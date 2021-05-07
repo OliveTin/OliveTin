@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+import "google/api/annotations.proto";
+
+message ActionButton {
+	string title = 1;
+	string icon = 2;
+}
+
+message GetButtonsResponse {
+	string title = 1;
+	repeated ActionButton actions = 2;
+}
+
+message GetButtonsRequest {}
+
+message StartActionRequest {
+	string actionName = 1;
+}
+
+message StartActionResponse {}
+
+service OliveTinApi {
+	rpc GetButtons(GetButtonsRequest) returns (GetButtonsResponse) {
+		option (google.api.http) = {
+			get: "/GetButtons"
+		};
+	}
+
+	rpc StartAction(StartActionRequest) returns (StartActionResponse) {
+		option (google.api.http) = {
+			get: "/StartAction"
+		};
+	}
+
+}
