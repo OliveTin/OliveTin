@@ -1,0 +1,91 @@
+body {
+	background-color: #333;
+	color: white;
+	text-align: center;
+	font-family: sans-serif;
+	padding: 0;
+	margin: 0;
+}
+
+.group {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+	grid-template-rows: auto auto auto auto;
+	padding: 1em;
+	grid-gap: 1em;
+	text-align: center;
+}
+
+div.entity {
+	background-color: #222;
+	box-shadow: 0 0 10px 0 #444;
+	display: grid;
+	grid-column: auto / span 2;
+	grid-row: auto / span 2;
+	grid-template-rows: auto min-content;
+	grid-template-columns: minmax(min-content, auto);
+}
+
+div.entity h2 {
+	grid-column: 1 / span all;
+}
+
+button {
+	padding: 1em;
+	color: white;
+	display: table-cell;
+	text-align: center;
+	border: 1px solid #666;
+	background-color: #222;
+	box-shadow: 0 0 10px 0 #444;
+	user-select: none;
+}
+
+button.good {
+	background-color: limegreen;
+}
+
+button:hover {
+	box-shadow: 0 0 10px 0 #666;
+	cursor: pointer;
+}
+
+button:disabled {
+	color: gray;
+	background-color: black;
+	cursor: not-allowed;
+}
+
+span.icon {
+	font-size: 3em;
+}
+
+.actionFailed {
+	animation: kfActionFailed 1s;
+}
+
+@keyframes kfActionFailed {
+	0% { background-color: black; }
+	20% { background-color: red; }
+	0% { background-color: inherit; }
+}
+
+.actionSuccess {
+	animation: kfActionSuccess 1s;
+}
+
+@keyframes kfActionSuccess {
+	0% { background-color: black; }
+	20% { background-color: green; }
+	0% { background-color: inherit; }
+}
+
+footer, footer a {
+	color: gray;
+}
+
+img.logo {
+	width: 1em;
+	height: 1em;
+	vertical-align: middle;
+}

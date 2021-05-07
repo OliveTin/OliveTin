@@ -1,0 +1,6 @@
+web/package-lock.json
+web/node_modules
+**/*.swp
+**/*.swo
+gen/
+go.sum
