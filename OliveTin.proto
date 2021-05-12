@@ -18,7 +18,12 @@ message StartActionRequest {
 	string actionName = 1;
 }
 
-message StartActionResponse {}
+message StartActionResponse {
+	string stdout = 1;
+	string stderr = 2;
+	bool timedOut = 3;
+	int32 exitCode = 4;
+}
 
 service OliveTinApi {
 	rpc GetButtons(GetButtonsRequest) returns (GetButtonsResponse) {

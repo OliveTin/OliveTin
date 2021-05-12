@@ -5,8 +5,10 @@ import (
 
 	restApi "github.com/jamesread/OliveTin/pkg/restApi"
 	grpcApi "github.com/jamesread/OliveTin/pkg/grpcApi"
+	webuiServer "github.com/jamesread/OliveTin/pkg/webuiServer"
 
 	config "github.com/jamesread/OliveTin/pkg/config"
+	executor "github.com/jamesread/OliveTin/pkg/executor"
 	"github.com/spf13/viper"
 	"os"
 )
@@ -20,12 +22,14 @@ func init() {
 	log.SetLevel(log.DebugLevel) // Default to debug, to catch cfg issues
 
 	viper.AutomaticEnv();
+	viper.SetConfigName("config.yaml")
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath(".")
-	viper.AddConfigPath("/etc/olivetin/")
+	viper.AddConfigPath("/etc/OliveTin/")
 
 	if err := viper.ReadInConfig(); err != nil {
-		log.Panicf("Config file error %s", err);
+		log.Errorf("Config file error at startup. %s", err);
+		os.Exit(1);
 	};
 
 	cfg = config.DefaultConfig();
@@ -42,13 +46,17 @@ func init() {
 
 func main() {
 	log.WithFields(log.Fields {
-		"listenPortRestActions": cfg.ListenPortRestActions,
-		"listenPortWebUi": cfg.ListenPortWebUi,
+		"listenAddressGrpcActions": cfg.ListenAddressGrpcActions,
+		"listenAddressRestActions": cfg.ListenAddressRestActions,
+		"listenAddressWebUi": cfg.ListenAddressWebUi,
 	}).Info("OliveTin started");
 
 	log.Debugf("%+v", cfg)
 
-	go grpcApi.Start()
+	executor.Cfg = cfg;
 
-	restApi.Start();
+	go grpcApi.Start(cfg.ListenAddressGrpcActions, cfg)
+	go restApi.Start(cfg.ListenAddressRestActions, cfg.ListenAddressGrpcActions, cfg)
+
+	webuiServer.Start(cfg.ListenAddressWebUi, cfg.ListenAddressRestActions)
 }

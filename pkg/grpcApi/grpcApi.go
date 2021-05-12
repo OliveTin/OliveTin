@@ -3,11 +3,18 @@ package grpcApi;
 import (
 	"google.golang.org/grpc"
 	pb "github.com/jamesread/OliveTin/gen/grpc"
-	"fmt"
 	"net"
 	log "github.com/sirupsen/logrus"
 	ctx "context"
+
+	config "github.com/jamesread/OliveTin/pkg/config"
+	executor "github.com/jamesread/OliveTin/pkg/executor"
 )
+
+var (
+	cfg *config.Config;
+)
+
 
 type OliveTinApi struct {
 
@@ -16,9 +23,7 @@ type OliveTinApi struct {
 func (api *OliveTinApi) StartAction(ctx ctx.Context, req *pb.StartActionRequest) (*pb.StartActionResponse, error) {
 	res := &pb.StartActionResponse{}
 
-	log.WithFields(log.Fields{
-		"actionName": req.ActionName,
-	}).Infof("StartAction")
+	executor.ExecAction(req.ActionName)
 
 	return res, nil
 }
@@ -26,25 +31,23 @@ func (api *OliveTinApi) StartAction(ctx ctx.Context, req *pb.StartActionRequest)
 func (api *OliveTinApi) GetButtons(ctx ctx.Context, req *pb.GetButtonsRequest) (*pb.GetButtonsResponse, error) {
 	res := &pb.GetButtonsResponse{};
 
-	btn1 := pb.ActionButton {
-		Title: "foo",
-		Icon: "&#x1F1E6",
-	};
+	for _, action := range cfg.ActionButtons {
+		btn := pb.ActionButton {
+			Title: action.Title,
+			Icon: lookupHtmlIcon(action.Icon),
+		}
 
-	btn2 := pb.ActionButton {
-		Title: "bar",
-		Icon: "&#x1F1E6",
-	};
+		res.Actions = append(res.Actions, &btn);
+	}
 
-	res.Actions = append(res.Actions, &btn1);
-	res.Actions = append(res.Actions, &btn2);
 
 	return res, nil
 }
 
-func Start() {
-	port := 1337;
-	lis, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%d", port));
+func Start(listenAddress string, globalConfig *config.Config) {
+	cfg = globalConfig
+
+	lis, err := net.Listen("tcp", listenAddress);
 
 	if err != nil {
 		log.Fatalf("Failed to listen - %v", err);

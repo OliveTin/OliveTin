@@ -2,7 +2,6 @@ package restApi;
 
 import (
 	"google.golang.org/grpc"
-	"fmt"
 	log "github.com/sirupsen/logrus"
 	"context"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
@@ -10,28 +9,32 @@ import (
 	"strings"
 
 	gw "github.com/jamesread/OliveTin/gen/grpc"
+
+	config "github.com/jamesread/OliveTin/pkg/config"
+)
+
+var (
+	cfg *config.Config;
 )
 
 
-func Start() (error) {
-	port := 1339;
+func Start(listenAddressRest string, listenAddressGrpc string, globalConfig *config.Config) (error) {
+	cfg = globalConfig
 
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	//lis, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%d", port));
-
 	mux := runtime.NewServeMux()
 	opts := []grpc.DialOption{grpc.WithInsecure()}
 
-	err := gw.RegisterOliveTinApiHandlerFromEndpoint(ctx, mux, "127.0.0.1:1337", opts)
+	err := gw.RegisterOliveTinApiHandlerFromEndpoint(ctx, mux, listenAddressGrpc, opts)
 
 	if err != nil {
 		log.Fatalf("gw error %v", err)
 	}
 
-	return http.ListenAndServe(fmt.Sprintf(":%d", port), allowCors(mux))
+	return http.ListenAndServe(listenAddressRest, allowCors(mux))
 }
 
 func allowCors(h http.Handler) http.Handler {

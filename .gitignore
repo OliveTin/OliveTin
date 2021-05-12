@@ -4,3 +4,4 @@ web/node_modules
 **/*.swo
 gen/
 go.sum
+OliveTin

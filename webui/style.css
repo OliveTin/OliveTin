@@ -16,6 +16,11 @@ body {
 	text-align: center;
 }
 
+.error {
+	background-color: salmon;
+	padding: 1em;
+}
+
 div.entity {
 	background-color: #222;
 	box-shadow: 0 0 10px 0 #444;

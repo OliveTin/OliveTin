@@ -5,7 +5,7 @@ class ActionButton extends window.HTMLButtonElement {
     this.stateLabels = []
     this.currentState = 0
     this.isWaiting = false
-    this.actionCallUrl = 'http://mindstorm4:1339/StartAction?actionName=' + this.title
+    this.actionCallUrl = window.restBaseUrl + 'StartAction?actionName=' + this.title
 
     if (json.icon !== undefined) {
       this.unicodeIcon = unescape(json.icon)

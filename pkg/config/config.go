@@ -8,6 +8,7 @@ import (
 type ActionButton struct {
 	Title string
 	Icon string
+	Shell string
 	Css map[string]string `mapstructure:omitempty`
 }
 
@@ -19,8 +20,9 @@ type Entity struct {
 }
 
 type Config struct {
-	ListenPortRestActions int
-	ListenPortWebUi int
+	ListenAddressWebUi string
+	ListenAddressRestActions string
+	ListenAddressGrpcActions string
 	LogLevel string
 	ActionButtons []ActionButton `mapstructure:"actions"`
 	Entities []Entity `mapstructure:omitempty`
@@ -28,8 +30,9 @@ type Config struct {
 
 func DefaultConfig() *Config {
 	config := Config{};
-	config.ListenPortRestActions = 1337;
-	config.ListenPortWebUi = 1339;
+	config.ListenAddressWebUi = "0.0.0.0:1337"
+	config.ListenAddressRestActions = "0.0.0.0:1338"
+	config.ListenAddressGrpcActions = "0.0.0.0:1339"
 	config.LogLevel = "INFO"
 
 	return &config
@@ -43,3 +46,4 @@ func (cfg *Config) GetLogLevel() (log.Level) {
 	default: return log.DebugLevel; 
 	}
 }
+
