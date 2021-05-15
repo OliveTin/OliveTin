@@ -25,6 +25,7 @@ func init() {
 	viper.SetConfigName("config.yaml")
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath(".")
+	viper.AddConfigPath("/config") // For containers.
 	viper.AddConfigPath("/etc/OliveTin/")
 
 	if err := viper.ReadInConfig(); err != nil {

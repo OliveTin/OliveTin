@@ -10,6 +10,7 @@ type ActionButton struct {
 	Icon string
 	Shell string
 	Css map[string]string `mapstructure:omitempty`
+	Timeout int
 }
 
 type Entity struct {

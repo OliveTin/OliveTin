@@ -7,10 +7,10 @@ class ActionButton extends window.HTMLButtonElement {
     this.isWaiting = false
     this.actionCallUrl = window.restBaseUrl + 'StartAction?actionName=' + this.title
 
-    if (json.icon !== undefined) {
-      this.unicodeIcon = unescape(json.icon)
-    } else {
+    if (json.icon == "") {
       this.unicodeIcon = '&#x1f4a9'
+    } else {
+      this.unicodeIcon = unescape(json.icon)
     }
 
     this.onclick = () => { this.startAction() }
@@ -30,17 +30,23 @@ class ActionButton extends window.HTMLButtonElement {
         return res.json()
       }
     }).then(json => {
-      this.onActionResult()
+      if (json.timedOut) {
+        this.onActionResult('actionTimedOut')
+      } else if (json.exitCode != 0) {
+        this.onActionResult('actionNonZeroExit')
+      } else {
+        this.onActionResult('actionSuccess')
+      }
     }).catch(err => {
       this.onActionError(err)
     })
   }
 
-  onActionResult (json) {
+  onActionResult (cssClass) {
     this.disabled = false
     this.isWaiting = false
     this.updateHtml()
-    this.classList.add('actionSuccess')
+    this.classList.add(cssClass)
   }
 
   onActionError (err) {

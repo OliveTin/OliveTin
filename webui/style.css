@@ -1,6 +1,6 @@
 body {
-	background-color: #333;
-	color: white;
+	background-color: #efefef;
+	color: black;
 	text-align: center;
 	font-family: sans-serif;
 	padding: 0;
@@ -9,7 +9,7 @@ body {
 
 .group {
 	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+	grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
 	grid-template-rows: auto auto auto auto;
 	padding: 1em;
 	grid-gap: 1em;
@@ -37,12 +37,12 @@ div.entity h2 {
 
 button {
 	padding: 1em;
-	color: white;
+	color: black;
 	display: table-cell;
 	text-align: center;
-	border: 1px solid #666;
-	background-color: #222;
-	box-shadow: 0 0 10px 0 #444;
+	border: 1px solid #999;
+	background-color: #dee3e7;
+	box-shadow: 0 0 6px 0 #aaa;
 	user-select: none;
 }
 
@@ -85,6 +85,27 @@ span.icon {
 	0% { background-color: inherit; }
 }
 
+.actionNonZeroExit {
+	animation: kfActionNonZeroExit 1s;
+}
+
+@keyframes kfActionNonZeroExit {
+	0% { background-color: black; }
+	20% { background-color: blue; }
+	0% { background-color: inherit; }
+}
+
+.actionTimeout {
+	animation: kfActionTimeout 1s;
+}
+
+@keyframes kfActionTimeout {
+	0% { background-color: black; }
+	20% { background-color: cyan; }
+	0% { background-color: inherit; }
+}
+
+
 footer, footer a {
 	color: gray;
 }
@@ -93,4 +114,27 @@ img.logo {
 	width: 1em;
 	height: 1em;
 	vertical-align: middle;
+}
+
+@media (max-width: 320px) {
+	.group {
+		grid-template-columns: auto;
+		background-color: red;
+		grid-gap: 0;
+		padding: 0;
+	}
+}
+
+@media (prefers-color-scheme: dark) {
+	body {
+		background-color: #333;
+		color: white;
+	}
+
+	button {
+		border: 1px solid #666;
+		background-color: #222;
+		box-shadow: 0 0 6px 0 #444;
+		color: white;
+	}
 }

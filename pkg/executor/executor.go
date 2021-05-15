@@ -9,7 +9,6 @@ import (
 	"os/exec"
 	"context"
 	"time"
-	"fmt"
 )
 
 var (
@@ -31,30 +30,51 @@ func ExecAction(action string) (*pb.StartActionResponse) {
 		return res
 	}
 
-	log.Infof("Found action %s", actualAction.Title)
+	log.WithFields(log.Fields {
+		"title": actualAction.Title,
+		"timeout": actualAction.Timeout,
+	}).Infof("Found action")
 
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 3 * time.Second)
 	defer cancel()
 
 	cmd := exec.CommandContext(ctx, "sh", "-c", actualAction.Shell)
 	stdout, stderr := cmd.Output()
 
+	res.ExitCode = int64(cmd.ProcessState.ExitCode())
 	res.Stdout = string(stdout)
-	res.Stderr = fmt.Sprintf("%s", stderr)
+
+	if stderr == nil {
+		res.Stderr = ""
+	} else {
+		res.Stderr = stderr.Error()
+	}
 
 	if ctx.Err() == context.DeadlineExceeded {
 		res.TimedOut = true
 	}
 
-	log.Infof("Command %v stdout %v", actualAction.Title, res.Stdout)
-	log.Infof("Command %v stderr %v", actualAction.Title, res.Stderr)
+	log.WithFields(log.Fields {
+		"stdout": res.Stdout,
+		"stderr": res.Stderr,
+		"timedOut": res.TimedOut,
+		"exit": res.ExitCode,
+	}).Infof("Finished command.")
 
 	return res
+}
+
+func sanitizeAction(action *config.ActionButton) {
+	if action.Timeout < 3 {
+		action.Timeout = 3
+	}
 }
 
 func findAction(actionTitle string) (*config.ActionButton, error) {
 	for _, action := range Cfg.ActionButtons {
 		if action.Title == actionTitle {
+			sanitizeAction(&action)
+
 			return &action, nil
 		}
 	}

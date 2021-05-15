@@ -21,11 +21,7 @@ type OliveTinApi struct {
 }
 
 func (api *OliveTinApi) StartAction(ctx ctx.Context, req *pb.StartActionRequest) (*pb.StartActionResponse, error) {
-	res := &pb.StartActionResponse{}
-
-	executor.ExecAction(req.ActionName)
-
-	return res, nil
+	return executor.ExecAction(req.ActionName), nil
 }
 
 func (api *OliveTinApi) GetButtons(ctx ctx.Context, req *pb.GetButtonsRequest) (*pb.GetButtonsResponse, error) {
@@ -40,6 +36,7 @@ func (api *OliveTinApi) GetButtons(ctx ctx.Context, req *pb.GetButtonsRequest) (
 		res.Actions = append(res.Actions, &btn);
 	}
 
+	log.Infof("getButtons: %v", res)
 
 	return res, nil
 }

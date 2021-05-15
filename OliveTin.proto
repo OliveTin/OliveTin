@@ -22,7 +22,7 @@ message StartActionResponse {
 	string stdout = 1;
 	string stderr = 2;
 	bool timedOut = 3;
-	int32 exitCode = 4;
+	int64 exitCode = 4;
 }
 
 service OliveTinApi {

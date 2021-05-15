@@ -1,6 +1,6 @@
 'use strict'
 
-import { loadContents } from './js/loader.js'
+import { marshalActionButtonsJsonToHtml } from './js/marshaller.js'
 
 /**
  * Design choice; define this as a "global function" (on window) so that it can 
@@ -14,18 +14,21 @@ window.showBigError = (type, friendlyType, message) => {
 	err.classList.add("error")
 	err.innerHTML = "<h1>Error " + friendlyType + "</h1><p>" + message + "</p><p><a href = 'http://github.com/jamesread/OliveTin' target = 'blank'/>OliveTin Documentation</a></p>";
 
-    document.getElementById('rootGroup').appendChild(err)
+  document.getElementById('rootGroup').appendChild(err)
 }
 
 function onInitialLoad(res) {
   window.restBaseUrl = res.Rest;
 
-  window.fetch(window.restBaseUrl + "GetButtons").then(res => {
-	return res.json()
+  window.fetch(window.restBaseUrl + "GetButtons", {
+    cors: 'cors',
+    // No fetch options
   }).then(res => {
-	loadContents(res)
+    return res.json()
+  }).then(res => {
+    marshalActionButtonsJsonToHtml(res)
   }).catch(err => {
-	showBigError("fetch-initial-buttons", "getting initial buttons", err, "blat")
+    showBigError("fetch-initial-buttons", "getting initial buttons", err, "blat")
   });
 }
 
