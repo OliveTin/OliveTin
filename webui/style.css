@@ -1,5 +1,5 @@
 body {
-	background-color: #efefef;
+	background-color: #dee3e7;
 	color: black;
 	text-align: center;
 	font-family: sans-serif;
@@ -21,8 +21,12 @@ body {
 	padding: 1em;
 }
 
+.title.temporaryStatusMessage {
+	color: gray;
+}
+
 div.entity {
-	background-color: #222;
+	background-color: white;
 	box-shadow: 0 0 10px 0 #444;
 	display: grid;
 	grid-column: auto / span 2;
@@ -41,13 +45,9 @@ button {
 	display: table-cell;
 	text-align: center;
 	border: 1px solid #999;
-	background-color: #dee3e7;
+	background-color: white;
 	box-shadow: 0 0 6px 0 #aaa;
 	user-select: none;
-}
-
-button.good {
-	background-color: limegreen;
 }
 
 button:hover {
@@ -57,7 +57,7 @@ button:hover {
 
 button:disabled {
 	color: gray;
-	background-color: black;
+	background-color: #333;
 	cursor: not-allowed;
 }
 
@@ -81,7 +81,7 @@ span.icon {
 
 @keyframes kfActionSuccess {
 	0% { background-color: black; }
-	20% { background-color: green; }
+	20% { background-color: limegreen; }
 	0% { background-color: inherit; }
 }
 
@@ -91,7 +91,7 @@ span.icon {
 
 @keyframes kfActionNonZeroExit {
 	0% { background-color: black; }
-	20% { background-color: blue; }
+	20% { background-color: orange; }
 	0% { background-color: inherit; }
 }
 
@@ -119,7 +119,6 @@ img.logo {
 @media (max-width: 320px) {
 	.group {
 		grid-template-columns: auto;
-		background-color: red;
 		grid-gap: 0;
 		padding: 0;
 	}
@@ -136,5 +135,9 @@ img.logo {
 		background-color: #222;
 		box-shadow: 0 0 6px 0 #444;
 		color: white;
+	}
+
+	button:disabled {
+		background-color: black;
 	}
 }
