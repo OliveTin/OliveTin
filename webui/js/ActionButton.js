@@ -3,6 +3,7 @@ class ActionButton extends window.HTMLButtonElement {
     this.title = json.title
     this.states = []
     this.stateLabels = []
+    this.temporaryStatusMessage = null
     this.currentState = 0
     this.isWaiting = false
     this.actionCallUrl = window.restBaseUrl + 'StartAction?actionName=' + this.title
@@ -25,26 +26,22 @@ class ActionButton extends window.HTMLButtonElement {
     this.updateHtml()
     this.classList = [] // Removes old animation classes
 
-    window.fetch(this.actionCallUrl).then(res => {
-      if (!res.ok) {
-        return res.json()
-      }
-    }).then(json => {
+    window.fetch(this.actionCallUrl).then(res => res.json()
+    ).then((json) => {
       if (json.timedOut) {
-        this.onActionResult('actionTimedOut')
+        this.onActionResult('actionTimeout', "Timed out")
       } else if (json.exitCode != 0) {
-        this.onActionResult('actionNonZeroExit')
+        this.onActionResult('actionNonZeroExit', "Exit code " + json.exitCode)
       } else {
-        this.onActionResult('actionSuccess')
+        this.onActionResult('actionSuccess', "Success!")
       }
     }).catch(err => {
       this.onActionError(err)
     })
   }
 
-  onActionResult (cssClass) {
-    this.disabled = false
-    this.isWaiting = false
+  onActionResult (cssClass, temporaryStatusMessage) {
+    this.temporaryStatusMessage = '[ ' + temporaryStatusMessage + ' ]'
     this.updateHtml()
     this.classList.add(cssClass)
   }
@@ -73,7 +70,18 @@ class ActionButton extends window.HTMLButtonElement {
   }
 
   updateHtml () {
-    if (this.isWaiting) {
+    if (this.temporaryStatusMessage != null) {
+      this.domTitle.innerText = this.temporaryStatusMessage
+      this.domTitle.classList.add('temporaryStatusMessage')
+      this.isWaiting = false
+      this.disabled = false
+
+      setTimeout(() => { 
+        this.temporaryStatusMessage = null
+        this.domTitle.classList.remove('temporaryStatusMessage')
+        this.updateHtml() 
+      }, 2000)
+    } else if (this.isWaiting) {
       this.domTitle.innerText = 'Waiting...'
     } else {
       this.domTitle.innerText = this.title
