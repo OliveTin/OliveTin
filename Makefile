@@ -14,4 +14,10 @@ podman-container:
 	podman create --name olivetin -p 1337:1337 -p 1338:1338 -p 1339:1339 -v /etc/OliveTin/:/config:ro olivetin
 	podman start olivetin
 
+devrun: compile
+	killall OliveTin || true
+	./OliveTin &
+
+devcontainer: compile podman-image podman-container
+
 .PHONY: grpc
