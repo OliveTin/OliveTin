@@ -1,14 +1,14 @@
-package staticWebserverForUi
+package webuiServer
 
 import (
-	"net/http"
 	"encoding/json"
+	cors "github.com/jamesread/OliveTin/internal/cors"
 	log "github.com/sirupsen/logrus"
-	cors "github.com/jamesread/OliveTin/pkg/cors"
+	"net/http"
 	"os"
 )
 
-type WebUiSettings struct {
+type WebUISettings struct {
 	Rest string
 }
 
@@ -35,14 +35,14 @@ func Start(listenAddress string, listenAddressRest string) {
 	http.Handle("/", cors.AllowCors(http.FileServer(http.Dir(findWebuiDir()))))
 
 	http.HandleFunc("/webUiSettings.json", func(w http.ResponseWriter, r *http.Request) {
-		ret := WebUiSettings {
+		ret := WebUISettings{
 			Rest: "http://" + listenAddressRest + "/",
 		}
 
 		jsonRet, _ := json.Marshal(ret)
 
-		w.Write([]byte(jsonRet));
+		w.Write([]byte(jsonRet))
 	})
 
-	log.Fatal(http.ListenAndServe(listenAddress, nil));
+	log.Fatal(http.ListenAndServe(listenAddress, nil))
 }

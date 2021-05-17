@@ -1,5 +1,5 @@
-web/package-lock.json
-web/node_modules
+webui/package-lock.json
+webui/node_modules
 **/*.swp
 **/*.swo
 gen/

@@ -1,25 +1,24 @@
-package restApi;
+package restapi
 
 import (
-	"google.golang.org/grpc"
-	log "github.com/sirupsen/logrus"
 	"context"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	log "github.com/sirupsen/logrus"
+	"google.golang.org/grpc"
 	"net/http"
 
 	gw "github.com/jamesread/OliveTin/gen/grpc"
 
-	cors "github.com/jamesread/OliveTin/pkg/cors"
+	cors "github.com/jamesread/OliveTin/internal/cors"
 
-	config "github.com/jamesread/OliveTin/pkg/config"
+	config "github.com/jamesread/OliveTin/internal/config"
 )
 
 var (
-	cfg *config.Config;
+	cfg *config.Config
 )
 
-
-func Start(listenAddressRest string, listenAddressGrpc string, globalConfig *config.Config) (error) {
+func Start(listenAddressRest string, listenAddressGrpc string, globalConfig *config.Config) error {
 	cfg = globalConfig
 
 	ctx := context.Background()

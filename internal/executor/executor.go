@@ -1,23 +1,23 @@
-package executor 
+package executor
 
 import (
-	config "github.com/jamesread/OliveTin/pkg/config"
-	log "github.com/sirupsen/logrus"
 	pb "github.com/jamesread/OliveTin/gen/grpc"
+	config "github.com/jamesread/OliveTin/internal/config"
+	log "github.com/sirupsen/logrus"
 
+	"context"
 	"errors"
 	"os/exec"
-	"context"
 	"time"
 )
 
 var (
-	Cfg *config.Config;
+	Cfg *config.Config
 )
 
-func ExecAction(action string) (*pb.StartActionResponse) {
+func ExecAction(action string) *pb.StartActionResponse {
 	res := &pb.StartActionResponse{}
-	res.TimedOut = false;
+	res.TimedOut = false
 
 	log.WithFields(log.Fields{
 		"actionName": action,
@@ -30,12 +30,12 @@ func ExecAction(action string) (*pb.StartActionResponse) {
 		return res
 	}
 
-	log.WithFields(log.Fields {
-		"title": actualAction.Title,
+	log.WithFields(log.Fields{
+		"title":   actualAction.Title,
 		"timeout": actualAction.Timeout,
 	}).Infof("Found action")
 
-	ctx, cancel := context.WithTimeout(context.Background(), 3 * time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
 	cmd := exec.CommandContext(ctx, "sh", "-c", actualAction.Shell)
@@ -54,11 +54,11 @@ func ExecAction(action string) (*pb.StartActionResponse) {
 		res.TimedOut = true
 	}
 
-	log.WithFields(log.Fields {
-		"stdout": res.Stdout,
-		"stderr": res.Stderr,
+	log.WithFields(log.Fields{
+		"stdout":   res.Stdout,
+		"stderr":   res.Stderr,
 		"timedOut": res.TimedOut,
-		"exit": res.ExitCode,
+		"exit":     res.ExitCode,
 	}).Infof("Finished command.")
 
 	return res
@@ -81,5 +81,3 @@ func findAction(actionTitle string) (*config.ActionButton, error) {
 
 	return nil, errors.New("Action not found")
 }
-
-
