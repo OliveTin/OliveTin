@@ -8,7 +8,7 @@ class ActionButton extends window.HTMLButtonElement {
     this.isWaiting = false
     this.actionCallUrl = window.restBaseUrl + 'StartAction?actionName=' + this.title
 
-    if (json.icon == "") {
+    if (json.icon === '') {
       this.unicodeIcon = '&#x1f4a9'
     } else {
       this.unicodeIcon = unescape(json.icon)
@@ -29,11 +29,11 @@ class ActionButton extends window.HTMLButtonElement {
     window.fetch(this.actionCallUrl).then(res => res.json()
     ).then((json) => {
       if (json.timedOut) {
-        this.onActionResult('actionTimeout', "Timed out")
-      } else if (json.exitCode != 0) {
-        this.onActionResult('actionNonZeroExit', "Exit code " + json.exitCode)
+        this.onActionResult('actionTimeout', 'Timed out')
+      } else if (json.exitCode !== 0) {
+        this.onActionResult('actionNonZeroExit', 'Exit code ' + json.exitCode)
       } else {
-        this.onActionResult('actionSuccess', "Success!")
+        this.onActionResult('actionSuccess', 'Success!')
       }
     }).catch(err => {
       this.onActionError(err)
@@ -76,10 +76,10 @@ class ActionButton extends window.HTMLButtonElement {
       this.isWaiting = false
       this.disabled = false
 
-      setTimeout(() => { 
+      setTimeout(() => {
         this.temporaryStatusMessage = null
         this.domTitle.classList.remove('temporaryStatusMessage')
-        this.updateHtml() 
+        this.updateHtml()
       }, 2000)
     } else if (this.isWaiting) {
       this.domTitle.innerText = 'Waiting...'

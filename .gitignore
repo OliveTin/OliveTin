@@ -5,3 +5,4 @@ webui/node_modules
 gen/
 go.sum
 OliveTin
+reports

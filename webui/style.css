@@ -1,143 +1,156 @@
 body {
-	background-color: #dee3e7;
-	color: black;
-	text-align: center;
-	font-family: sans-serif;
-	padding: 0;
-	margin: 0;
+  background-color: #dee3e7;
+  color: black;
+  text-align: center;
+  font-family: sans-serif;
+  padding: 0;
+  margin: 0;
 }
 
-.group {
-	display: grid;
-	grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-	grid-template-rows: auto auto auto auto;
-	padding: 1em;
-	grid-gap: 1em;
-	text-align: center;
+fieldset {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  grid-template-rows: auto auto auto auto;
+  padding: 1em;
+  grid-gap: 1em;
+  text-align: center;
+  border: 0;
+}
+
+legend {
+  padding-top: 1em;
+}
+
+span[role="icon"] {
+  display: block;
 }
 
 .error {
-	background-color: salmon;
-	padding: 1em;
+  background-color: salmon;
+  padding: 1em;
 }
 
 .title.temporaryStatusMessage {
-	color: gray;
+  color: gray;
 }
 
 div.entity {
-	background-color: white;
-	box-shadow: 0 0 10px 0 #444;
-	display: grid;
-	grid-column: auto / span 2;
-	grid-row: auto / span 2;
-	grid-template-rows: auto min-content;
-	grid-template-columns: minmax(min-content, auto);
+  background-color: white;
+  box-shadow: 0 0 10px 0 #444;
+  display: grid;
+  grid-column: auto / span 2;
+  grid-row: auto / span 2;
+  grid-template-rows: auto min-content;
+  grid-template-columns: minmax(min-content, auto);
 }
 
 div.entity h2 {
-	grid-column: 1 / span all;
+  grid-column: 1 / span all;
 }
 
 button {
-	padding: 1em;
-	color: black;
-	display: table-cell;
-	text-align: center;
-	border: 1px solid #999;
-	background-color: white;
-	box-shadow: 0 0 6px 0 #aaa;
-	user-select: none;
+  padding: 1em;
+  color: black;
+  display: table-cell;
+  text-align: center;
+  border: 1px solid #999;
+  background-color: white;
+  box-shadow: 0 0 6px 0 #aaa;
+  user-select: none;
 }
 
 button:hover {
-	box-shadow: 0 0 10px 0 #666;
-	cursor: pointer;
+  box-shadow: 0 0 10px 0 #666;
+  cursor: pointer;
+}
+
+button:focus {
+  outline: 1px solid black;
 }
 
 button:disabled {
-	color: gray;
-	background-color: #333;
-	cursor: not-allowed;
+  color: gray;
+  background-color: #333;
+  cursor: not-allowed;
 }
 
 span.icon {
-	font-size: 3em;
+  font-size: 3em;
 }
 
 .actionFailed {
-	animation: kfActionFailed 1s;
+  animation: kfActionFailed 1s;
 }
 
 @keyframes kfActionFailed {
-	0% { background-color: black; }
-	20% { background-color: red; }
-	0% { background-color: inherit; }
+  0% { background-color: black; }
+  20% { background-color: red; }
+  0% { background-color: inherit; }
 }
 
 .actionSuccess {
-	animation: kfActionSuccess 1s;
+  animation: kfActionSuccess 1s;
 }
 
 @keyframes kfActionSuccess {
-	0% { background-color: black; }
-	20% { background-color: limegreen; }
-	0% { background-color: inherit; }
+  0% { background-color: black; }
+  20% { background-color: limegreen; }
+  0% { background-color: inherit; }
 }
 
 .actionNonZeroExit {
-	animation: kfActionNonZeroExit 1s;
+  animation: kfActionNonZeroExit 1s;
 }
 
 @keyframes kfActionNonZeroExit {
-	0% { background-color: black; }
-	20% { background-color: orange; }
-	0% { background-color: inherit; }
+  0% { background-color: black; }
+  20% { background-color: orange; }
+  0% { background-color: inherit; }
 }
 
 .actionTimeout {
-	animation: kfActionTimeout 1s;
+  animation: kfActionTimeout 1s;
 }
 
 @keyframes kfActionTimeout {
-	0% { background-color: black; }
-	20% { background-color: cyan; }
-	0% { background-color: inherit; }
+  0% { background-color: black; }
+  20% { background-color: cyan; }
+  0% { background-color: inherit; }
 }
 
-
-footer, footer a {
-	color: gray;
+footer,
+footer a {
+  color: black;
 }
 
 img.logo {
-	width: 1em;
-	height: 1em;
-	vertical-align: middle;
+  width: 1em;
+  height: 1em;
+  vertical-align: middle;
 }
 
 @media (max-width: 320px) {
-	.group {
-		grid-template-columns: auto;
-		grid-gap: 0;
-		padding: 0;
-	}
+  fieldset {
+    grid-template-columns: auto;
+    grid-gap: 0;
+    padding: 0;
+  }
 }
 
 @media (prefers-color-scheme: dark) {
-	body {
-		background-color: #333;
-		color: white;
-	}
+  body {
+    background-color: #333;
+    color: white;
+  }
 
-	button {
-		border: 1px solid #666;
-		background-color: #222;
-		box-shadow: 0 0 6px 0 #444;
-		color: white;
-	}
+  button {
+    border: 1px solid #666;
+    background-color: #222;
+    box-shadow: 0 0 6px 0 #444;
+    color: white;
+  }
 
-	button:disabled {
-		background-color: black;
-	}
+  button:disabled {
+    background-color: black;
+  }
 }
