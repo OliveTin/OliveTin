@@ -85,8 +85,10 @@ Of course, running a container image is very straightforward - but you might nee
 
 ### Running - `podman` (or `docker`)
 
+There is a container image that is periodically updated here; https://hub.docker.com/repository/docker/jamesread/olivetin 
+
 ```
-root@host: podman create --name olivetin -p 1337 -p 1338 -p 1339 -v /etc/olivetin/:/config:ro olivetin
+root@host: podman create --name olivetin -p 1337 -p 1338 -p 1339 -v /etc/olivetin/:/config:ro docker.io/jamesread/olivetin
 
 ```
 
