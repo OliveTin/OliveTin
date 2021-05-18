@@ -1,6 +1,6 @@
 # OliveTin
 
-OliveTin is a web based quick access control panel for running jobs.
+OliveTin is a web interface for running Linux shell commands.
 
 For example, it can be used to turn home automation lights on or off, or start
 workflows in n8n.  
