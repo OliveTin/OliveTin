@@ -1,0 +1,47 @@
+= Contributions
+
+Contributions are very welcome - code, docs, whatever they might be! If this is
+your first contribution to an Open Source project or you're a core maintainer
+of multiple projects, your time and interest in contributing is most welcome.
+
+If you're not sure where to get started, raise an issue in the project.
+
+Ideas may be discussed, purely on their merits and issues. Our Code of Conduct
+(CoC) is straightforward - it's important that contributors feel comfortable in 
+discussion throughout the whole process. This project respects the 
+link:https://www.kernel.org/doc/html/latest/process/code-of-conduct.html[Linux Kernel code of conduct]. 
+
+== If you're not sure, ask!
+
+Don't be afraid to ask for advice before working on a
+contribution. If you're thinking about a bigger change, especially that might
+affect the core working or architecture, it's almost essential to talk and ask
+about what you're planning might affect things. Some of the larger future plans may not be
+documented well so it's difficult to understand how your change might affect
+the general direction and roadmap of this project without asking. 
+
+The preferred way to communicate is probably via GitHub issues for now. 
+
+=== Getting started to contribute;
+
+The project layout is reasonably straightforward; 
+
+* See the `Makefile` for common targets. This project was originally created on top of Fedora, but it should be usable on Debian/your faveourite distro with minor changes (if any).
+* The API is defined in protobuf+grpc - you will need to `make grpc`. 
+* The Go daemon is built from the `cmd` and `internal` directories mostly.
+* The webui is just a single page application with a bit of Javascript in the `webui` directory. This can happily be hosted on another webserver.
+
+== Mechanics of submitting a change
+
+* Please fork, feature-branch, and PR. 
+* In your PR, please provide a brief, but meaningful description that describes why you think
+  this contribution is useful, and what it changes.
+
+Thanks so much for your time! :-) 
+
+=== Checklist - testing your changes
+
+Before you PR, please run these checks locally;
+
+* `make daemon-compile`, `make daemon-codestyle` and `make daemon-unittests` should run cleanly. 
+* `make webui-codestyle` should run cleanly. 
