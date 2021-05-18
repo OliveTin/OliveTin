@@ -15,6 +15,7 @@ Some example **use cases**;
 ## Features
 
 * **Responsive, touch-friendly UI** - great for tablets and mobile
+* **Super simple config in YAML** - because if it's not YAML now-a-days, it's not "cloud native" :-) 
 * **Dark mode** - for those of you that roll that way.
 * **Accessible** - passes all the accessibility checks in Firefox, and issues with accessibility are taken seriously.  
 * **Container** - available for quickly testing and getting it up and running, great for the selfhosted community. 
