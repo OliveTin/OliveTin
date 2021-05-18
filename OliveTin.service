@@ -1,0 +1,9 @@
+[Unit]
+Description=OliveTin
+
+[Service]
+ExecStart=/usr/sbin/OliveTin
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
