@@ -8,7 +8,6 @@ import (
 	webuiServer "github.com/jamesread/OliveTin/internal/webuiServer"
 
 	config "github.com/jamesread/OliveTin/internal/config"
-	executor "github.com/jamesread/OliveTin/internal/executor"
 	"github.com/spf13/viper"
 	"os"
 )
@@ -53,8 +52,6 @@ func main() {
 	}).Info("OliveTin started")
 
 	log.Debugf("%+v", cfg)
-
-	executor.Cfg = cfg
 
 	go grpcapi.Start(cfg.ListenAddressGrpcActions, cfg)
 	go restapi.Start(cfg.ListenAddressRestActions, cfg.ListenAddressGrpcActions, cfg)

@@ -11,11 +11,7 @@ import (
 	"time"
 )
 
-var (
-	Cfg *config.Config
-)
-
-func ExecAction(action string) *pb.StartActionResponse {
+func ExecAction(cfg *config.Config, action string) *pb.StartActionResponse {
 	res := &pb.StartActionResponse{}
 	res.TimedOut = false
 
@@ -23,7 +19,7 @@ func ExecAction(action string) *pb.StartActionResponse {
 		"actionName": action,
 	}).Infof("StartAction")
 
-	actualAction, err := findAction(action)
+	actualAction, err := findAction(cfg, action)
 
 	if err != nil {
 		log.Errorf("Error finding action %s, %s", err, action)
@@ -70,8 +66,8 @@ func sanitizeAction(action *config.ActionButton) {
 	}
 }
 
-func findAction(actionTitle string) (*config.ActionButton, error) {
-	for _, action := range Cfg.ActionButtons {
+func findAction(cfg *config.Config, actionTitle string) (*config.ActionButton, error) {
+	for _, action := range cfg.ActionButtons {
 		if action.Title == actionTitle {
 			sanitizeAction(&action)
 
