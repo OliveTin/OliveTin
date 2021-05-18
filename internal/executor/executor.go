@@ -41,7 +41,7 @@ func ExecAction(action string) *pb.StartActionResponse {
 	cmd := exec.CommandContext(ctx, "sh", "-c", actualAction.Shell)
 	stdout, stderr := cmd.Output()
 
-	res.ExitCode = int64(cmd.ProcessState.ExitCode())
+	res.ExitCode = int32(cmd.ProcessState.ExitCode())
 	res.Stdout = string(stdout)
 
 	if stderr == nil {
