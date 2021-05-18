@@ -59,6 +59,8 @@ actions:
   shell: ssh root@overseer 'service lightdm restart'
 ```
 
+A full example config can be found at in this repository - [config.yaml](https://github.com/jamesread/OliveTin/blob/main/var/config.yaml).
+
 ## Ports 
 
 By default OliveTin will use the following ports;
