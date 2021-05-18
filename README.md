@@ -15,6 +15,10 @@ Desktop web browser;
 
 ![Desktop screenshot](media/screenshotDesktop.png)
 
+Desktop web browser (dark mode); 
+
+![Desktop screenshot](media/screenshotDesktopDark.png)
+
 Mobile screen size (responsive layout); 
 
 ![Mobile screenshot](media/screenshotMobile.png)
