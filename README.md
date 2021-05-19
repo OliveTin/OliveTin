@@ -1,5 +1,7 @@
 # OliveTin
 
+<img alt = "project logo" src = "https://github.com/jamesread/OliveTin/blob/main/webui/OliveTinLogo.png" align = "right" width = "160px" />
+
 OliveTin is a web interface for running Linux shell commands.
 
 Some example **use cases**;
