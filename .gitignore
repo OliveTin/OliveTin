@@ -5,4 +5,7 @@ webui/node_modules
 gen/
 go.sum
 OliveTin
+OliveTin.armhf
+OliveTin.exe
 reports
+releases/
