@@ -16,6 +16,7 @@ var (
 )
 
 type oliveTinAPI struct {
+	pb.UnimplementedOliveTinApiServer
 }
 
 func (api *oliveTinAPI) StartAction(ctx ctx.Context, req *pb.StartActionRequest) (*pb.StartActionResponse, error) {
@@ -39,10 +40,11 @@ func (api *oliveTinAPI) GetButtons(ctx ctx.Context, req *pb.GetButtonsRequest) (
 	return res, nil
 }
 
-func Start(listenAddress string, globalConfig *config.Config) {
+// Start will start the GRPC API.
+func Start(globalConfig *config.Config) {
 	cfg = globalConfig
 
-	lis, err := net.Listen("tcp", listenAddress)
+	lis, err := net.Listen("tcp", cfg.ListenAddressGrpcActions)
 
 	if err != nil {
 		log.Fatalf("Failed to listen - %v", err)

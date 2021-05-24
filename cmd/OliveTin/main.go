@@ -4,8 +4,8 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	grpcapi "github.com/jamesread/OliveTin/internal/grpcapi"
-	restapi "github.com/jamesread/OliveTin/internal/restapi"
-	webuiServer "github.com/jamesread/OliveTin/internal/webuiServer"
+
+	"github.com/jamesread/OliveTin/internal/httpservers"
 
 	config "github.com/jamesread/OliveTin/internal/config"
 	"github.com/spf13/viper"
@@ -39,22 +39,19 @@ func init() {
 		os.Exit(1)
 	}
 
-	log.SetLevel(cfg.GetLogLevel())
+	if logLevel, err := log.ParseLevel(cfg.LogLevel); err == nil {
+		log.SetLevel(logLevel)
+	}
 
 	viper.WatchConfig()
 }
 
 func main() {
-	log.WithFields(log.Fields{
-		"listenAddressGrpcActions": cfg.ListenAddressGrpcActions,
-		"listenAddressRestActions": cfg.ListenAddressRestActions,
-		"listenAddressWebUI":       cfg.ListenAddressWebUI,
-	}).Info("OliveTin started")
+	log.Info("OliveTin started")
 
 	log.Debugf("%+v", cfg)
 
-	go grpcapi.Start(cfg.ListenAddressGrpcActions, cfg)
-	go restapi.Start(cfg.ListenAddressRestActions, cfg.ListenAddressGrpcActions, cfg)
+	go grpcapi.Start(cfg)
 
-	webuiServer.Start(cfg.ListenAddressWebUI, cfg.ListenAddressRestActions)
+	httpservers.StartServers(cfg)
 }

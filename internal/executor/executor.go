@@ -11,6 +11,7 @@ import (
 	"time"
 )
 
+// ExecAction executes an action.
 func ExecAction(cfg *config.Config, action string) *pb.StartActionResponse {
 	res := &pb.StartActionResponse{}
 	res.TimedOut = false

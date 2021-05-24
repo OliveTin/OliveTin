@@ -1,5 +1,7 @@
 syntax = "proto3";
 
+option go_package = "gen/grpc";
+
 import "google/api/annotations.proto";
 
 message ActionButton {
@@ -28,13 +30,13 @@ message StartActionResponse {
 service OliveTinApi {
 	rpc GetButtons(GetButtonsRequest) returns (GetButtonsResponse) {
 		option (google.api.http) = {
-			get: "/GetButtons"
+			get: "/api/GetButtons"
 		};
 	}
 
 	rpc StartAction(StartActionRequest) returns (StartActionResponse) {
 		option (google.api.http) = {
-			get: "/StartAction"
+			get: "/api/StartAction"
 		};
 	}
 

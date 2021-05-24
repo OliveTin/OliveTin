@@ -23,8 +23,9 @@ daemon-unittests:
 	go tool cover -html=reports/unittests.out -o reports/unittests.html
 
 grpc:
-	protoc -I.:/usr/share/gocode/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis/ --go_out=plugins=grpc:gen/grpc/ OliveTin.proto 
-	protoc -I.:/usr/share/gocode/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis/ --grpc-gateway_out=gen/grpc --grpc-gateway_opt paths=source_relative OliveTin.proto
+	protoc -I.:$(GOPATH)/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis/ --go_out=. --go-grpc_out=. --grpc-gateway_out=. OliveTin.proto 
+#	protoc --go-grpc_out=grpc:gen/grpc/ OliveTin.proto 
+#	protoc -I.:$(GOPATH)/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis/ --grpc-gateway_out=gen/grpc --grpc-gateway_opt paths=source_relative OliveTin.proto
 
 podman-image:
 	buildah bud -t olivetin
@@ -46,6 +47,7 @@ webui-codestyle:
 	cd webui && stylelint style.css
 
 release-common: 
+	rm -rf webui/node_modules/
 	rm -rf releases/
 	mkdir -p releases/common/
 	cp -r webui releases/common/

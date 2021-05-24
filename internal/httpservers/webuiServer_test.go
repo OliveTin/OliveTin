@@ -1,4 +1,4 @@
-package webuiServer
+package httpservers
 
 import (
 	"github.com/stretchr/testify/assert"
