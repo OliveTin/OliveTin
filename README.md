@@ -10,6 +10,8 @@ Some example **use cases**;
 2. Great for home automation tablets stuck on walls around your house - I use this to turn Hue lights on and off for example. 
 3. Sometimes SSH access isn't possible to a server, or you are feeling too lazy to type a long command you run regularly! I use this to send Wake on Lan commands to servers around my house.
 
+[Community on Discord.](https://discord.gg/JpDFXFH3)
+
 ## YouTube video demo (6 mins)
 
 [![6 minute demo video](https://img.youtube.com/vi/Ej6NM9rmZtk/0.jpg)](https://www.youtube.com/watch?v=Ej6NM9rmZtk)
