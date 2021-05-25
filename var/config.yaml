@@ -7,11 +7,7 @@ ListenAddressSingleHTTPFrontend: 0.0.0.0:1337 # Listen on all addresses availabl
 logLevel: "INFO"
 
 # Actions (buttons) to show up on the WebUI:
-actions: 
-- title: Restart Plex
-  icon: smile
-  shell: docker restart plex
-  
+actions:   
   # This will send 1 ping (-c 1)
 - title: Ping Google.com
   shell: ping google.com -c 1
@@ -22,10 +18,6 @@ actions:
   icon: poop
   shell: ssh root@overseer 'service lightdm restart'
 
-- title: "teratan.lan Ansible site.yml"
-  icon: "&#x1F1E6"
-  shell: ansible-playbook -i /etc/hosts /root/myPlaybook.yaml
-
 - title: sleep 2 seconds
   shell: sleep 2
   icon: "&#x1F971"
@@ -33,4 +25,29 @@ actions:
 - title: sleep 5 seconds (timeout)
   shell: sleep 5
   icon: "&#x1F62A"
+
+  # OliveTin can run long-running jobs like Ansible playbooks. 
+  # 
+  # For such jobs, you will need to install ansible-playbook on the host where
+  # you are running OliveTin, or in the container.
+  #
+  # You probably want a much longer timeout as well (so that ansible completes).
+- title: "Run Ansible Playbook"
+  icon: "&#x1F1E6"
+  shell: ansible-playbook -i /etc/hosts /root/myRepo/myPlaybook.yaml
+  timeout: 120
+
+  # OliveTin can control containers - docker is just a command line app.
+  # 
+  # However, if you are running in a container you will need to do some setup;
+  #
+  # 1) When creating the container, bind mount the docker sock like this;
+  # docker create -v /var/run/docker.sock:/container/path/docker.sock ...additional args here... 
+  #
+  # 2) Install the docker client like this (if using the Fedora base image)
+  # - docker exec -it olivetin dnf install -y docker 
+  #
+- title: Restart Plex
+  icon: smile
+  shell: docker restart plex
 
