@@ -1,0 +1,45 @@
+project_name: OliveTin
+before:
+  hooks:
+    - go mod tidy
+    - make grpc
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - armhf
+archives:
+  - replacements:
+      darwin: Darwin
+      linux: Linux
+      windows: Windows
+      386: i386
+      amd64: x86_64
+checksum:
+  name_template: 'checksums.txt'
+snapshot:
+  name_template: "{{ .Tag }}-next"
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+
+dockers:
+  - dockerfile: Dockerfile
+
+nfpms:
+  - maintainer: James Read <contact@jread.com>
+    description: OliveTin is a web interface for running Linux shell commands.
+    homepage: https://github.com/jamesread/OliveTin
+    license: AGPL-3.0
+    formats:
+      - deb
+      - rpm
+      - apk
