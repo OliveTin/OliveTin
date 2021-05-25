@@ -69,12 +69,14 @@ archives:
         format: zip
 
 dockers:
-  - dockerfile: Dockerfile
+  - image_templates:
+      - "docker.io/jamesread/olivetin:latest"
+      - "docker.io/jamesread/olivetin:{{ .Tag }}"
+    dockerfile: Dockerfile
     goos: linux
-    goarch: amd64
     skip_push: true
-    build_flag_templates:
-      - "--platform=linux/arm64"
+    extra_files:
+      - webui
 
 nfpms:
   - maintainer: James Read <contact@jread.com>
