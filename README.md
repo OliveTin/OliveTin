@@ -4,13 +4,16 @@
 
 OliveTin is a web interface for running Linux shell commands.
 
+![Discord](https://img.shields.io/discord/846737624960860180?label=Discord%20Server) [![Go Report Card](https://goreportcard.com/badge/github.com/jamesread/OliveTin)](https://goreportcard.com/report/github.com/jamesread/OliveTin)
+
+
 Some example **use cases**;
 
 1. Give controlled access to run shell commands to less technical folks who cannot be trusted with SSH. I use this so my family can `podman restart plex` without asking me, and without giving them shell access!
 2. Great for home automation tablets stuck on walls around your house - I use this to turn Hue lights on and off for example. 
 3. Sometimes SSH access isn't possible to a server, or you are feeling too lazy to type a long command you run regularly! I use this to send Wake on Lan commands to servers around my house.
 
-[Community on Discord.](https://discord.gg/JpDFXFH3)
+[Join the community on Discord.](https://discord.gg/JpDFXFH3)
 
 ## YouTube video demo (6 mins)
 
