@@ -12,7 +12,7 @@ builds:
       - darwin
     goarch:
       - amd64
-      - armhf
+      - arm # 32bit
 archives:
   - replacements:
       darwin: Darwin
