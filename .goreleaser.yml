@@ -18,7 +18,6 @@ builds:
 
     goarm:
       - 6 # For old RPIs
-      - 7 # For modern arm
 
     main: cmd/OliveTin/main.go
 
@@ -30,7 +29,7 @@ builds:
         goarch: arm
 
       - goos: windows # Does anyone use Windows on arm64?
-        goarch: amd64
+        goarch: arm64
 
 
 checksum:
