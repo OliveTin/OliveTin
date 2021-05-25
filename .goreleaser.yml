@@ -37,9 +37,10 @@ archives:
 
     replacements:
       darwin: macOS
-      amd64: x86_64
 
-    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Os }}-{{ .Arch }}"
+
+    wrap_in_directory: true
 
     format_overrides:
       - goos: windows
