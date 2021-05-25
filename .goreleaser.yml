@@ -14,13 +14,6 @@ builds:
       - amd64
       - arm # 32bit
     main: cmd/OliveTin/main.go
-archives:
-  - replacements:
-      darwin: Darwin
-      linux: Linux
-      windows: Windows
-      386: i386
-      amd64: x86_64
 checksum:
   name_template: 'checksums.txt'
 snapshot:
@@ -31,6 +24,26 @@ changelog:
     exclude:
       - '^docs:'
       - '^test:'
+
+archives:
+  - 
+    format: tar.gz
+
+    files: 
+      - var/config.yaml
+      - README.md
+      - Dockerfile
+      - webui
+
+    replacements:
+      darwin: macOS
+      amd64: x86_64
+
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+
+    format_overrides:
+      - goos: windows
+        format: zip
 
 dockers:
   - dockerfile: Dockerfile
