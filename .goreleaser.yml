@@ -88,7 +88,7 @@ nfpms:
 
     contents:
       - src: OliveTin.service
-        dst: /etc/systemd/system/
+        dst: /etc/systemd/system/OliveTin.service
 
       - src: webui
         dst: /var/www/olivetin/
