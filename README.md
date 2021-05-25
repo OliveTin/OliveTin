@@ -77,7 +77,7 @@ Some people might not want the gRPC API public - simply set `listenAddressGrpcAc
 
 Running OliveTin as a systemd service on a Linux machine is a bit more effort than running as a container - but it means it can use any program installed on your machine (you don't have to add programs to a container). 
 
-1. Copy the `OliveTin` binary to `/usr/sbin/OliveTin`
+1. Copy the `OliveTin` binary to `/usr/local/bin/OliveTin`
 2. Copy the `webui` directory contents to `/var/www/olivetin/` (eg, `/var/www/olivetin/index.html`)
 3. Copy the `OliveTin.service` file to `/etc/systemd/system/`
 4. Create a `config.yaml` using the example provided above to get you started.

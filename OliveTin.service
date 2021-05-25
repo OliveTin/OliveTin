@@ -2,7 +2,7 @@
 Description=OliveTin
 
 [Service]
-ExecStart=/usr/sbin/OliveTin
+ExecStart=/usr/local/bin/OliveTin
 Restart=always
 
 [Install]
