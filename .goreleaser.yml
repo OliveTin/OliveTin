@@ -12,8 +12,28 @@ builds:
       - darwin
     goarch:
       - amd64
+    main: cmd/OliveTin/main.go
+
+    # For modern ARM
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - arm64
+    main: cmd/OliveTin/main.go
+
+    # For old RPIs
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    goarch:
       - arm # 32bit
     main: cmd/OliveTin/main.go
+
 checksum:
   name_template: 'checksums.txt'
 snapshot:
@@ -48,6 +68,11 @@ archives:
 
 dockers:
   - dockerfile: Dockerfile
+    goos: linux
+    goarch: amd64
+    skip_push: true
+    build_flag_templates:
+      - "--platform=linux/arm64"
 
 nfpms:
   - maintainer: James Read <contact@jread.com>
