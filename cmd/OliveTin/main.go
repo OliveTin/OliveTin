@@ -14,10 +14,18 @@ import (
 
 var (
 	cfg *config.Config
+	version = "dev"
+	commit = "nocommit"
+	date = "nodate"
 )
 
 func init() {
-	log.Info("OliveTin initializing")
+	log.WithFields(log.Fields{
+		"version": version,
+		"commit": commit,
+		"date": date,
+	}).Info("OliveTin initializing")
+
 	log.SetLevel(log.DebugLevel) // Default to debug, to catch cfg issues
 
 	viper.AutomaticEnv()

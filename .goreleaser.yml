@@ -31,6 +31,8 @@ builds:
       - goos: windows # Does anyone use Windows on arm64?
         goarch: arm64
 
+    ldflags:
+      - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{ .CommitDate }}
 
 checksum:
   name_template: 'checksums.txt'
