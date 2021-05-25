@@ -49,6 +49,7 @@ archives:
 
     files: 
       - var/config.yaml
+      - LICENSE
       - README.md
       - Dockerfile
       - webui
@@ -81,3 +82,11 @@ nfpms:
       - deb
       - rpm
       - apk
+
+    contents:
+      - src: webui
+        dst: /var/www/olivetin/
+
+      - src: var/config.yaml
+        dst: /etc/OliveTin/config.yaml
+        type: "config|noreplace"
