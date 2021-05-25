@@ -10,29 +10,28 @@ builds:
       - linux
       - windows
       - darwin
+
     goarch:
       - amd64
-    main: cmd/OliveTin/main.go
-
-    # For modern ARM
-  - env:
-      - CGO_ENABLED=0
-    goos:
-      - linux
-      - windows
-      - darwin
-    goarch:
       - arm64
+      - arm
+
+    goarm:
+      - 6 # For old RPIs
+      - 7 # For modern arm
+
     main: cmd/OliveTin/main.go
 
-    # For old RPIs
-  - env:
-      - CGO_ENABLED=0
-    goos:
-      - linux
-    goarch:
-      - arm # 32bit
-    main: cmd/OliveTin/main.go
+    ignore:
+      - goos: darwin
+        goarch: arm # Mac does not work on [32bit] arm
+
+      - goos: windows
+        goarch: arm
+
+      - goos: windows # Does anyone use Windows on arm64?
+        goarch: amd64
+
 
 checksum:
   name_template: 'checksums.txt'
