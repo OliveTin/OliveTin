@@ -55,6 +55,7 @@ archives:
       - README.md
       - Dockerfile
       - webui
+      - OliveTin.service
 
     replacements:
       darwin: macOS
@@ -86,6 +87,9 @@ nfpms:
       - apk
 
     contents:
+      - src: OliveTin.service
+        dst: /etc/systemd/system/
+
       - src: webui
         dst: /var/www/olivetin/
 
