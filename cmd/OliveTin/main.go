@@ -13,17 +13,17 @@ import (
 )
 
 var (
-	cfg *config.Config
+	cfg     *config.Config
 	version = "dev"
-	commit = "nocommit"
-	date = "nodate"
+	commit  = "nocommit"
+	date    = "nodate"
 )
 
 func init() {
 	log.WithFields(log.Fields{
 		"version": version,
-		"commit": commit,
-		"date": date,
+		"commit":  commit,
+		"date":    date,
 	}).Info("OliveTin initializing")
 
 	log.SetLevel(log.DebugLevel) // Default to debug, to catch cfg issues
