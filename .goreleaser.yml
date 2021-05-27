@@ -74,7 +74,8 @@ dockers:
       - "docker.io/jamesread/olivetin:{{ .Tag }}"
     dockerfile: Dockerfile
     goos: linux
-    skip_push: true
+    goarch: amd64
+    skip_push: false
     extra_files:
       - webui
 
