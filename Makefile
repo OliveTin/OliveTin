@@ -44,4 +44,7 @@ webui-codestyle:
 	cd webui && eslint main.js js/*
 	cd webui && stylelint style.css
 
+clean:
+	rm -rf dist OliveTin OliveTin.armhf OliveTin.exe reports gen
+
 .PHONY: grpc 
