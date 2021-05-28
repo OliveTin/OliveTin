@@ -44,6 +44,10 @@ Mobile screen size (responsive layout);
 
 ![Mobile screenshot](media/screenshotMobile.png)
 
+## Documentation
+
+All documentation can be found at http://olivetin.app . This includes installation and usage guide, etc. 
+
 ## Example `config.yaml` 
 
 Put this `config.yaml` in `/etc/OliveTin/` if you're running a standard service, or mount it at `/config` if running in a container.
@@ -67,44 +71,4 @@ actions:
 ```
 
 A full example config can be found at in this repository - [config.yaml](https://github.com/jamesread/OliveTin/blob/main/var/config.yaml).
-
-## Ports 
-
-By default OliveTin will use the following ports;
-
-* `1337` - for hosting the web interface
-* `1338` - for the REST API (the api the web interface uses to do stuff)
-* `1339` - a modern gRPC API (OliveTin uses protobuf under the hood) 
-
-Some people might not want the gRPC API public - simply set `listenAddressGrpcActions: 127.0.0.1:1339` in your config so it doesn't listen publicly. It cannot be disabled completely - it's required for the REST API to work.
-
-## Installation - systemd service (recommended)
-
-Running OliveTin as a systemd service on a Linux machine is a bit more effort than running as a container - but it means it can use any program installed on your machine (you don't have to add programs to a container). 
-
-1. Copy the `OliveTin` binary to `/usr/local/bin/OliveTin`
-2. Copy the `webui` directory contents to `/var/www/olivetin/` (eg, `/var/www/olivetin/index.html`)
-3. Copy the `OliveTin.service` file to `/etc/systemd/system/`
-4. Create a `config.yaml` using the example provided above to get you started.
-
-Run `systemctl restart OliveTin` and check `systemctl status OliveTin`.
-
-## Installation - as a container 
-
-Of course, running a container image is very straightforward - but you might need to add files and programs to the OliveTin container to make it useful for your use case. Generally running a systemd service is better for OliveTin. 
-
-### Running - `podman` (or `docker`)
-
-There is a container image that is periodically updated here; https://hub.docker.com/repository/docker/jamesread/olivetin 
-
-```
-root@host: podman create --name olivetin -p 1337 -p 1338 -p 1339 -v /etc/olivetin/:/config:ro docker.io/jamesread/olivetin
-
-```
-
-### Building - `buildah` (or `docker build`)
-
-```
-root@host: buildah bud -t olivetin
-```
 
