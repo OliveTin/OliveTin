@@ -1,0 +1,8 @@
+version: "3.8"
+services:
+  olivetin:
+    container_name: olivetin
+    image: jamesread/olivetin
+    volumes:
+      - /docker/olivetin:/config # replace host path or volume as needed
+    restart: unless-stopped
