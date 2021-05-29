@@ -20,7 +20,7 @@ about what you're planning might affect things. Some of the larger future plans 
 documented well so it's difficult to understand how your change might affect
 the general direction and roadmap of this project without asking. 
 
-The preferred way to communicate is probably via GitHub issues for now. 
+The preferred way to communicate is probably via Discord or GitHub issues. 
 
 === Getting started to contribute;
 
@@ -31,17 +31,6 @@ The project layout is reasonably straightforward;
 * The Go daemon is built from the `cmd` and `internal` directories mostly.
 * The webui is just a single page application with a bit of Javascript in the `webui` directory. This can happily be hosted on another webserver.
 
-== Mechanics of submitting a change
+== Mechanics of submitting a pull request
 
-* Please fork, feature-branch, and PR. 
-* In your PR, please provide a brief, but meaningful description that describes why you think
-  this contribution is useful, and what it changes.
-
-Thanks so much for your time! :-) 
-
-=== Checklist - testing your changes
-
-Before you PR, please run these checks locally;
-
-* `make daemon-compile`, `make daemon-codestyle` and `make daemon-unittests` should run cleanly. 
-* `make webui-codestyle` should run cleanly. 
+When you are ready for a PR, please see the link:.github/PULL_REQUEST_TEMPLATE.md[pull request template].
