@@ -23,7 +23,7 @@ daemon-unittests:
 	go tool cover -html=reports/unittests.out -o reports/unittests.html
 
 grpc:
-	protoc -I.:$(GOPATH)/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis/ --go_out=. --go-grpc_out=. --grpc-gateway_out=. OliveTin.proto 
+	protoc -I.:/home/xconspirisist/sandbox/go/pkg/mod/github.com/grpc-ecosystem/grpc-gateway@v1.16.0/third_party/googleapis/ --go_out=. --go-grpc_out=. --grpc-gateway_out=. OliveTin.proto 
 
 podman-image:
 	buildah bud -t olivetin

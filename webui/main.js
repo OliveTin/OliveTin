@@ -12,7 +12,23 @@ function showBigError (type, friendlyType, message) {
   document.getElementById('rootGroup').appendChild(domErr)
 }
 
+function showSection (name) {
+  for (let otherName of ["Actions", "Logs"]) {
+    document.getElementById('show' + otherName).classList.remove('activeSection');
+    document.getElementById('content' + otherName).hidden = true;
+  }
+
+  document.getElementById('show' + name).classList.add('activeSection')
+  document.getElementById('content' + name).hidden = false;
+}
+
+
 function onInitialLoad (res) {
+  document.getElementById('showActions').onclick = () => { showSection('Actions') };
+  document.getElementById('showLogs').onclick = () => { showSection('Logs') }
+
+  showSection('Actions');
+
   window.restBaseUrl = res.Rest
 
   window.fetch(window.restBaseUrl + 'GetButtons', {

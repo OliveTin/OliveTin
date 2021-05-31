@@ -44,6 +44,10 @@ class ActionButton extends window.HTMLButtonElement {
     this.temporaryStatusMessage = '[ ' + temporaryStatusMessage + ' ]'
     this.updateHtml()
     this.classList.add(cssClass)
+
+    setTimeout(() => {
+      this.classList.remove(cssClass)
+    }, 1000);
   }
 
   onActionError (err) {
@@ -52,6 +56,10 @@ class ActionButton extends window.HTMLButtonElement {
     this.isWaiting = false
     this.updateHtml()
     this.classList.add('actionFailed')
+
+    setTimeout(() => {
+      this.classList.remove('actionFailed')
+    }, 1000);
   }
 
   constructTemplate () {
