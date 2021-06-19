@@ -5,8 +5,9 @@ option go_package = "gen/grpc";
 import "google/api/annotations.proto";
 
 message ActionButton {
-	string title = 1;
-	string icon = 2;
+	string id = 1;
+	string title = 2;
+	string icon = 3;
 }
 
 message GetButtonsResponse {

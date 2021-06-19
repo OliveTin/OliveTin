@@ -3,19 +3,19 @@
 import { marshalActionButtonsJsonToHtml } from './js/marshaller.js'
 
 function showBigError (type, friendlyType, message) {
+  clearInterval(window.buttonInterval)
+
   console.error('Error ' + type + ': ', message)
 
   const domErr = document.createElement('div')
   domErr.classList.add('error')
-  domErr.innerHTML = '<h1>Error ' + friendlyType + '</h1><p>' + message + "</p><p><a href = 'http://github.com/jamesread/OliveTin' target = 'blank'/>OliveTin Documentation</a></p>"
+  domErr.innerHTML = '<h1>Error ' + friendlyType + '</h1><p>' + message + "</p><p><a href = 'http://olivetin.app/_errors_troubleshooting.html' target = 'blank'/>OliveTin Documentation</a></p>"
 
   document.getElementById('rootGroup').appendChild(domErr)
 }
 
-function onInitialLoad (res) {
-  window.restBaseUrl = res.Rest
-
-  window.fetch(window.restBaseUrl + 'GetButtons', {
+function fetchGetButtons() {
+ window.fetch(window.restBaseUrl + 'GetButtons', {
     cors: 'cors'
     // No fetch options
   }).then(res => {
@@ -23,8 +23,15 @@ function onInitialLoad (res) {
   }).then(res => {
     marshalActionButtonsJsonToHtml(res)
   }).catch(err => {
-    showBigError('fetch-initial-buttons', 'getting initial buttons', err, 'blat')
+    showBigError('fetch-buttons', 'getting buttons', err, 'blat')
   })
+}
+
+function onInitialLoad (res) {
+  window.restBaseUrl = res.Rest
+
+  window.buttonInterval = setInterval(fetchGetButtons, 3000);
+  fetchGetButtons()
 }
 
 window.fetch('webUiSettings.json').then(res => {

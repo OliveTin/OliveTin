@@ -4,6 +4,7 @@ import ()
 
 // ActionButton represents a button that is shown in the webui.
 type ActionButton struct {
+	Id		string
 	Title   string
 	Icon    string
 	Shell   string

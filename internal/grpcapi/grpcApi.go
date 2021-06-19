@@ -6,6 +6,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"net"
+	"crypto/md5"
+	"fmt"
 
 	config "github.com/jamesread/OliveTin/internal/config"
 	executor "github.com/jamesread/OliveTin/internal/executor"
@@ -28,8 +30,9 @@ func (api *oliveTinAPI) GetButtons(ctx ctx.Context, req *pb.GetButtonsRequest) (
 
 	for _, action := range cfg.ActionButtons {
 		btn := pb.ActionButton{
-			Title: action.Title,
-			Icon:  lookupHTMLIcon(action.Icon),
+			Id:		fmt.Sprintf("%x", md5.Sum([]byte(action.Title))),
+			Title:	action.Title,
+			Icon:	lookupHTMLIcon(action.Icon),
 		}
 
 		res.Actions = append(res.Actions, &btn)

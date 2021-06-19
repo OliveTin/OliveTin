@@ -18,6 +18,12 @@ class ActionButton extends window.HTMLButtonElement {
 
     this.constructTemplate()
     this.updateHtml()
+
+    this.setAttribute("id", "actionButton_" + json.id)
+  }
+
+  updateFromJson (json) {
+    console.log("updating button")
   }
 
   startAction () {
@@ -67,6 +73,7 @@ class ActionButton extends window.HTMLButtonElement {
 
     this.domTitle = this.querySelector('.title')
     this.domIcon = this.querySelector('.icon')
+
   }
 
   updateHtml () {
