@@ -4,6 +4,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	grpcapi "github.com/jamesread/OliveTin/internal/grpcapi"
+	updatecheck "github.com/jamesread/OliveTin/internal/updatecheck"
 
 	"github.com/jamesread/OliveTin/internal/httpservers"
 
@@ -57,7 +58,9 @@ func init() {
 func main() {
 	log.Info("OliveTin started")
 
-	log.Debugf("%+v", cfg)
+	log.Debugf("Config: %+v", cfg)
+
+	go updatecheck.CheckForUpdate(version, commit, cfg)
 
 	go grpcapi.Start(cfg)
 
