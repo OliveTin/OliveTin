@@ -4,7 +4,7 @@ import ()
 
 // ActionButton represents a button that is shown in the webui.
 type ActionButton struct {
-	Id		string
+	ID      string
 	Title   string
 	Icon    string
 	Shell   string
@@ -32,6 +32,7 @@ type Config struct {
 	LogLevel                        string
 	ActionButtons                   []ActionButton `mapstructure:"actions"`
 	Entities                        []Entity       `mapstructure:"omitempty"`
+	CheckForUpdates                 bool
 }
 
 // DefaultConfig gets a new Config structure with sensible default values.
@@ -43,6 +44,7 @@ func DefaultConfig() *Config {
 	config.ListenAddressGrpcActions = "localhost:1339"
 	config.ListenAddressWebUI = "localhost:1340"
 	config.LogLevel = "INFO"
+	config.CheckForUpdates = true
 
 	return &config
 }

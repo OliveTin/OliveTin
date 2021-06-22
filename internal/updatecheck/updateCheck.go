@@ -1,27 +1,27 @@
 package updatecheck
 
 import (
-	config "github.com/jamesread/OliveTin/internal/config"
-	log "github.com/sirupsen/logrus"
+	"bytes"
+	"encoding/json"
 	"github.com/denisbrodbeck/machineid"
 	"github.com/go-co-op/gocron"
-	"runtime"
-	"net/http"
-	"encoding/json"
-	"bytes"
-	"time"
+	config "github.com/jamesread/OliveTin/internal/config"
+	log "github.com/sirupsen/logrus"
 	"io/ioutil"
+	"net/http"
+	"runtime"
+	"time"
 )
 
-type UpdateRequest struct {
+type updateRequest struct {
 	CurrentVersion string
-	CurrentCommit string
-	OS string
-	Arch string
-	MachineId string
+	CurrentCommit  string
+	OS             string
+	Arch           string
+	MachineID      string
 }
 
-func machineId() string {
+func machineID() string {
 	v, err := machineid.ProtectedID("OliveTin")
 
 	if err != nil {
@@ -29,16 +29,23 @@ func machineId() string {
 		return "?"
 	}
 
-	return v;
+	return v
 }
 
-func CheckForUpdate(currentVersion string, currentCommit string, cfg *config.Config) {
-	payload := UpdateRequest {
+// StartUpdateChecker will start a job that runs periodically, checking
+// for updates.
+func StartUpdateChecker(currentVersion string, currentCommit string, cfg *config.Config) {
+	if !cfg.CheckForUpdates {
+		log.Warn("Update checking is disabled")
+		return
+	}
+
+	payload := updateRequest{
 		CurrentVersion: currentVersion,
-		CurrentCommit: currentCommit,
-		OS: runtime.GOOS,
-		Arch: runtime.GOARCH,
-		MachineId: machineId(),
+		CurrentCommit:  currentCommit,
+		OS:             runtime.GOOS,
+		Arch:           runtime.GOARCH,
+		MachineID:      machineID(),
 	}
 
 	s := gocron.NewScheduler(time.UTC)
@@ -50,7 +57,7 @@ func CheckForUpdate(currentVersion string, currentCommit string, cfg *config.Con
 	s.StartAsync()
 }
 
-func actualCheckForUpdate(payload UpdateRequest) {
+func actualCheckForUpdate(payload updateRequest) {
 	jsonUpdateRequest, err := json.Marshal(payload)
 
 	req, err := http.NewRequest("POST", "http://update-check.olivetin.app", bytes.NewReader(jsonUpdateRequest))
@@ -66,14 +73,14 @@ func actualCheckForUpdate(payload UpdateRequest) {
 
 	if err != nil {
 		log.Errorf("Update check failed %v", err)
-	} else {
-		newVersion, _ := ioutil.ReadAll(resp.Body)
-
-		log.WithFields(log.Fields {
-			"NewVersion": string(newVersion),
-		}).Infof("Update check complete");
-
-		defer resp.Body.Close();
+		return
 	}
 
+	newVersion, _ := ioutil.ReadAll(resp.Body)
+
+	log.WithFields(log.Fields{
+		"NewVersion": string(newVersion),
+	}).Infof("Update check complete")
+
+	defer resp.Body.Close()
 }

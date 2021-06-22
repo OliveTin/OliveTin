@@ -13,9 +13,6 @@ import (
 
 // ExecAction executes an action.
 func ExecAction(cfg *config.Config, action string) *pb.StartActionResponse {
-	res := &pb.StartActionResponse{}
-	res.TimedOut = false
-
 	log.WithFields(log.Fields{
 		"actionName": action,
 	}).Infof("StartAction")
@@ -24,8 +21,18 @@ func ExecAction(cfg *config.Config, action string) *pb.StartActionResponse {
 
 	if err != nil {
 		log.Errorf("Error finding action %s, %s", err, action)
-		return res
+
+		return &pb.StartActionResponse{
+			TimedOut: false,
+		}
 	}
+
+	return execAction(cfg, actualAction)
+}
+
+func execAction(cfg *config.Config, actualAction *config.ActionButton) *pb.StartActionResponse {
+	res := &pb.StartActionResponse{}
+	res.TimedOut = false
 
 	log.WithFields(log.Fields{
 		"title":   actualAction.Title,

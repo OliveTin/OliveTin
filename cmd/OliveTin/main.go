@@ -60,7 +60,7 @@ func main() {
 
 	log.Debugf("Config: %+v", cfg)
 
-	go updatecheck.CheckForUpdate(version, commit, cfg)
+	go updatecheck.StartUpdateChecker(version, commit, cfg)
 
 	go grpcapi.Start(cfg)
 
