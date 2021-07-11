@@ -1,11 +1,11 @@
 # OliveTin
 
-<img alt = "project logo" src = "https://github.com/jamesread/OliveTin/blob/main/webui/OliveTinLogo.png" align = "right" width = "160px" />
+<img alt = "project logo" src = "https://github.com/OliveTin/OliveTin/blob/main/webui/OliveTinLogo.png" align = "right" width = "160px" />
 
 OliveTin is a web interface for running Linux shell commands.
 
 [![Discord](https://img.shields.io/discord/846737624960860180?label=Discord%20Server)](https://discord.gg/jhYWWpNJ3v)
-[![Go Report Card](https://goreportcard.com/badge/github.com/jamesread/OliveTin)](https://goreportcard.com/report/github.com/jamesread/OliveTin)
+[![Go Report Card](https://goreportcard.com/badge/github.com/Olivetin/OliveTin)](https://goreportcard.com/report/github.com/OliveTin/OliveTin)
 
 
 Some example **use cases**;
@@ -47,7 +47,7 @@ Mobile screen size (responsive layout);
 
 ## Documentation
 
-All documentation can be found at http://olivetin.app . This includes installation and usage guide, etc. 
+All documentation can be found at http://docs.olivetin.app . This includes installation and usage guide, etc. 
 
 ## Example `config.yaml` 
 
@@ -71,5 +71,5 @@ actions:
   shell: ssh root@overseer 'service lightdm restart'
 ```
 
-A full example config can be found at in this repository - [config.yaml](https://github.com/jamesread/OliveTin/blob/main/var/config.yaml).
+A full example config can be found at in this repository - [config.yaml](https://github.com/OliveTin/OliveTin/blob/main/var/config.yaml).
 
