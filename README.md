@@ -49,9 +49,9 @@ Mobile screen size (responsive layout);
 
 All documentation can be found at http://docs.olivetin.app . This includes installation and usage guide, etc. 
 
-## Example `config.yaml`
+### Quickstart reference for `config.yaml`
 
-Lots of documentation for how to write your `config.yaml` can be found at [the documentation site.](https://docs.olivetin.app)
+This is a quick example of `config.yaml` - but again, lots of documentation for how to write your `config.yaml` can be found at [the documentation site.](https://docs.olivetin.app)
 
 Put this `config.yaml` in `/etc/OliveTin/` if you're running a standard service, or mount it at `/config` if running in a container.
 
