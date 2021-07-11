@@ -27,17 +27,27 @@ function fetchGetButtons() {
   })
 }
 
-function onInitialLoad (res) {
-  window.restBaseUrl = res.Rest
+function processWebuiSettingsJson (settings) {
+  window.restBaseUrl = settings.Rest
 
-  window.buttonInterval = setInterval(fetchGetButtons, 3000);
-  fetchGetButtons()
+  if (settings.ThemeName) {
+    var themeCss = document.createElement('link')
+    themeCss.setAttribute('rel', 'stylesheet');
+    themeCss.setAttribute('type', 'text/css')
+    themeCss.setAttribute('href', '/themes/' + settings.ThemeName + '/theme.css');
+
+    document.head.appendChild(themeCss);
+  }
 }
 
 window.fetch('webUiSettings.json').then(res => {
   return res.json()
 }).then(res => {
-  onInitialLoad(res)
+  processWebuiSettingsJson(res)
+
+  fetchGetButtons()
+
+  window.buttonInterval = setInterval(fetchGetButtons, 3000);
 }).catch(err => {
   showBigError('fetch-webui-settings', 'getting webui settings', err)
 })
