@@ -49,7 +49,9 @@ Mobile screen size (responsive layout);
 
 All documentation can be found at http://docs.olivetin.app . This includes installation and usage guide, etc. 
 
-## Example `config.yaml` 
+## Example `config.yaml`
+
+Lots of documentation for how to write your `config.yaml` can be found at [the documentation site.](https://docs.olivetin.app)
 
 Put this `config.yaml` in `/etc/OliveTin/` if you're running a standard service, or mount it at `/config` if running in a container.
 
@@ -57,15 +59,18 @@ Put this `config.yaml` in `/etc/OliveTin/` if you're running a standard service,
 listenAddressWebUI: 0.0.0.0:1337 # Listen on all addresses available, port 1337
 logLevel: "INFO"
 actions: 
+  # Docs: https://docs.olivetin.app/action-container-control.html 
 - title: Restart Plex
   icon: smile
   shell: docker restart plex
   
   # This will send 1 ping 
+  # Docs: https://docs.olivetin.app/action-ping.html
 - title: Ping Google.com
   shell: ping google.com -c 1
   
   # Restart lightdm on host "overseer"
+  # Docs: https://docs.olivetin.app/action-ssh.html
 - title: restart lightdm
   icon: poop
   shell: ssh root@overseer 'service lightdm restart'

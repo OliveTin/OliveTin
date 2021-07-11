@@ -9,11 +9,13 @@ logLevel: "INFO"
 # Actions (buttons) to show up on the WebUI:
 actions:   
   # This will send 1 ping (-c 1)
+  # Docs: https://docs.olivetin.app/action-ping.html
 - title: Ping Google.com
   shell: ping google.com -c 1
   icon: ping
   
   # Restart lightdm on host "overseer"
+  # Docs: https://docs.olivetin.app/action-ping.html
 - title: restart lightdm
   icon: poop
   shell: ssh root@overseer 'service lightdm restart'
@@ -39,14 +41,10 @@ actions:
 
   # OliveTin can control containers - docker is just a command line app.
   # 
-  # However, if you are running in a container you will need to do some setup;
+  # However, if you are running in a container you will need to do some setup,
+  # see the docs below.
   #
-  # 1) When creating the container, bind mount the docker sock like this;
-  # docker create -v /var/run/docker.sock:/container/path/docker.sock ...additional args here... 
-  #
-  # 2) Install the docker client like this (if using the Fedora base image)
-  # - docker exec -it olivetin dnf install -y docker 
-  #
+  # Docs: https://docs.olivetin.app/action-container-control.html
 - title: Restart Plex
   icon: smile
   shell: docker restart plex
