@@ -1,29 +1,35 @@
 class ActionButton extends window.HTMLButtonElement {
   constructFromJson (json) {
+    this.updateIterationTimestamp = 0;
+
     this.title = json.title
-    this.states = []
-    this.stateLabels = []
     this.temporaryStatusMessage = null
-    this.currentState = 0
     this.isWaiting = false
     this.actionCallUrl = window.restBaseUrl + 'StartAction?actionName=' + this.title
 
-    if (json.icon === '') {
-      this.unicodeIcon = '&#x1f4a9'
-    } else {
-      this.unicodeIcon = unescape(json.icon)
-    }
+    this.updateFromJson(json)
 
     this.onclick = () => { this.startAction() }
 
     this.constructTemplate()
+    
     this.updateHtml()
 
     this.setAttribute("id", "actionButton_" + json.id)
   }
 
   updateFromJson (json) {
-    console.log("updating button")
+    // Fields that should not be updated
+    // 
+    // title - as the callback URL relies on it
+    // actionCallbackUrl - as it's based on the title
+    // temporaryStatusMessage - as the button might be "waiting" on execution to finish while it's being updated.
+
+    if (json.icon === '') {
+      this.unicodeIcon = '&#x1f4a9'
+    } else {
+      this.unicodeIcon = unescape(json.icon)
+    }
   }
 
   startAction () {
@@ -73,7 +79,6 @@ class ActionButton extends window.HTMLButtonElement {
 
     this.domTitle = this.querySelector('.title')
     this.domIcon = this.querySelector('.icon')
-
   }
 
   updateHtml () {
@@ -95,18 +100,6 @@ class ActionButton extends window.HTMLButtonElement {
     }
 
     this.domIcon.innerHTML = this.unicodeIcon
-  }
-
-  getCurrentStateLabel (useLabels = true) {
-    if (useLabels) {
-      return this.stateLabels[this.currentState]
-    } else {
-      return this.states[this.currentState]
-    }
-  }
-
-  getNextStateLabel () {
-    return this.stateLabels[this.currentState + 1]
   }
 }
 
