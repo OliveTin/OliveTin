@@ -10,6 +10,7 @@ import (
 
 	config "github.com/jamesread/OliveTin/internal/config"
 	"github.com/spf13/viper"
+	"github.com/fsnotify/fsnotify"
 	"os"
 )
 
@@ -43,16 +44,28 @@ func init() {
 
 	cfg = config.DefaultConfig()
 
-	if err := viper.UnmarshalExact(cfg); err != nil {
-		log.Errorf("Config unmarshal error %+v", err)
-		os.Exit(1)
-	}
+	reloadConfig();
 
 	if logLevel, err := log.ParseLevel(cfg.LogLevel); err == nil {
 		log.SetLevel(logLevel)
 	}
 
 	viper.WatchConfig()
+	viper.OnConfigChange(func(e fsnotify.Event) {
+		if e.Op == fsnotify.Write {
+			log.Info("Config file changed:", e.String())
+
+			reloadConfig();
+		}
+	})
+}
+
+func reloadConfig() {
+	if err := viper.UnmarshalExact(&cfg); err != nil {
+		log.Errorf("Config unmarshal error %+v", err)
+		os.Exit(1)
+	}
+
 }
 
 func main() {
