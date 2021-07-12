@@ -60,7 +60,12 @@ func StartUpdateChecker(currentVersion string, currentCommit string, cfg *config
 func actualCheckForUpdate(payload updateRequest) {
 	jsonUpdateRequest, err := json.Marshal(payload)
 
-	req, err := http.NewRequest("POST", "http://update-check.olivetin.app", bytes.NewReader(jsonUpdateRequest))
+	if err != nil {
+		log.Errorf("Update check failed %v", err)
+		return
+	}
+
+	req, err := http.NewRequest("POST", "http://update-check.olivetin.app", bytes.NewBuffer(jsonUpdateRequest))
 
 	if err != nil {
 		log.Errorf("Update check failed %v", err)
