@@ -39,7 +39,7 @@ func execAction(cfg *config.Config, actualAction *config.ActionButton) *pb.Start
 		"timeout": actualAction.Timeout,
 	}).Infof("Found action")
 
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(actualAction.Timeout) * time.Second)
 	defer cancel()
 
 	cmd := exec.CommandContext(ctx, "sh", "-c", actualAction.Shell)
