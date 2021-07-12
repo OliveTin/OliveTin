@@ -9,7 +9,7 @@ function showBigError (type, friendlyType, message) {
 
   const domErr = document.createElement('div')
   domErr.classList.add('error')
-  domErr.innerHTML = '<h1>Error ' + friendlyType + '</h1><p>' + message + "</p><p><a href = 'http://olivetin.app/_errors_troubleshooting.html' target = 'blank'/>OliveTin Documentation</a></p>"
+  domErr.innerHTML = '<h1>Error ' + friendlyType + '</h1><p>' + message + "</p><p><a href = 'http://docs.olivetin.app/troubleshooting.html' target = 'blank'/>OliveTin Documentation</a></p>"
 
   document.getElementById('rootGroup').appendChild(domErr)
 }
