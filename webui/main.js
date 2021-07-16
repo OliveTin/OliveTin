@@ -1,6 +1,6 @@
 'use strict'
 
-import { marshalActionButtonsJsonToHtml } from './js/marshaller.js'
+import { marshalActionButtonsJsonToHtml, marshalLogsJsonToHtml } from './js/marshaller.js'
 
 function showBigError (type, friendlyType, message) {
   clearInterval(window.buttonInterval)
@@ -34,11 +34,22 @@ function setupSections() {
 function fetchGetButtons() {
   window.fetch(window.restBaseUrl + 'GetButtons', {
     cors: 'cors'
-    // No fetch options
   }).then(res => {
     return res.json()
   }).then(res => {
     marshalActionButtonsJsonToHtml(res)
+  }).catch(err => {
+    showBigError('fetch-buttons', 'getting buttons', err, 'blat')
+  })
+}
+
+function fetchGetLogs() {
+  window.fetch(window.restBaseUrl + 'GetLogs', {
+    cors: 'cors'
+  }).then(res => {
+    return res.json()
+  }).then(res => {
+    marshalLogsJsonToHtml(res)
   }).catch(err => {
     showBigError('fetch-buttons', 'getting buttons', err, 'blat')
   })
@@ -65,6 +76,7 @@ window.fetch('webUiSettings.json').then(res => {
   processWebuiSettingsJson(res)
 
   fetchGetButtons()
+  fetchGetLogs()
 
   window.buttonInterval = setInterval(fetchGetButtons, 3000);
 }).catch(err => {

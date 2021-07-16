@@ -1,3 +1,5 @@
+import { marshalLogsJsonToHtml } from './marshaller.js';
+
 class ActionButton extends window.HTMLButtonElement {
   constructFromJson (json) {
     this.updateIterationTimestamp = 0;
@@ -40,6 +42,8 @@ class ActionButton extends window.HTMLButtonElement {
 
     window.fetch(this.actionCallUrl).then(res => res.json()
     ).then((json) => {
+      marshalLogsJsonToHtml({"logs": [json.logEntry]})
+
       if (json.timedOut) {
         this.onActionResult('actionTimeout', 'Timed out')
       } else if (json.exitCode !== 0) {

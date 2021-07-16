@@ -37,16 +37,22 @@ fieldset#switcher button:last-child{
 table {
 	background-color: white;
 	border-collapse: collapse;
+	width: 100%;
 }
 
-td {
+th, td {
 	border: 1px solid #efefef;
+	text-align: left;
+	padding: .6em;
+}
+
+th:first-child {
+	width: 5%;
 }
 
 button.activeSection {
 	font-weight: bold;
 }
-
 
 legend {
   padding-top: 1em;
@@ -188,4 +194,17 @@ img.logo {
 
 main {
 	padding: 1em;
+}
+
+summary {
+	cursor: pointer;
+}
+
+details {
+	display: inline-block;
+}
+
+details[open] {
+	margin-top: 1em;
+	display: block;
 }

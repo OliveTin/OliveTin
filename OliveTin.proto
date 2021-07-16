@@ -22,17 +22,18 @@ message StartActionRequest {
 }
 
 message StartActionResponse {
-	string stdout = 1;
-	string stderr = 2;
-	bool timedOut = 3;
-	int32 exitCode = 4;
+	LogEntry logEntry = 1;
 }
 
 message GetLogsRequest{};
 
 message LogEntry {
 	string datetime = 1;
-	string content = 2;
+	string actionTitle = 2;
+	string stdout = 3;
+	string stderr = 4;
+	bool timedOut = 5;
+	int32 exitCode = 6;
 }
 
 message GetLogsResponse {
@@ -52,10 +53,9 @@ service OliveTinApi {
 		};
 	}
 
-	rpc GetLogs(GetLogsRequst) returns (GetLogsResponse) {
+	rpc GetLogs(GetLogsRequest) returns (GetLogsResponse) {
 		option (google.api.http) = {
 			get: "/api/GetLogs"
-		}
+		};
 	}
-
 }

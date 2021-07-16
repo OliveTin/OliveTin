@@ -19,12 +19,13 @@
 
 			<section id = "contentLogs" title = "Logs" hidden>
 				<table>
-					<tr>
-						<td>12 seconds ago</td> <td>blat blat <button>Logs</button></td>
-					</tr>
-					<tr>
-						<td>4 seconds ago</td> <td>blat blat foo foo <button>Logs</button></td>
-					</tr>
+					<thead>
+						<tr>
+							<th>Timestamp</th>
+							<th>Log</th>
+						</tr>
+					</thead>
+					<tbody id = "logTableBody" />
 				</table>
 			</section>
 
@@ -44,6 +45,22 @@
 		<template id = "tplActionButton">
 			<span role = "img" title = "button icon" class = "icon">&#x1f4a9;</span>
 			<p role = "title" class = "title">Untitled Button</p>
+		</template>
+
+		<template id = "tplLogRow">
+			<tr>
+				<td class = "timestamp">?</td> 
+				<td>
+					<span class = "content">?</span>
+				
+					<details>
+						<summary>stdout</summary>
+						<pre>
+							?
+						</pre>
+					</details>
+				</td>
+			</tr>
 		</template>
 
 		<script type = "module" src = "main.js"></script>

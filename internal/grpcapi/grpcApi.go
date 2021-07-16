@@ -15,6 +15,7 @@ import (
 
 var (
 	cfg *config.Config
+	ex = executor.Executor{}
 )
 
 type oliveTinAPI struct {
@@ -22,7 +23,7 @@ type oliveTinAPI struct {
 }
 
 func (api *oliveTinAPI) StartAction(ctx ctx.Context, req *pb.StartActionRequest) (*pb.StartActionResponse, error) {
-	return executor.ExecAction(cfg, req.ActionName), nil
+	return ex.ExecAction(cfg, req.ActionName), nil
 }
 
 func (api *oliveTinAPI) GetButtons(ctx ctx.Context, req *pb.GetButtonsRequest) (*pb.GetButtonsResponse, error) {
@@ -41,6 +42,25 @@ func (api *oliveTinAPI) GetButtons(ctx ctx.Context, req *pb.GetButtonsRequest) (
 	log.Infof("getButtons: %v", res)
 
 	return res, nil
+}
+
+func (api *oliveTinAPI) GetLogs(ctx ctx.Context, req *pb.GetLogsRequest) (*pb.GetLogsResponse, error) {
+	ret := &pb.GetLogsResponse{};
+	
+	// TODO Limit to 10 entries or something to prevent browser lag.
+
+	for _, logEntry := range ex.Logs {
+		ret.Logs = append(ret.Logs, &pb.LogEntry{
+			ActionTitle: logEntry.ActionTitle,
+			Datetime: logEntry.Datetime,
+			Stdout: logEntry.Stdout,
+			Stderr: logEntry.Stderr,
+			TimedOut: logEntry.TimedOut,
+			ExitCode: logEntry.ExitCode,
+		})
+	}
+
+	return ret, nil
 }
 
 // Start will start the GRPC API.
