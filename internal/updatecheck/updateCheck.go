@@ -57,19 +57,12 @@ func StartUpdateChecker(currentVersion string, currentCommit string, cfg *config
 	s.StartAsync()
 }
 
-func actualCheckForUpdate(payload updateRequest) {
-	jsonUpdateRequest, err := json.Marshal(payload)
-
-	if err != nil {
-		log.Errorf("Update check failed %v", err)
-		return
-	}
-
+func doRequest(jsonUpdateRequest []byte) string {
 	req, err := http.NewRequest("POST", "http://update-check.olivetin.app", bytes.NewBuffer(jsonUpdateRequest))
 
 	if err != nil {
 		log.Errorf("Update check failed %v", err)
-		return
+		return ""
 	}
 
 	req.Header.Set("Content-Type", "application/json")
@@ -78,14 +71,27 @@ func actualCheckForUpdate(payload updateRequest) {
 
 	if err != nil {
 		log.Errorf("Update check failed %v", err)
-		return
+		return ""
 	}
 
 	newVersion, _ := ioutil.ReadAll(resp.Body)
 
-	log.WithFields(log.Fields{
-		"NewVersion": string(newVersion),
-	}).Infof("Update check complete")
-
 	defer resp.Body.Close()
+
+	return string(newVersion)
+}
+
+func actualCheckForUpdate(payload updateRequest) {
+	jsonUpdateRequest, err := json.Marshal(payload)
+
+	if err != nil {
+		log.Errorf("Update check failed %v", err)
+		return
+	}
+
+	newVersion := doRequest(jsonUpdateRequest)
+
+	log.WithFields(log.Fields{
+		"NewVersion": newVersion,
+	}).Infof("Update check complete")
 }
