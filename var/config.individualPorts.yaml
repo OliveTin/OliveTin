@@ -1,3 +1,9 @@
+# WARNING
+# This is considered an advanced installation of OliveTin, and 99% of users
+# probably won't need this configuration file. If you're just getting started
+# with OliveTin, don't use this. 
+# WARNING
+#
 # This tells OliveTin to not spawn the internal micro reverse proxy. 
 #
 # This gives you more fine grained control, but requires quite a bit more setup. 
