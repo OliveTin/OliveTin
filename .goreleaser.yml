@@ -70,12 +70,13 @@ archives:
 
 dockers:
   - image_templates:
+      - "docker.io/jamesread/olivetin:latest"
       - "docker.io/jamesread/olivetin:{{ .Tag }}-amd64"
     dockerfile: Dockerfile
     goos: linux
     goarch: amd64
     skip_push: false
-    use_buildx: true
+    use: docker
     build_flag_templates:
       - "--platform=linux/amd64"
       - "--label=org.opencontainers.image.title={{.ProjectName}}"
