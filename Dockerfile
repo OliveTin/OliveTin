@@ -1,8 +1,11 @@
 FROM fedora
 
 RUN mkdir -p /config /var/www/olivetin/ && \
-    dnf install -y iputils && \
-    dnf clean all && \
+    dnf install -y \ 
+		iputils \
+		openssh-clients \
+		docker \
+    && dnf clean all && \
     rm -rf /var/cache/yum # install ping
 
 EXPOSE 1337/tcp 
