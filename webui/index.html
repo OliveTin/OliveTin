@@ -12,9 +12,26 @@
 
 	<body>
 		<main title = "main content">
-			<fieldset id = "rootGroup">
-				<legend>OliveTin Actions</legend>
+			<fieldset id = "switcher">
+				<button id = "showActions">Actions</button>
+				<button id = "showLogs">Logs</button>
 			</fieldset>
+
+			<section id = "contentLogs" title = "Logs" hidden>
+				<table>
+					<tr>
+						<td>12 seconds ago</td> <td>blat blat <button>Logs</button></td>
+					</tr>
+					<tr>
+						<td>4 seconds ago</td> <td>blat blat foo foo <button>Logs</button></td>
+					</tr>
+				</table>
+			</section>
+
+			<section id = "contentActions" title = "Actions" hidden >
+				<fieldset id = "rootGroup">
+				</fieldset>
+			</section>
 		</main>
 		<footer title = "footer">
 			<p><img title = "application icon" src = "OliveTinLogo.png" height = "1em" class = "logo" /> OliveTin</p>

@@ -7,15 +7,46 @@ body {
   margin: 0;
 }
 
-fieldset {
+fieldset { 
+  padding: 0;
+}
+
+fieldset#rootGroup {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   grid-template-rows: auto auto auto auto;
-  padding: 1em;
   grid-gap: 1em;
   text-align: center;
   border: 0;
 }
+
+fieldset#switcher {
+	border: 0; 
+	text-align: right;
+	margin-bottom: 1em;
+}
+
+fieldset#switcher button:first-child{
+	border-radius: 1em 0em 0em 1em;
+}
+
+fieldset#switcher button:last-child{
+	border-radius: 0 1em 1em 0;
+}
+
+table {
+	background-color: white;
+	border-collapse: collapse;
+}
+
+td {
+	border: 1px solid #efefef;
+}
+
+button.activeSection {
+	font-weight: bold;
+}
+
 
 legend {
   padding-top: 1em;
@@ -153,4 +184,8 @@ img.logo {
   button:disabled {
     background-color: black;
   }
+}
+
+main {
+	padding: 1em;
 }

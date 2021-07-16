@@ -20,7 +20,7 @@ export function marshalActionButtonsJsonToHtml (json) {
     htmlButton.updateIterationTimestamp = currentIterationTimestamp;
   }
 
-  for (const existingButton of document.querySelectorAll('button')) {
+  for (const existingButton of document.querySelector('#contentActions').querySelectorAll('button')) {
     if (existingButton.updateIterationTimestamp != currentIterationTimestamp) {
       existingButton.remove();
     }

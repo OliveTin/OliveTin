@@ -28,6 +28,17 @@ message StartActionResponse {
 	int32 exitCode = 4;
 }
 
+message GetLogsRequest{};
+
+message LogEntry {
+	string datetime = 1;
+	string content = 2;
+}
+
+message GetLogsResponse {
+	repeated LogEntry logs = 1;
+}
+
 service OliveTinApi {
 	rpc GetButtons(GetButtonsRequest) returns (GetButtonsResponse) {
 		option (google.api.http) = {
@@ -39,6 +50,12 @@ service OliveTinApi {
 		option (google.api.http) = {
 			get: "/api/StartAction"
 		};
+	}
+
+	rpc GetLogs(GetLogsRequst) returns (GetLogsResponse) {
+		option (google.api.http) = {
+			get: "/api/GetLogs"
+		}
 	}
 
 }
