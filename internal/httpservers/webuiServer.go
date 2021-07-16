@@ -11,7 +11,7 @@ import (
 )
 
 type webUISettings struct {
-	Rest string
+	Rest      string
 	ThemeName string
 }
 
@@ -34,7 +34,7 @@ func findWebuiDir() string {
 	return "./webui" // Should not exist
 }
 
-func generateWebUiSettings(w http.ResponseWriter, r *http.Request) {
+func generateWebUISettings(w http.ResponseWriter, r *http.Request) {
 	restAddress := ""
 
 	if !cfg.UseSingleHTTPFrontend {
@@ -42,7 +42,7 @@ func generateWebUiSettings(w http.ResponseWriter, r *http.Request) {
 	}
 
 	jsonRet, _ := json.Marshal(webUISettings{
-		Rest: restAddress + "/api/",
+		Rest:      restAddress + "/api/",
 		ThemeName: cfg.ThemeName,
 	})
 
@@ -56,7 +56,7 @@ func startWebUIServer(cfg *config.Config) {
 
 	mux := http.NewServeMux()
 	mux.Handle("/", http.FileServer(http.Dir(findWebuiDir())))
-	mux.HandleFunc("/webUiSettings.json", generateWebUiSettings)
+	mux.HandleFunc("/webUiSettings.json", generateWebUISettings)
 
 	srv := &http.Server{
 		Addr:    cfg.ListenAddressWebUI,

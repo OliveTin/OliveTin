@@ -8,9 +8,9 @@ import (
 
 	"github.com/jamesread/OliveTin/internal/httpservers"
 
+	"github.com/fsnotify/fsnotify"
 	config "github.com/jamesread/OliveTin/internal/config"
 	"github.com/spf13/viper"
-	"github.com/fsnotify/fsnotify"
 	"os"
 )
 
@@ -44,7 +44,7 @@ func init() {
 
 	cfg = config.DefaultConfig()
 
-	reloadConfig();
+	reloadConfig()
 
 	if logLevel, err := log.ParseLevel(cfg.LogLevel); err == nil {
 		log.SetLevel(logLevel)
@@ -55,7 +55,7 @@ func init() {
 		if e.Op == fsnotify.Write {
 			log.Info("Config file changed:", e.String())
 
-			reloadConfig();
+			reloadConfig()
 		}
 	})
 }

@@ -24,7 +24,7 @@ type Entity struct {
 // Config is the global config used through the whole app.
 type Config struct {
 	UseSingleHTTPFrontend           bool
-	ThemeName						string
+	ThemeName                       string
 	ListenAddressSingleHTTPFrontend string
 	ListenAddressWebUI              string
 	ListenAddressRestActions        string
