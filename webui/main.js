@@ -27,10 +27,9 @@ function showSection (name) {
 function setupSections() {
   document.getElementById('showActions').onclick = () => { showSection('Actions') };
   document.getElementById('showLogs').onclick = () => { showSection('Logs') }
-
+  
   showSection('Actions');
 }
-
 
 function fetchGetButtons() {
   window.fetch(window.restBaseUrl + 'GetButtons', {
