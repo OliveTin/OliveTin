@@ -56,8 +56,13 @@ This is a quick example of `config.yaml` - but again, lots of documentation for 
 Put this `config.yaml` in `/etc/OliveTin/` if you're running a standard service, or mount it at `/config` if running in a container.
 
 ```yaml
-listenAddressWebUI: 0.0.0.0:1337 # Listen on all addresses available, port 1337
+# Listen on all addresses available, port 1337
+listenAddressSingleHTTPFrontend: 0.0.0.0:1337 
+
+# Choose from INFO (default), WARN and DEBUG
 logLevel: "INFO"
+
+# Actions (buttons) to show up on the WebUI:
 actions: 
   # Docs: https://docs.olivetin.app/action-container-control.html 
 - title: Restart Plex
