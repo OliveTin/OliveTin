@@ -1,5 +1,7 @@
 FROM fedora
 
+RUN useradd -rm olivetin
+
 RUN mkdir -p /config /var/www/olivetin/ && \
     dnf install -y \ 
 		iputils \
@@ -15,6 +17,6 @@ VOLUME /config
 COPY OliveTin /usr/bin/OliveTin
 COPY webui /var/www/olivetin/
 
-USER 1001
+USER olivetin
 
 ENTRYPOINT [ "/usr/bin/OliveTin" ]
