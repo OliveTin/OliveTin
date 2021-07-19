@@ -44,10 +44,10 @@ class ActionButton extends window.HTMLButtonElement {
     ).then((json) => {
       marshalLogsJsonToHtml({"logs": [json.logEntry]})
 
-      if (json.timedOut) {
+      if (json.logEntry.timedOut) {
         this.onActionResult('actionTimeout', 'Timed out')
-      } else if (json.exitCode !== 0) {
-        this.onActionResult('actionNonZeroExit', 'Exit code ' + json.exitCode)
+      } else if (json.logEntry.exitCode !== 0) {
+        this.onActionResult('actionNonZeroExit', 'Exit code ' + json.logEntry.exitCode)
       } else {
         this.onActionResult('actionSuccess', 'Success!')
       }
