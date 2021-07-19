@@ -1,6 +1,6 @@
 'use strict'
 
-import { marshalActionButtonsJsonToHtml } from './js/marshaller.js'
+import { marshalActionButtonsJsonToHtml, marshalLogsJsonToHtml } from './js/marshaller.js'
 
 function showBigError (type, friendlyType, message) {
   clearInterval(window.buttonInterval)
@@ -14,14 +14,42 @@ function showBigError (type, friendlyType, message) {
   document.getElementById('rootGroup').appendChild(domErr)
 }
 
+function showSection (name) {
+  for (let otherName of ["Actions", "Logs"]) {
+    document.getElementById('show' + otherName).classList.remove('activeSection');
+    document.getElementById('content' + otherName).hidden = true;
+  }
+
+  document.getElementById('show' + name).classList.add('activeSection')
+  document.getElementById('content' + name).hidden = false;
+}
+
+function setupSections() {
+  document.getElementById('showActions').onclick = () => { showSection('Actions') };
+  document.getElementById('showLogs').onclick = () => { showSection('Logs') }
+  
+  showSection('Actions');
+}
+
 function fetchGetButtons() {
- window.fetch(window.restBaseUrl + 'GetButtons', {
+  window.fetch(window.restBaseUrl + 'GetButtons', {
     cors: 'cors'
-    // No fetch options
   }).then(res => {
     return res.json()
   }).then(res => {
     marshalActionButtonsJsonToHtml(res)
+  }).catch(err => {
+    showBigError('fetch-buttons', 'getting buttons', err, 'blat')
+  })
+}
+
+function fetchGetLogs() {
+  window.fetch(window.restBaseUrl + 'GetLogs', {
+    cors: 'cors'
+  }).then(res => {
+    return res.json()
+  }).then(res => {
+    marshalLogsJsonToHtml(res)
   }).catch(err => {
     showBigError('fetch-buttons', 'getting buttons', err, 'blat')
   })
@@ -40,14 +68,18 @@ function processWebuiSettingsJson (settings) {
   }
 }
 
+setupSections();
+
 window.fetch('webUiSettings.json').then(res => {
   return res.json()
 }).then(res => {
   processWebuiSettingsJson(res)
 
   fetchGetButtons()
+  fetchGetLogs()
 
   window.buttonInterval = setInterval(fetchGetButtons, 3000);
 }).catch(err => {
   showBigError('fetch-webui-settings', 'getting webui settings', err)
 })
+

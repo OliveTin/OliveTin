@@ -15,7 +15,6 @@ fieldset#rootGroup {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   grid-template-rows: auto auto auto auto;
-  padding: 1em;
   grid-gap: 1em;
   text-align: center;
   border: 0;
@@ -213,6 +212,23 @@ img.logo {
   footer, footer a {
 	color: gray;
   }
+}
+
+main {
+	padding: 1em;
+}
+
+summary {
+	cursor: pointer;
+}
+
+details {
+	display: inline-block;
+}
+
+details[open] {
+	margin-top: 1em;
+	display: block;
 }
 
 main {

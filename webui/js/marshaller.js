@@ -16,13 +16,25 @@ export function marshalActionButtonsJsonToHtml (json) {
       htmlButton.updateHtml()
     }
 
-    console.log("action", jsonButton.title)
     htmlButton.updateIterationTimestamp = currentIterationTimestamp;
   }
 
-  for (const existingButton of document.querySelectorAll('button')) {
+  for (const existingButton of document.querySelector('#contentActions').querySelectorAll('button')) {
     if (existingButton.updateIterationTimestamp != currentIterationTimestamp) {
       existingButton.remove();
     }
+  }
+}
+
+export function marshalLogsJsonToHtml (json) {
+  for (const logEntry of json.logs) {
+    const tpl = document.getElementById('tplLogRow')
+    const row = tpl.content.cloneNode(true)
+
+    row.querySelector('.timestamp').innerText = logEntry.datetime
+    row.querySelector('.content').innerText = logEntry.actionTitle
+    row.querySelector('pre').innerText = logEntry.stdout
+
+    document.querySelector('#logTableBody').prepend(row)
   }
 }

@@ -1,3 +1,5 @@
+import { marshalLogsJsonToHtml } from './marshaller.js';
+
 class ActionButton extends window.HTMLButtonElement {
   constructFromJson (json) {
     this.updateIterationTimestamp = 0;
@@ -40,10 +42,12 @@ class ActionButton extends window.HTMLButtonElement {
 
     window.fetch(this.actionCallUrl).then(res => res.json()
     ).then((json) => {
-      if (json.timedOut) {
+      marshalLogsJsonToHtml({"logs": [json.logEntry]})
+
+      if (json.logEntry.timedOut) {
         this.onActionResult('actionTimeout', 'Timed out')
-      } else if (json.exitCode !== 0) {
-        this.onActionResult('actionNonZeroExit', 'Exit code ' + json.exitCode)
+      } else if (json.logEntry.exitCode !== 0) {
+        this.onActionResult('actionNonZeroExit', 'Exit code ' + json.logEntry.exitCode)
       } else {
         this.onActionResult('actionSuccess', 'Success!')
       }
@@ -56,6 +60,10 @@ class ActionButton extends window.HTMLButtonElement {
     this.temporaryStatusMessage = '[ ' + temporaryStatusMessage + ' ]'
     this.updateHtml()
     this.classList.add(cssClass)
+
+    setTimeout(() => {
+      this.classList.remove(cssClass)
+    }, 1000);
   }
 
   onActionError (err) {
@@ -64,6 +72,10 @@ class ActionButton extends window.HTMLButtonElement {
     this.isWaiting = false
     this.updateHtml()
     this.classList.add('actionFailed')
+
+    setTimeout(() => {
+      this.classList.remove('actionFailed')
+    }, 1000);
   }
 
   constructTemplate () {

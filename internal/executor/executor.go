@@ -11,8 +11,22 @@ import (
 	"time"
 )
 
+type InternalLogEntry struct {
+	Datetime string
+	Content string
+	Stdout string
+	Stderr string
+	TimedOut bool
+	ExitCode int32
+	ActionTitle string
+}
+
+type Executor struct {
+	Logs []InternalLogEntry
+}
+
 // ExecAction executes an action.
-func ExecAction(cfg *config.Config, action string) *pb.StartActionResponse {
+func (e *Executor) ExecAction(cfg *config.Config, action string) *pb.StartActionResponse {
 	log.WithFields(log.Fields{
 		"actionName": action,
 	}).Infof("StartAction")
@@ -23,16 +37,31 @@ func ExecAction(cfg *config.Config, action string) *pb.StartActionResponse {
 		log.Errorf("Error finding action %s, %s", err, action)
 
 		return &pb.StartActionResponse{
-			TimedOut: false,
+			LogEntry: nil,
 		}
 	}
 
-	return execAction(cfg, actualAction)
+	res := execAction(cfg, actualAction)
+
+	e.Logs = append(e.Logs, *res);
+
+	return &pb.StartActionResponse{
+		LogEntry: &pb.LogEntry {
+			ActionTitle: actualAction.Title,
+			TimedOut: res.TimedOut,
+			Stderr: res.Stderr,
+			Stdout: res.Stdout,
+			ExitCode: res.ExitCode,
+		},
+	};
 }
 
-func execAction(cfg *config.Config, actualAction *config.ActionButton) *pb.StartActionResponse {
-	res := &pb.StartActionResponse{}
-	res.TimedOut = false
+func execAction(cfg *config.Config, actualAction *config.ActionButton) *InternalLogEntry {
+	res := &InternalLogEntry {
+		Datetime: time.Now().Format("2006-01-02 15:04:05"),
+		TimedOut: false,
+		ActionTitle: actualAction.Title,
+	}
 
 	log.WithFields(log.Fields{
 		"title":   actualAction.Title,
