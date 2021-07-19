@@ -8,6 +8,7 @@ message ActionButton {
 	string id = 1;
 	string title = 2;
 	string icon = 3;
+	bool canExec = 4;
 }
 
 message GetButtonsResponse {
@@ -34,6 +35,8 @@ message LogEntry {
 	string stderr = 4;
 	bool timedOut = 5;
 	int32 exitCode = 6;
+	string user = 7;
+	string userClass = 8;
 }
 
 message GetLogsResponse {

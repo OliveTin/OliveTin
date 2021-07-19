@@ -4,6 +4,7 @@ import (
 	pb "github.com/jamesread/OliveTin/gen/grpc"
 	config "github.com/jamesread/OliveTin/internal/config"
 	log "github.com/sirupsen/logrus"
+	acl "github.com/jamesread/OliveTin/internal/acl"
 
 	"context"
 	"errors"
@@ -26,20 +27,10 @@ type Executor struct {
 }
 
 // ExecAction executes an action.
-func (e *Executor) ExecAction(cfg *config.Config, action string) *pb.StartActionResponse {
+func (e *Executor) ExecAction(cfg *config.Config, user *acl.User, actualAction *config.ActionButton) *pb.StartActionResponse {
 	log.WithFields(log.Fields{
-		"actionName": action,
+		"actionName": actualAction.Title,
 	}).Infof("StartAction")
-
-	actualAction, err := findAction(cfg, action)
-
-	if err != nil {
-		log.Errorf("Error finding action %s, %s", err, action)
-
-		return &pb.StartActionResponse{
-			LogEntry: nil,
-		}
-	}
 
 	res := execAction(cfg, actualAction)
 
@@ -103,7 +94,7 @@ func sanitizeAction(action *config.ActionButton) {
 	}
 }
 
-func findAction(cfg *config.Config, actionTitle string) (*config.ActionButton, error) {
+func FindAction(cfg *config.Config, actionTitle string) (*config.ActionButton, error) {
 	for _, action := range cfg.ActionButtons {
 		if action.Title == actionTitle {
 			sanitizeAction(&action)

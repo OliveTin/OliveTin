@@ -11,6 +11,7 @@ import (
 
 	config "github.com/jamesread/OliveTin/internal/config"
 	executor "github.com/jamesread/OliveTin/internal/executor"
+	acl "github.com/jamesread/OliveTin/internal/acl"
 )
 
 var (
@@ -23,23 +24,52 @@ type oliveTinAPI struct {
 }
 
 func (api *oliveTinAPI) StartAction(ctx ctx.Context, req *pb.StartActionRequest) (*pb.StartActionResponse, error) {
-	return ex.ExecAction(cfg, req.ActionName), nil
+	actualAction, err := executor.FindAction(cfg, req.ActionName)
+
+	if err != nil {
+		log.Errorf("Error finding action %s, %s", err, req.ActionName)
+
+		return &pb.StartActionResponse{
+			LogEntry: nil,
+		}, nil
+	}
+
+	user := acl.UserFromContext(ctx)
+
+	if !acl.IsAllowedExec(cfg, user, actualAction) {
+		return &pb.StartActionResponse{
+		}, nil
+
+	}
+
+	return ex.ExecAction(cfg, acl.UserFromContext(ctx), actualAction), nil
 }
 
 func (api *oliveTinAPI) GetButtons(ctx ctx.Context, req *pb.GetButtonsRequest) (*pb.GetButtonsResponse, error) {
 	res := &pb.GetButtonsResponse{}
 
+	user := acl.UserFromContext(ctx)
+
 	for _, action := range cfg.ActionButtons {
+		if !acl.IsAllowedView(cfg, user, &action) {
+			continue
+		}
+
 		btn := pb.ActionButton{
 			Id:    fmt.Sprintf("%x", md5.Sum([]byte(action.Title))),
 			Title: action.Title,
 			Icon:  lookupHTMLIcon(action.Icon),
+			CanExec: acl.IsAllowedExec(cfg, user, &action),
 		}
 
 		res.Actions = append(res.Actions, &btn)
 	}
 
-	log.Infof("getButtons: %v", res)
+	if len(res.Actions) == 0 {
+		log.Warn("Zero actions found - check that you have some actions defined, with a view permission")
+	}
+
+	log.Debugf("getButtons: %v", res)
 
 	return res, nil
 }

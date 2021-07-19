@@ -10,6 +10,7 @@ type ActionButton struct {
 	Shell   string
 	CSS     map[string]string `mapstructure:"omitempty"`
 	Timeout int
+	Permissions []PermissionsEntry
 }
 
 // Entity represents a "thing" that can have multiple actions associated with it.
@@ -19,6 +20,22 @@ type Entity struct {
 	Icon          string
 	ActionButtons []ActionButton `mapstructure:"actions"`
 	CSS           map[string]string
+}
+
+type PermissionsEntry struct {
+	Usergroup string
+	View bool
+	Exec bool
+}
+
+type DefaultPermissions struct {
+	View bool
+	Exec bool
+}
+
+type UserGroup struct {
+	Name string
+	Members []string
 }
 
 // Config is the global config used through the whole app.
@@ -34,6 +51,8 @@ type Config struct {
 	ActionButtons                   []ActionButton `mapstructure:"actions"`
 	Entities                        []Entity       `mapstructure:"omitempty"`
 	CheckForUpdates                 bool
+	Usergroups						[]UserGroup
+	DefaultPermissions				DefaultPermissions
 }
 
 // DefaultConfig gets a new Config structure with sensible default values.
@@ -46,6 +65,8 @@ func DefaultConfig() *Config {
 	config.ListenAddressWebUI = "localhost:1340"
 	config.LogLevel = "INFO"
 	config.CheckForUpdates = true
+	config.DefaultPermissions.Exec = true
+	config.DefaultPermissions.View = true
 
 	return &config
 }
