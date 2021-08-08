@@ -49,7 +49,7 @@ type Config struct {
 	ExternalRestAddress             string
 	LogLevel                        string
 	ActionButtons                   []ActionButton `mapstructure:"actions"`
-	Entities                        []Entity       `mapstructure:"omitempty"`
+	Entities                        []Entity       `mapstructure:"entities"`
 	CheckForUpdates                 bool
 	Usergroups						[]UserGroup
 	DefaultPermissions				DefaultPermissions

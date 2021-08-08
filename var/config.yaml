@@ -1,7 +1,9 @@
 # There is a built-in micro proxy that will host the webui and REST API all on 
 # one port (this is called the "Single HTTP Frontend") and means you just need 
 # one open port in the container/firewalls/etc. 
-ListenAddressSingleHTTPFrontend: 0.0.0.0:1337 # Listen on all addresses available, port 1337
+#
+# Listen on all addresses available, port 1337
+listenAddressSingleHTTPFrontend: 0.0.0.0:1337 
 
 # Choose from INFO (default), WARN and DEBUG
 logLevel: "INFO"
