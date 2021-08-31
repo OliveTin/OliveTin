@@ -23,7 +23,7 @@ daemon-unittests:
 	go tool cover -html=reports/unittests.out -o reports/unittests.html
 
 grpc:
-	protoc -I .:./proto --go_out=. --go-grpc_out=. --grpc-gateway_out=. OliveTin.proto 
+	buf generate
 
 podman-image:
 	buildah bud -t olivetin
