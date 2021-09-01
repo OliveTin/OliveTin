@@ -22,6 +22,18 @@ the general direction and roadmap of this project without asking.
 
 The preferred way to communicate is probably via Discord or GitHub issues. 
 
+=== Dev environment setup and clean build - Fedora 
+
+```
+dnf install git go protobuf-compiler make -y 
+git clone https://github.com/OliveTin/OliveTin.git
+cd OliveTin
+go get
+make grpc
+make
+./OliveTin
+```
+
 === Getting started to contribute;
 
 The project layout is reasonably straightforward; 
