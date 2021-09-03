@@ -3,9 +3,10 @@ module github.com/jamesread/OliveTin
 go 1.15
 
 require (
-	github.com/denisbrodbeck/machineid v1.0.1 // indirect
-	github.com/fsnotify/fsnotify v1.4.9 // indirect
-	github.com/go-co-op/gocron v1.6.2 // indirect
+	github.com/bufbuild/buf v0.37.0
+	github.com/denisbrodbeck/machineid v1.0.1
+	github.com/fsnotify/fsnotify v1.4.9
+	github.com/go-co-op/gocron v1.6.2
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.4.0
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/viper v1.7.1
