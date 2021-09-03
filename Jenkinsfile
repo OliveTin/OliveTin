@@ -4,7 +4,7 @@ pipeline {
     stages {
         stage ('Pre-Build') {
             steps {
-				sh 'go get -tags tools ./...'
+				sh 'go get -tags tools'
                 sh 'buf generate'
             }
         }
