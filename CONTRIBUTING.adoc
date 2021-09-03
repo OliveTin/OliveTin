@@ -28,8 +28,13 @@ The preferred way to communicate is probably via Discord or GitHub issues.
 dnf install git go protobuf-compiler make -y 
 git clone https://github.com/OliveTin/OliveTin.git
 cd OliveTin
-go get
-make grpc
+
+# For each dependency in tools.go;
+go install "github.com/bufbuild/buf/cmd/buf"
+go install ... 
+
+buf generate 
+
 make
 ./OliveTin
 ```
