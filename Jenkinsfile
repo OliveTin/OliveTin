@@ -4,13 +4,18 @@ pipeline {
     stages {
         stage ('Pre-Build') {
             steps {
-                sh 'make grpc'
+				sh 'go get -tags tools ./...'
+                sh 'buf generate'
             }
         }
         
         stage('Compile') {
             steps {
-                sh 'make grpc daemon-compile'
+				withEnv(["PATH+GO=${root}/go/bin"]) {
+					sh 'go env'
+					sh 'echo $PATH'
+	                sh 'make daemon-compile'
+				}
             }
         }
         
