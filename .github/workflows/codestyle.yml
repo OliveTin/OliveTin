@@ -10,7 +10,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Setup Go
-        users: actions/setup-go@v2
+        uses: actions/setup-go@v2
 
       - name: daemon
         run: make daemon-codestyle
