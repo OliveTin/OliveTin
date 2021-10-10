@@ -3,7 +3,6 @@ webui/node_modules
 **/*.swp
 **/*.swo
 gen/
-go.sum
 OliveTin
 OliveTin.armhf
 OliveTin.exe
