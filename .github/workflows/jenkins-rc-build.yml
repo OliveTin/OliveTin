@@ -1,6 +1,14 @@
 name: "Jenkins RC Build"
 
-on: [push]
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs: 
+      reason:
+        description: "Reason"
+        required: true
+        default: "no reason given"
 
 jobs:
   codestyle:
