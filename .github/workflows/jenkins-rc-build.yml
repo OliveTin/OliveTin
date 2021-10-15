@@ -1,0 +1,23 @@
+name: "Jenkins RC Build"
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs: 
+      reason:
+        description: "Reason"
+        required: true
+        default: "no reason given"
+
+jobs:
+  jenkins-trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger jenkins job
+        uses: appleboy/jenkins-action@master
+        with:
+          url: ${{ secrets.JENKINS_URL }}
+          user: ${{ secrets.JENKINS_USER }}
+          token: ${{ secrets.JENKINS_TOKEN }}
+          job: "OliveTin/OliveTin-rc-builder"

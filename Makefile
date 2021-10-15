@@ -21,8 +21,15 @@ daemon-unittests:
 	mkdir -p reports
 	go test ./... -coverprofile reports/unittests.out
 	go tool cover -html=reports/unittests.out -o reports/unittests.html
+	
+go-tools:
+	go install "github.com/bufbuild/buf/cmd/buf"
+	go install "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway"
+	go install "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2"
+	go install "google.golang.org/grpc/cmd/protoc-gen-go-grpc"
+	go install "google.golang.org/protobuf/cmd/protoc-gen-go"
 
-grpc:
+grpc: go-tools
 	buf generate
 
 podman-image:
