@@ -1,6 +1,6 @@
 FROM fedora
 
-RUN useradd -rm olivetin -u 1000 -g 1000
+RUN useradd -rm olivetin -u 1000 
 
 RUN mkdir -p /config /var/www/olivetin/ && \
     dnf install -y \ 
