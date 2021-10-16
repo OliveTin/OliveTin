@@ -4,12 +4,12 @@ import ()
 
 // ActionButton represents a button that is shown in the webui.
 type ActionButton struct {
-	ID      string
-	Title   string
-	Icon    string
-	Shell   string
-	CSS     map[string]string `mapstructure:"omitempty"`
-	Timeout int
+	ID          string
+	Title       string
+	Icon        string
+	Shell       string
+	CSS         map[string]string `mapstructure:"omitempty"`
+	Timeout     int
 	Permissions []PermissionsEntry
 }
 
@@ -24,8 +24,8 @@ type Entity struct {
 
 type PermissionsEntry struct {
 	Usergroup string
-	View bool
-	Exec bool
+	View      bool
+	Exec      bool
 }
 
 type DefaultPermissions struct {
@@ -34,7 +34,7 @@ type DefaultPermissions struct {
 }
 
 type UserGroup struct {
-	Name string
+	Name    string
 	Members []string
 }
 
@@ -51,8 +51,8 @@ type Config struct {
 	ActionButtons                   []ActionButton `mapstructure:"actions"`
 	Entities                        []Entity       `mapstructure:"entities"`
 	CheckForUpdates                 bool
-	Usergroups						[]UserGroup
-	DefaultPermissions				DefaultPermissions
+	Usergroups                      []UserGroup
+	DefaultPermissions              DefaultPermissions
 }
 
 // DefaultConfig gets a new Config structure with sensible default values.

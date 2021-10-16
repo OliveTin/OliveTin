@@ -9,14 +9,14 @@ import (
 	"google.golang.org/grpc"
 	"net"
 
+	acl "github.com/jamesread/OliveTin/internal/acl"
 	config "github.com/jamesread/OliveTin/internal/config"
 	executor "github.com/jamesread/OliveTin/internal/executor"
-	acl "github.com/jamesread/OliveTin/internal/acl"
 )
 
 var (
 	cfg *config.Config
-	ex = executor.Executor{}
+	ex  = executor.Executor{}
 )
 
 type oliveTinAPI struct {
@@ -37,8 +37,7 @@ func (api *oliveTinAPI) StartAction(ctx ctx.Context, req *pb.StartActionRequest)
 	user := acl.UserFromContext(ctx)
 
 	if !acl.IsAllowedExec(cfg, user, actualAction) {
-		return &pb.StartActionResponse{
-		}, nil
+		return &pb.StartActionResponse{}, nil
 
 	}
 
@@ -56,9 +55,9 @@ func (api *oliveTinAPI) GetButtons(ctx ctx.Context, req *pb.GetButtonsRequest) (
 		}
 
 		btn := pb.ActionButton{
-			Id:    fmt.Sprintf("%x", md5.Sum([]byte(action.Title))),
-			Title: action.Title,
-			Icon:  lookupHTMLIcon(action.Icon),
+			Id:      fmt.Sprintf("%x", md5.Sum([]byte(action.Title))),
+			Title:   action.Title,
+			Icon:    lookupHTMLIcon(action.Icon),
 			CanExec: acl.IsAllowedExec(cfg, user, &action),
 		}
 
@@ -75,18 +74,18 @@ func (api *oliveTinAPI) GetButtons(ctx ctx.Context, req *pb.GetButtonsRequest) (
 }
 
 func (api *oliveTinAPI) GetLogs(ctx ctx.Context, req *pb.GetLogsRequest) (*pb.GetLogsResponse, error) {
-	ret := &pb.GetLogsResponse{};
-	
+	ret := &pb.GetLogsResponse{}
+
 	// TODO Limit to 10 entries or something to prevent browser lag.
 
 	for _, logEntry := range ex.Logs {
 		ret.Logs = append(ret.Logs, &pb.LogEntry{
 			ActionTitle: logEntry.ActionTitle,
-			Datetime: logEntry.Datetime,
-			Stdout: logEntry.Stdout,
-			Stderr: logEntry.Stderr,
-			TimedOut: logEntry.TimedOut,
-			ExitCode: logEntry.ExitCode,
+			Datetime:    logEntry.Datetime,
+			Stdout:      logEntry.Stdout,
+			Stderr:      logEntry.Stderr,
+			TimedOut:    logEntry.TimedOut,
+			ExitCode:    logEntry.ExitCode,
 		})
 	}
 

@@ -1,29 +1,29 @@
 package acl
 
 import (
+	"context"
 	config "github.com/jamesread/OliveTin/internal/config"
 	log "github.com/sirupsen/logrus"
-	"context"
 )
 
 type User struct {
-	Username string;
+	Username string
 }
 
 func IsAllowedExec(cfg *config.Config, user *User, action *config.ActionButton) bool {
 	canExec := cfg.DefaultPermissions.Exec
 
 	log.WithFields(log.Fields{
-				"User": user.Username,
-				"Action": action.Title,
-				"CanExec": canExec,
+		"User":    user.Username,
+		"Action":  action.Title,
+		"CanExec": canExec,
 	}).Debug("isAllowedExec Permission Default")
 
 	for _, permissionEntry := range action.Permissions {
 		if isUserInGroup(user, permissionEntry.Usergroup) {
 			log.WithFields(log.Fields{
-				"User": user.Username,
-				"Action": action.Title,
+				"User":    user.Username,
+				"Action":  action.Title,
 				"CanExec": permissionEntry.Exec,
 			}).Debug("isAllowedExec Permission Entry")
 
@@ -32,30 +32,30 @@ func IsAllowedExec(cfg *config.Config, user *User, action *config.ActionButton) 
 	}
 
 	log.WithFields(log.Fields{
-		"User": user.Username,
-		"Action": action.Title,
+		"User":    user.Username,
+		"Action":  action.Title,
 		"CanExec": canExec,
 	}).Debug("isAllowedExec Final Result")
 
-	return canExec;
+	return canExec
 }
 
 func IsAllowedView(cfg *config.Config, user *User, action *config.ActionButton) bool {
 	canView := cfg.DefaultPermissions.View
 
 	log.WithFields(log.Fields{
-				"User": user.Username,
-				"Action": action.Title,
-				"CanView": canView,
+		"User":    user.Username,
+		"Action":  action.Title,
+		"CanView": canView,
 	}).Debug("isAllowedView Permission Default")
 
 	for idx, permissionEntry := range action.Permissions {
 		if isUserInGroup(user, permissionEntry.Usergroup) {
 			log.WithFields(log.Fields{
-				"User": user.Username,
-				"Action": action.Title,
+				"User":    user.Username,
+				"Action":  action.Title,
 				"CanView": permissionEntry.View,
-				"Index": idx,
+				"Index":   idx,
 			}).Debug("isAllowedView Permission Entry")
 
 			canView = permissionEntry.View
@@ -63,22 +63,20 @@ func IsAllowedView(cfg *config.Config, user *User, action *config.ActionButton) 
 	}
 
 	log.WithFields(log.Fields{
-		"User": user.Username,
-		"Action": action.Title,
+		"User":    user.Username,
+		"Action":  action.Title,
 		"CanView": canView,
 	}).Debug("isAllowedView Final Result")
 
-	return canView;
+	return canView
 }
 
-
-
 func isUserInGroup(user *User, usergroup string) bool {
-	return true;
+	return true
 }
 
 func UserFromContext(ctx context.Context) *User {
-	return &User {
+	return &User{
 		Username: "Guest",
 	}
 }

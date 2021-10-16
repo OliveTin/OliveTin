@@ -2,9 +2,9 @@ package executor
 
 import (
 	pb "github.com/jamesread/OliveTin/gen/grpc"
+	acl "github.com/jamesread/OliveTin/internal/acl"
 	config "github.com/jamesread/OliveTin/internal/config"
 	log "github.com/sirupsen/logrus"
-	acl "github.com/jamesread/OliveTin/internal/acl"
 
 	"context"
 	"errors"
@@ -13,12 +13,12 @@ import (
 )
 
 type InternalLogEntry struct {
-	Datetime string
-	Content string
-	Stdout string
-	Stderr string
-	TimedOut bool
-	ExitCode int32
+	Datetime    string
+	Content     string
+	Stdout      string
+	Stderr      string
+	TimedOut    bool
+	ExitCode    int32
 	ActionTitle string
 }
 
@@ -34,23 +34,23 @@ func (e *Executor) ExecAction(cfg *config.Config, user *acl.User, actualAction *
 
 	res := execAction(cfg, actualAction)
 
-	e.Logs = append(e.Logs, *res);
+	e.Logs = append(e.Logs, *res)
 
 	return &pb.StartActionResponse{
-		LogEntry: &pb.LogEntry {
+		LogEntry: &pb.LogEntry{
 			ActionTitle: actualAction.Title,
-			TimedOut: res.TimedOut,
-			Stderr: res.Stderr,
-			Stdout: res.Stdout,
-			ExitCode: res.ExitCode,
+			TimedOut:    res.TimedOut,
+			Stderr:      res.Stderr,
+			Stdout:      res.Stdout,
+			ExitCode:    res.ExitCode,
 		},
-	};
+	}
 }
 
 func execAction(cfg *config.Config, actualAction *config.ActionButton) *InternalLogEntry {
-	res := &InternalLogEntry {
-		Datetime: time.Now().Format("2006-01-02 15:04:05"),
-		TimedOut: false,
+	res := &InternalLogEntry{
+		Datetime:    time.Now().Format("2006-01-02 15:04:05"),
+		TimedOut:    false,
 		ActionTitle: actualAction.Title,
 	}
 
