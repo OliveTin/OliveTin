@@ -66,6 +66,10 @@ function processWebuiSettingsJson (settings) {
 
     document.head.appendChild(themeCss);
   }
+
+  if (settings.HideNavigation) {
+    document.querySelector('#switcher').display = 'none';
+  }
 }
 
 setupSections();
