@@ -14,14 +14,15 @@ message ActionButton {
 }
 
 message ActionArgument {
-	string variable = 1;
+	string name = 1;
 	string label = 2; 
 	string type = 3;
+	string defaultValue = 4;
 
-	repeated ActionArgumentValue values = 4;
+	repeated ActionArgumentChoice choices = 5;
 }
 
-message ActionArgumentValue {
+message ActionArgumentChoice {
 	string value = 1;
 	string label = 2;
 }
