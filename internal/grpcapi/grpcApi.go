@@ -7,9 +7,9 @@ import (
 	"google.golang.org/grpc"
 	"net"
 
+	acl "github.com/jamesread/OliveTin/internal/acl"
 	config "github.com/jamesread/OliveTin/internal/config"
 	executor "github.com/jamesread/OliveTin/internal/executor"
-	acl "github.com/jamesread/OliveTin/internal/acl"
 )
 
 var (
