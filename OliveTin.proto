@@ -9,6 +9,21 @@ message ActionButton {
 	string title = 2;
 	string icon = 3;
 	bool canExec = 4;
+
+	repeated ActionArgument arguments = 5;
+}
+
+message ActionArgument {
+	string variable = 1;
+	string label = 2; 
+	string type = 3;
+
+	repeated ActionArgumentValue values = 4;
+}
+
+message ActionArgumentValue {
+	string value = 1;
+	string label = 2;
 }
 
 message GetButtonsResponse {

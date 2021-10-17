@@ -61,6 +61,14 @@ func (api *oliveTinAPI) GetButtons(ctx ctx.Context, req *pb.GetButtonsRequest) (
 			CanExec: acl.IsAllowedExec(cfg, user, &action),
 		}
 
+		for _, cfgArg := range action.Arguments {
+			pbArg := pb.ActionArgument {
+				Label: cfgArg.Label,
+			}
+
+			btn.Arguments = append(btn.Arguments, &pbArg)
+		}
+
 		res.Actions = append(res.Actions, &btn)
 	}
 

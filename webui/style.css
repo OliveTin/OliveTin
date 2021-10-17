@@ -247,3 +247,13 @@ details[open] {
 	margin-top: 1em;
 	display: block;
 }
+
+form.actionArguments {
+	border-radius: 1em;
+	position: absolute;
+	top: 1em;
+	left: 1em;
+	right: 1em;
+	padding: 1em;
+	background-color: #fff;
+}
