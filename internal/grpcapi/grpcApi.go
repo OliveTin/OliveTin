@@ -2,16 +2,14 @@ package grpcapi
 
 import (
 	ctx "context"
-	"crypto/md5"
-	"fmt"
 	pb "github.com/jamesread/OliveTin/gen/grpc"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"net"
 
-	acl "github.com/jamesread/OliveTin/internal/acl"
 	config "github.com/jamesread/OliveTin/internal/config"
 	executor "github.com/jamesread/OliveTin/internal/executor"
+	acl "github.com/jamesread/OliveTin/internal/acl"
 )
 
 var (
@@ -54,22 +52,8 @@ func (api *oliveTinAPI) GetButtons(ctx ctx.Context, req *pb.GetButtonsRequest) (
 			continue
 		}
 
-		btn := pb.ActionButton{
-			Id:      fmt.Sprintf("%x", md5.Sum([]byte(action.Title))),
-			Title:   action.Title,
-			Icon:    lookupHTMLIcon(action.Icon),
-			CanExec: acl.IsAllowedExec(cfg, user, &action),
-		}
-
-		for _, cfgArg := range action.Arguments {
-			pbArg := pb.ActionArgument {
-				Label: cfgArg.Label,
-			}
-
-			btn.Arguments = append(btn.Arguments, &pbArg)
-		}
-
-		res.Actions = append(res.Actions, &btn)
+		btn := buildButton(action, user)
+		res.Actions = append(res.Actions, btn)
 	}
 
 	if len(res.Actions) == 0 {

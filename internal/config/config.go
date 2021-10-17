@@ -15,13 +15,14 @@ type ActionButton struct {
 }
 
 type ActionArgument struct {
-	Variable	string
+	Name		string
 	Label		string
 	Type		string
-	Values 		[]ActionArgumentValue
+	Default		string
+	Choices		[]ActionArgumentChoice
 }
 
-type ActionArgumentValue struct {
+type ActionArgumentChoice struct {
 	Value		string
 	Label		string
 }
