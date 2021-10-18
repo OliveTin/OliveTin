@@ -8,6 +8,21 @@ import (
 	config "github.com/jamesread/OliveTin/internal/config"
 )
 
+func actionButtonsCfgToPb(cfgActionButtons []config.ActionButton, user *acl.User) (*pb.GetButtonsResponse) {
+	res := &pb.GetButtonsResponse{}
+
+	for _, action := range cfgActionButtons {
+		if !acl.IsAllowedView(cfg, user, &action) {
+			continue
+		}
+
+		btn := buildButton(action, user)
+		res.Actions = append(res.Actions, btn)
+	}
+
+	return res
+}
+
 func buildButton(action config.ActionButton, user *acl.User) *pb.ActionButton {
 	btn := pb.ActionButton{
 		Id:      fmt.Sprintf("%x", md5.Sum([]byte(action.Title))),

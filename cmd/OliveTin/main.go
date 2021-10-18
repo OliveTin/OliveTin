@@ -62,9 +62,7 @@ func reloadConfig() {
 		os.Exit(1)
 	}
 
-	if logLevel, err := log.ParseLevel(cfg.LogLevel); err == nil {
-		log.SetLevel(logLevel)
-	}
+	config.Sanitize(cfg);
 }
 
 func main() {

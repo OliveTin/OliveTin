@@ -56,21 +56,6 @@ func (api *oliveTinAPI) GetButtons(ctx ctx.Context, req *pb.GetButtonsRequest) (
 	return res, nil
 }
 
-func actionButtonsCfgToPb(cfgActionButtons []config.ActionButton, user *acl.User) (*pb.GetButtonsResponse) {
-	res := &pb.GetButtonsResponse{}
-
-	for _, action := range cfgActionButtons {
-		if !acl.IsAllowedView(cfg, user, &action) {
-			continue
-		}
-
-		btn := buildButton(action, user)
-		res.Actions = append(res.Actions, btn)
-	}
-
-	return res
-}
-
 func (api *oliveTinAPI) GetLogs(ctx ctx.Context, req *pb.GetLogsRequest) (*pb.GetLogsResponse, error) {
 	ret := &pb.GetLogsResponse{}
 
