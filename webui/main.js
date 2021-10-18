@@ -66,6 +66,8 @@ function processWebuiSettingsJson (settings) {
 
     document.head.appendChild(themeCss)
   }
+
+  document.querySelector('#switcher').hidden = settings.HideNavigation
 }
 
 setupSections()
