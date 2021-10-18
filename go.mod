@@ -6,6 +6,7 @@ require (
 	github.com/bufbuild/buf v0.54.1
 	github.com/denisbrodbeck/machineid v1.0.1
 	github.com/fsnotify/fsnotify v1.4.9
+	github.com/fzipp/gocyclo v0.3.1
 	github.com/go-co-op/gocron v1.6.2
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.5.0
 	github.com/sirupsen/logrus v1.8.1

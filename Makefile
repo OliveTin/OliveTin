@@ -27,7 +27,7 @@ go-tools:
 	go install "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2"
 	go install "google.golang.org/grpc/cmd/protoc-gen-go-grpc"
 	go install "google.golang.org/protobuf/cmd/protoc-gen-go"
-	go install "github.com/fzipp/gocyclo/cmd/gocyclo@latest"
+	go install "github.com/fzipp/gocyclo/cmd/gocyclo"
 
 grpc: go-tools
 	buf generate
