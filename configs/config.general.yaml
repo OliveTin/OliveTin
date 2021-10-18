@@ -1,0 +1,53 @@
+# There is a built-in micro proxy that will host the webui and REST API all on 
+# one port (this is called the "Single HTTP Frontend") and means you just need 
+# one open port in the container/firewalls/etc. 
+#
+# Listen on all addresses available, port 1337
+listenAddressSingleHTTPFrontend: 0.0.0.0:1337 
+
+# Choose from INFO (default), WARN and DEBUG
+logLevel: "INFO"
+
+# Actions (buttons) to show up on the WebUI:
+actions:   
+  # This will send 1 ping (-c 1)
+  # Docs: https://docs.olivetin.app/action-ping.html
+- title: Ping Google.com
+  shell: ping google.com -c 1
+  icon: ping
+  
+  # Restart lightdm on host "overseer"
+  # Docs: https://docs.olivetin.app/action-ping.html
+- title: restart lightdm
+  icon: poop
+  shell: ssh root@overseer 'service lightdm restart'
+
+- title: sleep 2 seconds
+  shell: sleep 2
+  icon: "&#x1F971"
+
+- title: sleep 5 seconds (timeout)
+  shell: sleep 5
+  icon: "&#x1F62A"
+
+  # OliveTin can run long-running jobs like Ansible playbooks. 
+  # 
+  # For such jobs, you will need to install ansible-playbook on the host where
+  # you are running OliveTin, or in the container.
+  #
+  # You probably want a much longer timeout as well (so that ansible completes).
+- title: "Run Ansible Playbook"
+  icon: "&#x1F1E6"
+  shell: ansible-playbook -i /etc/hosts /root/myRepo/myPlaybook.yaml
+  timeout: 120
+
+  # OliveTin can control containers - docker is just a command line app.
+  # 
+  # However, if you are running in a container you will need to do some setup,
+  # see the docs below.
+  #
+  # Docs: https://docs.olivetin.app/action-container-control.html
+- title: Restart Plex
+  icon: smile
+  shell: docker restart plex
+
