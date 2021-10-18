@@ -1,6 +1,7 @@
 describe('Hidden Nav', () => {
   beforeEach(() => {
     cy.visit("/")
+    cy.wait(500)
   });
 
   it("Footer contains promo", () => {
