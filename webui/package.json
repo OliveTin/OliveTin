@@ -1,7 +1,8 @@
 {
-  "name": "olivetin",
+  "name": "olivetin-webui",
   "version": "1.0.0",
-  "description": "",
+  "description": "The WebUI for OliveTin",
+  "repository": "http://github.com/OliveTin/OliveTin",
   "main": "main.js",
   "devDependencies": {
     "stylelint": "^13.13.0",

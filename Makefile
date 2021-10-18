@@ -48,6 +48,7 @@ devrun: compile
 devcontainer: compile podman-image podman-container
 
 webui-codestyle:
+	cd webui && npm install
 	cd webui && eslint main.js js/*
 	cd webui && stylelint style.css
 
