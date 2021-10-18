@@ -50,7 +50,7 @@ archives:
     format: tar.gz
 
     files: 
-      - var/config.yaml
+      - configs/config.yaml
       - LICENSE
       - README.md
       - Dockerfile
