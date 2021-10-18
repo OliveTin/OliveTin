@@ -1,4 +1,5 @@
 import { marshalLogsJsonToHtml } from './marshaller.js'
+import "./ArgumentForm.js"
 
 class ActionButton extends window.HTMLButtonElement {
   constructFromJson (json) {
@@ -11,7 +12,18 @@ class ActionButton extends window.HTMLButtonElement {
 
     this.updateFromJson(json)
 
-    this.onclick = () => { this.startAction() }
+    this.onclick = () => { 
+      if (json.arguments.length > 0) {
+        let frm = document.createElement('form', { is: 'argument-form' })
+        window.frm = frm
+        console.log(frm)
+        frm.setup(json, this.startAction)
+
+        document.body.appendChild(frm)
+      } else {
+        this.startAction() 
+      }
+    }
 
     this.constructTemplate()
 

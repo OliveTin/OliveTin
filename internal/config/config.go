@@ -11,6 +11,19 @@ type ActionButton struct {
 	CSS         map[string]string `mapstructure:"omitempty"`
 	Timeout     int
 	Permissions []PermissionsEntry
+	Arguments	[]ActionArgument
+}
+
+type ActionArgument struct {
+	Variable	string
+	Label		string
+	Type		string
+	Values 		[]ActionArgumentValue
+}
+
+type ActionArgumentValue struct {
+	Value		string
+	Label		string
 }
 
 // Entity represents a "thing" that can have multiple actions associated with it.
