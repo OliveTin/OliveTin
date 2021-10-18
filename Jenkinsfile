@@ -4,6 +4,8 @@ pipeline {
     stages {
         stage ('Pre-Build') {
             steps {
+				cleanWs()
+
 				sh 'make go-tools'
             }
         }
