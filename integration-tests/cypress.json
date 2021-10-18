@@ -1,0 +1,5 @@
+{
+	"baseUrl": "http://localhost:1337",
+	"screenshotsFolder": "results/screenshots/",
+	"videosFolder": "results/videos/"
+}
