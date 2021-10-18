@@ -21,12 +21,16 @@ pipeline {
         
         stage ('Post-Compile') {
             parallel { 
-                codeStyle: {
-					sh 'make daemon-codestyle'
-					sh 'make webui-codestyle'
-                },
-                unitTests: {
-					sh 'make daemon-unittests'
+                stage('Codestyle') {
+                    steps {
+                        sh 'make daemon-codestyle'
+                        sh 'make webui-codestyle'
+                    }
+                }
+                stage('UnitTests') {
+                    steps {
+                        sh 'make daemon-unittests'
+                    }
                 }
             }
         }
