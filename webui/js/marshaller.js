@@ -4,7 +4,7 @@ export function marshalActionButtonsJsonToHtml (json) {
   const currentIterationTimestamp = Date.now()
 
   for (const jsonButton of json.actions) {
-    var htmlButton = document.querySelector('#actionButton_' + jsonButton.id)
+    let htmlButton = document.querySelector('#actionButton_' + jsonButton.id)
 
     if (htmlButton == null) {
       htmlButton = document.createElement('button', { is: 'action-button' })
@@ -16,12 +16,12 @@ export function marshalActionButtonsJsonToHtml (json) {
       htmlButton.updateHtml()
     }
 
-    htmlButton.updateIterationTimestamp = currentIterationTimestamp;
+    htmlButton.updateIterationTimestamp = currentIterationTimestamp
   }
 
   for (const existingButton of document.querySelector('#contentActions').querySelectorAll('button')) {
-    if (existingButton.updateIterationTimestamp != currentIterationTimestamp) {
-      existingButton.remove();
+    if (existingButton.updateIterationTimestamp !== currentIterationTimestamp) {
+      existingButton.remove()
     }
   }
 }

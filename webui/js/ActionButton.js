@@ -1,8 +1,8 @@
-import { marshalLogsJsonToHtml } from './marshaller.js';
+import { marshalLogsJsonToHtml } from './marshaller.js'
 
 class ActionButton extends window.HTMLButtonElement {
   constructFromJson (json) {
-    this.updateIterationTimestamp = 0;
+    this.updateIterationTimestamp = 0
 
     this.title = json.title
     this.temporaryStatusMessage = null
@@ -14,15 +14,15 @@ class ActionButton extends window.HTMLButtonElement {
     this.onclick = () => { this.startAction() }
 
     this.constructTemplate()
-    
+
     this.updateHtml()
 
-    this.setAttribute("id", "actionButton_" + json.id)
+    this.setAttribute('id', 'actionButton_' + json.id)
   }
 
   updateFromJson (json) {
     // Fields that should not be updated
-    // 
+    //
     // title - as the callback URL relies on it
     // actionCallbackUrl - as it's based on the title
     // temporaryStatusMessage - as the button might be "waiting" on execution to finish while it's being updated.
@@ -42,7 +42,7 @@ class ActionButton extends window.HTMLButtonElement {
 
     window.fetch(this.actionCallUrl).then(res => res.json()
     ).then((json) => {
-      marshalLogsJsonToHtml({"logs": [json.logEntry]})
+      marshalLogsJsonToHtml({ logs: [json.logEntry] })
 
       if (json.logEntry.timedOut) {
         this.onActionResult('actionTimeout', 'Timed out')
@@ -63,7 +63,7 @@ class ActionButton extends window.HTMLButtonElement {
 
     setTimeout(() => {
       this.classList.remove(cssClass)
-    }, 1000);
+    }, 1000)
   }
 
   onActionError (err) {
@@ -75,7 +75,7 @@ class ActionButton extends window.HTMLButtonElement {
 
     setTimeout(() => {
       this.classList.remove('actionFailed')
-    }, 1000);
+    }, 1000)
   }
 
   constructTemplate () {

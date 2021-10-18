@@ -15,23 +15,23 @@ function showBigError (type, friendlyType, message) {
 }
 
 function showSection (name) {
-  for (let otherName of ["Actions", "Logs"]) {
-    document.getElementById('show' + otherName).classList.remove('activeSection');
-    document.getElementById('content' + otherName).hidden = true;
+  for (const otherName of ['Actions', 'Logs']) {
+    document.getElementById('show' + otherName).classList.remove('activeSection')
+    document.getElementById('content' + otherName).hidden = true
   }
 
   document.getElementById('show' + name).classList.add('activeSection')
-  document.getElementById('content' + name).hidden = false;
+  document.getElementById('content' + name).hidden = false
 }
 
-function setupSections() {
-  document.getElementById('showActions').onclick = () => { showSection('Actions') };
+function setupSections () {
+  document.getElementById('showActions').onclick = () => { showSection('Actions') }
   document.getElementById('showLogs').onclick = () => { showSection('Logs') }
-  
-  showSection('Actions');
+
+  showSection('Actions')
 }
 
-function fetchGetButtons() {
+function fetchGetButtons () {
   window.fetch(window.restBaseUrl + 'GetButtons', {
     cors: 'cors'
   }).then(res => {
@@ -43,7 +43,7 @@ function fetchGetButtons() {
   })
 }
 
-function fetchGetLogs() {
+function fetchGetLogs () {
   window.fetch(window.restBaseUrl + 'GetLogs', {
     cors: 'cors'
   }).then(res => {
@@ -59,16 +59,16 @@ function processWebuiSettingsJson (settings) {
   window.restBaseUrl = settings.Rest
 
   if (settings.ThemeName) {
-    var themeCss = document.createElement('link')
-    themeCss.setAttribute('rel', 'stylesheet');
+    const themeCss = document.createElement('link')
+    themeCss.setAttribute('rel', 'stylesheet')
     themeCss.setAttribute('type', 'text/css')
-    themeCss.setAttribute('href', '/themes/' + settings.ThemeName + '/theme.css');
+    themeCss.setAttribute('href', '/themes/' + settings.ThemeName + '/theme.css')
 
-    document.head.appendChild(themeCss);
+    document.head.appendChild(themeCss)
   }
 }
 
-setupSections();
+setupSections()
 
 window.fetch('webUiSettings.json').then(res => {
   return res.json()
@@ -78,8 +78,7 @@ window.fetch('webUiSettings.json').then(res => {
   fetchGetButtons()
   fetchGetLogs()
 
-  window.buttonInterval = setInterval(fetchGetButtons, 3000);
+  window.buttonInterval = setInterval(fetchGetButtons, 3000)
 }).catch(err => {
   showBigError('fetch-webui-settings', 'getting webui settings', err)
 })
-
