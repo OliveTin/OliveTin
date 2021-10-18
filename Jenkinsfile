@@ -23,13 +23,17 @@ pipeline {
             parallel { 
                 stage('Codestyle') {
                     steps {
-                        sh 'make daemon-codestyle'
-                        sh 'make webui-codestyle'
+						withEnv(["PATH+GO=/root/go/bin/"]) {
+                        	sh 'make daemon-codestyle'
+                        	sh 'make webui-codestyle'
+						}
                     }
                 }
                 stage('UnitTests') {
                     steps {
-                        sh 'make daemon-unittests'
+						withEnv(["PATH+GO=/root/go/bin/"]) {
+	                        sh 'make daemon-unittests'
+						}
                     }
                 }
             }
