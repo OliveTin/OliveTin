@@ -45,11 +45,23 @@ func (api *oliveTinAPI) StartAction(ctx ctx.Context, req *pb.StartActionRequest)
 }
 
 func (api *oliveTinAPI) GetButtons(ctx ctx.Context, req *pb.GetButtonsRequest) (*pb.GetButtonsResponse, error) {
-	res := &pb.GetButtonsResponse{}
-
 	user := acl.UserFromContext(ctx)
 
-	for _, action := range cfg.ActionButtons {
+	res := actionButtonsCfgToPb(cfg.ActionButtons, user)
+
+	if len(res.Actions) == 0 {
+		log.Warn("Zero actions found - check that you have some actions defined, with a view permission")
+	}
+
+	log.Debugf("getButtons: %v", res)
+
+	return res, nil
+}
+
+func actionButtonsCfgToPb(cfgActionButtons []config.ActionButton, user *acl.User) (*pb.GetButtonsResponse) {
+	res := &pb.GetButtonsResponse{}
+
+	for _, action := range cfgActionButtons {
 		if !acl.IsAllowedView(cfg, user, &action) {
 			continue
 		}
@@ -64,13 +76,7 @@ func (api *oliveTinAPI) GetButtons(ctx ctx.Context, req *pb.GetButtonsRequest) (
 		res.Actions = append(res.Actions, &btn)
 	}
 
-	if len(res.Actions) == 0 {
-		log.Warn("Zero actions found - check that you have some actions defined, with a view permission")
-	}
-
-	log.Debugf("getButtons: %v", res)
-
-	return res, nil
+	return res
 }
 
 func (api *oliveTinAPI) GetLogs(ctx ctx.Context, req *pb.GetLogsRequest) (*pb.GetLogsResponse, error) {
