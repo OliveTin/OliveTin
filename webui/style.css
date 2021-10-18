@@ -275,3 +275,43 @@ label {
 input {
 	padding: .6em;
 }
+
+form.actionArguments {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	padding: 1em;
+    box-shadow: 0 0 6px 0 #aaa;
+	background-color: #dee3e7;
+}
+
+h2 {
+	font-size: 1em;
+}
+
+h2 span.icon {
+	vertical-align: middle;
+	padding-right: .2em;
+}
+
+form div.wrapper {
+	border-radius: 1em;
+    box-shadow: 0 0 10px 0 #444;
+    background-color: white;
+    border: 1px solid #999;
+	text-align: left;
+	padding: 1em;
+}
+
+label {
+	width: 30%;
+	text-align: right;
+	display: inline-block;
+	padding-right: 1em;
+}
+
+input {
+	padding: .6em;
+}

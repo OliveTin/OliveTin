@@ -1,4 +1,4 @@
-import { marshalLogsJsonToHtml } from './marshaller.js'
+import { marshalLogsJsonToHtml } from './marshaller.js';
 import "./ArgumentForm.js"
 
 class ActionButton extends window.HTMLButtonElement {
