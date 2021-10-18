@@ -10,7 +10,7 @@ pipeline {
         
         stage('Compile') {
             steps {
-				withEnv(["PATH+GO=${root}/go/bin"]) {
+				withEnv(["PATH+GO=/root/go/bin/"]) {
 					sh 'go env'
 					sh 'echo $PATH'
                 	sh 'buf generate'
