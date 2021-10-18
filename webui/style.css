@@ -8,7 +8,7 @@ body {
 }
 
 fieldset {
-	padding: 0;
+  padding: 0;
 }
 
 fieldset#rootGroup {
@@ -20,43 +20,30 @@ fieldset#rootGroup {
   border: 0;
 }
 
-fieldset#switcher {
-	border: 0; 
-	text-align: right;
-	margin-bottom: 1em;
-}
-
-fieldset#switcher button:first-child{
-	border-radius: 1em 0em 0em 1em;
-}
-
-fieldset#switcher button:last-child{
-	border-radius: 0 1em 1em 0;
-}
-
 table {
-	background-color: white;
-	border-collapse: collapse;
-	width: 100%;
-	box-shadow: 0 0 10px 0 #444;
+  background-color: white;
+  border-collapse: collapse;
+  width: 100%;
+  box-shadow: 0 0 10px 0 #444;
 }
 
-th, td {
-	border: 1px solid #efefef;
-	text-align: left;
-	padding: .6em;
+th,
+td {
+  border: 1px solid #efefef;
+  text-align: left;
+  padding: 0.6em;
 }
 
 th:first-child {
-	width: 5%;
+  width: 5%;
 }
 
 tr:hover td {
-	background-color: beige;
+  background-color: beige;
 }
 
 button.activeSection {
-	font-weight: bold;
+  font-weight: bold;
 }
 
 legend {
@@ -114,6 +101,20 @@ button:disabled {
   color: gray;
   background-color: #333;
   cursor: not-allowed;
+}
+
+fieldset#switcher {
+  border: 0;
+  text-align: right;
+  margin-bottom: 1em;
+}
+
+fieldset#switcher button:first-child {
+  border-radius: 1em 0 0 1em;
+}
+
+fieldset#switcher button:last-child {
+  border-radius: 0 1em 1em 0;
 }
 
 span.icon {
@@ -196,54 +197,41 @@ img.logo {
     background-color: black;
   }
 
-  table, td, th {
-	border: 1px solid gray;
+  table,
+  td,
+  th {
+    border: 1px solid gray;
   }
 
-  td, tr {
-	background-color: #222;
-	color: white;
+  td,
+  tr {
+    background-color: #222;
+    color: white;
   }
 
   tr:hover td {
-	background-color: #666;
+    background-color: #666;
   }
 
-  footer, footer a {
-	color: gray;
+  footer,
+  footer a {
+    color: gray;
   }
 }
 
 main {
-	padding: 1em;
+  padding: 1em;
 }
 
 summary {
-	cursor: pointer;
+  cursor: pointer;
 }
 
 details {
-	display: inline-block;
+  display: inline-block;
 }
 
 details[open] {
-	margin-top: 1em;
-	display: block;
-}
-
-main {
-	padding: 1em;
-}
-
-summary {
-	cursor: pointer;
-}
-
-details {
-	display: inline-block;
-}
-
-details[open] {
-	margin-top: 1em;
-	display: block;
+  margin-top: 1em;
+  display: block;
 }
