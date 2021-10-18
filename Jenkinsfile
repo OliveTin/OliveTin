@@ -1,10 +1,15 @@
 pipeline {
     agent any
 
+	options {
+		skipDefaultCheckout(true)
+	}
+
     stages {
         stage ('Pre-Build') {
             steps {
 				cleanWs()
+				checkout scm
 
 				sh 'make go-tools'
             }
