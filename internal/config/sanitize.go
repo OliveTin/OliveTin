@@ -38,6 +38,12 @@ func sanitizeActionArgument(arg *ActionArgument) {
 		arg.Title = arg.Name
 	}
 
+	for idx, choice := range arg.Choices {
+		if choice.Title == "" {
+			arg.Choices[idx].Title = choice.Value
+		}
+	}
+
 	sanitizeActionArgumentNoType(arg)
 
 	// TODO Validate the default against the type checker, but this creates a
