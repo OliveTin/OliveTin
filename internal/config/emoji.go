@@ -1,4 +1,4 @@
-package grpcapi
+package config
 
 var emojis = map[string]string{
 	"poop":  "&#x1f4a9;",

@@ -2,8 +2,7 @@ package config
 
 import ()
 
-// ActionButton represents a button that is shown in the webui.
-type ActionButton struct {
+type Action struct {
 	ID          string
 	Title       string
 	Icon        string
@@ -11,15 +10,29 @@ type ActionButton struct {
 	CSS         map[string]string `mapstructure:"omitempty"`
 	Timeout     int
 	Permissions []PermissionsEntry
+	Arguments   []ActionArgument
+}
+
+type ActionArgument struct {
+	Name    string
+	Title   string
+	Type    string
+	Default string
+	Choices []ActionArgumentChoice
+}
+
+type ActionArgumentChoice struct {
+	Value string
+	Title string
 }
 
 // Entity represents a "thing" that can have multiple actions associated with it.
 // for example, a media player with a start and stop action.
 type Entity struct {
-	Title         string
-	Icon          string
-	ActionButtons []ActionButton `mapstructure:"actions"`
-	CSS           map[string]string
+	Title   string
+	Icon    string
+	Actions []Action `mapstructure:"actions"`
+	CSS     map[string]string
 }
 
 type PermissionsEntry struct {
@@ -49,9 +62,10 @@ type Config struct {
 	ListenAddressGrpcActions        string
 	ExternalRestAddress             string
 	LogLevel                        string
-	ActionButtons                   []ActionButton `mapstructure:"actions"`
-	Entities                        []Entity       `mapstructure:"entities"`
+	Actions                         []Action `mapstructure:"actions"`
+	Entities                        []Entity `mapstructure:"entities"`
 	CheckForUpdates                 bool
+	ShowNewVersions                 bool
 	Usergroups                      []UserGroup
 	DefaultPermissions              DefaultPermissions
 }
@@ -67,6 +81,7 @@ func DefaultConfig() *Config {
 	config.ListenAddressWebUI = "localhost:1340"
 	config.LogLevel = "INFO"
 	config.CheckForUpdates = true
+	config.ShowNewVersions = true
 	config.DefaultPermissions.Exec = true
 	config.DefaultPermissions.View = true
 

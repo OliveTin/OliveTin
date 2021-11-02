@@ -14,7 +14,7 @@ daemon-compile: daemon-compile-armhf daemon-compile-x64-lin daemon-compile-x64-w
 daemon-codestyle:
 	go fmt ./...
 	go vet ./...
-	gocyclo -over 3 cmd internal 
+	gocyclo -over 4 cmd internal 
 
 daemon-unittests:
 	mkdir -p reports

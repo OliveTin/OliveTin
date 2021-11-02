@@ -2,8 +2,6 @@ package grpcapi
 
 import (
 	ctx "context"
-	"crypto/md5"
-	"fmt"
 	pb "github.com/jamesread/OliveTin/gen/grpc"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
@@ -16,7 +14,7 @@ import (
 
 var (
 	cfg *config.Config
-	ex  = executor.Executor{}
+	ex  = executor.DefaultExecutor()
 )
 
 type oliveTinAPI struct {
@@ -24,59 +22,36 @@ type oliveTinAPI struct {
 }
 
 func (api *oliveTinAPI) StartAction(ctx ctx.Context, req *pb.StartActionRequest) (*pb.StartActionResponse, error) {
-	actualAction, err := executor.FindAction(cfg, req.ActionName)
+	args := make(map[string]string)
 
-	if err != nil {
-		log.Errorf("Error finding action %s, %s", err, req.ActionName)
+	log.Debugf("SA %v", req)
 
-		return &pb.StartActionResponse{
-			LogEntry: nil,
-		}, nil
+	for _, arg := range req.Arguments {
+		args[arg.Name] = arg.Value
 	}
 
-	user := acl.UserFromContext(ctx)
-
-	if !acl.IsAllowedExec(cfg, user, actualAction) {
-		return &pb.StartActionResponse{}, nil
-
+	execReq := executor.ExecutionRequest{
+		ActionName: req.ActionName,
+		Arguments:  args,
+		User:       acl.UserFromContext(ctx),
+		Cfg:        cfg,
 	}
 
-	return ex.ExecAction(cfg, acl.UserFromContext(ctx), actualAction), nil
+	return ex.ExecRequest(&execReq), nil
 }
 
-func (api *oliveTinAPI) GetButtons(ctx ctx.Context, req *pb.GetButtonsRequest) (*pb.GetButtonsResponse, error) {
+func (api *oliveTinAPI) GetDashboardComponents(ctx ctx.Context, req *pb.GetDashboardComponentsRequest) (*pb.GetDashboardComponentsResponse, error) {
 	user := acl.UserFromContext(ctx)
 
-	res := actionButtonsCfgToPb(cfg.ActionButtons, user)
+	res := actionsCfgToPb(cfg.Actions, user)
 
 	if len(res.Actions) == 0 {
 		log.Warn("Zero actions found - check that you have some actions defined, with a view permission")
 	}
 
-	log.Debugf("getButtons: %v", res)
+	log.Debugf("GetDashboardComponents: %v", res)
 
 	return res, nil
-}
-
-func actionButtonsCfgToPb(cfgActionButtons []config.ActionButton, user *acl.User) (*pb.GetButtonsResponse) {
-	res := &pb.GetButtonsResponse{}
-
-	for _, action := range cfgActionButtons {
-		if !acl.IsAllowedView(cfg, user, &action) {
-			continue
-		}
-
-		btn := pb.ActionButton{
-			Id:      fmt.Sprintf("%x", md5.Sum([]byte(action.Title))),
-			Title:   action.Title,
-			Icon:    lookupHTMLIcon(action.Icon),
-			CanExec: acl.IsAllowedExec(cfg, user, &action),
-		}
-
-		res.Actions = append(res.Actions, &btn)
-	}
-
-	return res
 }
 
 func (api *oliveTinAPI) GetLogs(ctx ctx.Context, req *pb.GetLogsRequest) (*pb.GetLogsResponse, error) {
@@ -87,6 +62,7 @@ func (api *oliveTinAPI) GetLogs(ctx ctx.Context, req *pb.GetLogsRequest) (*pb.Ge
 	for _, logEntry := range ex.Logs {
 		ret.Logs = append(ret.Logs, &pb.LogEntry{
 			ActionTitle: logEntry.ActionTitle,
+			ActionIcon:  logEntry.ActionIcon,
 			Datetime:    logEntry.Datetime,
 			Stdout:      logEntry.Stdout,
 			Stderr:      logEntry.Stderr,
@@ -96,6 +72,25 @@ func (api *oliveTinAPI) GetLogs(ctx ctx.Context, req *pb.GetLogsRequest) (*pb.Ge
 	}
 
 	return ret, nil
+}
+
+/*
+This function is ONLY a helper for the UI - the arguments are validated properly
+on the StartAction -> Executor chain. This is here basically to provide helpful
+error messages more quickly before starting the action.
+*/
+func (api *oliveTinAPI) ValidateArgumentType(ctx ctx.Context, req *pb.ValidateArgumentTypeRequest) (*pb.ValidateArgumentTypeResponse, error) {
+	err := executor.TypeSafetyCheck("", req.Value, req.Type)
+	desc := ""
+
+	if err != nil {
+		desc = err.Error()
+	}
+
+	return &pb.ValidateArgumentTypeResponse{
+		Valid:       err == nil,
+		Description: desc,
+	}, nil
 }
 
 // Start will start the GRPC API.

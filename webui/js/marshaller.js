@@ -31,9 +31,30 @@ export function marshalLogsJsonToHtml (json) {
     const tpl = document.getElementById('tplLogRow')
     const row = tpl.content.cloneNode(true)
 
+    if (logEntry.stdout.length === 0) {
+      logEntry.stdout = '(empty)'
+    }
+
+    if (logEntry.stderr.length === 0) {
+      logEntry.stderr = '(empty)'
+    }
+
+    let logTableExitCode = logEntry.exitCode
+
+    if (logEntry.exitCode === 0) {
+      logTableExitCode = 'OK'
+    }
+
+    if (logEntry.timedOut) {
+      logTableExitCode += ' (timed out)'
+    }
+
     row.querySelector('.timestamp').innerText = logEntry.datetime
     row.querySelector('.content').innerText = logEntry.actionTitle
-    row.querySelector('pre').innerText = logEntry.stdout
+    row.querySelector('.icon').innerHTML = logEntry.actionIcon
+    row.querySelector('pre.stdout').innerText = logEntry.stdout
+    row.querySelector('pre.stderr').innerText = logEntry.stderr
+    row.querySelector('.exitCode').innerText = logTableExitCode
 
     document.querySelector('#logTableBody').prepend(row)
   }

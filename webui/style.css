@@ -52,6 +52,14 @@ legend {
 
 span[role="icon"] {
   display: block;
+  font-size: 3em;
+  vertical-align: middle;
+}
+
+form span[role="icon"],
+tr.logRow span[role="icon"] {
+  display: inline-block;
+  padding-right: 0.2em;
 }
 
 .error {
@@ -73,11 +81,17 @@ div.entity {
   grid-template-columns: minmax(min-content, auto);
 }
 
+h2 {
+  font-size: 1em;
+  display: inline-block;
+}
+
 div.entity h2 {
   grid-column: 1 / span all;
 }
 
-button {
+button,
+input[type="submit"] {
   padding: 1em;
   color: black;
   display: table-cell;
@@ -88,16 +102,19 @@ button {
   user-select: none;
 }
 
-button:hover {
+button:hover,
+input[type="submit"]:hover {
   box-shadow: 0 0 10px 0 #666;
   cursor: pointer;
 }
 
-button:focus {
+button:focus,
+input[type="submit"]:focus {
   outline: 1px solid black;
 }
 
-button:disabled {
+button:disabled,
+input[type="submit"]:disabled {
   color: gray;
   background-color: #333;
   cursor: not-allowed;
@@ -115,10 +132,6 @@ fieldset#switcher button:first-child {
 
 fieldset#switcher button:last-child {
   border-radius: 0 1em 1em 0;
-}
-
-span.icon {
-  font-size: 3em;
 }
 
 .actionFailed {
@@ -180,13 +193,115 @@ img.logo {
   }
 }
 
+main {
+  padding: 1em;
+}
+
+summary {
+  cursor: pointer;
+}
+
+details {
+  display: inline-block;
+}
+
+details[open] {
+  margin-top: 1em;
+  display: block;
+}
+
+form.actionArguments {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 1em;
+  box-shadow: 0 0 6px 0 #aaa;
+  background-color: #dee3e7;
+}
+
+form div.wrapper {
+  border-radius: 1em;
+  box-shadow: 0 0 10px 0 #444;
+  background-color: white;
+  border: 1px solid #999;
+  text-align: left;
+  padding: 1em;
+}
+
+label {
+  width: 20%;
+  text-align: right;
+  display: inline-block;
+  padding-right: 1em;
+}
+
+input {
+  padding: 0.6em;
+}
+
+input:invalid {
+  outline: 2px solid red;
+}
+
+form .wrapper span.icon {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+form input[type="submit"]:first-child {
+  margin-right: 1em;
+}
+
+button[name=cancel]:hover {
+  background-color: salmon;
+}
+
+input[name=start]:hover {
+  background-color: #aceaac;
+}
+
+form div.buttons {
+  text-align: right;
+}
+
+pre {
+  border: 1px solid gray;
+  padding: 1em;
+  min-height: 1em;
+}
+
+td.exitCode {
+  text-align: center;
+}
+
+input.invalid {
+  background-color: salmon;
+}
+
+#availableVersion {
+  background-color: #aceaac;
+  padding: 0.2em;
+  border-radius: 1em;
+}
+
 @media (prefers-color-scheme: dark) {
   body {
     background-color: #333;
     color: white;
   }
 
-  button {
+  form.actionArguments {
+    background-color: #333;
+  }
+
+  form div.wrapper {
+    background-color: #222;
+  }
+
+  button,
+  input[type="submit"] {
     border: 1px solid #666;
     background-color: #222;
     box-shadow: 0 0 6px 0 #444;
@@ -217,21 +332,4 @@ img.logo {
   footer a {
     color: gray;
   }
-}
-
-main {
-  padding: 1em;
-}
-
-summary {
-  cursor: pointer;
-}
-
-details {
-  display: inline-block;
-}
-
-details[open] {
-  margin-top: 1em;
-  display: block;
 }

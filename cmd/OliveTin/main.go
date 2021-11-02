@@ -44,8 +44,6 @@ func init() {
 
 	cfg = config.DefaultConfig()
 
-	reloadConfig()
-
 	viper.WatchConfig()
 	viper.OnConfigChange(func(e fsnotify.Event) {
 		if e.Op == fsnotify.Write {
@@ -54,6 +52,9 @@ func init() {
 			reloadConfig()
 		}
 	})
+
+	reloadConfig()
+	log.Info("Init complete")
 }
 
 func reloadConfig() {
@@ -62,9 +63,7 @@ func reloadConfig() {
 		os.Exit(1)
 	}
 
-	if logLevel, err := log.ParseLevel(cfg.LogLevel); err == nil {
-		log.SetLevel(logLevel)
-	}
+	config.Sanitize(cfg)
 }
 
 func main() {

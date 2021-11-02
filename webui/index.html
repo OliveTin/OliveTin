@@ -23,6 +23,7 @@
 						<tr>
 							<th>Timestamp</th>
 							<th>Log</th>
+							<th>Exit Code</th>
 						</tr>
 					</thead>
 					<tbody id = "logTableBody" />
@@ -38,28 +39,56 @@
 			<p><img title = "application icon" src = "OliveTinLogo.png" height = "1em" class = "logo" /> OliveTin</p>
 			<p>	
 				<a href = "https://docs.olivetin.app" target = "_new">Documentation</a> | 
-				<a href = "https://github.com/OliveTin/OliveTin/issues/new/choose" target = "_new">Raise an issue on GitHub</a>
+				<a href = "https://github.com/OliveTin/OliveTin/issues/new/choose" target = "_new">Raise an issue on GitHub</a> | 
+				<span id = "currentVersion">Version: ?</p>  
+				<a id = "availableVersion" href = "http://olivetin.app" target = "_blank" hidden>?</a>
 			</p>
 		</footer>
 
+		<template id = "tplArgumentForm">
+			<div class = "wrapper">
+				<div>
+					<span class = "icon" role = "icon"></span>
+					<h2>Argument form</h2>
+				</div>
+
+				<div class = "arguments"></div>
+
+				<div class = "buttons">
+					<input name = "start" type = "submit" value = "Start">
+					<button name = "cancel">Cancel</button>
+				</div>
+			</div>
+		</template>
+
 		<template id = "tplActionButton">
-			<span role = "img" title = "button icon" class = "icon">&#x1f4a9;</span>
+			<span role = "icon" title = "button icon" class = "icon">&#x1f4a9;</span>
 			<p role = "title" class = "title">Untitled Button</p>
 		</template>
 
 		<template id = "tplLogRow">
-			<tr>
+			<tr class = "logRow">
 				<td class = "timestamp">?</td> 
 				<td>
+					<span class = "icon" role = "icon"></span>
 					<span class = "content">?</span>
 				
 					<details>
 						<summary>stdout</summary>
-						<pre>
+						<pre class = "stdout">
 							?
 						</pre>
 					</details>
+
+					<details>
+						<summary>stderr</summary>
+						<pre class = "stderr">
+							?
+						</pre>
+					</details>
+
 				</td>
+				<td class = "exitCode">?</td>
 			</tr>
 		</template>
 

@@ -21,6 +21,9 @@ type updateRequest struct {
 	MachineID      string
 }
 
+var AvailableVersion = "none"
+var CurrentVersion = "?"
+
 func machineID() string {
 	v, err := machineid.ProtectedID("OliveTin")
 
@@ -39,6 +42,8 @@ func StartUpdateChecker(currentVersion string, currentCommit string, cfg *config
 		log.Warn("Update checking is disabled")
 		return
 	}
+
+	CurrentVersion = currentVersion
 
 	payload := updateRequest{
 		CurrentVersion: currentVersion,
@@ -89,9 +94,9 @@ func actualCheckForUpdate(payload updateRequest) {
 		return
 	}
 
-	newVersion := doRequest(jsonUpdateRequest)
+	AvailableVersion = doRequest(jsonUpdateRequest)
 
 	log.WithFields(log.Fields{
-		"NewVersion": newVersion,
+		"NewVersion": AvailableVersion,
 	}).Infof("Update check complete")
 }

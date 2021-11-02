@@ -31,8 +31,8 @@ function setupSections () {
   showSection('Actions')
 }
 
-function fetchGetButtons () {
-  window.fetch(window.restBaseUrl + 'GetButtons', {
+function fetchGetDashboardComponents () {
+  window.fetch(window.restBaseUrl + 'GetDashboardComponents', {
     cors: 'cors'
   }).then(res => {
     return res.json()
@@ -67,6 +67,13 @@ function processWebuiSettingsJson (settings) {
     document.head.appendChild(themeCss)
   }
 
+  document.querySelector('#currentVersion').innerText = 'Version: ' + settings.CurrentVersion
+
+  if (settings.ShowNewVersions && settings.AvailableVersion !== 'none') {
+    document.querySelector('#availableVersion').innerText = 'New Version Available: ' + settings.AvailableVersion
+    document.querySelector('#availableVersion').hidden = false
+  }
+
   document.querySelector('#switcher').hidden = settings.HideNavigation
 }
 
@@ -77,10 +84,10 @@ window.fetch('webUiSettings.json').then(res => {
 }).then(res => {
   processWebuiSettingsJson(res)
 
-  fetchGetButtons()
+  fetchGetDashboardComponents()
   fetchGetLogs()
 
-  window.buttonInterval = setInterval(fetchGetButtons, 3000)
+  window.buttonInterval = setInterval(fetchGetDashboardComponents, 3000)
 }).catch(err => {
   showBigError('fetch-webui-settings', 'getting webui settings', err)
 })

@@ -9,99 +9,286 @@ import (
 	"context"
 	"errors"
 	"os/exec"
+	"regexp"
+	"strings"
 	"time"
 )
 
+var (
+	typecheckRegex = map[string]string{
+		"very_dangerous_raw_string": "",
+		"int":                       "^[\\d]+$",
+		"ascii":                     "^[a-zA-Z0-9]+$",
+		"ascii_identifier":          "^[a-zA-Z0-9\\-\\.\\_]+$",
+		"ascii_sentence":            "^[a-zA-Z0-9 \\,\\.]+$",
+	}
+)
+
 type InternalLogEntry struct {
-	Datetime    string
-	Content     string
-	Stdout      string
-	Stderr      string
-	TimedOut    bool
-	ExitCode    int32
+	Datetime string
+	Stdout   string
+	Stderr   string
+	TimedOut bool
+	ExitCode int32
+
+	/*
+		The following two properties are obviously on Action normally, but it's useful
+		that logs are lightweight (so we don't need to have an action associated to
+		logs, etc. Therefore, we duplicate those values here.
+	*/
 	ActionTitle string
+	ActionIcon  string
+}
+
+type ExecutionRequest struct {
+	ActionName         string
+	Arguments          map[string]string
+	action             *config.Action
+	Cfg                *config.Config
+	User               *acl.User
+	logEntry           *InternalLogEntry
+	finalParsedCommand string
+}
+
+type ExecutorStep interface {
+	Exec(*ExecutionRequest) bool
 }
 
 type Executor struct {
 	Logs []InternalLogEntry
+
+	chainOfCommand []ExecutorStep
 }
 
-// ExecAction executes an action.
-func (e *Executor) ExecAction(cfg *config.Config, user *acl.User, actualAction *config.ActionButton) *pb.StartActionResponse {
-	log.WithFields(log.Fields{
-		"actionName": actualAction.Title,
-	}).Infof("StartAction")
+func DefaultExecutor() *Executor {
+	e := Executor{}
+	e.chainOfCommand = []ExecutorStep{
+		StepFindAction{},
+		StepAclCheck{},
+		StepParseArgs{},
+		StepLogStart{},
+		StepExec{},
+		StepLogFinish{},
+	}
 
-	res := execAction(cfg, actualAction)
+	return &e
+}
 
-	e.Logs = append(e.Logs, *res)
+type StepFindAction struct{}
+
+func (s StepFindAction) Exec(req *ExecutionRequest) bool {
+	actualAction := req.Cfg.FindAction(req.ActionName)
+
+	if actualAction == nil {
+		log.WithFields(log.Fields{
+			"actionName": req.ActionName,
+		}).Warnf("Action not found")
+
+		req.logEntry.Stderr = "Action not found"
+		req.logEntry.ExitCode = -1337
+
+		return false
+	}
+
+	req.action = actualAction
+	req.logEntry.ActionIcon = actualAction.Icon
+
+	return true
+}
+
+type StepAclCheck struct{}
+
+func (s StepAclCheck) Exec(req *ExecutionRequest) bool {
+	return acl.IsAllowedExec(req.Cfg, req.User, req.action)
+}
+
+// ExecRequest processes an ExecutionRequest
+func (e *Executor) ExecRequest(req *ExecutionRequest) *pb.StartActionResponse {
+	req.logEntry = &InternalLogEntry{
+		Datetime:    time.Now().Format("2006-01-02 15:04:05"),
+		ActionTitle: req.ActionName,
+	}
+
+	for _, step := range e.chainOfCommand {
+		if !step.Exec(req) {
+			break
+		}
+	}
+
+	e.Logs = append(e.Logs, *req.logEntry)
 
 	return &pb.StartActionResponse{
 		LogEntry: &pb.LogEntry{
-			ActionTitle: actualAction.Title,
-			TimedOut:    res.TimedOut,
-			Stderr:      res.Stderr,
-			Stdout:      res.Stdout,
-			ExitCode:    res.ExitCode,
+			ActionTitle: req.logEntry.ActionTitle,
+			ActionIcon:  req.logEntry.ActionIcon,
+			Datetime:    req.logEntry.Datetime,
+			Stderr:      req.logEntry.Stderr,
+			Stdout:      req.logEntry.Stdout,
+			TimedOut:    req.logEntry.TimedOut,
+			ExitCode:    req.logEntry.ExitCode,
 		},
 	}
 }
 
-func execAction(cfg *config.Config, actualAction *config.ActionButton) *InternalLogEntry {
-	res := &InternalLogEntry{
-		Datetime:    time.Now().Format("2006-01-02 15:04:05"),
-		TimedOut:    false,
-		ActionTitle: actualAction.Title,
+type StepLogStart struct{}
+
+func (e StepLogStart) Exec(req *ExecutionRequest) bool {
+	log.WithFields(log.Fields{
+		"title":   req.action.Title,
+		"timeout": req.action.Timeout,
+	}).Infof("Action starting")
+
+	return true
+}
+
+type StepLogFinish struct{}
+
+func (e StepLogFinish) Exec(req *ExecutionRequest) bool {
+	log.WithFields(log.Fields{
+		"title":    req.action.Title,
+		"stdout":   req.logEntry.Stdout,
+		"stderr":   req.logEntry.Stderr,
+		"timedOut": req.logEntry.TimedOut,
+		"exit":     req.logEntry.ExitCode,
+	}).Infof("Action finished")
+
+	return true
+}
+
+type StepParseArgs struct{}
+
+func (e StepParseArgs) Exec(req *ExecutionRequest) bool {
+	var err error
+
+	req.finalParsedCommand, err = parseActionArguments(req.action.Shell, req.Arguments, req.action)
+
+	if err != nil {
+		req.logEntry.ExitCode = -1337
+		req.logEntry.Stderr = ""
+		req.logEntry.Stdout = err.Error()
+
+		log.Warnf(err.Error())
+
+		return false
 	}
 
-	log.WithFields(log.Fields{
-		"title":   actualAction.Title,
-		"timeout": actualAction.Timeout,
-	}).Infof("Found action")
+	return true
+}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(actualAction.Timeout)*time.Second)
+type StepExec struct{}
+
+func (e StepExec) Exec(req *ExecutionRequest) bool {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(req.action.Timeout)*time.Second)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctx, "sh", "-c", actualAction.Shell)
+	cmd := exec.CommandContext(ctx, "sh", "-c", req.finalParsedCommand)
 	stdout, stderr := cmd.Output()
 
-	res.ExitCode = int32(cmd.ProcessState.ExitCode())
-	res.Stdout = string(stdout)
-
-	if stderr == nil {
-		res.Stderr = ""
-	} else {
-		res.Stderr = stderr.Error()
+	if stderr != nil {
+		req.logEntry.Stderr = stderr.Error()
 	}
 
 	if ctx.Err() == context.DeadlineExceeded {
-		res.TimedOut = true
+		req.logEntry.TimedOut = true
+	}
+
+	req.logEntry.ExitCode = int32(cmd.ProcessState.ExitCode())
+	req.logEntry.Stdout = string(stdout)
+
+	return true
+}
+
+func parseActionArguments(rawShellCommand string, values map[string]string, action *config.Action) (string, error) {
+	log.WithFields(log.Fields{
+		"cmd": rawShellCommand,
+	}).Infof("Before Parse Args")
+
+	r := regexp.MustCompile("{{ *?([a-z]+?) *?}}")
+	matches := r.FindAllStringSubmatch(rawShellCommand, -1)
+
+	for _, match := range matches {
+		argValue, argProvided := values[match[1]]
+
+		if !argProvided {
+			log.Infof("%v", values)
+			return "", errors.New("Required arg not provided: " + match[1])
+		}
+
+		err := typecheckActionArgument(match[1], argValue, action)
+
+		if err != nil {
+			return "", err
+		}
+
+		log.WithFields(log.Fields{
+			"name":  match[1],
+			"value": argValue,
+		}).Debugf("Arg assigned")
+
+		rawShellCommand = strings.Replace(rawShellCommand, match[0], argValue, -1)
 	}
 
 	log.WithFields(log.Fields{
-		"stdout":   res.Stdout,
-		"stderr":   res.Stderr,
-		"timedOut": res.TimedOut,
-		"exit":     res.ExitCode,
-	}).Infof("Finished command.")
+		"cmd": rawShellCommand,
+	}).Infof("After Parse Args")
 
-	return res
+	return rawShellCommand, nil
 }
 
-func sanitizeAction(action *config.ActionButton) {
-	if action.Timeout < 3 {
-		action.Timeout = 3
+func typecheckActionArgument(name string, value string, action *config.Action) error {
+	arg := findArg(name, action)
+
+	if arg == nil {
+		return errors.New("Action arg not defined: " + name)
 	}
+
+	if len(arg.Choices) > 0 {
+		return typecheckChoice(value, arg)
+	}
+
+	return TypeSafetyCheck(name, value, arg.Type)
 }
 
-func FindAction(cfg *config.Config, actionTitle string) (*config.ActionButton, error) {
-	for _, action := range cfg.ActionButtons {
-		if action.Title == actionTitle {
-			sanitizeAction(&action)
-
-			return &action, nil
+func typecheckChoice(value string, arg *config.ActionArgument) error {
+	for _, choice := range arg.Choices {
+		if value == choice.Value {
+			return nil
 		}
 	}
 
-	return nil, errors.New("Action not found")
+	return errors.New("Arg value is not one of the predefined choices")
+}
+
+func TypeSafetyCheck(name string, value string, typ string) error {
+	pattern, found := typecheckRegex[typ]
+
+	log.Infof("%v %v", pattern, typ)
+
+	if !found {
+		return errors.New("Arg type not implemented " + typ)
+	}
+
+	matches, _ := regexp.MatchString(pattern, value)
+
+	if !matches {
+		log.WithFields(log.Fields{
+			"name":  name,
+			"type":  typ,
+			"value": value,
+		}).Warn("Arg type check safety failure")
+
+		return errors.New("Invalid argument, doesn't match " + typ)
+	}
+
+	return nil
+}
+
+func findArg(name string, action *config.Action) *config.ActionArgument {
+	for _, arg := range action.Arguments {
+		if arg.Name == name {
+			return &arg
+		}
+	}
+
+	return nil
 }

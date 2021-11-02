@@ -8,12 +8,16 @@ import (
 	"os"
 
 	config "github.com/jamesread/OliveTin/internal/config"
+	updatecheck "github.com/jamesread/OliveTin/internal/updatecheck"
 )
 
 type webUISettings struct {
-	Rest      string
-	ThemeName string
-	HideNavigation bool
+	Rest             string
+	ThemeName        string
+	HideNavigation   bool
+	AvailableVersion string
+	CurrentVersion   string
+	ShowNewVersions  bool
 }
 
 func findWebuiDir() string {
@@ -43,9 +47,12 @@ func generateWebUISettings(w http.ResponseWriter, r *http.Request) {
 	}
 
 	jsonRet, _ := json.Marshal(webUISettings{
-		Rest:      restAddress + "/api/",
-		ThemeName: cfg.ThemeName,
-		HideNavigation: cfg.HideNavigation,
+		Rest:             restAddress + "/api/",
+		ThemeName:        cfg.ThemeName,
+		HideNavigation:   cfg.HideNavigation,
+		AvailableVersion: updatecheck.AvailableVersion,
+		CurrentVersion:   updatecheck.CurrentVersion,
+		ShowNewVersions:  cfg.ShowNewVersions,
 	})
 
 	w.Write([]byte(jsonRet))

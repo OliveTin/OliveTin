@@ -1,4 +1,5 @@
 import { marshalLogsJsonToHtml } from './marshaller.js'
+import './ArgumentForm.js'
 
 class ActionButton extends window.HTMLButtonElement {
   constructFromJson (json) {
@@ -7,11 +8,22 @@ class ActionButton extends window.HTMLButtonElement {
     this.title = json.title
     this.temporaryStatusMessage = null
     this.isWaiting = false
-    this.actionCallUrl = window.restBaseUrl + 'StartAction?actionName=' + this.title
+    this.actionCallUrl = window.restBaseUrl + 'StartAction'
 
     this.updateFromJson(json)
 
-    this.onclick = () => { this.startAction() }
+    this.onclick = () => {
+      if (json.arguments.length > 0) {
+        const frm = document.createElement('form', { is: 'argument-form' })
+        frm.setup(json, (args) => {
+          this.startAction(args)
+        })
+
+        document.body.appendChild(frm)
+      } else {
+        this.startAction()
+      }
+    }
 
     this.constructTemplate()
 
@@ -34,18 +46,41 @@ class ActionButton extends window.HTMLButtonElement {
     }
   }
 
-  startAction () {
+  startAction (actionArgs) {
     this.disabled = true
     this.isWaiting = true
     this.updateHtml()
     this.classList = [] // Removes old animation classes
 
-    window.fetch(this.actionCallUrl).then(res => res.json()
+    if (actionArgs === undefined) {
+      actionArgs = []
+    }
+
+    const startActionArgs = {
+      actionName: this.title,
+      arguments: actionArgs
+    }
+
+    window.fetch(this.actionCallUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(startActionArgs)
+    }).then((res) => {
+      if (res.ok) {
+        return res.json()
+      } else {
+        throw new Error(res.statusText)
+      }
+    }
     ).then((json) => {
       marshalLogsJsonToHtml({ logs: [json.logEntry] })
 
       if (json.logEntry.timedOut) {
         this.onActionResult('actionTimeout', 'Timed out')
+      } else if (json.logEntry.exitCode === -1337) {
+        this.onActionError('Error')
       } else if (json.logEntry.exitCode !== 0) {
         this.onActionResult('actionNonZeroExit', 'Exit code ' + json.logEntry.exitCode)
       } else {
