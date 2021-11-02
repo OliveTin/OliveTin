@@ -1,85 +1,140 @@
 
 class ArgumentForm extends window.HTMLFormElement {
-  setup(json, callback) {
+  setup (json, callback) {
     this.setAttribute('class', 'actionArguments')
 
-    console.log(json)
-
-    this.domWrapper = document.createElement('div')
-    this.domWrapper.classList += 'wrapper'
-    this.appendChild(this.domWrapper)
-
-    this.domTitle = document.createElement('h2')
-    this.domTitle.innerText = json.title + ": Arguments"
-    this.domWrapper.appendChild(this.domTitle);
-
-    this.domIcon = document.createElement('span');
-    this.domIcon.classList += 'icon'
-    this.domIcon.setAttribute('role', 'img')
+    this.constructTemplate()
+    this.domTitle.innerText = json.title
     this.domIcon.innerHTML = json.icon
-    this.domTitle.prepend(this.domIcon)
-
-    let a = document.createElement("span")
-    a.innerText = "This is test version of the form."
-    this.domWrapper.appendChild(a)
-
     this.createDomFormArguments(json.arguments)
-    this.domWrapper.appendChild(this.createDomSubmit())
 
-    console.log(json)
+    this.domBtnStart.onclick = () => {
+      for (const arg of this.argInputs) {
+        if (!arg.validity.valid) {
+          return
+        }
+      }
+
+      const argvs = this.getArgumentValues()
+
+      callback(argvs)
+
+      this.remove()
+    }
+
+    this.domBtnCancel.onclick = () => {
+      this.remove()
+    }
   }
 
-  createDomSubmit() {
-    let el = document.createElement('button')
-    el.setAttribute('action', 'submit')
-    el.innerText = "Run"
+  getArgumentValues () {
+    const ret = []
 
-    return el
+    for (const arg of this.argInputs) {
+      ret.push({
+        name: arg.name,
+        value: arg.value
+      })
+    }
+
+    return ret
   }
 
-  createDomFormArguments(args) {
-    for (let arg of args) {
-      let domFieldWrapper = document.createElement('p');
+  constructTemplate () {
+    const tpl = document.getElementById('tplArgumentForm')
+    const content = tpl.content.cloneNode(true)
+
+    this.appendChild(content)
+
+    this.domTitle = this.querySelector('h2')
+    this.domIcon = this.querySelector('span.icon')
+    this.domWrapper = this.querySelector('.wrapper')
+
+    this.domArgs = this.querySelector('.arguments')
+
+    this.domBtnStart = this.querySelector('[name=start]')
+    this.domBtnCancel = this.querySelector('[name=cancel]')
+  }
+
+  createDomFormArguments (args) {
+    this.argInputs = []
+
+    for (const arg of args) {
+      const domFieldWrapper = document.createElement('p')
 
       domFieldWrapper.appendChild(this.createDomLabel(arg))
       domFieldWrapper.appendChild(this.createDomInput(arg))
 
-      this.domWrapper.appendChild(domFieldWrapper)
+      this.domArgs.appendChild(domFieldWrapper)
     }
   }
 
-  createDomLabel(arg) {
-    let domLbl = document.createElement('label')
-    domLbl.innerText = arg.label + ':';
+  createDomLabel (arg) {
+    const domLbl = document.createElement('label')
+    domLbl.innerText = arg.title + ':'
     domLbl.setAttribute('for', arg.name)
 
-    return domLbl;
+    return domLbl
   }
 
-  createDomInput(arg) {
-    let domEl = null;
+  createDomInput (arg) {
+    let domEl = null
 
     if (arg.choices.length > 0) {
       domEl = document.createElement('select')
 
-      for (let choice of arg.choices) {
+      // select/choice elements don't get an onchange/validation because theoretically
+      // the user should only select from a dropdown of valid options. The choices are
+      // riggeriously checked on StartAction anyway. ValidateArgumentType is only
+      // meant for showing simple warnings in the UI before running.
+
+      for (const choice of arg.choices) {
         domEl.appendChild(this.createSelectOption(choice))
       }
     } else {
       domEl = document.createElement('input')
+      domEl.onchange = () => {
+        const validateArgumentTypeArgs = {
+          value: domEl.value,
+          type: arg.type
+        }
+
+        window.fetch(window.restBaseUrl + 'ValidateArgumentType', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(validateArgumentTypeArgs)
+        }).then((res) => {
+          if (res.ok) {
+            return res.json()
+          } else {
+            throw new Error(res.statusText)
+          }
+        }).then((json) => {
+          console.log(json.valid)
+          if (json.valid) {
+            domEl.setCustomValidity('')
+          } else {
+            domEl.setCustomValidity(json.description)
+          }
+        })
+      }
     }
 
-    domEl.setAttribute('id', arg.name)
+    domEl.name = arg.name
     domEl.value = arg.defaultValue
 
-    return domEl;
+    this.argInputs.push(domEl)
+
+    return domEl
   }
 
-  createSelectOption(choice) {
-    let domEl = document.createElement('option')
+  createSelectOption (choice) {
+    const domEl = document.createElement('option')
 
     domEl.setAttribute('value', choice.value)
-    domEl.innerText = choice.label
+    domEl.innerText = choice.title
 
     return domEl
   }

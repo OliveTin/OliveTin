@@ -52,19 +52,19 @@ func getNewTestServerAndClient(t *testing.T, injectedConfig *config.Config) (*gr
 	return conn, client
 }
 
-func TestGetButtonsAndStart(t *testing.T) {
+func TestGetActionsAndStart(t *testing.T) {
 	cfg = config.DefaultConfig()
-	btn1 := config.ActionButton{}
+	btn1 := config.Action{}
 	btn1.Title = "blat"
 	btn1.Shell = "echo 'test'"
-	cfg.ActionButtons = append(cfg.ActionButtons, btn1)
+	cfg.Actions = append(cfg.Actions, btn1)
 
 	conn, client := getNewTestServerAndClient(t, cfg)
 
-	respGb, err := client.GetButtons(context.Background(), &pb.GetButtonsRequest{})
+	respGb, err := client.GetDashboardComponents(context.Background(), &pb.GetDashboardComponentsRequest{})
 
 	if err != nil {
-		t.Errorf("GetButtons: %v", err)
+		t.Errorf("GetDashboardComponentsRequest: %v", err)
 	}
 
 	assert.Equal(t, true, true, "sayHello Failed")

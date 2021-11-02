@@ -10,7 +10,7 @@ type User struct {
 	Username string
 }
 
-func IsAllowedExec(cfg *config.Config, user *User, action *config.ActionButton) bool {
+func IsAllowedExec(cfg *config.Config, user *User, action *config.Action) bool {
 	canExec := cfg.DefaultPermissions.Exec
 
 	log.WithFields(log.Fields{
@@ -40,7 +40,7 @@ func IsAllowedExec(cfg *config.Config, user *User, action *config.ActionButton) 
 	return canExec
 }
 
-func IsAllowedView(cfg *config.Config, user *User, action *config.ActionButton) bool {
+func IsAllowedView(cfg *config.Config, user *User, action *config.Action) bool {
 	canView := cfg.DefaultPermissions.View
 
 	log.WithFields(log.Fields{

@@ -4,7 +4,7 @@ option go_package = "gen/grpc";
 
 import "google/api/annotations.proto";
 
-message ActionButton {
+message Action {
 	string id = 1;
 	string title = 2;
 	string icon = 3;
@@ -15,7 +15,7 @@ message ActionButton {
 
 message ActionArgument {
 	string name = 1;
-	string label = 2; 
+	string title = 2; 
 	string type = 3;
 	string defaultValue = 4;
 
@@ -24,18 +24,32 @@ message ActionArgument {
 
 message ActionArgumentChoice {
 	string value = 1;
-	string label = 2;
+	string title = 2;
 }
 
-message GetButtonsResponse {
+message Entity {
 	string title = 1;
-	repeated ActionButton actions = 2;
+	string icon = 2;
+	repeated Action actions = 3;
 }
 
-message GetButtonsRequest {}
+message GetDashboardComponentsResponse {
+	string title = 1;
+	repeated Action actions = 2;
+	repeated Entity entities = 3;
+}
+
+message GetDashboardComponentsRequest {}
 
 message StartActionRequest {
 	string actionName = 1;
+
+	repeated StartActionArgument arguments = 2;
+}
+
+message StartActionArgument {
+	string name = 1;
+	string value = 2;
 }
 
 message StartActionResponse {
@@ -53,28 +67,47 @@ message LogEntry {
 	int32 exitCode = 6;
 	string user = 7;
 	string userClass = 8;
+	string actionIcon = 9;
 }
 
 message GetLogsResponse {
 	repeated LogEntry logs = 1;
 }
 
+message ValidateArgumentTypeRequest {
+	string value = 1;
+	string type = 2;
+}
+
+message ValidateArgumentTypeResponse {
+	bool valid = 1;
+	string description = 2;
+}
+
 service OliveTinApi {
-	rpc GetButtons(GetButtonsRequest) returns (GetButtonsResponse) {
+	rpc GetDashboardComponents(GetDashboardComponentsRequest) returns (GetDashboardComponentsResponse) {
 		option (google.api.http) = {
-			get: "/api/GetButtons"
+			get: "/api/GetDashboardComponents"
 		};
 	}
 
 	rpc StartAction(StartActionRequest) returns (StartActionResponse) {
 		option (google.api.http) = {
-			get: "/api/StartAction"
+			post: "/api/StartAction"
+			body: "*"
 		};
 	}
 
 	rpc GetLogs(GetLogsRequest) returns (GetLogsResponse) {
 		option (google.api.http) = {
 			get: "/api/GetLogs"
+		};
+	}
+
+	rpc ValidateArgumentType(ValidateArgumentTypeRequest) returns (ValidateArgumentTypeResponse) {
+		option (google.api.http) = {
+			post: "/api/ValidateArgumentType"
+			body: "*"
 		};
 	}
 }
