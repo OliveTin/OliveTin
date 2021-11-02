@@ -10,25 +10,32 @@ logLevel: "INFO"
 
 # Actions (buttons) to show up on the WebUI:
 actions:   
+  # This will run a simple script that you create.
+- title: Run backup script
+  shell: /opt/backupScript.sh
+  icon: backup
+
   # This will send 1 ping (-c 1)
   # Docs: https://docs.olivetin.app/action-ping.html
-- title: Ping Google.com
-  shell: ping google.com -c 1
+- title: Ping host
+  shell: ping {{ host }} -c {{ count }}
   icon: ping
+  arguments:
+    - name: host
+      title: host
+      type: ascii_identifier
+      default: example.com
+
+    - name: count
+      title: Count
+      type: int
+      default: 1
   
-  # Restart lightdm on host "overseer"
+  # Restart lightdm on host "server1"
   # Docs: https://docs.olivetin.app/action-ping.html
-- title: restart lightdm
-  icon: poop
-  shell: ssh root@overseer 'service lightdm restart'
-
-- title: sleep 2 seconds
-  shell: sleep 2
-  icon: "&#x1F971"
-
-- title: sleep 5 seconds (timeout)
-  shell: sleep 5
-  icon: "&#x1F62A"
+- title: restart httpd
+  icon: restart
+  shell: ssh root@server1 'service httpd restart'
 
   # OliveTin can run long-running jobs like Ansible playbooks. 
   # 
@@ -47,7 +54,24 @@ actions:
   # see the docs below.
   #
   # Docs: https://docs.olivetin.app/action-container-control.html
-- title: Restart Plex
-  icon: smile
-  shell: docker restart plex
+- title: Restart Docker Container
+  icon: restart
+  shell: docker restart {{ container }}
+  arguments:
+    - name: container
+      title: Container name
+      choices:
+        - value: plex
+        - value: traefik
+        - value: grafana
+
+- title: Slow Script
+  shell: sleep 3
+  timeout: 5
+  icon: "&#x1F971"
+
+- title: Broken Script (timeout)
+  shell: sleep 5
+  timeout: 5
+  icon: "&#x1F62A"
 
