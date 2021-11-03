@@ -1,11 +1,11 @@
 package config
 
 var emojis = map[string]string{
-	"poop":  "&#x1f4a9;",
-	"smile": "&#x1F600;",
-	"ping":  "&#x1f4e1;",
-	"backup": "&#128190;",
-	"reboot": "&#9211;",
+	"poop":    "&#x1f4a9;",
+	"smile":   "&#x1F600;",
+	"ping":    "&#x1f4e1;",
+	"backup":  "&#128190;",
+	"reboot":  "&#9211;",
 	"restart": "&#9211;",
 }
 
