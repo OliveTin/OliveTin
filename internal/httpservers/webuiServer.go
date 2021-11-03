@@ -23,12 +23,16 @@ type webUISettings struct {
 func findWebuiDir() string {
 	directoriesToSearch := []string{
 		"./webui",
+		"/usr/share/OliveTin/webui/",
 		"/var/www/olivetin/",
+		"/etc/OliveTin/webui/",
 	}
 
 	for _, dir := range directoriesToSearch {
 		if _, err := os.Stat(dir); !os.IsNotExist(err) {
-			log.Infof("Found the webui directory here: %v", dir)
+			log.WithFields(log.Fields{
+				"dir": dir,
+			}).Infof("Found the webui directory")
 
 			return dir
 		}
