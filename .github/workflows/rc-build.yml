@@ -15,6 +15,9 @@ jobs:
           go-version: '^1.16.0'
 
       - name: grpc
+        run: make grpc
+
+      - name: goreleaser
         uses: goreleaser/goreleaser-action@v2
         with: 
           distribution: goreleaser
