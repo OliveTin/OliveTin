@@ -2,7 +2,6 @@ project_name: OliveTin
 before:
   hooks:
     - go mod tidy
-    - make grpc
 builds:
   - env:
       - CGO_ENABLED=0
