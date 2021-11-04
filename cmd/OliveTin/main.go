@@ -63,7 +63,7 @@ func reloadConfig() {
 		os.Exit(1)
 	}
 
-	config.Sanitize(cfg)
+	cfg.Sanitize()
 }
 
 func main() {

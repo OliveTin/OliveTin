@@ -11,7 +11,7 @@ func TestSanitizeConfig(t *testing.T) {
 	a := Action{
 		Title: "Mr Waffles",
 		Arguments: []ActionArgument{
-			ActionArgument{
+			{
 				Name: "Carrots",
 				Choices: []ActionArgumentChoice{
 					{
@@ -26,8 +26,7 @@ func TestSanitizeConfig(t *testing.T) {
 	}
 
 	c.Actions = append(c.Actions, a)
-
-	Sanitize(c)
+	c.Sanitize()
 
 	a2 := c.FindAction("Mr Waffles")
 

@@ -24,6 +24,9 @@ var (
 	}
 )
 
+// InternalLogEntry objects are created by an Executor, and represent the final
+// state of execution (even if the command is not executed). It's designed to be
+// easily serializable.
 type InternalLogEntry struct {
 	Datetime string
 	Stdout   string
@@ -40,6 +43,8 @@ type InternalLogEntry struct {
 	ActionIcon  string
 }
 
+// ExecutionRequest is a request to execute an action. It's passed to an
+// Executor. They're created from the grpcapi.
 type ExecutionRequest struct {
 	ActionName         string
 	Arguments          map[string]string
@@ -50,33 +55,37 @@ type ExecutionRequest struct {
 	finalParsedCommand string
 }
 
-type ExecutorStep interface {
+type executorStep interface {
 	Exec(*ExecutionRequest) bool
 }
 
+// Executor represents a helper class for executing commands. It's main method
+// is ExecRequest
 type Executor struct {
 	Logs []InternalLogEntry
 
-	chainOfCommand []ExecutorStep
+	chainOfCommand []executorStep
 }
 
+// DefaultExecutor returns an Executor, with a sensible "chain of command" for
+// executing actions.
 func DefaultExecutor() *Executor {
 	e := Executor{}
-	e.chainOfCommand = []ExecutorStep{
-		StepFindAction{},
-		StepAclCheck{},
-		StepParseArgs{},
-		StepLogStart{},
-		StepExec{},
-		StepLogFinish{},
+	e.chainOfCommand = []executorStep{
+		stepFindAction{},
+		stepACLCheck{},
+		stepParseArgs{},
+		stepLogStart{},
+		stepExec{},
+		stepLogFinish{},
 	}
 
 	return &e
 }
 
-type StepFindAction struct{}
+type stepFindAction struct{}
 
-func (s StepFindAction) Exec(req *ExecutionRequest) bool {
+func (s stepFindAction) Exec(req *ExecutionRequest) bool {
 	actualAction := req.Cfg.FindAction(req.ActionName)
 
 	if actualAction == nil {
@@ -95,9 +104,9 @@ func (s StepFindAction) Exec(req *ExecutionRequest) bool {
 	return true
 }
 
-type StepAclCheck struct{}
+type stepACLCheck struct{}
 
-func (s StepAclCheck) Exec(req *ExecutionRequest) bool {
+func (s stepACLCheck) Exec(req *ExecutionRequest) bool {
 	return acl.IsAllowedExec(req.Cfg, req.User, req.action)
 }
 
@@ -132,9 +141,9 @@ func (e *Executor) ExecRequest(req *ExecutionRequest) *pb.StartActionResponse {
 	}
 }
 
-type StepLogStart struct{}
+type stepLogStart struct{}
 
-func (e StepLogStart) Exec(req *ExecutionRequest) bool {
+func (e stepLogStart) Exec(req *ExecutionRequest) bool {
 	log.WithFields(log.Fields{
 		"title":   req.action.Title,
 		"timeout": req.action.Timeout,
@@ -143,9 +152,9 @@ func (e StepLogStart) Exec(req *ExecutionRequest) bool {
 	return true
 }
 
-type StepLogFinish struct{}
+type stepLogFinish struct{}
 
-func (e StepLogFinish) Exec(req *ExecutionRequest) bool {
+func (e stepLogFinish) Exec(req *ExecutionRequest) bool {
 	log.WithFields(log.Fields{
 		"title":    req.action.Title,
 		"stdout":   req.logEntry.Stdout,
@@ -157,9 +166,9 @@ func (e StepLogFinish) Exec(req *ExecutionRequest) bool {
 	return true
 }
 
-type StepParseArgs struct{}
+type stepParseArgs struct{}
 
-func (e StepParseArgs) Exec(req *ExecutionRequest) bool {
+func (e stepParseArgs) Exec(req *ExecutionRequest) bool {
 	var err error
 
 	req.finalParsedCommand, err = parseActionArguments(req.action.Shell, req.Arguments, req.action)
@@ -175,9 +184,9 @@ func (e StepParseArgs) Exec(req *ExecutionRequest) bool {
 	return true
 }
 
-type StepExec struct{}
+type stepExec struct{}
 
-func (e StepExec) Exec(req *ExecutionRequest) bool {
+func (e stepExec) Exec(req *ExecutionRequest) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(req.action.Timeout)*time.Second)
 	defer cancel()
 
@@ -259,6 +268,9 @@ func typecheckChoice(value string, arg *config.ActionArgument) error {
 	return errors.New("Arg value is not one of the predefined choices")
 }
 
+// TypeSafetyCheck checks argument values match a specific type. The types are
+// defined in typecheckRegex, and, you guessed it, uses regex to check for allowed
+// characters.
 func TypeSafetyCheck(name string, value string, typ string) error {
 	pattern, found := typecheckRegex[typ]
 

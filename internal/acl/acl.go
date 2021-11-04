@@ -6,10 +6,12 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+// User respresents a person.
 type User struct {
 	Username string
 }
 
+// IsAllowedExec checks if a User is allowed to execute an Action
 func IsAllowedExec(cfg *config.Config, user *User, action *config.Action) bool {
 	canExec := cfg.DefaultPermissions.Exec
 
@@ -40,6 +42,7 @@ func IsAllowedExec(cfg *config.Config, user *User, action *config.Action) bool {
 	return canExec
 }
 
+// IsAllowedView checks if a User is allowed to view an Action
 func IsAllowedView(cfg *config.Config, user *User, action *config.Action) bool {
 	canView := cfg.DefaultPermissions.View
 
@@ -75,6 +78,8 @@ func isUserInGroup(user *User, usergroup string) bool {
 	return true
 }
 
+// UserFromContext tries to find a user from a grpc context - obviously this is
+// a stub at the moment.
 func UserFromContext(ctx context.Context) *User {
 	return &User{
 		Username: "Guest",

@@ -21,7 +21,7 @@ func testingExecutor() (*Executor, *config.Config) {
 		Title: "Do some tickles",
 		Shell: "echo 'Tickling {{ person }}'",
 		Arguments: []config.ActionArgument{
-			config.ActionArgument{
+			{
 				Name: "person",
 				Type: "ascii",
 			},
@@ -29,7 +29,7 @@ func testingExecutor() (*Executor, *config.Config) {
 	}
 
 	cfg.Actions = append(cfg.Actions, a1)
-	config.Sanitize(cfg)
+	cfg.Sanitize()
 
 	return e, cfg
 }

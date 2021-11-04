@@ -21,7 +21,10 @@ type updateRequest struct {
 	MachineID      string
 }
 
+// AvailableVersion is updated when checking with the update service.
 var AvailableVersion = "none"
+
+// CurrentVersion is set by the main cmd (which is in tern set as a compile constant)
 var CurrentVersion = "?"
 
 func machineID() string {

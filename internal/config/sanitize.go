@@ -4,36 +4,38 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func Sanitize(cfg *Config) {
-	sanitizeLogLevel(cfg)
+// Sanitize will look for common configuration issues, and fix them. For example,
+// populating undefined fields - name -> title, etc.
+func (cfg *Config) Sanitize() {
+	cfg.sanitizeLogLevel()
 
 	//log.Infof("cfg %p", cfg)
 
-	for idx, _ := range cfg.Actions {
-		sanitizeAction(&cfg.Actions[idx])
+	for idx := range cfg.Actions {
+		cfg.Actions[idx].sanitize()
 	}
 }
 
-func sanitizeLogLevel(cfg *Config) {
+func (cfg *Config) sanitizeLogLevel() {
 	if logLevel, err := log.ParseLevel(cfg.LogLevel); err == nil {
 		log.Info("Setting log level to ", logLevel)
 		log.SetLevel(logLevel)
 	}
 }
 
-func sanitizeAction(action *Action) {
+func (action *Action) sanitize() {
 	if action.Timeout < 3 {
 		action.Timeout = 3
 	}
 
 	action.Icon = lookupHTMLIcon(action.Icon)
 
-	for idx, _ := range action.Arguments {
-		sanitizeActionArgument(&action.Arguments[idx])
+	for idx := range action.Arguments {
+		action.Arguments[idx].sanitize()
 	}
 }
 
-func sanitizeActionArgument(arg *ActionArgument) {
+func (arg *ActionArgument) sanitize() {
 	if arg.Title == "" {
 		arg.Title = arg.Name
 	}
@@ -44,13 +46,13 @@ func sanitizeActionArgument(arg *ActionArgument) {
 		}
 	}
 
-	sanitizeActionArgumentNoType(arg)
+	arg.sanitizeNoType()
 
 	// TODO Validate the default against the type checker, but this creates a
 	// import loop
 }
 
-func sanitizeActionArgumentNoType(arg *ActionArgument) {
+func (arg *ActionArgument) sanitizeNoType() {
 	if len(arg.Choices) == 0 && arg.Type == "" {
 		log.WithFields(log.Fields{
 			"arg": arg.Name,

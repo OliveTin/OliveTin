@@ -1,7 +1,7 @@
 package config
 
-import ()
-
+// Action represents the core functionality of OliveTin - commands that show up
+// as buttons in the UI.
 type Action struct {
 	ID          string
 	Title       string
@@ -13,6 +13,7 @@ type Action struct {
 	Arguments   []ActionArgument
 }
 
+// ActionArgument objects appear on Actions.
 type ActionArgument struct {
 	Name    string
 	Title   string
@@ -21,6 +22,7 @@ type ActionArgument struct {
 	Choices []ActionArgumentChoice
 }
 
+// ActionArgumentChoice represents a predefined choice for an argument.
 type ActionArgumentChoice struct {
 	Value string
 	Title string
@@ -35,17 +37,20 @@ type Entity struct {
 	CSS     map[string]string
 }
 
+// PermissionsEntry defines what users can do with an action.
 type PermissionsEntry struct {
 	Usergroup string
 	View      bool
 	Exec      bool
 }
 
+// DefaultPermissions will be used when no PermissionsEntry overrides it.
 type DefaultPermissions struct {
 	View bool
 	Exec bool
 }
 
+// UserGroup is a group of users.
 type UserGroup struct {
 	Name    string
 	Members []string
