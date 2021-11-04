@@ -85,7 +85,6 @@ func (s StepFindAction) Exec(req *ExecutionRequest) bool {
 		}).Warnf("Action not found")
 
 		req.logEntry.Stderr = "Action not found"
-		req.logEntry.ExitCode = -1337
 
 		return false
 	}
@@ -107,6 +106,9 @@ func (e *Executor) ExecRequest(req *ExecutionRequest) *pb.StartActionResponse {
 	req.logEntry = &InternalLogEntry{
 		Datetime:    time.Now().Format("2006-01-02 15:04:05"),
 		ActionTitle: req.ActionName,
+		Stdout:      "",
+		Stderr:      "",
+		ExitCode:    -1337, // If an Action is not actually executed, this is the default exit code.
 	}
 
 	for _, step := range e.chainOfCommand {
@@ -163,8 +165,6 @@ func (e StepParseArgs) Exec(req *ExecutionRequest) bool {
 	req.finalParsedCommand, err = parseActionArguments(req.action.Shell, req.Arguments, req.action)
 
 	if err != nil {
-		req.logEntry.ExitCode = -1337
-		req.logEntry.Stderr = ""
 		req.logEntry.Stdout = err.Error()
 
 		log.Warnf(err.Error())
@@ -236,7 +236,7 @@ func parseActionArguments(rawShellCommand string, values map[string]string, acti
 }
 
 func typecheckActionArgument(name string, value string, action *config.Action) error {
-	arg := findArg(name, action)
+	arg := action.FindArg(name)
 
 	if arg == nil {
 		return errors.New("Action arg not defined: " + name)
@@ -262,8 +262,6 @@ func typecheckChoice(value string, arg *config.ActionArgument) error {
 func TypeSafetyCheck(name string, value string, typ string) error {
 	pattern, found := typecheckRegex[typ]
 
-	log.Infof("%v %v", pattern, typ)
-
 	if !found {
 		return errors.New("Arg type not implemented " + typ)
 	}
@@ -278,16 +276,6 @@ func TypeSafetyCheck(name string, value string, typ string) error {
 		}).Warn("Arg type check safety failure")
 
 		return errors.New("Invalid argument, doesn't match " + typ)
-	}
-
-	return nil
-}
-
-func findArg(name string, action *config.Action) *config.ActionArgument {
-	for _, arg := range action.Arguments {
-		if arg.Name == name {
-			return &arg
-		}
 	}
 
 	return nil

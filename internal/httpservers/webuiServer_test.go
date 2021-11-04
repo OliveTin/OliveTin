@@ -2,8 +2,8 @@ package httpservers
 
 import (
 	"github.com/stretchr/testify/assert"
-	"testing"
 	"os"
+	"testing"
 )
 
 func TestGetWebuiDir(t *testing.T) {
