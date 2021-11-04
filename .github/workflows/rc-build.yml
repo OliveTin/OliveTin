@@ -19,7 +19,7 @@ jobs:
         run: goreleaser release --snapshot --rm-dist 
 
       - name: Archive binaries
-        uses: actions/upload-artifacts@v2
+        uses: actions/upload-artifact@v2
         with: 
           name: dist
           path: dist/**
