@@ -15,10 +15,11 @@ jobs:
           go-version: '^1.16.0'
 
       - name: grpc
-        run: make grpc
-
-      - name: goreleaser
-        run: goreleaser release --snapshot --rm-dist 
+        uses: goreleaser/goreleaser-action@v2
+        with: 
+          distribution: goreleaser
+          version: latest
+          args: release --snapshot --rm-dist
 
       - name: Archive binaries
         uses: actions/upload-artifact@v2
