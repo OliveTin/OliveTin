@@ -27,7 +27,7 @@ func TestFindAction(t *testing.T) {
 
 	assert.NotNil(t, c.FindAction("a2"), "Find action a2")
 	assert.NotNil(t, c.FindAction("a2").FindArg("Blat"), "Find action argument")
-	assert.Nil(t, c.FindAction("a2").FindArg("Blatey Cake"), "Find non-existant action argument")
+	assert.Nil(t, c.FindAction("a2").FindArg("Blatey Cake"), "Find non-existent action argument")
 
-	assert.Nil(t, c.FindAction("waffles"), "Find non-existant action")
+	assert.Nil(t, c.FindAction("waffles"), "Find non-existent action")
 }
