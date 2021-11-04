@@ -25,7 +25,7 @@ jobs:
           path: dist/**
 
       - name: Archive integration tests
-        uses: actions/upload-artifacts@v2
+        uses: actions/upload-artifact@v2
         with: 
           name: integration-tests
           path: integration-tests
