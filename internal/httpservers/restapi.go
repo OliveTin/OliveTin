@@ -31,7 +31,6 @@ func startRestAPIServer(globalConfig *config.Config) error {
 	defer cancel()
 
 	// The JSONPb.EmitDefaults is necssary, so "empty" fields are returned in JSON.
-	//mux := runtime.NewServeMux(runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.JSONPb{OrigName: true, EmitDefaults: true}))
 	mux := runtime.NewServeMux(
 		runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.HTTPBodyMarshaler{
 			Marshaler: &runtime.JSONPb{
@@ -47,7 +46,9 @@ func startRestAPIServer(globalConfig *config.Config) error {
 	err := gw.RegisterOliveTinApiHandlerFromEndpoint(ctx, mux, cfg.ListenAddressGrpcActions, opts)
 
 	if err != nil {
-		log.Fatalf("gw error %v", err)
+		log.Errorf("Could not register REST API Handler %v", err)
+
+		return err
 	}
 
 	return http.ListenAndServe(cfg.ListenAddressRestActions, cors.AllowCors(mux))

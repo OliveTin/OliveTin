@@ -234,7 +234,7 @@ func parseActionArguments(rawShellCommand string, values map[string]string, acti
 			"value": argValue,
 		}).Debugf("Arg assigned")
 
-		rawShellCommand = strings.Replace(rawShellCommand, match[0], argValue, -1)
+		rawShellCommand = strings.ReplaceAll(rawShellCommand, match[0], argValue)
 	}
 
 	log.WithFields(log.Fields{
@@ -265,7 +265,7 @@ func typecheckChoice(value string, arg *config.ActionArgument) error {
 		}
 	}
 
-	return errors.New("Arg value is not one of the predefined choices")
+	return errors.New("argument value is not one of the predefined choices")
 }
 
 // TypeSafetyCheck checks argument values match a specific type. The types are
@@ -275,7 +275,7 @@ func TypeSafetyCheck(name string, value string, typ string) error {
 	pattern, found := typecheckRegex[typ]
 
 	if !found {
-		return errors.New("Arg type not implemented " + typ)
+		return errors.New("argument type not implemented " + typ)
 	}
 
 	matches, _ := regexp.MatchString(pattern, value)
@@ -287,7 +287,7 @@ func TypeSafetyCheck(name string, value string, typ string) error {
 			"value": value,
 		}).Warn("Arg type check safety failure")
 
-		return errors.New("Invalid argument, doesn't match " + typ)
+		return errors.New("invalid argument, doesn't match " + typ)
 	}
 
 	return nil

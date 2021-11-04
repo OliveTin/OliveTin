@@ -9,7 +9,7 @@ import (
 func (cfg *Config) Sanitize() {
 	cfg.sanitizeLogLevel()
 
-	//log.Infof("cfg %p", cfg)
+	// log.Infof("cfg %p", cfg)
 
 	for idx := range cfg.Actions {
 		cfg.Actions[idx].sanitize()

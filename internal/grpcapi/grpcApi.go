@@ -105,7 +105,12 @@ func Start(globalConfig *config.Config) {
 
 	grpcServer := grpc.NewServer()
 	pb.RegisterOliveTinApiServer(grpcServer, newServer())
-	grpcServer.Serve(lis)
+
+	err = grpcServer.Serve(lis)
+
+	if err != nil {
+		log.Fatalf("Could not start gRPC Server - %v", err)
+	}
 }
 
 func newServer() *oliveTinAPI {

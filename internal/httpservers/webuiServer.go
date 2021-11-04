@@ -59,7 +59,11 @@ func generateWebUISettings(w http.ResponseWriter, r *http.Request) {
 		ShowNewVersions:  cfg.ShowNewVersions,
 	})
 
-	w.Write([]byte(jsonRet))
+	_, err := w.Write([]byte(jsonRet))
+
+	if err != nil {
+		log.Warnf("Could not write webui settings: %v", err)
+	}
 }
 
 func startWebUIServer(cfg *config.Config) {
