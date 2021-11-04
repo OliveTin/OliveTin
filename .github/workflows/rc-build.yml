@@ -1,0 +1,31 @@
+name: "RC Build"
+
+on: [push]
+
+jobs:
+  codestyle:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup Go
+        uses: actions/setup-go@v2
+
+      - name: grpc
+        run: make grpc
+
+      - name: goreleaser
+        run: goreleaser release --snapshot --rm-dist 
+
+      - name: Archive binaries
+        uses: actions/upload-artifacts@v2
+        with: 
+          name: dist
+          path: dist/**
+
+      - name: Archive integration tests
+        uses: actions/upload-artifacts@v2
+        with: 
+          name: integration-tests
+          path: integration-tests
