@@ -3,7 +3,7 @@ name: "RC Build"
 on: [push]
 
 jobs:
-  codestyle:
+  rcbuild:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -11,6 +11,8 @@ jobs:
 
       - name: Setup Go
         uses: actions/setup-go@v2
+        with: 
+        go-version: '^1.16.0'
 
       - name: grpc
         run: make grpc
