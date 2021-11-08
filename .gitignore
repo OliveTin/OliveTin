@@ -3,9 +3,9 @@ webui/node_modules
 **/*.swp
 **/*.swo
 gen/
-OliveTin
-OliveTin.armhf
-OliveTin.exe
+/OliveTin
+/OliveTin.armhf
+/OliveTin.exe
 reports
 releases/
 dist/

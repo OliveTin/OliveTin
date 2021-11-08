@@ -1,0 +1,81 @@
+#!/bin/bash
+#
+# olivetin		Start/Stop OliveTin
+#
+# chkconfig: 2345 55 25
+# description: SSH is a protocol for secure remote shell access. \
+#              This service starts up the OpenSSH server daemon.
+#
+# processname: OliveTin
+
+### BEGIN INIT INFO
+# Provides: OliveTin
+# Required-Start: $local_fs $network $syslog
+# Required-Stop: $local_fs $syslog
+# Should-Start: $syslog
+# Should-Stop: $network $syslog
+# Default-Start: 2 3 4 5
+# Default-Stop: 0 1 6
+# Short-Description: Start/Stop OliveTin
+# Description:       OliveTin is an app to run your Linux shell commands from a web interface.
+#
+### END INIT INFO
+
+# source function library
+. /etc/rc.d/init.d/functions
+
+RETVAL=0
+prog="OliveTin"
+lockfile=/var/lock/subsys/$prog
+
+runlevel=$(set -- $(runlevel); eval "echo \$$#" )
+
+start()
+{
+	echo -n $"Starting $prog: "
+	/usr/local/bin/OliveTin $OPTIONS &
+	RETVAL=$?
+	return $RETVAL
+}
+
+stop()
+{
+	echo -n $"Stopping $prog: "
+	killall OliveTin
+	RETVAL=$?
+	return $RETVAL
+}
+
+status() {
+	PID=$(pidof OliveTin)
+	RETVAL=$? 
+
+	if [ $RETVAL -eq 1 ] ; then
+		echo "OliveTin is stopped"
+	else
+		echo "OliveTin is running"
+	fi
+
+	return $RETVAL
+}
+
+restart() {
+	stop
+	start
+}
+
+case "$1" in
+	start)
+		start
+		;;
+	stop)
+		stop
+		;;
+	status)
+		status
+		;;
+	*)
+		echo $"Usage: $0 {start|stop|status|restart}"
+		RETVAL=2
+esac
+exit $RETVAL
