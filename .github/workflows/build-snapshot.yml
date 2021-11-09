@@ -1,4 +1,4 @@
-name: "RC Build"
+name: "Build Snapshot"
 
 on: [push]
 

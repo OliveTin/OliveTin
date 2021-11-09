@@ -12,6 +12,9 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v2
 
+      - name: deps
+        run: make grpc
+
       - name: daemon
         run: make daemon-codestyle
 
