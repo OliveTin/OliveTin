@@ -34,7 +34,12 @@
 				<fieldset id = "rootGroup">
 				</fieldset>
 			</section>
+
+			<noscript>
+				<div class = "error">Sorry, JavaScript is required to use OliveTin.</div>
+			</noscript>
 		</main>
+
 		<footer title = "footer">
 			<p><img title = "application icon" src = "OliveTinLogo.png" height = "1em" class = "logo" /> OliveTin</p>
 			<p>	
@@ -91,6 +96,28 @@
 				<td class = "exitCode">?</td>
 			</tr>
 		</template>
+
+		<script type = "text/javascript">
+			/** 
+			This is the bootstrap code, which relies on very simple, old javascript
+		  	to at least display a helpful error message if we can't use OliveTin.
+			*/
+			function showBigError (type, friendlyType, message) {
+			  clearInterval(window.buttonInterval)
+
+			  console.error('Error ' + type + ': ', message)
+
+			  const domErr = document.createElement('div')
+			  domErr.classList.add('error')
+			  domErr.innerHTML = '<h1>Error ' + friendlyType + '</h1><p>' + message + "</p><p><a href = 'http://docs.olivetin.app/troubleshooting.html' target = 'blank'/>OliveTin Documentation</a></p>"
+
+			  document.getElementById('rootGroup').appendChild(domErr)
+			}
+		</script>
+
+		<script type = "text/javascript" nomodule>
+			showBigError("js-modules-not-supported", "Sorry, your browser does not support JavaScript modules.", null)
+		</script>
 
 		<script type = "module" src = "main.js"></script>
 	</body>

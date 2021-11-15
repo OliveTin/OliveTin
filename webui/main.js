@@ -2,18 +2,6 @@
 
 import { marshalActionButtonsJsonToHtml, marshalLogsJsonToHtml } from './js/marshaller.js'
 
-function showBigError (type, friendlyType, message) {
-  clearInterval(window.buttonInterval)
-
-  console.error('Error ' + type + ': ', message)
-
-  const domErr = document.createElement('div')
-  domErr.classList.add('error')
-  domErr.innerHTML = '<h1>Error ' + friendlyType + '</h1><p>' + message + "</p><p><a href = 'http://docs.olivetin.app/troubleshooting.html' target = 'blank'/>OliveTin Documentation</a></p>"
-
-  document.getElementById('rootGroup').appendChild(domErr)
-}
-
 function showSection (name) {
   for (const otherName of ['Actions', 'Logs']) {
     document.getElementById('show' + otherName).classList.remove('activeSection')
@@ -77,17 +65,21 @@ function processWebuiSettingsJson (settings) {
   document.querySelector('#switcher').hidden = settings.HideNavigation
 }
 
-setupSections()
+function main() {
+  setupSections()
 
-window.fetch('webUiSettings.json').then(res => {
-  return res.json()
-}).then(res => {
-  processWebuiSettingsJson(res)
+  window.fetch('webUiSettings.json').then(res => {
+    return res.json()
+  }).then(res => {
+    processWebuiSettingsJson(res)
 
-  fetchGetDashboardComponents()
-  fetchGetLogs()
+    fetchGetDashboardComponents()
+    fetchGetLogs()
 
-  window.buttonInterval = setInterval(fetchGetDashboardComponents, 3000)
-}).catch(err => {
-  showBigError('fetch-webui-settings', 'getting webui settings', err)
-})
+    window.buttonInterval = setInterval(fetchGetDashboardComponents, 3000)
+  }).catch(err => {
+    showBigError('fetch-webui-settings', 'getting webui settings', err)
+  })
+}
+
+main(); // call self
