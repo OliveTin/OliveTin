@@ -1,4 +1,4 @@
-name: "Jenkins RC Build"
+name: "Build Jenkins RC"
 
 on:
   push:
