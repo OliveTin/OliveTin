@@ -20,6 +20,33 @@ fieldset#rootGroup {
   border: 0;
 }
 
+fieldset#switcher {
+	border: 0; 
+	text-align: right;
+	margin-bottom: 1em;
+}
+
+fieldset#switcher button {
+	padding: 1em;
+	color: black;
+	display: table-cell;
+	text-align: center;
+	border: 1px solid #999;
+	background-color: white;
+	box-shadow: 0 0 6px 0 #aaa;
+	user-select: none;
+	background-color: white;
+	cursor: pointer;
+}
+
+fieldset#switcher button:first-child{
+	border-radius: 1em 0em 0em 1em;
+}
+
+fieldset#switcher button:last-child{
+	border-radius: 0 1em 1em 0;
+}
+
 table {
   background-color: white;
   border-collapse: collapse;
@@ -94,7 +121,6 @@ button,
 input[type="submit"] {
   padding: 1em;
   color: black;
-  display: table-cell;
   text-align: center;
   border: 1px solid #999;
   background-color: white;

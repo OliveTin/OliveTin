@@ -7,21 +7,22 @@ export function marshalActionButtonsJsonToHtml (json) {
     let htmlButton = document.querySelector('#actionButton_' + jsonButton.id)
 
     if (htmlButton == null) {
-      htmlButton = document.createElement('button', { is: 'action-button' })
+      htmlButton = document.createElement('action-button')
       htmlButton.constructFromJson(jsonButton)
 
       document.getElementById('rootGroup').appendChild(htmlButton)
     } else {
       htmlButton.updateFromJson(jsonButton)
-      htmlButton.updateHtml()
+      htmlButton.updateDom()
     }
 
     htmlButton.updateIterationTimestamp = currentIterationTimestamp
   }
 
-  for (const existingButton of document.querySelector('#contentActions').querySelectorAll('button')) {
-    if (existingButton.updateIterationTimestamp !== currentIterationTimestamp) {
-      existingButton.remove()
+  // Remove existing, but stale buttons (that were not updated in this round)
+  for (const existingButton of document.querySelector('#contentActions').querySelectorAll('action-button')) {
+    if (existingButton.updateIterationTimestamp != currentIterationTimestamp) {
+      existingButton.remove();
     }
   }
 }

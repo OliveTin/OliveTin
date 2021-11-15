@@ -1,5 +1,5 @@
 
-class ArgumentForm extends window.HTMLFormElement {
+class ArgumentForm extends window.HTMLElement {
   setup (json, callback) {
     this.setAttribute('class', 'actionArguments')
 
@@ -140,4 +140,4 @@ class ArgumentForm extends window.HTMLFormElement {
   }
 }
 
-window.customElements.define('argument-form', ArgumentForm, { extends: 'form' })
+window.customElements.define('argument-form', ArgumentForm)

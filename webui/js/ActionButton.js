@@ -1,11 +1,18 @@
 import { marshalLogsJsonToHtml } from './marshaller.js'
 import './ArgumentForm.js'
 
-class ActionButton extends window.HTMLButtonElement {
+class ActionButton extends window.HTMLElement {
   constructFromJson (json) {
     this.updateIterationTimestamp = 0
 
-    this.title = json.title
+    this.constructDomFromTemplate()
+
+    // DOM Attributes
+    this.btn.title = json.title
+    this.btn.onclick = () => { this.startAction() }
+    
+    // Class attributes
+    this.actionCallUrl = window.restBaseUrl + 'StartAction?actionName=' + json.title
     this.temporaryStatusMessage = null
     this.isWaiting = false
     this.actionCallUrl = window.restBaseUrl + 'StartAction'
@@ -28,6 +35,12 @@ class ActionButton extends window.HTMLButtonElement {
     this.constructTemplate()
 
     this.updateHtml()
+=======
+
+    this.updateFromJson(json)
+
+    this.updateDom()
+>>>>>>> 40cfb1f (progress so far)
 
     this.setAttribute('id', 'actionButton_' + json.id)
   }
@@ -47,10 +60,10 @@ class ActionButton extends window.HTMLButtonElement {
   }
 
   startAction (actionArgs) {
-    this.disabled = true
+    this.btn.disabled = true
     this.isWaiting = true
-    this.updateHtml()
-    this.classList = [] // Removes old animation classes
+    this.updateDom()
+    this.btn.classList = [] // Removes old animation classes
 
     if (actionArgs === undefined) {
       actionArgs = []
@@ -93,27 +106,27 @@ class ActionButton extends window.HTMLButtonElement {
 
   onActionResult (cssClass, temporaryStatusMessage) {
     this.temporaryStatusMessage = '[ ' + temporaryStatusMessage + ' ]'
-    this.updateHtml()
-    this.classList.add(cssClass)
+    this.updateDom()
+    this.btn.classList.add(cssClass)
 
     setTimeout(() => {
-      this.classList.remove(cssClass)
-    }, 1000)
+      this.btn.classList.remove(cssClass)
+    }, 1000);
   }
 
   onActionError (err) {
     console.log('callback error', err)
-    this.disabled = false
+    this.btn.disabled = false
     this.isWaiting = false
-    this.updateHtml()
-    this.classList.add('actionFailed')
+    this.updateDom()
+    this.btn.classList.add('actionFailed')
 
     setTimeout(() => {
-      this.classList.remove('actionFailed')
-    }, 1000)
+      this.btn.classList.remove('actionFailed')
+    }, 1000);
   }
 
-  constructTemplate () {
+  constructDomFromTemplate () {
     const tpl = document.getElementById('tplActionButton')
     const content = tpl.content.cloneNode(true)
 
@@ -124,11 +137,14 @@ class ActionButton extends window.HTMLButtonElement {
 
     this.appendChild(content)
 
-    this.domTitle = this.querySelector('.title')
-    this.domIcon = this.querySelector('.icon')
+    this.btn = this.querySelector('button')
+    this.domTitle = this.btn.querySelector('.title')
+    this.domIcon = this.btn.querySelector('.icon')
   }
 
-  updateHtml () {
+  updateDom () {
+    console.log(this.querySelector("button"))
+
     if (this.temporaryStatusMessage != null) {
       this.domTitle.innerText = this.temporaryStatusMessage
       this.domTitle.classList.add('temporaryStatusMessage')
@@ -138,16 +154,16 @@ class ActionButton extends window.HTMLButtonElement {
       setTimeout(() => {
         this.temporaryStatusMessage = null
         this.domTitle.classList.remove('temporaryStatusMessage')
-        this.updateHtml()
+        this.updateDom()
       }, 2000)
     } else if (this.isWaiting) {
       this.domTitle.innerText = 'Waiting...'
     } else {
-      this.domTitle.innerText = this.title
+      this.domTitle.innerText = this.btn.title
     }
 
     this.domIcon.innerHTML = this.unicodeIcon
   }
 }
 
-window.customElements.define('action-button', ActionButton, { extends: 'button' })
+window.customElements.define('action-button', ActionButton)
