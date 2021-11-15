@@ -21,8 +21,8 @@ export function marshalActionButtonsJsonToHtml (json) {
 
   // Remove existing, but stale buttons (that were not updated in this round)
   for (const existingButton of document.querySelector('#contentActions').querySelectorAll('action-button')) {
-    if (existingButton.updateIterationTimestamp != currentIterationTimestamp) {
-      existingButton.remove();
+    if (existingButton.updateIterationTimestamp !== currentIterationTimestamp) {
+      existingButton.remove()
     }
   }
 }

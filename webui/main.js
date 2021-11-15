@@ -27,7 +27,7 @@ function fetchGetDashboardComponents () {
   }).then(res => {
     marshalActionButtonsJsonToHtml(res)
   }).catch(err => {
-    showBigError('fetch-buttons', 'getting buttons', err, 'blat')
+    window.showBigError('fetch-buttons', 'getting buttons', err, 'blat')
   })
 }
 
@@ -39,7 +39,7 @@ function fetchGetLogs () {
   }).then(res => {
     marshalLogsJsonToHtml(res)
   }).catch(err => {
-    showBigError('fetch-buttons', 'getting buttons', err, 'blat')
+    window.showBigError('fetch-buttons', 'getting buttons', err, 'blat')
   })
 }
 
@@ -62,10 +62,10 @@ function processWebuiSettingsJson (settings) {
     document.querySelector('#availableVersion').hidden = false
   }
 
-  document.querySelector('#switcher').hidden = settings.HideNavigation
+  document.querySelector('#sectionSwitcher').hidden = settings.HideNavigation
 }
 
-function main() {
+function main () {
   setupSections()
 
   window.fetch('webUiSettings.json').then(res => {
@@ -78,8 +78,8 @@ function main() {
 
     window.buttonInterval = setInterval(fetchGetDashboardComponents, 3000)
   }).catch(err => {
-    showBigError('fetch-webui-settings', 'getting webui settings', err)
+    window.showBigError('fetch-webui-settings', 'getting webui settings', err)
   })
 }
 
-main(); // call self
+main() // call self
