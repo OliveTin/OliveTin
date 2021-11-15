@@ -7,6 +7,7 @@ OliveTin is a web interface for running Linux shell commands.
 [![Discord](https://img.shields.io/discord/846737624960860180?label=Discord%20Server)](https://discord.gg/jhYWWpNJ3v)
 [![Awesome](https://cdn.rawgit.com/sindresorhus/awesome/d7305f38d29fed78fa85652e3a63e154dd8e8829/media/badge.svg)](https://github.com/awesome-selfhosted/awesome-selfhosted#automation)
 [![Go Report Card](https://goreportcard.com/badge/github.com/Olivetin/OliveTin)](https://goreportcard.com/report/github.com/OliveTin/OliveTin)
+[![Build Snapshot](https://github.com/OliveTin/OliveTin/actions/workflows/build-snapshot.yml/badge.svg)](https://github.com/OliveTin/OliveTin/actions/workflows/build-snapshot.yml)
 
 
 Some example **use cases**;
