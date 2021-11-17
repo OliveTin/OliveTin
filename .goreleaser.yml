@@ -66,3 +66,78 @@ archives:
     format_overrides:
       - goos: windows
         format: zip
+
+dockers:
+  - image_templates:
+      - "docker.io/jamesread/olivetin:{{ .Tag }}-amd64"
+    dockerfile: Dockerfile
+    goos: linux
+    goarch: amd64
+    skip_push: false
+    use: docker
+    build_flag_templates:
+      - "--platform=linux/amd64"
+      - "--label=org.opencontainers.image.title={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Tag}}"
+    extra_files:
+      - webui
+
+  - image_templates:
+      - "docker.io/jamesread/olivetin:{{ .Tag }}-arm64"
+    dockerfile: Dockerfile
+    goos: linux
+    goarch: arm64
+    skip_push: false
+    use: docker
+    build_flag_templates:
+      - "--platform=linux/amd64"
+      - "--label=org.opencontainers.image.title={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Tag}}"
+    extra_files:
+      - webui
+
+  - image_templates:
+      - "docker.io/jamesread/olivetin:{{ .Tag }}-armv5"
+    dockerfile: Dockerfile
+    goos: linux
+    goarm: 5
+    goarch: arm
+    skip_push: false
+    use: docker
+    build_flag_templates:
+      - "--platform=linux/amd64"
+      - "--label=org.opencontainers.image.title={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Tag}}"
+    extra_files:
+      - webui
+
+docker_manifests:
+  - name_template: docker.io/jamesread/olivetin:{{ .Version }}
+    image_templates:
+      - docker.io/jamesread/olivetin:{{ .Version }}-amd64
+      - docker.io/jamesread/olivetin:{{ .Version }}-arm64
+      - docker.io/jamesread/olivetin:{{ .Version }}-armv5
+
+nfpms:
+  - maintainer: James Read <contact@jread.com>
+    description: OliveTin is a web interface for running Linux shell commands.
+    homepage: https://github.com/jamesread/OliveTin
+    license: AGPL-3.0
+    formats:
+      - deb
+      - rpm
+      - apk
+
+    contents:
+      - src: OliveTin.service
+        dst: /etc/systemd/system/OliveTin.service
+
+      - src: webui
+        dst: /var/www/olivetin/
+
+      - src: config.yaml
+        dst: /etc/OliveTin/config.yaml
+        type: "config|noreplace"

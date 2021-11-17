@@ -28,7 +28,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with: 
           name: dist
-          path: dist/OliveTin-**
+          path: dist/OliveTin*.*
 
       - name: Archive integration tests
         uses: actions/upload-artifact@v2

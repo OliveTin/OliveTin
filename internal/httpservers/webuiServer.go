@@ -23,7 +23,6 @@ type webUISettings struct {
 func findWebuiDir() string {
 	directoriesToSearch := []string{
 		"./webui",
-		"/usr/share/OliveTin/webui/",
 		"/var/www/olivetin/",
 		"/etc/OliveTin/webui/",
 	}
