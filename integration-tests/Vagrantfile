@@ -1,0 +1,35 @@
+# This Vagrantfile is designed to be used with artifacts that have been built by goreleaser.
+# (eg, snapshot builds on GitHub)
+
+
+Vagrant.configure("2") do |config| 
+  config.vm.box = "generic/centos8"
+  config.vm.provision "shell", inline: "mkdir /etc/OliveTin && chmod o+w /etc/OliveTin/", privileged: true
+  config.vm.provision "file", source: "configs/config.general.yaml/.", destination: "/etc/OliveTin/config.yaml"
+
+  config.vm.provider :libvirt do |libvirt|
+    libvirt.management_network_device = 'virbr0'
+  end
+
+  config.vm.define :f34 do |f34|
+    f34.vm.box = "generic/fedora34"
+    f34.vm.provision "file", source: "/opt/OliveTin-vagrant/linux_amd64_rpm/.", destination: "."
+    f34.vm.provision "shell", inline: "rpm -U OliveTin* && systemctl enable --now OliveTin && systemctl disable --now firewalld"
+  end
+
+  config.vm.define :debian do |debian|
+    debian.vm.box = "generic/debian10"
+    debian.vm.provision "file", source: "/opt/OliveTin-vagrant/linux_amd64_deb/.", destination: "."
+    debian.vm.provision "shell", inline: "dpkg --force-confold -i OliveTin* && systemctl enable --now OliveTin"
+  end
+
+  config.vm.define :ubuntu do |ubuntu|
+    ubuntu.vm.box = "generic/ubuntu2110"
+    ubuntu.vm.provision "file", source: "/opt/OliveTin-vagrant/linux_amd64_deb/.", destination: "."
+    ubuntu.vm.provision "shell", inline: "dpkg --force-confold -i OliveTin* && systemctl enable --now OliveTin && systemctl disable --now firewalld"
+  end
+
+  # TODO
+  #
+
+end

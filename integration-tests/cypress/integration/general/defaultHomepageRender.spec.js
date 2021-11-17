@@ -12,7 +12,7 @@ describe('Homepage rendering', () => {
   })
 
   it('Switcher navigation is visible', () => {
-    cy.get('#switcher').then($el => {
+    cy.get('#sectionSwitcher').then($el => {
       expect(Cypress.dom.isHidden($el)).to.be.false
     })
   })
