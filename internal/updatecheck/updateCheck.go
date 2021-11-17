@@ -41,12 +41,12 @@ func machineID() string {
 // StartUpdateChecker will start a job that runs periodically, checking
 // for updates.
 func StartUpdateChecker(currentVersion string, currentCommit string, cfg *config.Config) {
+	CurrentVersion = currentVersion
+
 	if !cfg.CheckForUpdates {
 		log.Warn("Update checking is disabled")
 		return
 	}
-
-	CurrentVersion = currentVersion
 
 	payload := updateRequest{
 		CurrentVersion: currentVersion,
