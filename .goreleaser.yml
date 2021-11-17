@@ -1,7 +1,8 @@
 project_name: OliveTin
 before:
   hooks:
-    - go mod tidy
+    - go mod download
+    - rm -rf webui/node_modules
 builds:
   - env:
       - CGO_ENABLED=0
@@ -16,7 +17,7 @@ builds:
       - arm
 
     goarm:
-      - 5 # For old RPIs
+      - 7 # For old RPIs
 
     main: cmd/OliveTin/main.go
 
@@ -105,7 +106,7 @@ dockers:
       - "docker.io/jamesread/olivetin:{{ .Tag }}-armv7"
     dockerfile: Dockerfile
     goos: linux
-    goarm: 5
+    goarm: 7
     goarch: arm
     skip_push: false
     use: docker
@@ -119,6 +120,12 @@ dockers:
 
 docker_manifests:
   - name_template: docker.io/jamesread/olivetin:{{ .Version }}
+    image_templates:
+      - docker.io/jamesread/olivetin:{{ .Version }}-amd64
+      - docker.io/jamesread/olivetin:{{ .Version }}-arm64
+      - docker.io/jamesread/olivetin:{{ .Version }}-armv7
+
+  - name_template: docker.io/jamesread/olivetin:latest
     image_templates:
       - docker.io/jamesread/olivetin:{{ .Version }}-amd64
       - docker.io/jamesread/olivetin:{{ .Version }}-arm64
