@@ -75,7 +75,7 @@ dockers:
     goos: linux
     goarch: amd64
     skip_push: false
-    use: docker
+    
     build_flag_templates:
       - "--platform=linux/amd64"
       - "--label=org.opencontainers.image.title={{.ProjectName}}"
@@ -87,11 +87,11 @@ dockers:
 
   - image_templates:
       - "docker.io/jamesread/olivetin:{{ .Tag }}-arm64"
-    dockerfile: Dockerfile
+    dockerfile: Dockerfile.arm64
     goos: linux
     goarch: arm64
     skip_push: false
-    use: docker
+    
     build_flag_templates:
       - "--platform=linux/arm64"
       - "--label=org.opencontainers.image.title={{.ProjectName}}"
@@ -104,12 +104,12 @@ dockers:
     # support rpi 1's, but it seems most container images start with v7.
   - image_templates:
       - "docker.io/jamesread/olivetin:{{ .Tag }}-armv7"
-    dockerfile: Dockerfile
+    dockerfile: Dockerfile.armv7
     goos: linux
     goarm: 7
     goarch: arm
     skip_push: false
-    use: docker
+    
     build_flag_templates:
       - "--platform=linux/arm/v7"
       - "--label=org.opencontainers.image.title={{.ProjectName}}"

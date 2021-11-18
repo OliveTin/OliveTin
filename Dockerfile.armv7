@@ -1,4 +1,4 @@
-FROM --platform=linux/amd64 docker.io/amd64/fedora
+FROM --platform=linux/arm/v7 arm32v7/fedora:latest
 
 RUN useradd -rm olivetin -u 1000 
 
