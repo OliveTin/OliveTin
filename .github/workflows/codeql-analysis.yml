@@ -13,6 +13,12 @@ name: "CodeQL"
 
 on:
   push:
+    paths: 
+      - 'cmd/**'
+      - 'internal/**'
+      - 'webui/**'
+      - 'integration-tests/**'
+      - 'OliveTin.proto'
     branches: [ main ]
   pull_request:
     # The branches below must be a subset of the branches above
