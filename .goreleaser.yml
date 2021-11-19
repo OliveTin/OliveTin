@@ -151,3 +151,13 @@ nfpms:
       - src: config.yaml
         dst: /etc/OliveTin/config.yaml
         type: "config|noreplace"
+
+release:
+  footer: |
+    ## Useful links
+
+    - [Which download do I need?](https://docs.olivetin.app/choose-package.html)
+    - [Ask for help and chat with others users in the Discord community](https://discord.gg/jhYWWpNJ3v)
+   
+    Thanks for your interest in OliveTin!
+  
