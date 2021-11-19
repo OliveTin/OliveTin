@@ -9,6 +9,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
+      - name: qemu static
+        run: sudo apt install -y qemu-user-static
+
       - name: Setup Go
         uses: actions/setup-go@v2
         with: 
