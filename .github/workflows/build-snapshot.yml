@@ -3,14 +3,18 @@ name: "Build Snapshot"
 on: [push]
 
 jobs:
-  rcbuild:
+  build-snapshot:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: qemu static
-        run: sudo apt install -y qemu-user-static
+        name: Set up QEMU
+        id: qemu
+        uses: docker/setup-qemu-action@v1
+        with:
+          image: tonistiigi/binfmt:latest
+          platforms: arm64,arm
 
       - name: Setup Go
         uses: actions/setup-go@v2
