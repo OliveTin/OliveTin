@@ -21,6 +21,9 @@ daemon-unittests:
 	mkdir -p reports
 	go test ./... -coverprofile reports/unittests.out
 	go tool cover -html=reports/unittests.out -o reports/unittests.html
+
+githooks:
+	cp -v .githooks/* .git/hooks/
 	
 go-tools:
 	go install "github.com/bufbuild/buf/cmd/buf"
@@ -31,7 +34,7 @@ go-tools:
 	go install "google.golang.org/grpc/cmd/protoc-gen-go-grpc"
 	go install "google.golang.org/protobuf/cmd/protoc-gen-go"
 
-grpc: go-tools
+grpc: githooks go-tools
 	buf generate
 
 podman-image:

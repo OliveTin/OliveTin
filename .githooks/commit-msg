@@ -1,0 +1,28 @@
+#!/usr/bin/env python3
+
+import sys
+
+commitmsg = ""
+
+with open('.git/COMMIT_EDITMSG', mode='r') as f:
+    commitmsg = f.readline().strip()
+
+print("Commit message is: " + commitmsg)
+
+ALLOWED_COMMIT_TYPES = [
+    "cicd",
+    "typo",
+    "fmt",
+    "doc",
+    "bugfix",
+    "security",
+    "feature",
+]
+
+for allowedType in ALLOWED_COMMIT_TYPES:
+    if commitmsg.startswith(allowedType + ":"):
+        print("Allowing commit type: ", allowedType)
+        sys.exit(0)
+
+print("Commit message should start with commit type. One of: ", ", ".join(ALLOWED_COMMIT_TYPES))
+sys.exit(1)
