@@ -2,23 +2,30 @@
 
 <img alt = "project logo" src = "https://github.com/OliveTin/OliveTin/blob/main/webui/OliveTinLogo.png" align = "right" width = "160px" />
 
-OliveTin is a web interface for running Linux shell commands.
+OliveTin gives **safe** and **simple** access to predefined shell commands from a web interface. 
 
 [![Discord](https://img.shields.io/discord/846737624960860180?label=Discord%20Server)](https://discord.gg/jhYWWpNJ3v)
 [![Awesome](https://cdn.rawgit.com/sindresorhus/awesome/d7305f38d29fed78fa85652e3a63e154dd8e8829/media/badge.svg)](https://github.com/awesome-selfhosted/awesome-selfhosted#automation)
 [![Go Report Card](https://goreportcard.com/badge/github.com/Olivetin/OliveTin)](https://goreportcard.com/report/github.com/OliveTin/OliveTin)
 [![Build Snapshot](https://github.com/OliveTin/OliveTin/actions/workflows/build-snapshot.yml/badge.svg)](https://github.com/OliveTin/OliveTin/actions/workflows/build-snapshot.yml)
 
+## Use cases 
 
-Some example **use cases**;
+**Safely** give access to commands, for less technical people;
 
-1. Give controlled access to run shell commands to less technical folks who cannot be trusted with SSH. I use this so my family can `podman restart plex` without asking me, and without giving them shell access!
-2. Great for home automation tablets stuck on walls around your house - I use this to turn Hue lights on and off for example. 
-3. Sometimes SSH access isn't possible to a server, or you are feeling too lazy to type a long command you run regularly! I use this to send Wake on Lan commands to servers around my house.
+* eg: Give your family a button to `podman restart plex`
+* eg: Give junior admins a simple web form with dropdowns, to start your custom script. `backupScript.sh --folder {{ customerName }}`
+* eg: Enable SSH access to the server for the next 20 mins `firewall-cmd --add-service ssh --timeout 20m`
 
-[Join the community on Discord.](https://discord.gg/jhYWWpNJ3v)
+**Simplify** complex commands, make them accessible and repeatable;
 
-## YouTube video demo (6 mins)
+* eg: Expose complex commands on touchscreen tablets stuck on walls around your house. `wake-on-lan aa:bb:cc:11:22:33`
+* eg: Run long running on your servers from your cell phone. `dnf update -y`
+* eg: Define complex commands with lots of preset arguments, and turn a few arguments into dropdown select boxes. `docker rm {{ container }} && docker create {{ container }} && docker start {{ container }}`
+
+[Join the community on Discord](https://discord.gg/jhYWWpNJ3v) to talk with other users about use cases, or to ask for support in getting started.
+
+## YouTube demo video (6 mins)
 
 [![6 minute demo video](https://img.youtube.com/vi/Ej6NM9rmZtk/0.jpg)](https://www.youtube.com/watch?v=Ej6NM9rmZtk)
 
@@ -83,5 +90,5 @@ actions:
   shell: ssh root@overseer 'service lightdm restart'
 ```
 
-A full example config can be found at in this repository - [config.yaml](https://github.com/OliveTin/OliveTin/blob/main/var/config.yaml).
+A full example config can be found at in this repository - [config.yaml](https://github.com/OliveTin/OliveTin/blob/main/config.yaml).
 
