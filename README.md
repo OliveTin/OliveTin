@@ -75,19 +75,30 @@ logLevel: "INFO"
 actions: 
   # Docs: https://docs.olivetin.app/action-container-control.html 
 - title: Restart Plex
-  icon: smile
+  icon: restart
   shell: docker restart plex
   
   # This will send 1 ping 
   # Docs: https://docs.olivetin.app/action-ping.html
-- title: Ping Google.com
-  shell: ping google.com -c 1
+- title: Ping host
+  shell: ping {{ host }} -c {{ count }}
+  icon: ping
+  arguments:
+    - name: host
+      title: host
+      type: ascii_identifier
+      default: example.com
+
+    - name: count
+      title: Count
+      type: int
+      default: 1
   
-  # Restart lightdm on host "overseer"
+  # Restart http on host "webserver1"
   # Docs: https://docs.olivetin.app/action-ssh.html
-- title: restart lightdm
-  icon: poop
-  shell: ssh root@overseer 'service lightdm restart'
+- title: restart httpd
+  icon: restart
+  shell: ssh root@webserver1 'service httpd restart'
 ```
 
 A full example config can be found at in this repository - [config.yaml](https://github.com/OliveTin/OliveTin/blob/main/config.yaml).
