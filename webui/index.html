@@ -8,17 +8,21 @@
 		<title>OliveTin</title>
 		<link rel = "stylesheet" type = "text/css" href = "style.css" />
 		<link rel = "shortcut icon" type = "image/png" href = "OliveTinLogo.png" />
+
+		<link rel = "apple-touch-icon" sizes="57x57" href="OliveTinLogo-57px.png" />
+		<link rel = "apple-touch-icon" sizes="120x120" href="OliveTinLogo-120px.png" />
+		<link rel = "apple-touch-icon" sizes="180x180" href="OliveTinLogo-180px.png" />
 	</head>
 
 	<body>
 		<main title = "main content">
-			<fieldset id = "sectionSwitcher">
+			<fieldset id = "sectionSwitcher" title = "Sections">
 				<button id = "showActions">Actions</button>
 				<button id = "showLogs">Logs</button>
 			</fieldset>
 
 			<section id = "contentLogs" title = "Logs" hidden>
-				<table>
+				<table title = "Logs">
 					<thead>
 						<tr>
 							<th>Timestamp</th>
@@ -31,7 +35,7 @@
 			</section>
 
 			<section id = "contentActions" title = "Actions" hidden >
-				<fieldset id = "rootGroup">
+				<fieldset id = "rootGroup" title = "Dashboard of buttons">
 				</fieldset>
 			</section>
 
