@@ -15,6 +15,6 @@ plugins:
   - name: swagger
     out: reports/swagger
 
-  - name: openapiv2
-    out: reports/openapiv2
+#  - name: openapiv2
+#    out: reports/openapiv2
 
