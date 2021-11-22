@@ -12,8 +12,8 @@ plugins:
     out: gen/grpc/
     opt: paths=source_relative
 
-  - name: swagger
-    out: reports/swagger
+#  - name: swagger
+#    out: reports/swagger
 
 #  - name: openapiv2
 #    out: reports/openapiv2
