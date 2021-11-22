@@ -17,7 +17,7 @@ builds:
       - arm
 
     goarm:
-      - 7 # For old RPIs
+      - 5 # For old RPIs
 
     main: cmd/OliveTin/main.go
 
@@ -106,7 +106,6 @@ dockers:
       - "docker.io/jamesread/olivetin:{{ .Tag }}-armv7"
     dockerfile: Dockerfile.armv7
     goos: linux
-    goarm: 7
     goarch: arm
     skip_push: false
     
