@@ -18,6 +18,7 @@ builds:
 
     goarm:
       - 5 # For old RPIs
+      - 7
 
     main: cmd/OliveTin/main.go
 
@@ -60,7 +61,7 @@ archives:
     replacements:
       darwin: macOS
 
-    name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Os }}-{{ .Arch }}"
+    name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Os }}-{{ .Arch }}{{ .Arm }}"
 
     wrap_in_directory: true
 
@@ -107,6 +108,7 @@ dockers:
     dockerfile: Dockerfile.armv7
     goos: linux
     goarch: arm
+    goarm: 7
     skip_push: false
     
     build_flag_templates:
