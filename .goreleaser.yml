@@ -60,6 +60,7 @@ archives:
 
     replacements:
       darwin: macOS
+      arm: arm32v
 
     name_template: "{{ .ProjectName }}-{{ .Version }}-{{ .Os }}-{{ .Arch }}{{ .Arm }}"
 
