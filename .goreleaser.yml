@@ -141,7 +141,6 @@ nfpms:
     formats:
       - deb
       - rpm
-      - apk
 
     contents:
       - src: OliveTin.service
