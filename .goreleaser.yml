@@ -18,6 +18,7 @@ builds:
 
     goarm:
       - 5 # For old RPIs
+      - 6 
       - 7
 
     main: cmd/OliveTin/main.go

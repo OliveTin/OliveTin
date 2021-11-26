@@ -9,7 +9,7 @@ RUN mkdir -p /config /var/www/olivetin \
 		openssh-clients \
 		docker \
     && dnf clean all && \
-    rm -rf /var/cache/yum 
+    rm -rf /var/cache/dnf 
 
 EXPOSE 1337/tcp 
 
