@@ -12,6 +12,7 @@ import (
 	"regexp"
 	"strings"
 	"time"
+	"bytes"
 )
 
 var (
@@ -190,19 +191,26 @@ func (e stepExec) Exec(req *ExecutionRequest) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(req.action.Timeout)*time.Second)
 	defer cancel()
 
-	cmd := exec.CommandContext(ctx, "sh", "-c", req.finalParsedCommand)
-	stdout, stderr := cmd.Output()
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
 
-	if stderr != nil {
-		req.logEntry.Stderr = stderr.Error()
+	cmd := exec.CommandContext(ctx, "sh", "-c", req.finalParsedCommand)
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	runerr := cmd.Run()
+		
+	req.logEntry.ExitCode = int32(cmd.ProcessState.ExitCode())
+	req.logEntry.Stdout = stdout.String()
+	req.logEntry.Stderr = stderr.String()
+
+	if runerr != nil {
+		req.logEntry.Stderr = runerr.Error() + "\n\n" + req.logEntry.Stderr
 	}
 
 	if ctx.Err() == context.DeadlineExceeded {
 		req.logEntry.TimedOut = true
 	}
-
-	req.logEntry.ExitCode = int32(cmd.ProcessState.ExitCode())
-	req.logEntry.Stdout = string(stdout)
 
 	return true
 }
