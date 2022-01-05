@@ -15,7 +15,7 @@ class ActionButton extends window.HTMLElement {
     this.updateFromJson(json)
 
     // DOM Attributes
-    this.setAttribute("role", "none")
+    this.setAttribute('role', 'none')
     this.btn.title = json.title
     this.btn.onclick = () => {
       console.log(json.arguments)
