@@ -46,6 +46,11 @@ podman-container:
 	podman create --name olivetin -p 1337:1337 -v /etc/OliveTin/:/config:ro olivetin
 	podman start olivetin
 
+integration-tests-docker-image:
+	docker rm -f olivetin && docker rmi -f olivetin
+	docker build -t olivetin:latest .
+	docker create --name olivetin -p 1337:1337 -v `pwd`/integration-tests/configs/:/config/ olivetin 
+
 devrun: compile
 	killall OliveTin || true
 	./OliveTin &
