@@ -11,6 +11,8 @@ import (
 	"net/http"
 	"runtime"
 	"time"
+	"errors"
+	"os"
 )
 
 type updateRequest struct {
@@ -19,6 +21,7 @@ type updateRequest struct {
 	OS             string
 	Arch           string
 	MachineID      string
+	InContainer    bool
 }
 
 // AvailableVersion is updated when checking with the update service.
@@ -38,6 +41,14 @@ func machineID() string {
 	return v
 }
 
+func isInContainer() bool {
+	if _, err := os.Stat("/.dockerenv"); errors.Is(err, os.ErrNotExist) {
+		return false;
+	}
+
+	return true;
+}
+
 // StartUpdateChecker will start a job that runs periodically, checking
 // for updates.
 func StartUpdateChecker(currentVersion string, currentCommit string, cfg *config.Config) {
@@ -54,6 +65,7 @@ func StartUpdateChecker(currentVersion string, currentCommit string, cfg *config
 		OS:             runtime.GOOS,
 		Arch:           runtime.GOARCH,
 		MachineID:      machineID(),
+		InContainer:	isInContainer(),
 	}
 
 	s := gocron.NewScheduler(time.UTC)
@@ -91,6 +103,8 @@ func doRequest(jsonUpdateRequest []byte) string {
 
 func actualCheckForUpdate(payload updateRequest) {
 	jsonUpdateRequest, err := json.Marshal(payload)
+
+	log.Debugf("Update request payload: %+v", payload)
 
 	if err != nil {
 		log.Errorf("Update check failed %v", err)
