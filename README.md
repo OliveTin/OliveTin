@@ -64,6 +64,13 @@ All documentation can be found at http://docs.olivetin.app . This includes insta
 
 This is a quick example of `config.yaml` - but again, lots of documentation for how to write your `config.yaml` can be found at [the documentation site.](https://docs.olivetin.app)
 
+* (Recommended) [Linux package install (.rpm/.deb)](https://docs.olivetin.app/install-linuxpackage.html) install instructions
+* [Container (podman/docker)](https://docs.olivetin.app/install-container.html) install instructions
+* [Docker compose](https://docs.olivetin.app/install-compose.html) install instructions
+* [Helm on Kubernetes](https://docs.olivetin.app/install-helm.html) install instructions
+* [Kubernetes (manual)](https://docs.olivetin.app/install-k8s.html) install instructions
+* [.tar.gz (manual)](https://docs.olivetin.app/install-targz.html) install instructions
+
 Put this `config.yaml` in `/etc/OliveTin/` if you're running a standard service, or mount it at `/config` if running in a container.
 
 ```yaml
