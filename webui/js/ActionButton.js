@@ -84,13 +84,13 @@ class ActionButton extends window.HTMLElement {
       marshalLogsJsonToHtml({ logs: [json.logEntry] })
 
       if (json.logEntry.timedOut) {
-        this.onActionResult('actionTimeout', 'Timed out')
+        this.onActionResult('action-timeout', 'Timed out')
       } else if (json.logEntry.exitCode === -1337) {
         this.onActionError('Error')
       } else if (json.logEntry.exitCode !== 0) {
-        this.onActionResult('actionNonZeroExit', 'Exit code ' + json.logEntry.exitCode)
+        this.onActionResult('action-nonzero-exit', 'Exit code ' + json.logEntry.exitCode)
       } else {
-        this.onActionResult('actionSuccess', 'Success!')
+        this.onActionResult('action-success', 'Success!')
       }
     }).catch(err => {
       this.onActionError(err)
@@ -113,10 +113,10 @@ class ActionButton extends window.HTMLElement {
     this.btn.disabled = false
     this.isWaiting = false
     this.updateDom()
-    this.btn.classList.add('actionFailed')
+    this.btn.classList.add('action-failed')
 
     setTimeout(() => {
-      this.btn.classList.remove('actionFailed')
+      this.btn.classList.remove('action-failed')
     }, 1000)
   }
 
@@ -139,13 +139,13 @@ class ActionButton extends window.HTMLElement {
   updateDom () {
     if (this.temporaryStatusMessage != null) {
       this.domTitle.innerText = this.temporaryStatusMessage
-      this.domTitle.classList.add('temporaryStatusMessage')
+      this.domTitle.classList.add('temporary-status-message')
       this.isWaiting = false
       this.disabled = false
 
       setTimeout(() => {
         this.temporaryStatusMessage = null
-        this.domTitle.classList.remove('temporaryStatusMessage')
+        this.domTitle.classList.remove('temporary-status-message')
         this.updateDom()
       }, 2000)
     } else if (this.isWaiting) {

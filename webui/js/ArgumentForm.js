@@ -1,7 +1,7 @@
 
 class ArgumentForm extends window.HTMLElement {
   setup (json, callback) {
-    this.setAttribute('class', 'actionArguments')
+    this.setAttribute('class', 'action-arguments')
 
     this.constructTemplate()
     this.domTitle.innerText = json.title

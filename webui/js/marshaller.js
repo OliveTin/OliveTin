@@ -10,7 +10,7 @@ export function marshalActionButtonsJsonToHtml (json) {
       htmlButton = document.createElement('action-button')
       htmlButton.constructFromJson(jsonButton)
 
-      document.getElementById('rootGroup').appendChild(htmlButton)
+      document.getElementById('root-group').appendChild(htmlButton)
     } else {
       htmlButton.updateFromJson(jsonButton)
       htmlButton.updateDom()
@@ -55,7 +55,7 @@ export function marshalLogsJsonToHtml (json) {
     row.querySelector('.icon').innerHTML = logEntry.actionIcon
     row.querySelector('pre.stdout').innerText = logEntry.stdout
     row.querySelector('pre.stderr').innerText = logEntry.stderr
-    row.querySelector('.exitCode').innerText = logTableExitCode
+    row.querySelector('.exit-code').innerText = logTableExitCode
 
     document.querySelector('#logTableBody').prepend(row)
   }

@@ -16,7 +16,7 @@
 
 	<body>
 		<main title = "main content">
-			<fieldset id = "sectionSwitcher" title = "Sections">
+			<fieldset id = "section-switcher" title = "Sections">
 				<button id = "showActions">Actions</button>
 				<button id = "showLogs">Logs</button>
 			</fieldset>
@@ -35,7 +35,7 @@
 			</section>
 
 			<section id = "contentActions" title = "Actions" hidden >
-				<fieldset id = "rootGroup" title = "Dashboard of buttons">
+				<fieldset id = "root-group" title = "Dashboard of buttons">
 				</fieldset>
 			</section>
 
@@ -50,12 +50,12 @@
 				<a href = "https://docs.olivetin.app" target = "_new">Documentation</a> | 
 				<a href = "https://github.com/OliveTin/OliveTin/issues/new/choose" target = "_new">Raise an issue on GitHub</a> | 
 				<span id = "currentVersion">Version: ?</p>  
-				<a id = "availableVersion" href = "http://olivetin.app" target = "_blank" hidden>?</a>
+				<a id = "available-version" href = "http://olivetin.app" target = "_blank" hidden>?</a>
 			</p>
 		</footer>
 
 		<template id = "tplArgumentForm">
-			<form class = "actionArguments">
+			<form class = "action-arguments">
 				<div class = "wrapper">
 					<div>
 						<span class = "icon" role = "icon"></span>
@@ -80,7 +80,7 @@
 		</template>
 
 		<template id = "tplLogRow">
-			<tr class = "logRow">
+			<tr class = "log-row">
 				<td class = "timestamp">?</td> 
 				<td>
 					<span class = "icon" role = "icon"></span>
@@ -101,7 +101,7 @@
 					</details>
 
 				</td>
-				<td class = "exitCode">?</td>
+				<td class = "exit-code">?</td>
 			</tr>
 		</template>
 
@@ -119,7 +119,7 @@
 			  domErr.classList.add('error')
 			  domErr.innerHTML = '<h1>Error ' + friendlyType + '</h1><p>' + message + "</p><p><a href = 'http://docs.olivetin.app/troubleshooting.html' target = 'blank'/>OliveTin Documentation</a></p>"
 
-			  document.getElementById('rootGroup').appendChild(domErr)
+			  document.getElementById('root-group').appendChild(domErr)
 			}
 		</script>
 

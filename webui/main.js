@@ -58,11 +58,11 @@ function processWebuiSettingsJson (settings) {
   document.querySelector('#currentVersion').innerText = 'Version: ' + settings.CurrentVersion
 
   if (settings.ShowNewVersions && settings.AvailableVersion !== 'none') {
-    document.querySelector('#availableVersion').innerText = 'New Version Available: ' + settings.AvailableVersion
-    document.querySelector('#availableVersion').hidden = false
+    document.querySelector('#available-version').innerText = 'New Version Available: ' + settings.AvailableVersion
+    document.querySelector('#available-version').hidden = false
   }
 
-  document.querySelector('#sectionSwitcher').hidden = settings.HideNavigation
+  document.querySelector('#section-switcher').hidden = settings.HideNavigation
 }
 
 function main () {

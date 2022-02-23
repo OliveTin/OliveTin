@@ -9,7 +9,7 @@ describe('Hidden Nav', () => {
   })
 
   it('Switcher navigation is hidden', () => {
-    cy.get('#sectionSwitcher').then($el => {
+    cy.get('#section-switcher').then($el => {
       expect(Cypress.dom.isHidden($el)).to.be.true
     })
   })

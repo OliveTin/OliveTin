@@ -8,11 +8,11 @@ describe('Homepage rendering', () => {
   })
 
   it('Default buttons are rendered', () => {
-    cy.get("#rootGroup button").should('have.length', 6)
+    cy.get("#root-group button").should('have.length', 6)
   })
 
   it('Switcher navigation is visible', () => {
-    cy.get('#sectionSwitcher').then($el => {
+    cy.get('#section-switcher').then($el => {
       expect(Cypress.dom.isHidden($el)).to.be.false
     })
   })
