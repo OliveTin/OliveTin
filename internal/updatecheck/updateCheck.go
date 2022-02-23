@@ -3,16 +3,16 @@ package updatecheck
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/denisbrodbeck/machineid"
+	"errors"
 	"github.com/go-co-op/gocron"
+	"github.com/google/uuid"
 	config "github.com/jamesread/OliveTin/internal/config"
 	log "github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"runtime"
 	"time"
-	"errors"
-	"os"
 )
 
 type updateRequest struct {
@@ -20,7 +20,7 @@ type updateRequest struct {
 	CurrentCommit  string
 	OS             string
 	Arch           string
-	MachineID      string
+	InstallationID string
 	InContainer    bool
 }
 
@@ -30,23 +30,55 @@ var AvailableVersion = "none"
 // CurrentVersion is set by the main cmd (which is in tern set as a compile constant)
 var CurrentVersion = "?"
 
-func machineID() string {
-	v, err := machineid.ProtectedID("OliveTin")
+func getInstanceIDFilename() string {
+	directory := "./"
 
-	if err != nil {
-		log.Warnf("Error getting machine ID: %v", err)
-		return "?"
+	if _, err := os.Stat("/etc/OliveTin"); !os.IsNotExist(err) {
+		directory = "/etc/OliveTin/"
 	}
 
-	return v
+	if _, err := os.Stat("/config"); !os.IsNotExist(err) {
+		directory = "/config/"
+	}
+
+	return directory + "installation-id.txt"
+
+}
+
+func installationID() string {
+	filename := getInstanceIDFilename()
+
+	content := "unset"
+	contentBytes, err := ioutil.ReadFile(filename)
+
+	if err != nil {
+		fileHandle, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0644)
+
+		if err != nil {
+			log.Warnf("Could not read + create installation ID file: %v", err)
+			return "cant-create"
+		}
+
+		content = uuid.NewString()
+		fileHandle.WriteString(content)
+		fileHandle.Close()
+	} else {
+		content = string(contentBytes)
+	}
+
+	log.WithFields(log.Fields{
+		"content": content,
+	}).Infof("Installation ID")
+
+	return content
 }
 
 func isInContainer() bool {
 	if _, err := os.Stat("/.dockerenv"); errors.Is(err, os.ErrNotExist) {
-		return false;
+		return false
 	}
 
-	return true;
+	return true
 }
 
 // StartUpdateChecker will start a job that runs periodically, checking
@@ -64,8 +96,8 @@ func StartUpdateChecker(currentVersion string, currentCommit string, cfg *config
 		CurrentCommit:  currentCommit,
 		OS:             runtime.GOOS,
 		Arch:           runtime.GOARCH,
-		MachineID:      machineID(),
-		InContainer:	isInContainer(),
+		InstallationID: installationID(),
+		InContainer:    isInContainer(),
 	}
 
 	s := gocron.NewScheduler(time.UTC)
