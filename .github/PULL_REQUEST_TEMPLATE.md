@@ -13,7 +13,10 @@ Helpful information to understand the project can be found here: [CONTRIBUTING](
 # Checklist
 Please put a X in the boxes as evidence of reading through the checklist.
 
-- [ ] I have forked the project, and raised this PR on a freature branch. 
-- [ ] `make daemon-compile`, `make daemon-codestyle` and `make daemon-unittests` runs cleanly. 
-- [ ] `make webui-codestyle` should runs cleanly. 
+- [ ] I have forked the project, and raised this PR on a feature branch. 
+- [ ] `make githooks` has been run, and my git commit message was accepted by the git hook.
+- [ ] `make daemon-compile` runs without any issues.
+- [ ] `make daemon-codestyle` runs without any issues.
+- [ ] `make daemon-unittests` runs without any issues.
+- [ ] `make webui-codestyle` runs without any issues. 
 - [ ] I understand and accept the [AGPL-3.0 license](LICENSE) and [code of conduct](CODE_OF_CONDUCT.md), and my contributions fall under these. 
