@@ -61,6 +61,7 @@ type Config struct {
 	UseSingleHTTPFrontend           bool
 	ThemeName                       string
 	HideNavigation                  bool
+	ShowFooter                      bool
 	ListenAddressSingleHTTPFrontend string
 	ListenAddressWebUI              string
 	ListenAddressRestActions        string
@@ -80,6 +81,7 @@ func DefaultConfig() *Config {
 	config := Config{}
 	config.UseSingleHTTPFrontend = true
 	config.HideNavigation = false
+	config.ShowFooter = true
 	config.ListenAddressSingleHTTPFrontend = "0.0.0.0:1337"
 	config.ListenAddressRestActions = "localhost:1338"
 	config.ListenAddressGrpcActions = "localhost:1339"
