@@ -15,6 +15,7 @@ type webUISettings struct {
 	Rest             string
 	ThemeName        string
 	HideNavigation   bool
+	ShowFooter       bool
 	AvailableVersion string
 	CurrentVersion   string
 	ShowNewVersions  bool
@@ -53,6 +54,7 @@ func generateWebUISettings(w http.ResponseWriter, r *http.Request) {
 		Rest:             restAddress + "/api/",
 		ThemeName:        cfg.ThemeName,
 		HideNavigation:   cfg.HideNavigation,
+		ShowFooter:       cfg.ShowFooter,
 		AvailableVersion: updatecheck.AvailableVersion,
 		CurrentVersion:   updatecheck.CurrentVersion,
 		ShowNewVersions:  cfg.ShowNewVersions,

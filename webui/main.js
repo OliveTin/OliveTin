@@ -63,6 +63,7 @@ function processWebuiSettingsJson (settings) {
   }
 
   document.querySelector('#section-switcher').hidden = settings.HideNavigation
+  document.querySelector('footer[title="footer"]').hidden = !settings.ShowFooter
 }
 
 function main () {
