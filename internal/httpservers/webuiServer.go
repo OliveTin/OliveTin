@@ -14,7 +14,7 @@ import (
 type webUISettings struct {
 	Rest             string
 	ThemeName        string
-	HideNavigation   bool
+	ShowNavigation   bool
 	AvailableVersion string
 	CurrentVersion   string
 	ShowNewVersions  bool
@@ -52,7 +52,7 @@ func generateWebUISettings(w http.ResponseWriter, r *http.Request) {
 	jsonRet, _ := json.Marshal(webUISettings{
 		Rest:             restAddress + "/api/",
 		ThemeName:        cfg.ThemeName,
-		HideNavigation:   cfg.HideNavigation,
+		ShowNavigation:   cfg.ShowNavigation,
 		AvailableVersion: updatecheck.AvailableVersion,
 		CurrentVersion:   updatecheck.CurrentVersion,
 		ShowNewVersions:  cfg.ShowNewVersions,
