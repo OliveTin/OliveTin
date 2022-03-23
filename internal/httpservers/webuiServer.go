@@ -14,11 +14,11 @@ import (
 type webUISettings struct {
 	Rest             string
 	ThemeName        string
-	HideNavigation   bool
-	ShowFooter       bool
+  ShowFooter       bool
+	ShowNavigation   bool
+	ShowNewVersions  bool
 	AvailableVersion string
 	CurrentVersion   string
-	ShowNewVersions  bool
 }
 
 func findWebuiDir() string {
@@ -53,11 +53,12 @@ func generateWebUISettings(w http.ResponseWriter, r *http.Request) {
 	jsonRet, _ := json.Marshal(webUISettings{
 		Rest:             restAddress + "/api/",
 		ThemeName:        cfg.ThemeName,
-		HideNavigation:   cfg.HideNavigation,
-		ShowFooter:       cfg.ShowFooter,
+    ShowFooter:       cfg.ShowFooter,
+		ShowNavigation:   cfg.ShowNavigation,
+		ShowNewVersions:  cfg.ShowNewVersions,
 		AvailableVersion: updatecheck.AvailableVersion,
 		CurrentVersion:   updatecheck.CurrentVersion,
-		ShowNewVersions:  cfg.ShowNewVersions,
+
 	})
 
 	_, err := w.Write([]byte(jsonRet))
