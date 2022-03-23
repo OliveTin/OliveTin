@@ -13,7 +13,7 @@ type Action struct {
 	Arguments   []ActionArgument
 }
 
-// ActionArgument objects appear on Actions.
+// ActionArgument objects appear on Actions. 
 type ActionArgument struct {
 	Name    string
 	Title   string
@@ -60,7 +60,6 @@ type UserGroup struct {
 type Config struct {
 	UseSingleHTTPFrontend           bool
 	ThemeName                       string
-	ShowNavigation                  bool
 	ListenAddressSingleHTTPFrontend string
 	ListenAddressWebUI              string
 	ListenAddressRestActions        string
@@ -70,6 +69,8 @@ type Config struct {
 	Actions                         []Action `mapstructure:"actions"`
 	Entities                        []Entity `mapstructure:"entities"`
 	CheckForUpdates                 bool
+  ShowFooter                      bool
+  ShowNavigation                  bool
 	ShowNewVersions                 bool
 	Usergroups                      []UserGroup
 	DefaultPermissions              DefaultPermissions
@@ -79,14 +80,15 @@ type Config struct {
 func DefaultConfig() *Config {
 	config := Config{}
 	config.UseSingleHTTPFrontend = true
+  config.ShowFooter = true
 	config.ShowNavigation = true
+  config.ShowNewVersions = true
 	config.ListenAddressSingleHTTPFrontend = "0.0.0.0:1337"
 	config.ListenAddressRestActions = "localhost:1338"
 	config.ListenAddressGrpcActions = "localhost:1339"
 	config.ListenAddressWebUI = "localhost:1340"
 	config.LogLevel = "INFO"
 	config.CheckForUpdates = true
-	config.ShowNewVersions = true
 	config.DefaultPermissions.Exec = true
 	config.DefaultPermissions.View = true
 
