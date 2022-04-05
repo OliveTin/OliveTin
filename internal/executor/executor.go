@@ -220,7 +220,7 @@ func parseActionArguments(rawShellCommand string, values map[string]string, acti
 		"cmd": rawShellCommand,
 	}).Infof("Before Parse Args")
 
-	r := regexp.MustCompile("{{ *?([a-z]+?) *?}}")
+	r := regexp.MustCompile("{{ *?([a-zA-Z0-9_]+?) *?}}")
 	matches := r.FindAllStringSubmatch(rawShellCommand, -1)
 
 	for _, match := range matches {
