@@ -32,12 +32,12 @@ func StartSingleHTTPFrontend(cfg *config.Config) {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/api/", func(w http.ResponseWriter, r *http.Request) {
-		log.Debugf("api req: %v", r.URL)
+		log.Debugf("api req: %q", r.URL)
 		apiProxy.ServeHTTP(w, r)
 	})
 
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		log.Debugf("ui req: %v", r.URL)
+		log.Debugf("ui req: %q", r.URL)
 		webuiProxy.ServeHTTP(w, r)
 	})
 

@@ -22,6 +22,11 @@ var (
 )
 
 func init() {
+	log.SetFormatter(&log.TextFormatter{
+		ForceQuote: true,
+		DisableTimestamp: true,
+	})
+
 	log.WithFields(log.Fields{
 		"version": version,
 		"commit":  commit,
