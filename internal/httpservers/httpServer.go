@@ -8,9 +8,10 @@ import (
 // for both of them.
 func StartServers(cfg *config.Config) {
 	go startWebUIServer(cfg)
-	go startRestAPIServer(cfg)
 
 	if cfg.UseSingleHTTPFrontend {
-		StartSingleHTTPFrontend(cfg)
+		go StartSingleHTTPFrontend(cfg)
 	}
+
+	startRestAPIServer(cfg)
 }

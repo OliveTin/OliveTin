@@ -44,16 +44,10 @@ func findWebuiDir() string {
 }
 
 func generateWebUISettings(w http.ResponseWriter, r *http.Request) {
-	restAddress := ""
-
-	if !cfg.UseSingleHTTPFrontend {
-		restAddress = cfg.ExternalRestAddress
-	}
-
 	jsonRet, _ := json.Marshal(webUISettings{
-		Rest:             restAddress + "/api/",
+		Rest:             cfg.ExternalRestAddress + "/api/",
 		ThemeName:        cfg.ThemeName,
-    ShowFooter:       cfg.ShowFooter,
+		ShowFooter:       cfg.ShowFooter,
 		ShowNavigation:   cfg.ShowNavigation,
 		ShowNewVersions:  cfg.ShowNewVersions,
 		AvailableVersion: updatecheck.AvailableVersion,
