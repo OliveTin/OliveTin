@@ -30,24 +30,7 @@ var AvailableVersion = "none"
 // CurrentVersion is set by the main cmd (which is in tern set as a compile constant)
 var CurrentVersion = "?"
 
-func getInstanceIDFilename() string {
-	directory := "./"
-
-	if _, err := os.Stat("/etc/OliveTin"); !os.IsNotExist(err) {
-		directory = "/etc/OliveTin/"
-	}
-
-	if _, err := os.Stat("/config"); !os.IsNotExist(err) {
-		directory = "/config/"
-	}
-
-	return directory + "installation-id.txt"
-
-}
-
-func installationID() string {
-	filename := getInstanceIDFilename()
-
+func installationID(filename string) string {
 	content := "unset"
 	contentBytes, err := ioutil.ReadFile(filename)
 
@@ -64,10 +47,18 @@ func installationID() string {
 		fileHandle.Close()
 	} else {
 		content = string(contentBytes)
+
+		_, err := uuid.Parse(content)
+
+		if err != nil {
+			log.Errorf("Invalid installation ID, %v", err)
+			content = "invalid-installation-id"
+		}
 	}
 
 	log.WithFields(log.Fields{
 		"content": content,
+		"from":    filename,
 	}).Infof("Installation ID")
 
 	return content
@@ -83,7 +74,7 @@ func isInContainer() bool {
 
 // StartUpdateChecker will start a job that runs periodically, checking
 // for updates.
-func StartUpdateChecker(currentVersion string, currentCommit string, cfg *config.Config) {
+func StartUpdateChecker(currentVersion string, currentCommit string, cfg *config.Config, configDir string) {
 	CurrentVersion = currentVersion
 
 	if !cfg.CheckForUpdates {
@@ -96,7 +87,7 @@ func StartUpdateChecker(currentVersion string, currentCommit string, cfg *config
 		CurrentCommit:  currentCommit,
 		OS:             runtime.GOOS,
 		Arch:           runtime.GOARCH,
-		InstallationID: installationID(),
+		InstallationID: installationID(configDir + "/installation-id.txt"),
 		InContainer:    isInContainer(),
 	}
 

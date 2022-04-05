@@ -14,6 +14,7 @@ import (
 	config "github.com/jamesread/OliveTin/internal/config"
 	"github.com/spf13/viper"
 	"os"
+	"path"
 )
 
 var (
@@ -25,7 +26,7 @@ var (
 
 func init() {
 	log.SetFormatter(&log.TextFormatter{
-		ForceQuote: true,
+		ForceQuote:       true,
 		DisableTimestamp: true,
 	})
 
@@ -37,7 +38,7 @@ func init() {
 
 	log.SetLevel(log.DebugLevel) // Default to debug, to catch cfg issues
 
-	var configDir string;
+	var configDir string
 	flag.StringVar(&configDir, "configdir", ".", "Config directory path")
 	flag.Parse()
 
@@ -82,11 +83,15 @@ func reloadConfig() {
 }
 
 func main() {
-	log.Info("OliveTin started")
+	configDir := path.Dir(viper.ConfigFileUsed())
+
+	log.WithFields(log.Fields{
+		"configDir": configDir,
+	}).Infof("OliveTin started")
 
 	log.Debugf("Config: %+v", cfg)
 
-	go updatecheck.StartUpdateChecker(version, commit, cfg)
+	go updatecheck.StartUpdateChecker(version, commit, cfg, configDir)
 
 	go grpcapi.Start(cfg)
 
