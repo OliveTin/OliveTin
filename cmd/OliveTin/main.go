@@ -1,6 +1,8 @@
 package main
 
 import (
+	"flag"
+
 	log "github.com/sirupsen/logrus"
 
 	grpcapi "github.com/jamesread/OliveTin/internal/grpcapi"
@@ -35,10 +37,18 @@ func init() {
 
 	log.SetLevel(log.DebugLevel) // Default to debug, to catch cfg issues
 
+	var configDir string;
+	flag.StringVar(&configDir, "configdir", ".", "Config directory path")
+	flag.Parse()
+
+	log.WithFields(log.Fields{
+		"value": configDir,
+	}).Debugf("Value of -configdir flag")
+
 	viper.AutomaticEnv()
 	viper.SetConfigName("config.yaml")
 	viper.SetConfigType("yaml")
-	viper.AddConfigPath(".")
+	viper.AddConfigPath(configDir)
 	viper.AddConfigPath("/config") // For containers.
 	viper.AddConfigPath("/etc/OliveTin/")
 
