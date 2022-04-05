@@ -14,7 +14,7 @@ import (
 type webUISettings struct {
 	Rest             string
 	ThemeName        string
-  ShowFooter       bool
+	ShowFooter       bool
 	ShowNavigation   bool
 	ShowNewVersions  bool
 	AvailableVersion string
@@ -52,7 +52,6 @@ func generateWebUISettings(w http.ResponseWriter, r *http.Request) {
 		ShowNewVersions:  cfg.ShowNewVersions,
 		AvailableVersion: updatecheck.AvailableVersion,
 		CurrentVersion:   updatecheck.CurrentVersion,
-
 	})
 
 	_, err := w.Write([]byte(jsonRet))

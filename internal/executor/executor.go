@@ -6,13 +6,13 @@ import (
 	config "github.com/jamesread/OliveTin/internal/config"
 	log "github.com/sirupsen/logrus"
 
+	"bytes"
 	"context"
 	"errors"
 	"os/exec"
 	"regexp"
 	"strings"
 	"time"
-	"bytes"
 )
 
 var (
@@ -199,7 +199,7 @@ func (e stepExec) Exec(req *ExecutionRequest) bool {
 	cmd.Stderr = &stderr
 
 	runerr := cmd.Run()
-		
+
 	req.logEntry.ExitCode = int32(cmd.ProcessState.ExitCode())
 	req.logEntry.Stdout = stdout.String()
 	req.logEntry.Stderr = stderr.String()
