@@ -143,6 +143,8 @@ nfpms:
       - deb
       - rpm
 
+    bindir: /usr/local/bin/
+
     contents:
       - src: OliveTin.service
         dst: /etc/systemd/system/OliveTin.service
