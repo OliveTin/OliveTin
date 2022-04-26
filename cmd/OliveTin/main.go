@@ -5,13 +5,13 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	grpcapi "github.com/jamesread/OliveTin/internal/grpcapi"
-	updatecheck "github.com/jamesread/OliveTin/internal/updatecheck"
+	grpcapi "github.com/OliveTin/OliveTin/internal/grpcapi"
+	updatecheck "github.com/OliveTin/OliveTin/internal/updatecheck"
 
-	"github.com/jamesread/OliveTin/internal/httpservers"
+	"github.com/OliveTin/OliveTin/internal/httpservers"
 
 	"github.com/fsnotify/fsnotify"
-	config "github.com/jamesread/OliveTin/internal/config"
+	config "github.com/OliveTin/OliveTin/internal/config"
 	"github.com/spf13/viper"
 	"os"
 	"path"

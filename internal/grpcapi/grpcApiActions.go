@@ -3,9 +3,9 @@ package grpcapi
 import (
 	"crypto/md5"
 	"fmt"
-	pb "github.com/jamesread/OliveTin/gen/grpc"
-	acl "github.com/jamesread/OliveTin/internal/acl"
-	config "github.com/jamesread/OliveTin/internal/config"
+	pb "github.com/OliveTin/OliveTin/gen/grpc"
+	acl "github.com/OliveTin/OliveTin/internal/acl"
+	config "github.com/OliveTin/OliveTin/internal/config"
 )
 
 func actionsCfgToPb(cfgActions []config.Action, user *acl.User) *pb.GetDashboardComponentsResponse {

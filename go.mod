@@ -1,4 +1,4 @@
-module github.com/jamesread/OliveTin
+module github.com/OliveTin/OliveTin
 
 go 1.16
 

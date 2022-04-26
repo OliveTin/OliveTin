@@ -2,7 +2,7 @@ package acl
 
 import (
 	"context"
-	config "github.com/jamesread/OliveTin/internal/config"
+	config "github.com/OliveTin/OliveTin/internal/config"
 	log "github.com/sirupsen/logrus"
 )
 

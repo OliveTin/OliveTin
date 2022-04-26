@@ -6,7 +6,7 @@ Don’t be afraid to ask for advice before working on a contribution. If you’r
 
 The preferred way to communicate is probably via Discord or GitHub issues. 
 
-Helpful information to understand the project can be found here: [CONTRIBUTING](https://github.com/jamesread/OliveTin/blob/main/CONTRIBUTING.adoc)
+Helpful information to understand the project can be found here: [CONTRIBUTING](https://github.com/OliveTin/OliveTin/blob/main/CONTRIBUTING.adoc)
 
 ^^^ please delete the lines above when raising a PR to keep the request to the bare essentials ^^^
 

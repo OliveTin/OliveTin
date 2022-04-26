@@ -137,7 +137,7 @@ docker_manifests:
 nfpms:
   - maintainer: James Read <contact@jread.com>
     description: OliveTin is a web interface for running Linux shell commands.
-    homepage: https://github.com/jamesread/OliveTin
+    homepage: https://github.com/OliveTin/OliveTin
     license: AGPL-3.0
     formats:
       - deb

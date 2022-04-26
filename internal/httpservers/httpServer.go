@@ -1,7 +1,7 @@
 package httpservers
 
 import (
-	config "github.com/jamesread/OliveTin/internal/config"
+	config "github.com/OliveTin/OliveTin/internal/config"
 )
 
 // StartServers will start 3 HTTP servers. The WebUI, the Rest API, and a proxy

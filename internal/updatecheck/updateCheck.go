@@ -6,7 +6,7 @@ import (
 	"errors"
 	"github.com/go-co-op/gocron"
 	"github.com/google/uuid"
-	config "github.com/jamesread/OliveTin/internal/config"
+	config "github.com/OliveTin/OliveTin/internal/config"
 	log "github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net/http"

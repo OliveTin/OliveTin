@@ -8,11 +8,11 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"net/http"
 
-	gw "github.com/jamesread/OliveTin/gen/grpc"
+	gw "github.com/OliveTin/OliveTin/gen/grpc"
 
-	cors "github.com/jamesread/OliveTin/internal/cors"
+	cors "github.com/OliveTin/OliveTin/internal/cors"
 
-	config "github.com/jamesread/OliveTin/internal/config"
+	config "github.com/OliveTin/OliveTin/internal/config"
 )
 
 var (
