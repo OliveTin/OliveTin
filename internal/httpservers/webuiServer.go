@@ -2,13 +2,13 @@ package httpservers
 
 import (
 	"encoding/json"
-	//	cors "github.com/jamesread/OliveTin/internal/cors"
+	//	cors "github.com/OliveTin/OliveTin/internal/cors"
 	log "github.com/sirupsen/logrus"
 	"net/http"
 	"os"
 
-	config "github.com/jamesread/OliveTin/internal/config"
-	updatecheck "github.com/jamesread/OliveTin/internal/updatecheck"
+	config "github.com/OliveTin/OliveTin/internal/config"
+	updatecheck "github.com/OliveTin/OliveTin/internal/updatecheck"
 )
 
 type webUISettings struct {

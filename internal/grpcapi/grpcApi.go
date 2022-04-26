@@ -2,14 +2,14 @@ package grpcapi
 
 import (
 	ctx "context"
-	pb "github.com/jamesread/OliveTin/gen/grpc"
+	pb "github.com/OliveTin/OliveTin/gen/grpc"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"net"
 
-	acl "github.com/jamesread/OliveTin/internal/acl"
-	config "github.com/jamesread/OliveTin/internal/config"
-	executor "github.com/jamesread/OliveTin/internal/executor"
+	acl "github.com/OliveTin/OliveTin/internal/acl"
+	config "github.com/OliveTin/OliveTin/internal/config"
+	executor "github.com/OliveTin/OliveTin/internal/executor"
 )
 
 var (

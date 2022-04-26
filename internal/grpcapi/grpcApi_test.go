@@ -12,8 +12,8 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	pb "github.com/jamesread/OliveTin/gen/grpc"
-	config "github.com/jamesread/OliveTin/internal/config"
+	pb "github.com/OliveTin/OliveTin/gen/grpc"
+	config "github.com/OliveTin/OliveTin/internal/config"
 )
 
 const bufSize = 1024 * 1024

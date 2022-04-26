@@ -1,13 +1,13 @@
 compile: daemon-compile-x64-lin
 
 daemon-compile-armhf: 
-	GOARCH=arm GOARM=6 go build -o OliveTin.armhf github.com/jamesread/OliveTin/cmd/OliveTin
+	GOARCH=arm GOARM=6 go build -o OliveTin.armhf github.com/OliveTin/OliveTin/cmd/OliveTin
 
 daemon-compile-x64-lin: 
-	GOOS=linux go build -o OliveTin github.com/jamesread/OliveTin/cmd/OliveTin 
+	GOOS=linux go build -o OliveTin github.com/OliveTin/OliveTin/cmd/OliveTin
 
 daemon-compile-x64-win:
-	GOOS=windows GOARCH=amd64 go build -o OliveTin.exe github.com/jamesread/OliveTin/cmd/OliveTin
+	GOOS=windows GOARCH=amd64 go build -o OliveTin.exe github.com/OliveTin/OliveTin/cmd/OliveTin
 
 daemon-compile: daemon-compile-armhf daemon-compile-x64-lin daemon-compile-x64-win
 
