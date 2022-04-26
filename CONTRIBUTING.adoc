@@ -29,6 +29,9 @@ dnf install git go protobuf-compiler make -y
 git clone https://github.com/OliveTin/OliveTin.git
 cd OliveTin
 
+# `make grpc` will also run `make go-tools`, which installs "buf". This binary 
+# will be put in your GOPATH/bin/, which should be on your path. buf is used to 
+# generate the protobuf / grpc stubs.
 make grpc
 make
 ./OliveTin
