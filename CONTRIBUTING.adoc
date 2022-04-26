@@ -29,12 +29,7 @@ dnf install git go protobuf-compiler make -y
 git clone https://github.com/OliveTin/OliveTin.git
 cd OliveTin
 
-# For each dependency in tools.go;
-go install "github.com/bufbuild/buf/cmd/buf"
-go install ... 
-
-buf generate 
-
+make grpc
 make
 ./OliveTin
 ```
