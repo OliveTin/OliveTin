@@ -87,7 +87,7 @@ func DefaultConfig() *Config {
 	config.ListenAddressRestActions = "localhost:1338"
 	config.ListenAddressGrpcActions = "localhost:1339"
 	config.ListenAddressWebUI = "localhost:1340"
-	config.ExternalRestAddress = ""
+	config.ExternalRestAddress = "."
 	config.LogLevel = "INFO"
 	config.CheckForUpdates = true
 	config.DefaultPermissions.Exec = true
