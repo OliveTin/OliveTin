@@ -11,6 +11,8 @@ print("Commit message is: " + commitmsg)
 
 ALLOWED_COMMIT_TYPES = [
     "cicd",
+    "refactor",
+    "depbump",
     "typo",
     "fmt",
     "doc",
