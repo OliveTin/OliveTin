@@ -92,22 +92,28 @@ func buildUserAcls(cfg *config.Config, user *AuthenticatedUser) {
 	}
 }
 
+func isACLRelevant(cfg *config.Config, actionAcls []string, acl config.AccessControlList, user *AuthenticatedUser) bool {
+	if !slices.Contains(user.acls, acl.Name) {
+		return false
+	}
+
+	if acl.AddToEveryAction {
+		return true
+	}
+
+	if slices.Contains(actionAcls, acl.Name) {
+		return true
+	}
+
+	return false
+}
+
 func getRelevantAcls(cfg *config.Config, actionAcls []string, user *AuthenticatedUser) []*config.AccessControlList {
 	var ret []*config.AccessControlList
 
 	for _, acl := range cfg.AccessControlLists {
-		if !slices.Contains(user.acls, acl.Name) {
-			continue
-		}
-
-		if acl.AddToEveryAction {
+		if isACLRelevant(cfg, actionAcls, acl, user) {
 			ret = append(ret, &acl)
-			continue
-		}
-
-		if slices.Contains(actionAcls, acl.Name) {
-			ret = append(ret, &acl)
-			continue
 		}
 	}
 
