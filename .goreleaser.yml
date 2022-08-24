@@ -39,7 +39,7 @@ builds:
 checksum:
   name_template: 'checksums.txt'
 snapshot:
-  name_template: "{{ .Commit }}"
+  name_template: "{{ .Branch }}-{{ .Commit }}"
 changelog:
   sort: asc
   filters:
