@@ -8,7 +8,7 @@ import (
 	config "github.com/OliveTin/OliveTin/internal/config"
 )
 
-func actionsCfgToPb(cfgActions []config.Action, user *acl.User) *pb.GetDashboardComponentsResponse {
+func actionsCfgToPb(cfgActions []config.Action, user *acl.AuthenticatedUser) *pb.GetDashboardComponentsResponse {
 	res := &pb.GetDashboardComponentsResponse{}
 
 	for _, action := range cfgActions {
@@ -23,7 +23,7 @@ func actionsCfgToPb(cfgActions []config.Action, user *acl.User) *pb.GetDashboard
 	return res
 }
 
-func actionCfgToPb(action config.Action, user *acl.User) *pb.Action {
+func actionCfgToPb(action config.Action, user *acl.AuthenticatedUser) *pb.Action {
 	btn := pb.Action{
 		Id:      fmt.Sprintf("%x", md5.Sum([]byte(action.Title))),
 		Title:   action.Title,

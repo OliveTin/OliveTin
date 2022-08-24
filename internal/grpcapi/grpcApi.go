@@ -5,6 +5,7 @@ import (
 	pb "github.com/OliveTin/OliveTin/gen/grpc"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
+
 	"net"
 
 	acl "github.com/OliveTin/OliveTin/internal/acl"
@@ -31,17 +32,17 @@ func (api *oliveTinAPI) StartAction(ctx ctx.Context, req *pb.StartActionRequest)
 	}
 
 	execReq := executor.ExecutionRequest{
-		ActionName: req.ActionName,
-		Arguments:  args,
-		User:       acl.UserFromContext(ctx),
-		Cfg:        cfg,
+		ActionName:        req.ActionName,
+		Arguments:         args,
+		AuthenticatedUser: acl.UserFromContext(ctx, cfg),
+		Cfg:               cfg,
 	}
 
 	return ex.ExecRequest(&execReq), nil
 }
 
 func (api *oliveTinAPI) GetDashboardComponents(ctx ctx.Context, req *pb.GetDashboardComponentsRequest) (*pb.GetDashboardComponentsResponse, error) {
-	user := acl.UserFromContext(ctx)
+	user := acl.UserFromContext(ctx, cfg)
 
 	res := actionsCfgToPb(cfg.Actions, user)
 
@@ -91,6 +92,18 @@ func (api *oliveTinAPI) ValidateArgumentType(ctx ctx.Context, req *pb.ValidateAr
 		Valid:       err == nil,
 		Description: desc,
 	}, nil
+}
+
+func (api *oliveTinAPI) WhoAmI(ctx ctx.Context, req *pb.WhoAmIRequest) (*pb.WhoAmIResponse, error) {
+	user := acl.UserFromContext(ctx, cfg)
+
+	res := &pb.WhoAmIResponse{
+		AuthenticatedUser: user.Username,
+	}
+
+	log.Warnf("usergroup: %v", user.Usergroup)
+
+	return res, nil
 }
 
 // Start will start the GRPC API.

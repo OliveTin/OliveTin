@@ -4,84 +4,112 @@ import (
 	"context"
 	config "github.com/OliveTin/OliveTin/internal/config"
 	log "github.com/sirupsen/logrus"
+
+	"golang.org/x/exp/slices"
+	"google.golang.org/grpc/metadata"
 )
 
 // User respresents a person.
-type User struct {
-	Username string
+type AuthenticatedUser struct {
+	Username  string
+	Usergroup string
+
+	acls []string
 }
 
-// IsAllowedExec checks if a User is allowed to execute an Action
-func IsAllowedExec(cfg *config.Config, user *User, action *config.Action) bool {
-	canExec := cfg.DefaultPermissions.Exec
-
-	log.WithFields(log.Fields{
-		"User":    user.Username,
-		"Action":  action.Title,
-		"CanExec": canExec,
-	}).Debug("isAllowedExec Permission Default")
-
-	for _, permissionEntry := range action.Permissions {
-		if isUserInGroup(user, permissionEntry.Usergroup) {
+// IsAllowedExec checks if a AuthenticatedUser is allowed to execute an Action
+func IsAllowedExec(cfg *config.Config, user *AuthenticatedUser, action *config.Action) bool {
+	for _, acl := range getRelevantAcls(cfg, action.Acls, user) {
+		if acl.Permissions.Exec {
 			log.WithFields(log.Fields{
-				"User":    user.Username,
-				"Action":  action.Title,
-				"CanExec": permissionEntry.Exec,
-			}).Debug("isAllowedExec Permission Entry")
+				"User":   user.Username,
+				"Action": action.Title,
+				"ACL":    acl.Name,
+			}).Debug("isAllowedExec - Matched ACL")
 
-			canExec = permissionEntry.Exec
+			return true
 		}
 	}
 
 	log.WithFields(log.Fields{
-		"User":    user.Username,
-		"Action":  action.Title,
-		"CanExec": canExec,
-	}).Debug("isAllowedExec Final Result")
+		"User":   user.Username,
+		"Action": action.Title,
+	}).Debug("isAllowedExec - No ACLs matched")
 
-	return canExec
+	return cfg.DefaultPermissions.Exec
 }
 
 // IsAllowedView checks if a User is allowed to view an Action
-func IsAllowedView(cfg *config.Config, user *User, action *config.Action) bool {
-	canView := cfg.DefaultPermissions.View
-
-	log.WithFields(log.Fields{
-		"User":    user.Username,
-		"Action":  action.Title,
-		"CanView": canView,
-	}).Debug("isAllowedView Permission Default")
-
-	for idx, permissionEntry := range action.Permissions {
-		if isUserInGroup(user, permissionEntry.Usergroup) {
+func IsAllowedView(cfg *config.Config, user *AuthenticatedUser, action *config.Action) bool {
+	for _, acl := range getRelevantAcls(cfg, action.Acls, user) {
+		if acl.Permissions.View {
 			log.WithFields(log.Fields{
-				"User":    user.Username,
-				"Action":  action.Title,
-				"CanView": permissionEntry.View,
-				"Index":   idx,
-			}).Debug("isAllowedView Permission Entry")
+				"User":   user.Username,
+				"Action": action.Title,
+				"ACL":    acl.Name,
+			}).Debug("isAllowedView - Matched ACL")
 
-			canView = permissionEntry.View
+			return true
 		}
 	}
 
 	log.WithFields(log.Fields{
-		"User":    user.Username,
-		"Action":  action.Title,
-		"CanView": canView,
-	}).Debug("isAllowedView Final Result")
+		"User":   user.Username,
+		"Action": action.Title,
+	}).Debug("isAllowedView - No ACLs matched")
 
-	return canView
+	return cfg.DefaultPermissions.View
 }
 
-func isUserInGroup(user *User, usergroup string) bool {
-	return true
-}
+// UserFromContext tries to find a user from a grpc context
+func UserFromContext(ctx context.Context, cfg *config.Config) *AuthenticatedUser {
+	md, _ := metadata.FromIncomingContext(ctx)
 
-// UserFromContext tries to find a user from a grpc context - obviously this is
-// a stub at the moment.
-func UserFromContext(ctx context.Context) *User {
-	return &User{
-		Username: "Guest",
+	ret := &AuthenticatedUser{
+		Username:  md.Get("username")[0],
+		Usergroup: md.Get("usergroup")[0],
 	}
+
+	buildUserAcls(cfg, ret)
+
+	log.Infof("UserFromContext: %+v", ret)
+
+	return ret
+}
+
+func buildUserAcls(cfg *config.Config, user *AuthenticatedUser) {
+	for _, acl := range cfg.AccessControlLists {
+		if slices.Contains(acl.MatchUsernames, user.Username) {
+			user.acls = append(user.acls, acl.Name)
+			continue
+		}
+
+		if slices.Contains(acl.MatchUsergroups, user.Usergroup) {
+			user.acls = append(user.acls, acl.Name)
+			continue
+
+		}
+	}
+}
+
+func getRelevantAcls(cfg *config.Config, actionAcls []string, user *AuthenticatedUser) []*config.AccessControlList {
+	var ret []*config.AccessControlList
+
+	for _, acl := range cfg.AccessControlLists {
+		if !slices.Contains(user.acls, acl.Name) {
+			continue
+		}
+
+		if acl.AddToEveryAction {
+			ret = append(ret, &acl)
+			continue
+		}
+
+		if slices.Contains(actionAcls, acl.Name) {
+			ret = append(ret, &acl)
+			continue
+		}
+	}
+
+	return ret
 }

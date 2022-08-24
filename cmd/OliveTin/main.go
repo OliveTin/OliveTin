@@ -10,8 +10,8 @@ import (
 
 	"github.com/OliveTin/OliveTin/internal/httpservers"
 
-	"github.com/fsnotify/fsnotify"
 	config "github.com/OliveTin/OliveTin/internal/config"
+	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
 	"os"
 	"path"
