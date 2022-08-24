@@ -34,7 +34,7 @@ jobs:
       - name: Archive binaries
         uses: actions/upload-artifact@v3.1.0
         with: 
-          name: "OliveTin-snapshot-${{ github.ref_name }}-${{ github.short_ref }}-dist"
+        name: "OliveTin-snapshot-${{ github.ref_name }}-${{ GITHUB_SHA::7 }}-dist"
           path: dist/OliveTin*.*
 
       - name: Archive integration tests
