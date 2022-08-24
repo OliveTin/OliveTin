@@ -34,12 +34,12 @@ builds:
         goarch: arm64
 
     ldflags:
-      - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{ .CommitDate }}
+      - -s -w -X main.version={{.Version}} -X main.commit={{.ShortCommit}} -X main.date={{ .CommitDate }}
 
 checksum:
   name_template: 'checksums.txt'
 snapshot:
-  name_template: "{{ .Branch }}-{{ .Commit }}"
+  name_template: "{{ .Branch }}-{{ .ShortCommit }}"
 changelog:
   sort: asc
   filters:
