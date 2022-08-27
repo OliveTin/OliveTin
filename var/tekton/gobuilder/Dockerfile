@@ -1,5 +1,7 @@
 FROM fedora
 RUN dnf install go -y --exclude=iputils
+COPY go.mod ./
+COPY so.sum ./
 RUN go install "github.com/bufbuild/buf/cmd/buf"
 RUN go install "github.com/fzipp/gocyclo/cmd/gocyclo"
 RUN go install "github.com/go-critic/go-critic/cmd/gocritic"
