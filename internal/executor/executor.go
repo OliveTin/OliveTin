@@ -51,7 +51,7 @@ type ExecutionRequest struct {
 	Arguments          map[string]string
 	action             *config.Action
 	Cfg                *config.Config
-	User               *acl.User
+	AuthenticatedUser  *acl.AuthenticatedUser
 	logEntry           *InternalLogEntry
 	finalParsedCommand string
 }
@@ -108,7 +108,7 @@ func (s stepFindAction) Exec(req *ExecutionRequest) bool {
 type stepACLCheck struct{}
 
 func (s stepACLCheck) Exec(req *ExecutionRequest) bool {
-	return acl.IsAllowedExec(req.Cfg, req.User, req.action)
+	return acl.IsAllowedExec(req.Cfg, req.AuthenticatedUser, req.action)
 }
 
 // ExecRequest processes an ExecutionRequest

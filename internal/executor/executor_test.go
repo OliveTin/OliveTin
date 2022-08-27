@@ -38,9 +38,9 @@ func TestCreateExecutorAndExec(t *testing.T) {
 	e, cfg := testingExecutor()
 
 	req := ExecutionRequest{
-		ActionName: "Do some tickles",
-		User:       &acl.User{Username: "Mr Tickle"},
-		Cfg:        cfg,
+		ActionName:        "Do some tickles",
+		AuthenticatedUser: &acl.AuthenticatedUser{Username: "Mr Tickle"},
+		Cfg:               cfg,
 		Arguments: map[string]string{
 			"person": "yourself",
 		},
@@ -81,13 +81,13 @@ func TestArgumentNameCamelCase(t *testing.T) {
 		},
 	}
 
-	values := map[string]string {
+	values := map[string]string{
 		"personName": "Fred",
 	}
 
-	out, err := parseActionArguments(a1.Shell, values, &a1);
+	out, err := parseActionArguments(a1.Shell, values, &a1)
 
-	assert.Equal(t, "echo 'Tickling Fred'", out);
+	assert.Equal(t, "echo 'Tickling Fred'", out)
 	assert.Nil(t, err)
 }
 
@@ -103,13 +103,13 @@ func TestArgumentNameSnakeCase(t *testing.T) {
 		},
 	}
 
-	values := map[string]string {
+	values := map[string]string{
 		"person_name": "Fred",
 	}
 
-	out, err := parseActionArguments(a1.Shell, values, &a1);
+	out, err := parseActionArguments(a1.Shell, values, &a1)
 
-	assert.Equal(t, "echo 'Tickling Fred'", out);
+	assert.Equal(t, "echo 'Tickling Fred'", out)
 	assert.Nil(t, err)
 }
 
@@ -125,13 +125,13 @@ func TestArgumentNameNumbers(t *testing.T) {
 		},
 	}
 
-	values := map[string]string {
+	values := map[string]string{
 		"person1name": "Fred",
 	}
 
-	out, err := parseActionArguments(a1.Shell, values, &a1);
+	out, err := parseActionArguments(a1.Shell, values, &a1)
 
-	assert.Equal(t, "echo 'Tickling Fred'", out);
+	assert.Equal(t, "echo 'Tickling Fred'", out)
 	assert.Nil(t, err)
 }
 
@@ -147,10 +147,10 @@ func TestArgumentNotProvided(t *testing.T) {
 		},
 	}
 
-	values := map[string]string {}
-	
-	out, err := parseActionArguments(a1.Shell, values, &a1);
+	values := map[string]string{}
 
-	assert.Equal(t, "", out);
+	out, err := parseActionArguments(a1.Shell, values, &a1)
+
+	assert.Equal(t, "", out)
 	assert.Equal(t, err.Error(), "Required arg not provided: personName")
 }

@@ -21,3 +21,13 @@ func (action *Action) FindArg(name string) *ActionArgument {
 
 	return nil
 }
+
+func (cfg *Config) FindAcl(aclTitle string) *AccessControlList {
+	for _, acl := range cfg.AccessControlLists {
+		if acl.Name == aclTitle {
+			return &acl
+		}
+	}
+
+	return nil
+}

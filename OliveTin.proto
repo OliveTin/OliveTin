@@ -84,6 +84,12 @@ message ValidateArgumentTypeResponse {
 	string description = 2;
 }
 
+message WhoAmIRequest {}
+
+message WhoAmIResponse {
+	string authenticatedUser = 1;
+}
+
 service OliveTinApi {
 	rpc GetDashboardComponents(GetDashboardComponentsRequest) returns (GetDashboardComponentsResponse) {
 		option (google.api.http) = {
@@ -108,6 +114,12 @@ service OliveTinApi {
 		option (google.api.http) = {
 			post: "/api/ValidateArgumentType"
 			body: "*"
+		};
+	}
+
+	rpc WhoAmI(WhoAmIRequest) returns (WhoAmIResponse) {
+		option (google.api.http) = {
+			get: "/api/WhoAmI"
 		};
 	}
 }
