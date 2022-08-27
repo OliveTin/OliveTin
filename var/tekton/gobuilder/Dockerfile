@@ -1,8 +1,8 @@
 FROM fedora
 RUN dnf install -v go -y --exclude=iputils
-RUN echo "Docker is stupid"
-COPY go.mod /root/
-COPY go.sum /root/
+RUN echo "cwd" && pwd && ls -l
+COPY go.mod /
+COPY go.sum /
 RUN go install -v "github.com/bufbuild/buf/cmd/buf"
 RUN go install -v "github.com/fzipp/gocyclo/cmd/gocyclo"
 RUN go install -v "github.com/go-critic/go-critic/cmd/gocritic"
