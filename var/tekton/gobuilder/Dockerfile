@@ -1,6 +1,7 @@
 FROM fedora
 RUN dnf install -v go -y --exclude=iputils
-RUN echo "cwd" && pwd && ls -l
+RUN pwd
+RUN ls -l
 COPY go.mod /workspace/
 COPY go.sum /workspace/
 RUN go install -v "github.com/bufbuild/buf/cmd/buf"
