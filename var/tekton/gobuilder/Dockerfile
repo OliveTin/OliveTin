@@ -1,6 +1,6 @@
 FROM fedora
 RUN dnf install go -y --exclude=iputils
-RUN pwd
+RUN echo "Docker is stupid"
 COPY go.mod ./
 COPY go.sum ./
 RUN go install "github.com/bufbuild/buf/cmd/buf"
