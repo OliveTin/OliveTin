@@ -70,7 +70,16 @@ func init() {
 	})
 
 	reloadConfig()
+
+	warnIfPuidGuid()
+
 	log.Info("Init complete")
+}
+
+func warnIfPuidGuid() {
+	if os.Getenv("PUID") != "" || os.Getenv("PGID") != "" {
+		log.Warnf("PUID or PGID seem to be set to something, but they are ignored by OliveTin. Please check https://docs.olivetin.app/no-puid-pgid.html")
+	}
 }
 
 func reloadConfig() {
