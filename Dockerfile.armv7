@@ -1,4 +1,4 @@
-FROM --platform=linux/arm/v7 registry.fedoraproject.org/fedora-minimal:36-armhfp
+FROM --platform=linux/armhfp registry.fedoraproject.org/fedora-minimal:36-armhfp
 
 RUN useradd --system --create-home olivetin -u 1000 
 
