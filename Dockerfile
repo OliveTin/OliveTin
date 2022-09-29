@@ -1,7 +1,5 @@
 FROM --platform=linux/amd64 registry.fedoraproject.org/fedora-minimal:36-x86_64
 
-RUN useradd --system --create-home olivetin -u 1000 
-
 RUN mkdir -p /config /var/www/olivetin \
     && \
     microdnf install -y --nodocs --noplugins --setopt=keepcache=0 --setopt=install_weak_deps=0 \ 
@@ -9,6 +7,8 @@ RUN mkdir -p /config /var/www/olivetin \
 		openssh-clients \
 		shadow-utils \
 		docker 
+
+RUN useradd --system --create-home olivetin -u 1000 
 
 EXPOSE 1337/tcp 
 

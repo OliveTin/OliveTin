@@ -1,13 +1,13 @@
 FROM --platform=linux/arm/v7 registry.fedoraproject.org/fedora-minimal:36-armhfp
 
-RUN useradd --system --create-home olivetin -u 1000 
-
 RUN mkdir -p /config /var/www/olivetin \
     && \
     microdnf install -y --nodocs --noplugins --setopt=keepcache=0 --setopt=install_weak_deps=0 \ 
 		iputils \
 		shadow-utils \ 
 		openssh-clients 
+
+RUN useradd --system --create-home olivetin -u 1000 
 
 EXPOSE 1337/tcp 
 
