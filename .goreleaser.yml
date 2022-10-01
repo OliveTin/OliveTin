@@ -78,7 +78,6 @@ dockers:
     goos: linux
     goarch: amd64
     skip_push: false
-    
     build_flag_templates:
       - "--platform=linux/amd64"
       - "--label=org.opencontainers.image.title={{.ProjectName}}"
@@ -94,27 +93,8 @@ dockers:
     goos: linux
     goarch: arm64
     skip_push: false
-    
     build_flag_templates:
       - "--platform=linux/arm64"
-      - "--label=org.opencontainers.image.title={{.ProjectName}}"
-      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
-      - "--label=org.opencontainers.image.version={{.Tag}}"
-    extra_files:
-      - webui
-
-    # This container image actually uses the goarm v5 binary, because v5 helps
-    # support rpi 1's, but it seems most container images start with v7.
-  - image_templates:
-      - "docker.io/jamesread/olivetin:{{ .Tag }}-armv7"
-    dockerfile: Dockerfile.armv7
-    goos: linux
-    goarch: arm
-    goarm: 7
-    skip_push: false
-    
-    build_flag_templates:
-      - "--platform=linux/arm/v7"
       - "--label=org.opencontainers.image.title={{.ProjectName}}"
       - "--label=org.opencontainers.image.revision={{.FullCommit}}"
       - "--label=org.opencontainers.image.version={{.Tag}}"
@@ -126,13 +106,11 @@ docker_manifests:
     image_templates:
       - docker.io/jamesread/olivetin:{{ .Version }}-amd64
       - docker.io/jamesread/olivetin:{{ .Version }}-arm64
-      - docker.io/jamesread/olivetin:{{ .Version }}-armv7
 
   - name_template: docker.io/jamesread/olivetin:latest
     image_templates:
       - docker.io/jamesread/olivetin:{{ .Version }}-amd64
       - docker.io/jamesread/olivetin:{{ .Version }}-arm64
-      - docker.io/jamesread/olivetin:{{ .Version }}-armv7
 
 nfpms:
   - maintainer: James Read <contact@jread.com>
