@@ -10,6 +10,7 @@ import (
 	"context"
 	"errors"
 	"os/exec"
+	"net/url"
 	"regexp"
 	"strings"
 	"time"
@@ -279,11 +280,19 @@ func typecheckChoice(value string, arg *config.ActionArgument) error {
 // TypeSafetyCheck checks argument values match a specific type. The types are
 // defined in typecheckRegex, and, you guessed it, uses regex to check for allowed
 // characters.
-func TypeSafetyCheck(name string, value string, typ string) error {
-	pattern, found := typecheckRegex[typ]
+func TypeSafetyCheck(name string, value string, argumentType string) error {
+	if argumentType == "url" {
+		return typeSafetyCheckUrl(name, value)
+	}
+
+	return typeSafetyCheckRegex(name, value, argumentType)
+}
+
+func typeSafetyCheckRegex(name string, value string, argumentType string) error {
+	pattern, found := typecheckRegex[argumentType]
 
 	if !found {
-		return errors.New("argument type not implemented " + typ)
+		return errors.New("argument type not implemented " + argumentType)
 	}
 
 	matches, _ := regexp.MatchString(pattern, value)
@@ -291,12 +300,18 @@ func TypeSafetyCheck(name string, value string, typ string) error {
 	if !matches {
 		log.WithFields(log.Fields{
 			"name":  name,
-			"type":  typ,
 			"value": value,
+			"type":  argumentType,
 		}).Warn("Arg type check safety failure")
 
-		return errors.New("invalid argument, doesn't match " + typ)
+		return errors.New("invalid argument, doesn't match " + argumentType)
 	}
 
 	return nil
+}
+
+func typeSafetyCheckUrl(name string, value string) error {
+	_, err := url.ParseRequestURI(value)
+
+	return err
 }
