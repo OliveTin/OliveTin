@@ -46,6 +46,8 @@ changelog:
     exclude:
       - '^docs:'
       - '^test:'
+      - '^cicd:'
+      - '^refactor:'
 
 archives:
   - 
