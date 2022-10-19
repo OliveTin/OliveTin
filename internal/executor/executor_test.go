@@ -12,6 +12,13 @@ func TestSanitizeUnsafe(t *testing.T) {
 	assert.Nil(t, TypeSafetyCheck("", "_zomg_ c:/ haxxor ' bobby tables && rm -rf ", "very_dangerous_raw_string"))
 }
 
+func TestSanitizeUnimplemented(t *testing.T) {
+	err := TypeSafetyCheck("", "I am a happy little argument", "greeting_type")
+
+	assert.NotNil(t, err, "Test an argument type that does not exist")
+}
+
+
 func testingExecutor() (*Executor, *config.Config) {
 	e := DefaultExecutor()
 
