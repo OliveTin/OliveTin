@@ -61,18 +61,34 @@ func IsAllowedView(cfg *config.Config, user *AuthenticatedUser, action *config.A
 	return cfg.DefaultPermissions.View
 }
 
+func getMetdataKeyOrEmpty(md metadata.MD, key string) string {
+	mdValues := md.Get(key)
+
+	if len(mdValues) > 0 {
+		return mdValues[0]
+	}
+
+	return ""
+}
+
 // UserFromContext tries to find a user from a grpc context
 func UserFromContext(ctx context.Context, cfg *config.Config) *AuthenticatedUser {
-	md, _ := metadata.FromIncomingContext(ctx)
+	md, ok := metadata.FromIncomingContext(ctx)
 
-	ret := &AuthenticatedUser{
-		Username:  md.Get("username")[0],
-		Usergroup: md.Get("usergroup")[0],
+	ret := &AuthenticatedUser{}
+
+	if ok {
+		ret.Username = getMetdataKeyOrEmpty(md, "username")
+		ret.Usergroup = getMetdataKeyOrEmpty(md, "password")
+
 	}
 
 	buildUserAcls(cfg, ret)
 
-	log.Infof("UserFromContext: %+v", ret)
+	log.WithFields(log.Fields{
+		"username": ret.Username,
+		"usergroup": ret.Usergroup,
+	}).Infof("UserFromContext")
 
 	return ret
 }
