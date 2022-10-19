@@ -125,6 +125,8 @@ nfpms:
 
     bindir: /usr/local/bin/
 
+    file_name_template: '{{ .PackageName }}_{{ .Os }}_{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}{{ with .Mips }}_{{ . }}{{ end }}{{ if not (eq .Amd64 "v1") }}{{ .Amd64 }}{{ end }}'
+
     contents:
       - src: OliveTin.service
         dst: /etc/systemd/system/OliveTin.service
@@ -138,6 +140,10 @@ nfpms:
 
 release:
   footer: |
+    ## Container images ([on Docker Hub](https://hub.docker.com/r/jamesread/olivetin/tags?page=1&ordering=last_updated))
+
+    - `docker pull docker.io/jamesread/olivetin:{{ .Version }}`
+
     ## Useful links
 
     - [Which download do I need?](https://docs.olivetin.app/choose-package.html)
