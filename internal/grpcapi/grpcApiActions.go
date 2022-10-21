@@ -36,6 +36,7 @@ func actionCfgToPb(action config.Action, user *acl.AuthenticatedUser) *pb.Action
 			Name:         cfgArg.Name,
 			Title:        cfgArg.Title,
 			Type:         cfgArg.Type,
+			Description:  cfgArg.Description,
 			DefaultValue: cfgArg.Default,
 			Choices:      buildChoices(cfgArg.Choices),
 		}
