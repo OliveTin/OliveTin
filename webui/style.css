@@ -282,6 +282,10 @@ input[name="start"]:hover {
   background-color: #aceaac;
 }
 
+span.inputDescription {
+  margin-left: 1em;
+}
+
 form div.buttons {
   text-align: right;
 }

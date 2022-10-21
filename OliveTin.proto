@@ -20,6 +20,8 @@ message ActionArgument {
 	string defaultValue = 4;
 
 	repeated ActionArgumentChoice choices = 5;
+
+	string description = 6;
 }
 
 message ActionArgumentChoice {

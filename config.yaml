@@ -25,11 +25,13 @@ actions:
       title: host
       type: ascii_identifier
       default: example.com
+      description: The host that you want to ping
 
     - name: count
       title: Count
       type: int
       default: 1
+      description: How many times to do you want to ping?
   
   # Restart lightdm on host "server1"
   # Docs: https://docs.olivetin.app/action-ping.html

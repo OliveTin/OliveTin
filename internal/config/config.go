@@ -17,6 +17,7 @@ type Action struct {
 type ActionArgument struct {
 	Name    string
 	Title   string
+	Description string
 	Type    string
 	Default string
 	Choices []ActionArgumentChoice
