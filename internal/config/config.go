@@ -15,12 +15,12 @@ type Action struct {
 
 // ActionArgument objects appear on Actions.
 type ActionArgument struct {
-	Name    string
-	Title   string
+	Name        string
+	Title       string
 	Description string
-	Type    string
-	Default string
-	Choices []ActionArgumentChoice
+	Type        string
+	Default     string
+	Choices     []ActionArgumentChoice
 }
 
 // ActionArgumentChoice represents a predefined choice for an argument.
