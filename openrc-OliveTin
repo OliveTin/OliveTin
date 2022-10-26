@@ -1,0 +1,7 @@
+#!/sbin/openrc-run
+
+name=$RC_SVCNAME
+description="OliveTin"
+command="/usr/local/bin/OliveTin"
+pidfile="/run/${RC_SVCNAME}.pid"
+command_background=true
