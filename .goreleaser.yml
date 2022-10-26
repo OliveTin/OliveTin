@@ -115,7 +115,8 @@ docker_manifests:
       - docker.io/jamesread/olivetin:{{ .Version }}-arm64
 
 nfpms:
-  - maintainer: James Read <contact@jread.com>
+  - id: default
+    maintainer: James Read <contact@jread.com>
     description: OliveTin is a web interface for running Linux shell commands.
     homepage: https://github.com/OliveTin/OliveTin
     license: AGPL-3.0
@@ -137,6 +138,30 @@ nfpms:
       - src: config.yaml
         dst: /etc/OliveTin/config.yaml
         type: "config|noreplace"
+
+  - id: openrc
+    maintainer: James Read <contact@jread.com>
+    description: OliveTin is a web interface for running Linux shell commands.
+    homepage: https://github.com/OliveTin/OliveTin
+    license: AGPL-3.0
+    formats:
+      - apk
+
+    bindir: /usr/local/bin/
+
+    file_name_template: '{{ .PackageName }}_{{ .Os }}_{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}{{ with .Mips }}_{{ . }}{{ end }}{{ if not (eq .Amd64 "v1") }}{{ .Amd64 }}{{ end }}'
+
+    contents:
+      - src: var/openrc/OliveTin
+        dst: /etc/init.d/
+
+      - src: webui
+        dst: /var/www/olivetin/
+
+      - src: config.yaml
+        dst: /etc/OliveTin/config.yaml
+        type: "config|noreplace"
+
 
 release:
   footer: |
