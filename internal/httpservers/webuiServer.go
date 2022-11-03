@@ -19,6 +19,8 @@ type webUISettings struct {
 	ShowNewVersions  bool
 	AvailableVersion string
 	CurrentVersion   string
+	PageTitle		 string
+
 }
 
 func findWebuiDir() string {
@@ -52,6 +54,7 @@ func generateWebUISettings(w http.ResponseWriter, r *http.Request) {
 		ShowNewVersions:  cfg.ShowNewVersions,
 		AvailableVersion: updatecheck.AvailableVersion,
 		CurrentVersion:   updatecheck.CurrentVersion,
+		PageTitle:        cfg.PageTitle,
 	})
 
 	_, err := w.Write([]byte(jsonRet))

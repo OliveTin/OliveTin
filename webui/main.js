@@ -65,10 +65,10 @@ function processWebuiSettingsJson (settings) {
   document.querySelector('#section-switcher').hidden = !settings.ShowNavigation
   document.querySelector('footer[title="footer"]').hidden = !settings.ShowFooter
 
-  if (settings.pageTitle) {
-    document.title = settings.pageTitle;
-    const titleElem = document.querySelector("#pageTitle");
-    if (titleElem) titleElem.innerText = settings.pageTitle;
+  if (settings.PageTitle) {
+    document.title = settings.PageTitle;
+    const titleElem = document.querySelector("#page-title");
+    if (titleElem) titleElem.innerText = settings.PageTitle;
   }
 }
 
