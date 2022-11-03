@@ -20,9 +20,26 @@ fieldset#root-group {
   border: 0;
 }
 
-label#sidebar-toggler-button {
+#perma-widget {
   position: absolute;
   z-index: 2;
+}
+
+#perma-widget label {
+  display: inline;
+}
+
+#sidebar-toggle-wrapper {
+  display: inline;
+}
+
+h1 {
+  display: inline;
+  padding-left: 1em;
+  font-size: small;
+}
+
+label#sidebar-toggler-button {
   width: auto;
   top: 1em;
   left: .5em;
@@ -31,14 +48,15 @@ label#sidebar-toggler-button {
   border-radius: 50%;
   background-color: white;
   text-align: center;
-  display: grid;
+  display: inline-grid;
   place-items: center;
   padding: 0;
   box-shadow: 0 0 5px 0 #444;
+  color: #666;
 }
 
 label#sidebar-toggler-button:hover, label#sidebar-toggler-button:focus {
-  color: red;
+  color: black;
   cursor: pointer;
 }
 
@@ -52,7 +70,7 @@ aside {
   height: 100%;
   left: 0;
   top: 0;
-  padding-top: 3em;
+  padding-top: 4em;
   transition: .5s ease;
   background-color: white;
   border: 0px 0px 10px 0;
@@ -67,13 +85,15 @@ aside ul {
 aside ul li {
   list-style: none;
   text-align: left;
-  padding: 1em;
+  padding-left: 1em;
+  padding-top: .5em;
+  padding-bottom: .5em;
   border-bottom: 1px inset black;
 }
 
 aside ul li:hover {
-  background-color: black;
-  color: white;
+  color: black;
+  background-color: #efefef;
   cursor: pointer;
 }
 
