@@ -20,7 +20,7 @@
 				<div id = "sidebar-toggle-wrapper">
 					<label for = "sidebar-toggler" id = "sidebar-toggler-button" title = "Toggle sidebar" tabindex = "0">&#9776;</label>
 				</div>
-				<h1>OliveTin</h1>
+				<h1 id = "page-title">OliveTin</h1>
 			</div>
 
 
@@ -33,7 +33,6 @@
 					</ul>
 				</aside>
 			</div>
-
 			<fieldset id = "section-switcher" title = "Sections">
 				<button id = "showActions">Actions</button>
 				<button id = "showLogs">Logs</button>
@@ -135,7 +134,7 @@
 
 			  const domErr = document.createElement('div')
 			  domErr.classList.add('error')
-			  domErr.innerHTML = '<h1>Error ' + friendlyType + '</h1><p>' + message + "</p><p><a href = 'http://docs.olivetin.app/troubleshooting.html' target = 'blank'/>OliveTin Documentation</a></p>"
+			  domErr.innerHTML = '<h1>Error ' + friendlyType + '</h1><p>' + message + "</p><p><a href = 'http://docs.olivetin.app/err-" + type + ".html' target = 'blank'/>" + type + " error in OliveTin Documentation</a></p>"
 
 			  document.getElementById('root-group').appendChild(domErr)
 			}

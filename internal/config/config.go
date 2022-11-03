@@ -15,12 +15,12 @@ type Action struct {
 
 // ActionArgument objects appear on Actions.
 type ActionArgument struct {
-	Name    string
-	Title   string
+	Name        string
+	Title       string
 	Description string
-	Type    string
-	Default string
-	Choices []ActionArgumentChoice
+	Type        string
+	Default     string
+	Choices     []ActionArgumentChoice
 }
 
 // ActionArgumentChoice represents a predefined choice for an argument.
@@ -66,6 +66,7 @@ type Config struct {
 	Actions                         []Action `mapstructure:"actions"`
 	Entities                        []Entity `mapstructure:"entities"`
 	CheckForUpdates                 bool
+	PageTitle                       string
 	ShowFooter                      bool
 	ShowNavigation                  bool
 	ShowNewVersions                 bool
@@ -79,6 +80,7 @@ type Config struct {
 func DefaultConfig() *Config {
 	config := Config{}
 	config.UseSingleHTTPFrontend = true
+	config.PageTitle = "OliveTin"
 	config.ShowFooter = true
 	config.ShowNavigation = true
 	config.ShowNewVersions = true

@@ -86,7 +86,7 @@ func UserFromContext(ctx context.Context, cfg *config.Config) *AuthenticatedUser
 	buildUserAcls(cfg, ret)
 
 	log.WithFields(log.Fields{
-		"username": ret.Username,
+		"username":  ret.Username,
 		"usergroup": ret.Usergroup,
 	}).Infof("UserFromContext")
 
