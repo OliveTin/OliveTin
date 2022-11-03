@@ -64,6 +64,7 @@ class ArgumentForm extends window.HTMLElement {
 
       domFieldWrapper.appendChild(this.createDomLabel(arg))
       domFieldWrapper.appendChild(this.createDomInput(arg))
+      domFieldWrapper.appendChild(this.createDomDescription(arg))
 
       this.domArgs.appendChild(domFieldWrapper)
     }
@@ -128,6 +129,14 @@ class ArgumentForm extends window.HTMLElement {
     this.argInputs.push(domEl)
 
     return domEl
+  }
+
+  createDomDescription (arg) {
+    const domArgumentDescription = document.createElement('span')
+    domArgumentDescription.classList.add('argument-description')
+    domArgumentDescription.innerText = arg.description
+
+    return domArgumentDescription
   }
 
   createSelectOption (choice) {

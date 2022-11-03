@@ -41,8 +41,8 @@ podman-image:
 	buildah bud -t olivetin
 
 podman-container:
-	podman kill olivetin
-	podman rm olivetin
+	podman kill olivetin || true
+	podman rm olivetin || true
 	podman create --name olivetin -p 1337:1337 -v /etc/OliveTin/:/config:ro olivetin
 	podman start olivetin
 

@@ -3,23 +3,24 @@ package config
 // Action represents the core functionality of OliveTin - commands that show up
 // as buttons in the UI.
 type Action struct {
-	ID          string
-	Title       string
-	Icon        string
-	Shell       string
-	CSS         map[string]string `mapstructure:"omitempty"`
-	Timeout     int
-	Permissions []PermissionsEntry
-	Arguments   []ActionArgument
+	ID        string
+	Title     string
+	Icon      string
+	Shell     string
+	CSS       map[string]string `mapstructure:"omitempty"`
+	Timeout   int
+	Acls      []string
+	Arguments []ActionArgument
 }
 
 // ActionArgument objects appear on Actions.
 type ActionArgument struct {
-	Name    string
-	Title   string
-	Type    string
-	Default string
-	Choices []ActionArgumentChoice
+	Name        string
+	Title       string
+	Description string
+	Type        string
+	Default     string
+	Choices     []ActionArgumentChoice
 }
 
 // ActionArgumentChoice represents a predefined choice for an argument.
@@ -37,23 +38,19 @@ type Entity struct {
 	CSS     map[string]string
 }
 
-// PermissionsEntry defines what users can do with an action.
-type PermissionsEntry struct {
-	Usergroup string
-	View      bool
-	Exec      bool
-}
-
-// DefaultPermissions will be used when no PermissionsEntry overrides it.
-type DefaultPermissions struct {
+// PermissionsList defines what users can do with an action.
+type PermissionsList struct {
 	View bool
 	Exec bool
 }
 
-// UserGroup is a group of users.
-type UserGroup struct {
-	Name    string
-	Members []string
+// AccessControlList defines what permissions apply to a user or user group.
+type AccessControlList struct {
+	Name             string
+	AddToEveryAction bool
+	MatchUsergroups  []string
+	MatchUsernames   []string
+	Permissions      PermissionsList
 }
 
 // Config is the global config used through the whole app.
@@ -73,8 +70,10 @@ type Config struct {
 	ShowFooter                      bool
 	ShowNavigation                  bool
 	ShowNewVersions                 bool
-	Usergroups                      []UserGroup
-	DefaultPermissions              DefaultPermissions
+	AuthJwtCookieName               string
+	AuthJwtSecret                   string
+	DefaultPermissions              PermissionsList
+	AccessControlLists              []AccessControlList
 }
 
 // DefaultConfig gets a new Config structure with sensible default values.

@@ -8,10 +8,6 @@ import (
 	config "github.com/OliveTin/OliveTin/internal/config"
 )
 
-func TestSanitizeUnsafe(t *testing.T) {
-	assert.Nil(t, TypeSafetyCheck("", "_zomg_ c:/ haxxor ' bobby tables && rm -rf ", "very_dangerous_raw_string"))
-}
-
 func testingExecutor() (*Executor, *config.Config) {
 	e := DefaultExecutor()
 
@@ -38,9 +34,9 @@ func TestCreateExecutorAndExec(t *testing.T) {
 	e, cfg := testingExecutor()
 
 	req := ExecutionRequest{
-		ActionName: "Do some tickles",
-		User:       &acl.User{Username: "Mr Tickle"},
-		Cfg:        cfg,
+		ActionName:        "Do some tickles",
+		AuthenticatedUser: &acl.AuthenticatedUser{Username: "Mr Tickle"},
+		Cfg:               cfg,
 		Arguments: map[string]string{
 			"person": "yourself",
 		},
@@ -81,13 +77,13 @@ func TestArgumentNameCamelCase(t *testing.T) {
 		},
 	}
 
-	values := map[string]string {
+	values := map[string]string{
 		"personName": "Fred",
 	}
 
-	out, err := parseActionArguments(a1.Shell, values, &a1);
+	out, err := parseActionArguments(a1.Shell, values, &a1)
 
-	assert.Equal(t, "echo 'Tickling Fred'", out);
+	assert.Equal(t, "echo 'Tickling Fred'", out)
 	assert.Nil(t, err)
 }
 
@@ -103,54 +99,12 @@ func TestArgumentNameSnakeCase(t *testing.T) {
 		},
 	}
 
-	values := map[string]string {
+	values := map[string]string{
 		"person_name": "Fred",
 	}
 
-	out, err := parseActionArguments(a1.Shell, values, &a1);
+	out, err := parseActionArguments(a1.Shell, values, &a1)
 
-	assert.Equal(t, "echo 'Tickling Fred'", out);
+	assert.Equal(t, "echo 'Tickling Fred'", out)
 	assert.Nil(t, err)
-}
-
-func TestArgumentNameNumbers(t *testing.T) {
-	a1 := config.Action{
-		Title: "Do some tickles",
-		Shell: "echo 'Tickling {{ person1name }}'",
-		Arguments: []config.ActionArgument{
-			{
-				Name: "person1name",
-				Type: "ascii",
-			},
-		},
-	}
-
-	values := map[string]string {
-		"person1name": "Fred",
-	}
-
-	out, err := parseActionArguments(a1.Shell, values, &a1);
-
-	assert.Equal(t, "echo 'Tickling Fred'", out);
-	assert.Nil(t, err)
-}
-
-func TestArgumentNotProvided(t *testing.T) {
-	a1 := config.Action{
-		Title: "Do some tickles",
-		Shell: "echo 'Tickling {{ personName }}'",
-		Arguments: []config.ActionArgument{
-			{
-				Name: "person",
-				Type: "ascii",
-			},
-		},
-	}
-
-	values := map[string]string {}
-	
-	out, err := parseActionArguments(a1.Shell, values, &a1);
-
-	assert.Equal(t, "", out);
-	assert.Equal(t, err.Error(), "Required arg not provided: personName")
 }

@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Set up QEMU
         id: qemu
@@ -38,7 +38,7 @@ jobs:
         with: 
           distribution: goreleaser
           version: latest
-          args: release --rm-dist 
+          args: release --rm-dist --parallelism 1 
         env: 
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
 

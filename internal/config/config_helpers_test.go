@@ -31,3 +31,16 @@ func TestFindAction(t *testing.T) {
 
 	assert.Nil(t, c.FindAction("waffles"), "Find non-existent action")
 }
+
+func TestFindAcl(t *testing.T) {
+	c := DefaultConfig()
+
+	acl1 := AccessControlList{
+		Name: "Testing ACL",
+	}
+
+	c.AccessControlLists = append(c.AccessControlLists, acl1)
+
+	assert.NotNil(t, c.FindAcl("Testing ACL"), "Find a ACL that should exist")
+	assert.Nil(t, c.FindAcl("Chocolate Cake"), "Find a ACL that does not exist")
+}
