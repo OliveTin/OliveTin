@@ -20,11 +20,88 @@ fieldset#root-group {
   border: 0;
 }
 
+#perma-widget {
+  position: absolute;
+  z-index: 2;
+}
+
+#perma-widget label {
+  display: inline;
+}
+
+#sidebar-toggle-wrapper {
+  display: inline;
+}
+
+h1 {
+  display: inline;
+  padding-left: 1em;
+  font-size: small;
+}
+
+label#sidebar-toggler-button {
+  width: auto;
+  top: 1em;
+  left: .5em;
+  height: 2em;
+  width: 2em;
+  border-radius: 50%;
+  background-color: white;
+  text-align: center;
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  box-shadow: 0 0 5px 0 #444;
+  color: #666;
+}
+
+label#sidebar-toggler-button:hover, label#sidebar-toggler-button:focus {
+  color: black;
+  cursor: pointer;
+}
+
+input:checked ~ aside {
+  left: -250px;
+}
+
+aside {
+  position: absolute;
+  width: 180px;
+  height: 100%;
+  left: 0;
+  top: 0;
+  padding-top: 4em;
+  transition: .5s ease;
+  background-color: white;
+  border: 0px 0px 10px 0;
+  box-shadow: 0 0 10px 0 #444;
+}
+
+aside ul {
+  padding: 0;
+  margin: 0;
+}
+
+aside ul li {
+  list-style: none;
+  text-align: left;
+  padding-left: 1em;
+  padding-top: .5em;
+  padding-bottom: .5em;
+  border-bottom: 1px inset black;
+}
+
+aside ul li:hover {
+  color: black;
+  background-color: #efefef;
+  cursor: pointer;
+}
+
 table {
   background-color: white;
   border-collapse: collapse;
   width: 100%;
-  box-shadow: 0 0 10px 0 #444;
+  box-shadow: 0 0 5px 0 #444;
 }
 
 th,

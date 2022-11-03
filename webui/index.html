@@ -16,7 +16,23 @@
 
 	<body>
 		<main title = "main content">
-			<h1 id="pageTitle">OliveTin</h1>
+			<div id = "perma-widget">
+				<div id = "sidebar-toggle-wrapper">
+					<label for = "sidebar-toggler" id = "sidebar-toggler-button" title = "Toggle sidebar" tabindex = "0">&#9776;</label>
+				</div>
+				<h1 id = "page-title">OliveTin</h1>
+			</div>
+
+
+			<div id = "content-sidebar">
+				<input type = "checkbox" id = "sidebar-toggler" hidden checked />
+				<aside>
+					<ul>
+						<li>Foo</li>
+						<li>Bar</li>
+					</ul>
+				</aside>
+			</div>
 			<fieldset id = "section-switcher" title = "Sections">
 				<button id = "showActions">Actions</button>
 				<button id = "showLogs">Logs</button>
