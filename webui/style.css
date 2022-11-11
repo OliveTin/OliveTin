@@ -20,11 +20,79 @@ fieldset#root-group {
   border: 0;
 }
 
+#sidebar-toggle-wrapper {
+  display: inline;
+}
+
+h1 {
+  display: inline;
+  padding-left: 1em;
+  font-size: small;
+}
+
+label#sidebar-toggler-button {
+  top: 1em;
+  left: 0.5em;
+  height: 2em;
+  width: 2em;
+  border-radius: 50%;
+  background-color: white;
+  text-align: center;
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  box-shadow: 0 0 5px 0 #444;
+  color: #666;
+}
+
+label#sidebar-toggler-button:hover,
+label#sidebar-toggler-button:focus {
+  color: black;
+  cursor: pointer;
+}
+
+aside {
+  position: absolute;
+  width: 180px;
+  height: 100%;
+  left: 0;
+  top: 0;
+  padding-top: 4em;
+  transition: 0.5s ease;
+  background-color: white;
+  border: 0 0 10px 0;
+  box-shadow: 0 0 10px 0 #444;
+}
+
+input:checked ~ aside {
+  left: -250px;
+}
+
+aside ul {
+  padding: 0;
+  margin: 0;
+}
+
+aside ul li {
+  list-style: none;
+  text-align: left;
+  padding-left: 1em;
+  padding-top: 0.5em;
+  padding-bottom: 0.5em;
+  border-bottom: 1px inset black;
+}
+
+aside ul li:hover {
+  color: black;
+  background-color: #efefef;
+  cursor: pointer;
+}
+
 table {
   background-color: white;
   border-collapse: collapse;
   width: 100%;
-  box-shadow: 0 0 10px 0 #444;
+  box-shadow: 0 0 5px 0 #444;
 }
 
 th,
@@ -255,6 +323,15 @@ label {
   text-align: right;
   display: inline-block;
   padding-right: 1em;
+}
+
+#perma-widget {
+  position: absolute;
+  z-index: 2;
+}
+
+#perma-widget label {
+  display: inline;
 }
 
 input {
