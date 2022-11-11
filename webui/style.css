@@ -20,15 +20,6 @@ fieldset#root-group {
   border: 0;
 }
 
-#perma-widget {
-  position: absolute;
-  z-index: 2;
-}
-
-#perma-widget label {
-  display: inline;
-}
-
 #sidebar-toggle-wrapper {
   display: inline;
 }
@@ -40,9 +31,8 @@ h1 {
 }
 
 label#sidebar-toggler-button {
-  width: auto;
   top: 1em;
-  left: .5em;
+  left: 0.5em;
   height: 2em;
   width: 2em;
   border-radius: 50%;
@@ -55,13 +45,10 @@ label#sidebar-toggler-button {
   color: #666;
 }
 
-label#sidebar-toggler-button:hover, label#sidebar-toggler-button:focus {
+label#sidebar-toggler-button:hover,
+label#sidebar-toggler-button:focus {
   color: black;
   cursor: pointer;
-}
-
-input:checked ~ aside {
-  left: -250px;
 }
 
 aside {
@@ -71,10 +58,14 @@ aside {
   left: 0;
   top: 0;
   padding-top: 4em;
-  transition: .5s ease;
+  transition: 0.5s ease;
   background-color: white;
-  border: 0px 0px 10px 0;
+  border: 0 0 10px 0;
   box-shadow: 0 0 10px 0 #444;
+}
+
+input:checked ~ aside {
+  left: -250px;
 }
 
 aside ul {
@@ -86,8 +77,8 @@ aside ul li {
   list-style: none;
   text-align: left;
   padding-left: 1em;
-  padding-top: .5em;
-  padding-bottom: .5em;
+  padding-top: 0.5em;
+  padding-bottom: 0.5em;
   border-bottom: 1px inset black;
 }
 
@@ -332,6 +323,15 @@ label {
   text-align: right;
   display: inline-block;
   padding-right: 1em;
+}
+
+#perma-widget {
+  position: absolute;
+  z-index: 2;
+}
+
+#perma-widget label {
+  display: inline;
 }
 
 input {

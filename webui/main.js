@@ -66,9 +66,9 @@ function processWebuiSettingsJson (settings) {
   document.querySelector('footer[title="footer"]').hidden = !settings.ShowFooter
 
   if (settings.PageTitle) {
-    document.title = settings.PageTitle;
-    const titleElem = document.querySelector("#page-title");
-    if (titleElem) titleElem.innerText = settings.PageTitle;
+    document.title = settings.PageTitle
+    const titleElem = document.querySelector('#page-title')
+    if (titleElem) titleElem.innerText = settings.PageTitle
   }
 }
 
