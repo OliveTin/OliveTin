@@ -6,11 +6,11 @@ require (
 	github.com/bufbuild/buf v1.3.1
 	github.com/fsnotify/fsnotify v1.5.4
 	github.com/fzipp/gocyclo v0.5.0
-	github.com/go-co-op/gocron v1.13.0
 	github.com/go-critic/go-critic v0.6.2
 	github.com/golang-jwt/jwt/v4 v4.4.2
 	github.com/google/uuid v1.3.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.10.3
+	github.com/robfig/cron/v3 v3.0.1
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/viper v1.12.0
 	github.com/stretchr/testify v1.7.2
@@ -55,7 +55,6 @@ require (
 	github.com/quasilyte/go-ruleguard v0.3.15 // indirect
 	github.com/quasilyte/gogrep v0.0.0-20220103110004-ffaa07af02e3 // indirect
 	github.com/quasilyte/regex/syntax v0.0.0-20200407221936-30656e2c4a95 // indirect
-	github.com/robfig/cron/v3 v3.0.1 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/spf13/afero v1.8.2 // indirect
 	github.com/spf13/cast v1.5.0 // indirect
@@ -69,7 +68,6 @@ require (
 	go.uber.org/zap v1.21.0 // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
 	golang.org/x/net v0.0.0-20220722155237-a158d28d115b // indirect
-	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4 // indirect
 	golang.org/x/sys v0.0.0-20220722155257-8c9f86f7a55f // indirect
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
 	golang.org/x/text v0.3.7 // indirect

@@ -5,14 +5,13 @@ import (
 	"encoding/json"
 	"errors"
 	config "github.com/OliveTin/OliveTin/internal/config"
-	"github.com/go-co-op/gocron"
 	"github.com/google/uuid"
+	"github.com/robfig/cron/v3"
 	log "github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"runtime"
-	"time"
 )
 
 type updateRequest struct {
@@ -91,13 +90,19 @@ func StartUpdateChecker(currentVersion string, currentCommit string, cfg *config
 		InContainer:    isInContainer(),
 	}
 
-	s := gocron.NewScheduler(time.UTC)
+	s := cron.New(cron.WithSeconds())
 
-	s.Every(7).Days().Do(func() {
+	// Several values have been tried here.
+	// 1st: Every 24h - very spammy.
+	// 2nd: Every 7d - (168 hours - much more reasonable, but it checks in at the same time/day each week.
+	// Current: Every 100h is not so spammy, and has the advantage that the checkin time "shifts" hours.
+	s.AddFunc("@every 100h", func() {
 		actualCheckForUpdate(payload)
 	})
+	
+	go actualCheckForUpdate(payload) // On startup
 
-	s.StartAsync()
+	go s.Start()
 }
 
 func doRequest(jsonUpdateRequest []byte) string {
