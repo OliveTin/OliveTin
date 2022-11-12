@@ -19,8 +19,7 @@ type webUISettings struct {
 	ShowNewVersions  bool
 	AvailableVersion string
 	CurrentVersion   string
-	PageTitle		 string
-
+	PageTitle        string
 }
 
 func findWebuiDir() string {
