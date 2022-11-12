@@ -34,8 +34,15 @@ go-tools:
 	go install "google.golang.org/grpc/cmd/protoc-gen-go-grpc"
 	go install "google.golang.org/protobuf/cmd/protoc-gen-go"
 
-grpc: githooks go-tools
+setup: grpc githooks go-tools
+
+grpc:
 	buf generate
+
+dist: grpc
+
+protoc:
+	protoc --go_out=. --go-grpc_out=. --grpc-gateway_out=. -I .:/usr/include/ OliveTin.proto
 
 podman-image:
 	buildah bud -t olivetin
