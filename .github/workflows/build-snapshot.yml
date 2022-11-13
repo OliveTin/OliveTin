@@ -1,8 +1,9 @@
+---
 name: "Build Snapshot"
 
-on: 
+on:
   - push
-  - workflow_dispatch 
+  - workflow_dispatch
 
 jobs:
   build-snapshot:
@@ -18,15 +19,15 @@ jobs:
           image: tonistiigi/binfmt:latest
           platforms: arm64,arm
 
-			- name: Setup node
+      - name: Setup node
         uses: actions/setup-node@v3
-				with:
-					cache: 'npm'
-					cache-dependency-path: webui/package-lock.json
+        with:
+          cache: 'npm'
+          cache-dependency-path: webui/package-lock.json
 
       - name: Setup Go
         uses: actions/setup-go@v3
-        with: 
+        with:
           go-version: '>=1.18.0'
           cache: true
 
@@ -35,19 +36,19 @@ jobs:
 
       - name: goreleaser
         uses: goreleaser/goreleaser-action@v3
-        with: 
+        with:
           distribution: goreleaser
           version: latest
           args: release --snapshot --rm-dist --parallelism 1
 
       - name: Archive binaries
         uses: actions/upload-artifact@v3.1.0
-        with: 
+        with:
           name: "OliveTin-snapshot-${{ github.ref_name }}-${{ github.sha }}-dist"
           path: dist/OliveTin*.*
 
       - name: Archive integration tests
         uses: actions/upload-artifact@v3.1.0
-        with: 
+        with:
           name: integration-tests
           path: integration-tests
