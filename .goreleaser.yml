@@ -60,6 +60,7 @@ archives:
       - Dockerfile
       - webui
       - OliveTin.service
+      - /var/
 
     replacements:
       darwin: macOS
@@ -139,6 +140,9 @@ nfpms:
         dst: /etc/OliveTin/config.yaml
         type: "config|noreplace"
 
+      - src: var/manpage/OliveTin.1.gz
+        dst: /usr/share/man/man1/OliveTin.1.gz
+
   - id: openrc
     maintainer: James Read <contact@jread.com>
     description: OliveTin is a web interface for running Linux shell commands.
@@ -162,6 +166,8 @@ nfpms:
         dst: /etc/OliveTin/config.yaml
         type: "config|noreplace"
 
+      - src: var/manpage/OliveTin.1.gz
+        dst: /usr/share/man/man1/OliveTin.1.gz
 
 release:
   footer: |
