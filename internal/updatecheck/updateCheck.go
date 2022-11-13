@@ -30,7 +30,7 @@ var AvailableVersion = "none"
 var CurrentVersion = "?"
 
 func installationID(filename string) string {
-	content := "unset"
+	var content string
 	contentBytes, err := ioutil.ReadFile(filename)
 
 	if err != nil {
