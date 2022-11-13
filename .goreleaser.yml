@@ -60,7 +60,7 @@ archives:
       - Dockerfile
       - webui
       - OliveTin.service
-      - /var/
+      - ./var/
 
     replacements:
       darwin: macOS
