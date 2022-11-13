@@ -99,7 +99,7 @@ func StartUpdateChecker(currentVersion string, currentCommit string, cfg *config
 	s.AddFunc("@every 100h", func() {
 		actualCheckForUpdate(payload)
 	})
-	
+
 	go actualCheckForUpdate(payload) // On startup
 
 	go s.Start()
