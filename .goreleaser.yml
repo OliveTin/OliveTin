@@ -42,6 +42,18 @@ snapshot:
   name_template: "{{ .Branch }}-{{ .ShortCommit }}"
 changelog:
   sort: asc
+  groups:
+    - title: 'Security'
+      regexp: '^.*?security(\([[:word:]]+\))??!?:.+$'
+      order: 0
+    - title: 'Features'
+      regexp: '^.*?feature(\([[:word:]]+\))??!?:.+$'
+      order: 1
+    - title: 'Bug fixes'
+      regexp: '^.*?bugfix(\([[:word:]]+\))??!?:.+$'
+      order: 2
+    - title: Others
+      order: 999
   filters:
     exclude:
       - '^docs:'
