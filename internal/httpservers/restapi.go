@@ -88,8 +88,8 @@ func startRestAPIServer(globalConfig *config.Config) error {
 				return nil
 			}
 
-			username := lookupClaimValueOrDefault(claims, "name", "none")
-			usergroup := lookupClaimValueOrDefault(claims, "group", "none")
+			username := lookupClaimValueOrDefault(claims, cfg.AuthJwtClaimUsername, "none")
+			usergroup := lookupClaimValueOrDefault(claims, cfg.AuthJwtClaimUserGroup, "none")
 
 			md := metadata.Pairs(
 				"username", username,

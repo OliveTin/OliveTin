@@ -72,6 +72,8 @@ type Config struct {
 	ShowNewVersions                 bool
 	AuthJwtCookieName               string
 	AuthJwtSecret                   string
+	AuthJwtClaimUsername            string
+	AuthJwtClaimUserGroup           string
 	DefaultPermissions              PermissionsList
 	AccessControlLists              []AccessControlList
 }
@@ -93,6 +95,8 @@ func DefaultConfig() *Config {
 	config.CheckForUpdates = true
 	config.DefaultPermissions.Exec = true
 	config.DefaultPermissions.View = true
+	config.AuthJwtClaimUsername = "name"
+	config.AuthJwtClaimUserGroup = "group"
 
 	return &config
 }
