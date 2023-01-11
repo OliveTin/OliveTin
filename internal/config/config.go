@@ -95,7 +95,7 @@ func DefaultConfig() *Config {
 	config.CheckForUpdates = true
 	config.DefaultPermissions.Exec = true
 	config.DefaultPermissions.View = true
-	config.AuthJwtClaimUsername = "user"
+	config.AuthJwtClaimUsername = "name"
 	config.AuthJwtClaimUserGroup = "group"
 
 	return &config
