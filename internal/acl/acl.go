@@ -79,8 +79,7 @@ func UserFromContext(ctx context.Context, cfg *config.Config) *AuthenticatedUser
 
 	if ok {
 		ret.Username = getMetdataKeyOrEmpty(md, "username")
-		ret.Usergroup = getMetdataKeyOrEmpty(md, "password")
-
+		ret.Usergroup = getMetdataKeyOrEmpty(md, "usergroup")
 	}
 
 	buildUserAcls(cfg, ret)
