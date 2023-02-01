@@ -14,6 +14,7 @@ import (
 
 	pb "github.com/OliveTin/OliveTin/gen/grpc"
 	config "github.com/OliveTin/OliveTin/internal/config"
+	"github.com/OliveTin/OliveTin/internal/executor"
 )
 
 const bufSize = 1024 * 1024
@@ -21,9 +22,11 @@ const bufSize = 1024 * 1024
 var lis *bufconn.Listener
 
 func init() {
+	ex := executor.DefaultExecutor()
+
 	lis = bufconn.Listen(bufSize)
 	s := grpc.NewServer()
-	pb.RegisterOliveTinApiServer(s, newServer())
+	pb.RegisterOliveTinApiServer(s, newServer(ex))
 
 	go func() {
 		if err := s.Serve(lis); err != nil {

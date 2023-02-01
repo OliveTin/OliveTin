@@ -387,6 +387,12 @@ input.invalid {
   border-radius: 1em;
 }
 
+span.tag {
+  background-color: lightgray;
+  border-radius: .6em;
+  padding: .2em;
+}
+
 @media (prefers-color-scheme: dark) {
   body {
     background-color: #333;

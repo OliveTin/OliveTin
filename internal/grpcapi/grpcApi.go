@@ -15,11 +15,12 @@ import (
 
 var (
 	cfg *config.Config
-	ex  = executor.DefaultExecutor()
 )
 
 type oliveTinAPI struct {
 	pb.UnimplementedOliveTinApiServer
+
+	executor *executor.Executor
 }
 
 func (api *oliveTinAPI) StartAction(ctx ctx.Context, req *pb.StartActionRequest) (*pb.StartActionResponse, error) {
@@ -38,7 +39,7 @@ func (api *oliveTinAPI) StartAction(ctx ctx.Context, req *pb.StartActionRequest)
 		Cfg:               cfg,
 	}
 
-	return ex.ExecRequest(&execReq), nil
+	return api.executor.ExecRequest(&execReq), nil
 }
 
 func (api *oliveTinAPI) GetDashboardComponents(ctx ctx.Context, req *pb.GetDashboardComponentsRequest) (*pb.GetDashboardComponentsResponse, error) {
@@ -60,7 +61,7 @@ func (api *oliveTinAPI) GetLogs(ctx ctx.Context, req *pb.GetLogsRequest) (*pb.Ge
 
 	// TODO Limit to 10 entries or something to prevent browser lag.
 
-	for _, logEntry := range ex.Logs {
+	for _, logEntry := range api.executor.Logs {
 		ret.Logs = append(ret.Logs, &pb.LogEntry{
 			ActionTitle: logEntry.ActionTitle,
 			ActionIcon:  logEntry.ActionIcon,
@@ -69,6 +70,7 @@ func (api *oliveTinAPI) GetLogs(ctx ctx.Context, req *pb.GetLogsRequest) (*pb.Ge
 			Stderr:      logEntry.Stderr,
 			TimedOut:    logEntry.TimedOut,
 			ExitCode:    logEntry.ExitCode,
+			Tags:        logEntry.Tags,
 		})
 	}
 
@@ -107,7 +109,7 @@ func (api *oliveTinAPI) WhoAmI(ctx ctx.Context, req *pb.WhoAmIRequest) (*pb.WhoA
 }
 
 // Start will start the GRPC API.
-func Start(globalConfig *config.Config) {
+func Start(globalConfig *config.Config, ex *executor.Executor) {
 	cfg = globalConfig
 
 	lis, err := net.Listen("tcp", cfg.ListenAddressGrpcActions)
@@ -117,7 +119,7 @@ func Start(globalConfig *config.Config) {
 	}
 
 	grpcServer := grpc.NewServer()
-	pb.RegisterOliveTinApiServer(grpcServer, newServer())
+	pb.RegisterOliveTinApiServer(grpcServer, newServer(ex))
 
 	err = grpcServer.Serve(lis)
 
@@ -126,7 +128,8 @@ func Start(globalConfig *config.Config) {
 	}
 }
 
-func newServer() *oliveTinAPI {
+func newServer(ex *executor.Executor) *oliveTinAPI {
 	server := oliveTinAPI{}
+	server.executor = ex
 	return &server
 }

@@ -17,6 +17,7 @@ import (
 type ExecutionRequest struct {
 	ActionName         string
 	Arguments          map[string]string
+	Tags               []string
 	action             *config.Action
 	Cfg                *config.Config
 	AuthenticatedUser  *acl.AuthenticatedUser
@@ -33,6 +34,7 @@ type InternalLogEntry struct {
 	Stderr   string
 	TimedOut bool
 	ExitCode int32
+	Tags     []string
 
 	/*
 		The following two properties are obviously on Action normally, but it's useful
@@ -184,6 +186,8 @@ func stepExec(req *ExecutionRequest) bool {
 	if ctx.Err() == context.DeadlineExceeded {
 		req.logEntry.TimedOut = true
 	}
+
+	req.logEntry.Tags = req.Tags
 
 	return true
 }

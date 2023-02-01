@@ -5,7 +5,9 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	"github.com/OliveTin/OliveTin/internal/executor"
 	grpcapi "github.com/OliveTin/OliveTin/internal/grpcapi"
+	"github.com/OliveTin/OliveTin/internal/onstartup"
 	updatecheck "github.com/OliveTin/OliveTin/internal/updatecheck"
 
 	"github.com/OliveTin/OliveTin/internal/httpservers"
@@ -100,9 +102,13 @@ func main() {
 
 	log.Debugf("Config: %+v", cfg)
 
+	executor := executor.DefaultExecutor()
+
+	go onstartup.Execute(cfg, executor)
+
 	go updatecheck.StartUpdateChecker(version, commit, cfg, configDir)
 
-	go grpcapi.Start(cfg)
+	go grpcapi.Start(cfg, executor)
 
 	httpservers.StartServers(cfg)
 }
