@@ -11,6 +11,7 @@ type Action struct {
 	Timeout       int
 	Acls          []string
 	ExecOnStartup bool
+	ExecOnCron    []string
 	Arguments     []ActionArgument
 }
 
