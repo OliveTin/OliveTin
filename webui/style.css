@@ -389,8 +389,8 @@ input.invalid {
 
 span.tag {
   background-color: lightgray;
-  border-radius: .6em;
-  padding: .2em;
+  border-radius: 0.6em;
+  padding: 0.2em;
 }
 
 @media (prefers-color-scheme: dark) {
