@@ -70,6 +70,7 @@ message LogEntry {
 	string user = 7;
 	string userClass = 8;
 	string actionIcon = 9;
+	repeated string tags = 10;
 }
 
 message GetLogsResponse {

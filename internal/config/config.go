@@ -3,14 +3,15 @@ package config
 // Action represents the core functionality of OliveTin - commands that show up
 // as buttons in the UI.
 type Action struct {
-	ID        string
-	Title     string
-	Icon      string
-	Shell     string
-	CSS       map[string]string `mapstructure:"omitempty"`
-	Timeout   int
-	Acls      []string
-	Arguments []ActionArgument
+	ID            string
+	Title         string
+	Icon          string
+	Shell         string
+	CSS           map[string]string `mapstructure:"omitempty"`
+	Timeout       int
+	Acls          []string
+	ExecOnStartup bool
+	Arguments     []ActionArgument
 }
 
 // ActionArgument objects appear on Actions.

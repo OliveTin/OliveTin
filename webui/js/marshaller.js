@@ -57,6 +57,14 @@ export function marshalLogsJsonToHtml (json) {
     row.querySelector('pre.stderr').innerText = logEntry.stderr
     row.querySelector('.exit-code').innerText = logTableExitCode
 
+    for (const tag of logEntry.tags) {
+      const domTag = document.createElement('span')
+      domTag.classList.add('tag')
+      domTag.innerText = tag
+
+      row.querySelector('.tags').append(domTag)
+    }
+
     document.querySelector('#logTableBody').prepend(row)
   }
 }
