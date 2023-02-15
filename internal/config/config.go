@@ -76,6 +76,8 @@ type Config struct {
 	AuthJwtSecret                   string
 	AuthJwtClaimUsername            string
 	AuthJwtClaimUserGroup           string
+	AuthHttpHeaderUsername 			string
+	AuthHttpHeaderUserGroup 		string
 	DefaultPermissions              PermissionsList
 	AccessControlLists              []AccessControlList
 }
