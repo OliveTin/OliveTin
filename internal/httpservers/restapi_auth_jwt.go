@@ -1,10 +1,10 @@
-package httpservers;
+package httpservers
 
 import (
-	"github.com/golang-jwt/jwt/v4"
-	"fmt"
-	log "github.com/sirupsen/logrus"
 	"errors"
+	"fmt"
+	"github.com/golang-jwt/jwt/v4"
+	log "github.com/sirupsen/logrus"
 	"net/http"
 )
 
@@ -65,4 +65,3 @@ func parseJwtCookie(request *http.Request) (string, string) {
 
 	return username, usergroup
 }
-

@@ -72,9 +72,7 @@ func startRestAPIServer(globalConfig *config.Config) error {
 
 	// The JSONPb.EmitDefaults is necssary, so "empty" fields are returned in JSON.
 	mux := runtime.NewServeMux(
-		runtime.WithMetadata(func(ctx context.Context, request *http.Request) metadata.MD {
-			return parseRequestMetadata(ctx, request)
-		}),
+		runtime.WithMetadata(parseRequestMetadata),
 		runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.HTTPBodyMarshaler{
 			Marshaler: &runtime.JSONPb{
 				MarshalOptions: protojson.MarshalOptions{
