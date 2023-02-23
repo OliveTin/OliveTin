@@ -35,7 +35,7 @@ jobs:
         run: make grpc
 
       - name: goreleaser
-        uses: goreleaser/goreleaser-action@v3
+        uses: goreleaser/goreleaser-action@v4.2.0
         with:
           distribution: goreleaser
           version: latest
