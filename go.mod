@@ -17,7 +17,7 @@ require (
 	golang.org/x/exp v0.0.0-20220823124025-807a23277127
 	google.golang.org/grpc v1.47.0
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.1.0
-	google.golang.org/protobuf v1.28.0
+	google.golang.org/protobuf v1.28.1
 )
 
 require (
