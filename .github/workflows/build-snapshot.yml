@@ -39,7 +39,7 @@ jobs:
         with:
           distribution: goreleaser
           version: latest
-          args: release --snapshot --rm-dist --parallelism 1
+          args: release --snapshot --clean --parallelism 1 --skip-docker
 
       - name: Archive binaries
         uses: actions/upload-artifact@v3.1.0
