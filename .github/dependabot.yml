@@ -2,6 +2,8 @@ version: 2
 updates:
   - package-ecosystem: "gomod"
     directory: "/"
+    schedule:
+      interval: "daily"
     pull-request-branch-name:
       # The default / breaks artifact names at archive time.
       separator: "-"
