@@ -7,7 +7,7 @@ require (
 	github.com/fsnotify/fsnotify v1.5.4
 	github.com/fzipp/gocyclo v0.5.0
 	github.com/go-critic/go-critic v0.6.7
-	github.com/golang-jwt/jwt/v4 v4.4.2
+	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/google/uuid v1.3.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.10.3
 	github.com/robfig/cron/v3 v3.0.1
