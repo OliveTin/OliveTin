@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/bufbuild/buf v1.14.0
-	github.com/fsnotify/fsnotify v1.5.4
+	github.com/fsnotify/fsnotify v1.6.0
 	github.com/fzipp/gocyclo v0.6.0
 	github.com/go-critic/go-critic v0.6.7
 	github.com/golang-jwt/jwt/v4 v4.5.0
