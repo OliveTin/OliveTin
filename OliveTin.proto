@@ -93,6 +93,12 @@ message WhoAmIResponse {
 	string authenticatedUser = 1;
 }
 
+message SosReportRequest {}
+
+message SosReportResponse {
+	string alert = 1;
+}
+
 service OliveTinApi {
 	rpc GetDashboardComponents(GetDashboardComponentsRequest) returns (GetDashboardComponentsResponse) {
 		option (google.api.http) = {
@@ -123,6 +129,12 @@ service OliveTinApi {
 	rpc WhoAmI(WhoAmIRequest) returns (WhoAmIResponse) {
 		option (google.api.http) = {
 			get: "/api/WhoAmI"
+		};
+	}
+
+	rpc SosReport(SosReportRequest) returns (SosReportResponse) {
+		option (google.api.http) = {
+			get: "/api/sosreport"
 		};
 	}
 }

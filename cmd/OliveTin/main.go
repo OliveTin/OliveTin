@@ -7,6 +7,7 @@ import (
 
 	"github.com/OliveTin/OliveTin/internal/executor"
 	grpcapi "github.com/OliveTin/OliveTin/internal/grpcapi"
+	"github.com/OliveTin/OliveTin/internal/installationinfo"
 	"github.com/OliveTin/OliveTin/internal/oncron"
 	"github.com/OliveTin/OliveTin/internal/onstartup"
 	updatecheck "github.com/OliveTin/OliveTin/internal/updatecheck"
@@ -75,6 +76,11 @@ func init() {
 	reloadConfig()
 
 	warnIfPuidGuid()
+
+	installationinfo.Config = cfg
+	installationinfo.Build.Version = version
+	installationinfo.Build.Commit = commit
+	installationinfo.Build.Date = date
 
 	log.Info("Init complete")
 }
