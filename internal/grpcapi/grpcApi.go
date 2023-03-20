@@ -11,6 +11,7 @@ import (
 	acl "github.com/OliveTin/OliveTin/internal/acl"
 	config "github.com/OliveTin/OliveTin/internal/config"
 	executor "github.com/OliveTin/OliveTin/internal/executor"
+	installationinfo "github.com/OliveTin/OliveTin/internal/installationinfo"
 )
 
 var (
@@ -104,6 +105,16 @@ func (api *oliveTinAPI) WhoAmI(ctx ctx.Context, req *pb.WhoAmIRequest) (*pb.WhoA
 	}
 
 	log.Warnf("usergroup: %v", user.Usergroup)
+
+	return res, nil
+}
+
+func (api *oliveTinAPI) SosReport(ctx ctx.Context, req *pb.SosReportRequest) (*pb.SosReportResponse, error) {
+	res := &pb.SosReportResponse{
+		Alert: "Your SOS Report has been logged to OliveTin logs.",
+	}
+
+	log.Infof("\n" + installationinfo.GetSosReport())
 
 	return res, nil
 }

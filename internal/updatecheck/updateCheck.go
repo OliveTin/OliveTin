@@ -3,15 +3,14 @@ package updatecheck
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	config "github.com/OliveTin/OliveTin/internal/config"
+	installationinfo "github.com/OliveTin/OliveTin/internal/installationinfo"
 	"github.com/google/uuid"
 	"github.com/robfig/cron/v3"
 	log "github.com/sirupsen/logrus"
 	"io/ioutil"
 	"net/http"
 	"os"
-	"runtime"
 )
 
 type updateRequest struct {
@@ -63,14 +62,6 @@ func installationID(filename string) string {
 	return content
 }
 
-func isInContainer() bool {
-	if _, err := os.Stat("/.dockerenv"); errors.Is(err, os.ErrNotExist) {
-		return false
-	}
-
-	return true
-}
-
 // StartUpdateChecker will start a job that runs periodically, checking
 // for updates.
 func StartUpdateChecker(currentVersion string, currentCommit string, cfg *config.Config, configDir string) {
@@ -84,10 +75,10 @@ func StartUpdateChecker(currentVersion string, currentCommit string, cfg *config
 	payload := updateRequest{
 		CurrentVersion: currentVersion,
 		CurrentCommit:  currentCommit,
-		OS:             runtime.GOOS,
-		Arch:           runtime.GOARCH,
+		OS:             installationinfo.Runtime.OS,
+		Arch:           installationinfo.Runtime.Arch,
 		InstallationID: installationID(configDir + "/installation-id.txt"),
-		InContainer:    isInContainer(),
+		InContainer:    installationinfo.Runtime.InContainer,
 	}
 
 	s := cron.New(cron.WithSeconds())
