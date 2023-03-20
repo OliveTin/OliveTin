@@ -12,6 +12,12 @@ assignees: ''
 If you are getting an error message, then please copy/paste, or better, provide
 a screenshot to show us exactly what is wrong.
 
+**Can you provide a sosreport?**
+
+A sosreport really helps us to help you, by providing critical information about your install. If you can generate a sosreport, please copy and paste the output here.
+
+How to generate a sosreport: https://docs.olivetin.app/sosreport.html
+
 **What package/file/container did you use to install OliveTin?**
 
 eg: OliveTin-1234-x86_64.rpm
