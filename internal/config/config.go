@@ -80,6 +80,7 @@ type Config struct {
 	AuthHttpHeaderUserGroup         string
 	DefaultPermissions              PermissionsList
 	AccessControlLists              []AccessControlList
+	WebUIDir                        string
 }
 
 // DefaultConfig gets a new Config structure with sensible default values.
@@ -101,6 +102,7 @@ func DefaultConfig() *Config {
 	config.DefaultPermissions.View = true
 	config.AuthJwtClaimUsername = "name"
 	config.AuthJwtClaimUserGroup = "group"
+	config.WebUIDir = "./webui"
 
 	return &config
 }
