@@ -75,7 +75,10 @@ func getMetdataKeyOrEmpty(md metadata.MD, key string) string {
 func UserFromContext(ctx context.Context, cfg *config.Config) *AuthenticatedUser {
 	md, ok := metadata.FromIncomingContext(ctx)
 
-	ret := &AuthenticatedUser{}
+	ret := &AuthenticatedUser{
+		Username:  "guest",
+		Usergroup: "guest",
+	}
 
 	if ok {
 		ret.Username = getMetdataKeyOrEmpty(md, "username")

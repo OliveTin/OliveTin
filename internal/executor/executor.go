@@ -4,10 +4,12 @@ import (
 	pb "github.com/OliveTin/OliveTin/gen/grpc"
 	acl "github.com/OliveTin/OliveTin/internal/acl"
 	config "github.com/OliveTin/OliveTin/internal/config"
+	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 
 	"bytes"
 	"context"
+	"io"
 	"os/exec"
 	"runtime"
 	"time"
@@ -24,18 +26,22 @@ type ExecutionRequest struct {
 	AuthenticatedUser  *acl.AuthenticatedUser
 	logEntry           *InternalLogEntry
 	finalParsedCommand string
+	uuid               string
 }
 
 // InternalLogEntry objects are created by an Executor, and represent the final
 // state of execution (even if the command is not executed). It's designed to be
 // easily serializable.
 type InternalLogEntry struct {
-	Datetime string
-	Stdout   string
-	Stderr   string
-	TimedOut bool
-	ExitCode int32
-	Tags     []string
+	DatetimeStarted  string
+	DatetimeFinished string
+	Stdout           string
+	Stderr           string
+	StdoutBuffer     io.ReadCloser
+	StderrBuffer     io.ReadCloser
+	TimedOut         bool
+	ExitCode         int32
+	Tags             []string
 
 	/*
 		The following two properties are obviously on Action normally, but it's useful
@@ -44,6 +50,9 @@ type InternalLogEntry struct {
 	*/
 	ActionTitle string
 	ActionIcon  string
+
+	ExecutionStarted   bool
+	ExecutionCompleted bool
 }
 
 type executorStepFunc func(*ExecutionRequest) bool
@@ -51,46 +60,17 @@ type executorStepFunc func(*ExecutionRequest) bool
 // Executor represents a helper class for executing commands. It's main method
 // is ExecRequest
 type Executor struct {
-	Logs []InternalLogEntry
+	Logs map[string]*InternalLogEntry
 
 	chainOfCommand []executorStepFunc
-}
-
-// ExecRequest processes an ExecutionRequest
-func (e *Executor) ExecRequest(req *ExecutionRequest) *pb.StartActionResponse {
-	req.logEntry = &InternalLogEntry{
-		Datetime:    time.Now().Format("2006-01-02 15:04:05"),
-		ActionTitle: req.ActionName,
-		Stdout:      "",
-		Stderr:      "",
-		ExitCode:    -1337, // If an Action is not actually executed, this is the default exit code.
-	}
-
-	for _, step := range e.chainOfCommand {
-		if !step(req) {
-			break
-		}
-	}
-
-	e.Logs = append(e.Logs, *req.logEntry)
-
-	return &pb.StartActionResponse{
-		LogEntry: &pb.LogEntry{
-			ActionTitle: req.logEntry.ActionTitle,
-			ActionIcon:  req.logEntry.ActionIcon,
-			Datetime:    req.logEntry.Datetime,
-			Stderr:      req.logEntry.Stderr,
-			Stdout:      req.logEntry.Stdout,
-			TimedOut:    req.logEntry.TimedOut,
-			ExitCode:    req.logEntry.ExitCode,
-		},
-	}
 }
 
 // DefaultExecutor returns an Executor, with a sensible "chain of command" for
 // executing actions.
 func DefaultExecutor() *Executor {
 	e := Executor{}
+	e.Logs = make(map[string]*InternalLogEntry)
+
 	e.chainOfCommand = []executorStepFunc{
 		stepFindAction,
 		stepACLCheck,
@@ -101,6 +81,36 @@ func DefaultExecutor() *Executor {
 	}
 
 	return &e
+}
+
+// ExecRequest processes an ExecutionRequest
+func (e *Executor) ExecRequest(req *ExecutionRequest) *pb.StartActionResponse {
+	req.uuid = uuid.New().String()
+	req.logEntry = &InternalLogEntry{
+		DatetimeStarted:    time.Now().Format("2006-01-02 15:04:05"),
+		ActionTitle:        req.ActionName,
+		Stdout:             "",
+		Stderr:             "",
+		ExitCode:           -1337, // If an Action is not actually executed, this is the default exit code.
+		ExecutionStarted:   false,
+		ExecutionCompleted: false,
+	}
+
+	e.Logs[req.uuid] = req.logEntry
+
+	go e.execChain(req)
+
+	return &pb.StartActionResponse{
+		ExecutionUuid: req.uuid,
+	}
+}
+
+func (e *Executor) execChain(req *ExecutionRequest) {
+	for _, step := range e.chainOfCommand {
+		if !step(req) {
+			break
+		}
+	}
 }
 
 func stepFindAction(req *ExecutionRequest) bool {
@@ -181,9 +191,19 @@ func stepExec(req *ExecutionRequest) bool {
 	cmd := wrapCommandInShell(ctx, req.finalParsedCommand)
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
+	req.logEntry.StdoutBuffer, _ = cmd.StdoutPipe()
+	req.logEntry.StderrBuffer, _ = cmd.StderrPipe()
 
-	runerr := cmd.Run()
+	req.logEntry.ExecutionStarted = true
 
+	runerr := cmd.Start()
+
+	cmd.Wait()
+
+	//req.logEntry.Stdout = req.logEntry.StdoutBuffer.String()
+	//req.logEntry.Stderr = req.logEntry.StderrBuffer.String()
+
+	req.logEntry.ExecutionCompleted = true
 	req.logEntry.ExitCode = int32(cmd.ProcessState.ExitCode())
 	req.logEntry.Stdout = stdout.String()
 	req.logEntry.Stderr = stderr.String()
