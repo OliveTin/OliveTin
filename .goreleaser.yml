@@ -103,7 +103,7 @@ dockers:
 
   - image_templates:
       - "docker.io/jamesread/olivetin:{{ .Tag }}-arm64"
-      - "ghcr.io/olivetin/olivetin:{{ .Tag }}-amd64"
+      - "ghcr.io/olivetin/olivetin:{{ .Tag }}-arm64"
     dockerfile: Dockerfile.arm64
     goos: linux
     goarch: arm64
