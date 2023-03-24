@@ -1,6 +1,7 @@
 FROM --platform=linux/arm64 registry.fedoraproject.org/fedora-minimal:36-aarch64
 
 LABEL org.opencontainers.image.source https://github.com/OliveTin/OliveTin
+LABEL org.opencontainers.image.title=OliveTin
 
 RUN mkdir -p /config /var/www/olivetin \
     && \

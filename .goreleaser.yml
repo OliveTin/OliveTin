@@ -96,10 +96,8 @@ dockers:
     skip_push: false
     build_flag_templates:
       - "--platform=linux/amd64"
-      - "--label=org.opencontainers.image.title={{.ProjectName}}"
       - "--label=org.opencontainers.image.revision={{.FullCommit}}"
       - "--label=org.opencontainers.image.version={{.Tag}}"
-      - "--platform=linux/amd64"
     extra_files:
       - webui
 
@@ -112,7 +110,6 @@ dockers:
     skip_push: false
     build_flag_templates:
       - "--platform=linux/arm64"
-      - "--label=org.opencontainers.image.title={{.ProjectName}}"
       - "--label=org.opencontainers.image.revision={{.FullCommit}}"
       - "--label=org.opencontainers.image.version={{.Tag}}"
     extra_files:

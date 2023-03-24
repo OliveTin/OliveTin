@@ -57,7 +57,7 @@ jobs:
           version: latest
           args: release --clean --parallelism 1
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Archive binaries
         uses: actions/upload-artifact@v2
