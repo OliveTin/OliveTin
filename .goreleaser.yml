@@ -89,6 +89,7 @@ archives:
 dockers:
   - image_templates:
       - "docker.io/jamesread/olivetin:{{ .Tag }}-amd64"
+      - "ghcr.io/olivetin/olivetin:{{ .Tag }}-amd64"
     dockerfile: Dockerfile
     goos: linux
     goarch: amd64
@@ -104,6 +105,7 @@ dockers:
 
   - image_templates:
       - "docker.io/jamesread/olivetin:{{ .Tag }}-arm64"
+      - "ghcr.io/olivetin/olivetin:{{ .Tag }}-amd64"
     dockerfile: Dockerfile.arm64
     goos: linux
     goarch: arm64
@@ -126,6 +128,16 @@ docker_manifests:
     image_templates:
       - docker.io/jamesread/olivetin:{{ .Version }}-amd64
       - docker.io/jamesread/olivetin:{{ .Version }}-arm64
+
+  - name_template: ghcr.io/olivetin/olivetin:{{ .Version }}
+    image_templates:
+      - ghcr.io/olivetin/olivetin:{{ .Version }}-amd64
+      - ghcr.io/olivetin/olivetin:{{ .Version }}-arm64
+
+  - name_template: ghcr.io/olivetin/olivetin:latest
+    image_templates:
+      - ghcr.io/olivetin/olivetin:{{ .Version }}-amd64
+      - ghcr.io/olivetin/olivetin:{{ .Version }}-arm64
 
 nfpms:
   - id: default
@@ -213,6 +225,10 @@ nfpms:
 
 release:
   footer: |
+    ## Container images (from GitHub)
+
+    - `docker pull ghcr.io/olivetin/olivetin:{{ .Version }}`
+
     ## Container images ([on Docker Hub](https://hub.docker.com/r/jamesread/olivetin/tags?page=1&ordering=last_updated))
 
     - `docker pull docker.io/jamesread/olivetin:{{ .Version }}`

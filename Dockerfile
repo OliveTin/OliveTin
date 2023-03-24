@@ -1,5 +1,7 @@
 FROM --platform=linux/amd64 registry.fedoraproject.org/fedora-minimal:36-x86_64
 
+LABEL org.opencontainers.image.source https://github.com/OliveTin/OliveTin
+
 RUN mkdir -p /config /var/www/olivetin \
     && microdnf install -y --nodocs --noplugins --setopt=keepcache=0 --setopt=install_weak_deps=0 \ 
 		iputils \
