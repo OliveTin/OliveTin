@@ -49,11 +49,11 @@ jobs:
         run: make grpc
 
       - name: goreleaser
-        uses: goreleaser/goreleaser-action@v2
+        uses: goreleaser/goreleaser-action@v4.2.0
         with:
           distribution: goreleaser
           version: latest
-          args: release --rm-dist --parallelism 1
+          args: release --clean --parallelism 1
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
 
