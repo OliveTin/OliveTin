@@ -113,7 +113,6 @@ class ArgumentForm extends window.HTMLElement {
             throw new Error(res.statusText)
           }
         }).then((json) => {
-          console.log(json.valid)
           if (json.valid) {
             domEl.setCustomValidity('')
           } else {
