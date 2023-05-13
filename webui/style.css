@@ -265,14 +265,6 @@ img.logo {
   vertical-align: middle;
 }
 
-@media (max-width: 320px) {
-  fieldset {
-    grid-template-columns: auto;
-    grid-gap: 0;
-    padding: 0;
-  }
-}
-
 main {
   padding: 1em;
 }
