@@ -300,10 +300,7 @@ details[open] {
 
 form.action-arguments {
   position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  inset: 0;
   padding: 1em;
   box-shadow: 0 0 6px 0 #aaa;
   background-color: #dee3e7;
