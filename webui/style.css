@@ -227,9 +227,7 @@ button.active-section {
 }
 
 @keyframes kf-action-failed {
-  0% { background-color: black; }
   20% { background-color: red; }
-  0% { background-color: inherit; }
 }
 
 .action-success {
@@ -237,9 +235,7 @@ button.active-section {
 }
 
 @keyframes kf-action-success {
-  0% { background-color: black; }
   20% { background-color: limegreen; }
-  0% { background-color: inherit; }
 }
 
 .action-nonzero-exit {
@@ -247,9 +243,7 @@ button.active-section {
 }
 
 @keyframes kf-action-nonzero-exit {
-  0% { background-color: black; }
   20% { background-color: orange; }
-  0% { background-color: inherit; }
 }
 
 .action-timeout {
@@ -257,9 +251,7 @@ button.active-section {
 }
 
 @keyframes kf-action-timeout {
-  0% { background-color: black; }
   20% { background-color: cyan; }
-  0% { background-color: inherit; }
 }
 
 footer,
