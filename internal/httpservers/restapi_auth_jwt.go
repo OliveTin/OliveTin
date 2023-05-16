@@ -1,14 +1,45 @@
 package httpservers
 
 import (
+	"crypto/rsa"
 	"errors"
 	"fmt"
 	"github.com/golang-jwt/jwt/v4"
 	log "github.com/sirupsen/logrus"
 	"net/http"
+	"os"
+)
+
+var (
+	pubKeyBytes []byte = nil
+	pubKey      *rsa.PublicKey
 )
 
 func parseJwtToken(cookieValue string) (*jwt.Token, error) {
+	if cfg.AuthJwtPubKeyPath != "" { // activate this path only if pub key is specified
+		if pubKeyBytes == nil { // keep in memory after first load
+			var err error
+			pubKeyBytes, err = os.ReadFile(cfg.AuthJwtPubKeyPath)
+			if err != nil {
+				return nil, fmt.Errorf("couldn't read public key from file %s", cfg.AuthJwtPubKeyPath)
+			}
+			// Since the token is RSA (which we validated at the start of this function), the return type of this function actually has to be rsa.PublicKey!
+			pubKey, err = jwt.ParseRSAPublicKeyFromPEM(pubKeyBytes)
+			if err != nil {
+				return nil, fmt.Errorf("error parsing public key object (from %s)", cfg.AuthJwtPubKeyPath)
+			}
+		}
+		return jwt.Parse(cookieValue, func(token *jwt.Token) (interface{}, error) {
+			if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
+				return nil, fmt.Errorf(
+					"expected token algorithm '%v' but got '%v'",
+					jwt.SigningMethodRS256.Name,
+					token.Header)
+			}
+			return pubKey, nil
+		})
+	}
+
 	return jwt.Parse(cookieValue, func(token *jwt.Token) (interface{}, error) {
 		// Don't forget to validate the alg is what you expect:
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
