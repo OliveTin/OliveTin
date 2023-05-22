@@ -1,7 +1,6 @@
 package httpservers
 
 import (
-	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
@@ -13,7 +12,7 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/protobuf/encoding/protojson"
-	"io/ioutil"
+	"io"
 	"net"
 	"net/http"
 	"os"
@@ -23,7 +22,7 @@ import (
 
 func TestJWTSignatureVerificationSucceeds(t *testing.T) {
 	tmpFile, _ := os.CreateTemp(os.TempDir(), "olivetin-jwt-")
-	defer os.Remove(tmpFile.Name())
+	//defer os.Remove(tmpFile.Name())
 
 	fmt.Println("Created File: " + tmpFile.Name())
 
@@ -31,7 +30,7 @@ func TestJWTSignatureVerificationSucceeds(t *testing.T) {
 	pubKey := &privateKey.PublicKey
 	pubPem := pem.EncodeToMemory(
 		&pem.Block{
-			Type:  "RSA PUBLIC KEY",
+			Type:  "PUBLIC KEY",
 			Bytes: x509.MarshalPKCS1PublicKey(pubKey),
 		},
 	)
@@ -44,18 +43,15 @@ func TestJWTSignatureVerificationSucceeds(t *testing.T) {
 	config.AuthJwtClaimUsername = "sub"
 	config.AuthJwtClaimUserGroup = "olivetinGroup"
 	config.AuthJwtCookieName = "authorization_token"
+	SetGlobalRestConfig(config) // ugly, setting global var, we should pass configs as params to modules... :/
 
 	token := jwt.New(jwt.SigningMethodRS256)
 	claims := token.Claims.(jwt.MapClaims)
 	claims["exp"] = time.Now().Add(10 * time.Minute)
-	claims["olivetinGroup"] = "test"
 	claims["sub"] = "test"
+	claims["olivetinGroup"] = "test"
 
 	tokenStr, _ := token.SignedString(privateKey)
-
-	ctx := context.Background()
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
 
 	// init mux endpoint like in restapi.go (but using dummy response handler)
 	mux := runtime.NewServeMux(
@@ -70,8 +66,7 @@ func TestJWTSignatureVerificationSucceeds(t *testing.T) {
 		}),
 	)
 	mux.HandlePath("GET", "/", func(w http.ResponseWriter, r *http.Request, pathParams map[string]string) {
-		// username, usergroup := parseJwtCookie(r)
-		username, usergroup := "a", "b"
+		username, usergroup := parseJwtCookie(r)
 		w.Write([]byte(fmt.Sprintf("username=%v, usergroup=%v", username, usergroup)))
 	})
 
@@ -97,7 +92,7 @@ func TestJWTSignatureVerificationSucceeds(t *testing.T) {
 	res, _ := client.Do(req)
 	defer res.Body.Close()
 	assert.Equal(t, 200, res.StatusCode)
-	body, _ := ioutil.ReadAll(res.Body)
+	body, _ := io.ReadAll(res.Body)
 	fmt.Println(string(body))
 }
 
