@@ -74,10 +74,6 @@ archives:
       - OliveTin.service
       - ./var/
 
-    replacements:
-      darwin: macOS
-      arm: arm32v
-
     name_template: "{{ .ProjectName }}-{{ .Os }}-{{ .Arch }}{{ .Arm }}"
 
     wrap_in_directory: true
