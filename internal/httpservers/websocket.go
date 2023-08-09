@@ -5,14 +5,16 @@ import (
 	log "github.com/sirupsen/logrus"
 	"net/http"
 	"nhooyr.io/websocket"
+	"nhooyr.io/websocket/wsjson"
+	"context"
 )
 
-func handleWebsocket(w http.ResponseWriter, r *http.Request) {
+func handleWebsocket(w http.ResponseWriter, r *http.Request) bool {
 	c, err := websocket.Accept(w, r, nil)
 
 	if err != nil {
-		Log.Warnf("Websocket issue: %v", err)
-		return
+		log.Warnf("Websocket issue: %v", err)
+		return false
 	}
 
 	defer c.Close(websocket.StatusInternalError, "Goodbye")
@@ -23,14 +25,16 @@ func handleWebsocket(w http.ResponseWriter, r *http.Request) {
 
 	var v interface{}
 
-	err = wsjson.Read(Ctx, c, v)
-
-	if err != nil {
-		Log.Warnf("Websocket issue: %v", err)
-		return
-	}
+	err = wsjson.Read(ctx, c, v)
 
 	log.Printf("recv: %v", v)
 
+	if err != nil {
+		log.Warnf("Websocket issue: %v", err)
+		return false
+	}
+
+
 	c.Close(websocket.StatusNormalClosure, "")
+	return true
 }

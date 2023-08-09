@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"strings"
 )
 
 // StartSingleHTTPFrontend will create a reverse proxy that proxies the API
@@ -37,8 +38,12 @@ func StartSingleHTTPFrontend(cfg *config.Config) {
 	})
 
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		log.Debugf("ui req: %q", r.URL)
-		webuiProxy.ServeHTTP(w, r)
+		if strings.Contains(r.Header.Get("Connection"), "Upgrade") {
+			handleWebsocket(w, r)
+		} else {
+			log.Debugf("ui req: %q", r.URL)
+			webuiProxy.ServeHTTP(w, r)
+		}
 	})
 
 	srv := &http.Server{
