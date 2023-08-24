@@ -15,31 +15,44 @@ var (
 	pubKey      *rsa.PublicKey
 )
 
-func parseJwtToken(cookieValue string) (*jwt.Token, error) {
-	if cfg.AuthJwtPubKeyPath != "" { // activate this path only if pub key is specified
-		if pubKeyBytes == nil { // keep in memory after first load
-			var err error
-			pubKeyBytes, err = os.ReadFile(cfg.AuthJwtPubKeyPath)
-			if err != nil {
-				return nil, fmt.Errorf("couldn't read public key from file %s", cfg.AuthJwtPubKeyPath)
-			}
-			// Since the token is RSA (which we validated at the start of this function), the return type of this function actually has to be rsa.PublicKey!
-			pubKey, err = jwt.ParseRSAPublicKeyFromPEM(pubKeyBytes)
-			if err != nil {
-				return nil, fmt.Errorf("error parsing public key object (from %s)", cfg.AuthJwtPubKeyPath)
-			}
-		}
-		return jwt.Parse(cookieValue, func(token *jwt.Token) (interface{}, error) {
-			if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
-				return nil, fmt.Errorf(
-					"expected token algorithm '%v' but got '%v'",
-					jwt.SigningMethodRS256.Name,
-					token.Header)
-			}
-			return pubKey, nil
-		})
+func readPublicKey() error {
+	if pubKeyBytes != nil {
+		return nil // Already read.
 	}
 
+	pubKeyBytes, err := os.ReadFile(cfg.AuthJwtPubKeyPath)
+	if err != nil {
+		return fmt.Errorf("couldn't read public key from file %s", cfg.AuthJwtPubKeyPath)
+	}
+
+	// Since the token is RSA (which we validated at the start of this function), the return type of this function actually has to be rsa.PublicKey!
+	pubKey, err = jwt.ParseRSAPublicKeyFromPEM(pubKeyBytes)
+	if err != nil {
+		return fmt.Errorf("error parsing public key object (from %s)", cfg.AuthJwtPubKeyPath)
+	}
+
+	return nil
+}
+
+func parseJwtTokenWithKey(cookieValue string) (*jwt.Token, error) {
+	err := readPublicKey()
+
+	if err != nil {
+		return nil, err
+	}
+
+	return jwt.Parse(cookieValue, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
+			return nil, fmt.Errorf(
+				"expected token algorithm '%v' but got '%v'",
+				jwt.SigningMethodRS256.Name,
+				token.Header)
+		}
+		return pubKey, nil
+	})
+}
+
+func parseJwtTokenWithoutKey(cookieValue string) (*jwt.Token, error) {
 	return jwt.Parse(cookieValue, func(token *jwt.Token) (interface{}, error) {
 		// Don't forget to validate the alg is what you expect:
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -49,6 +62,14 @@ func parseJwtToken(cookieValue string) (*jwt.Token, error) {
 		// hmacSampleSecret is a []byte containing your secret, e.g. []byte("my_secret_key")
 		return []byte(cfg.AuthJwtSecret), nil
 	})
+}
+
+func parseJwtToken(cookieValue string) (*jwt.Token, error) {
+	if cfg.AuthJwtPubKeyPath != "" { // activate this path only if pub key is specified
+		return parseJwtTokenWithKey(cookieValue)
+	} else {
+		return parseJwtTokenWithoutKey(cookieValue)
+	}
 }
 
 func getClaimsFromJwtToken(cookieValue string) (jwt.MapClaims, error) {

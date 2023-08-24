@@ -20,7 +20,7 @@ import (
 	"time"
 )
 
-func testBase(t *testing.T, expire int64, expectCode int) {
+func createKeys() (*rsa.PrivateKey, string) {
 	tmpFile, _ := os.CreateTemp(os.TempDir(), "olivetin-jwt-")
 	defer os.Remove(tmpFile.Name())
 
@@ -36,13 +36,20 @@ func testBase(t *testing.T, expire int64, expectCode int) {
 			Bytes: pkixPubKey,
 		},
 	)
+
 	if err := os.WriteFile(tmpFile.Name(), pubPem, 0755); err != nil {
 		fmt.Printf("error when dumping pubKey: %s \n", err)
 	}
 
+	return privateKey, tmpFile.Name()
+}
+
+func testBase(t *testing.T, expire int64, expectCode int) {
+	privateKey, publicKeyPath := createKeys()
+
 	// default config + overrides
 	config := config2.DefaultConfig()
-	config.AuthJwtPubKeyPath = tmpFile.Name()
+	config.AuthJwtPubKeyPath = publicKeyPath
 	config.AuthJwtClaimUsername = "sub"
 	config.AuthJwtClaimUserGroup = "olivetinGroup"
 	config.AuthJwtCookieName = "authorization_token"
@@ -97,11 +104,16 @@ func testBase(t *testing.T, expire int64, expectCode int) {
 		MaxAge: 300,
 	}
 	req.AddCookie(cookie)
-	res, _ := client.Do(req)
-	defer res.Body.Close()
-	assert.Equal(t, expectCode, res.StatusCode)
-	body, _ := io.ReadAll(res.Body)
-	fmt.Println(string(body))
+	res, err := client.Do(req)
+
+	if err != nil {
+		assert.Equal(t, expectCode, -1)
+	} else {
+		defer res.Body.Close()
+		assert.Equal(t, expectCode, res.StatusCode)
+		body, _ := io.ReadAll(res.Body)
+		fmt.Println(string(body))
+	}
 }
 
 func TestJWTSignatureVerificationSucceeds(t *testing.T) {
