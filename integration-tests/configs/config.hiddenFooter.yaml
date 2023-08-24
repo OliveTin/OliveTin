@@ -1,12 +1,12 @@
 #
 # Integration Test Config: General
-# 
+#
 
 showFooter: false
-checkForUpdates: false 
+checkForUpdates: false
 
 # Actions (buttons) to show up on the WebUI:
-actions:   
+actions:
 - title: Ping example.com
   shell: ping example.com -c 1
   icon: ping

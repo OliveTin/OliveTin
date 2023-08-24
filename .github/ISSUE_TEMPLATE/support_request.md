@@ -39,7 +39,7 @@ If possible, please copy and paste your OliveTin logs from when the error happen
 **Screenshot of WebDeveloper console logs**
 
 If you know how, and if you think it's relevant, a screenshot of the
-WebDeveloper console from when you clicked a button is often really helpful. 
+WebDeveloper console from when you clicked a button is often really helpful.
 
 **Anything else?**
 

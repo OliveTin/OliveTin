@@ -13,6 +13,7 @@ type Action struct {
 	ExecOnStartup bool
 	ExecOnCron    []string
 	Arguments     []ActionArgument
+	PopupOnStart  bool
 }
 
 // ActionArgument objects appear on Actions.

@@ -4,16 +4,16 @@ LABEL org.opencontainers.image.source https://github.com/OliveTin/OliveTin
 LABEL org.opencontainers.image.title=OliveTin
 
 RUN mkdir -p /config /var/www/olivetin \
-    && microdnf install -y --nodocs --noplugins --setopt=keepcache=0 --setopt=install_weak_deps=0 \ 
+    && microdnf install -y --nodocs --noplugins --setopt=keepcache=0 --setopt=install_weak_deps=0 \
 		iputils \
 		openssh-clients \
 		shadow-utils \
 		docker \
 	&& microdnf clean all
 
-RUN useradd --system --create-home olivetin -u 1000 
+RUN useradd --system --create-home olivetin -u 1000
 
-EXPOSE 1337/tcp 
+EXPOSE 1337/tcp
 
 VOLUME /config
 
