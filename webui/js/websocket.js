@@ -22,7 +22,7 @@ function websocketOnOpen (evt) {
 
   const foo = '{}'
 
-  ws.send(foo)
+  window.ws.send(foo)
 }
 
 function websocketOnMessage (msg) {
