@@ -1,6 +1,7 @@
 'use strict'
 
 import { marshalActionButtonsJsonToHtml, marshalLogsJsonToHtml } from './js/marshaller.js'
+import { setupWebsocket } from './js/websocket.js'
 
 function showSection (name) {
   for (const otherName of ['Actions', 'Logs']) {
@@ -74,6 +75,8 @@ function processWebuiSettingsJson (settings) {
 
 function main () {
   setupSections()
+
+  setupWebsocket()
 
   window.fetch('webUiSettings.json').then(res => {
     return res.json()

@@ -6,6 +6,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 
+	"io"
 	"net"
 
 	acl "github.com/OliveTin/OliveTin/internal/acl"
@@ -43,6 +44,32 @@ func (api *oliveTinAPI) StartAction(ctx ctx.Context, req *pb.StartActionRequest)
 	return api.executor.ExecRequest(&execReq), nil
 }
 
+func (api *oliveTinAPI) WatchExecution(req *pb.WatchExecutionRequest, srv pb.OliveTinApi_WatchExecutionServer) error {
+	log.Infof("Watch")
+
+	if logEntry, ok := api.executor.Logs[req.ExecutionUuid]; !ok {
+		log.Errorf("Execution not found: %v", req.ExecutionUuid)
+
+		return nil
+	} else {
+		if logEntry.ExecutionStarted {
+			for !logEntry.ExecutionCompleted {
+				tmp := make([]byte, 256)
+
+				red, err := io.ReadAtLeast(logEntry.StdoutBuffer, tmp, 1)
+
+				log.Infof("%v %v", red, err)
+
+				srv.Send(&pb.WatchExecutionUpdate{
+					Update: string(tmp),
+				})
+			}
+		}
+
+		return nil
+	}
+}
+
 func (api *oliveTinAPI) GetDashboardComponents(ctx ctx.Context, req *pb.GetDashboardComponentsRequest) (*pb.GetDashboardComponentsResponse, error) {
 	user := acl.UserFromContext(ctx, cfg)
 
@@ -62,16 +89,18 @@ func (api *oliveTinAPI) GetLogs(ctx ctx.Context, req *pb.GetLogsRequest) (*pb.Ge
 
 	// TODO Limit to 10 entries or something to prevent browser lag.
 
-	for _, logEntry := range api.executor.Logs {
+	for uuid, logEntry := range api.executor.Logs {
 		ret.Logs = append(ret.Logs, &pb.LogEntry{
-			ActionTitle: logEntry.ActionTitle,
-			ActionIcon:  logEntry.ActionIcon,
-			Datetime:    logEntry.Datetime,
-			Stdout:      logEntry.Stdout,
-			Stderr:      logEntry.Stderr,
-			TimedOut:    logEntry.TimedOut,
-			ExitCode:    logEntry.ExitCode,
-			Tags:        logEntry.Tags,
+			ActionTitle:      logEntry.ActionTitle,
+			ActionIcon:       logEntry.ActionIcon,
+			DatetimeStarted:  logEntry.DatetimeStarted,
+			DatetimeFinished: logEntry.DatetimeFinished,
+			Stdout:           logEntry.Stdout,
+			Stderr:           logEntry.Stderr,
+			TimedOut:         logEntry.TimedOut,
+			ExitCode:         logEntry.ExitCode,
+			Tags:             logEntry.Tags,
+			ExecutionUuid:    uuid,
 		})
 	}
 
