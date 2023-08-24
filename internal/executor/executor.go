@@ -200,8 +200,8 @@ func stepExec(req *ExecutionRequest) bool {
 
 	cmd.Wait()
 
-	//req.logEntry.Stdout = req.logEntry.StdoutBuffer.String()
-	//req.logEntry.Stderr = req.logEntry.StderrBuffer.String()
+	// req.logEntry.Stdout = req.logEntry.StdoutBuffer.String()
+	// req.logEntry.Stderr = req.logEntry.StderrBuffer.String()
 
 	req.logEntry.ExecutionCompleted = true
 	req.logEntry.ExitCode = int32(cmd.ProcessState.ExitCode())

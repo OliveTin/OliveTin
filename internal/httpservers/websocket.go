@@ -1,12 +1,12 @@
 package httpservers
 
 import (
-	"time"
+	"context"
 	log "github.com/sirupsen/logrus"
 	"net/http"
 	"nhooyr.io/websocket"
 	"nhooyr.io/websocket/wsjson"
-	"context"
+	"time"
 )
 
 func handleWebsocket(w http.ResponseWriter, r *http.Request) bool {
@@ -33,7 +33,6 @@ func handleWebsocket(w http.ResponseWriter, r *http.Request) bool {
 		log.Warnf("Websocket issue: %v", err)
 		return false
 	}
-
 
 	c.Close(websocket.StatusNormalClosure, "")
 	return true
