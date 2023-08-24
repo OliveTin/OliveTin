@@ -1,29 +1,39 @@
-function websocketInit() {
-  let proto = "ws:"
+export function setupWebsocket () {
+  window.websocketAvailable = false
 
-  if (window.location.protocol == "https:") {
-    proto = "wss:"
+  let proto = 'ws:'
+
+  if (window.location.protocol === 'https:') {
+    proto = 'wss:'
   }
 
-  let wsUrl = proto + window.location.host + '/websocket'
+  const websocketConnectionUrl = proto + window.location.host + '/websocket'
+  const ws = window.ws = new WebSocket(websocketConnectionUrl)
 
-  console.log(wsUrl)
-
-  window.ws = new WebSocket(wsUrl)
-
-  window.ws.addEventListener("open", () => {
-    console.log("socket opened!")
-  window.ws.send("Hi!")
-  })
-
-  window.ws.addEventListener("error", () => {
-    console.error("ws error")
-  })
-
-  window.ws.addEventListener("message", (msg) => {
-    console.log("ws msg", msg)
-  })
-
+  ws.addEventListener('open', websocketOnOpen)
+  ws.addEventListener('message', websocketOnMessage)
+  ws.addEventListener('error', websocketOnError)
+  ws.addEventListener('close', websocketOnClose)
 }
 
-websocketInit()
+function websocketOnOpen (evt) {
+  window.websocketAvailable = true
+  console.log('open')
+
+  const foo = '{}'
+
+  ws.send(foo)
+}
+
+function websocketOnMessage (msg) {
+  console.log(msg)
+}
+
+function websocketOnError (err) {
+  window.websocketAvailable = false
+  console.log(err)
+}
+
+function websocketOnClose () {
+  window.websocketAvailable = false
+}

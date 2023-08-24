@@ -74,10 +74,6 @@ archives:
       - OliveTin.service
       - ./var/
 
-    replacements:
-      darwin: macOS
-      arm: arm32v
-
     name_template: "{{ .ProjectName }}-{{ .Os }}-{{ .Arch }}{{ .Arm }}"
 
     wrap_in_directory: true
@@ -229,11 +225,15 @@ release:
     ## Container images ([on Docker Hub](https://hub.docker.com/r/jamesread/olivetin/tags?page=1&ordering=last_updated))
 
     - `docker pull docker.io/jamesread/olivetin:{{ .Version }}`
+    
+    ## Upgrade warnings, or breaking changes
+   
+    - No such issues between the last release and this version. 
 
     ## Useful links
 
     - [Which download do I need?](https://docs.olivetin.app/choose-package.html)
     - [Ask for help and chat with others users in the Discord community](https://discord.gg/jhYWWpNJ3v)
-   
+    
     Thanks for your interest in OliveTin!
   

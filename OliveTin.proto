@@ -9,13 +9,13 @@ message Action {
 	string title = 2;
 	string icon = 3;
 	bool canExec = 4;
-
 	repeated ActionArgument arguments = 5;
+	bool popupOnStart = 6;
 }
 
 message ActionArgument {
 	string name = 1;
-	string title = 2; 
+	string title = 2;
 	string type = 3;
 	string defaultValue = 4;
 
@@ -55,13 +55,13 @@ message StartActionArgument {
 }
 
 message StartActionResponse {
-	LogEntry logEntry = 1;
+	string executionUuid = 2;
 }
 
 message GetLogsRequest{};
 
 message LogEntry {
-	string datetime = 1;
+	string datetimeStarted = 1;
 	string actionTitle = 2;
 	string stdout = 3;
 	string stderr = 4;
@@ -71,6 +71,8 @@ message LogEntry {
 	string userClass = 8;
 	string actionIcon = 9;
 	repeated string tags = 10;
+	string executionUuid = 11;
+	string datetimeFinished = 12;
 }
 
 message GetLogsResponse {
@@ -85,6 +87,14 @@ message ValidateArgumentTypeRequest {
 message ValidateArgumentTypeResponse {
 	bool valid = 1;
 	string description = 2;
+}
+
+message WatchExecutionRequest {
+	string executionUuid = 1;
+}
+
+message WatchExecutionUpdate {
+	string update = 1;
 }
 
 message WhoAmIRequest {}
@@ -109,6 +119,13 @@ service OliveTinApi {
 	rpc StartAction(StartActionRequest) returns (StartActionResponse) {
 		option (google.api.http) = {
 			post: "/api/StartAction"
+			body: "*"
+		};
+	}
+
+	rpc WatchExecution(WatchExecutionRequest) returns (stream WatchExecutionUpdate) {
+		option (google.api.http) = {
+			post: "/api/WatchExecution"
 			body: "*"
 		};
 	}
