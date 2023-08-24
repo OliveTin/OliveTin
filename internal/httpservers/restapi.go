@@ -59,6 +59,10 @@ func parseRequestMetadata(ctx context.Context, req *http.Request) metadata.MD {
 	return md
 }
 
+func SetGlobalRestConfig(config *config.Config) {
+	cfg = config
+}
+
 func startRestAPIServer(globalConfig *config.Config) error {
 	cfg = globalConfig
 

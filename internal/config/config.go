@@ -74,9 +74,10 @@ type Config struct {
 	ShowNavigation                  bool
 	ShowNewVersions                 bool
 	AuthJwtCookieName               string
-	AuthJwtSecret                   string
+	AuthJwtSecret                   string // mutually exclusive with pub key config fields
 	AuthJwtClaimUsername            string
 	AuthJwtClaimUserGroup           string
+	AuthJwtPubKeyPath               string // will read pub key from file on disk
 	AuthHttpHeaderUsername          string
 	AuthHttpHeaderUserGroup         string
 	DefaultPermissions              PermissionsList
