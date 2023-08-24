@@ -1,17 +1,17 @@
 #
 # Integration Test Config: General
-# 
+#
 
-listenAddressSingleHTTPFrontend: 0.0.0.0:1337 
+listenAddressSingleHTTPFrontend: 0.0.0.0:1337
 
 logLevel: "DEBUG"
-checkForUpdates: false 
+checkForUpdates: false
 
-actions:   
+actions:
 - title: Ping Google.com
   shell: ping google.com -c 1
   icon: ping
-  
+
 - title: restart lightdm
   icon: poop
   shell: ssh root@overseer 'service lightdm restart'
@@ -32,4 +32,3 @@ actions:
 - title: Restart Plex
   icon: smile
   shell: docker restart plex
-

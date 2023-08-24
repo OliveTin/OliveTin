@@ -1,14 +1,14 @@
 #
 # Integration Test Config: General
-# 
+#
 
-listenAddressSingleHTTPFrontend: 0.0.0.0:1337 
+listenAddressSingleHTTPFrontend: 0.0.0.0:1337
 
 showNavigation: false
-checkForUpdates: false 
+checkForUpdates: false
 
 # Actions (buttons) to show up on the WebUI:
-actions:   
+actions:
 - title: Ping example.com
   shell: ping example.com -c 1
   icon: ping

@@ -14,5 +14,3 @@ describe('Hidden Nav', () => {
     })
   })
 });
-
-
