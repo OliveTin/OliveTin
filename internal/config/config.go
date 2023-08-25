@@ -12,6 +12,7 @@ type Action struct {
 	Acls          []string
 	ExecOnStartup bool
 	ExecOnCron    []string
+	MaxConcurrent int
 	Arguments     []ActionArgument
 	PopupOnStart  bool
 }

@@ -14,6 +14,7 @@ export class ExecutionDialog {
     this.domDatetimeStarted = this.dlg.querySelector('.datetimeStarted')
     this.domDatetimeFinished = this.dlg.querySelector('.datetimeFinished')
     this.domExitCode = this.dlg.querySelector('.exitCode')
+    this.domStatus = this.dlg.querySelector('.status')
   }
 
   show () {
@@ -23,17 +24,24 @@ export class ExecutionDialog {
   renderResult (res) {
     this.executionUuid = res.logEntry.executionUuid
 
-    if (res.logEntry.datetimeFinished === '') {
-      this.domExitCode.innerText = 'Still running...'
-      this.domDatetimeFinished.innerText = 'Still running...'
-    } else {
+    if (res.logEntry.executionFinished) {
+      this.domStatus.innerText = 'Completed'
+      this.domDatetimeFinished.innerText = res.logEntry.datetimeFinished
+
+      if (res.logEntry.blocked) {
+        this.domStatus.innerText = 'Blocked'
+      }
+
       if (res.logEntry.timedOut) {
         this.domExitCode.innerText = 'Timed out'
+        this.domStatus.innerText = 'Timed out'
       } else {
         this.domExitCode.innerText = res.logEntry.exitCode
       }
-
-      this.domDatetimeFinished.innerText = res.logEntry.datetimeFinished
+    } else {
+      this.domDatetimeFinished.innerText = 'Still running...'
+      this.domExitCode.innerText = 'Still running...'
+      this.domStatus.innerText = 'Still running...'
     }
 
     this.domIcon.innerHTML = res.logEntry.actionIcon

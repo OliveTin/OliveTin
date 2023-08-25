@@ -8,6 +8,7 @@ import (
 
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"os/exec"
 	"runtime"
@@ -43,17 +44,18 @@ type ExecutionRequest struct {
 // state of execution (even if the command is not executed). It's designed to be
 // easily serializable.
 type InternalLogEntry struct {
-	DatetimeStarted    string
-	DatetimeFinished   string
-	Stdout             string
-	Stderr             string
-	StdoutBuffer       io.ReadCloser
-	StderrBuffer       io.ReadCloser
-	TimedOut           bool
-	ExitCode           int32
-	Tags               []string
-	ExecutionStarted   bool
-	ExecutionCompleted bool
+	DatetimeStarted   string
+	DatetimeFinished  string
+	Stdout            string
+	Stderr            string
+	StdoutBuffer      io.ReadCloser
+	StderrBuffer      io.ReadCloser
+	TimedOut          bool
+	Blocked           bool
+	ExitCode          int32
+	Tags              []string
+	ExecutionStarted  bool
+	ExecutionFinished bool
 
 	/*
 		The following 3 properties are obviously on Action normally, but it's useful
@@ -76,11 +78,11 @@ func DefaultExecutor() *Executor {
 	e.chainOfCommand = []executorStepFunc{
 		stepLogRequested,
 		stepFindAction,
+		stepConcurrencyCheck,
 		stepACLCheck,
 		stepParseArgs,
 		stepLogStart,
 		stepExec,
-		stepNotifyListeners,
 		stepLogFinish,
 	}
 
@@ -103,14 +105,14 @@ func (e *Executor) ExecRequest(req *ExecutionRequest) *pb.StartActionResponse {
 	// duplicate UUIDs (or just random strings), but this is the only way.
 	req.executor = e
 	req.logEntry = &InternalLogEntry{
-		DatetimeStarted:    time.Now().Format("2006-01-02 15:04:05"),
-		ActionTitle:        req.ActionName,
-		UUID:               req.UUID,
-		Stdout:             "",
-		Stderr:             "",
-		ExitCode:           -1337, // If an Action is not actually executed, this is the default exit code.
-		ExecutionStarted:   false,
-		ExecutionCompleted: false,
+		DatetimeStarted:   time.Now().Format("2006-01-02 15:04:05"),
+		ActionTitle:       req.ActionName,
+		UUID:              req.UUID,
+		Stdout:            "",
+		Stderr:            "",
+		ExitCode:          -1337, // If an Action is not actually executed, this is the default exit code.
+		ExecutionStarted:  false,
+		ExecutionFinished: false,
 	}
 
 	e.Logs[req.UUID] = req.logEntry
@@ -132,6 +134,41 @@ func (e *Executor) execChain(req *ExecutionRequest) {
 			break
 		}
 	}
+
+	req.logEntry.ExecutionFinished = true
+
+	// This isn't a step, because we want to notify all listeners, irrespective
+	// of how many steps were actually executed.
+	notifyListeners(req)
+}
+
+func getConcurrentCount(req *ExecutionRequest) int {
+	concurrentCount := 0
+
+	for _, log := range req.executor.Logs {
+		if log.ActionTitle == req.ActionName && !log.ExecutionFinished {
+			concurrentCount += 1
+		}
+	}
+
+	return concurrentCount
+}
+
+func stepConcurrencyCheck(req *ExecutionRequest) bool {
+	concurrentCount := getConcurrentCount(req)
+
+	// Note that the current execution is counted int the logs, so when checking we +1
+	if concurrentCount >= (req.action.MaxConcurrent + 1) {
+		msg := fmt.Sprintf("Blocked from executing. This would mean this action is running %d times concurrently, but this action has maxExecutions set to %d.", concurrentCount, req.action.MaxConcurrent)
+
+		log.Warnf(msg)
+
+		req.logEntry.Stdout = msg
+		req.logEntry.Blocked = true
+		return false
+	}
+
+	return true
 }
 
 func stepFindAction(req *ExecutionRequest) bool {
@@ -202,12 +239,10 @@ func stepLogFinish(req *ExecutionRequest) bool {
 	return true
 }
 
-func stepNotifyListeners(req *ExecutionRequest) bool {
+func notifyListeners(req *ExecutionRequest) {
 	for _, listener := range req.executor.listeners {
 		listener.OnExecutionFinished(req.logEntry)
 	}
-
-	return true
 }
 
 func wrapCommandInShell(ctx context.Context, finalParsedCommand string) *exec.Cmd {
@@ -240,7 +275,6 @@ func stepExec(req *ExecutionRequest) bool {
 	// req.logEntry.Stdout = req.logEntry.StdoutBuffer.String()
 	// req.logEntry.Stderr = req.logEntry.StderrBuffer.String()
 
-	req.logEntry.ExecutionCompleted = true
 	req.logEntry.ExitCode = int32(cmd.ProcessState.ExitCode())
 	req.logEntry.Stdout = stdout.String()
 	req.logEntry.Stderr = stderr.String()

@@ -51,8 +51,8 @@ class ExecutionButton extends window.HTMLElement {
   onFinished (LogEntry) {
     if (LogEntry.timedOut) {
       this.onActionResult('action-timeout', 'Timed out')
-    } else if (LogEntry.exitCode === -1337) {
-      this.onActionError('Error')
+    } else if (LogEntry.blocked) {
+      this.onActionResult('action-blocked', 'Blocked!')
     } else if (LogEntry.exitCode !== 0) {
       this.onActionResult('action-nonzero-exit', 'Exit code ' + LogEntry.exitCode)
     } else {
@@ -61,7 +61,6 @@ class ExecutionButton extends window.HTMLElement {
   }
 
   onActionResult (cssClass, temporaryStatusMessage) {
-    this.btn.disabled = false
     this.temporaryStatusMessage = '[ ' + temporaryStatusMessage + ' ]'
     this.updateDom()
     this.btn.classList.add(cssClass)

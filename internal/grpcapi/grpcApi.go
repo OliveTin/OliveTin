@@ -55,16 +55,19 @@ func (api *oliveTinAPI) ExecutionStatus(ctx ctx.Context, req *pb.ExecutionStatus
 	}
 
 	res.LogEntry = &pb.LogEntry{
-		ActionTitle:      logEntry.ActionTitle,
-		ActionIcon:       logEntry.ActionIcon,
-		DatetimeStarted:  logEntry.DatetimeStarted,
-		DatetimeFinished: logEntry.DatetimeFinished,
-		Stdout:           logEntry.Stdout,
-		Stderr:           logEntry.Stderr,
-		TimedOut:         logEntry.TimedOut,
-		ExitCode:         logEntry.ExitCode,
-		Tags:             logEntry.Tags,
-		ExecutionUuid:    logEntry.UUID,
+		ActionTitle:       logEntry.ActionTitle,
+		ActionIcon:        logEntry.ActionIcon,
+		DatetimeStarted:   logEntry.DatetimeStarted,
+		DatetimeFinished:  logEntry.DatetimeFinished,
+		Stdout:            logEntry.Stdout,
+		Stderr:            logEntry.Stderr,
+		TimedOut:          logEntry.TimedOut,
+		Blocked:           logEntry.Blocked,
+		ExitCode:          logEntry.ExitCode,
+		Tags:              logEntry.Tags,
+		ExecutionUuid:     logEntry.UUID,
+		ExecutionStarted:  logEntry.ExecutionStarted,
+		ExecutionFinished: logEntry.ExecutionFinished,
 	}
 
 	return res, nil
@@ -119,16 +122,19 @@ func (api *oliveTinAPI) GetLogs(ctx ctx.Context, req *pb.GetLogsRequest) (*pb.Ge
 
 	for uuid, logEntry := range api.executor.Logs {
 		ret.Logs = append(ret.Logs, &pb.LogEntry{
-			ActionTitle:      logEntry.ActionTitle,
-			ActionIcon:       logEntry.ActionIcon,
-			DatetimeStarted:  logEntry.DatetimeStarted,
-			DatetimeFinished: logEntry.DatetimeFinished,
-			Stdout:           logEntry.Stdout,
-			Stderr:           logEntry.Stderr,
-			TimedOut:         logEntry.TimedOut,
-			ExitCode:         logEntry.ExitCode,
-			Tags:             logEntry.Tags,
-			ExecutionUuid:    uuid,
+			ActionTitle:       logEntry.ActionTitle,
+			ActionIcon:        logEntry.ActionIcon,
+			DatetimeStarted:   logEntry.DatetimeStarted,
+			DatetimeFinished:  logEntry.DatetimeFinished,
+			Stdout:            logEntry.Stdout,
+			Stderr:            logEntry.Stderr,
+			TimedOut:          logEntry.TimedOut,
+			Blocked:           logEntry.Blocked,
+			ExitCode:          logEntry.ExitCode,
+			Tags:              logEntry.Tags,
+			ExecutionUuid:     uuid,
+			ExecutionStarted:  logEntry.ExecutionStarted,
+			ExecutionFinished: logEntry.ExecutionFinished,
 		})
 	}
 
@@ -136,7 +142,7 @@ func (api *oliveTinAPI) GetLogs(ctx ctx.Context, req *pb.GetLogsRequest) (*pb.Ge
 		return ret.Logs[i].DatetimeStarted < ret.Logs[j].DatetimeStarted
 	}
 
-	sort.Slice(ret.Logs, sorter);
+	sort.Slice(ret.Logs, sorter)
 
 	return ret, nil
 }
