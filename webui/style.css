@@ -7,6 +7,13 @@ body {
   margin: 0;
 }
 
+dialog {
+  min-width: 600px;
+  text-align: left;
+  padding: 1em;
+  box-shadow: 0 0 6px 0 #444;
+}
+
 fieldset {
   padding: 0;
 }
@@ -120,7 +127,7 @@ span[role="icon"] {
   vertical-align: middle;
 }
 
-form span[role="icon"],
+.action-header span[role="icon"],
 tr.log-row span[role="icon"] {
   display: inline-block;
   padding-right: 0.2em;
@@ -128,6 +135,9 @@ tr.log-row span[role="icon"] {
 
 .error {
   background-color: salmon;
+}
+
+div.error {
   padding: 1em;
 }
 
@@ -146,6 +156,7 @@ div.entity {
 }
 
 h2 {
+  margin-top: 0;
   font-size: 1em;
   display: inline-block;
 }
@@ -183,6 +194,11 @@ input[type="submit"]:disabled {
   color: gray;
   background-color: #333;
   cursor: not-allowed;
+}
+
+div.executions button {
+  margin-top: .2em;
+  margin-bottom: .2em;
 }
 
 fieldset#section-switcher {
@@ -282,21 +298,9 @@ details[open] {
   display: block;
 }
 
-form.action-arguments {
-  position: absolute;
-  inset: 0;
-  padding: 1em;
-  box-shadow: 0 0 6px 0 #aaa;
-  background-color: #dee3e7;
-}
-
 form div.wrapper {
-  border-radius: 1em;
-  box-shadow: 0 0 10px 0 #444;
   background-color: white;
-  border: 1px solid #999;
   text-align: left;
-  padding: 1em;
 }
 
 label {

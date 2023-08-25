@@ -50,7 +50,7 @@ export function marshalLogsJsonToHtml (json) {
       logTableExitCode += ' (timed out)'
     }
 
-    row.querySelector('.timestamp').innerText = logEntry.datetime
+    row.querySelector('.timestamp').innerText = logEntry.datetimeStarted
     row.querySelector('.content').innerText = logEntry.actionTitle
     row.querySelector('.icon').innerHTML = logEntry.actionIcon
     row.querySelector('pre.stdout').innerText = logEntry.stdout

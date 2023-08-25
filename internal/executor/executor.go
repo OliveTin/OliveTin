@@ -4,7 +4,6 @@ import (
 	pb "github.com/OliveTin/OliveTin/gen/grpc"
 	acl "github.com/OliveTin/OliveTin/internal/acl"
 	config "github.com/OliveTin/OliveTin/internal/config"
-	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 
 	"bytes"
@@ -15,55 +14,58 @@ import (
 	"time"
 )
 
+// Executor represents a helper class for executing commands. It's main method
+// is ExecRequest
+type Executor struct {
+	Logs map[string]*InternalLogEntry
+
+	listeners []listener
+
+	chainOfCommand []executorStepFunc
+}
+
 // ExecutionRequest is a request to execute an action. It's passed to an
 // Executor. They're created from the grpcapi.
 type ExecutionRequest struct {
 	ActionName         string
 	Arguments          map[string]string
+	UUID               string
 	Tags               []string
 	action             *config.Action
 	Cfg                *config.Config
 	AuthenticatedUser  *acl.AuthenticatedUser
 	logEntry           *InternalLogEntry
 	finalParsedCommand string
-	uuid               string
+	executor           *Executor
 }
 
 // InternalLogEntry objects are created by an Executor, and represent the final
 // state of execution (even if the command is not executed). It's designed to be
 // easily serializable.
 type InternalLogEntry struct {
-	DatetimeStarted  string
-	DatetimeFinished string
-	Stdout           string
-	Stderr           string
-	StdoutBuffer     io.ReadCloser
-	StderrBuffer     io.ReadCloser
-	TimedOut         bool
-	ExitCode         int32
-	Tags             []string
+	DatetimeStarted    string
+	DatetimeFinished   string
+	Stdout             string
+	Stderr             string
+	StdoutBuffer       io.ReadCloser
+	StderrBuffer       io.ReadCloser
+	TimedOut           bool
+	ExitCode           int32
+	Tags               []string
+	ExecutionStarted   bool
+	ExecutionCompleted bool
 
 	/*
-		The following two properties are obviously on Action normally, but it's useful
+		The following 3 properties are obviously on Action normally, but it's useful
 		that logs are lightweight (so we don't need to have an action associated to
 		logs, etc. Therefore, we duplicate those values here.
 	*/
 	ActionTitle string
 	ActionIcon  string
-
-	ExecutionStarted   bool
-	ExecutionCompleted bool
+	UUID        string
 }
 
 type executorStepFunc func(*ExecutionRequest) bool
-
-// Executor represents a helper class for executing commands. It's main method
-// is ExecRequest
-type Executor struct {
-	Logs map[string]*InternalLogEntry
-
-	chainOfCommand []executorStepFunc
-}
 
 // DefaultExecutor returns an Executor, with a sensible "chain of command" for
 // executing actions.
@@ -72,23 +74,38 @@ func DefaultExecutor() *Executor {
 	e.Logs = make(map[string]*InternalLogEntry)
 
 	e.chainOfCommand = []executorStepFunc{
+		stepLogRequested,
 		stepFindAction,
 		stepACLCheck,
 		stepParseArgs,
 		stepLogStart,
 		stepExec,
+		stepNotifyListeners,
 		stepLogFinish,
 	}
 
 	return &e
 }
 
+type listener interface {
+	OnExecutionStarted(actionName string)
+	OnExecutionFinished(logEntry *InternalLogEntry)
+}
+
+func (e *Executor) AddListener(m listener) {
+	e.listeners = append(e.listeners, m)
+}
+
 // ExecRequest processes an ExecutionRequest
 func (e *Executor) ExecRequest(req *ExecutionRequest) *pb.StartActionResponse {
-	req.uuid = uuid.New().String()
+	// req.UUID is now set by the client, so that they can track the request
+	// from start to finish. This means that a malicious client could send
+	// duplicate UUIDs (or just random strings), but this is the only way.
+	req.executor = e
 	req.logEntry = &InternalLogEntry{
 		DatetimeStarted:    time.Now().Format("2006-01-02 15:04:05"),
 		ActionTitle:        req.ActionName,
+		UUID:               req.UUID,
 		Stdout:             "",
 		Stderr:             "",
 		ExitCode:           -1337, // If an Action is not actually executed, this is the default exit code.
@@ -96,12 +113,16 @@ func (e *Executor) ExecRequest(req *ExecutionRequest) *pb.StartActionResponse {
 		ExecutionCompleted: false,
 	}
 
-	e.Logs[req.uuid] = req.logEntry
+	e.Logs[req.UUID] = req.logEntry
+
+	for _, listener := range e.listeners {
+		listener.OnExecutionStarted(req.ActionName)
+	}
 
 	go e.execChain(req)
 
 	return &pb.StartActionResponse{
-		ExecutionUuid: req.uuid,
+		ExecutionUuid: req.UUID,
 	}
 }
 
@@ -152,10 +173,18 @@ func stepParseArgs(req *ExecutionRequest) bool {
 	return true
 }
 
+func stepLogRequested(req *ExecutionRequest) bool {
+	log.WithFields(log.Fields{
+		"actionTitle": req.ActionName,
+	}).Infof("Action requested")
+
+	return true
+}
+
 func stepLogStart(req *ExecutionRequest) bool {
 	log.WithFields(log.Fields{
-		"title":   req.action.Title,
-		"timeout": req.action.Timeout,
+		"actionTitle": req.action.Title,
+		"timeout":     req.action.Timeout,
 	}).Infof("Action starting")
 
 	return true
@@ -163,12 +192,20 @@ func stepLogStart(req *ExecutionRequest) bool {
 
 func stepLogFinish(req *ExecutionRequest) bool {
 	log.WithFields(log.Fields{
-		"title":    req.action.Title,
-		"stdout":   req.logEntry.Stdout,
-		"stderr":   req.logEntry.Stderr,
-		"timedOut": req.logEntry.TimedOut,
-		"exit":     req.logEntry.ExitCode,
+		"actionTitle": req.action.Title,
+		"stdout":      req.logEntry.Stdout,
+		"stderr":      req.logEntry.Stderr,
+		"timedOut":    req.logEntry.TimedOut,
+		"exit":        req.logEntry.ExitCode,
 	}).Infof("Action finished")
+
+	return true
+}
+
+func stepNotifyListeners(req *ExecutionRequest) bool {
+	for _, listener := range req.executor.listeners {
+		listener.OnExecutionFinished(req.logEntry)
+	}
 
 	return true
 }
@@ -217,6 +254,7 @@ func stepExec(req *ExecutionRequest) bool {
 	}
 
 	req.logEntry.Tags = req.Tags
+	req.logEntry.DatetimeFinished = time.Now().Format("2006-01-02 15:04:05")
 
 	return true
 }

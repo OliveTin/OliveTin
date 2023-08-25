@@ -90,7 +90,7 @@ func UserFromContext(ctx context.Context, cfg *config.Config) *AuthenticatedUser
 	log.WithFields(log.Fields{
 		"username":  ret.Username,
 		"usergroup": ret.Usergroup,
-	}).Infof("UserFromContext")
+	}).Debugf("UserFromContext")
 
 	return ret
 }

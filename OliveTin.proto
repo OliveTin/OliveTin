@@ -8,16 +8,16 @@ message Action {
 	string id = 1;
 	string title = 2;
 	string icon = 3;
-	bool canExec = 4;
+	bool can_exec = 4;
 	repeated ActionArgument arguments = 5;
-	bool popupOnStart = 6;
+	bool popup_on_start = 6;
 }
 
 message ActionArgument {
 	string name = 1;
 	string title = 2;
 	string type = 3;
-	string defaultValue = 4;
+	string default_value = 4;
 
 	repeated ActionArgumentChoice choices = 5;
 
@@ -44,9 +44,11 @@ message GetDashboardComponentsResponse {
 message GetDashboardComponentsRequest {}
 
 message StartActionRequest {
-	string actionName = 1;
+	string action_name = 1;
 
 	repeated StartActionArgument arguments = 2;
+
+	string uuid = 3;
 }
 
 message StartActionArgument {
@@ -55,24 +57,25 @@ message StartActionArgument {
 }
 
 message StartActionResponse {
-	string executionUuid = 2;
+	string execution_uuid = 2;
 }
 
 message GetLogsRequest{};
 
 message LogEntry {
-	string datetimeStarted = 1;
-	string actionTitle = 2;
+	string datetime_started = 1;
+	string action_title = 2;
 	string stdout = 3;
 	string stderr = 4;
-	bool timedOut = 5;
-	int32 exitCode = 6;
+	bool timed_out = 5;
+	int32 exit_code = 6;
 	string user = 7;
-	string userClass = 8;
-	string actionIcon = 9;
+	string user_class = 8;
+	string action_icon = 9;
 	repeated string tags = 10;
-	string executionUuid = 11;
-	string datetimeFinished = 12;
+	string execution_uuid = 11;
+	string datetime_finished = 12;
+	string uuid = 13;
 }
 
 message GetLogsResponse {
@@ -90,17 +93,25 @@ message ValidateArgumentTypeResponse {
 }
 
 message WatchExecutionRequest {
-	string executionUuid = 1;
+	string execution_uuid = 1;
 }
 
 message WatchExecutionUpdate {
 	string update = 1;
 }
 
+message ExecutionStatusRequest {
+	string execution_uuid = 1;
+}
+
+message ExecutionStatusResponse {
+	LogEntry log_entry = 1;
+}
+
 message WhoAmIRequest {}
 
 message WhoAmIResponse {
-	string authenticatedUser = 1;
+	string authenticated_user = 1;
 }
 
 message SosReportRequest {}
@@ -109,7 +120,7 @@ message SosReportResponse {
 	string alert = 1;
 }
 
-service OliveTinApi {
+service OliveTinApiService {
 	rpc GetDashboardComponents(GetDashboardComponentsRequest) returns (GetDashboardComponentsResponse) {
 		option (google.api.http) = {
 			get: "/api/GetDashboardComponents"
@@ -123,9 +134,9 @@ service OliveTinApi {
 		};
 	}
 
-	rpc WatchExecution(WatchExecutionRequest) returns (stream WatchExecutionUpdate) {
+	rpc ExecutionStatus(ExecutionStatusRequest) returns (ExecutionStatusResponse) {
 		option (google.api.http) = {
-			post: "/api/WatchExecution"
+			post: "/api/ExecutionStatus"
 			body: "*"
 		};
 	}

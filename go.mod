@@ -9,6 +9,7 @@ require (
 	github.com/go-critic/go-critic v0.8.2
 	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/google/uuid v1.3.0
+	github.com/gorilla/websocket v1.4.1
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.16.2
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/sirupsen/logrus v1.9.3
@@ -20,7 +21,6 @@ require (
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.3.0
 	google.golang.org/protobuf v1.31.0
 	gopkg.in/yaml.v3 v3.0.1
-	nhooyr.io/websocket v1.8.7
 )
 
 require (

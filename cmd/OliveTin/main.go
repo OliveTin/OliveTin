@@ -11,6 +11,7 @@ import (
 	"github.com/OliveTin/OliveTin/internal/oncron"
 	"github.com/OliveTin/OliveTin/internal/onstartup"
 	updatecheck "github.com/OliveTin/OliveTin/internal/updatecheck"
+	"github.com/OliveTin/OliveTin/internal/websocket"
 
 	"github.com/OliveTin/OliveTin/internal/httpservers"
 
@@ -110,6 +111,7 @@ func main() {
 	log.Debugf("Config: %+v", cfg)
 
 	executor := executor.DefaultExecutor()
+	executor.AddListener(websocket.ExecutionListener)
 
 	go onstartup.Execute(cfg, executor)
 	go oncron.Schedule(cfg, executor)

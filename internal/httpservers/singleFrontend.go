@@ -10,6 +10,7 @@ away, and several other issues.
 
 import (
 	config "github.com/OliveTin/OliveTin/internal/config"
+	"github.com/OliveTin/OliveTin/internal/websocket"
 	log "github.com/sirupsen/logrus"
 	"net/http"
 	"net/http/httputil"
@@ -39,7 +40,7 @@ func StartSingleHTTPFrontend(cfg *config.Config) {
 
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if strings.Contains(r.Header.Get("Connection"), "Upgrade") {
-			handleWebsocket(w, r)
+			websocket.HandleWebsocket(w, r)
 		} else {
 			log.Debugf("ui req: %q", r.URL)
 			webuiProxy.ServeHTTP(w, r)

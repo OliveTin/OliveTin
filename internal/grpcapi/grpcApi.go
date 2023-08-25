@@ -6,8 +6,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 
-	"io"
 	"net"
+	"sort"
 
 	acl "github.com/OliveTin/OliveTin/internal/acl"
 	config "github.com/OliveTin/OliveTin/internal/config"
@@ -20,7 +20,7 @@ var (
 )
 
 type oliveTinAPI struct {
-	pb.UnimplementedOliveTinApiServer
+	pb.UnimplementedOliveTinApiServiceServer
 
 	executor *executor.Executor
 }
@@ -36,6 +36,7 @@ func (api *oliveTinAPI) StartAction(ctx ctx.Context, req *pb.StartActionRequest)
 
 	execReq := executor.ExecutionRequest{
 		ActionName:        req.ActionName,
+		UUID:              req.Uuid,
 		Arguments:         args,
 		AuthenticatedUser: acl.UserFromContext(ctx, cfg),
 		Cfg:               cfg,
@@ -44,6 +45,32 @@ func (api *oliveTinAPI) StartAction(ctx ctx.Context, req *pb.StartActionRequest)
 	return api.executor.ExecRequest(&execReq), nil
 }
 
+func (api *oliveTinAPI) ExecutionStatus(ctx ctx.Context, req *pb.ExecutionStatusRequest) (*pb.ExecutionStatusResponse, error) {
+	res := &pb.ExecutionStatusResponse{}
+
+	logEntry, ok := api.executor.Logs[req.ExecutionUuid]
+
+	if !ok {
+		return res, nil
+	}
+
+	res.LogEntry = &pb.LogEntry{
+		ActionTitle:      logEntry.ActionTitle,
+		ActionIcon:       logEntry.ActionIcon,
+		DatetimeStarted:  logEntry.DatetimeStarted,
+		DatetimeFinished: logEntry.DatetimeFinished,
+		Stdout:           logEntry.Stdout,
+		Stderr:           logEntry.Stderr,
+		TimedOut:         logEntry.TimedOut,
+		ExitCode:         logEntry.ExitCode,
+		Tags:             logEntry.Tags,
+		ExecutionUuid:    logEntry.UUID,
+	}
+
+	return res, nil
+}
+
+/**
 func (api *oliveTinAPI) WatchExecution(req *pb.WatchExecutionRequest, srv pb.OliveTinApi_WatchExecutionServer) error {
 	log.Infof("Watch")
 
@@ -69,6 +96,7 @@ func (api *oliveTinAPI) WatchExecution(req *pb.WatchExecutionRequest, srv pb.Oli
 		return nil
 	}
 }
+*/
 
 func (api *oliveTinAPI) GetDashboardComponents(ctx ctx.Context, req *pb.GetDashboardComponentsRequest) (*pb.GetDashboardComponentsResponse, error) {
 	user := acl.UserFromContext(ctx, cfg)
@@ -103,6 +131,12 @@ func (api *oliveTinAPI) GetLogs(ctx ctx.Context, req *pb.GetLogsRequest) (*pb.Ge
 			ExecutionUuid:    uuid,
 		})
 	}
+
+	sorter := func(i, j int) bool {
+		return ret.Logs[i].DatetimeStarted < ret.Logs[j].DatetimeStarted
+	}
+
+	sort.Slice(ret.Logs, sorter);
 
 	return ret, nil
 }
@@ -159,7 +193,7 @@ func Start(globalConfig *config.Config, ex *executor.Executor) {
 	}
 
 	grpcServer := grpc.NewServer()
-	pb.RegisterOliveTinApiServer(grpcServer, newServer(ex))
+	pb.RegisterOliveTinApiServiceServer(grpcServer, newServer(ex))
 
 	err = grpcServer.Serve(lis)
 

@@ -22,8 +22,9 @@ var (
 
 func parseActionArguments(rawShellCommand string, values map[string]string, action *config.Action) (string, error) {
 	log.WithFields(log.Fields{
-		"cmd": rawShellCommand,
-	}).Infof("Before Parse Args")
+		"actionTitle": action.Title,
+		"cmd":         rawShellCommand,
+	}).Infof("Action parse args - Before")
 
 	r := regexp.MustCompile("{{ *?([a-zA-Z0-9_]+?) *?}}")
 	matches := r.FindAllStringSubmatch(rawShellCommand, -1)
@@ -51,8 +52,9 @@ func parseActionArguments(rawShellCommand string, values map[string]string, acti
 	}
 
 	log.WithFields(log.Fields{
-		"cmd": rawShellCommand,
-	}).Infof("After Parse Args")
+		"actionTitle": action.Title,
+		"cmd":         rawShellCommand,
+	}).Infof("Action parse args - After")
 
 	return rawShellCommand, nil
 }

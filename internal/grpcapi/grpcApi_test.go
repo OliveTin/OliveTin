@@ -26,7 +26,7 @@ func init() {
 
 	lis = bufconn.Listen(bufSize)
 	s := grpc.NewServer()
-	pb.RegisterOliveTinApiServer(s, newServer(ex))
+	pb.RegisterOliveTinApiServiceServer(s, newServer(ex))
 
 	go func() {
 		if err := s.Serve(lis); err != nil {
@@ -39,7 +39,7 @@ func bufDialer(context.Context, string) (net.Conn, error) {
 	return lis.Dial()
 }
 
-func getNewTestServerAndClient(t *testing.T, injectedConfig *config.Config) (*grpc.ClientConn, pb.OliveTinApiClient) {
+func getNewTestServerAndClient(t *testing.T, injectedConfig *config.Config) (*grpc.ClientConn, pb.OliveTinApiServiceClient) {
 	cfg = injectedConfig
 
 	ctx := context.Background()
@@ -50,7 +50,7 @@ func getNewTestServerAndClient(t *testing.T, injectedConfig *config.Config) (*gr
 		t.Fatalf("Failed to dial bufnet: %v", err)
 	}
 
-	client := pb.NewOliveTinApiClient(conn)
+	client := pb.NewOliveTinApiServiceClient(conn)
 
 	return conn, client
 }

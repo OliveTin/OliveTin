@@ -1,5 +1,5 @@
-import { marshalLogsJsonToHtml } from './marshaller.js'
 import './ArgumentForm.js'
+import './ExecutionButton.js'
 
 class ActionButton extends window.HTMLElement {
   constructFromJson (json) {
@@ -25,6 +25,7 @@ class ActionButton extends window.HTMLElement {
         })
 
         document.body.appendChild(frm)
+        frm.querySelector('dialog').showModal()
       } else {
         this.startAction()
       }
@@ -32,7 +33,8 @@ class ActionButton extends window.HTMLElement {
 
     this.updateFromJson(json)
 
-    this.updateDom()
+    this.domTitle.innerText = this.btn.title
+    this.domIcon.innerHTML = this.unicodeIcon
 
     this.setAttribute('id', 'actionButton_' + json.id)
   }
@@ -52,19 +54,26 @@ class ActionButton extends window.HTMLElement {
   }
 
   startAction (actionArgs) {
-    this.btn.disabled = true
-    this.isWaiting = true
-    this.updateDom()
+    //    this.btn.disabled = true
+    //    this.isWaiting = true
+    //    this.updateDom()
     this.btn.classList = [] // Removes old animation classes
 
     if (actionArgs === undefined) {
       actionArgs = []
     }
 
+    // UUIDs are create client side, so that we can setup a "execution-button"
+    // to track the execution before we send the request to the server.
     const startActionArgs = {
       actionName: this.btn.title,
-      arguments: actionArgs
+      arguments: actionArgs,
+      uuid: window.crypto.randomUUID()
     }
+
+    const btnExecution = document.createElement('execution-button')
+    btnExecution.constructFromJson(startActionArgs.uuid)
+    this.querySelector('div.executions').appendChild(btnExecution)
 
     window.fetch(this.actionCallUrl, {
       method: 'POST',
@@ -80,43 +89,10 @@ class ActionButton extends window.HTMLElement {
       }
     }
     ).then((json) => {
-      marshalLogsJsonToHtml({ logs: [json.logEntry] })
-
-      if (json.logEntry.timedOut) {
-        this.onActionResult('action-timeout', 'Timed out')
-      } else if (json.logEntry.exitCode === -1337) {
-        this.onActionError('Error')
-      } else if (json.logEntry.exitCode !== 0) {
-        this.onActionResult('action-nonzero-exit', 'Exit code ' + json.logEntry.exitCode)
-      } else {
-        this.onActionResult('action-success', 'Success!')
-      }
+      // The button used to wait for the action to finish, but now it is fire & forget
     }).catch(err => {
       this.onActionError(err)
     })
-  }
-
-  onActionResult (cssClass, temporaryStatusMessage) {
-    this.btn.disabled = false
-    this.temporaryStatusMessage = '[ ' + temporaryStatusMessage + ' ]'
-    this.updateDom()
-    this.btn.classList.add(cssClass)
-
-    setTimeout(() => {
-      this.btn.classList.remove(cssClass)
-    }, 1000)
-  }
-
-  onActionError (err) {
-    console.error('callback error', err)
-    this.btn.disabled = false
-    this.isWaiting = false
-    this.updateDom()
-    this.btn.classList.add('action-failed')
-
-    setTimeout(() => {
-      this.btn.classList.remove('action-failed')
-    }, 1000)
   }
 
   constructDomFromTemplate () {
@@ -133,27 +109,6 @@ class ActionButton extends window.HTMLElement {
     this.btn = this.querySelector('button')
     this.domTitle = this.btn.querySelector('.title')
     this.domIcon = this.btn.querySelector('.icon')
-  }
-
-  updateDom () {
-    if (this.temporaryStatusMessage != null) {
-      this.domTitle.innerText = this.temporaryStatusMessage
-      this.domTitle.classList.add('temporary-status-message')
-      this.isWaiting = false
-      this.disabled = false
-
-      setTimeout(() => {
-        this.temporaryStatusMessage = null
-        this.domTitle.classList.remove('temporary-status-message')
-        this.updateDom()
-      }, 2000)
-    } else if (this.isWaiting) {
-      this.domTitle.innerText = 'Waiting...'
-    } else {
-      this.domTitle.innerText = this.btn.title
-    }
-
-    this.domIcon.innerHTML = this.unicodeIcon
   }
 }
 

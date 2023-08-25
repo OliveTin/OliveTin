@@ -1,7 +1,7 @@
 'use strict'
 
 import { marshalActionButtonsJsonToHtml, marshalLogsJsonToHtml } from './js/marshaller.js'
-import { setupWebsocket } from './js/websocket.js'
+import { checkWebsocketConnection } from './js/websocket.js'
 
 function showSection (name) {
   for (const otherName of ['Actions', 'Logs']) {
@@ -20,15 +20,42 @@ function setupSections () {
   showSection('Actions')
 }
 
+function refreshLoop () {
+  if (window.websocketAvailable) {
+    document.querySelector('#serverConnection').classList.remove('error')
+    document.querySelector('#serverConnection').innerText = 'websocket'
+
+    // Websocket updates are streamed live, not updated on a loop.
+  } else if (window.restAvailable) {
+    // Fallback to rest, but try to reconnect the websocket anyway.
+
+    fetchGetDashboardComponents()
+    checkWebsocketConnection()
+
+    document.querySelector('#serverConnection').classList.remove('error')
+    document.querySelector('#serverConnection').innerText = 'rest'
+
+    fetchGetLogs()
+  } else {
+    document.querySelector('#serverConnection').innerText = 'disconnected, trying to reconnect...'
+    document.querySelector('#serverConnection').classList.add('error')
+
+    // Still try to fetch the dashboard, if successfull window.restAvailable = true
+    fetchGetDashboardComponents()
+  }
+}
+
 function fetchGetDashboardComponents () {
   window.fetch(window.restBaseUrl + 'GetDashboardComponents', {
     cors: 'cors'
   }).then(res => {
     return res.json()
   }).then(res => {
+    window.restAvailable = true
     marshalActionButtonsJsonToHtml(res)
-  }).catch(err => {
-    window.showBigError('fetch-buttons', 'getting buttons', err, 'blat')
+  }).catch(() => { // err is 1st arg
+    window.restAvailable = false
+    //    window.showBigError('fetch-buttons', 'getting buttons', err, 'blat')
   })
 }
 
@@ -56,7 +83,7 @@ function processWebuiSettingsJson (settings) {
     document.head.appendChild(themeCss)
   }
 
-  document.querySelector('#currentVersion').innerText = 'Version: ' + settings.CurrentVersion
+  document.querySelector('#currentVersion').innerText = settings.CurrentVersion
 
   if (settings.ShowNewVersions && settings.AvailableVersion !== 'none') {
     document.querySelector('#available-version').innerText = 'New Version Available: ' + settings.AvailableVersion
@@ -76,17 +103,16 @@ function processWebuiSettingsJson (settings) {
 function main () {
   setupSections()
 
-  setupWebsocket()
-
   window.fetch('webUiSettings.json').then(res => {
     return res.json()
   }).then(res => {
     processWebuiSettingsJson(res)
 
-    fetchGetDashboardComponents()
-    fetchGetLogs()
+    window.restAvailable = true
+    window.refreshLoop = refreshLoop
+    window.refreshLoop()
 
-    window.buttonInterval = setInterval(fetchGetDashboardComponents, 3000)
+    setInterval(refreshLoop, 3000)
   }).catch(err => {
     window.showBigError('fetch-webui-settings', 'getting webui settings', err)
   })
