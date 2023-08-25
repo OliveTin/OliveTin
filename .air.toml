@@ -6,7 +6,7 @@ tmp_dir = "tmp"
   args_bin = []
   bin = "./OliveTin"
   cmd = "go build -o OliveTin github.com/OliveTin/OliveTin/cmd/OliveTin"
-  delay = 0
+  delay = 1
   exclude_dir = ["assets", "tmp", "vendor", "testdata"]
   exclude_file = []
   exclude_regex = ["_test.go"]
@@ -23,7 +23,7 @@ tmp_dir = "tmp"
   rerun = false
   rerun_delay = 500
   send_interrupt = false
-  stop_on_error = false
+  stop_on_error = true
 
 [color]
   app = ""
