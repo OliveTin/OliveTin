@@ -270,6 +270,14 @@ button.active-section {
   20% { background-color: cyan; }
 }
 
+.action-blocked {
+  animation: kf-action-blocked 1s;
+}
+
+@keyframes kf-action-blocked {
+  20% { background-color: purple; }
+}
+
 footer,
 footer a {
   color: black;

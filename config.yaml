@@ -13,13 +13,18 @@ actions:
   # This will run a simple script that you create.
 - title: Run backup script
   shell: /opt/backupScript.sh
+  maxConcurrent: 1
   icon: backup
+
+- title: date
+  shell: date
 
   # This will send 1 ping (-c 1)
   # Docs: https://docs.olivetin.app/action-ping.html
 - title: Ping host
   shell: ping {{ host }} -c {{ count }}
   icon: ping
+  timeout: 100
   arguments:
     - name: host
       title: host

@@ -37,16 +37,19 @@ func (WebsocketExecutionListener) OnExecutionStarted(title string) {
 
 func (WebsocketExecutionListener) OnExecutionFinished(logEntry *executor.InternalLogEntry) {
 	le := &pb.LogEntry{
-		ActionTitle:      logEntry.ActionTitle,
-		ActionIcon:       logEntry.ActionIcon,
-		DatetimeStarted:  logEntry.DatetimeStarted,
-		DatetimeFinished: logEntry.DatetimeFinished,
-		Stdout:           logEntry.Stdout,
-		Stderr:           logEntry.Stderr,
-		TimedOut:         logEntry.TimedOut,
-		ExitCode:         logEntry.ExitCode,
-		Tags:             logEntry.Tags,
-		Uuid:             logEntry.UUID,
+		ActionTitle:       logEntry.ActionTitle,
+		ActionIcon:        logEntry.ActionIcon,
+		DatetimeStarted:   logEntry.DatetimeStarted,
+		DatetimeFinished:  logEntry.DatetimeFinished,
+		Stdout:            logEntry.Stdout,
+		Stderr:            logEntry.Stderr,
+		TimedOut:          logEntry.TimedOut,
+		Blocked:           logEntry.Blocked,
+		ExitCode:          logEntry.ExitCode,
+		Tags:              logEntry.Tags,
+		Uuid:              logEntry.UUID,
+		ExecutionStarted:  logEntry.ExecutionStarted,
+		ExecutionFinished: logEntry.ExecutionFinished,
 	}
 
 	broadcast("ExecutionFinished", le)

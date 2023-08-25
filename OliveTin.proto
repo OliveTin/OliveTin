@@ -76,6 +76,9 @@ message LogEntry {
 	string execution_uuid = 11;
 	string datetime_finished = 12;
 	string uuid = 13;
+	bool execution_started = 14;
+	bool execution_finished = 15;
+	bool blocked = 16;
 }
 
 message GetLogsResponse {
