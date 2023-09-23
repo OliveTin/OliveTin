@@ -2,7 +2,7 @@
 # (eg, snapshot builds on GitHub)
 
 
-Vagrant.configure("2") do |config| 
+Vagrant.configure("2") do |config|
   config.vm.box = "generic/centos8"
   config.vm.provision "shell", inline: "mkdir /etc/OliveTin && chmod o+w /etc/OliveTin/", privileged: true
   config.vm.provision "file", source: "configs/config.general.yaml/.", destination: "/etc/OliveTin/config.yaml"

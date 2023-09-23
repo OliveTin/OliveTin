@@ -7,9 +7,9 @@ of multiple projects, your time and interest in contributing is most welcome.
 If you're not sure where to get started, raise an issue in the project.
 
 Ideas may be discussed, purely on their merits and issues. Our Code of Conduct
-(CoC) is straightforward - it's important that contributors feel comfortable in 
-discussion throughout the whole process. This project respects the 
-link:https://www.kernel.org/doc/html/latest/process/code-of-conduct.html[Linux Kernel code of conduct]. 
+(CoC) is straightforward - it's important that contributors feel comfortable in
+discussion throughout the whole process. This project respects the
+link:https://www.kernel.org/doc/html/latest/process/code-of-conduct.html[Linux Kernel code of conduct].
 
 == If you're not sure, ask!
 
@@ -18,19 +18,19 @@ contribution. If you're thinking about a bigger change, especially that might
 affect the core working or architecture, it's almost essential to talk and ask
 about what you're planning might affect things. Some of the larger future plans may not be
 documented well so it's difficult to understand how your change might affect
-the general direction and roadmap of this project without asking. 
+the general direction and roadmap of this project without asking.
 
-The preferred way to communicate is probably via Discord or GitHub issues. 
+The preferred way to communicate is probably via Discord or GitHub issues.
 
-=== Dev environment setup and clean build - Fedora 
+=== Dev environment setup and clean build - Fedora
 
 ```
-dnf install git go protobuf-compiler make -y 
+dnf install git go protobuf-compiler make -y
 git clone https://github.com/OliveTin/OliveTin.git
 cd OliveTin
 
-# `make grpc` will also run `make go-tools`, which installs "buf". This binary 
-# will be put in your GOPATH/bin/, which should be on your path. buf is used to 
+# `make grpc` will also run `make go-tools`, which installs "buf". This binary
+# will be put in your GOPATH/bin/, which should be on your path. buf is used to
 # generate the protobuf / grpc stubs.
 make grpc
 make
@@ -39,10 +39,10 @@ make
 
 === Getting started to contribute;
 
-The project layout is reasonably straightforward; 
+The project layout is reasonably straightforward;
 
 * See the `Makefile` for common targets. This project was originally created on top of Fedora, but it should be usable on Debian/your faveourite distro with minor changes (if any).
-* The API is defined in protobuf+grpc - you will need to `make grpc`. 
+* The API is defined in protobuf+grpc - you will need to `make grpc`.
 * The Go daemon is built from the `cmd` and `internal` directories mostly.
 * The webui is just a single page application with a bit of Javascript in the `webui` directory. This can happily be hosted on another webserver.
 

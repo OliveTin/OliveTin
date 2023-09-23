@@ -1,9 +1,9 @@
 compile: daemon-compile-x64-lin
 
-daemon-compile-armhf: 
+daemon-compile-armhf:
 	GOARCH=arm GOARM=6 go build -o OliveTin.armhf github.com/OliveTin/OliveTin/cmd/OliveTin
 
-daemon-compile-x64-lin: 
+daemon-compile-x64-lin:
 	GOOS=linux go build -o OliveTin github.com/OliveTin/OliveTin/cmd/OliveTin
 
 daemon-compile-x64-win:
@@ -14,7 +14,7 @@ daemon-compile: daemon-compile-armhf daemon-compile-x64-lin daemon-compile-x64-w
 daemon-codestyle:
 	go fmt ./...
 	go vet ./...
-	gocyclo -over 4 cmd internal 
+	gocyclo -over 4 cmd internal
 	gocritic check ./...
 
 daemon-unittests:
@@ -24,7 +24,7 @@ daemon-unittests:
 
 githooks:
 	cp -v .githooks/* .git/hooks/
-	
+
 go-tools:
 	go install "github.com/bufbuild/buf/cmd/buf"
 	go install "github.com/fzipp/gocyclo/cmd/gocyclo"
@@ -37,7 +37,7 @@ go-tools:
 grpc: go-tools
 	buf generate
 
-dist: protoc 
+dist: protoc
 
 protoc:
 	protoc --go_out=. --go-grpc_out=. --grpc-gateway_out=. -I .:/usr/include/ OliveTin.proto
@@ -54,7 +54,7 @@ podman-container:
 integration-tests-docker-image:
 	docker rm -f olivetin && docker rmi -f olivetin
 	docker build -t olivetin:latest .
-	docker create --name olivetin -p 1337:1337 -v `pwd`/integration-tests/configs/:/config/ olivetin 
+	docker create --name olivetin -p 1337:1337 -v `pwd`/integration-tests/configs/:/config/ olivetin
 
 devrun: compile
 	killall OliveTin || true
@@ -70,4 +70,4 @@ webui-codestyle:
 clean:
 	rm -rf dist OliveTin OliveTin.armhf OliveTin.exe reports gen
 
-.PHONY: grpc 
+.PHONY: grpc

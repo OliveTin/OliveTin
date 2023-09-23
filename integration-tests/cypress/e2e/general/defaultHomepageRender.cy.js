@@ -17,5 +17,3 @@ describe('Homepage rendering', () => {
     })
   })
 });
-
-

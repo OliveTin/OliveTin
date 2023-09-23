@@ -62,47 +62,96 @@
 		</main>
 
 		<footer title = "footer">
-			<p><img title = "application icon" src = "OliveTinLogo.png" height = "1em" class = "logo" /> OliveTin</p>
-			<p>	
-				<a href = "https://docs.olivetin.app" target = "_new">Documentation</a> | 
-				<a href = "https://github.com/OliveTin/OliveTin/issues/new/choose" target = "_new">Raise an issue on GitHub</a> | 
-				<span id = "currentVersion">Version: ?</p>  
+			<p><img title = "application icon" src = "OliveTinLogo.png" alt = "OliveTin logo" height = "1em" class = "logo" /> OliveTin</p>
+			<p>
+				<a href = "https://docs.olivetin.app" target = "_new">Documentation</a> |
+				<a href = "https://github.com/OliveTin/OliveTin/issues/new/choose" target = "_new">Raise an issue on GitHub</a> |
+				<span>Version: <span id = "currentVersion">?</span></span> |
+				<span>Server connection: <span id = "serverConnection">?</span></span>
+			</p>
+			<p>
 				<a id = "available-version" href = "http://olivetin.app" target = "_blank" hidden>?</a>
 			</p>
 		</footer>
 
+		<dialog id = "executionResults">
+			<div class = "action-header">
+				<span class = "icon" role = "icon"></span>
+
+				<h2>Log:
+					<span class = "title">?</span>
+				</h2>
+			</div>
+			<p>
+				<strong>Started: </strong><span class = "datetimeStarted">unknown</span>.
+				<strong>Finished: </strong><span class = "datetimeFinished">unknown</span>
+			</p>
+			<p>
+				<strong>Exit Code: </strong><span class = "exitCode">unknown</span>
+			</p>
+			<p>
+				<strong>Status: </strong><span class = "status">unknown</span>
+			</p>
+
+
+			<details>
+				<summary>stdout</summary>
+				<pre class = "stdout">
+					?
+				</pre>
+			</details>
+
+			<details>
+				<summary>stderr</summary>
+				<pre class = "stderr">
+					?
+				</pre>
+			</details>
+
+			<form method = "dialog">
+				<button name = "cancel">Close</button>
+			</form>
+		</dialog>
+
 		<template id = "tplArgumentForm">
-			<form class = "action-arguments">
-				<div class = "wrapper">
-					<div>
-						<span class = "icon" role = "icon"></span>
-						<h2>Argument form</h2>
-					</div>
+			<dialog>
+				<form class = "action-arguments">
+					<div class = "wrapper">
+						<div class = "action-header">
+							<span class = "icon" role = "icon"></span>
+							<h2>Argument form</h2>
+						</div>
 
-					<div class = "arguments"></div>
+						<div class = "arguments"></div>
 
-					<div class = "buttons">
-						<input name = "start" type = "submit" value = "Start">
-						<button name = "cancel">Cancel</button>
+						<div class = "buttons">
+							<input name = "start" type = "submit" value = "Start">
+							<button name = "cancel">Cancel</button>
+						</div>
 					</div>
-				</div>
-			<form>
+				</form>
+			</button>
 		</template>
 
 		<template id = "tplActionButton">
-			<button>
-				<span role = "icon" title = "button icon" class = "icon">&#x1f4a9;</span>
-				<p role = "title" class = "title">Untitled Button</p>
-			</button>
+			<div>
+				<button>
+					<span role = "icon" title = "button icon" class = "icon">&#x1f4a9;</span>
+					<span role = "title" class = "title">Untitled Button</span>
+				</button>
+
+				<div class = "executions">
+				</div>
+			</div>
 		</template>
 
 		<template id = "tplLogRow">
 			<tr class = "log-row">
-				<td class = "timestamp">?</td> 
+				<td class = "timestamp">?</td>
 				<td>
 					<span class = "icon" role = "icon"></span>
 					<span class = "content">?</span>
-	
+
 					<details>
 						<summary>stdout</summary>
 						<pre class = "stdout">
@@ -124,12 +173,15 @@
 		</template>
 
 		<script type = "text/javascript">
-			/** 
+			/**
 			This is the bootstrap code, which relies on very simple, old javascript
 		  	to at least display a helpful error message if we can't use OliveTin.
 			*/
 			function showBigError (type, friendlyType, message) {
-			  clearInterval(window.buttonInterval)
+			  for (const oldError of document.querySelectorAll('div.error').values()) {
+				window.old = oldError;
+				oldError.remove();
+			  }
 
 			  console.error('Error ' + type + ': ', message)
 
@@ -146,5 +198,6 @@
 		</script>
 
 		<script type = "module" src = "main.js"></script>
+		<script type = "module" src = "js/websocket.js"></script>
 	</body>
 </html>

@@ -48,7 +48,7 @@ stop()
 
 status() {
 	PID=$(pidof OliveTin)
-	RETVAL=$? 
+	RETVAL=$?
 
 	if [ $RETVAL -eq 1 ] ; then
 		echo "OliveTin is stopped"

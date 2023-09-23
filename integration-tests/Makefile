@@ -1,6 +1,6 @@
 cypress:
 	npm install
 	./cypressRun.sh "general"
-	./cypressRun.sh "hiddenNav"		
+	./cypressRun.sh "hiddenNav"
 
 .PHONY: cypress container

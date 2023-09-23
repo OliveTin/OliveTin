@@ -10,5 +10,3 @@ describe('Hidden Footer', () => {
     })
   })
 });
-
-

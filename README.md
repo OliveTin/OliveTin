@@ -2,7 +2,7 @@
 
 <img alt = "project logo" src = "https://github.com/OliveTin/OliveTin/blob/main/webui/OliveTinLogo.png" align = "right" width = "160px" />
 
-OliveTin gives **safe** and **simple** access to predefined shell commands from a web interface. 
+OliveTin gives **safe** and **simple** access to predefined shell commands from a web interface.
 
 [![Discord](https://img.shields.io/discord/846737624960860180?label=Discord%20Server)](https://discord.gg/jhYWWpNJ3v)
 [![Awesome](https://cdn.rawgit.com/sindresorhus/awesome/d7305f38d29fed78fa85652e3a63e154dd8e8829/media/badge.svg)](https://github.com/awesome-selfhosted/awesome-selfhosted#automation)
@@ -11,7 +11,7 @@ OliveTin gives **safe** and **simple** access to predefined shell commands from 
 [![Go Report Card](https://goreportcard.com/badge/github.com/Olivetin/OliveTin)](https://goreportcard.com/report/github.com/OliveTin/OliveTin)
 [![Build Snapshot](https://github.com/OliveTin/OliveTin/actions/workflows/build-snapshot.yml/badge.svg)](https://github.com/OliveTin/OliveTin/actions/workflows/build-snapshot.yml)
 
-## Use cases 
+## Use cases
 
 **Safely** give access to commands, for less technical people;
 
@@ -34,10 +34,10 @@ OliveTin gives **safe** and **simple** access to predefined shell commands from 
 ## Features
 
 * **Responsive, touch-friendly UI** - great for tablets and mobile
-* **Super simple config in YAML** - because if it's not YAML now-a-days, it's not "cloud native" :-) 
+* **Super simple config in YAML** - because if it's not YAML now-a-days, it's not "cloud native" :-)
 * **Dark mode** - for those of you that roll that way.
-* **Accessible** - passes all the accessibility checks in Firefox, and issues with accessibility are taken seriously.  
-* **Container** - available for quickly testing and getting it up and running, great for the selfhosted community. 
+* **Accessible** - passes all the accessibility checks in Firefox, and issues with accessibility are taken seriously.
+* **Container** - available for quickly testing and getting it up and running, great for the selfhosted community.
 * **Integrate with anything** - OliveTin just runs Linux shell commands, so theoretially you could integrate with a bunch of stuff just by using curl, ping, etc. However, writing your own shell scripts is a great way to extend OliveTin.
 * **Lightweight on resources** - uses only a few MB of RAM and barely any CPU. Written in Go, with a web interface written as a modern, responsive, Single Page App that uses the REST/gRPC API.
 * **Good amount of unit tests and style checks** - helps potential contributors be consistent, and helps with maintainability.
@@ -48,17 +48,17 @@ Desktop web browser;
 
 ![Desktop screenshot](media/screenshotDesktop.png)
 
-Desktop web browser (dark mode); 
+Desktop web browser (dark mode);
 
 ![Desktop screenshot](media/screenshotDesktopDark.png)
 
-Mobile screen size (responsive layout); 
+Mobile screen size (responsive layout);
 
 ![Mobile screenshot](media/screenshotMobile.png)
 
 ## Documentation
 
-All documentation can be found at http://docs.olivetin.app . This includes installation and usage guide, etc. 
+All documentation can be found at http://docs.olivetin.app . This includes installation and usage guide, etc.
 
 ### Quickstart reference for `config.yaml`
 
@@ -75,19 +75,19 @@ Put this `config.yaml` in `/etc/OliveTin/` if you're running a standard service,
 
 ```yaml
 # Listen on all addresses available, port 1337
-listenAddressSingleHTTPFrontend: 0.0.0.0:1337 
+listenAddressSingleHTTPFrontend: 0.0.0.0:1337
 
 # Choose from INFO (default), WARN and DEBUG
 logLevel: "INFO"
 
 # Actions (buttons) to show up on the WebUI:
-actions: 
-  # Docs: https://docs.olivetin.app/action-container-control.html 
+actions:
+  # Docs: https://docs.olivetin.app/action-container-control.html
 - title: Restart Plex
   icon: restart
   shell: docker restart plex
-  
-  # This will send 1 ping 
+
+  # This will send 1 ping
   # Docs: https://docs.olivetin.app/action-ping.html
 - title: Ping host
   shell: ping {{ host }} -c {{ count }}
@@ -102,7 +102,7 @@ actions:
       title: Count
       type: int
       default: 1
-  
+
   # Restart http on host "webserver1"
   # Docs: https://docs.olivetin.app/action-ssh.html
 - title: restart httpd
@@ -111,4 +111,3 @@ actions:
 ```
 
 A full example config can be found at in this repository - [config.yaml](https://github.com/OliveTin/OliveTin/blob/main/config.yaml).
-

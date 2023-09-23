@@ -12,7 +12,9 @@ type Action struct {
 	Acls          []string
 	ExecOnStartup bool
 	ExecOnCron    []string
+	MaxConcurrent int
 	Arguments     []ActionArgument
+	PopupOnStart  bool
 }
 
 // ActionArgument objects appear on Actions.
@@ -73,9 +75,10 @@ type Config struct {
 	ShowNavigation                  bool
 	ShowNewVersions                 bool
 	AuthJwtCookieName               string
-	AuthJwtSecret                   string
+	AuthJwtSecret                   string // mutually exclusive with pub key config fields
 	AuthJwtClaimUsername            string
 	AuthJwtClaimUserGroup           string
+	AuthJwtPubKeyPath               string // will read pub key from file on disk
 	AuthHttpHeaderUsername          string
 	AuthHttpHeaderUserGroup         string
 	DefaultPermissions              PermissionsList

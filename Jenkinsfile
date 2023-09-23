@@ -14,7 +14,7 @@ pipeline {
 				sh 'make go-tools'
             }
         }
-        
+
         stage('Compile') {
             steps {
 				withEnv(["PATH+GO=/root/go/bin/"]) {
@@ -25,9 +25,9 @@ pipeline {
 				}
             }
         }
-        
+
         stage ('Post-Compile') {
-            parallel { 
+            parallel {
                 stage('Codestyle') {
                     steps {
 						withEnv(["PATH+GO=/root/go/bin/"]) {
@@ -45,6 +45,6 @@ pipeline {
                 }
             }
         }
-        
+
     }
 }

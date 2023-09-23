@@ -25,10 +25,11 @@ func actionsCfgToPb(cfgActions []config.Action, user *acl.AuthenticatedUser) *pb
 
 func actionCfgToPb(action config.Action, user *acl.AuthenticatedUser) *pb.Action {
 	btn := pb.Action{
-		Id:      fmt.Sprintf("%x", md5.Sum([]byte(action.Title))),
-		Title:   action.Title,
-		Icon:    action.Icon,
-		CanExec: acl.IsAllowedExec(cfg, user, &action),
+		Id:           fmt.Sprintf("%x", md5.Sum([]byte(action.Title))),
+		Title:        action.Title,
+		Icon:         action.Icon,
+		CanExec:      acl.IsAllowedExec(cfg, user, &action),
+		PopupOnStart: action.PopupOnStart,
 	}
 
 	for _, cfgArg := range action.Arguments {

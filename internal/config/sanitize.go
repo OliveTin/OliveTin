@@ -30,6 +30,10 @@ func (action *Action) sanitize() {
 
 	action.Icon = lookupHTMLIcon(action.Icon)
 
+	if action.MaxConcurrent < 1 {
+		action.MaxConcurrent = 1
+	}
+
 	for idx := range action.Arguments {
 		action.Arguments[idx].sanitize()
 	}

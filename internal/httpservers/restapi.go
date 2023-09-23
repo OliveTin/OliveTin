@@ -59,6 +59,10 @@ func parseRequestMetadata(ctx context.Context, req *http.Request) metadata.MD {
 	return md
 }
 
+func SetGlobalRestConfig(config *config.Config) {
+	cfg = config
+}
+
 func startRestAPIServer(globalConfig *config.Config) error {
 	cfg = globalConfig
 
@@ -76,7 +80,7 @@ func startRestAPIServer(globalConfig *config.Config) error {
 		runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.HTTPBodyMarshaler{
 			Marshaler: &runtime.JSONPb{
 				MarshalOptions: protojson.MarshalOptions{
-					UseProtoNames:   true,
+					UseProtoNames:   false, // eg: canExec for js instead of can_exec from protobuf
 					EmitUnpopulated: true,
 				},
 			},
@@ -84,7 +88,7 @@ func startRestAPIServer(globalConfig *config.Config) error {
 	)
 	opts := []grpc.DialOption{grpc.WithInsecure()}
 
-	err := gw.RegisterOliveTinApiHandlerFromEndpoint(ctx, mux, cfg.ListenAddressGrpcActions, opts)
+	err := gw.RegisterOliveTinApiServiceHandlerFromEndpoint(ctx, mux, cfg.ListenAddressGrpcActions, opts)
 
 	if err != nil {
 		log.Errorf("Could not register REST API Handler %v", err)
