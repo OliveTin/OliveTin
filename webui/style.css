@@ -33,7 +33,7 @@ fieldset#root-group {
 
 h1 {
   display: inline;
-  padding-left: 1em;
+  padding-left: .5em;
   font-size: small;
 }
 
@@ -42,12 +42,11 @@ label#sidebar-toggler-button {
   left: 0.5em;
   height: 2em;
   width: 2em;
-  border-radius: 50%;
   background-color: white;
   text-align: center;
   display: inline-grid;
   place-items: center;
-  padding: 0;
+  padding: .2em;
   box-shadow: 0 0 5px 0 #444;
   color: #666;
 }
@@ -291,6 +290,7 @@ img.logo {
 
 main {
   padding: 1em;
+  padding-top: 3em;
 }
 
 summary {
@@ -319,7 +319,9 @@ label {
 }
 
 #perma-widget {
-  position: absolute;
+  position: absolute; 
+  top: 1em;
+  left: 1em;
   z-index: 2;
 }
 
