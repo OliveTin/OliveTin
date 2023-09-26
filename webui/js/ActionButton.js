@@ -53,8 +53,8 @@ class ActionButton extends window.HTMLElement {
     }
   }
 
-  getUniqueId() {
-    if (window.isSecureContext) { 
+  getUniqueId () {
+    if (window.isSecureContext) {
       return window.crypto.randomUUID()
     } else {
       return Date.now()
