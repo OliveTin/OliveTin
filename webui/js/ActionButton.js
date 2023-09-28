@@ -57,7 +57,7 @@ class ActionButton extends window.HTMLElement {
     if (window.isSecureContext) {
       return window.crypto.randomUUID()
     } else {
-      return Date.now()
+      return Date.now().toString()
     }
   }
   
