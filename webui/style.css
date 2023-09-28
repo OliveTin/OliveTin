@@ -57,6 +57,11 @@ label#sidebar-toggler-button:focus {
   cursor: pointer;
 }
 
+footer,
+footer a {
+  color: black;
+}
+
 aside {
   position: absolute;
   width: 180px;
@@ -279,11 +284,6 @@ button.active-section {
 
 @keyframes kf-action-blocked {
   20% { background-color: purple; }
-}
-
-footer,
-footer a {
-  color: black;
 }
 
 img.logo {
