@@ -60,7 +60,7 @@ class ActionButton extends window.HTMLElement {
       return Date.now().toString()
     }
   }
-  
+
   startAction (actionArgs) {
     //    this.btn.disabled = true
     //    this.isWaiting = true
