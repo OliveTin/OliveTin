@@ -82,13 +82,17 @@ aside ul {
 aside ul li {
   list-style: none;
   text-align: left;
-  padding-left: 1em;
-  padding-top: 0.5em;
-  padding-bottom: 0.5em;
   border-bottom: 1px inset black;
 }
 
-aside ul li:hover {
+aside ul li a {
+  display: block;
+  padding-left: 1em;
+  padding-top: 0.5em;
+  padding-bottom: 0.5em;
+}
+
+aside ul li a:hover {
   color: black;
   background-color: #efefef;
   cursor: pointer;
