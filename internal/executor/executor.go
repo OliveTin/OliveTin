@@ -1,7 +1,6 @@
 package executor
 
 import (
-	pb "github.com/OliveTin/OliveTin/gen/grpc"
 	acl "github.com/OliveTin/OliveTin/internal/acl"
 	config "github.com/OliveTin/OliveTin/internal/config"
 	log "github.com/sirupsen/logrus"
@@ -13,6 +12,7 @@ import (
 	"os/exec"
 	"runtime"
 	"time"
+	"sync"
 )
 
 // Executor represents a helper class for executing commands. It's main method
@@ -99,11 +99,14 @@ func (e *Executor) AddListener(m listener) {
 }
 
 // ExecRequest processes an ExecutionRequest
-func (e *Executor) ExecRequest(req *ExecutionRequest) *pb.StartActionResponse {
+func (e *Executor) ExecRequest(req *ExecutionRequest) (*sync.WaitGroup, string) {
+	req.executor = e
+
 	// req.UUID is now set by the client, so that they can track the request
 	// from start to finish. This means that a malicious client could send
 	// duplicate UUIDs (or just random strings), but this is the only way.
-	req.executor = e
+	req.uuid = uuid.New().String()
+
 	req.logEntry = &InternalLogEntry{
 		DatetimeStarted:   time.Now().Format("2006-01-02 15:04:05"),
 		ActionTitle:       req.ActionName,
@@ -121,11 +124,15 @@ func (e *Executor) ExecRequest(req *ExecutionRequest) *pb.StartActionResponse {
 		listener.OnExecutionStarted(req.ActionName)
 	}
 
-	go e.execChain(req)
+	wg := new(sync.WaitGroup)
+	wg.Add(1);
 
-	return &pb.StartActionResponse{
-		ExecutionUuid: req.UUID,
-	}
+	go func() {
+		e.execChain(req)
+		defer wg.Done();
+	}()
+
+	return wg, req.uuid;
 }
 
 func (e *Executor) execChain(req *ExecutionRequest) {
