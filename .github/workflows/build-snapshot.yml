@@ -42,11 +42,16 @@ jobs:
       - name: unit tests
         run: make daemon-unittests
 
+      - name: run OliveTin for integration tests
+        run: OliveTin &
+
       - name: integration tests
         uses: cypress-io/github-action@v6
         with:
-          start: ./../OliveTin
           working-directory: integration-tests
+
+      - name: kill OliveTin after integration tests
+        run: killall OliveTin
 
       - name: goreleaser
         uses: goreleaser/goreleaser-action@v4.2.0
