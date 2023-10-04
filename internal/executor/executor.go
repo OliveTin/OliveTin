@@ -11,8 +11,8 @@ import (
 	"io"
 	"os/exec"
 	"runtime"
-	"time"
 	"sync"
+	"time"
 )
 
 // Executor represents a helper class for executing commands. It's main method
@@ -105,7 +105,6 @@ func (e *Executor) ExecRequest(req *ExecutionRequest) (*sync.WaitGroup, string) 
 	// req.UUID is now set by the client, so that they can track the request
 	// from start to finish. This means that a malicious client could send
 	// duplicate UUIDs (or just random strings), but this is the only way.
-	req.uuid = uuid.New().String()
 
 	req.logEntry = &InternalLogEntry{
 		DatetimeStarted:   time.Now().Format("2006-01-02 15:04:05"),
@@ -125,14 +124,14 @@ func (e *Executor) ExecRequest(req *ExecutionRequest) (*sync.WaitGroup, string) 
 	}
 
 	wg := new(sync.WaitGroup)
-	wg.Add(1);
+	wg.Add(1)
 
 	go func() {
 		e.execChain(req)
-		defer wg.Done();
+		defer wg.Done()
 	}()
 
-	return wg, req.uuid;
+	return wg, req.UUID
 }
 
 func (e *Executor) execChain(req *ExecutionRequest) {

@@ -42,11 +42,11 @@ func (api *oliveTinAPI) StartAction(ctx ctx.Context, req *pb.StartActionRequest)
 		Cfg:               cfg,
 	}
 
-	_, uuid := api.executor.ExecRequest(&execReq);
+	_, uuid := api.executor.ExecRequest(&execReq)
 
-	return &pb.StartActionResponse {
+	return &pb.StartActionResponse{
 		ExecutionUuid: uuid,
-	}, nil;
+	}, nil
 
 }
 

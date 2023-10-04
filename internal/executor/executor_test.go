@@ -42,7 +42,6 @@ func TestCreateExecutorAndExec(t *testing.T) {
 		},
 	}
 
-
 	assert.NotNil(t, e, "Create an executor")
 
 	wg, _ := e.ExecRequest(&req)
