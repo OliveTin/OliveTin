@@ -16,7 +16,7 @@
 
 	<body>
 		<main title = "main content">
-			<div id = "perma-widget" hidden>
+			<div id = "perma-widget">
 				<div id = "sidebar-toggle-wrapper">
 					<label for = "sidebar-toggler" id = "sidebar-toggler-button" title = "Toggle sidebar" tabindex = "0">&#9776;</label>
 				</div>
@@ -28,15 +28,11 @@
 				<input type = "checkbox" id = "sidebar-toggler" hidden checked />
 				<aside>
 					<ul>
-						<li>Foo</li>
-						<li>Bar</li>
+						<li><a id = "showActions">Actions</a></li>
+						<li><a id = "showLogs">Logs</a></li>
 					</ul>
 				</aside>
 			</div>
-			<fieldset id = "section-switcher" title = "Sections">
-				<button id = "showActions">Actions</button>
-				<button id = "showLogs">Logs</button>
-			</fieldset>
 
 			<section id = "contentLogs" title = "Logs" hidden>
 				<table title = "Logs">
@@ -136,7 +132,7 @@
 		<template id = "tplActionButton">
 			<div>
 				<button>
-					<span role = "icon" title = "button icon" class = "icon">&#x1f4a9;</span>
+					<span role = "icon" title = "action button icon" class = "icon">&#x1f4a9;</span>
 					<span role = "title" class = "title">Untitled Button</span>
 				</button>
 

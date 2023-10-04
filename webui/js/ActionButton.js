@@ -53,6 +53,14 @@ class ActionButton extends window.HTMLElement {
     }
   }
 
+  getUniqueId () {
+    if (window.isSecureContext) {
+      return window.crypto.randomUUID()
+    } else {
+      return Date.now().toString()
+    }
+  }
+
   startAction (actionArgs) {
     //    this.btn.disabled = true
     //    this.isWaiting = true
@@ -68,7 +76,7 @@ class ActionButton extends window.HTMLElement {
     const startActionArgs = {
       actionName: this.btn.title,
       arguments: actionArgs,
-      uuid: window.crypto.randomUUID()
+      uuid: this.getUniqueId()
     }
 
     const btnExecution = document.createElement('execution-button')

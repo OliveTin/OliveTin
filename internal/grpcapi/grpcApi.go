@@ -42,7 +42,12 @@ func (api *oliveTinAPI) StartAction(ctx ctx.Context, req *pb.StartActionRequest)
 		Cfg:               cfg,
 	}
 
-	return api.executor.ExecRequest(&execReq), nil
+	_, uuid := api.executor.ExecRequest(&execReq)
+
+	return &pb.StartActionResponse{
+		ExecutionUuid: uuid,
+	}, nil
+
 }
 
 func (api *oliveTinAPI) ExecutionStatus(ctx ctx.Context, req *pb.ExecutionStatusRequest) (*pb.ExecutionStatusResponse, error) {

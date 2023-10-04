@@ -42,11 +42,11 @@ func TestCreateExecutorAndExec(t *testing.T) {
 		},
 	}
 
-	e.ExecRequest(&req)
-
 	assert.NotNil(t, e, "Create an executor")
 
-	assert.NotNil(t, e.ExecRequest(&req), "Execute a request")
+	wg, _ := e.ExecRequest(&req)
+	wg.Wait()
+
 	assert.Equal(t, int32(0), req.logEntry.ExitCode, "Exit code is zero")
 }
 
@@ -59,7 +59,8 @@ func TestExecNonExistant(t *testing.T) {
 		Cfg:        cfg,
 	}
 
-	e.ExecRequest(&req)
+	wg, _ := e.ExecRequest(&req)
+	wg.Wait()
 
 	assert.Equal(t, int32(-1337), req.logEntry.ExitCode, "Log entry is set to an internal error code")
 	assert.Equal(t, "", req.logEntry.ActionIcon, "Log entry icon wasnt found")
