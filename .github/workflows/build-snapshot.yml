@@ -74,4 +74,6 @@ jobs:
         uses: actions/upload-artifact@v3.1.0
         with:
           name: integration-tests
-          path: integration-tests
+          path: |
+            integration-tests
+            !integration-tests/node_modules
