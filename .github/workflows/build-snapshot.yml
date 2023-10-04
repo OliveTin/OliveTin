@@ -45,7 +45,7 @@ jobs:
       - name: integration tests
         uses: cypress-io/github-action@v6
         with:
-          start: ./OliveTin
+          start: ./../OliveTin
           working-directory: integration-tests
 
       - name: goreleaser
