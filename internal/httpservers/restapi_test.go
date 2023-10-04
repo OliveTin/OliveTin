@@ -127,7 +127,7 @@ func testBase(t *testing.T, expire int64, expectCode int) {
 }
 
 func TestJWTSignatureVerificationSucceeds(t *testing.T) {
-	//testBase(t, 1000, 200)
+	// testBase(t, 1000, 200)
 }
 
 func TestJWTSignatureVerificationFails(t *testing.T) {
