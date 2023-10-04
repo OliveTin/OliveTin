@@ -42,8 +42,11 @@ jobs:
       - name: unit tests
         run: make daemon-unittests
 
+      - name: ls
+        run: ls && pwd
+
       - name: run OliveTin for integration tests
-        run: OliveTin &
+        run: ./OliveTin &
 
       - name: integration tests
         uses: cypress-io/github-action@v6
