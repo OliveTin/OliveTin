@@ -18,14 +18,14 @@
 		<main title = "main content">
 			<div id = "perma-widget">
 				<div id = "sidebar-toggle-wrapper">
-					<label for = "sidebar-toggler" id = "sidebar-toggler-button" title = "Toggle sidebar" tabindex = "0">&#9776;</label>
+					<label for = "hide-sidebar-checkbox" id = "sidebar-toggler-button" title = "Toggle sidebar" tabindex = "0">&#9776;</label>
 				</div>
 				<h1 id = "page-title">OliveTin</h1>
 			</div>
 
 
 			<div id = "content-sidebar">
-				<input type = "checkbox" id = "sidebar-toggler" hidden checked />
+				<input type = "checkbox" id = "hide-sidebar-checkbox" hidden checked />
 				<aside>
 					<ul>
 						<li><a id = "showActions">Actions</a></li>
@@ -130,14 +130,15 @@
 		</template>
 
 		<template id = "tplActionButton">
-			<div>
-				<button>
-					<span role = "icon" title = "action button icon" class = "icon">&#x1f4a9;</span>
-					<span role = "title" class = "title">Untitled Button</span>
-				</button>
+			<button>
+				<span role = "icon" title = "action button icon" class = "icon">&#x1f4a9;</span>
+				<span role = "title" class = "title">Untitled Button</span>
+			</button>
 
-				<div class = "executions">
-				</div>
+			<div class = "action-button-footer">
+				<details class = "executions">
+					<summary>Not executed yet.</summary>
+				</details>
 			</div>
 		</template>
 

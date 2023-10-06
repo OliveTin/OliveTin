@@ -11,6 +11,8 @@ function showSection (name) {
 
   document.getElementById('show' + name).classList.add('activeSection')
   document.getElementById('content' + name).hidden = false
+
+  document.getElementById('hide-sidebar-checkbox').checked = true
 }
 
 function setupSections () {
