@@ -49,10 +49,9 @@ jobs:
         run: ./OliveTin &
 
       - name: integration tests
-        uses: cypress-io/github-action@v6
+        run: make
         with:
           working-directory: integration-tests
-          spec: cypress/e2e/general/*
 
       - name: kill OliveTin after integration tests
         run: killall OliveTin

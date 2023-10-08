@@ -4,12 +4,15 @@
   "repository": "https://github.com/OliveTin/OliveTin-integration-tests",
   "description": "The cypress WebUI tests",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "cypress": "^13.2.0"
+    "chai": "^4.3.10",
+    "mocha": "^10.2.0",
+    "selenium-webdriver": "4.12.0"
   }
 }

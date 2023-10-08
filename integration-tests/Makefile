@@ -1,6 +1,5 @@
-cypress:
+default:
 	npm install
-	./cypressRun.sh "general"
-	./cypressRun.sh "hiddenNav"
+	mocha
 
-.PHONY: cypress container
+.PHONY: default
