@@ -1,5 +1,5 @@
 default:
-	npm install
-	mocha
+	npm install --no-fund
+	./node_modules/.bin/mocha
 
 .PHONY: default
