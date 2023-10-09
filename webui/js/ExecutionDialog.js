@@ -5,7 +5,7 @@ export class ExecutionDialog {
   constructFromJson (json) {
     this.executionUuid = json
 
-    this.dlg = document.querySelector('dialog#executionResults')
+    this.dlg = document.querySelector('dialog#execution-results-popup')
 
     this.domIcon = this.dlg.querySelector('.icon')
     this.domTitle = this.dlg.querySelector('.title')

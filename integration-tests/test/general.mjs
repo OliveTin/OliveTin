@@ -25,7 +25,9 @@ describe('config: general', function () {
 
   it('Default buttons are rendered', async function() {
     await webdriver.get('http://localhost:1337')
-    await webdriver.manage().setTimeouts({ implicit: 2000 });
+
+//    await webdriver.manage().setTimeouts({ implicit: 2000 });
+
     let buttons = await webdriver.findElement(By.id('root-group')).findElements(By.tagName('button'))
 
     expect(buttons).to.have.length(6);
