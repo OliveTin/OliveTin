@@ -1,8 +1,8 @@
 {
   "name": "olivetin-integration-tests",
   "version": "1.0.0",
-  "repository": "https://github.com/OliveTin/OliveTin-integration-tests",
-  "description": "The cypress WebUI tests",
+  "repository": "https://github.com/OliveTin/OliveTin",
+  "description": "The integration-tests for OliveTin's webui.",
   "main": "index.js",
   "type": "module",
   "scripts": {
