@@ -19,7 +19,7 @@ class ActionButton extends window.HTMLElement {
     this.btn.title = json.title
     this.btn.onclick = () => {
       if (json.arguments.length > 0) {
-        for (let oldArgumentForm of document.querySelectorAll('argument-form')) {
+        for (const oldArgumentForm of document.querySelectorAll('argument-form')) {
           oldArgumentForm.remove()
         }
 
