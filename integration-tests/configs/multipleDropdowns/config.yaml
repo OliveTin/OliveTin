@@ -1,0 +1,25 @@
+---
+listenAddressSingleHTTPFrontend: 0.0.0.0:1337
+
+logLevel: "DEBUG"
+checkForUpdates: false
+
+actions:
+- title: Ping Google.com
+  shell: ping google.com -c 1
+  icon: ping
+
+- title: Test multiple dropdowns
+  shell: echo {{ salutation }} {{ person }}
+  icon: ping
+  arguments:
+    - name: salutation
+      choices:
+        - value: Hello
+        - value: Goodbye
+
+    - name: person
+      choices:
+        - value: Alice
+        - value: Bob
+        - value: Dave
