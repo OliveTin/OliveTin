@@ -49,9 +49,7 @@ jobs:
         run: ./OliveTin &
 
       - name: integration tests
-        run: make
-        with:
-          working-directory: integration-tests
+        run: cd integration-tests && make
 
       - name: kill OliveTin after integration tests
         run: killall OliveTin
