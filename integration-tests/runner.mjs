@@ -1,5 +1,6 @@
 import process from 'node:process'
 import {spawn} from 'node:child_process'
+import waitOn from 'wait-on'
 
 let ot = null;
 
@@ -23,7 +24,7 @@ export default function getRunner() {
 }
 
 class OliveTinTestRunnerLocalProcess {
-  start(cfg) {
+  async start(cfg) {
     ot = spawn("./../OliveTin", ['-configdir', 'configs/' + cfg + '/'])
 
     const logStdout = process.env.OLIVETIN_TEST_RUNNER_LOG_STDOUT == 1
@@ -38,7 +39,6 @@ class OliveTinTestRunnerLocalProcess {
       });
     }
 
-
     ot.on('close', (code) => {
         console.log(`child process exited with code ${code}`);
     });
@@ -47,10 +47,15 @@ class OliveTinTestRunnerLocalProcess {
       this.server = await startSomeServer({port: process.env.TEST_PORT});
       console.log(`server running on port ${this.server.port}`);
       */
+
+    await waitOn({
+      'resources': [ 'http://localhost:1337/' ]
+    })
+
     return ot
   }
 
-  stop() {
-    ot.kill();
+  async stop() {
+    await ot.kill();
   }
 }

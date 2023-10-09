@@ -1,17 +1,17 @@
-import {expect} from 'chai';
+import { expect } from 'chai';
 
-import {By} from 'selenium-webdriver';
+import { By } from 'selenium-webdriver';
 
 describe('config: hiddenFooter', function () {
   before(async function () {
-    runner.start('hiddenFooter')
+    await runner.start('hiddenFooter')
   });
 
   after(async () => {
-    runner.stop()
+    await runner.stop()
   });
 
-  it('Footer is hidden', async () => {
+  it('Check that footer is hidden', async () => {
     await webdriver.get('http://localhost:1337')
 
     let footer = await webdriver.findElement(By.tagName('footer'))

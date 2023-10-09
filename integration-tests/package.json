@@ -12,7 +12,11 @@
   "license": "ISC",
   "devDependencies": {
     "chai": "^4.3.10",
+    "eslint": "^8.51.0",
     "mocha": "^10.2.0",
     "selenium-webdriver": "4.12.0"
+  },
+  "dependencies": {
+    "wait-on": "^7.0.1"
   }
 }

@@ -12,5 +12,5 @@ export async function mochaGlobalSetup () {
 }
 
 export async function mochaGlobalTeardown () {
-  await global.webdriver.quit();
+  await global.webdriver.quit()
 }

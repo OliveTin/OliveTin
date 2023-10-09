@@ -3,11 +3,11 @@ import {By} from 'selenium-webdriver';
 
 describe('config: general', function () {
   before(async function () {
-    runner.start('general')
+    await runner.start('general')
   });
 
   after(async () => {
-    runner.stop()
+    await runner.stop()
   });
 
   it('Page title', async function () {
