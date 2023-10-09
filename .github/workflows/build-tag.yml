@@ -62,7 +62,7 @@ jobs:
       - name: Archive binaries
         uses: actions/upload-artifact@v2
         with:
-          name: "OliveTin-${{ GITHUB_REF_NAME }}"
+          name: "OliveTin-${{ github.ref_name }}"
           path: dist/OliveTin*.*
 
       - name: Archive integration tests
