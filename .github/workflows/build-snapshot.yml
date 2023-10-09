@@ -45,14 +45,8 @@ jobs:
       - name: ls
         run: ls && pwd
 
-      - name: run OliveTin for integration tests
-        run: ./OliveTin &
-
       - name: integration tests
         run: cd integration-tests && make
-
-      - name: kill OliveTin after integration tests
-        run: killall OliveTin
 
       - name: goreleaser
         uses: goreleaser/goreleaser-action@v4.2.0
