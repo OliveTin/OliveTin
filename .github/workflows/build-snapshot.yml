@@ -34,28 +34,16 @@ jobs:
           cache: true
 
       - name: grpc
-        run: make grpc
+        run: make -w grpc
 
       - name: make daemon
-        run: make daemon-compile-x64-lin
+        run: make -w daemon-compile-x64-lin
 
       - name: unit tests
-        run: make daemon-unittests
-
-      - name: ls
-        run: ls && pwd
-
-      - name: run OliveTin for integration tests
-        run: ./OliveTin &
+        run: make -w daemon-unittests
 
       - name: integration tests
-        uses: cypress-io/github-action@v6
-        with:
-          working-directory: integration-tests
-          spec: cypress/e2e/general/*
-
-      - name: kill OliveTin after integration tests
-        run: killall OliveTin
+        run: cd integration-tests && make -w
 
       - name: goreleaser
         uses: goreleaser/goreleaser-action@v4.2.0
