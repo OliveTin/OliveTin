@@ -9,6 +9,8 @@ export async function mochaGlobalSetup () {
   global.webdriver = await new Builder().forBrowser(Browser.CHROME).setChromeOptions(options).build()
 
   global.runner = getRunner()
+
+  console.log("Runner constructor: " + global.runner.constructor.name)
 }
 
 export async function mochaGlobalTeardown () {

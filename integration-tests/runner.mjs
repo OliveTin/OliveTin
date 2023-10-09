@@ -1,47 +1,47 @@
 import process from 'node:process'
-import {spawn} from 'node:child_process'
 import waitOn from 'wait-on'
+import { spawn } from 'node:child_process'
 
-let ot = null;
+let ot = null
 
-export default function getRunner() {
+export default function getRunner () {
   const type = process.env.OLIVETIN_TEST_RUNNER
 
-  console.log("TEST RUNNER IS: ", type)
+  console.log('OLIVETIN_TEST_RUNNER env value is: ', type)
 
   switch (type) {
     case 'local':
-      return new OliveTinTestRunnerLocalProcess();
+      return new OliveTinTestRunnerLocalProcess()
     case 'vm':
-      return null;
+      return null
     case 'container':
-      return null;
+      return null
     default:
-      console.warn('Using default test runner')
-
-      return new OliveTinTestRunnerLocalProcess();
+      return new OliveTinTestRunnerLocalProcess()
   }
 }
 
 class OliveTinTestRunnerLocalProcess {
-  async start(cfg) {
-    ot = spawn("./../OliveTin", ['-configdir', 'configs/' + cfg + '/'])
+  async start (cfg) {
+    ot = spawn('./../OliveTin', ['-configdir', 'configs/' + cfg + '/'])
 
-    const logStdout = process.env.OLIVETIN_TEST_RUNNER_LOG_STDOUT == 1
+    const logStdout = process.env.OLIVETIN_TEST_RUNNER_LOG_STDOUT === '1'
 
     if (logStdout) {
       ot.stdout.on('data', (data) => {
-          console.log(`stdout: ${data}`);
-      });
+        console.log(`stdout: ${data}`)
+      })
 
       ot.stderr.on('data', (data) => {
-          console.error(`stderr: ${data}`);
-      });
+        console.error(`stderr: ${data}`)
+      })
     }
 
     ot.on('close', (code) => {
-        console.log(`child process exited with code ${code}`);
-    });
+      if (code != null) {
+        console.log(`child process exited with code ${code}`)
+      }
+    })
 
     /*
       this.server = await startSomeServer({port: process.env.TEST_PORT});
@@ -49,13 +49,13 @@ class OliveTinTestRunnerLocalProcess {
       */
 
     await waitOn({
-      'resources': [ 'http://localhost:1337/' ]
+      'resources': ['http://localhost:1337/']
     })
 
     return ot
   }
 
-  async stop() {
-    await ot.kill();
+  async stop () {
+    await ot.kill()
   }
 }
