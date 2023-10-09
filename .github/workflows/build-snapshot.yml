@@ -34,19 +34,16 @@ jobs:
           cache: true
 
       - name: grpc
-        run: make grpc
+        run: make -w grpc
 
       - name: make daemon
-        run: make daemon-compile-x64-lin
+        run: make -w daemon-compile-x64-lin
 
       - name: unit tests
-        run: make daemon-unittests
-
-      - name: ls
-        run: ls && pwd
+        run: make -w daemon-unittests
 
       - name: integration tests
-        run: cd integration-tests && make
+        run: cd integration-tests && make -w
 
       - name: goreleaser
         uses: goreleaser/goreleaser-action@v4.2.0
