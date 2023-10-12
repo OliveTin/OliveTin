@@ -52,16 +52,20 @@ jobs:
           version: latest
           args: release --snapshot --clean --parallelism 1 --skip-docker
 
+      - name: get date
+        run: |
+          DATE=$(date +'%Y-%m-%d')" >> "$GITHUB_ENV"
+
       - name: Archive binaries
         uses: actions/upload-artifact@v3.1.0
         with:
-          name: "OliveTin-snapshot-$(date +'%Y-%m-%d')-${{ github.sha }}"
+          name: "OliveTin-snapshot-${{ env.DATE }}-${{ github.sha }}"
           path: dist/OliveTin*.*
 
       - name: Archive integration tests
         uses: actions/upload-artifact@v3.1.0
         with:
-          name: "OliveTin-integration-tests-$(date +'%Y-%m-%d')-${{ github.sha }}"
+          name: "OliveTin-integration-tests-${{ env.DATE }}-${{ github.sha }}"
           path: |
             integration-tests
             !integration-tests/node_modules
