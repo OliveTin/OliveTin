@@ -13,6 +13,20 @@ func (cfg *Config) FindAction(actionTitle string) *Action {
 
 // FindArg will return an arg if there is a match on Name
 func (action *Action) FindArg(name string) *ActionArgument {
+	if name == "stdout" {
+		return &ActionArgument{
+			Name: "stdout",
+			Type: "very_dangerous_raw_string",
+		}
+	}
+
+	if name == "exitCode" {
+		return &ActionArgument{
+			Name: "exitCode",
+			Type: "int",
+		}
+	}
+
 	for _, arg := range action.Arguments {
 		if arg.Name == name {
 			return &arg
