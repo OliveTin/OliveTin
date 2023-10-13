@@ -311,18 +311,12 @@ func stepExecAfter(req *ExecutionRequest) bool {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
-	args := map[string]string {
-		"stdout": req.logEntry.Stdout,
+	args := map[string]string{
+		"stdout":   req.logEntry.Stdout,
 		"exitCode": fmt.Sprintf("%v", req.logEntry.ExitCode),
 	}
 
-	finalParsedCommand, err := parseActionArguments(req.action.ShellAfterCompleted, args, req.action)
-
-	if err != nil {
-		log.Warnf("Could not map args for stepAfter, %v", err)
-
-		return false;
-	}
+	finalParsedCommand, _ := parseActionArguments(req.action.ShellAfterCompleted, args, req.action)
 
 	cmd := wrapCommandInShell(ctx, finalParsedCommand)
 	cmd.Stdout = &stdout
