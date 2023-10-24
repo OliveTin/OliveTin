@@ -115,7 +115,7 @@ func (api *oliveTinAPI) GetDashboardComponents(ctx ctx.Context, req *pb.GetDashb
 		log.Warn("Zero actions found - check that you have some actions defined, with a view permission")
 	}
 
-	log.Debugf("GetDashboardComponents: %v", res)
+	log.Tracef("GetDashboardComponents: %v", res)
 
 	return res, nil
 }
