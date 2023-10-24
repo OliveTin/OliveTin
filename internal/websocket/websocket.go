@@ -9,7 +9,9 @@ import (
 	"net/http"
 )
 
-var upgrader = ws.Upgrader{}
+var upgrader = ws.Upgrader{
+	CheckOrigin: checkOriginPermissive,
+}
 
 type WebsocketClient struct {
 	conn *ws.Conn
@@ -33,6 +35,23 @@ func (WebsocketExecutionListener) OnExecutionStarted(title string) {
 			Action: title,
 		});
 	*/
+}
+
+/*
+The default checkOrigin function checks that the origin (browser) matches the
+request origin. However in OliveTin we expect many users to deliberately proxy
+the connection with reverse proxies.
+
+So, we just permit any origin. After some searching I'm not sure if this exposes
+OliveTin to security issues, but it seems probably not. It would be possible to
+create a config option like PermitWebsocketConnectionsFrom or something, but
+I'd prefer if OliveTin works as much as possible "out of the box".
+
+If this does expose OliveTin to security issues, it will be changed in the
+future obviously.
+*/
+func checkOriginPermissive(r *http.Request) bool {
+	return true
 }
 
 func (WebsocketExecutionListener) OnExecutionFinished(logEntry *executor.InternalLogEntry) {
