@@ -4,7 +4,7 @@ export function marshalActionButtonsJsonToHtml (json) {
   const currentIterationTimestamp = Date.now()
 
   for (const jsonButton of json.actions) {
-    let htmlButton = document.querySelector('#actionButton_' + jsonButton.id)
+    let htmlButton = document.querySelector('#execution-' + jsonButton.id)
 
     if (htmlButton == null) {
       htmlButton = document.createElement('action-button')
