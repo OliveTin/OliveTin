@@ -83,6 +83,7 @@ func DefaultExecutor() *Executor {
 		stepParseArgs,
 		stepLogStart,
 		stepExec,
+		stepExecAfter,
 		stepLogFinish,
 	}
 
@@ -297,6 +298,50 @@ func stepExec(req *ExecutionRequest) bool {
 
 	req.logEntry.Tags = req.Tags
 	req.logEntry.DatetimeFinished = time.Now().Format("2006-01-02 15:04:05")
+
+	return true
+}
+
+func stepExecAfter(req *ExecutionRequest) bool {
+	if req.action.ShellAfterCompleted == "" {
+		return true
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(req.action.Timeout)*time.Second)
+	defer cancel()
+
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+
+	args := map[string]string{
+		"stdout":   req.logEntry.Stdout,
+		"exitCode": fmt.Sprintf("%v", req.logEntry.ExitCode),
+	}
+
+	finalParsedCommand, _ := parseActionArguments(req.action.ShellAfterCompleted, args, req.action)
+
+	cmd := wrapCommandInShell(ctx, finalParsedCommand)
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	req.logEntry.StdoutBuffer, _ = cmd.StdoutPipe()
+	req.logEntry.StderrBuffer, _ = cmd.StderrPipe()
+
+	runerr := cmd.Start()
+
+	cmd.Wait()
+
+	req.logEntry.Stdout += "---\n" + stdout.String()
+	req.logEntry.Stderr += "---\n" + stderr.String()
+
+	if runerr != nil {
+		req.logEntry.Stderr = runerr.Error() + "\n\n" + req.logEntry.Stderr
+	}
+
+	if ctx.Err() == context.DeadlineExceeded {
+		req.logEntry.Stderr += "Your shellAfterCommand command timed out."
+	}
+
+	req.logEntry.Stdout += fmt.Sprintf("Your shellAfterCommand exited with code %v", cmd.ProcessState.ExitCode())
 
 	return true
 }

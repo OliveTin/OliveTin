@@ -7,6 +7,7 @@ type Action struct {
 	Title                  string
 	Icon                   string
 	Shell                  string
+	ShellAfterCompleted    string
 	CSS                    map[string]string `mapstructure:"omitempty"`
 	Timeout                int
 	Acls                   []string

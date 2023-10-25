@@ -10,14 +10,16 @@ logLevel: "INFO"
 
 # Actions (buttons) to show up on the WebUI:
 actions:
+- title: date
+  shell: date
+  popupOnStart: true
+
   # This will run a simple script that you create.
 - title: Run backup script
   shell: /opt/backupScript.sh
+  shellAfterCompleted: "apprise -t 'Notification: Backup script completed' -b 'The backup script completed with code {{ exitCode}}. The log is: \n {{ stdout }} '"
   maxConcurrent: 1
   icon: backup
-
-- title: date
-  shell: date
 
   # This will send 1 ping (-c 1)
   # Docs: https://docs.olivetin.app/action-ping.html
