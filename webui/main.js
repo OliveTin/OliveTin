@@ -24,26 +24,33 @@ function setupSections () {
 
 function refreshLoop () {
   if (window.websocketAvailable) {
-    document.querySelector('#serverConnection').classList.remove('error')
-    document.querySelector('#serverConnection').innerText = 'websocket'
-
     // Websocket updates are streamed live, not updated on a loop.
   } else if (window.restAvailable) {
     // Fallback to rest, but try to reconnect the websocket anyway.
 
     fetchGetDashboardComponents()
-    checkWebsocketConnection()
-
-    document.querySelector('#serverConnection').classList.remove('error')
-    document.querySelector('#serverConnection').innerText = 'rest'
-
     fetchGetLogs()
-  } else {
-    document.querySelector('#serverConnection').innerText = 'disconnected, trying to reconnect...'
-    document.querySelector('#serverConnection').classList.add('error')
 
+    checkWebsocketConnection()
+  } else {
     // Still try to fetch the dashboard, if successfull window.restAvailable = true
     fetchGetDashboardComponents()
+  }
+
+  refreshServerConnectionLabel()
+}
+
+function refreshServerConnectionLabel () {
+  if (window.restAvailable) {
+    document.querySelector('#serverConnectionRest').classList.remove('error')
+  } else {
+    document.querySelector('#serverConnectionRest').classList.add('error')
+  }
+
+  if (window.websocketAvailable) {
+    document.querySelector('#serverConnectionWebSocket').classList.remove('error')
+  } else {
+    document.querySelector('#serverConnectionWebSocket').classList.add('error')
   }
 }
 
@@ -53,11 +60,17 @@ function fetchGetDashboardComponents () {
   }).then(res => {
     return res.json()
   }).then(res => {
+    if (!window.restAvailable) {
+      window.clearBigErrors('fetch-buttons')
+    }
+
     window.restAvailable = true
     marshalActionButtonsJsonToHtml(res)
-  }).catch(() => { // err is 1st arg
+
+    refreshServerConnectionLabel() // in-case it changed, update the label quicker
+  }).catch((err) => { // err is 1st arg
     window.restAvailable = false
-    //    window.showBigError('fetch-buttons', 'getting buttons', err, 'blat')
+    window.showBigError('fetch-buttons', 'getting buttons', err, 'blat')
   })
 }
 

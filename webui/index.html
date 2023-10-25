@@ -63,7 +63,10 @@
 				<a href = "https://docs.olivetin.app" target = "_new">Documentation</a> |
 				<a href = "https://github.com/OliveTin/OliveTin/issues/new/choose" target = "_new">Raise an issue on GitHub</a> |
 				<span>Version: <span id = "currentVersion">?</span></span> |
-				<span>Server connection: <span id = "serverConnection">?</span></span>
+				<span>Server connection:
+					<span id = "serverConnectionRest">REST</span>,
+					<span id = "serverConnectionWebSocket">WebSocket</span>
+				</span>
 			</p>
 			<p>
 				<a id = "available-version" href = "http://olivetin.app" target = "_blank" hidden>?</a>
@@ -175,18 +178,29 @@
 		  	to at least display a helpful error message if we can't use OliveTin.
 			*/
 			function showBigError (type, friendlyType, message) {
-			  for (const oldError of document.querySelectorAll('div.error').values()) {
-				window.old = oldError;
-				oldError.remove();
-			  }
+			  clearBigErrors(type)
 
 			  console.error('Error ' + type + ': ', message)
 
 			  const domErr = document.createElement('div')
 			  domErr.classList.add('error')
+			  domErr.classList.add(type)
 			  domErr.innerHTML = '<h1>Error ' + friendlyType + '</h1><p>' + message + "</p><p><a href = 'http://docs.olivetin.app/err-" + type + ".html' target = 'blank'/>" + type + " error in OliveTin Documentation</a></p>"
 
-			  document.getElementById('root-group').appendChild(domErr)
+			  document.body.prepend(domErr)
+			}
+
+			function clearBigErrors(additionalClass) {
+			  let selector = 'div.error'
+
+		      if (additionalClass != null) {
+				  selector += '.' + additionalClass
+			  }
+
+			  for (const oldError of document.querySelectorAll(selector).values()) {
+				window.old = oldError;
+				oldError.remove();
+			  }
 			}
 		</script>
 
@@ -195,6 +209,5 @@
 		</script>
 
 		<script type = "module" src = "main.js"></script>
-		<script type = "module" src = "js/websocket.js"></script>
 	</body>
 </html>

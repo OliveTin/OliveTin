@@ -25,7 +25,7 @@ func IsAllowedExec(cfg *config.Config, user *AuthenticatedUser, action *config.A
 				"User":   user.Username,
 				"Action": action.Title,
 				"ACL":    acl.Name,
-			}).Debug("isAllowedExec - Matched ACL")
+			}).Trace("isAllowedExec - Matched ACL")
 
 			return true
 		}
@@ -34,7 +34,7 @@ func IsAllowedExec(cfg *config.Config, user *AuthenticatedUser, action *config.A
 	log.WithFields(log.Fields{
 		"User":   user.Username,
 		"Action": action.Title,
-	}).Debug("isAllowedExec - No ACLs matched")
+	}).Trace("isAllowedExec - No ACLs matched")
 
 	return cfg.DefaultPermissions.Exec
 }
@@ -47,7 +47,7 @@ func IsAllowedView(cfg *config.Config, user *AuthenticatedUser, action *config.A
 				"User":   user.Username,
 				"Action": action.Title,
 				"ACL":    acl.Name,
-			}).Debug("isAllowedView - Matched ACL")
+			}).Trace("isAllowedView - Matched ACL")
 
 			return true
 		}
@@ -56,7 +56,7 @@ func IsAllowedView(cfg *config.Config, user *AuthenticatedUser, action *config.A
 	log.WithFields(log.Fields{
 		"User":   user.Username,
 		"Action": action.Title,
-	}).Debug("isAllowedView - No ACLs matched")
+	}).Trace("isAllowedView - No ACLs matched")
 
 	return cfg.DefaultPermissions.View
 }
