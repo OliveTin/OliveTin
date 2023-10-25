@@ -401,6 +401,19 @@ span.tag {
   padding: 0.2em;
 }
 
+div.toolbar {
+  padding: .4em;
+  text-align: left;
+  background-color: #efefef;
+  border: 1px solid #999;
+  display: flex;
+  flex-direction: row;
+}
+
+div.toolbar * {
+  margin-right: 1em;
+}
+
 @media (prefers-color-scheme: dark) {
   body {
     background-color: #333;
