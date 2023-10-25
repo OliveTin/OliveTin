@@ -30,7 +30,7 @@ export function marshalActionButtonsJsonToHtml (json) {
 export function marshalLogsJsonToHtml (json) {
   for (const logEntry of json.logs) {
     const tpl = document.getElementById('tplLogRow')
-    const row = tpl.content.cloneNode(true)
+    const row = tpl.content.querySelector('tr').cloneNode(true)
 
     if (logEntry.stdout.length === 0) {
       logEntry.stdout = '(empty)'
@@ -56,6 +56,7 @@ export function marshalLogsJsonToHtml (json) {
     row.querySelector('pre.stdout').innerText = logEntry.stdout
     row.querySelector('pre.stderr').innerText = logEntry.stderr
     row.querySelector('.exit-code').innerText = logTableExitCode
+    row.setAttribute('title', logEntry.actionTitle)
 
     for (const tag of logEntry.tags) {
       const domTag = document.createElement('span')

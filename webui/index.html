@@ -35,9 +35,13 @@
 			</div>
 
 			<section id = "contentLogs" title = "Logs" hidden>
+				<div class = "toolbar">
+					<input placeholder = "Search for action name" id = "logSearchBox" />
+					<button id = "searchLogsClear" title = "Clear search filter" disabled>X</button>
+				</div>
 				<table title = "Logs">
 					<thead>
-						<tr>
+						<tr title = "untitled">
 							<th>Timestamp</th>
 							<th>Log</th>
 							<th>Exit Code</th>

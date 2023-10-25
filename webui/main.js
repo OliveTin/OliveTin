@@ -3,6 +3,27 @@
 import { marshalActionButtonsJsonToHtml, marshalLogsJsonToHtml } from './js/marshaller.js'
 import { checkWebsocketConnection } from './js/websocket.js'
 
+function searchLogs (e) {
+  document.getElementById('searchLogsClear').disabled = false
+
+  const searchText = e.target.value.toLowerCase()
+
+  for (const row of document.querySelectorAll('tr.log-row')) {
+    const actionTitle = row.getAttribute('title').toLowerCase()
+
+    row.hidden = !actionTitle.includes(searchText)
+  }
+}
+
+function searchLogsClear () {
+  for (const row of document.querySelectorAll('tr.log-row')) {
+    row.hidden = false
+  }
+
+  document.getElementById('searchLogsClear').disabled = true
+  document.getElementById('logSearchBox').value = ''
+}
+
 function showSection (name) {
   for (const otherName of ['Actions', 'Logs']) {
     document.getElementById('show' + otherName).classList.remove('activeSection')
@@ -20,6 +41,11 @@ function setupSections () {
   document.getElementById('showLogs').onclick = () => { showSection('Logs') }
 
   showSection('Actions')
+}
+
+function setupLogSearchBox () {
+  document.getElementById('logSearchBox').oninput = searchLogs
+  document.getElementById('searchLogsClear').onclick = searchLogsClear
 }
 
 function refreshLoop () {
@@ -117,6 +143,7 @@ function processWebuiSettingsJson (settings) {
 
 function main () {
   setupSections()
+  setupLogSearchBox()
 
   window.fetch('webUiSettings.json').then(res => {
     return res.json()
