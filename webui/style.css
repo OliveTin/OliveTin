@@ -8,10 +8,10 @@ body {
 }
 
 dialog {
+  box-shadow: 0 0 6px 0 #444;
   min-width: 600px;
   text-align: left;
   padding: 1em;
-  box-shadow: 0 0 6px 0 #444;
 }
 
 fieldset {
@@ -33,11 +33,11 @@ fieldset#root-group {
 
 h1 {
   display: inline;
-  padding-left: .5em;
   font-size: small;
+  padding-left: .5em;
 }
 
-label#sidebar-toggler-button {
+#sidebar-toggler-button {
   top: 1em;
   left: 0.5em;
   height: 2em;
@@ -51,8 +51,8 @@ label#sidebar-toggler-button {
   color: #666;
 }
 
-label#sidebar-toggler-button:hover,
-label#sidebar-toggler-button:focus {
+#sidebar-toggler-button:hover,
+#sidebar-toggler-button:focus {
   color: black;
   cursor: pointer;
 }
@@ -81,8 +81,8 @@ input:checked ~ aside {
 }
 
 aside ul {
-  padding: 0;
   margin: 0;
+  padding: 0;
 }
 
 aside ul li {
@@ -186,7 +186,8 @@ details[open] {
 /* General Buttons */
 
 button,
-input[type="submit"] {
+input[type="submit"]
+{
   padding: 1em;
   color: black;
   text-align: center;
@@ -361,10 +362,12 @@ form input[type="submit"]:first-child {
 
 button[name="cancel"]:hover {
   background-color: salmon;
+  color: black;
 }
 
 input[name="start"]:hover {
   background-color: #aceaac;
+  color: black;
 }
 
 span.argument-description {
@@ -420,8 +423,9 @@ div.toolbar * {
     color: white;
   }
 
-  form.action-arguments {
-    background-color: #333;
+  dialog {
+    background-color: #222;
+    color: white;
   }
 
   form div.wrapper {
@@ -429,11 +433,37 @@ div.toolbar * {
   }
 
   button,
-  input[type="submit"] {
+  input[type="submit"],
+  #sidebar-toggler-button {
     border: 1px solid #666;
     background-color: #222;
     box-shadow: 0 0 6px 0 #444;
     color: white;
+  }
+
+  #sidebar-toggler-button:focus,
+  #sidebar-toggler-button:hover
+  {
+    color: white;
+  }
+
+  aside {
+    background-color: #111;
+    color: white;
+  }
+
+  footer,
+  footer a {
+    color: gray;
+  }
+
+  aside ul li a:hover {
+    background-color: #666;
+    color: white;
+  }
+
+  .action-button-footer {
+    background-color: #111;
   }
 
   button:disabled {
@@ -454,10 +484,5 @@ div.toolbar * {
 
   tr:hover td {
     background-color: #666;
-  }
-
-  footer,
-  footer a {
-    color: gray;
   }
 }
