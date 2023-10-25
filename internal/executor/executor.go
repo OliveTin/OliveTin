@@ -167,7 +167,9 @@ func stepConcurrencyCheck(req *ExecutionRequest) bool {
 	if concurrentCount >= (req.action.MaxConcurrent + 1) {
 		msg := fmt.Sprintf("Blocked from executing. This would mean this action is running %d times concurrently, but this action has maxExecutions set to %d.", concurrentCount, req.action.MaxConcurrent)
 
-		log.Warnf(msg)
+		log.WithFields(log.Fields{
+			"actionTitle": req.ActionName,
+		}).Warnf(msg)
 
 		req.logEntry.Stdout = msg
 		req.logEntry.Blocked = true
