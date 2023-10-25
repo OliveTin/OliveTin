@@ -21,6 +21,7 @@ function searchLogsClear () {
   }
 
   document.getElementById('searchLogsClear').disabled = true
+  document.getElementById('logSearchBox').value = ''
 }
 
 function showSection (name) {
