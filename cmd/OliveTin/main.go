@@ -31,27 +31,52 @@ var (
 )
 
 func init() {
+	initLog()
+
+	initViperConfig(initCliFlags())
+
+	initCheckEnvironment()
+
+	initInstallationInfo()
+
+	log.Info("OliveTin initialization complete")
+}
+
+func initLog() {
 	log.SetFormatter(&log.TextFormatter{
 		ForceQuote:       true,
 		DisableTimestamp: true,
 	})
 
-	log.WithFields(log.Fields{
-		"version": version,
-		"commit":  commit,
-		"date":    date,
-	}).Info("OliveTin initializing")
+	// Use debug this early on to catch details about startup errors. The
+	// default config will raise the log level later, if not set.
+	log.SetLevel(log.DebugLevel) // Default to debug, to catch cfg issue
+}
 
-	log.SetLevel(log.DebugLevel) // Default to debug, to catch cfg issues
-
+func initCliFlags() string {
 	var configDir string
 	flag.StringVar(&configDir, "configdir", ".", "Config directory path")
+
+	var printVersion bool
+	flag.BoolVar(&printVersion, "version", false, "Prints the version number and exits")
 	flag.Parse()
+
+	// This log message should be the first log message OliveTin prints.
+	if printVersion {
+		logStartupMessage("OliveTin is just printing the startup message")
+		os.Exit(1)
+	} else {
+		logStartupMessage("OliveTin initializing")
+	}
 
 	log.WithFields(log.Fields{
 		"value": configDir,
 	}).Debugf("Value of -configdir flag")
 
+	return configDir
+}
+
+func initViperConfig(configDir string) {
 	viper.AutomaticEnv()
 	viper.SetConfigName("config.yaml")
 	viper.SetConfigType("yaml")
@@ -76,15 +101,25 @@ func init() {
 	})
 
 	reloadConfig()
+}
 
-	warnIfPuidGuid()
-
+func initInstallationInfo() {
 	installationinfo.Config = cfg
 	installationinfo.Build.Version = version
 	installationinfo.Build.Commit = commit
 	installationinfo.Build.Date = date
+}
 
-	log.Info("Init complete")
+func logStartupMessage(message string) {
+	log.WithFields(log.Fields{
+		"version": version,
+		"commit":  commit,
+		"date":    date,
+	}).Info(message)
+}
+
+func initCheckEnvironment() {
+	warnIfPuidGuid()
 }
 
 func warnIfPuidGuid() {

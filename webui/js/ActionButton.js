@@ -105,7 +105,7 @@ class ActionButton extends window.HTMLElement {
     ).then((json) => {
       // The button used to wait for the action to finish, but now it is fire & forget
     }).catch(err => {
-      this.onActionError(err)
+      btnExecution.onActionError(err)
     })
   }
 
