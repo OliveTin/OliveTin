@@ -111,11 +111,11 @@ func (c *WebsocketClient) messageLoop() {
 		mt, message, err := c.conn.ReadMessage()
 
 		if err != nil {
-			log.Printf("err: %v", err)
+			log.Debugf("err: %v", err)
 			break
 		}
 
-		log.Infof("websocket recv: %s %d", message, mt)
+		log.Tracef("websocket recv: %s %d", message, mt)
 	}
 }
 
