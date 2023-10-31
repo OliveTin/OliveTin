@@ -43,6 +43,7 @@ actions:
   # Restart lightdm on host "server1"
   # Docs: https://docs.olivetin.app/action-ping.html
 - title: restart httpd
+  titleAlias: restart_httpd
   icon: restart
   shell: ssh root@server1 'service httpd restart'
 

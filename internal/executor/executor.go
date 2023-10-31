@@ -29,10 +29,10 @@ type Executor struct {
 // Executor. They're created from the grpcapi.
 type ExecutionRequest struct {
 	ActionName         string
+	Action             *config.Action
 	Arguments          map[string]string
 	UUID               string
 	Tags               []string
-	action             *config.Action
 	Cfg                *config.Config
 	AuthenticatedUser  *acl.AuthenticatedUser
 	logEntry           *InternalLogEntry
@@ -165,8 +165,8 @@ func stepConcurrencyCheck(req *ExecutionRequest) bool {
 	concurrentCount := getConcurrentCount(req)
 
 	// Note that the current execution is counted int the logs, so when checking we +1
-	if concurrentCount >= (req.action.MaxConcurrent + 1) {
-		msg := fmt.Sprintf("Blocked from executing. This would mean this action is running %d times concurrently, but this action has maxExecutions set to %d.", concurrentCount, req.action.MaxConcurrent)
+	if concurrentCount >= (req.Action.MaxConcurrent + 1) {
+		msg := fmt.Sprintf("Blocked from executing. This would mean this action is running %d times concurrently, but this action has maxExecutions set to %d.", concurrentCount, req.Action.MaxConcurrent)
 
 		log.WithFields(log.Fields{
 			"actionTitle": req.ActionName,
@@ -181,6 +181,10 @@ func stepConcurrencyCheck(req *ExecutionRequest) bool {
 }
 
 func stepFindAction(req *ExecutionRequest) bool {
+	if req.Action != nil {
+		return true
+	}
+
 	actualAction := req.Cfg.FindAction(req.ActionName)
 
 	if actualAction == nil {
@@ -193,20 +197,20 @@ func stepFindAction(req *ExecutionRequest) bool {
 		return false
 	}
 
-	req.action = actualAction
+	req.Action = actualAction
 	req.logEntry.ActionIcon = actualAction.Icon
 
 	return true
 }
 
 func stepACLCheck(req *ExecutionRequest) bool {
-	return acl.IsAllowedExec(req.Cfg, req.AuthenticatedUser, req.action)
+	return acl.IsAllowedExec(req.Cfg, req.AuthenticatedUser, req.Action)
 }
 
 func stepParseArgs(req *ExecutionRequest) bool {
 	var err error
 
-	req.finalParsedCommand, err = parseActionArguments(req.action.Shell, req.Arguments, req.action)
+	req.finalParsedCommand, err = parseActionArguments(req.Action.Shell, req.Arguments, req.Action)
 
 	if err != nil {
 		req.logEntry.Stdout = err.Error()
@@ -229,8 +233,8 @@ func stepLogRequested(req *ExecutionRequest) bool {
 
 func stepLogStart(req *ExecutionRequest) bool {
 	log.WithFields(log.Fields{
-		"actionTitle": req.action.Title,
-		"timeout":     req.action.Timeout,
+		"actionTitle": req.Action.Title,
+		"timeout":     req.Action.Timeout,
 	}).Infof("Action starting")
 
 	return true
@@ -238,7 +242,7 @@ func stepLogStart(req *ExecutionRequest) bool {
 
 func stepLogFinish(req *ExecutionRequest) bool {
 	log.WithFields(log.Fields{
-		"actionTitle": req.action.Title,
+		"actionTitle": req.Action.Title,
 		"stdout":      req.logEntry.Stdout,
 		"stderr":      req.logEntry.Stderr,
 		"timedOut":    req.logEntry.TimedOut,
@@ -263,7 +267,7 @@ func wrapCommandInShell(ctx context.Context, finalParsedCommand string) *exec.Cm
 }
 
 func stepExec(req *ExecutionRequest) bool {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(req.action.Timeout)*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(req.Action.Timeout)*time.Second)
 	defer cancel()
 
 	var stdout bytes.Buffer
@@ -303,11 +307,11 @@ func stepExec(req *ExecutionRequest) bool {
 }
 
 func stepExecAfter(req *ExecutionRequest) bool {
-	if req.action.ShellAfterCompleted == "" {
+	if req.Action.ShellAfterCompleted == "" {
 		return true
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(req.action.Timeout)*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(req.Action.Timeout)*time.Second)
 	defer cancel()
 
 	var stdout bytes.Buffer
@@ -318,7 +322,7 @@ func stepExecAfter(req *ExecutionRequest) bool {
 		"exitCode": fmt.Sprintf("%v", req.logEntry.ExitCode),
 	}
 
-	finalParsedCommand, _ := parseActionArguments(req.action.ShellAfterCompleted, args, req.action)
+	finalParsedCommand, _ := parseActionArguments(req.Action.ShellAfterCompleted, args, req.Action)
 
 	cmd := wrapCommandInShell(ctx, finalParsedCommand)
 	cmd.Stdout = &stdout

@@ -3,9 +3,11 @@ package grpcapi
 import (
 	ctx "context"
 	pb "github.com/OliveTin/OliveTin/gen/grpc"
+	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 
+	"errors"
 	"net"
 	"sort"
 
@@ -20,15 +22,14 @@ var (
 )
 
 type oliveTinAPI struct {
-	pb.UnimplementedOliveTinApiServiceServer
+	// Uncomment this if you want to allow undefined methods during dev.
+	//	pb.UnimplementedOliveTinApiServiceServer
 
 	executor *executor.Executor
 }
 
 func (api *oliveTinAPI) StartAction(ctx ctx.Context, req *pb.StartActionRequest) (*pb.StartActionResponse, error) {
 	args := make(map[string]string)
-
-	log.Debugf("SA %v", req)
 
 	for _, arg := range req.Arguments {
 		args[arg.Name] = arg.Value
@@ -47,19 +48,103 @@ func (api *oliveTinAPI) StartAction(ctx ctx.Context, req *pb.StartActionRequest)
 	return &pb.StartActionResponse{
 		ExecutionUuid: uuid,
 	}, nil
-
 }
 
-func (api *oliveTinAPI) ExecutionStatus(ctx ctx.Context, req *pb.ExecutionStatusRequest) (*pb.ExecutionStatusResponse, error) {
-	res := &pb.ExecutionStatusResponse{}
+func (api *oliveTinAPI) StartActionAndWait(ctx ctx.Context, req *pb.StartActionAndWaitRequest) (*pb.StartActionAndWaitResponse, error) {
+	args := make(map[string]string)
 
-	logEntry, ok := api.executor.Logs[req.ExecutionUuid]
-
-	if !ok {
-		return res, nil
+	execReq := executor.ExecutionRequest{
+		ActionName:        req.ActionName,
+		UUID:              uuid.NewString(),
+		Arguments:         args,
+		AuthenticatedUser: acl.UserFromContext(ctx, cfg),
+		Cfg:               cfg,
 	}
 
-	res.LogEntry = &pb.LogEntry{
+	wg, _ := api.executor.ExecRequest(&execReq)
+	wg.Wait()
+
+	internalLogEntry, ok := api.executor.Logs[execReq.UUID]
+
+	if ok {
+		return &pb.StartActionAndWaitResponse{
+			LogEntry: internalLogEntryToPb(internalLogEntry),
+		}, nil
+	} else {
+		return nil, errors.New("Execution not found!")
+	}
+}
+
+func (api *oliveTinAPI) StartActionByAlias(ctx ctx.Context, req *pb.StartActionByAliasRequest) (*pb.StartActionByAliasResponse, error) {
+	args := make(map[string]string)
+
+	action := findActionByAlias(req.ActionAlias)
+
+	if action == nil {
+		log.Warnf("ByAlias action alias not found: %v, cannot start execution.", req.ActionAlias)
+		return &pb.StartActionByAliasResponse{
+			ExecutionUuid: "",
+		}, errors.New("ByAlias action alias not found")
+	}
+
+	execReq := executor.ExecutionRequest{
+		ActionName: action.Title,
+		Action:     action,
+		UUID:       uuid.NewString(),
+		Arguments:  args,
+		AuthenticatedUser: &acl.AuthenticatedUser{
+			Username:  "webhook",
+			Usergroup: "webhook",
+		},
+		Cfg: cfg,
+	}
+
+	_, uuid := api.executor.ExecRequest(&execReq)
+
+	return &pb.StartActionByAliasResponse{
+		ExecutionUuid: uuid,
+	}, nil
+}
+
+func (api *oliveTinAPI) StartActionByAliasAndWait(ctx ctx.Context, req *pb.StartActionByAliasAndWaitRequest) (*pb.StartActionByAliasAndWaitResponse, error) {
+	args := make(map[string]string)
+
+	action := findActionByAlias(req.ActionAlias)
+
+	if action == nil {
+		log.Warnf("ByAlias action alias not found: %v, cannot start execution.", req.ActionAlias)
+
+		return &pb.StartActionByAliasAndWaitResponse{}, errors.New("ByAlias action alias not found")
+	}
+
+	execReq := executor.ExecutionRequest{
+		ActionName: action.Title,
+		Action:     action,
+		UUID:       uuid.NewString(),
+		Arguments:  args,
+		AuthenticatedUser: &acl.AuthenticatedUser{
+			Username:  "webhook",
+			Usergroup: "webhook",
+		},
+		Cfg: cfg,
+	}
+
+	wg, _ := api.executor.ExecRequest(&execReq)
+	wg.Wait()
+
+	internalLogEntry, ok := api.executor.Logs[execReq.UUID]
+
+	if ok {
+		return &pb.StartActionByAliasAndWaitResponse{
+			LogEntry: internalLogEntryToPb(internalLogEntry),
+		}, nil
+	} else {
+		return nil, errors.New("Execution not found!")
+	}
+}
+
+func internalLogEntryToPb(logEntry *executor.InternalLogEntry) *pb.LogEntry {
+	return &pb.LogEntry{
 		ActionTitle:       logEntry.ActionTitle,
 		ActionIcon:        logEntry.ActionIcon,
 		DatetimeStarted:   logEntry.DatetimeStarted,
@@ -74,6 +159,18 @@ func (api *oliveTinAPI) ExecutionStatus(ctx ctx.Context, req *pb.ExecutionStatus
 		ExecutionStarted:  logEntry.ExecutionStarted,
 		ExecutionFinished: logEntry.ExecutionFinished,
 	}
+}
+
+func (api *oliveTinAPI) ExecutionStatus(ctx ctx.Context, req *pb.ExecutionStatusRequest) (*pb.ExecutionStatusResponse, error) {
+	res := &pb.ExecutionStatusResponse{}
+
+	logEntry, ok := api.executor.Logs[req.ExecutionUuid]
+
+	if !ok {
+		return res, nil
+	}
+
+	res.LogEntry = internalLogEntryToPb(logEntry)
 
 	return res, nil
 }
@@ -126,21 +223,10 @@ func (api *oliveTinAPI) GetLogs(ctx ctx.Context, req *pb.GetLogsRequest) (*pb.Ge
 	// TODO Limit to 10 entries or something to prevent browser lag.
 
 	for uuid, logEntry := range api.executor.Logs {
-		ret.Logs = append(ret.Logs, &pb.LogEntry{
-			ActionTitle:       logEntry.ActionTitle,
-			ActionIcon:        logEntry.ActionIcon,
-			DatetimeStarted:   logEntry.DatetimeStarted,
-			DatetimeFinished:  logEntry.DatetimeFinished,
-			Stdout:            logEntry.Stdout,
-			Stderr:            logEntry.Stderr,
-			TimedOut:          logEntry.TimedOut,
-			Blocked:           logEntry.Blocked,
-			ExitCode:          logEntry.ExitCode,
-			Tags:              logEntry.Tags,
-			ExecutionUuid:     uuid,
-			ExecutionStarted:  logEntry.ExecutionStarted,
-			ExecutionFinished: logEntry.ExecutionFinished,
-		})
+		pbLogEntry := internalLogEntryToPb(logEntry)
+		pbLogEntry.ExecutionUuid = uuid
+
+		ret.Logs = append(ret.Logs, pbLogEntry)
 	}
 
 	sorter := func(i, j int) bool {
