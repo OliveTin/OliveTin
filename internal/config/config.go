@@ -5,6 +5,7 @@ package config
 type Action struct {
 	ID                     string
 	Title                  string
+	TitleAlias             string
 	Icon                   string
 	Shell                  string
 	ShellAfterCompleted    string

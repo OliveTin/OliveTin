@@ -60,6 +60,30 @@ message StartActionResponse {
 	string execution_uuid = 2;
 }
 
+message StartActionAndWaitRequest {
+	string action_name = 1;
+}
+
+message StartActionAndWaitResponse {
+	LogEntry log_entry = 1;
+}
+
+message StartActionByAliasRequest {
+	string action_alias = 1;
+}
+
+message StartActionByAliasResponse {
+	string execution_uuid = 2;
+}
+
+message StartActionByAliasAndWaitRequest {
+	string action_alias = 1;
+}
+
+message StartActionByAliasAndWaitResponse {
+	LogEntry log_entry = 1;
+}
+
 message GetLogsRequest{};
 
 message LogEntry {
@@ -133,6 +157,27 @@ service OliveTinApiService {
 	rpc StartAction(StartActionRequest) returns (StartActionResponse) {
 		option (google.api.http) = {
 			post: "/api/StartAction"
+			body: "*"
+		};
+	}
+
+	rpc StartActionAndWait(StartActionAndWaitRequest) returns (StartActionAndWaitResponse) {
+		option (google.api.http) = {
+			post: "/api/StartActionAndWait"
+			body: "*"
+		};
+	}
+
+	rpc StartActionByAlias(StartActionByAliasRequest) returns (StartActionByAliasResponse) {
+		option (google.api.http) = {
+			post: "/api/StartActionByAlias/{action_alias}"
+			body: "*"
+		};
+	}
+
+	rpc StartActionByAliasAndWait(StartActionByAliasAndWaitRequest) returns (StartActionByAliasAndWaitResponse) {
+		option (google.api.http) = {
+			post: "/api/StartActionByAliasAndWait/{action_alias}"
 			body: "*"
 		};
 	}

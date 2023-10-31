@@ -62,3 +62,15 @@ func buildChoices(choices []config.ActionArgumentChoice) []*pb.ActionArgumentCho
 
 	return ret
 }
+
+func findActionByAlias(alias string) *config.Action {
+	for _, action := range cfg.Actions {
+		if action.TitleAlias != "" {
+			if action.TitleAlias == alias {
+				return &action
+			}
+		}
+	}
+
+	return nil
+}
