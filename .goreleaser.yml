@@ -111,26 +111,44 @@ dockers:
     extra_files:
       - webui
 
+  - image_templates:
+      - "docker.io/jamesread/olivetin:{{ .Tag }}-armv7"
+      - "ghcr.io/olivetin/olivetin:{{ .Tag }}-armv7"
+    dockerfile: Dockerfile.armv7
+    goos: linux
+    goarch: armv7
+    skip_push: false
+    build_flag_templates:
+      - "--platform=linux/armv7"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Tag}}"
+    extra_files:
+      - webui
+
 docker_manifests:
   - name_template: docker.io/jamesread/olivetin:{{ .Version }}
     image_templates:
       - docker.io/jamesread/olivetin:{{ .Version }}-amd64
       - docker.io/jamesread/olivetin:{{ .Version }}-arm64
+      - docker.io/jamesread/olivetin:{{ .Version }}-armv7
 
   - name_template: docker.io/jamesread/olivetin:latest
     image_templates:
       - docker.io/jamesread/olivetin:{{ .Version }}-amd64
       - docker.io/jamesread/olivetin:{{ .Version }}-arm64
+      - docker.io/jamesread/olivetin:{{ .Version }}-armv7
 
   - name_template: ghcr.io/olivetin/olivetin:{{ .Version }}
     image_templates:
       - ghcr.io/olivetin/olivetin:{{ .Version }}-amd64
       - ghcr.io/olivetin/olivetin:{{ .Version }}-arm64
+      - ghcr.io/olivetin/olivetin:{{ .Version }}-armv7
 
   - name_template: ghcr.io/olivetin/olivetin:latest
     image_templates:
       - ghcr.io/olivetin/olivetin:{{ .Version }}-amd64
       - ghcr.io/olivetin/olivetin:{{ .Version }}-arm64
+      - ghcr.io/olivetin/olivetin:{{ .Version }}-armv7
 
 nfpms:
   - id: default
