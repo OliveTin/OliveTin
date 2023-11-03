@@ -147,6 +147,12 @@ message SosReportResponse {
 	string alert = 1;
 }
 
+message GetReadyzRequest {}
+
+message GetReadyzResponse {
+	string status = 1;
+}
+
 service OliveTinApiService {
 	rpc GetDashboardComponents(GetDashboardComponentsRequest) returns (GetDashboardComponentsResponse) {
 		option (google.api.http) = {
@@ -211,6 +217,12 @@ service OliveTinApiService {
 	rpc SosReport(SosReportRequest) returns (SosReportResponse) {
 		option (google.api.http) = {
 			get: "/api/sosreport"
+		};
+	}
+
+	rpc GetReadyz(GetReadyzRequest) returns (GetReadyzResponse) {
+		option (google.api.http) = {
+			get: "/api/readyz"
 		};
 	}
 }
