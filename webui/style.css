@@ -226,15 +226,22 @@ action-button details summary div span:first-child {
 }
 
 .action-button-footer {
-  display: block;
+  display: flex;
   text-align: left;
   font-size: smaller;
-  padding: 0.2em;
   background-color: #efefef;
   border-top: 0;
   border-left: 1px solid #666;
   border-right: 1px solid #666;
   border-bottom: 1px solid #666;
+  overflow: scroll;
+}
+
+execution-button {
+  display: inline-block;
+  margin-right: .2em;
+  margin-left: .2em;
+  margin-top: .2em;
 }
 
 execution-button button {
@@ -266,43 +273,29 @@ input[type="submit"]:disabled {
 /* Button animations */
 
 .action-failed {
-  animation: kf-action-failed 1s;
-}
-
-@keyframes kf-action-failed {
-  20% { background-color: red; }
+  transition: 1s;
+  background-color: red;
 }
 
 .action-success {
-  animation: kf-action-success 1s;
-}
-
-@keyframes kf-action-success {
-  20% { background-color: limegreen; }
+  transition: 1s;
+  background-color: limegreen;
 }
 
 .action-nonzero-exit {
   animation: kf-action-nonzero-exit 1s;
-}
-
-@keyframes kf-action-nonzero-exit {
-  20% { background-color: orange; }
+  transition: 1s;
+  background-color: orange;
 }
 
 .action-timeout {
-  animation: kf-action-timeout 1s;
-}
-
-@keyframes kf-action-timeout {
-  20% { background-color: cyan; }
+  transition: 1s;
+  background-color: cyan;
 }
 
 .action-blocked {
-  animation: kf-action-blocked 1s;
-}
-
-@keyframes kf-action-blocked {
-  20% { background-color: purple; }
+  transition: 1s;
+  background-color: purple;
 }
 
 img.logo {

@@ -85,9 +85,7 @@ class ActionButton extends window.HTMLElement {
 
     const btnExecution = document.createElement('execution-button')
     btnExecution.constructFromJson(startActionArgs.uuid)
-    this.querySelector('.executions').appendChild(btnExecution)
-
-    this.querySelector('summary').innerText = (this.querySelector('.executions').children.length - 1) + ' executions.'
+    this.querySelector('.action-button-footer').prepend(btnExecution)
 
     window.fetch(this.actionCallUrl, {
       method: 'POST',
