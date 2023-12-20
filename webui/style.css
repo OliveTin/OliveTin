@@ -9,7 +9,7 @@ body {
 
 dialog {
   box-shadow: 0 0 6px 0 #444;
-  min-width: 600px;
+  max-width: 600px;
   text-align: left;
   padding: 1em;
 }
