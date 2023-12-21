@@ -110,8 +110,10 @@ func buildUserAcls(cfg *config.Config, user *AuthenticatedUser) {
 	}
 }
 
-func isACLRelevant(cfg *config.Config, actionAcls []string, acl config.AccessControlList, user *AuthenticatedUser) bool {
+func isACLRelevantToAction(cfg *config.Config, actionAcls []string, acl config.AccessControlList, user *AuthenticatedUser) bool {
 	if !slices.Contains(user.acls, acl.Name) {
+		// If the user does not have this ACL, then it is not relevant
+
 		return false
 	}
 
@@ -130,7 +132,7 @@ func getRelevantAcls(cfg *config.Config, actionAcls []string, user *Authenticate
 	var ret []*config.AccessControlList
 
 	for _, acl := range cfg.AccessControlLists {
-		if isACLRelevant(cfg, actionAcls, acl, user) {
+		if isACLRelevantToAction(cfg, actionAcls, acl, user) {
 			ret = append(ret, &acl)
 		}
 	}

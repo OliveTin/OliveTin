@@ -23,6 +23,8 @@ func parseHttpHeaderForAuth(req *http.Request) (string, string) {
 	username, ok := req.Header[cfg.AuthHttpHeaderUsername]
 
 	if !ok {
+		log.Warnf("Config has AuthHttpHeaderUsername set to %v, but it was not found", cfg.AuthHttpHeaderUsername)
+
 		return "", ""
 	}
 
@@ -30,9 +32,15 @@ func parseHttpHeaderForAuth(req *http.Request) (string, string) {
 		usergroup, ok := req.Header[cfg.AuthHttpHeaderUserGroup]
 
 		if ok {
+			log.Debugf("HTTP Header Auth found a username and usergroup")
+
 			return username[0], usergroup[0]
+		} else {
+			log.Warnf("Config has AuthHttpHeaderUserGroup set to %v, but it was not found", cfg.AuthHttpHeaderUserGroup)
 		}
 	}
+
+	log.Debugf("HTTP Header Auth found a username, but usergroup is not being used")
 
 	return username[0], ""
 }
@@ -54,7 +62,7 @@ func parseRequestMetadata(ctx context.Context, req *http.Request) metadata.MD {
 		"usergroup", usergroup,
 	)
 
-	log.Debugf("jwt usable claims: %+v", md)
+	log.Debugf("api request metadata: %+v", md)
 
 	return md
 }
