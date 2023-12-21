@@ -111,11 +111,11 @@ func buildUserAcls(cfg *config.Config, user *AuthenticatedUser) {
 }
 
 func isACLRelevant(cfg *config.Config, actionAcls []string, acl config.AccessControlList, user *AuthenticatedUser) bool {
-	if acl.AddToEveryAction {
-		return true
+	if !slices.Contains(user.acls, acl.Name) {
+		return false
 	}
 
-	if slices.Contains(user.acls, acl.Name) {
+	if acl.AddToEveryAction {
 		return true
 	}
 
