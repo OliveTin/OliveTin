@@ -12,7 +12,7 @@ describe('config: multipleDropdowns', function () {
 
   it('Multiple dropdowns are possible', async function() {
     await webdriver.get(runner.baseUrl())
-//    await webdriver.manage().setTimeouts({ implicit: 2000 });
+    await webdriver.manage().setTimeouts({ implicit: 2000 });
 
     const button = await webdriver.findElement(By.id('actionButton_bdc45101bbd12c1397557790d9f3e059')).findElement(By.tagName('button'));
 
