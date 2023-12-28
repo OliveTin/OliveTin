@@ -12,6 +12,7 @@ logLevel: "INFO"
 actions:
 - title: date
   shell: date
+  icon: clock
   popupOnStart: true
 
   # This will run a simple script that you create.
