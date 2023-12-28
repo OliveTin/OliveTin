@@ -11,7 +11,7 @@ describe('config: hiddenNav', function () {
   })
 
   it('nav is hidden', async () => {
-    await webdriver.get('http://localhost:1337')
+    await webdriver.get(runner.baseUrl())
 
     const toggler = await webdriver.findElement(By.id('sidebar-toggle-wrapper'))
 
