@@ -319,7 +319,7 @@ form div.wrapper {
 }
 
 label {
-  width: 20%;
+  min-width: 20%;
   text-align: right;
   display: inline-block;
   padding-right: 1em;
@@ -367,6 +367,10 @@ span.argument-description {
   margin-left: 1em;
 }
 
+p.argument-wrapper {
+  display: flex;
+}
+
 form div.buttons {
   text-align: right;
 }
@@ -409,6 +413,24 @@ div.toolbar {
 
 div.toolbar * {
   margin-right: 1em;
+}
+
+@media screen and (width <= 600px) {
+  label {
+    text-align: left;
+    margin-bottom: .6em;
+    font-weight: bold;
+    min-width: auto;
+  }
+
+  p.argument-wrapper {
+    flex-direction: column;
+  }
+
+  span.argument-description {
+    margin-left: 0;
+    margin-top: .6em;
+  }
 }
 
 @media (prefers-color-scheme: dark) {
@@ -479,7 +501,7 @@ div.toolbar * {
   tr:hover td {
     background-color: #666;
   }
-  
+
   div.toolbar {
     background-color: black;
   }
