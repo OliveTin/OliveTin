@@ -170,15 +170,13 @@ service OliveTinApiService {
 
 	rpc StartActionByAlias(StartActionByAliasRequest) returns (StartActionByAliasResponse) {
 		option (google.api.http) = {
-			post: "/api/StartActionByAlias/{action_alias}"
-			body: "*"
+			get: "/api/StartActionByAlias/{action_alias}"
 		};
 	}
 
 	rpc StartActionByAliasAndWait(StartActionByAliasAndWaitRequest) returns (StartActionByAliasAndWaitResponse) {
 		option (google.api.http) = {
-			post: "/api/StartActionByAliasAndWait/{action_alias}"
-			body: "*"
+			get: "/api/StartActionByAliasAndWait/{action_alias}"
 		};
 	}
 
