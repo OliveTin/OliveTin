@@ -4,6 +4,7 @@ default:
 
 
 getsnapshot:
+	rm -rf /opt/OliveTin-snapshot/*
 	gh run download -D /opt/OliveTin-snapshot/
 
 .PHONY: default

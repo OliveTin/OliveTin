@@ -12,7 +12,7 @@ describe('config: hiddenFooter', function () {
   });
 
   it('Check that footer is hidden', async () => {
-    await webdriver.get('http://localhost:1337')
+    await webdriver.get(runner.baseUrl())
 
     let footer = await webdriver.findElement(By.tagName('footer'))
 

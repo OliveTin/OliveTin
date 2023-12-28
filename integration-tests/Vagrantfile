@@ -11,6 +11,12 @@ Vagrant.configure("2") do |config|
     libvirt.management_network_device = 'virbr0'
   end
 
+  config.vm.define :f38 do |f36|
+    f36.vm.box = "generic/fedora38"
+    f36.vm.provision "file", source: "/opt/OliveTin-snapshot/OliveTin_linux_amd64.rpm", destination: "$HOME/"
+    f36.vm.provision "shell", inline: "rpm -U OliveTin* && systemctl enable --now OliveTin && systemctl disable --now firewalld"
+  end
+
   config.vm.define :f36 do |f36|
     f36.vm.box = "generic/fedora36"
     f36.vm.provision "file", source: "/opt/OliveTin-snapshot/OliveTin_linux_amd64.rpm", destination: "$HOME/"

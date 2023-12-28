@@ -11,7 +11,7 @@ describe('config: general', function () {
   });
 
   it('Page title', async function () {
-    await webdriver.get('http://localhost:1337')
+    await webdriver.get(runner.baseUrl())
 
     let title = await webdriver.getTitle();
     expect(title).to.be.equal("OliveTin")
@@ -24,12 +24,12 @@ describe('config: general', function () {
   })
 
   it('Default buttons are rendered', async function() {
-    await webdriver.get('http://localhost:1337')
+    await webdriver.get(runner.baseUrl())
 
 //    await webdriver.manage().setTimeouts({ implicit: 2000 });
 
     let buttons = await webdriver.findElement(By.id('root-group')).findElements(By.tagName('button'))
 
-    expect(buttons).to.have.length(6);
+    expect(buttons).to.have.length(6)
   })
 })

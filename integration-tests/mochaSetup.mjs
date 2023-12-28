@@ -10,7 +10,7 @@ export async function mochaGlobalSetup () {
 
   global.runner = getRunner()
 
-  console.log("Runner constructor: " + global.runner.constructor.name)
+  console.log('Runner constructor: ' + global.runner.constructor.name)
 }
 
 export async function mochaGlobalTeardown () {
