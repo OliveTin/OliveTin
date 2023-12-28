@@ -92,14 +92,14 @@ class ArgumentForm extends window.HTMLElement {
       for (const choice of arg.choices) {
         domEl.appendChild(this.createSelectOption(choice))
       }
-    } else if (arg.type == 'confirmation') {
-      this.domBtnStart.disabled = true;
+    } else if (arg.type === 'confirmation') {
+      this.domBtnStart.disabled = true
 
       domEl = document.createElement('input')
       domEl.setAttribute('type', 'checkbox')
       domEl.onchange = () => {
-        this.domBtnStart.disabled = false;
-        domEl.disabled = true;
+        this.domBtnStart.disabled = false
+        domEl.disabled = true
       }
     } else {
       domEl = document.createElement('input')
