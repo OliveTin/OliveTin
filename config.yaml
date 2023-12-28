@@ -85,3 +85,10 @@ actions:
   shell: sleep 5
   timeout: 5
   icon: "&#x1F62A"
+
+- title: Delete old backups
+  icon: ashtonished
+  shell: rm -rf /opt/oldBackups/
+  arguments:
+    - type: confirmation
+      title: Are you sure?!
