@@ -234,7 +234,7 @@ action-button details summary div span:first-child {
   border-left: 1px solid #666;
   border-right: 1px solid #666;
   border-bottom: 1px solid #666;
-  overflow: scroll;
+  overflow: auto;
 }
 
 execution-button {
