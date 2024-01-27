@@ -1,11 +1,12 @@
 <!DOCTYPE html>
 
-<html>
+<html lang = "en">
 	<head>
-
-		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta name = "viewport" content = "width=device-width, initial-scale=1.0">
+		<meta name = "description" content = "Give safe and simple access to predefined shell commands from a web interface." />
 
 		<title>OliveTin</title>
+
 		<link rel = "stylesheet" type = "text/css" href = "style.css" />
 		<link rel = "shortcut icon" type = "image/png" href = "OliveTinLogo.png" />
 
@@ -18,7 +19,7 @@
 		<main title = "main content">
 			<div id = "perma-widget">
 				<div id = "sidebar-toggle-wrapper">
-					<label for = "hide-sidebar-checkbox" id = "sidebar-toggler-button" title = "Toggle sidebar" tabindex = "0">&#9776;</label>
+					<label role = "button" for = "hide-sidebar-checkbox" id = "sidebar-toggler-button" title = "Toggle sidebar" tabindex = "0">&#9776;</label>
 				</div>
 				<h1 id = "page-title">OliveTin</h1>
 			</div>
@@ -79,7 +80,7 @@
 
 		<dialog title = "Execution Results" id = "execution-results-popup">
 			<div class = "action-header">
-				<span class = "icon" role = "icon"></span>
+				<span role = "img" class = "icon"></span>
 
 				<h2>Log:
 					<span class = "title">?</span>
@@ -112,7 +113,7 @@
 			</details>
 
 			<form method = "dialog">
-				<button name = "cancel">Close</button>
+				<button name = "Cancel">Close</button>
 			</form>
 		</dialog>
 
@@ -121,7 +122,7 @@
 				<form class = "action-arguments">
 					<div class = "wrapper">
 						<div class = "action-header">
-							<span class = "icon" role = "icon"></span>
+							<span class = "icon" role = "img"></span>
 							<h2>Argument form</h2>
 						</div>
 
@@ -133,13 +134,13 @@
 						</div>
 					</div>
 				</form>
-			</button>
+			</dialog>
 		</template>
 
 		<template id = "tplActionButton">
 			<button>
-				<span role = "icon" title = "action button icon" class = "icon">&#x1f4a9;</span>
-				<span role = "title" class = "title">Untitled Button</span>
+				<span title = "action button icon" class = "icon">&#x1f4a9;</span>
+				<span class = "title">Untitled Button</span>
 			</button>
 
 			<div class = "action-button-footer">
@@ -150,7 +151,7 @@
 			<tr class = "log-row">
 				<td class = "timestamp">?</td>
 				<td>
-					<span class = "icon" role = "icon"></span>
+					<span role = "img" class = "icon"></span>
 					<span class = "content">?</span>
 
 					<details>
