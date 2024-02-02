@@ -130,16 +130,16 @@ legend {
   padding-top: 1em;
 }
 
-span[role="icon"] {
+span.icon {
   display: block;
   font-size: 3em;
-  vertical-align: middle;
 }
 
-.action-header span[role="icon"],
-tr.log-row span[role="icon"] {
+.action-header span.icon,
+tr.log-row span.icon {
   display: inline-block;
   padding-right: 0.2em;
+  vertical-align: middle;
 }
 
 .error {
@@ -165,9 +165,9 @@ div.entity {
 }
 
 h2 {
-  margin-top: 0;
-  font-size: 1em;
   display: inline-block;
+  font-size: 1em;
+  margin-top: 0;
 }
 
 div.entity h2 {
