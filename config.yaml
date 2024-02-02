@@ -21,6 +21,9 @@ actions:
   shellAfterCompleted: "apprise -t 'Notification: Backup script completed' -b 'The backup script completed with code {{ exitCode}}. The log is: \n {{ stdout }} '"
   maxConcurrent: 1
   icon: backup
+  execOnCron: # https://docs.olivetin.app/exec-cron.html
+    - "@monthly"     # Once per month
+    - "0 12 25 12 *" # And on Christmas day!
 
   # This will send 1 ping (-c 1)
   # Docs: https://docs.olivetin.app/action-ping.html

@@ -9,7 +9,13 @@ import (
 )
 
 func Schedule(cfg *config.Config, ex *executor.Executor) {
-	scheduler := cron.New(cron.WithSeconds())
+	var scheduler *cron.Cron
+
+	if cfg.CronSupportForSeconds {
+		scheduler = cron.New(cron.WithSeconds())
+	} else {
+		scheduler = cron.New()
+	}
 
 	for _, action := range cfg.Actions {
 		for _, cronline := range action.ExecOnCron {
