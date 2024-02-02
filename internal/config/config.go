@@ -88,6 +88,7 @@ type Config struct {
 	DefaultPermissions              PermissionsList
 	AccessControlLists              []AccessControlList
 	WebUIDir                        string
+	CronSupportForSeconds           bool
 }
 
 // DefaultConfig gets a new Config structure with sensible default values.
@@ -110,6 +111,7 @@ func DefaultConfig() *Config {
 	config.AuthJwtClaimUsername = "name"
 	config.AuthJwtClaimUserGroup = "group"
 	config.WebUIDir = "./webui"
+	config.CronSupportForSeconds = false
 
 	return &config
 }
