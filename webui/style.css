@@ -296,6 +296,7 @@ input[type="submit"]:disabled {
 .action-blocked {
   transition: 1s;
   background-color: purple;
+  color: white;
 }
 
 img.logo {
