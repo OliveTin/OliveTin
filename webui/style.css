@@ -145,6 +145,10 @@ tr:hover td {
 
 legend {
   padding-top: 1em;
+  text-align: center;
+  width: 100%;
+  padding-bottom: 1em;
+  font-weight: bold;
 }
 
 span.icon {
