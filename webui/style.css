@@ -21,6 +21,7 @@ fieldset {
   grid-gap: 1em;
   padding: 0;
   text-align: center;
+  justify-content: center;
   border: 0;
 }
 
