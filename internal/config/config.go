@@ -18,7 +18,7 @@ type Action struct {
 	ExecOnFileChangedInDir []string
 	MaxConcurrent          int
 	Arguments              []ActionArgument
-	PopupOnStart           bool
+	PopupOnStart           string
 }
 
 // ActionArgument objects appear on Actions.
@@ -71,8 +71,9 @@ type Config struct {
 	ListenAddressGrpcActions        string
 	ExternalRestAddress             string
 	LogLevel                        string
-	Actions                         []Action `mapstructure:"actions"`
-	Entities                        []Entity `mapstructure:"entities"`
+	Actions                         []Action        `mapstructure:"actions"`
+	Dashboards                      []DashboardItem `mapstructure:"dashboards"`
+	Entities                        []Entity        `mapstructure:"entities"`
 	CheckForUpdates                 bool
 	PageTitle                       string
 	ShowFooter                      bool
@@ -88,6 +89,15 @@ type Config struct {
 	DefaultPermissions              PermissionsList
 	AccessControlLists              []AccessControlList
 	WebUIDir                        string
+	CronSupportForSeconds           bool
+	SectionNavigationStyle          string
+}
+
+type DashboardItem struct {
+	Title    string
+	Type     string
+	Link     string
+	Contents []DashboardItem
 }
 
 // DefaultConfig gets a new Config structure with sensible default values.
@@ -110,6 +120,8 @@ func DefaultConfig() *Config {
 	config.AuthJwtClaimUsername = "name"
 	config.AuthJwtClaimUserGroup = "group"
 	config.WebUIDir = "./webui"
+	config.CronSupportForSeconds = false
+	config.SectionNavigationStyle = "sidebar"
 
 	return &config
 }

@@ -3,6 +3,7 @@ import { ExecutionDialog } from './ExecutionDialog.js'
 class ExecutionButton extends window.HTMLElement {
   constructFromJson (json) {
     this.executionUuid = json
+    this.ellapsed = 0
 
     this.appendChild(document.createElement('button'))
     this.isWaiting = true
@@ -17,35 +18,11 @@ class ExecutionButton extends window.HTMLElement {
   }
 
   show () {
-    if (window.executionDialog === undefined) {
+    if (typeof (window.executionDialog) === 'undefined') {
       window.executionDialog = new ExecutionDialog()
     }
 
-    const executionStatusArgs = {
-      executionUuid: this.executionUuid
-    }
-
-    window.executionDialog.constructFromJson(this.executionUuid)
-    window.executionDialog.show()
-
-    window.fetch(window.restBaseUrl + 'ExecutionStatus', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(executionStatusArgs)
-    }).then((res) => {
-      if (res.ok) {
-        return res.json()
-      } else {
-        throw new Error(res.statusText)
-      }
-    }
-    ).then((json) => {
-      window.executionDialog.renderResult(json)
-    }).catch(err => {
-      window.executionDialog.renderError(err)
-    })
+    window.executionDialog.show(this.executionUuid)
   }
 
   onFinished (LogEntry) {
@@ -56,30 +33,23 @@ class ExecutionButton extends window.HTMLElement {
     } else if (LogEntry.exitCode !== 0) {
       this.onActionResult('action-nonzero-exit', 'Exit code ' + LogEntry.exitCode)
     } else {
+      console.log(LogEntry)
+      this.ellapsed = Math.ceil(new Date(LogEntry.datetimeFinished) - new Date(LogEntry.datetimeStarted)) / 1000
       this.onActionResult('action-success', 'Success!')
     }
   }
 
   onActionResult (cssClass, temporaryStatusMessage) {
-    this.temporaryStatusMessage = '[ ' + temporaryStatusMessage + ' ]'
+    this.temporaryStatusMessage = '[' + temporaryStatusMessage + ']'
     this.updateDom()
     this.btn.classList.add(cssClass)
-
-    setTimeout(() => {
-      this.btn.classList.remove(cssClass)
-    }, 1000)
   }
 
   onActionError (err) {
     console.error('callback error', err)
-    this.btn.disabled = false
     this.isWaiting = false
     this.updateDom()
     this.btn.classList.add('action-failed')
-
-    setTimeout(() => {
-      this.btn.classList.remove('action-failed')
-    }, 1000)
   }
 
   updateDom () {
@@ -87,7 +57,6 @@ class ExecutionButton extends window.HTMLElement {
       this.btn.innerText = this.temporaryStatusMessage
       this.btn.classList.add('temporary-status-message')
       this.isWaiting = false
-      this.disabled = false
 
       setTimeout(() => {
         this.temporaryStatusMessage = null
@@ -97,7 +66,8 @@ class ExecutionButton extends window.HTMLElement {
     } else if (this.isWaiting) {
       this.btn.innerText = 'Waiting...'
     } else {
-      this.btn.innerText = 'Finished'
+      this.btn.innerText = this.ellapsed + 's'
+      this.btn.title = this.ellapsed + ' seconds'
     }
   }
 }

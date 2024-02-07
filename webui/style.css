@@ -1,28 +1,25 @@
 body {
   background-color: #dee3e7;
   color: black;
-  text-align: center;
   font-family: sans-serif;
-  padding: 0;
   margin: 0;
+  padding: 0;
+  text-align: center;
 }
 
 dialog {
   box-shadow: 0 0 6px 0 #444;
-  min-width: 600px;
-  text-align: left;
+  max-width: 600px;
   padding: 1em;
+  text-align: left;
 }
 
 fieldset {
-  padding: 0;
-}
-
-fieldset#root-group {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  grid-template-columns: repeat(auto-fit, 160px);
   grid-template-rows: auto auto auto auto;
   grid-gap: 1em;
+  padding: 0;
   text-align: center;
   border: 0;
 }
@@ -62,47 +59,66 @@ footer a {
   color: black;
 }
 
-aside {
+nav.sidebar {
+  background-color: white;
   position: absolute;
   width: 180px;
-  height: 100%;
+  height: 100vh;
   left: 0;
   top: 0;
-  padding-top: 4em;
   transition: 0.5s ease;
-  background-color: white;
-  border: 0 0 10px 0;
   box-shadow: 0 0 10px 0 #444;
   z-index: 3;
+  display: flex;
+  flex-direction: column;
 }
 
-input:checked ~ aside {
+#navigation-links {
+  padding-top: 4em;
+  flex-grow: 1;
+}
+
+#supplemental-links {
+  flex-grow: 0;
+}
+
+input:checked ~ nav.sidebar {
   left: -250px;
 }
 
-aside ul {
+nav ul {
   margin: 0;
   padding: 0;
 }
 
-aside ul li {
+nav ul li {
   list-style: none;
   text-align: left;
   border-bottom: 1px inset black;
 }
 
-aside ul li a {
+nav ul li a {
   display: block;
   padding-left: 1em;
   padding-top: 0.5em;
   padding-bottom: 0.5em;
+  user-select: none;
 }
 
-aside ul li a:hover {
+nav ul li a:hover {
   color: black;
   background-color: #efefef;
   cursor: pointer;
 }
+
+nav.topbar {
+  background-color: white;
+}
+
+nav.topbar ul li {
+  display: inline-block;
+}
+
 
 table {
   background-color: white;
@@ -130,16 +146,16 @@ legend {
   padding-top: 1em;
 }
 
-span[role="icon"] {
+span.icon {
   display: block;
   font-size: 3em;
-  vertical-align: middle;
 }
 
-.action-header span[role="icon"],
-tr.log-row span[role="icon"] {
+.action-header span.icon,
+tr.log-row span.icon {
   display: inline-block;
   padding-right: 0.2em;
+  vertical-align: middle;
 }
 
 .error {
@@ -165,9 +181,9 @@ div.entity {
 }
 
 h2 {
-  margin-top: 0;
-  font-size: 1em;
   display: inline-block;
+  font-size: 1em;
+  margin-top: 0;
 }
 
 div.entity h2 {
@@ -204,8 +220,8 @@ action-button {
 }
 
 action-button button {
-  width: 100%;
   flex-grow: 1;
+  width: 100%;
   z-index: 2;
 }
 
@@ -226,15 +242,22 @@ action-button details summary div span:first-child {
 }
 
 .action-button-footer {
-  display: block;
+  display: flex;
   text-align: left;
   font-size: smaller;
-  padding: 0.2em;
   background-color: #efefef;
   border-top: 0;
   border-left: 1px solid #666;
   border-right: 1px solid #666;
   border-bottom: 1px solid #666;
+  overflow: auto;
+}
+
+execution-button {
+  display: inline-block;
+  margin-right: .2em;
+  margin-left: .2em;
+  margin-top: .2em;
 }
 
 execution-button button {
@@ -266,43 +289,30 @@ input[type="submit"]:disabled {
 /* Button animations */
 
 .action-failed {
-  animation: kf-action-failed 1s;
-}
-
-@keyframes kf-action-failed {
-  20% { background-color: red; }
+  transition: 1s;
+  background-color: red;
 }
 
 .action-success {
-  animation: kf-action-success 1s;
-}
-
-@keyframes kf-action-success {
-  20% { background-color: limegreen; }
+  transition: 1s;
+  background-color: limegreen;
 }
 
 .action-nonzero-exit {
   animation: kf-action-nonzero-exit 1s;
-}
-
-@keyframes kf-action-nonzero-exit {
-  20% { background-color: orange; }
+  transition: 1s;
+  background-color: orange;
 }
 
 .action-timeout {
-  animation: kf-action-timeout 1s;
-}
-
-@keyframes kf-action-timeout {
-  20% { background-color: cyan; }
+  transition: 1s;
+  background-color: cyan;
 }
 
 .action-blocked {
-  animation: kf-action-blocked 1s;
-}
-
-@keyframes kf-action-blocked {
-  20% { background-color: purple; }
+  transition: 1s;
+  background-color: purple;
+  color: white;
 }
 
 img.logo {
@@ -313,6 +323,9 @@ img.logo {
 
 main {
   padding: 1em;
+}
+
+body.has-sidebar main {
   padding-top: 3em;
 }
 
@@ -326,7 +339,7 @@ form div.wrapper {
 }
 
 label {
-  width: 20%;
+  min-width: 20%;
   text-align: right;
   display: inline-block;
   padding-right: 1em;
@@ -374,6 +387,10 @@ span.argument-description {
   margin-left: 1em;
 }
 
+p.argument-wrapper {
+  display: flex;
+}
+
 form div.buttons {
   text-align: right;
 }
@@ -418,6 +435,28 @@ div.toolbar * {
   margin-right: 1em;
 }
 
+@media screen and (width <= 600px) {
+  fieldset {
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  }
+
+  label {
+    text-align: left;
+    margin-bottom: .6em;
+    font-weight: bold;
+    min-width: auto;
+  }
+
+  p.argument-wrapper {
+    flex-direction: column;
+  }
+
+  span.argument-description {
+    margin-left: 0;
+    margin-top: .6em;
+  }
+}
+
 @media (prefers-color-scheme: dark) {
   body {
     background-color: #333;
@@ -448,7 +487,7 @@ div.toolbar * {
     color: white;
   }
 
-  aside {
+  nav {
     background-color: #111;
     color: white;
   }
@@ -458,7 +497,7 @@ div.toolbar * {
     color: gray;
   }
 
-  aside ul li a:hover {
+  nav ul li a:hover {
     background-color: #666;
     color: white;
   }
@@ -486,7 +525,7 @@ div.toolbar * {
   tr:hover td {
     background-color: #666;
   }
-  
+
   div.toolbar {
     background-color: black;
   }

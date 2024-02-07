@@ -60,13 +60,14 @@ class ArgumentForm extends window.HTMLElement {
     this.argInputs = []
 
     for (const arg of args) {
-      const domFieldWrapper = document.createElement('p')
+      const domArgumentWrapper = document.createElement('p')
+      domArgumentWrapper.classList.add('argument-wrapper')
 
-      domFieldWrapper.appendChild(this.createDomLabel(arg))
-      domFieldWrapper.appendChild(this.createDomInput(arg))
-      domFieldWrapper.appendChild(this.createDomDescription(arg))
+      domArgumentWrapper.appendChild(this.createDomLabel(arg))
+      domArgumentWrapper.appendChild(this.createDomInput(arg))
+      domArgumentWrapper.appendChild(this.createDomDescription(arg))
 
-      this.domArgs.appendChild(domFieldWrapper)
+      this.domArgs.appendChild(domArgumentWrapper)
     }
   }
 
@@ -91,6 +92,15 @@ class ArgumentForm extends window.HTMLElement {
 
       for (const choice of arg.choices) {
         domEl.appendChild(this.createSelectOption(choice))
+      }
+    } else if (arg.type === 'confirmation') {
+      this.domBtnStart.disabled = true
+
+      domEl = document.createElement('input')
+      domEl.setAttribute('type', 'checkbox')
+      domEl.onchange = () => {
+        this.domBtnStart.disabled = false
+        domEl.disabled = true
       }
     } else {
       domEl = document.createElement('input')

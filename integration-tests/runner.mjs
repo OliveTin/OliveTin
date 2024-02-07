@@ -2,8 +2,6 @@ import process from 'node:process'
 import waitOn from 'wait-on'
 import { spawn } from 'node:child_process'
 
-let ot = null
-
 export default function getRunner () {
   const type = process.env.OLIVETIN_TEST_RUNNER
 
@@ -11,33 +9,41 @@ export default function getRunner () {
 
   switch (type) {
     case 'local':
-      return new OliveTinTestRunnerLocalProcess()
+      return new OliveTinTestRunnerStartLocalProcess()
     case 'vm':
-      return null
+      return new OliveTinTestRunnerVm()
     case 'container':
-      return null
+      return new OliveTinTestRunnerEnv()
     default:
-      return new OliveTinTestRunnerLocalProcess()
+      return new OliveTinTestRunnerStartLocalProcess()
   }
 }
 
-class OliveTinTestRunnerLocalProcess {
+class OliveTinTestRunner {
+  BASE_URL = 'http://nohost:1337/';
+
+  baseUrl() {
+    return this.BASE_URL
+  }
+}
+
+class OliveTinTestRunnerStartLocalProcess extends OliveTinTestRunner {
   async start (cfg) {
-    ot = spawn('./../OliveTin', ['-configdir', 'configs/' + cfg + '/'])
+    this.ot = spawn('./../OliveTin', ['-configdir', 'configs/' + cfg + '/'])
 
     const logStdout = process.env.OLIVETIN_TEST_RUNNER_LOG_STDOUT === '1'
 
     if (logStdout) {
-      ot.stdout.on('data', (data) => {
+      this.ot.stdout.on('data', (data) => {
         console.log(`stdout: ${data}`)
       })
 
-      ot.stderr.on('data', (data) => {
+      this.ot.stderr.on('data', (data) => {
         console.error(`stderr: ${data}`)
       })
     }
 
-    ot.on('close', (code) => {
+    this.ot.on('close', (code) => {
       if (code != null) {
         console.log(`child process exited with code ${code}`)
       }
@@ -48,14 +54,51 @@ class OliveTinTestRunnerLocalProcess {
       console.log(`server running on port ${this.server.port}`);
       */
 
-    await waitOn({
-      'resources': ['http://localhost:1337/']
-    })
+    this.BASE_URL = 'http://localhost:1337/'
 
-    return ot
+    await waitOn({
+      resources: [this.BASE_URL]
+    })
   }
 
   async stop () {
-    await ot.kill()
+    await this.ot.kill()
+  }
+}
+
+class OliveTinTestRunnerEnv extends OliveTinTestRunner {
+  constructor () {
+    super()
+
+    const IP = process.env.IP
+    const PORT = process.env.PORT
+
+    this.BASE_URL = 'http://' + IP + ':' + PORT + '/'
+
+    console.log('Runner ENV endpoint: ' + this.BASE_URL)
+  }
+
+  async start () {
+    await waitOn({
+      resources: [this.BASE_URL]
+    })
+  }
+
+  async stop () {
+
+  }
+}
+
+class OliveTinTestRunnerVm extends OliveTinTestRunnerEnv {
+  constructor() {
+    super()
+  }
+
+  async start (cfg) {
+    console.log("vagrant changing config")
+    spawn('vagrant', ['ssh', '-c', '"ln -sf /etc/OliveTin/ /opt/otConfigs/' + cfg + '/"'])
+    spawn('vagrant', ['ssh', '-c', '"systemctl restart OliveTin"'])
+
+    return null
   }
 }
