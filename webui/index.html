@@ -24,16 +24,16 @@
 				<h1 id = "page-title">OliveTin</h1>
 			</div>
 
+			<input type = "checkbox" id = "hide-sidebar-checkbox" hidden checked />
+			<nav hidden>
+				<ul id = "navigation-links">
+					<li><a id = "showActions">Actions</a></li>
+				</ul>
 
-			<div id = "content-sidebar">
-				<input type = "checkbox" id = "hide-sidebar-checkbox" hidden checked />
-				<aside>
-					<ul>
-						<li><a id = "showActions">Actions</a></li>
-						<li><a id = "showLogs">Logs</a></li>
-					</ul>
-				</aside>
-			</div>
+				<ul id = "supplemental-links">
+					<li><a id = "showLogs">Logs</a></li>
+				</ul>
+			</nav>
 
 			<section id = "contentLogs" title = "Logs" hidden>
 				<div class = "toolbar">
@@ -53,7 +53,8 @@
 			</section>
 
 			<section id = "contentActions" title = "Actions" hidden >
-				<fieldset id = "root-group" title = "Dashboard of buttons">
+				<fieldset id = "root-group" title = "Actions">
+					<legend hidden>Actions</legend>
 				</fieldset>
 			</section>
 
