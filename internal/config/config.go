@@ -12,6 +12,7 @@ type Action struct {
 	CSS                    map[string]string `mapstructure:"omitempty"`
 	Timeout                int
 	Acls                   []string
+	Entity                 []string
 	ExecOnStartup          bool
 	ExecOnCron             []string
 	ExecOnFileCreatedInDir []string
@@ -37,12 +38,22 @@ type ActionArgumentChoice struct {
 	Title string
 }
 
+// HelperAction is an action that is used normally to generate entities, it cannot be started manually.
+type HelperAction struct {
+	Title                  string
+	Shell                  string
+	ExecOnStartup          bool
+	ExecOnCron             []string
+	ExecOnFileCreatedInDir []string
+	ExecOnFileChangedInDir []string
+}
+
 // Entity represents a "thing" that can have multiple actions associated with it.
 // for example, a media player with a start and stop action.
-type Entity struct {
-	Title   string
+type EntityFile struct {
+	File    string
+	Name    string
 	Icon    string
-	Actions []Action `mapstructure:"actions"`
 	CSS     map[string]string
 }
 
@@ -72,8 +83,8 @@ type Config struct {
 	ExternalRestAddress             string
 	LogLevel                        string
 	Actions                         []Action        `mapstructure:"actions"`
+	Entities                        []EntityFile    `mapstructure:"entities"`
 	Dashboards                      []DashboardItem `mapstructure:"dashboards"`
-	Entities                        []Entity        `mapstructure:"entities"`
 	CheckForUpdates                 bool
 	PageTitle                       string
 	ShowFooter                      bool
@@ -89,6 +100,7 @@ type Config struct {
 	DefaultPermissions              PermissionsList
 	AccessControlLists              []AccessControlList
 	WebUIDir                        string
+	HelperActions                   []HelperAction `mapstructure:"helperActions"`
 	CronSupportForSeconds           bool
 	SectionNavigationStyle          string
 }

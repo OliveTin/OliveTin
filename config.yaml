@@ -8,90 +8,104 @@ listenAddressSingleHTTPFrontend: 0.0.0.0:1337
 # Choose from INFO (default), WARN and DEBUG
 logLevel: "INFO"
 
+entities:
+  - name: container
+    file: /etc/OliveTin/entities/containers.yaml
+    icon: container
+
+helpers:
+  - title: refresh container file
+    shell: "docker ps --format '{{ .state }}' > /etc/OliveTin/entities/containers.yaml"
+    execOnStartup: true
+    execOnCron:
+      - "*/1 * * * * *"
+
 # Actions (buttons) to show up on the WebUI:
 actions:
-- title: date
-  shell: date
-  icon: clock
-  popupOnStart: true
+  - title: date
+    shell: date
+    icon: clock
+    popupOnStart: true
 
-  # This will run a simple script that you create.
-- title: Run backup script
-  shell: /opt/backupScript.sh
-  shellAfterCompleted: "apprise -t 'Notification: Backup script completed' -b 'The backup script completed with code {{ exitCode}}. The log is: \n {{ stdout }} '"
-  maxConcurrent: 1
-  icon: backup
-  execOnCron: # https://docs.olivetin.app/exec-cron.html
-    - "@monthly"     # Once per month
-    - "0 12 25 12 *" # And on Christmas day!
+  - title: start
+    shell: docker start {{ container.name }}
+    icon: start
+    entity: container
 
-  # This will send 1 ping (-c 1)
-  # Docs: https://docs.olivetin.app/action-ping.html
-- title: Ping host
-  shell: ping {{ host }} -c {{ count }}
-  icon: ping
-  timeout: 100
-  arguments:
-    - name: host
-      title: host
-      type: ascii_identifier
-      default: example.com
-      description: The host that you want to ping
+    # This will run a simple script that you create.
+  - title: Run backup script
+    shell: /opt/backupScript.sh
+    shellAfterCompleted: "apprise -t 'Notification: Backup script completed' -b 'The backup script completed with code {{ exitCode}}. The log is: \n {{ stdout }} '"
+    maxConcurrent: 1
+    icon: backup
 
-    - name: count
-      title: Count
-      type: int
-      default: 1
-      description: How many times to do you want to ping?
+    # This will send 1 ping (-c 1)
+    # Docs: https://docs.olivetin.app/action-ping.html
+  - title: Ping host
+    shell: ping {{ host }} -c {{ count }}
+    icon: ping
+    timeout: 100
+    arguments:
+      - name: host
+        title: host
+        type: ascii_identifier
+        default: example.com
+        description: The host that you want to ping
 
-  # Restart lightdm on host "server1"
-  # Docs: https://docs.olivetin.app/action-ping.html
-- title: restart httpd
-  titleAlias: restart_httpd
-  icon: restart
-  shell: ssh root@server1 'service httpd restart'
+      - name: count
+        title: Count
+        type: int
+        default: 1
+        description: How many times to do you want to ping?
 
-  # OliveTin can run long-running jobs like Ansible playbooks.
-  #
-  # For such jobs, you will need to install ansible-playbook on the host where
-  # you are running OliveTin, or in the container.
-  #
-  # You probably want a much longer timeout as well (so that ansible completes).
-- title: "Run Ansible Playbook"
-  icon: "&#x1F1E6"
-  shell: ansible-playbook -i /etc/hosts /root/myRepo/myPlaybook.yaml
-  timeout: 120
+    # Restart lightdm on host "server1"
+    # Docs: https://docs.olivetin.app/action-ping.html
+  - title: restart httpd
+    titleAlias: restart_httpd
+    icon: restart
+    shell: ssh root@server1 'service httpd restart'
 
-  # OliveTin can control containers - docker is just a command line app.
-  #
-  # However, if you are running in a container you will need to do some setup,
-  # see the docs below.
-  #
-  # Docs: https://docs.olivetin.app/action-container-control.html
-- title: Restart Docker Container
-  icon: restart
-  shell: docker restart {{ container }}
-  arguments:
-    - name: container
-      title: Container name
-      choices:
-        - value: plex
-        - value: traefik
-        - value: grafana
+    # OliveTin can run long-running jobs like Ansible playbooks.
+    #
+    # For such jobs, you will need to install ansible-playbook on the host where
+    # you are running OliveTin, or in the container.
+    #
+    # You probably want a much longer timeout as well (so that ansible completes).
+  - title: "Run Ansible Playbook"
+    icon: "&#x1F1E6"
+    shell: ansible-playbook -i /etc/hosts /root/myRepo/myPlaybook.yaml
+    timeout: 120
 
-- title: Slow Script
-  shell: sleep 3
-  timeout: 5
-  icon: "&#x1F971"
+    # OliveTin can control containers - docker is just a command line app.
+    #
+    # However, if you are running in a container you will need to do some setup,
+    # see the docs below.
+    #
+    # Docs: https://docs.olivetin.app/action-container-control.html
+  - title: Restart Docker Container
+    icon: restart
+    shell: docker restart {{ container }}
+    arguments:
+      - name: container
+        title: Container name
+        choices:
+          - value: plex
+          - value: traefik
+          - value: grafana
 
-- title: Broken Script (timeout)
-  shell: sleep 5
-  timeout: 5
-  icon: "&#x1F62A"
+  - title: Slow Script
+    shell: sleep 3
+    timeout: 5
+    icon: "&#x1F971"
 
-- title: Delete old backups
-  icon: ashtonished
-  shell: rm -rf /opt/oldBackups/
-  arguments:
-    - type: confirmation
-      title: Are you sure?!
+  - title: Broken Script (timeout)
+    shell: sleep 5
+    timeout: 5
+    icon: "&#x1F62A"
+
+  - title: Delete old backups
+    icon: ashtonished
+    shell: rm -rf /opt/oldBackups/
+    arguments:
+      - type: confirmation
+        title: Are you sure?!
