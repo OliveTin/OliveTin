@@ -29,7 +29,7 @@ jobs:
           cache-dependency-path: webui/package-lock.json
 
       - name: Setup Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v5
         with:
           go-version: '^1.18.0'
           cache: true
