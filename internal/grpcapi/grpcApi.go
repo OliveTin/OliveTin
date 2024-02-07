@@ -281,6 +281,14 @@ func (api *oliveTinAPI) SosReport(ctx ctx.Context, req *pb.SosReportRequest) (*p
 	return res, nil
 }
 
+func (api *oliveTinAPI) GetReadyz(ctx ctx.Context, req *pb.GetReadyzRequest) (*pb.GetReadyzResponse, error) {
+	res := &pb.GetReadyzResponse{
+		Status: "OK",
+	}
+
+	return res, nil
+}
+
 // Start will start the GRPC API.
 func Start(globalConfig *config.Config, ex *executor.Executor) {
 	cfg = globalConfig
