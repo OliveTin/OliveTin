@@ -1,28 +1,25 @@
 body {
   background-color: #dee3e7;
   color: black;
-  text-align: center;
   font-family: sans-serif;
-  padding: 0;
   margin: 0;
+  padding: 0;
+  text-align: center;
 }
 
 dialog {
   box-shadow: 0 0 6px 0 #444;
   max-width: 600px;
-  text-align: left;
   padding: 1em;
+  text-align: left;
 }
 
 fieldset {
-  padding: 0;
-}
-
-fieldset#root-group {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  grid-template-columns: repeat(auto-fit, 160px);
   grid-template-rows: auto auto auto auto;
   grid-gap: 1em;
+  padding: 0;
   text-align: center;
   border: 0;
 }
@@ -62,47 +59,66 @@ footer a {
   color: black;
 }
 
-aside {
+nav.sidebar {
+  background-color: white;
   position: absolute;
   width: 180px;
-  height: 100%;
+  height: 100vh;
   left: 0;
   top: 0;
-  padding-top: 4em;
   transition: 0.5s ease;
-  background-color: white;
-  border: 0 0 10px 0;
   box-shadow: 0 0 10px 0 #444;
   z-index: 3;
+  display: flex;
+  flex-direction: column;
 }
 
-input:checked ~ aside {
+#navigation-links {
+  padding-top: 4em;
+  flex-grow: 1;
+}
+
+#supplemental-links {
+  flex-grow: 0;
+}
+
+input:checked ~ nav.sidebar {
   left: -250px;
 }
 
-aside ul {
+nav ul {
   margin: 0;
   padding: 0;
 }
 
-aside ul li {
+nav ul li {
   list-style: none;
   text-align: left;
   border-bottom: 1px inset black;
 }
 
-aside ul li a {
+nav ul li a {
   display: block;
   padding-left: 1em;
   padding-top: 0.5em;
   padding-bottom: 0.5em;
+  user-select: none;
 }
 
-aside ul li a:hover {
+nav ul li a:hover {
   color: black;
   background-color: #efefef;
   cursor: pointer;
 }
+
+nav.topbar {
+  background-color: white;
+}
+
+nav.topbar ul li {
+  display: inline-block;
+}
+
 
 table {
   background-color: white;
@@ -204,8 +220,8 @@ action-button {
 }
 
 action-button button {
-  width: 100%;
   flex-grow: 1;
+  width: 100%;
   z-index: 2;
 }
 
@@ -296,6 +312,7 @@ input[type="submit"]:disabled {
 .action-blocked {
   transition: 1s;
   background-color: purple;
+  color: white;
 }
 
 img.logo {
@@ -306,6 +323,9 @@ img.logo {
 
 main {
   padding: 1em;
+}
+
+body.has-sidebar main {
   padding-top: 3em;
 }
 
@@ -416,6 +436,10 @@ div.toolbar * {
 }
 
 @media screen and (width <= 600px) {
+  fieldset {
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  }
+
   label {
     text-align: left;
     margin-bottom: .6em;
@@ -463,7 +487,7 @@ div.toolbar * {
     color: white;
   }
 
-  aside {
+  nav {
     background-color: #111;
     color: white;
   }
@@ -473,7 +497,7 @@ div.toolbar * {
     color: gray;
   }
 
-  aside ul li a:hover {
+  nav ul li a:hover {
     background-color: #666;
     color: white;
   }

@@ -24,16 +24,16 @@
 				<h1 id = "page-title">OliveTin</h1>
 			</div>
 
+			<input type = "checkbox" id = "hide-sidebar-checkbox" hidden checked />
+			<nav hidden>
+				<ul id = "navigation-links">
+					<li><a id = "showActions">Actions</a></li>
+				</ul>
 
-			<div id = "content-sidebar">
-				<input type = "checkbox" id = "hide-sidebar-checkbox" hidden checked />
-				<aside>
-					<ul>
-						<li><a id = "showActions">Actions</a></li>
-						<li><a id = "showLogs">Logs</a></li>
-					</ul>
-				</aside>
-			</div>
+				<ul id = "supplemental-links">
+					<li><a id = "showLogs">Logs</a></li>
+				</ul>
+			</nav>
 
 			<section id = "contentLogs" title = "Logs" hidden>
 				<div class = "toolbar">
@@ -53,7 +53,8 @@
 			</section>
 
 			<section id = "contentActions" title = "Actions" hidden >
-				<fieldset id = "root-group" title = "Dashboard of buttons">
+				<fieldset id = "root-group" title = "Actions">
+					<legend hidden>Actions</legend>
 				</fieldset>
 			</section>
 
@@ -80,34 +81,34 @@
 
 		<dialog title = "Execution Results" id = "execution-results-popup">
 			<div class = "action-header">
-				<span role = "img" class = "icon"></span>
+				<span id = "execution-dialog-icon" class = "icon" role = "img"></span>
 
 				<h2>Log:
-					<span class = "title">?</span>
+					<span id = "execution-dialog-title">?</span>
 				</h2>
 			</div>
 			<p>
-				<strong>Started: </strong><span class = "datetimeStarted">unknown</span>.
-				<strong>Finished: </strong><span class = "datetimeFinished">unknown</span>
+				<strong>Started: </strong><span id = "execution-dialog-datetime-started">unknown</span>.
+				<strong>Finished: </strong><span id = "execution-dialog-datetime-finished">unknown</span>
 			</p>
 			<p>
-				<strong>Exit Code: </strong><span class = "exitCode">unknown</span>
+				<strong>Exit Code: </strong><span id = "execution-dialog-exit-code">unknown</span>
 			</p>
 			<p>
-				<strong>Status: </strong><span class = "status">unknown</span>
+				<strong>Status: </strong><span id = "execution-dialog-status">unknown</span>
 			</p>
 
 
 			<details>
-				<summary>stdout</summary>
-				<pre class = "stdout">
+				<summary>Output</summary>
+				<pre id = "execution-dialog-stdout">
 					?
 				</pre>
 			</details>
 
 			<details>
-				<summary>stderr</summary>
-				<pre class = "stderr">
+				<summary>Errors</summary>
+				<pre id = "execution-dialog-stderr">
 					?
 				</pre>
 			</details>

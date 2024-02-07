@@ -40,7 +40,7 @@ class ActionButton extends window.HTMLElement {
     this.domTitle.innerText = this.btn.title
     this.domIcon.innerHTML = this.unicodeIcon
 
-    this.setAttribute('id', 'actionButton_' + json.id)
+    this.setAttribute('id', 'actionButton-' + json.id)
   }
 
   updateFromJson (json) {
@@ -68,7 +68,6 @@ class ActionButton extends window.HTMLElement {
   startAction (actionArgs) {
     //    this.btn.disabled = true
     //    this.isWaiting = true
-    //    this.updateDom()
     this.btn.classList = [] // Removes old animation classes
 
     if (actionArgs === undefined) {
