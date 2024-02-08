@@ -1,11 +1,21 @@
 import './ActionButton.js' // To define action-button
+import { ExecutionDialog } from './ExecutionDialog.js'
+
+/**
+ * This is a weird function that just sets some globals.
+ */
+export function initMarshaller () {
+  window.changeDirectory = changeDirectory
+  window.showSection = showSection
+
+  window.executionDialog = new ExecutionDialog()
+
+  window.addEventListener('ExecutionFinished', onExecutionFinished)
+}
 
 export function marshalDashboardComponentsJsonToHtml (json) {
   marshalActionsJsonToHtml(json)
   marshalDashboardStructureToHtml(json)
-
-  window.changeDirectory = changeDirectory
-  window.showSection = showSection
 
   changeDirectory(null)
 }
@@ -34,6 +44,43 @@ function marshalActionsJsonToHtml (json) {
     if (existingButton.updateIterationTimestamp !== currentIterationTimestamp) {
       existingButton.remove()
     }
+  }
+}
+
+function onExecutionFinished (evt) {
+  const logEntry = evt.payload
+
+  const actionButton = window.actionButtons[logEntry.actionTitle]
+
+  switch (actionButton.popupOnStart) {
+    case 'execution-button':
+      document.querySelector('execution-button#execution-' + logEntry.uuid).onExecutionFinished(logEntry)
+      break
+    case 'execution-dialog-stdout-only':
+    case 'execution-dialog':
+      actionButton.onExecutionFinished(logEntry)
+
+      // We don't need to fetch the logEntry for the dialog because we already
+      // have it, so we open the dialog and it will get updated below.
+
+      window.executionDialog.show()
+      window.executionDialog.executionUuid = logEntry.uuid
+
+      break
+    default:
+      actionButton.onExecutionFinished(logEntry)
+      break
+  }
+
+  marshalLogsJsonToHtml({
+    logs: [logEntry]
+  })
+
+  // If the current execution dialog is open, update that too
+  if (window.executionDialog.dlg.open && window.executionDialog.executionUuid === logEntry.uuid) {
+    window.executionDialog.renderExecutionResult({
+      logEntry: logEntry
+    })
   }
 }
 
@@ -117,10 +164,10 @@ function marshalDashboardStructureToHtml (json) {
     document.getElementById('navigation-links').appendChild(navigationLi)
   }
 
-  if (json.dashboards.length === 0) {
-    showSection('Actions')
-  } else {
+  if (document.getElementById('root-group').children.length === 0 && json.dashboards.length > 0) {
     showSection(json.dashboards[0].title)
+  } else {
+    showSection('Actions')
   }
 
   const rootGroup = document.querySelector('#root-group')

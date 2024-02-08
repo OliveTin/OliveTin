@@ -83,38 +83,47 @@
 			<div class = "action-header">
 				<span id = "execution-dialog-icon" class = "icon" role = "img"></span>
 
-				<h2>Log:
+				<h2>
 					<span id = "execution-dialog-title">?</span>
 				</h2>
+
+				<button id = "execution-dialog-toggle-size">&#128470;</button>
 			</div>
-			<p>
-				<strong>Started: </strong><span id = "execution-dialog-datetime-started">unknown</span>.
-				<strong>Finished: </strong><span id = "execution-dialog-datetime-finished">unknown</span>
-			</p>
-			<p>
-				<strong>Exit Code: </strong><span id = "execution-dialog-exit-code">unknown</span>
-			</p>
-			<p>
-				<strong>Status: </strong><span id = "execution-dialog-status">unknown</span>
-			</p>
+			<div id = "execution-dialog-basics">
+					<strong>Started: </strong><span id = "execution-dialog-datetime-started">unknown</span>
+			</div>
+			<div id = "execution-dialog-details">
+				<p>
+					<strong>Finished: </strong><span id = "execution-dialog-datetime-finished">unknown</span>
+				</p>
+				<p>
+					<strong>Exit Code: </strong><span id = "execution-dialog-exit-code">unknown</span>
+				</p>
+				<p>
+					<strong>Status: </strong><span id = "execution-dialog-status">unknown</span>
+				</p>
+			</div>
 
+			<div id = "execution-dialog-output">
+				<details>
+					<summary>Standard Output</summary>
+					<pre id = "execution-dialog-stdout">
+						?
+					</pre>
+				</details>
 
-			<details>
-				<summary>Output</summary>
-				<pre id = "execution-dialog-stdout">
-					?
-				</pre>
-			</details>
-
-			<details>
-				<summary>Errors</summary>
-				<pre id = "execution-dialog-stderr">
-					?
-				</pre>
-			</details>
+				<details>
+					<summary>Standard Error</summary>
+					<pre id = "execution-dialog-stderr">
+						?
+					</pre>
+				</details>
+			</div>
 
 			<form method = "dialog">
-				<button name = "Cancel">Close</button>
+				<div class = "buttons">
+					<button name = "Cancel">Close</button>
+				</div>
 			</form>
 		</dialog>
 
