@@ -1,7 +1,24 @@
-import './ArgumentForm.js'
 import './ExecutionButton.js'
+import './ArgumentForm.js'
+import { ExecutionFeedbackButton } from './ExecutionFeedbackButton.js'
 
-class ActionButton extends window.HTMLElement {
+class ActionButton extends ExecutionFeedbackButton {
+  constructDomFromTemplate () {
+    const tpl = document.getElementById('tplActionButton')
+    const content = tpl.content.cloneNode(true)
+
+    /*
+     * FIXME: Should probably be using a shadowdom here, but seem to
+     * get an error when combined with custom elements.
+     */
+
+    this.appendChild(content)
+
+    this.btn = this.querySelector('button')
+    this.domTitle = this.btn.querySelector('.title')
+    this.domIcon = this.btn.querySelector('.icon')
+  }
+
   constructFromJson (json) {
     this.updateIterationTimestamp = 0
 
@@ -35,6 +52,8 @@ class ActionButton extends window.HTMLElement {
       }
     }
 
+    this.popupOnStart = json.popupOnStart
+
     this.updateFromJson(json)
 
     this.domTitle.innerText = this.btn.title
@@ -55,6 +74,14 @@ class ActionButton extends window.HTMLElement {
     } else {
       this.unicodeIcon = unescape(json.icon)
     }
+  }
+
+  onExecStatusChanged () {
+    this.btn.disabled = false
+
+    setTimeout(() => {
+      this.updateDom(null, this.btn.title)
+    }, 2000)
   }
 
   getUniqueId () {
@@ -82,9 +109,7 @@ class ActionButton extends window.HTMLElement {
       uuid: this.getUniqueId()
     }
 
-    const btnExecution = document.createElement('execution-button')
-    btnExecution.constructFromJson(startActionArgs.uuid)
-    this.querySelector('.action-button-footer').prepend(btnExecution)
+    this.onActionStarted(startActionArgs.uuid)
 
     window.fetch(this.actionCallUrl, {
       method: 'POST',
@@ -102,24 +127,30 @@ class ActionButton extends window.HTMLElement {
     ).then((json) => {
       // The button used to wait for the action to finish, but now it is fire & forget
     }).catch(err => {
-      btnExecution.onActionError(err)
+      throw err // We used to flash buttons red, but now hand to the global error handler
     })
   }
 
-  constructDomFromTemplate () {
-    const tpl = document.getElementById('tplActionButton')
-    const content = tpl.content.cloneNode(true)
+  onActionStarted (executionUuid) {
+    if (this.popupOnStart === 'execution-button') {
+      const btnExecution = document.createElement('execution-button')
+      btnExecution.constructFromJson(executionUuid)
+      this.querySelector('.action-button-footer').prepend(btnExecution)
 
-    /*
-     * FIXME: Should probably be using a shadowdom here, but seem to
-     * get an error when combined with custom elements.
-     */
+      return
+    }
 
-    this.appendChild(content)
+    if (this.popupOnStart.includes('execution-dialog')) {
+      window.executionDialog.reset()
 
-    this.btn = this.querySelector('button')
-    this.domTitle = this.btn.querySelector('.title')
-    this.domIcon = this.btn.querySelector('.icon')
+      if (this.popupOnStart === 'execution-dialog-stdout-only') {
+        window.executionDialog.hideEverythingApartFromOutput()
+      }
+
+      window.executionDialog.show(this)
+    }
+
+    this.btn.disabled = true
   }
 }
 

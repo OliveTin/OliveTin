@@ -51,10 +51,10 @@ type HelperAction struct {
 // Entity represents a "thing" that can have multiple actions associated with it.
 // for example, a media player with a start and stop action.
 type EntityFile struct {
-	File    string
-	Name    string
-	Icon    string
-	CSS     map[string]string
+	File string
+	Name string
+	Icon string
+	CSS  map[string]string
 }
 
 // PermissionsList defines what users can do with an action.
@@ -103,6 +103,7 @@ type Config struct {
 	HelperActions                   []HelperAction `mapstructure:"helperActions"`
 	CronSupportForSeconds           bool
 	SectionNavigationStyle          string
+	DefaultPopupOnStart             string
 }
 
 type DashboardItem struct {
@@ -134,6 +135,7 @@ func DefaultConfig() *Config {
 	config.WebUIDir = "./webui"
 	config.CronSupportForSeconds = false
 	config.SectionNavigationStyle = "sidebar"
+	config.DefaultPopupOnStart = "nothing"
 
 	return &config
 }

@@ -10,13 +10,21 @@ body {
 dialog {
   box-shadow: 0 0 6px 0 #444;
   max-width: 600px;
+  min-width: 60%;
   padding: 1em;
   text-align: left;
 }
 
+dialog.big {
+  max-width: 100%;
+  width: calc(100vw - 2em);
+  height: 100vh;
+  border: none;
+}
+
 fieldset {
   display: grid;
-  grid-template-columns: repeat(auto-fit, 160px);
+  grid-template-columns: repeat(auto-fit, 180px);
   grid-template-rows: auto auto auto auto;
   grid-gap: 1em;
   padding: 0;
@@ -29,10 +37,9 @@ fieldset {
   display: inline;
 }
 
-h1 {
-  display: inline;
-  font-size: small;
-  padding-left: .5em;
+footer,
+footer a {
+  color: black;
 }
 
 #sidebar-toggler-button {
@@ -55,13 +62,11 @@ h1 {
   cursor: pointer;
 }
 
-footer,
-footer a {
-  color: black;
+nav {
+  background-color: white;
 }
 
 nav.sidebar {
-  background-color: white;
   position: absolute;
   width: 180px;
   height: 100vh;
@@ -87,6 +92,16 @@ input:checked ~ nav.sidebar {
   left: -250px;
 }
 
+h1 {
+  display: inline;
+  font-size: small;
+  padding-left: .5em;
+}
+
+h1 a {
+  color: black;
+}
+
 nav ul {
   margin: 0;
   padding: 0;
@@ -106,6 +121,10 @@ nav ul li a {
   user-select: none;
 }
 
+h1 a:visited {
+  color: black;
+}
+
 nav ul li a:hover {
   color: black;
   background-color: #efefef;
@@ -119,7 +138,6 @@ nav.topbar {
 nav.topbar ul li {
   display: inline-block;
 }
-
 
 table {
   background-color: white;
@@ -156,6 +174,11 @@ span.icon {
   font-size: 3em;
 }
 
+.action-header {
+  display: flex;
+  align-items: center;
+}
+
 .action-header span.icon,
 tr.log-row span.icon {
   display: inline-block;
@@ -189,6 +212,7 @@ h2 {
   display: inline-block;
   font-size: 1em;
   margin-top: 0;
+  flex-grow: 1;
 }
 
 div.entity h2 {
@@ -404,6 +428,7 @@ pre {
   border: 1px solid gray;
   padding: 1em;
   min-height: 1em;
+  overflow: auto;
 }
 
 td.exit-code {
@@ -442,7 +467,7 @@ div.toolbar * {
 
 @media screen and (width <= 600px) {
   fieldset {
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   }
 
   label {
@@ -459,6 +484,12 @@ div.toolbar * {
   span.argument-description {
     margin-left: 0;
     margin-top: .6em;
+  }
+
+  dialog {
+    border-left: 0;
+    border-right: 0;
+    width: 100%;
   }
 }
 
@@ -492,14 +523,19 @@ div.toolbar * {
     color: white;
   }
 
-  nav {
-    background-color: #111;
-    color: white;
-  }
-
   footer,
   footer a {
     color: gray;
+  }
+
+
+  h1 a, h1 a:visited {
+    color: white;
+  }
+
+  nav {
+    background-color: #111;
+    color: white;
   }
 
   nav ul li a:hover {

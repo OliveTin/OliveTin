@@ -1,6 +1,6 @@
-import { ExecutionDialog } from './ExecutionDialog.js'
+import { ExecutionFeedbackButton } from './ExecutionFeedbackButton.js'
 
-class ExecutionButton extends window.HTMLElement {
+class ExecutionButton extends ExecutionFeedbackButton {
   constructFromJson (json) {
     this.executionUuid = json
     this.ellapsed = 0
@@ -15,60 +15,19 @@ class ExecutionButton extends window.HTMLElement {
     this.btn.onclick = () => {
       this.show()
     }
+
+    this.domTitle = this.btn
   }
 
   show () {
-    if (typeof (window.executionDialog) === 'undefined') {
-      window.executionDialog = new ExecutionDialog()
-    }
-
-    window.executionDialog.show(this.executionUuid)
+    window.executionDialog.reset()
+    window.executionDialog.show()
+    window.executionDialog.fetchExecutionResult(this.executionUuid)
   }
 
-  onFinished (LogEntry) {
-    if (LogEntry.timedOut) {
-      this.onActionResult('action-timeout', 'Timed out')
-    } else if (LogEntry.blocked) {
-      this.onActionResult('action-blocked', 'Blocked!')
-    } else if (LogEntry.exitCode !== 0) {
-      this.onActionResult('action-nonzero-exit', 'Exit code ' + LogEntry.exitCode)
-    } else {
-      console.log(LogEntry)
-      this.ellapsed = Math.ceil(new Date(LogEntry.datetimeFinished) - new Date(LogEntry.datetimeStarted)) / 1000
-      this.onActionResult('action-success', 'Success!')
-    }
-  }
-
-  onActionResult (cssClass, temporaryStatusMessage) {
-    this.temporaryStatusMessage = '[' + temporaryStatusMessage + ']'
-    this.updateDom()
-    this.btn.classList.add(cssClass)
-  }
-
-  onActionError (err) {
-    console.error('callback error', err)
-    this.isWaiting = false
-    this.updateDom()
-    this.btn.classList.add('action-failed')
-  }
-
-  updateDom () {
-    if (this.temporaryStatusMessage != null) {
-      this.btn.innerText = this.temporaryStatusMessage
-      this.btn.classList.add('temporary-status-message')
-      this.isWaiting = false
-
-      setTimeout(() => {
-        this.temporaryStatusMessage = null
-        this.btn.classList.remove('temporary-status-message')
-        this.updateDom()
-      }, 2000)
-    } else if (this.isWaiting) {
-      this.btn.innerText = 'Waiting...'
-    } else {
-      this.btn.innerText = this.ellapsed + 's'
-      this.btn.title = this.ellapsed + ' seconds'
-    }
+  onExecStatusChanged () {
+    this.domTitle.innerText = this.ellapsed + 's'
+    this.btn.title = this.ellapsed + ' seconds'
   }
 }
 

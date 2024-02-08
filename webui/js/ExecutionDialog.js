@@ -2,21 +2,51 @@
 // the <dialog /> element out of index.html and just re-uses that - as only
 // one dialog can be shown at a time.
 export class ExecutionDialog {
-  show (json) {
-    this.executionUuid = json
-
+  constructor () {
     this.dlg = document.querySelector('dialog#execution-results-popup')
 
     this.domIcon = document.getElementById('execution-dialog-icon')
     this.domTitle = document.getElementById('execution-dialog-title')
     this.domStdout = document.getElementById('execution-dialog-stdout')
     this.domStderr = document.getElementById('execution-dialog-stderr')
+    this.domStdoutToggleBig = document.getElementById('execution-dialog-toggle-size')
+    this.domStdoutToggleBig.onclick = () => {
+      this.toggleSize()
+    }
+
     this.domDatetimeStarted = document.getElementById('execution-dialog-datetime-started')
     this.domDatetimeFinished = document.getElementById('execution-dialog-datetime-finished')
     this.domExitCode = document.getElementById('execution-dialog-exit-code')
     this.domStatus = document.getElementById('execution-dialog-status')
 
-    this.domTitle.innerText = 'Loading...'
+    this.domExecutionBasics = document.getElementById('execution-dialog-basics')
+    this.domExecutionDetails = document.getElementById('execution-dialog-details')
+    this.domExecutionOutput = document.getElementById('execution-dialog-output')
+  }
+
+  toggleSize () {
+    if (this.dlg.classList.contains('big')) {
+      this.dlg.classList.remove('big')
+      this.domStdout.parentElement.open = false
+    } else {
+      this.dlg.classList.add('big')
+      this.domStdout.parentElement.open = true
+    }
+  }
+
+  reset () {
+    this.executionSeconds = 0
+
+    this.dlg.classList.remove('big')
+    this.dlg.style.maxWidth = 'calc(100vw - 2em)'
+    this.dlg.style.width = ''
+    this.dlg.style.height = ''
+    this.dlg.style.border = ''
+
+    this.domStdoutToggleBig.hidden = false
+
+    this.domIcon.innerText = ''
+    this.domTitle.innerText = 'Waiting for result... '
     this.domExitCode.innerText = '?'
     this.domStatus.className = ''
     this.domDatetimeStarted.innerText = ''
@@ -24,12 +54,44 @@ export class ExecutionDialog {
     this.domStdout.innerText = ''
     this.domStderr.innerText = ''
 
-    this.dlg.showModal()
+    this.hideDetailsOnResult = false
+    this.domExecutionBasics.hidden = false
 
-    this.fetchExecutionResult()
+    this.domExecutionDetails.hidden = true
+    this.domStdout.parentElement.open = false
+
+    this.domExecutionOutput.hidden = true
   }
 
-  fetchExecutionResult () {
+  show (actionButton) {
+    if (typeof actionButton !== 'undefined' && actionButton != null) {
+      this.domIcon.innerText = actionButton.domIcon.innerText
+    }
+
+    clearInterval(window.executionDialogTicker)
+    this.executionSeconds = 0
+    this.executionTick()
+    window.executionDialogTicker = setInterval(() => {
+      this.executionTick()
+    }, 1000)
+
+    this.dlg.showModal()
+  }
+
+  executionTick () {
+    this.executionSeconds++
+
+    this.domDatetimeStarted.innerText = this.executionSeconds + ' seconds ago'
+  }
+
+  hideEverythingApartFromOutput () {
+    this.hideDetailsOnResult = true
+    this.domExecutionBasics.hidden = true
+  }
+
+  fetchExecutionResult (uuid) {
+    this.executionUuid = uuid
+
     const executionStatusArgs = {
       executionUuid: this.executionUuid
     }
@@ -48,13 +110,23 @@ export class ExecutionDialog {
       }
     }
     ).then((json) => {
-      this.renderResult(json)
+      this.renderExecutionResult(json)
     }).catch(err => {
       this.renderError(err)
     })
   }
 
-  renderResult (res) {
+  renderExecutionResult (res) {
+    clearInterval(window.executionDialogTicker)
+
+    this.domExecutionOutput.hidden = false
+
+    if (!this.hideDetailsOnResult) {
+      this.domExecutionDetails.hidden = false
+    } else {
+      this.domStdout.parentElement.open = true
+    }
+
     this.executionUuid = res.logEntry.executionUuid
 
     if (res.logEntry.executionFinished) {
@@ -86,7 +158,7 @@ export class ExecutionDialog {
     this.domStdout.innerText = res.logEntry.stdout
     this.domStdout.innerText = res.logEntry.stdout
 
-    if (res.logEntry.stderr === '') {
+    if (res.logEntry.stderr === '(empty)') {
       this.domStderr.parentElement.style.display = 'none'
       this.domStderr.innerText = res.logEntry.stderr
     } else {

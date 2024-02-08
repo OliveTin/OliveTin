@@ -1,5 +1,3 @@
-import { marshalLogsJsonToHtml } from './marshaller.js'
-
 window.ws = null
 
 export function checkWebsocketConnection () {
@@ -38,27 +36,15 @@ function websocketOnMessage (msg) {
   // FIXME check msg status is OK
   const j = JSON.parse(msg.data)
 
+  const e = new Event(j.type)
+  e.payload = j.payload
+
   switch (j.type) {
     case 'ExecutionFinished':
-      updatePageAfterFinished(j.payload)
+      window.dispatchEvent(e)
       break
     default:
       window.showBigError('Unknown message type from server: ' + j.type)
-  }
-}
-
-function updatePageAfterFinished (logEntry) {
-  document.querySelector('execution-button#execution-' + logEntry.uuid).onFinished(logEntry)
-
-  marshalLogsJsonToHtml({
-    logs: [logEntry]
-  })
-
-  // If the current execution dialog is open, update that too
-  if (window.executionDialog != null && window.executionDialog.dlg.open && window.executionDialog.executionUuid === logEntry.uuid) {
-    window.executionDialog.renderResult({
-      logEntry: logEntry
-    })
   }
 }
 

@@ -1,6 +1,6 @@
 'use strict'
 
-import { setupSectionNavigation, marshalDashboardComponentsJsonToHtml, marshalLogsJsonToHtml } from './js/marshaller.js'
+import { initMarshaller, setupSectionNavigation, marshalDashboardComponentsJsonToHtml, marshalLogsJsonToHtml } from './js/marshaller.js'
 import { checkWebsocketConnection } from './js/websocket.js'
 
 function searchLogs (e) {
@@ -123,6 +123,7 @@ function processWebuiSettingsJson (settings) {
 }
 
 function main () {
+  initMarshaller()
   setupLogSearchBox()
   setupSectionNavigation('sidebar')
 
