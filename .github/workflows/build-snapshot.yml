@@ -39,6 +39,9 @@ jobs:
       - name: make daemon
         run: make -w daemon-compile-x64-lin
 
+      - name: make webui
+        run: make -w webui-dist
+
       - name: unit tests
         run: make -w daemon-unittests
 

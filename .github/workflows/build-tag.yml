@@ -48,7 +48,10 @@ jobs:
           password: ${{ secrets.CONTAINER_TOKEN }}
 
       - name: grpc
-        run: make grpc
+        run: make -w grpc
+
+      - name: make webui
+        run: make -w webui-dist
 
       - name: goreleaser
         uses: goreleaser/goreleaser-action@v4.2.0
