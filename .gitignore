@@ -1,4 +1,3 @@
-webui/node_modules
 **/*.swp
 **/*.swo
 gen/
@@ -10,3 +9,6 @@ releases/
 dist/
 installation-id.txt
 tmp/
+webui/
+webui.dev/node_modules
+webui.dev/.parcel-cache

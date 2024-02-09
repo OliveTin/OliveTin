@@ -63,9 +63,13 @@ devrun: compile
 devcontainer: compile podman-image podman-container
 
 webui-codestyle:
-	cd webui && npm install
-	cd webui && ./node_modules/.bin/eslint main.js js/*
-	cd webui && ./node_modules/.bin/stylelint style.css
+	cd webui.dev && npm install
+	cd webui.dev && ./node_modules/.bin/eslint main.js js/*
+	cd webui.dev && ./node_modules/.bin/stylelint style.css
+
+webui-dist:
+	cd webui.dev && npm install
+	cd webui.dev && parcel build --dist-dir ../webui/
 
 clean:
 	rm -rf dist OliveTin OliveTin.armhf OliveTin.exe reports gen

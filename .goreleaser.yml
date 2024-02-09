@@ -2,7 +2,7 @@ project_name: OliveTin
 before:
   hooks:
     - go mod download
-    - rm -rf webui/node_modules
+    - make webui-dist
 builds:
   - env:
       - CGO_ENABLED=0

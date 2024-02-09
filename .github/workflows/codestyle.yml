@@ -6,7 +6,7 @@ on:
     paths:
       - 'cmd/**'
       - 'internal/**'
-      - 'webui/**'
+      - 'webui.dev/**'
       - 'integration-tests/**'
       - 'OliveTin.proto'
 
