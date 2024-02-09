@@ -150,23 +150,8 @@ nfpms:
       - src: OliveTin.service
         dst: /etc/systemd/system/OliveTin.service
 
-      - src: webui/main.js
+      - src: webui/*
         dst: /var/www/olivetin/
-
-      - src: webui/index.html
-        dst: /var/www/olivetin/
-
-      - src: webui/*.png
-        dst: /var/www/olivetin/
-
-      - src: webui/*.svg
-        dst: /var/www/olivetin/
-
-      - src: webui/style.css
-        dst: /var/www/olivetin/
-
-      - src: webui/js/
-        dst: /var/www/olivetin/js/
 
       - src: config.yaml
         dst: /etc/OliveTin/config.yaml
@@ -191,23 +176,8 @@ nfpms:
       - src: var/openrc/OliveTin
         dst: /etc/init.d/OliveTin
 
-      - src: webui/main.js
+      - src: webui/*
         dst: /var/www/olivetin/
-
-      - src: webui/index.html
-        dst: /var/www/olivetin/
-
-      - src: webui/*.png
-        dst: /var/www/olivetin/
-
-      - src: webui/*.svg
-        dst: /var/www/olivetin/
-
-      - src: webui/style.css
-        dst: /var/www/olivetin/
-
-      - src: webui/js/
-        dst: /var/www/olivetin/js/
 
       - src: config.yaml
         dst: /etc/OliveTin/config.yaml
