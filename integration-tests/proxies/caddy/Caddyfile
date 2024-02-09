@@ -1,0 +1,3 @@
+http://olivetin.example.com {
+        reverse_proxy * http://localhost:1337
+}
