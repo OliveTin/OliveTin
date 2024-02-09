@@ -12,7 +12,7 @@ func (cfg *Config) Sanitize() {
 	// log.Infof("cfg %p", cfg)
 
 	for idx := range cfg.Actions {
-		cfg.Actions[idx].sanitize()
+		cfg.Actions[idx].sanitize(cfg)
 	}
 }
 
@@ -23,12 +23,13 @@ func (cfg *Config) sanitizeLogLevel() {
 	}
 }
 
-func (action *Action) sanitize() {
+func (action *Action) sanitize(cfg *Config) {
 	if action.Timeout < 3 {
 		action.Timeout = 3
 	}
 
 	action.Icon = lookupHTMLIcon(action.Icon)
+	action.PopupOnStart = sanitizePopupOnStart(action.PopupOnStart, cfg)
 
 	if action.MaxConcurrent < 1 {
 		action.MaxConcurrent = 1
@@ -36,6 +37,19 @@ func (action *Action) sanitize() {
 
 	for idx := range action.Arguments {
 		action.Arguments[idx].sanitize()
+	}
+}
+
+func sanitizePopupOnStart(raw string, cfg *Config) string {
+	switch raw {
+	case "execution-dialog":
+		return raw
+	case "execution-dialog-stdout-only":
+		return raw
+	case "execution-button":
+		return raw
+	default:
+		return cfg.DefaultPopupOnStart
 	}
 }
 

@@ -1,6 +1,6 @@
 'use strict'
 
-import { marshalActionButtonsJsonToHtml, marshalLogsJsonToHtml } from './js/marshaller.js'
+import { initMarshaller, setupSectionNavigation, marshalDashboardComponentsJsonToHtml, marshalLogsJsonToHtml } from './js/marshaller.js'
 import { checkWebsocketConnection } from './js/websocket.js'
 
 function searchLogs (e) {
@@ -22,25 +22,6 @@ function searchLogsClear () {
 
   document.getElementById('searchLogsClear').disabled = true
   document.getElementById('logSearchBox').value = ''
-}
-
-function showSection (name) {
-  for (const otherName of ['Actions', 'Logs']) {
-    document.getElementById('show' + otherName).classList.remove('activeSection')
-    document.getElementById('content' + otherName).hidden = true
-  }
-
-  document.getElementById('show' + name).classList.add('activeSection')
-  document.getElementById('content' + name).hidden = false
-
-  document.getElementById('hide-sidebar-checkbox').checked = true
-}
-
-function setupSections () {
-  document.getElementById('showActions').onclick = () => { showSection('Actions') }
-  document.getElementById('showLogs').onclick = () => { showSection('Logs') }
-
-  showSection('Actions')
 }
 
 function setupLogSearchBox () {
@@ -91,7 +72,7 @@ function fetchGetDashboardComponents () {
     }
 
     window.restAvailable = true
-    marshalActionButtonsJsonToHtml(res)
+    marshalDashboardComponentsJsonToHtml(res)
 
     refreshServerConnectionLabel() // in-case it changed, update the label quicker
   }).catch((err) => { // err is 1st arg
@@ -142,8 +123,9 @@ function processWebuiSettingsJson (settings) {
 }
 
 function main () {
-  setupSections()
+  initMarshaller()
   setupLogSearchBox()
+  setupSectionNavigation('sidebar')
 
   window.fetch('webUiSettings.json').then(res => {
     return res.json()

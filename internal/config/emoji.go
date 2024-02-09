@@ -8,8 +8,11 @@ var emojis = map[string]string{
 	"backup":      "&#128190;",
 	"reboot":      "&#9211;",
 	"restart":     "&#9211;",
+	"box":         "&#128230;",
 	"ashtonished": "&#128562;",
 	"clock":       "&#128338;",
+	"disk":        "&#128189;",
+	"logs":        "&#128269;",
 }
 
 func lookupHTMLIcon(keyToLookup string) string {

@@ -12,15 +12,15 @@ describe('config: multipleDropdowns', function () {
 
   it('Multiple dropdowns are possible', async function() {
     await webdriver.get(runner.baseUrl())
-    await webdriver.manage().setTimeouts({ implicit: 2000 });
+    await webdriver.manage().setTimeouts({ implicit: 2000 })
 
-    const button = await webdriver.findElement(By.id('actionButton_bdc45101bbd12c1397557790d9f3e059')).findElement(By.tagName('button'));
+    const button = await webdriver.findElement(By.id('actionButton-bdc45101bbd12c1397557790d9f3e059')).findElement(By.tagName('button'))
 
-    expect(button).to.not.be.undefined;
+    expect(button).to.not.be.undefined
 
     await button.click()
 
-    const dialog = await webdriver.findElement(By.id('argument-popup'));
+    const dialog = await webdriver.findElement(By.id('argument-popup'))
 
     await webdriver.wait(until.elementIsVisible(dialog), 2000)
 

@@ -12,13 +12,14 @@ type Action struct {
 	CSS                    map[string]string `mapstructure:"omitempty"`
 	Timeout                int
 	Acls                   []string
+	Entity                 []string
 	ExecOnStartup          bool
 	ExecOnCron             []string
 	ExecOnFileCreatedInDir []string
 	ExecOnFileChangedInDir []string
 	MaxConcurrent          int
 	Arguments              []ActionArgument
-	PopupOnStart           bool
+	PopupOnStart           string
 }
 
 // ActionArgument objects appear on Actions.
@@ -37,13 +38,23 @@ type ActionArgumentChoice struct {
 	Title string
 }
 
+// HelperAction is an action that is used normally to generate entities, it cannot be started manually.
+type HelperAction struct {
+	Title                  string
+	Shell                  string
+	ExecOnStartup          bool
+	ExecOnCron             []string
+	ExecOnFileCreatedInDir []string
+	ExecOnFileChangedInDir []string
+}
+
 // Entity represents a "thing" that can have multiple actions associated with it.
 // for example, a media player with a start and stop action.
-type Entity struct {
-	Title   string
-	Icon    string
-	Actions []Action `mapstructure:"actions"`
-	CSS     map[string]string
+type EntityFile struct {
+	File string
+	Name string
+	Icon string
+	CSS  map[string]string
 }
 
 // PermissionsList defines what users can do with an action.
@@ -71,8 +82,9 @@ type Config struct {
 	ListenAddressGrpcActions        string
 	ExternalRestAddress             string
 	LogLevel                        string
-	Actions                         []Action `mapstructure:"actions"`
-	Entities                        []Entity `mapstructure:"entities"`
+	Actions                         []Action        `mapstructure:"actions"`
+	Entities                        []EntityFile    `mapstructure:"entities"`
+	Dashboards                      []DashboardItem `mapstructure:"dashboards"`
 	CheckForUpdates                 bool
 	PageTitle                       string
 	ShowFooter                      bool
@@ -88,6 +100,17 @@ type Config struct {
 	DefaultPermissions              PermissionsList
 	AccessControlLists              []AccessControlList
 	WebUIDir                        string
+	HelperActions                   []HelperAction `mapstructure:"helperActions"`
+	CronSupportForSeconds           bool
+	SectionNavigationStyle          string
+	DefaultPopupOnStart             string
+}
+
+type DashboardItem struct {
+	Title    string
+	Type     string
+	Link     string
+	Contents []DashboardItem
 }
 
 // DefaultConfig gets a new Config structure with sensible default values.
@@ -110,6 +133,9 @@ func DefaultConfig() *Config {
 	config.AuthJwtClaimUsername = "name"
 	config.AuthJwtClaimUserGroup = "group"
 	config.WebUIDir = "./webui"
+	config.CronSupportForSeconds = false
+	config.SectionNavigationStyle = "sidebar"
+	config.DefaultPopupOnStart = "nothing"
 
 	return &config
 }

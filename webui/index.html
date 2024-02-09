@@ -1,11 +1,12 @@
 <!DOCTYPE html>
 
-<html>
+<html lang = "en">
 	<head>
-
-		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta name = "viewport" content = "width=device-width, initial-scale=1.0">
+		<meta name = "description" content = "Give safe and simple access to predefined shell commands from a web interface." />
 
 		<title>OliveTin</title>
+
 		<link rel = "stylesheet" type = "text/css" href = "style.css" />
 		<link rel = "shortcut icon" type = "image/png" href = "OliveTinLogo.png" />
 
@@ -23,16 +24,16 @@
 				<h1 id = "page-title">OliveTin</h1>
 			</div>
 
+			<input type = "checkbox" id = "hide-sidebar-checkbox" hidden checked />
+			<nav hidden>
+				<ul id = "navigation-links">
+					<li><a id = "showActions">Actions</a></li>
+				</ul>
 
-			<div id = "content-sidebar">
-				<input type = "checkbox" id = "hide-sidebar-checkbox" hidden checked />
-				<aside>
-					<ul>
-						<li><a id = "showActions">Actions</a></li>
-						<li><a id = "showLogs">Logs</a></li>
-					</ul>
-				</aside>
-			</div>
+				<ul id = "supplemental-links">
+					<li><a id = "showLogs">Logs</a></li>
+				</ul>
+			</nav>
 
 			<section id = "contentLogs" title = "Logs" hidden>
 				<div class = "toolbar">
@@ -52,7 +53,8 @@
 			</section>
 
 			<section id = "contentActions" title = "Actions" hidden >
-				<fieldset id = "root-group" title = "Dashboard of buttons">
+				<fieldset id = "root-group" title = "Actions">
+					<legend hidden>Actions</legend>
 				</fieldset>
 			</section>
 
@@ -79,40 +81,49 @@
 
 		<dialog title = "Execution Results" id = "execution-results-popup">
 			<div class = "action-header">
-				<span class = "icon" role = "icon"></span>
+				<span id = "execution-dialog-icon" class = "icon" role = "img"></span>
 
-				<h2>Log:
-					<span class = "title">?</span>
+				<h2>
+					<span id = "execution-dialog-title">?</span>
 				</h2>
+
+				<button id = "execution-dialog-toggle-size">&#128470;</button>
 			</div>
-			<p>
-				<strong>Started: </strong><span class = "datetimeStarted">unknown</span>.
-				<strong>Finished: </strong><span class = "datetimeFinished">unknown</span>
-			</p>
-			<p>
-				<strong>Exit Code: </strong><span class = "exitCode">unknown</span>
-			</p>
-			<p>
-				<strong>Status: </strong><span class = "status">unknown</span>
-			</p>
+			<div id = "execution-dialog-basics">
+					<strong>Started: </strong><span id = "execution-dialog-datetime-started">unknown</span>
+			</div>
+			<div id = "execution-dialog-details">
+				<p>
+					<strong>Finished: </strong><span id = "execution-dialog-datetime-finished">unknown</span>
+				</p>
+				<p>
+					<strong>Exit Code: </strong><span id = "execution-dialog-exit-code">unknown</span>
+				</p>
+				<p>
+					<strong>Status: </strong><span id = "execution-dialog-status">unknown</span>
+				</p>
+			</div>
 
+			<div id = "execution-dialog-output">
+				<details>
+					<summary>Standard Output</summary>
+					<pre id = "execution-dialog-stdout">
+						?
+					</pre>
+				</details>
 
-			<details>
-				<summary>stdout</summary>
-				<pre class = "stdout">
-					?
-				</pre>
-			</details>
-
-			<details>
-				<summary>stderr</summary>
-				<pre class = "stderr">
-					?
-				</pre>
-			</details>
+				<details>
+					<summary>Standard Error</summary>
+					<pre id = "execution-dialog-stderr">
+						?
+					</pre>
+				</details>
+			</div>
 
 			<form method = "dialog">
-				<button name = "cancel">Close</button>
+				<div class = "buttons">
+					<button name = "Cancel">Close</button>
+				</div>
 			</form>
 		</dialog>
 
@@ -121,7 +132,7 @@
 				<form class = "action-arguments">
 					<div class = "wrapper">
 						<div class = "action-header">
-							<span class = "icon" role = "icon"></span>
+							<span class = "icon" role = "img"></span>
 							<h2>Argument form</h2>
 						</div>
 
@@ -133,13 +144,13 @@
 						</div>
 					</div>
 				</form>
-			</button>
+			</dialog>
 		</template>
 
 		<template id = "tplActionButton">
 			<button>
-				<span role = "icon" title = "action button icon" class = "icon">&#x1f4a9;</span>
-				<span role = "title" class = "title">Untitled Button</span>
+				<span title = "action button icon" class = "icon">&#x1f4a9;</span>
+				<span class = "title">Untitled Button</span>
 			</button>
 
 			<div class = "action-button-footer">
@@ -150,7 +161,7 @@
 			<tr class = "log-row">
 				<td class = "timestamp">?</td>
 				<td>
-					<span class = "icon" role = "icon"></span>
+					<span role = "img" class = "icon"></span>
 					<span class = "content">?</span>
 
 					<details>

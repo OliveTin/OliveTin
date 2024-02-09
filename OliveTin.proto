@@ -10,7 +10,7 @@ message Action {
 	string icon = 3;
 	bool can_exec = 4;
 	repeated ActionArgument arguments = 5;
-	bool popup_on_start = 6;
+	string popup_on_start = 6;
 }
 
 message ActionArgument {
@@ -39,9 +39,17 @@ message GetDashboardComponentsResponse {
 	string title = 1;
 	repeated Action actions = 2;
 	repeated Entity entities = 3;
+	repeated DashboardItem dashboards = 4;
 }
 
 message GetDashboardComponentsRequest {}
+
+message DashboardItem {
+	string title = 1;
+	string type = 2;
+	repeated DashboardItem contents = 3;
+	string link = 4;
+}
 
 message StartActionRequest {
 	string action_name = 1;
@@ -147,6 +155,12 @@ message SosReportResponse {
 	string alert = 1;
 }
 
+message GetReadyzRequest {}
+
+message GetReadyzResponse {
+	string status = 1;
+}
+
 service OliveTinApiService {
 	rpc GetDashboardComponents(GetDashboardComponentsRequest) returns (GetDashboardComponentsResponse) {
 		option (google.api.http) = {
@@ -209,6 +223,12 @@ service OliveTinApiService {
 	rpc SosReport(SosReportRequest) returns (SosReportResponse) {
 		option (google.api.http) = {
 			get: "/api/sosreport"
+		};
+	}
+
+	rpc GetReadyz(GetReadyzRequest) returns (GetReadyzResponse) {
+		option (google.api.http) = {
+			get: "/api/readyz"
 		};
 	}
 }

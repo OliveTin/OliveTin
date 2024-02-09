@@ -214,6 +214,8 @@ func (api *oliveTinAPI) GetDashboardComponents(ctx ctx.Context, req *pb.GetDashb
 
 	log.Tracef("GetDashboardComponents: %v", res)
 
+	dashboardCfgToPb(res, cfg.Dashboards)
+
 	return res, nil
 }
 
@@ -275,6 +277,14 @@ func (api *oliveTinAPI) SosReport(ctx ctx.Context, req *pb.SosReportRequest) (*p
 	}
 
 	log.Infof("\n" + installationinfo.GetSosReport())
+
+	return res, nil
+}
+
+func (api *oliveTinAPI) GetReadyz(ctx ctx.Context, req *pb.GetReadyzRequest) (*pb.GetReadyzResponse, error) {
+	res := &pb.GetReadyzResponse{
+		Status: "OK",
+	}
 
 	return res, nil
 }
