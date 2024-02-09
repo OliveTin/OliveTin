@@ -8,7 +8,7 @@
 
 - Get the snapshot you want to test `make getsnapshot`
 - To test against VMs:
--- `export OLIVETIN_TEST_RUNNER=container`
--- `vagrant up f38` (or whatever distro you like defined in `Vagrantfile`)
--- `. envVagrant.sh f38` to set the $IP and $PORT
+-- `export OLIVETIN_TEST_RUNNER=vm`
+-- `vagrant up fedora38` (or whatever distro you like defined in `Vagrantfile`)
+-- `. envVagrant.sh fedora38` to set the $IP and $PORT
 - `mocha`

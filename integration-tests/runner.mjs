@@ -96,7 +96,7 @@ class OliveTinTestRunnerVm extends OliveTinTestRunnerEnv {
 
   async start (cfg) {
     console.log("vagrant changing config")
-    spawn('vagrant', ['ssh', '-c', '"ln -sf /etc/OliveTin/ /opt/otConfigs/' + cfg + '/"'])
+    spawn('vagrant', ['ssh', '-c', '"ln -sf /etc/OliveTin/ /opt/OliveTin-configs/' + cfg + '/config.yaml"'])
     spawn('vagrant', ['ssh', '-c', '"systemctl restart OliveTin"'])
 
     return null

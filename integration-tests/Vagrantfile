@@ -3,39 +3,34 @@
 
 
 Vagrant.configure("2") do |config|
-  config.vm.box = "generic/centos8"
   config.vm.provision "shell", inline: "mkdir /etc/OliveTin && chmod o+w /etc/OliveTin/", privileged: true
-  config.vm.provision "file", source: "configs/general/config.yaml/.", destination: "/etc/OliveTin/config.yaml"
+  config.vm.provision "file", source: "configs/.", destination: "/opt/OliveTin-configs/"
 
   config.vm.provider :libvirt do |libvirt|
     libvirt.management_network_device = 'virbr0'
   end
 
-  config.vm.define :f38 do |f36|
-    f36.vm.box = "generic/fedora38"
-    f36.vm.provision "file", source: "/opt/OliveTin-snapshot/OliveTin_linux_amd64.rpm", destination: "$HOME/"
-    f36.vm.provision "shell", inline: "rpm -U OliveTin* && systemctl enable --now OliveTin && systemctl disable --now firewalld"
+  config.vm.define :stream9 do |i|
+    i.vm.box = "centos/stream9"
+    i.vm.provision "file", source: "/opt/OliveTin-snapshot/OliveTin_linux_amd64.rpm", destination: "$HOME/"
+    i.vm.provision "shell", inline: "rpm -U OliveTin* && systemctl enable --now OliveTin && systemctl disable --now firewalld"
   end
 
-  config.vm.define :f36 do |f36|
-    f36.vm.box = "generic/fedora36"
-    f36.vm.provision "file", source: "/opt/OliveTin-snapshot/OliveTin_linux_amd64.rpm", destination: "$HOME/"
-    f36.vm.provision "shell", inline: "rpm -U OliveTin* && systemctl enable --now OliveTin && systemctl disable --now firewalld"
+  config.vm.define :fedora38 do |i|
+    i.vm.box = "generic/fedora38"
+    i.vm.provision "file", source: "/opt/OliveTin-snapshot/OliveTin_linux_amd64.rpm", destination: "$HOME/"
+    i.vm.provision "shell", inline: "rpm -U OliveTin* && systemctl enable --now OliveTin && systemctl disable --now firewalld"
   end
 
-  config.vm.define :debian do |debian|
-    debian.vm.box = "generic/debian10"
-    debian.vm.provision "file", source: "/opt/OliveTin-snapshot/OliveTin_linux_amd64.deb", destination: "$HOME/"
-    debian.vm.provision "shell", inline: "dpkg --force-confold -i OliveTin* && systemctl enable --now OliveTin"
+  config.vm.define :debian12 do |i|
+    i.vm.box = "debian/bookworm64"
+    i.vm.provision "file", source: "/opt/OliveTin-snapshot/OliveTin_linux_amd64.deb", destination: "$HOME/"
+    i.vm.provision "shell", inline: "dpkg --force-confold -i OliveTin* && systemctl enable --now OliveTin"
   end
 
-  config.vm.define :ubuntu do |ubuntu|
-    ubuntu.vm.box = "generic/ubuntu2110"
-    ubuntu.vm.provision "file", source: "/opt/OliveTin-snapshot/OliveTin_linux_amd64.deb", destination: "$HOME/"
-    ubuntu.vm.provision "shell", inline: "dpkg --force-confold -i OliveTin* && systemctl enable --now OliveTin && systemctl disable --now firewalld"
+  config.vm.define :ubuntu2310 do |i|
+    i.vm.box = "ubuntu/mantic64"
+    i.vm.provision "file", source: "/opt/OliveTin-snapshot/OliveTin_linux_amd64.deb", destination: "$HOME/"
+    i.vm.provision "shell", inline: "dpkg --force-confold -i OliveTin* && systemctl enable --now OliveTin && systemctl disable --now firewalld"
   end
-
-  # TODO
-  #
-
 end
