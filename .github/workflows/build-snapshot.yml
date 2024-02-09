@@ -49,11 +49,11 @@ jobs:
         run: cd integration-tests && make -w
 
       - name: goreleaser
-        uses: goreleaser/goreleaser-action@v4.2.0
+        uses: goreleaser/goreleaser-action@v5
         with:
           distribution: goreleaser
           version: latest
-          args: release --snapshot --clean --parallelism 1 --skip-docker
+          args: release --snapshot --clean --parallelism 1 --skip=docker
 
       - name: get date
         run: |
