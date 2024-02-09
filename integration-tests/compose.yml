@@ -1,0 +1,17 @@
+---
+version: "3.8"
+services:
+  nginx:
+    container_name: nginx
+    image: docker.io/nginx
+    volumes:
+      - ./proxies/nginx/:/etc/nginx/
+    ports:
+      - "8443:8443"
+    restart: unless-stopped
+    networks:
+      - otproxy
+
+networks:
+  otproxy:
+    name: otproxy
