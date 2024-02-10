@@ -2,7 +2,7 @@
   "name": "olivetin-webui",
   "version": "1.0.0",
   "description": "The WebUI for OliveTin",
-  "repository": "http://github.com/OliveTin/OliveTin",
+  "repository": "https://github.com/OliveTin/OliveTin",
   "source": "index.html",
   "devDependencies": {
     "eslint": "^7.25.0",
