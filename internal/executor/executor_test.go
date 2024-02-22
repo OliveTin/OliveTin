@@ -63,7 +63,7 @@ func TestExecNonExistant(t *testing.T) {
 	wg.Wait()
 
 	assert.Equal(t, int32(-1337), req.logEntry.ExitCode, "Log entry is set to an internal error code")
-	assert.Equal(t, "", req.logEntry.ActionIcon, "Log entry icon wasnt found")
+	assert.Equal(t, "&#x1f4a9;", req.logEntry.ActionIcon, "Log entry icon is a poop (not found)")
 }
 
 func TestArgumentNameCamelCase(t *testing.T) {

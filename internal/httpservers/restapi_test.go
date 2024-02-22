@@ -100,8 +100,12 @@ func testBase(t *testing.T, expire int64, expectCode int) {
 	*/
 
 	go func() {
-		if err := srv.Serve(lis); err != nil {
-			t.Errorf("couldn't start server: %v", err)
+		if lis == nil {
+			t.Errorf("couldn't start server: listener is null")
+		} else {
+			if err := srv.Serve(lis); err != nil {
+				t.Errorf("couldn't start server: %v", err)
+			}
 		}
 	}()
 
