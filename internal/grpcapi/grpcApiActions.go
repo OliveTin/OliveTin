@@ -1,7 +1,7 @@
 package grpcapi
 
 import (
-	"crypto/md5"
+	"crypto/sha256"
 	"fmt"
 	pb "github.com/OliveTin/OliveTin/gen/grpc"
 	acl "github.com/OliveTin/OliveTin/internal/acl"
@@ -118,7 +118,10 @@ func buildChoices(choices []config.ActionArgumentChoice) []*pb.ActionArgumentCho
 }
 
 func createPublicID(action *config.Action, entityPrefix string) string {
-	return fmt.Sprintf("%x", md5.Sum([]byte(action.ID+"."+entityPrefix)))
+	h := sha256.New()
+	h.Write([]byte(action.ID+"."+entityPrefix))
+
+	return fmt.Sprintf("%x", h.Sum(nil))
 }
 
 func findActionByPublicID(id string) *config.Action {
