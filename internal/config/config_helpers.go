@@ -4,7 +4,7 @@ package config
 func (cfg *Config) FindAction(actionTitle string) *Action {
 	for _, action := range cfg.Actions {
 		if action.Title == actionTitle {
-			return &action
+			return action
 		}
 	}
 
@@ -36,7 +36,7 @@ func (action *Action) findArg(name string) *ActionArgument {
 func (cfg *Config) FindAcl(aclTitle string) *AccessControlList {
 	for _, acl := range cfg.AccessControlLists {
 		if acl.Name == aclTitle {
-			return &acl
+			return acl
 		}
 	}
 

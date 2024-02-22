@@ -1,0 +1,12 @@
+- name: server1
+  state: started
+  hostname: server1.example.com
+  ip: 192.168.0.1
+- name: server2
+  state: started
+  hostname: server2.example.com
+  ip: 192.168.0.2
+- name: server3
+  state: stopped
+  hostname: server3.example.com
+  ip: 192.168.0.3

@@ -1,5 +1,5 @@
-import {expect} from 'chai';
-import {By} from 'selenium-webdriver';
+import { expect } from 'chai'
+import { By } from 'selenium-webdriver'
 
 describe('config: hiddenNav', function () {
   before(async function () {

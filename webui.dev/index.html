@@ -189,7 +189,7 @@
 			This is the bootstrap code, which relies on very simple, old javascript
 		  	to at least display a helpful error message if we can't use OliveTin.
 			*/
-			function showBigError (type, friendlyType, message) {
+			window.showBigError = function (type, friendlyType, message) {
 			  clearBigErrors(type)
 
 			  console.error('Error ' + type + ': ', message)
@@ -202,7 +202,7 @@
 			  document.body.prepend(domErr)
 			}
 
-			function clearBigErrors(additionalClass) {
+			window.clearBigErrors = function (additionalClass) {
 			  let selector = 'div.error'
 
 		      if (additionalClass != null) {

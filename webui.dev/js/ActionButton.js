@@ -25,11 +25,9 @@ class ActionButton extends ExecutionFeedbackButton {
     this.constructDomFromTemplate()
 
     // Class attributes
-    this.temporaryStatusMessage = null
-    this.isWaiting = false
-    this.actionCallUrl = window.restBaseUrl + 'StartAction'
-
     this.updateFromJson(json)
+
+    this.actionId = json.id
 
     // DOM Attributes
     this.setAttribute('role', 'none')
@@ -59,15 +57,13 @@ class ActionButton extends ExecutionFeedbackButton {
     this.domTitle.innerText = this.btn.title
     this.domIcon.innerHTML = this.unicodeIcon
 
-    this.setAttribute('id', 'actionButton-' + json.id)
+    this.setAttribute('id', 'actionButton-' + this.actionId)
   }
 
   updateFromJson (json) {
     // Fields that should not be updated
     //
     // title - as the callback URL relies on it
-    // actionCallbackUrl - as it's based on the title
-    // temporaryStatusMessage - as the button might be "waiting" on execution to finish while it's being updated.
 
     if (json.icon === '') {
       this.unicodeIcon = '&#x1f4a9'
@@ -93,8 +89,6 @@ class ActionButton extends ExecutionFeedbackButton {
   }
 
   startAction (actionArgs) {
-    //    this.btn.disabled = true
-    //    this.isWaiting = true
     this.btn.classList = [] // Removes old animation classes
 
     if (actionArgs === undefined) {
@@ -104,14 +98,14 @@ class ActionButton extends ExecutionFeedbackButton {
     // UUIDs are create client side, so that we can setup a "execution-button"
     // to track the execution before we send the request to the server.
     const startActionArgs = {
-      actionName: this.btn.title,
+      actionId: this.actionId,
       arguments: actionArgs,
-      uuid: this.getUniqueId()
+      uniqueTrackingId: this.getUniqueId()
     }
 
     this.onActionStarted(startActionArgs.uuid)
 
-    window.fetch(this.actionCallUrl, {
+    window.fetch(window.restBaseUrl + 'StartAction', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

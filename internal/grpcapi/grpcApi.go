@@ -15,6 +15,7 @@ import (
 	config "github.com/OliveTin/OliveTin/internal/config"
 	executor "github.com/OliveTin/OliveTin/internal/executor"
 	installationinfo "github.com/OliveTin/OliveTin/internal/installationinfo"
+	sv "github.com/OliveTin/OliveTin/internal/stringvariables"
 )
 
 var (
@@ -35,18 +36,21 @@ func (api *oliveTinAPI) StartAction(ctx ctx.Context, req *pb.StartActionRequest)
 		args[arg.Name] = arg.Value
 	}
 
+	pair, _ := publicActionIdToActionMap[req.ActionId]
+
 	execReq := executor.ExecutionRequest{
-		ActionName:        req.ActionName,
-		UUID:              req.Uuid,
+		Action:            pair.Action,
+		EntityPrefix:      pair.EntityPrefix,
+		TrackingID:        req.UniqueTrackingId,
 		Arguments:         args,
 		AuthenticatedUser: acl.UserFromContext(ctx, cfg),
 		Cfg:               cfg,
 	}
 
-	_, uuid := api.executor.ExecRequest(&execReq)
+	api.executor.ExecRequest(&execReq)
 
 	return &pb.StartActionResponse{
-		ExecutionUuid: uuid,
+		ExecutionTrackingId: req.UniqueTrackingId,
 	}, nil
 }
 
@@ -54,8 +58,8 @@ func (api *oliveTinAPI) StartActionAndWait(ctx ctx.Context, req *pb.StartActionA
 	args := make(map[string]string)
 
 	execReq := executor.ExecutionRequest{
-		ActionName:        req.ActionName,
-		UUID:              uuid.NewString(),
+		Action:            findActionByPublicID(req.ActionId),
+		TrackingID:        uuid.NewString(),
 		Arguments:         args,
 		AuthenticatedUser: acl.UserFromContext(ctx, cfg),
 		Cfg:               cfg,
@@ -64,7 +68,7 @@ func (api *oliveTinAPI) StartActionAndWait(ctx ctx.Context, req *pb.StartActionA
 	wg, _ := api.executor.ExecRequest(&execReq)
 	wg.Wait()
 
-	internalLogEntry, ok := api.executor.Logs[execReq.UUID]
+	internalLogEntry, ok := api.executor.Logs[execReq.TrackingID]
 
 	if ok {
 		return &pb.StartActionAndWaitResponse{
@@ -75,67 +79,42 @@ func (api *oliveTinAPI) StartActionAndWait(ctx ctx.Context, req *pb.StartActionA
 	}
 }
 
-func (api *oliveTinAPI) StartActionByAlias(ctx ctx.Context, req *pb.StartActionByAliasRequest) (*pb.StartActionByAliasResponse, error) {
+func (api *oliveTinAPI) StartActionByGet(ctx ctx.Context, req *pb.StartActionByGetRequest) (*pb.StartActionByGetResponse, error) {
 	args := make(map[string]string)
 
-	action := findActionByAlias(req.ActionAlias)
-
-	if action == nil {
-		log.Warnf("ByAlias action alias not found: %v, cannot start execution.", req.ActionAlias)
-		return &pb.StartActionByAliasResponse{
-			ExecutionUuid: "",
-		}, errors.New("ByAlias action alias not found")
-	}
-
 	execReq := executor.ExecutionRequest{
-		ActionName: action.Title,
-		Action:     action,
-		UUID:       uuid.NewString(),
-		Arguments:  args,
-		AuthenticatedUser: &acl.AuthenticatedUser{
-			Username:  "webhook",
-			Usergroup: "webhook",
-		},
-		Cfg: cfg,
+		Action:            findActionByPublicID(req.ActionId),
+		TrackingID:        uuid.NewString(),
+		Arguments:         args,
+		AuthenticatedUser: acl.UserFromContext(ctx, cfg),
+		Cfg:               cfg,
 	}
 
-	_, uuid := api.executor.ExecRequest(&execReq)
+	_, uniqueTrackingId := api.executor.ExecRequest(&execReq)
 
-	return &pb.StartActionByAliasResponse{
-		ExecutionUuid: uuid,
+	return &pb.StartActionByGetResponse{
+		ExecutionTrackingId: uniqueTrackingId,
 	}, nil
 }
 
-func (api *oliveTinAPI) StartActionByAliasAndWait(ctx ctx.Context, req *pb.StartActionByAliasAndWaitRequest) (*pb.StartActionByAliasAndWaitResponse, error) {
+func (api *oliveTinAPI) StartActionByGetAndWait(ctx ctx.Context, req *pb.StartActionByGetAndWaitRequest) (*pb.StartActionByGetAndWaitResponse, error) {
 	args := make(map[string]string)
 
-	action := findActionByAlias(req.ActionAlias)
-
-	if action == nil {
-		log.Warnf("ByAlias action alias not found: %v, cannot start execution.", req.ActionAlias)
-
-		return &pb.StartActionByAliasAndWaitResponse{}, errors.New("ByAlias action alias not found")
-	}
-
 	execReq := executor.ExecutionRequest{
-		ActionName: action.Title,
-		Action:     action,
-		UUID:       uuid.NewString(),
-		Arguments:  args,
-		AuthenticatedUser: &acl.AuthenticatedUser{
-			Username:  "webhook",
-			Usergroup: "webhook",
-		},
-		Cfg: cfg,
+		Action:            findActionByPublicID(req.ActionId),
+		TrackingID:        uuid.NewString(),
+		Arguments:         args,
+		AuthenticatedUser: acl.UserFromContext(ctx, cfg),
+		Cfg:               cfg,
 	}
 
 	wg, _ := api.executor.ExecRequest(&execReq)
 	wg.Wait()
 
-	internalLogEntry, ok := api.executor.Logs[execReq.UUID]
+	internalLogEntry, ok := api.executor.Logs[execReq.TrackingID]
 
 	if ok {
-		return &pb.StartActionByAliasAndWaitResponse{
+		return &pb.StartActionByGetAndWaitResponse{
 			LogEntry: internalLogEntryToPb(internalLogEntry),
 		}, nil
 	} else {
@@ -145,26 +124,27 @@ func (api *oliveTinAPI) StartActionByAliasAndWait(ctx ctx.Context, req *pb.Start
 
 func internalLogEntryToPb(logEntry *executor.InternalLogEntry) *pb.LogEntry {
 	return &pb.LogEntry{
-		ActionTitle:       logEntry.ActionTitle,
-		ActionIcon:        logEntry.ActionIcon,
-		DatetimeStarted:   logEntry.DatetimeStarted,
-		DatetimeFinished:  logEntry.DatetimeFinished,
-		Stdout:            logEntry.Stdout,
-		Stderr:            logEntry.Stderr,
-		TimedOut:          logEntry.TimedOut,
-		Blocked:           logEntry.Blocked,
-		ExitCode:          logEntry.ExitCode,
-		Tags:              logEntry.Tags,
-		ExecutionUuid:     logEntry.UUID,
-		ExecutionStarted:  logEntry.ExecutionStarted,
-		ExecutionFinished: logEntry.ExecutionFinished,
+		ActionTitle:         logEntry.ActionTitle,
+		ActionIcon:          logEntry.ActionIcon,
+		ActionId:            logEntry.ActionId,
+		DatetimeStarted:     logEntry.DatetimeStarted,
+		DatetimeFinished:    logEntry.DatetimeFinished,
+		Stdout:              logEntry.Stdout,
+		Stderr:              logEntry.Stderr,
+		TimedOut:            logEntry.TimedOut,
+		Blocked:             logEntry.Blocked,
+		ExitCode:            logEntry.ExitCode,
+		Tags:                logEntry.Tags,
+		ExecutionTrackingId: logEntry.ExecutionTrackingID,
+		ExecutionStarted:    logEntry.ExecutionStarted,
+		ExecutionFinished:   logEntry.ExecutionFinished,
 	}
 }
 
 func (api *oliveTinAPI) ExecutionStatus(ctx ctx.Context, req *pb.ExecutionStatusRequest) (*pb.ExecutionStatusResponse, error) {
 	res := &pb.ExecutionStatusResponse{}
 
-	logEntry, ok := api.executor.Logs[req.ExecutionUuid]
+	logEntry, ok := api.executor.Logs[req.ExecutionTrackingId]
 
 	if !ok {
 		return res, nil
@@ -224,9 +204,9 @@ func (api *oliveTinAPI) GetLogs(ctx ctx.Context, req *pb.GetLogsRequest) (*pb.Ge
 
 	// TODO Limit to 10 entries or something to prevent browser lag.
 
-	for uuid, logEntry := range api.executor.Logs {
+	for trackingId, logEntry := range api.executor.Logs {
 		pbLogEntry := internalLogEntryToPb(logEntry)
-		pbLogEntry.ExecutionUuid = uuid
+		pbLogEntry.ExecutionTrackingId = trackingId
 
 		ret.Logs = append(ret.Logs, pbLogEntry)
 	}
@@ -272,11 +252,53 @@ func (api *oliveTinAPI) WhoAmI(ctx ctx.Context, req *pb.WhoAmIRequest) (*pb.WhoA
 }
 
 func (api *oliveTinAPI) SosReport(ctx ctx.Context, req *pb.SosReportRequest) (*pb.SosReportResponse, error) {
-	res := &pb.SosReportResponse{
-		Alert: "Your SOS Report has been logged to OliveTin logs.",
+	sos := installationinfo.GetSosReport()
+
+	res := &pb.SosReportResponse{}
+
+	if cfg.InsecureAllowDumpSos {
+		res.Alert = sos
+	} else {
+		res.Alert = "Your SOS Report has been logged to OliveTin logs."
+		log.Info(sos)
 	}
 
-	log.Infof("\n" + installationinfo.GetSosReport())
+	return res, nil
+}
+
+func (api *oliveTinAPI) DumpVars(ctx ctx.Context, req *pb.DumpVarsRequest) (*pb.DumpVarsResponse, error) {
+	res := &pb.DumpVarsResponse{}
+
+	if !cfg.InsecureAllowDumpVars {
+		res.Alert = "Dumping variables is not allowed by default because it is insecure."
+
+		return res, nil
+	}
+
+	res.Alert = "Dumping variables has been enabled in the configuration. Please set InsecureAllowDumpVars = false again after you don't need it anymore"
+	res.Contents = sv.Contents
+
+	return res, nil
+}
+
+func (api *oliveTinAPI) DumpPublicIdActionMap(ctx ctx.Context, req *pb.DumpPublicIdActionMapRequest) (*pb.DumpPublicIdActionMapResponse, error) {
+	res := &pb.DumpPublicIdActionMapResponse{}
+	res.Contents = make(map[string]*pb.ActionEntityPair)
+
+	if !cfg.InsecureAllowDumpActionMap {
+		res.Alert = "Dumping Public IDs is disallowed."
+
+		return res, nil
+	}
+
+	for k, v := range publicActionIdToActionMap {
+		res.Contents[k] = &pb.ActionEntityPair{
+			ActionTitle:  v.Action.Title,
+			EntityPrefix: v.EntityPrefix,
+		}
+	}
+
+	res.Alert = "Dumping variables has been enabled in the configuration. Please set InsecureAllowDumpActionMap = false again after you don't need it anymore"
 
 	return res, nil
 }

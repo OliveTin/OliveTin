@@ -26,7 +26,7 @@ func Schedule(cfg *config.Config, ex *executor.Executor) {
 	scheduler.Start()
 }
 
-func scheduleAction(cfg *config.Config, scheduler *cron.Cron, cronline string, ex *executor.Executor, action config.Action) {
+func scheduleAction(cfg *config.Config, scheduler *cron.Cron, cronline string, ex *executor.Executor, action *config.Action) {
 	log.WithFields(log.Fields{
 		"action":   action.Title,
 		"cronline": cronline,
@@ -34,9 +34,9 @@ func scheduleAction(cfg *config.Config, scheduler *cron.Cron, cronline string, e
 
 	_, err := scheduler.AddFunc(cronline, func() {
 		req := &executor.ExecutionRequest{
-			ActionName: action.Title,
-			Cfg:        cfg,
-			Tags:       []string{"cron"},
+			ActionTitle: action.Title,
+			Cfg:         cfg,
+			Tags:        []string{"cron"},
 			AuthenticatedUser: &acl.AuthenticatedUser{
 				Username: "cron",
 			},

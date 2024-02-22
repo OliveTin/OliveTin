@@ -25,7 +25,7 @@ dialog.big {
 fieldset {
   display: grid;
   grid-template-columns: repeat(auto-fit, 180px);
-  grid-template-rows: auto auto auto auto;
+  grid-auto-rows: 1fr;
   grid-gap: 1em;
   padding: 0;
   text-align: center;

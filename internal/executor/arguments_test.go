@@ -33,7 +33,7 @@ func TestArgumentNameNumbers(t *testing.T) {
 		"person1name": "Fred",
 	}
 
-	out, err := parseActionArguments(a1.Shell, values, &a1)
+	out, err := parseActionArguments(a1.Shell, values, &a1, a1.Title, "")
 
 	assert.Equal(t, "echo 'Tickling Fred'", out)
 	assert.Nil(t, err)
@@ -53,7 +53,7 @@ func TestArgumentNotProvided(t *testing.T) {
 
 	values := map[string]string{}
 
-	out, err := parseActionArguments(a1.Shell, values, &a1)
+	out, err := parseActionArguments(a1.Shell, values, &a1, a1.Title, "")
 
 	assert.Equal(t, "", out)
 	assert.Equal(t, err.Error(), "Required arg not provided: personName")

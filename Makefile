@@ -68,8 +68,9 @@ webui-codestyle:
 	cd webui.dev && ./node_modules/.bin/stylelint style.css
 
 webui-dist:
+	rm -rf webui webui.dev/dist
 	cd webui.dev && npm install
-	cd webui.dev && parcel build --dist-dir ../webui/
+	cd webui.dev && parcel build && mv dist ../webui
 
 clean:
 	rm -rf dist OliveTin OliveTin.armhf OliveTin.exe reports gen

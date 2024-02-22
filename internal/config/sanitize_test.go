@@ -8,7 +8,7 @@ import (
 func TestSanitizeConfig(t *testing.T) {
 	c := DefaultConfig()
 
-	a := Action{
+	a := &Action{
 		Title: "Mr Waffles",
 		Arguments: []ActionArgument{
 			{

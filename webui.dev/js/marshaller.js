@@ -187,11 +187,11 @@ function marshalDashboardStructureToHtml (json) {
 }
 
 function marshalLink (item, fieldset) {
-  let btn = window.actionButtons[item.link]
+  let btn = window.actionButtons[item.title]
 
   if (typeof btn === 'undefined') {
     btn = document.createElement('button')
-    btn.innerText = 'Action not found: ' + item.link
+    btn.innerText = 'Action not found: ' + item.title
     btn.classList.add('error')
   }
 
@@ -207,6 +207,9 @@ function marshalContainerContents (json, section, fieldset, parentDashboard) {
       case 'directory':
         marshalDirectoryButton(item, fieldset)
         marshalDirectory(item, section)
+        break
+      case 'display':
+        marshalDisplay(item, fieldset)
         break
       case 'link':
         marshalLink(item, fieldset)
@@ -333,6 +336,13 @@ function createDirectoryBreadcrumb (title, link) {
   }
 
   return a
+}
+
+function marshalDisplay (item, fieldset) {
+  const display = document.createElement('div')
+  display.innerHTML = item.title
+
+  fieldset.appendChild(display)
 }
 
 function marshalDirectoryButton (item, fieldset) {

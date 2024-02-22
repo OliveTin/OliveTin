@@ -3,6 +3,7 @@ package executor
 import (
 	acl "github.com/OliveTin/OliveTin/internal/acl"
 	config "github.com/OliveTin/OliveTin/internal/config"
+	sv "github.com/OliveTin/OliveTin/internal/stringvariables"
 	log "github.com/sirupsen/logrus"
 
 	"bytes"
@@ -28,13 +29,15 @@ type Executor struct {
 // ExecutionRequest is a request to execute an action. It's passed to an
 // Executor. They're created from the grpcapi.
 type ExecutionRequest struct {
-	ActionName         string
-	Action             *config.Action
-	Arguments          map[string]string
-	UUID               string
-	Tags               []string
-	Cfg                *config.Config
-	AuthenticatedUser  *acl.AuthenticatedUser
+	ActionTitle       string
+	Action            *config.Action
+	Arguments         map[string]string
+	TrackingID        string
+	Tags              []string
+	Cfg               *config.Config
+	AuthenticatedUser *acl.AuthenticatedUser
+	EntityPrefix      string
+
 	logEntry           *InternalLogEntry
 	finalParsedCommand string
 	executor           *Executor
@@ -44,18 +47,19 @@ type ExecutionRequest struct {
 // state of execution (even if the command is not executed). It's designed to be
 // easily serializable.
 type InternalLogEntry struct {
-	DatetimeStarted   string
-	DatetimeFinished  string
-	Stdout            string
-	Stderr            string
-	StdoutBuffer      io.ReadCloser
-	StderrBuffer      io.ReadCloser
-	TimedOut          bool
-	Blocked           bool
-	ExitCode          int32
-	Tags              []string
-	ExecutionStarted  bool
-	ExecutionFinished bool
+	DatetimeStarted     string
+	DatetimeFinished    string
+	Stdout              string
+	Stderr              string
+	StdoutBuffer        io.ReadCloser
+	StderrBuffer        io.ReadCloser
+	TimedOut            bool
+	Blocked             bool
+	ExitCode            int32
+	Tags                []string
+	ExecutionStarted    bool
+	ExecutionFinished   bool
+	ExecutionTrackingID string
 
 	/*
 		The following 3 properties are obviously on Action normally, but it's useful
@@ -64,7 +68,7 @@ type InternalLogEntry struct {
 	*/
 	ActionTitle string
 	ActionIcon  string
-	UUID        string
+	ActionId    string
 }
 
 type executorStepFunc func(*ExecutionRequest) bool
@@ -76,8 +80,7 @@ func DefaultExecutor() *Executor {
 	e.Logs = make(map[string]*InternalLogEntry)
 
 	e.chainOfCommand = []executorStepFunc{
-		stepLogRequested,
-		stepFindAction,
+		stepRequestAction,
 		stepConcurrencyCheck,
 		stepACLCheck,
 		stepParseArgs,
@@ -108,21 +111,19 @@ func (e *Executor) ExecRequest(req *ExecutionRequest) (*sync.WaitGroup, string) 
 	// duplicate UUIDs (or just random strings), but this is the only way.
 
 	req.logEntry = &InternalLogEntry{
-		DatetimeStarted:   time.Now().Format("2006-01-02 15:04:05"),
-		ActionTitle:       req.ActionName,
-		UUID:              req.UUID,
-		Stdout:            "",
-		Stderr:            "",
-		ExitCode:          -1337, // If an Action is not actually executed, this is the default exit code.
-		ExecutionStarted:  false,
-		ExecutionFinished: false,
+		DatetimeStarted:     time.Now().Format("2006-01-02 15:04:05"),
+		ExecutionTrackingID: req.TrackingID,
+		Stdout:              "",
+		Stderr:              "",
+		ExitCode:            -1337, // If an Action is not actually executed, this is the default exit code.
+		ExecutionStarted:    false,
+		ExecutionFinished:   false,
+		ActionId:            "",
+		ActionTitle:         "notfound",
+		ActionIcon:          "&#x1f4a9;",
 	}
 
-	e.Logs[req.UUID] = req.logEntry
-
-	for _, listener := range e.listeners {
-		listener.OnExecutionStarted(req.ActionName)
-	}
+	e.Logs[req.TrackingID] = req.logEntry
 
 	wg := new(sync.WaitGroup)
 	wg.Add(1)
@@ -132,7 +133,7 @@ func (e *Executor) ExecRequest(req *ExecutionRequest) (*sync.WaitGroup, string) 
 		defer wg.Done()
 	}()
 
-	return wg, req.UUID
+	return wg, req.TrackingID
 }
 
 func (e *Executor) execChain(req *ExecutionRequest) {
@@ -153,7 +154,7 @@ func getConcurrentCount(req *ExecutionRequest) int {
 	concurrentCount := 0
 
 	for _, log := range req.executor.Logs {
-		if log.ActionTitle == req.ActionName && !log.ExecutionFinished {
+		if log.ActionId == req.Action.ID && !log.ExecutionFinished {
 			concurrentCount += 1
 		}
 	}
@@ -169,36 +170,13 @@ func stepConcurrencyCheck(req *ExecutionRequest) bool {
 		msg := fmt.Sprintf("Blocked from executing. This would mean this action is running %d times concurrently, but this action has maxExecutions set to %d.", concurrentCount, req.Action.MaxConcurrent)
 
 		log.WithFields(log.Fields{
-			"actionTitle": req.ActionName,
+			"actionTitle": req.logEntry.ActionTitle,
 		}).Warnf(msg)
 
 		req.logEntry.Stdout = msg
 		req.logEntry.Blocked = true
 		return false
 	}
-
-	return true
-}
-
-func stepFindAction(req *ExecutionRequest) bool {
-	if req.Action != nil {
-		return true
-	}
-
-	actualAction := req.Cfg.FindAction(req.ActionName)
-
-	if actualAction == nil {
-		log.WithFields(log.Fields{
-			"actionName": req.ActionName,
-		}).Warnf("Action not found")
-
-		req.logEntry.Stderr = "Action not found"
-
-		return false
-	}
-
-	req.Action = actualAction
-	req.logEntry.ActionIcon = actualAction.Icon
 
 	return true
 }
@@ -210,7 +188,7 @@ func stepACLCheck(req *ExecutionRequest) bool {
 func stepParseArgs(req *ExecutionRequest) bool {
 	var err error
 
-	req.finalParsedCommand, err = parseActionArguments(req.Action.Shell, req.Arguments, req.Action)
+	req.finalParsedCommand, err = parseActionArguments(req.Action.Shell, req.Arguments, req.Action, req.logEntry.ActionTitle, req.EntityPrefix)
 
 	if err != nil {
 		req.logEntry.Stdout = err.Error()
@@ -223,9 +201,32 @@ func stepParseArgs(req *ExecutionRequest) bool {
 	return true
 }
 
-func stepLogRequested(req *ExecutionRequest) bool {
+func stepRequestAction(req *ExecutionRequest) bool {
+	// The grpc API always tries to find the action by ID, but it may
+	if req.Action == nil {
+		log.WithFields(log.Fields{
+			"actionTitle": req.ActionTitle,
+		}).Infof("Action finding")
+
+		req.Action = req.Cfg.FindAction(req.ActionTitle)
+
+		if req.Action == nil {
+			log.WithFields(log.Fields{
+				"actionName": req.ActionTitle,
+			}).Warnf("Action requested, but not found")
+
+			req.logEntry.Stderr = "Action not found: " + req.ActionTitle
+
+			return false
+		}
+	}
+
+	req.logEntry.ActionTitle = sv.ReplaceEntityVars(req.EntityPrefix, req.Action.Title)
+	req.logEntry.ActionIcon = req.Action.Icon
+	req.logEntry.ActionId = req.Action.ID
+
 	log.WithFields(log.Fields{
-		"actionTitle": req.ActionName,
+		"actionTitle": req.logEntry.ActionTitle,
 	}).Infof("Action requested")
 
 	return true
@@ -233,7 +234,7 @@ func stepLogRequested(req *ExecutionRequest) bool {
 
 func stepLogStart(req *ExecutionRequest) bool {
 	log.WithFields(log.Fields{
-		"actionTitle": req.Action.Title,
+		"actionTitle": req.logEntry.ActionTitle,
 		"timeout":     req.Action.Timeout,
 	}).Infof("Action starting")
 
@@ -242,7 +243,7 @@ func stepLogStart(req *ExecutionRequest) bool {
 
 func stepLogFinish(req *ExecutionRequest) bool {
 	log.WithFields(log.Fields{
-		"actionTitle": req.Action.Title,
+		"actionTitle": req.logEntry.ActionTitle,
 		"stdout":      req.logEntry.Stdout,
 		"stderr":      req.logEntry.Stderr,
 		"timedOut":    req.logEntry.TimedOut,
@@ -322,7 +323,7 @@ func stepExecAfter(req *ExecutionRequest) bool {
 		"exitCode": fmt.Sprintf("%v", req.logEntry.ExitCode),
 	}
 
-	finalParsedCommand, _ := parseActionArguments(req.Action.ShellAfterCompleted, args, req.Action)
+	finalParsedCommand, _ := parseActionArguments(req.Action.ShellAfterCompleted, args, req.Action, req.logEntry.ActionTitle, req.EntityPrefix)
 
 	cmd := wrapCommandInShell(ctx, finalParsedCommand)
 	cmd.Stdout = &stdout

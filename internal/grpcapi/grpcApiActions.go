@@ -6,29 +6,83 @@ import (
 	pb "github.com/OliveTin/OliveTin/gen/grpc"
 	acl "github.com/OliveTin/OliveTin/internal/acl"
 	config "github.com/OliveTin/OliveTin/internal/config"
+	sv "github.com/OliveTin/OliveTin/internal/stringvariables"
+	log "github.com/sirupsen/logrus"
+	"strconv"
 )
 
-func actionsCfgToPb(cfgActions []config.Action, user *acl.AuthenticatedUser) *pb.GetDashboardComponentsResponse {
+type ActionWithEntity struct {
+	Action       *config.Action
+	EntityPrefix string
+}
+
+var publicActionIdToActionMap map[string]ActionWithEntity
+
+func init() {
+	publicActionIdToActionMap = make(map[string]ActionWithEntity)
+}
+
+func actionsCfgToPb(cfgActions []*config.Action, user *acl.AuthenticatedUser) *pb.GetDashboardComponentsResponse {
 	res := &pb.GetDashboardComponentsResponse{}
 
 	for _, action := range cfgActions {
-		if !acl.IsAllowedView(cfg, user, &action) {
+		if !acl.IsAllowedView(cfg, user, action) {
 			continue
 		}
 
-		btn := actionCfgToPb(action, user)
-		res.Actions = append(res.Actions, btn)
+		if action.Entity != "" {
+			res.Actions = append(res.Actions, buildActionEntities(action.Entity, action)...)
+		} else {
+			btn := actionCfgToPb(action, user)
+			res.Actions = append(res.Actions, btn)
+		}
 	}
 
 	return res
 }
 
-func actionCfgToPb(action config.Action, user *acl.AuthenticatedUser) *pb.Action {
+func buildActionEntities(entityTitle string, tpl *config.Action) []*pb.Action {
+	ret := make([]*pb.Action, 0)
+
+	entityCount, _ := strconv.Atoi(sv.Get("entities." + entityTitle + ".count"))
+
+	for i := 0; i < entityCount; i++ {
+		ret = append(ret, buildEntityAction(tpl, entityTitle, i))
+	}
+
+	return ret
+}
+
+func buildEntityAction(tpl *config.Action, entityTitle string, entityIndex int) *pb.Action {
+	prefix := getEntityPrefix(entityTitle, entityIndex)
+
+	virtualActionId := createPublicID(tpl, prefix)
+
+	publicActionIdToActionMap[virtualActionId] = ActionWithEntity{
+		Action:       tpl,
+		EntityPrefix: prefix,
+	}
+
+	return &pb.Action{
+		Id:    virtualActionId,
+		Title: sv.ReplaceEntityVars(prefix, tpl.Title),
+		Icon:  tpl.Icon,
+	}
+}
+
+func actionCfgToPb(action *config.Action, user *acl.AuthenticatedUser) *pb.Action {
+	virtualActionId := createPublicID(action, "")
+
+	publicActionIdToActionMap[virtualActionId] = ActionWithEntity{
+		Action:       action,
+		EntityPrefix: "noent",
+	}
+
 	btn := pb.Action{
-		Id:           fmt.Sprintf("%x", md5.Sum([]byte(action.Title))),
+		Id:           virtualActionId,
 		Title:        action.Title,
 		Icon:         action.Icon,
-		CanExec:      acl.IsAllowedExec(cfg, user, &action),
+		CanExec:      acl.IsAllowedExec(cfg, user, action),
 		PopupOnStart: action.PopupOnStart,
 	}
 
@@ -63,13 +117,16 @@ func buildChoices(choices []config.ActionArgumentChoice) []*pb.ActionArgumentCho
 	return ret
 }
 
-func findActionByAlias(alias string) *config.Action {
-	for _, action := range cfg.Actions {
-		if action.TitleAlias != "" {
-			if action.TitleAlias == alias {
-				return &action
-			}
-		}
+func createPublicID(action *config.Action, entityPrefix string) string {
+	return fmt.Sprintf("%x", md5.Sum([]byte(action.ID+"."+entityPrefix)))
+}
+
+func findActionByPublicID(id string) *config.Action {
+	pair, found := publicActionIdToActionMap[id]
+
+	if found {
+		log.Infof("findPublic %v, %v", id, pair.Action.ID)
+		return pair.Action
 	}
 
 	return nil

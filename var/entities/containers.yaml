@@ -1,6 +1,0 @@
-sonarr:
-  state: started
-plex:
-  state: started
-sabnzbd:
-  state: stopped

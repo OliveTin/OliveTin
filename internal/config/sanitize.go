@@ -1,7 +1,9 @@
 package config
 
 import (
+	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
+	"strings"
 )
 
 // Sanitize will look for common configuration issues, and fix them. For example,
@@ -28,6 +30,7 @@ func (action *Action) sanitize(cfg *Config) {
 		action.Timeout = 3
 	}
 
+	action.ID = getActionID(action)
 	action.Icon = lookupHTMLIcon(action.Icon)
 	action.PopupOnStart = sanitizePopupOnStart(action.PopupOnStart, cfg)
 
@@ -38,6 +41,18 @@ func (action *Action) sanitize(cfg *Config) {
 	for idx := range action.Arguments {
 		action.Arguments[idx].sanitize()
 	}
+}
+
+func getActionID(action *Action) string {
+	if action.ID == "" {
+		return uuid.NewString()
+	}
+
+	if strings.Contains(action.ID, "{{") {
+		log.Fatalf("Action IDs cannot contain variables")
+	}
+
+	return action.ID
 }
 
 func sanitizePopupOnStart(raw string, cfg *Config) string {

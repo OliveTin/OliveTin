@@ -1,4 +1,4 @@
-import process from 'node:process'
+import * as process from 'node:process'
 import waitOn from 'wait-on'
 import { spawn } from 'node:child_process'
 

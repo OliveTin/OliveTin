@@ -13,7 +13,7 @@ func testingExecutor() (*Executor, *config.Config) {
 
 	cfg := config.DefaultConfig()
 
-	a1 := config.Action{
+	a1 := &config.Action{
 		Title: "Do some tickles",
 		Shell: "echo 'Tickling {{ person }}'",
 		Arguments: []config.ActionArgument{
@@ -34,7 +34,7 @@ func TestCreateExecutorAndExec(t *testing.T) {
 	e, cfg := testingExecutor()
 
 	req := ExecutionRequest{
-		ActionName:        "Do some tickles",
+		ActionTitle:       "Do some tickles",
 		AuthenticatedUser: &acl.AuthenticatedUser{Username: "Mr Tickle"},
 		Cfg:               cfg,
 		Arguments: map[string]string{
@@ -54,9 +54,9 @@ func TestExecNonExistant(t *testing.T) {
 	e, cfg := testingExecutor()
 
 	req := ExecutionRequest{
-		ActionName: "Waffles",
-		logEntry:   &InternalLogEntry{},
-		Cfg:        cfg,
+		ActionTitle: "Waffles",
+		logEntry:    &InternalLogEntry{},
+		Cfg:         cfg,
 	}
 
 	wg, _ := e.ExecRequest(&req)
@@ -67,7 +67,7 @@ func TestExecNonExistant(t *testing.T) {
 }
 
 func TestArgumentNameCamelCase(t *testing.T) {
-	a1 := config.Action{
+	a1 := &config.Action{
 		Title: "Do some tickles",
 		Shell: "echo 'Tickling {{ personName }}'",
 		Arguments: []config.ActionArgument{
@@ -82,14 +82,14 @@ func TestArgumentNameCamelCase(t *testing.T) {
 		"personName": "Fred",
 	}
 
-	out, err := parseActionArguments(a1.Shell, values, &a1)
+	out, err := parseActionArguments(a1.Shell, values, a1, a1.Title, "")
 
 	assert.Equal(t, "echo 'Tickling Fred'", out)
 	assert.Nil(t, err)
 }
 
 func TestArgumentNameSnakeCase(t *testing.T) {
-	a1 := config.Action{
+	a1 := &config.Action{
 		Title: "Do some tickles",
 		Shell: "echo 'Tickling {{ person_name }}'",
 		Arguments: []config.ActionArgument{
@@ -104,7 +104,7 @@ func TestArgumentNameSnakeCase(t *testing.T) {
 		"person_name": "Fred",
 	}
 
-	out, err := parseActionArguments(a1.Shell, values, &a1)
+	out, err := parseActionArguments(a1.Shell, values, a1, a1.Title, "")
 
 	assert.Equal(t, "echo 'Tickling Fred'", out)
 	assert.Nil(t, err)

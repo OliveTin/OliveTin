@@ -8,11 +8,11 @@ import (
 func TestFindAction(t *testing.T) {
 	c := DefaultConfig()
 
-	a1 := Action{}
+	a1 := &Action{}
 	a1.Title = "a1"
 	c.Actions = append(c.Actions, a1)
 
-	a2 := Action{
+	a2 := &Action{
 		Title: "a2",
 		Arguments: []ActionArgument{
 			{
@@ -35,7 +35,7 @@ func TestFindAction(t *testing.T) {
 func TestFindAcl(t *testing.T) {
 	c := DefaultConfig()
 
-	acl1 := AccessControlList{
+	acl1 := &AccessControlList{
 		Name: "Testing ACL",
 	}
 

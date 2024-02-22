@@ -39,24 +39,23 @@ message GetDashboardComponentsResponse {
 	string title = 1;
 	repeated Action actions = 2;
 	repeated Entity entities = 3;
-	repeated DashboardItem dashboards = 4;
+	repeated DashboardComponent dashboards = 4;
 }
 
 message GetDashboardComponentsRequest {}
 
-message DashboardItem {
+message DashboardComponent {
 	string title = 1;
 	string type = 2;
-	repeated DashboardItem contents = 3;
-	string link = 4;
+	repeated DashboardComponent contents = 3;
 }
 
 message StartActionRequest {
-	string action_name = 1;
+	string action_id = 1;
 
 	repeated StartActionArgument arguments = 2;
 
-	string uuid = 3;
+	string unique_tracking_id = 3;
 }
 
 message StartActionArgument {
@@ -65,30 +64,30 @@ message StartActionArgument {
 }
 
 message StartActionResponse {
-	string execution_uuid = 2;
+	string execution_tracking_id = 2;
 }
 
 message StartActionAndWaitRequest {
-	string action_name = 1;
+	string action_id = 1;
 }
 
 message StartActionAndWaitResponse {
 	LogEntry log_entry = 1;
 }
 
-message StartActionByAliasRequest {
-	string action_alias = 1;
+message StartActionByGetRequest {
+	string action_id = 1;
 }
 
-message StartActionByAliasResponse {
-	string execution_uuid = 2;
+message StartActionByGetResponse {
+	string execution_tracking_id = 2;
 }
 
-message StartActionByAliasAndWaitRequest {
-	string action_alias = 1;
+message StartActionByGetAndWaitRequest {
+	string action_id = 1;
 }
 
-message StartActionByAliasAndWaitResponse {
+message StartActionByGetAndWaitResponse {
 	LogEntry log_entry = 1;
 }
 
@@ -105,9 +104,9 @@ message LogEntry {
 	string user_class = 8;
 	string action_icon = 9;
 	repeated string tags = 10;
-	string execution_uuid = 11;
+	string execution_tracking_id = 11;
 	string datetime_finished = 12;
-	string uuid = 13;
+	string action_id = 13;
 	bool execution_started = 14;
 	bool execution_finished = 15;
 	bool blocked = 16;
@@ -128,7 +127,7 @@ message ValidateArgumentTypeResponse {
 }
 
 message WatchExecutionRequest {
-	string execution_uuid = 1;
+	string execution_tracking_id = 1;
 }
 
 message WatchExecutionUpdate {
@@ -136,7 +135,7 @@ message WatchExecutionUpdate {
 }
 
 message ExecutionStatusRequest {
-	string execution_uuid = 1;
+	string execution_tracking_id = 1;
 }
 
 message ExecutionStatusResponse {
@@ -153,6 +152,24 @@ message SosReportRequest {}
 
 message SosReportResponse {
 	string alert = 1;
+}
+
+message DumpVarsRequest {}
+
+message DumpVarsResponse {
+	string alert = 1;
+	map<string, string> contents = 2;
+}
+
+message ActionEntityPair {
+	string action_title = 1;
+	string entity_prefix = 2;
+}
+
+message DumpPublicIdActionMapRequest {}
+message DumpPublicIdActionMapResponse {
+	string alert = 1;
+	map<string, ActionEntityPair> contents = 2;
 }
 
 message GetReadyzRequest {}
@@ -182,15 +199,15 @@ service OliveTinApiService {
 		};
 	}
 
-	rpc StartActionByAlias(StartActionByAliasRequest) returns (StartActionByAliasResponse) {
+	rpc StartActionByGet(StartActionByGetRequest) returns (StartActionByGetResponse) {
 		option (google.api.http) = {
-			get: "/api/StartActionByAlias/{action_alias}"
+			get: "/api/StartActionByGet/{action_id}"
 		};
 	}
 
-	rpc StartActionByAliasAndWait(StartActionByAliasAndWaitRequest) returns (StartActionByAliasAndWaitResponse) {
+	rpc StartActionByGetAndWait(StartActionByGetAndWaitRequest) returns (StartActionByGetAndWaitResponse) {
 		option (google.api.http) = {
-			get: "/api/StartActionByAliasAndWait/{action_alias}"
+			get: "/api/StartActionByGetAndWait/{action_id}"
 		};
 	}
 
@@ -223,6 +240,18 @@ service OliveTinApiService {
 	rpc SosReport(SosReportRequest) returns (SosReportResponse) {
 		option (google.api.http) = {
 			get: "/api/sosreport"
+		};
+	}
+
+	rpc DumpVars(DumpVarsRequest) returns (DumpVarsResponse) {
+		option (google.api.http) = {
+			get: "/api/DumpVars"
+		};
+	}
+
+	rpc DumpPublicIdActionMap(DumpPublicIdActionMapRequest) returns (DumpPublicIdActionMapResponse) {
+		option (google.api.http) = {
+			get: "/api/DumpPublicIdActionMap"
 		};
 	}
 

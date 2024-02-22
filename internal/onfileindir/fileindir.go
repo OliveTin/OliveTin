@@ -20,7 +20,7 @@ func WatchFilesInDirectory(cfg *config.Config, ex *executor.Executor) {
 	}
 }
 
-func watch(directory string, action config.Action, cfg *config.Config, ex *executor.Executor, eventType fsnotify.Op) {
+func watch(directory string, action *config.Action, cfg *config.Config, ex *executor.Executor, eventType fsnotify.Op) {
 	log.WithFields(log.Fields{
 		"dir":       directory,
 		"eventType": eventType,
@@ -52,7 +52,7 @@ func watch(directory string, action config.Action, cfg *config.Config, ex *execu
 	<-done
 }
 
-func processEvent(watcher *fsnotify.Watcher, action config.Action, cfg *config.Config, ex *executor.Executor, eventType fsnotify.Op) {
+func processEvent(watcher *fsnotify.Watcher, action *config.Action, cfg *config.Config, ex *executor.Executor, eventType fsnotify.Op) {
 	select {
 	case event, ok := <-watcher.Events:
 		if !ok {
@@ -60,18 +60,19 @@ func processEvent(watcher *fsnotify.Watcher, action config.Action, cfg *config.C
 		}
 
 		checkEvent(&event, action, cfg, ex, eventType)
+		break
 	case err := <-watcher.Errors:
 		log.Errorf("Error in fsnotify: %v", err)
 		return
 	}
 }
 
-func checkEvent(event *fsnotify.Event, action config.Action, cfg *config.Config, ex *executor.Executor, eventType fsnotify.Op) {
+func checkEvent(event *fsnotify.Event, action *config.Action, cfg *config.Config, ex *executor.Executor, eventType fsnotify.Op) {
 	if event.Has(eventType) {
 		req := &executor.ExecutionRequest{
-			ActionName: action.Title,
-			Cfg:        cfg,
-			Tags:       []string{"fileindir"},
+			ActionTitle: action.Title,
+			Cfg:         cfg,
+			Tags:        []string{"fileindir"},
 			Arguments: map[string]string{
 				"filename": event.Name,
 			},

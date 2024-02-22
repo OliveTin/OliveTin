@@ -2,6 +2,7 @@ package executor
 
 import (
 	config "github.com/OliveTin/OliveTin/internal/config"
+	sv "github.com/OliveTin/OliveTin/internal/stringvariables"
 	log "github.com/sirupsen/logrus"
 
 	"errors"
@@ -20,9 +21,9 @@ var (
 	}
 )
 
-func parseActionArguments(rawShellCommand string, values map[string]string, action *config.Action) (string, error) {
+func parseActionArguments(rawShellCommand string, values map[string]string, action *config.Action, actionTitle string, entityPrefix string) (string, error) {
 	log.WithFields(log.Fields{
-		"actionTitle": action.Title,
+		"actionTitle": actionTitle,
 		"cmd":         rawShellCommand,
 	}).Infof("Action parse args - Before")
 
@@ -51,8 +52,10 @@ func parseActionArguments(rawShellCommand string, values map[string]string, acti
 		rawShellCommand = strings.ReplaceAll(rawShellCommand, match[0], argValue)
 	}
 
+	rawShellCommand = sv.ReplaceEntityVars(entityPrefix, rawShellCommand)
+
 	log.WithFields(log.Fields{
-		"actionTitle": action.Title,
+		"actionTitle": actionTitle,
 		"cmd":         rawShellCommand,
 	}).Infof("Action parse args - After")
 

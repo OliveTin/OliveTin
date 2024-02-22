@@ -57,8 +57,9 @@ func getNewTestServerAndClient(t *testing.T, injectedConfig *config.Config) (*gr
 
 func TestGetActionsAndStart(t *testing.T) {
 	cfg = config.DefaultConfig()
-	btn1 := config.Action{}
+	btn1 := &config.Action{}
 	btn1.Title = "blat"
+	btn1.ID = "blat"
 	btn1.Shell = "echo 'test'"
 	cfg.Actions = append(cfg.Actions, btn1)
 
@@ -76,7 +77,7 @@ func TestGetActionsAndStart(t *testing.T) {
 
 	log.Printf("Response: %+v", respGb)
 
-	respSa, err := client.StartAction(context.Background(), &pb.StartActionRequest{ActionName: "blat"})
+	respSa, err := client.StartAction(context.Background(), &pb.StartActionRequest{ActionId: "blat"})
 
 	assert.Nil(t, err, "Empty err after start action")
 	assert.NotNil(t, respSa, "Empty err after start action")

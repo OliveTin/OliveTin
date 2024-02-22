@@ -41,6 +41,10 @@ func IsAllowedExec(cfg *config.Config, user *AuthenticatedUser, action *config.A
 
 // IsAllowedView checks if a User is allowed to view an Action
 func IsAllowedView(cfg *config.Config, user *AuthenticatedUser, action *config.Action) bool {
+	if action.Hidden {
+		return false
+	}
+
 	for _, acl := range getRelevantAcls(cfg, action.Acls, user) {
 		if acl.Permissions.View {
 			log.WithFields(log.Fields{
@@ -110,7 +114,7 @@ func buildUserAcls(cfg *config.Config, user *AuthenticatedUser) {
 	}
 }
 
-func isACLRelevantToAction(cfg *config.Config, actionAcls []string, acl config.AccessControlList, user *AuthenticatedUser) bool {
+func isACLRelevantToAction(cfg *config.Config, actionAcls []string, acl *config.AccessControlList, user *AuthenticatedUser) bool {
 	if !slices.Contains(user.acls, acl.Name) {
 		// If the user does not have this ACL, then it is not relevant
 
@@ -133,7 +137,7 @@ func getRelevantAcls(cfg *config.Config, actionAcls []string, user *Authenticate
 
 	for _, acl := range cfg.AccessControlLists {
 		if isACLRelevantToAction(cfg, actionAcls, acl, user) {
-			ret = append(ret, &acl)
+			ret = append(ret, acl)
 		}
 	}
 

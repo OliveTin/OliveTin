@@ -5,14 +5,14 @@ package config
 type Action struct {
 	ID                     string
 	Title                  string
-	TitleAlias             string
 	Icon                   string
 	Shell                  string
 	ShellAfterCompleted    string
 	CSS                    map[string]string `mapstructure:"omitempty"`
 	Timeout                int
 	Acls                   []string
-	Entity                 []string
+	Entity                 string
+	Hidden                 bool
 	ExecOnStartup          bool
 	ExecOnCron             []string
 	ExecOnFileCreatedInDir []string
@@ -36,16 +36,6 @@ type ActionArgument struct {
 type ActionArgumentChoice struct {
 	Value string
 	Title string
-}
-
-// HelperAction is an action that is used normally to generate entities, it cannot be started manually.
-type HelperAction struct {
-	Title                  string
-	Shell                  string
-	ExecOnStartup          bool
-	ExecOnCron             []string
-	ExecOnFileCreatedInDir []string
-	ExecOnFileChangedInDir []string
 }
 
 // Entity represents a "thing" that can have multiple actions associated with it.
@@ -82,9 +72,9 @@ type Config struct {
 	ListenAddressGrpcActions        string
 	ExternalRestAddress             string
 	LogLevel                        string
-	Actions                         []Action        `mapstructure:"actions"`
-	Entities                        []EntityFile    `mapstructure:"entities"`
-	Dashboards                      []DashboardItem `mapstructure:"dashboards"`
+	Actions                         []*Action             `mapstructure:"actions"`
+	Entities                        []*EntityFile         `mapstructure:"entities"`
+	Dashboards                      []*DashboardComponent `mapstructure:"dashboards"`
 	CheckForUpdates                 bool
 	PageTitle                       string
 	ShowFooter                      bool
@@ -98,19 +88,21 @@ type Config struct {
 	AuthHttpHeaderUsername          string
 	AuthHttpHeaderUserGroup         string
 	DefaultPermissions              PermissionsList
-	AccessControlLists              []AccessControlList
+	AccessControlLists              []*AccessControlList
 	WebUIDir                        string
-	HelperActions                   []HelperAction `mapstructure:"helperActions"`
 	CronSupportForSeconds           bool
 	SectionNavigationStyle          string
 	DefaultPopupOnStart             string
+	InsecureAllowDumpVars           bool
+	InsecureAllowDumpSos            bool
+	InsecureAllowDumpActionMap      bool
 }
 
-type DashboardItem struct {
+type DashboardComponent struct {
 	Title    string
 	Type     string
-	Link     string
-	Contents []DashboardItem
+	Entity   string
+	Contents []DashboardComponent
 }
 
 // DefaultConfig gets a new Config structure with sensible default values.
@@ -136,6 +128,9 @@ func DefaultConfig() *Config {
 	config.CronSupportForSeconds = false
 	config.SectionNavigationStyle = "sidebar"
 	config.DefaultPopupOnStart = "nothing"
+	config.InsecureAllowDumpVars = false
+	config.InsecureAllowDumpSos = false
+	config.InsecureAllowDumpActionMap = false
 
 	return &config
 }

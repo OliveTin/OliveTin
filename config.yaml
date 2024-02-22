@@ -10,23 +10,41 @@ logLevel: "INFO"
 
 # Actions (buttons) to show up on the WebUI:
 actions:
+  # This is the most simple action, it just runs the command and flashes the
+  # button to indicate status.
+  #
+  # If you are running OliveTin in a container remember to pass through the
+  # docker socket! https://docs.olivetin.app/action-container-control.html
   - title: Restart media container
     shell: docker restart mediacontainer
     icon: box
-    entity: container
 
+  # This uses `popupOnStart: execution-dialog-stdout-only` to simply show just
+  # the command output.
   - title: Check disk space
     icon: disk
     shell: df -h /media
     popupOnStart: execution-dialog-stdout-only
 
+  # This uses `popupOnStart: execution-dialog` to show a dialog with more
+  # information about the command that was run.
   - title: check dmesg logs
     shell: dmesg | tail
     icon: logs
     popupOnStart: execution-dialog
 
+  # This uses `popupOnStart: execution-button` to display a mini button that
+  # links to the logs.
+  - title: date
+    shell: date
+    timeout: 6
+    icon: clock
+    popupOnStart: execution-button
 
-    # This will run a simple script that you create.
+  # You are not limited to operating system commands, and of course you can run
+  # your own scripts. Here `maxConcurrent` stops the script running multiple
+  # times in parallel. There is also a timeout that will kill the command if it
+  # runs for too long.
   - title: Run backup script
     shell: /opt/backupScript.sh
     shellAfterCompleted: "apprise -t 'Notification: Backup script completed' -b 'The backup script completed with code {{ exitCode}}. The log is: \n {{ stdout }} '"
@@ -35,14 +53,10 @@ actions:
     icon: backup
     popupOnStart: execution-dialog
 
-  - title: date
-    shell: date
-    timeout: 6
-    icon: clock
-    popupOnStart: execution-button
-
-    # This will send 1 ping (-c 1)
-    # Docs: https://docs.olivetin.app/action-ping.html
+  # When you want to prompt users for input, that is when you should use
+  # `arguments` - this presents a popup dialog and asks for argument values.
+  #
+  # Docs: https://docs.olivetin.app/action-ping.html
   - title: Ping host
     shell: ping {{ host }} -c {{ count }}
     icon: ping
@@ -60,31 +74,12 @@ actions:
         default: 1
         description: How many times to do you want to ping?
 
-    # OliveTin can run long-running jobs like Ansible playbooks.
-    #
-    # For such jobs, you will need to install ansible-playbook on the host where
-    # you are running OliveTin, or in the container.
-    #
-    # You probably want a much longer timeout as well (so that ansible completes).
-  - title: "Run Ansible Playbook"
-    icon: "&#x1F1E6"
-    shell: ansible-playbook -i /etc/hosts /root/myRepo/myPlaybook.yaml
-    timeout: 120
-
-    # Restart httpd on host "server1"
-    # Docs: https://docs.olivetin.app/action-ping.html
-  - title: restart httpd on server1
-    titleAlias: restart_httpd
-    icon: restart
-    timeout: 1
-    shell: ssh root@server1 'service httpd restart'
-
-    # OliveTin can control containers - docker is just a command line app.
-    #
-    # However, if you are running in a container you will need to do some setup,
-    # see the docs below.
-    #
-    # Docs: https://docs.olivetin.app/action-container-control.html
+  # OliveTin can control containers - docker is just a command line app.
+  #
+  # However, if you are running in a container you will need to do some setup,
+  # see the docs below.
+  #
+  # Docs: https://docs.olivetin.app/action-container-control.html
   - title: Restart Docker Container
     icon: restart
     shell: docker restart {{ container }}
@@ -96,6 +91,10 @@ actions:
           - value: traefik
           - value: grafana
 
+  # There is a special `confirmation` argument to help against accidental clicks
+  # on "dangerous" actions.
+  #
+  # Docs: https://docs.olivetin.app/confirmation.html
   - title: Delete old backups
     icon: ashtonished
     shell: rm -rf /opt/oldBackups/
@@ -103,35 +102,154 @@ actions:
       - type: confirmation
         title: Are you sure?!
 
-  - title: Server1 Power Off
-    shell: echo "Power Off Server 1"
 
-  - title: Server2 Wake On LAN
-    shell: echo "Sending Wake on LAN to Server 2"
+  # Sometimes you want to run actions on other servers - don't overcomplicate
+  # it, just use SSH!
+  #
+  # Docs: https://docs.olivetin.app/action-ssh.html
+  # Docs: https://docs.olivetin.app/action-service.html
+  - title: restart httpd on server1
+    id: restart_httpd
+    icon: restart
+    timeout: 1
+    shell: ssh root@server1 'service httpd restart'
 
-  - title: Server2 Power Off
-    shell: echo "Power Off Server 2"
+  # There are several built-in shortcuts for the `icon` option, but you
+  # can also just specify any HTML, this includes any unicode character,
+  # or a <img = "..." /> link to a custom icon.
+  #
+  # Docs: https://docs.olivetin.app/icons.html
+  #
+  # Lots of people use OliveTin to easily execute ansible-playbooks. You
+  # probably want a much longer timeout as well (so that ansible completes).
+  #
+  # Docs: https://docs.olivetin.app/ansible-playbook.html
+  - title: "Run Ansible Playbook"
+    icon: '&#x1F1E6;'
+    shell: ansible-playbook -i /etc/hosts /root/myRepo/myPlaybook.yaml
+    timeout: 120
+
+  # The following actions are "dummy" actions, used in a Dashboard. As long as
+  # you have these referenced in a dashboard, they will not who up in the
+  # `actions` view.
+  - title: Ping hypervisor1
+    shell: echo "hypervisor1 online"
+
+  - title: Ping hypervisor2
+    shell: echo "hypervisor2 online"
+
+  - title: "{{ server.name }} Wake on Lan"
+    shell: echo "Sending Wake on LAN to {{ server.hostname }}"
+    entity: server
+
+  - title: "{{ server.name }} Power Off"
+    shell: "echo 'Power Off Server: {{ server.hostname }}'"
+    entity: server
 
   - title: Ping All Servers
-    shell: echo "Ping all servers"
+    shell: "echo 'Ping all servers'"
     icon: ping
 
+  - title: Start {{ container.Names }}
+    icon: box
+    shell: docker start {{ container.Names }}
+    entity: container
+
+  - title: Stop {{ container.Names }}
+    icon: box
+    shell: docker stop {{ container.Names }}
+    entity: container
+
+  # Lastly, you can hide actions from the web UI, this is useful for creating
+  # background helpers that execute only on startup or a cron, for updating
+  # entity files.
+
+  # - title: Update container entity file
+  #   shell: 'docker ps -a --format json > /etc/OliveTin/containers.json'
+  #   hidden: true
+  #   execOnStartup: true
+  #   execOnCron: '*/1 * * * *'
+
+# An entity is something that exists - a "thing", like a VM, or a Container
+# is an entity. OliveTin allows you to then dynamically generate actions based
+# around these entities.
+#
+# This is really useful if you want to generate wake on lan or poweroff actions
+# for `server` entities, for example.
+#
+# A very popular use case that entities were designed for was for `container`
+# entities - in a similar way you could generate `start`, `stop`, and `restart`
+# container actions.
+#
+# Entities are just loaded fome files on disk, OliveTin will also watch these
+# files for updates while OliveTin is running, and update entities.
+#
+# Entities can have properties defined in those files, and those can be used
+# in your configuration as variables. For example; `container.status`,
+# or `vm.hostname`.
+#
+# Docs: http://docs.olivetin.app/entities.html
+entities:
+  # YAML files are the default expected format, so you can use .yml or .yaml,
+  # or even .txt, as long as the file contains valid a valid yaml LIST, then it
+  # will load properly.
+  #
+  # Docs: https://docs.olivetin.app/entities.html
+  - file: /etc/OliveTin/servers.yaml
+    name: server
+
+  - file: /etc/OliveTin/containers.json
+    name: container
+
+# Dashboards are a way of taking actions from the default "actions" view, and
+# organizing them into groups - either into folders, or fieldsets.
+#
+# The only way to properly use entities, are to use them with a `fieldset` on
+# a dashboard.
 dashboards:
+  # Top level items are dsahboards.
   - title: My Servers
     contents:
-      - title: Server Power Controls
+      # The contents of a dashboard will try to look for an action with a
+      # matching title IF the `contents: ` property is empty.
+      - title: Ping All Servers
+
+      # If you create an item with some "contents:", OliveTin will show that as
+      # directory.
+      - title: Hypervisors
+        contents:
+          - title: Ping hypervisor1
+          - title: Ping hypervisor2
+
+      # If you specify `type: fieldset` and some `contents`, it will show your
+      # actions grouped together without a folder.
+      - type: fieldset
+        entity: server
+        title: 'Server: {{ server.hostname }}'
+        contents:
+          # By default OliveTin will look for an action with a matching title
+          # and put it on the dashboard.
+          #
+          # Fieldsets  also support `type: display`, which can display arbitary
+          # text. This is useful for displaying things like a container's state.
+          - type: display
+            title: |
+              Hostname: <strong>{{ server.name }}</strong>
+              IP Address: <strong>{{ server.ip }}</strong>
+
+          # These are the actions (defined above) that we want on the dashboard.
+          - title: '{{ server.name }} Wake on Lan'
+          - title: '{{ server.name }} Power Off'
+
+  # This is the second dashboard.
+  - title: My Containers
+    contents:
+      - title: Container {{ container.Names }}
+        entity: container
         type: fieldset
         contents:
-          - title: Server 1
-            contents:
-              - link: Server1 Power Off
-
-          - title: Server 2
-            contents:
-              - link: Server2 Wake On LAN
-              - link: Server2 Power Off
-
-      - title: Server Utilities
-        type: fieldset
-        contents:
-          - link: Ping All Servers
+          - type: display
+            title: |
+              {{ container.Names }} <br /><br /><strong>{{ container.State }}</strong>
+          - title: 'Start {{ container.Names }}'
+          - title: 'Stop {{ container.Names }}'

@@ -19,7 +19,7 @@ func Execute(cfg *config.Config, ex *executor.Executor) {
 			}).Infof("Startup action")
 
 			req := &executor.ExecutionRequest{
-				ActionName:        action.Title,
+				ActionTitle:       action.Title,
 				Arguments:         nil,
 				Cfg:               cfg,
 				Tags:              []string{"startup"},

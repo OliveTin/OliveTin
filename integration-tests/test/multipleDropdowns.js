@@ -1,3 +1,4 @@
+import { describe, before, after } from 'mocha'
 import { expect } from 'chai'
 import { By, until } from 'selenium-webdriver'
 
@@ -14,9 +15,16 @@ describe('config: multipleDropdowns', function () {
     await webdriver.get(runner.baseUrl())
     await webdriver.manage().setTimeouts({ implicit: 2000 })
 
-    const button = await webdriver.findElement(By.id('actionButton-bdc45101bbd12c1397557790d9f3e059')).findElement(By.tagName('button'))
+    const buttons = await webdriver.findElements(By.tagName('button'))
+    let button = null
 
-    expect(button).to.not.be.undefined
+    for (const b of buttons) {
+      if (await b.getAttribute('title') === 'Test multiple dropdowns') {
+        button = b
+      }
+    }
+
+    expect(button).to.not.be.null
 
     await button.click()
 
