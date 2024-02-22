@@ -67,7 +67,7 @@ nav {
 }
 
 nav.sidebar {
-  position: absolute;
+  position: fixed;
   width: 180px;
   height: 100vh;
   left: 0;
