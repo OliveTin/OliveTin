@@ -36,7 +36,7 @@ func (api *oliveTinAPI) StartAction(ctx ctx.Context, req *pb.StartActionRequest)
 		args[arg.Name] = arg.Value
 	}
 
-	pair, _ := publicActionIdToActionMap[req.ActionId]
+	pair := publicActionIdToActionMap[req.ActionId]
 
 	execReq := executor.ExecutionRequest{
 		Action:            pair.Action,
