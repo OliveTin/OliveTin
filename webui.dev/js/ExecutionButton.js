@@ -2,7 +2,7 @@ import { ExecutionFeedbackButton } from './ExecutionFeedbackButton.js'
 
 class ExecutionButton extends ExecutionFeedbackButton {
   constructFromJson (json) {
-    this.executionUuid = json
+    this.executionTrackingId = json
     this.ellapsed = 0
 
     this.appendChild(document.createElement('button'))
@@ -22,7 +22,7 @@ class ExecutionButton extends ExecutionFeedbackButton {
   show () {
     window.executionDialog.reset()
     window.executionDialog.show()
-    window.executionDialog.fetchExecutionResult(this.executionUuid)
+    window.executionDialog.fetchExecutionResult(this.executionTrackingId)
   }
 
   onExecStatusChanged () {

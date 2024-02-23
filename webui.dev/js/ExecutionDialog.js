@@ -90,10 +90,10 @@ export class ExecutionDialog {
   }
 
   fetchExecutionResult (uuid) {
-    this.executionUuid = uuid
+    this.executionTrackingId = uuid
 
     const executionStatusArgs = {
-      executionUuid: this.executionUuid
+      executionTrackingId: this.executionTrackingId
     }
 
     window.fetch(window.restBaseUrl + 'ExecutionStatus', {
@@ -127,7 +127,7 @@ export class ExecutionDialog {
       this.domStdout.parentElement.open = true
     }
 
-    this.executionUuid = res.logEntry.executionUuid
+    this.executionTrackingId = res.logEntry.executionTrackingId
 
     if (res.logEntry.executionFinished) {
       this.domStatus.innerText = 'Completed'

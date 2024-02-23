@@ -56,7 +56,7 @@ function onExecutionFinished (evt) {
 
   switch (actionButton.popupOnStart) {
     case 'execution-button':
-      document.querySelector('execution-button#execution-' + logEntry.uuid).onExecutionFinished(logEntry)
+      document.querySelector('execution-button#execution-' + logEntry.executionTrackingId).onExecutionFinished(logEntry)
       break
     case 'execution-dialog-stdout-only':
     case 'execution-dialog':
@@ -413,6 +413,14 @@ export function marshalLogsJsonToHtml (json) {
     row.querySelector('pre.stderr').innerText = logEntry.stderr
     row.querySelector('.exit-code').innerText = logTableExitCode
     row.setAttribute('title', logEntry.actionTitle)
+
+    row.querySelector('.content').onclick = () => {
+      window.executionDialog.reset()
+      window.executionDialog.show()
+      window.executionDialog.renderExecutionResult({
+        logEntry: window.logEntries[logEntry.executionTrackingId]
+      })
+    }
 
     for (const tag of logEntry.tags) {
       const domTag = document.createElement('span')

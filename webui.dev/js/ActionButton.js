@@ -103,7 +103,7 @@ class ActionButton extends ExecutionFeedbackButton {
       uniqueTrackingId: this.getUniqueId()
     }
 
-    this.onActionStarted(startActionArgs.uuid)
+    this.onActionStarted(startActionArgs.uniqueTrackingId)
 
     window.fetch(window.restBaseUrl + 'StartAction', {
       method: 'POST',
@@ -125,10 +125,10 @@ class ActionButton extends ExecutionFeedbackButton {
     })
   }
 
-  onActionStarted (executionUuid) {
+  onActionStarted (executionTrackingId) {
     if (this.popupOnStart === 'execution-button') {
       const btnExecution = document.createElement('execution-button')
-      btnExecution.constructFromJson(executionUuid)
+      btnExecution.constructFromJson(executionTrackingId)
       this.querySelector('.action-button-footer').prepend(btnExecution)
 
       return
