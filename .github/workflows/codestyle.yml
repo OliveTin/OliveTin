@@ -25,10 +25,10 @@ jobs:
           cache: true
 
       - name: deps
-        run: make grpc
+        run: make -w grpc
 
       - name: daemon
-        run: make daemon-codestyle
+        run: make -w daemon-codestyle
 
       - name: webui
-        run: make webui-codestyle
+        run: make -w webui-codestyle
