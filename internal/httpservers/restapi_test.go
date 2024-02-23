@@ -86,28 +86,7 @@ func testBase(t *testing.T, expire int64, expectCode int) {
 	})
 
 	// make server and attach handler
-	srv := &http.Server{Handler: cors.AllowCors(mux)}
-	lis, _ := net.Listen("tcp", ":1337")
-
-	/*
-		if err != nil {
-			t.Errorf("Could not listen %v", err)
-		}
-
-			if srv == nil {
-				y.Errorf("srv is nil. Could not listen %v", err)
-			}
-	*/
-
-	go func() {
-		if lis == nil {
-			t.Errorf("couldn't start server: listener is null")
-		} else {
-			if err := srv.Serve(lis); err != nil {
-				t.Errorf("couldn't start server: %v", err)
-			}
-		}
-	}()
+	setupTestingServer(mux, t)
 
 	// make http client and send request to myself
 	client := &http.Client{}
@@ -128,6 +107,32 @@ func testBase(t *testing.T, expire int64, expectCode int) {
 		body, _ := io.ReadAll(res.Body)
 		fmt.Println(string(body))
 	}
+}
+
+func setupTestingServer(mux *runtime.ServeMux, t *testing.T) {
+	lis, err := net.Listen("tcp", ":1337")
+
+	if err != nil || lis == nil {
+		t.Errorf("Could not listen %v %v", err, lis)
+		return
+	}
+
+	srv := &http.Server{Handler: cors.AllowCors(mux)}
+
+	go startTestingServer(lis, srv, t)
+}
+
+func startTestingServer(lis net.Listener, srv *http.Server, t *testing.T) {
+	if srv == nil {
+		t.Errorf("srv is nil. Could not listen")
+		return
+	}
+
+	go func() {
+		if err := srv.Serve(lis); err != nil {
+			t.Errorf("couldn't start server: %v", err)
+		}
+	}()
 }
 
 func TestJWTSignatureVerificationSucceeds(t *testing.T) {
