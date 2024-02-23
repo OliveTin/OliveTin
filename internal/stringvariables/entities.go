@@ -9,7 +9,7 @@ import (
 var r *regexp.Regexp
 
 func init() {
-	r = regexp.MustCompile("{{ *?([a-zA-Z0-9_]+)\\.([a-zA-Z0-9_]+) *?}}")
+	r = regexp.MustCompile(`{{ *?([a-zA-Z0-9_]+)\.([a-zA-Z0-9_]+) *?}}`)
 }
 
 func ReplaceEntityVars(prefix string, source string) string {
