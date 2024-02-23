@@ -10,6 +10,8 @@ export function initMarshaller () {
 
   window.executionDialog = new ExecutionDialog()
 
+  window.logEntries = {}
+
   window.addEventListener('ExecutionFinished', onExecutionFinished)
 }
 
@@ -375,6 +377,14 @@ function marshalDirectory (item, section) {
 
 export function marshalLogsJsonToHtml (json) {
   for (const logEntry of json.logs) {
+    const existing = window.logEntries[logEntry.executionTrackingId]
+
+    if (existing !== undefined) {
+      continue
+    }
+
+    window.logEntries[logEntry.executionTrackingId] = logEntry
+
     const tpl = document.getElementById('tplLogRow')
     const row = tpl.content.querySelector('tr').cloneNode(true)
 
