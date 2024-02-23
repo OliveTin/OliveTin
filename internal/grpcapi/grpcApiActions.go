@@ -118,10 +118,14 @@ func buildChoices(choices []config.ActionArgumentChoice) []*pb.ActionArgumentCho
 }
 
 func createPublicID(action *config.Action, entityPrefix string) string {
-	h := sha256.New()
-	h.Write([]byte(action.ID + "." + entityPrefix))
+	if action.Entity == "" {
+		return action.ID
+	} else {
+		h := sha256.New()
+		h.Write([]byte(action.ID + "." + entityPrefix))
 
-	return fmt.Sprintf("%x", h.Sum(nil))
+		return fmt.Sprintf("%x", h.Sum(nil))
+	}
 }
 
 func findActionByPublicID(id string) *config.Action {
