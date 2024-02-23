@@ -157,6 +157,10 @@ nfpms:
         dst: /etc/OliveTin/config.yaml
         type: "config|noreplace"
 
+      - src: var/entities/*
+        dst: /etc/OliveTin/entities/
+        type: "config|noreplace"
+
       - src: var/manpage/OliveTin.1.gz
         dst: /usr/share/man/man1/OliveTin.1.gz
 
@@ -181,6 +185,10 @@ nfpms:
 
       - src: config.yaml
         dst: /etc/OliveTin/config.yaml
+        type: "config|noreplace"
+
+      - src: var/entities/*
+        dst: /etc/OliveTin/entities/
         type: "config|noreplace"
 
       - src: var/manpage/OliveTin.1.gz
