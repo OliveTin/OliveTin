@@ -1,6 +1,7 @@
-import { describe, before, after } from 'mocha'
+import { describe, it, before, after } from 'mocha'
 import { expect } from 'chai'
 import { By, until } from 'selenium-webdriver'
+import { getActionButtons } from '../lib/elements.js'
 
 describe('config: multipleDropdowns', function () {
   before(async function () {
@@ -15,15 +16,19 @@ describe('config: multipleDropdowns', function () {
     await webdriver.get(runner.baseUrl())
     await webdriver.manage().setTimeouts({ implicit: 2000 })
 
-    const buttons = await webdriver.findElements(By.tagName('button'))
-    let button = null
+    const buttons = await getActionButtons(webdriver)
 
+    let button = null
     for (const b of buttons) {
-      if (await b.getAttribute('title') === 'Test multiple dropdowns') {
+      const title = await b.getAttribute('title')
+
+      console.log('title: ' + title)
+      if (title === 'Test multiple dropdowns') {
         button = b
       }
     }
 
+    expect(buttons).to.have.length(2)
     expect(button).to.not.be.null
 
     await button.click()
