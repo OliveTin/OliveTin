@@ -1,0 +1,28 @@
+#
+# Integration Test Config: General
+#
+
+listenAddressSingleHTTPFrontend: 0.0.0.0:1337
+
+logLevel: "DEBUG"
+checkForUpdates: false
+
+actions:
+  - title: action1
+    shell: date
+    icon: clock
+
+  - title: action2
+    shell: date
+    icon: clock
+
+  - title: action3
+    shell: date
+    icon: clock
+
+dashboards:
+  - title: My Dashboard
+    contents:
+      - title: action1
+      - title: action2
+      - title: action3
