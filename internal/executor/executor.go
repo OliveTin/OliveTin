@@ -94,7 +94,7 @@ func DefaultExecutor() *Executor {
 }
 
 type listener interface {
-	OnExecutionStarted(actionName string)
+	OnExecutionStarted(actionTitle string)
 	OnExecutionFinished(logEntry *InternalLogEntry)
 }
 
@@ -206,13 +206,13 @@ func stepRequestAction(req *ExecutionRequest) bool {
 	if req.Action == nil {
 		log.WithFields(log.Fields{
 			"actionTitle": req.ActionTitle,
-		}).Infof("Action finding")
+		}).Infof("Action finding by title")
 
 		req.Action = req.Cfg.FindAction(req.ActionTitle)
 
 		if req.Action == nil {
 			log.WithFields(log.Fields{
-				"actionName": req.ActionTitle,
+				"actionTitle": req.ActionTitle,
 			}).Warnf("Action requested, but not found")
 
 			req.logEntry.Stderr = "Action not found: " + req.ActionTitle
