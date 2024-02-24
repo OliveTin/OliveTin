@@ -195,10 +195,10 @@ entities:
   # will load properly.
   #
   # Docs: https://docs.olivetin.app/entities.html
-  - file: /etc/OliveTin/servers.yaml
+  - file: /etc/OliveTin/entities/servers.yaml
     name: server
 
-  - file: /etc/OliveTin/containers.json
+  - file: /etc/OliveTin/entities/containers.json
     name: container
 
 # Dashboards are a way of taking actions from the default "actions" view, and
