@@ -154,21 +154,23 @@ actions:
     icon: box
     shell: docker start {{ container.Names }}
     entity: container
+    trigger: Update container entity file
 
   - title: Stop {{ container.Names }}
     icon: box
     shell: docker stop {{ container.Names }}
     entity: container
+    trigger: Update container entity file
 
   # Lastly, you can hide actions from the web UI, this is useful for creating
   # background helpers that execute only on startup or a cron, for updating
   # entity files.
 
-  # - title: Update container entity file
-  #   shell: 'docker ps -a --format json > /etc/OliveTin/containers.json'
-  #   hidden: true
-  #   execOnStartup: true
-  #   execOnCron: '*/1 * * * *'
+  - title: Update container entity file
+    shell: 'docker ps -a --format json > /etc/OliveTin/entities/containers.json'
+    hidden: true
+    execOnStartup: true
+    execOnCron: '*/1 * * * *'
 
 # An entity is something that exists - a "thing", like a VM, or a Container
 # is an entity. OliveTin allows you to then dynamically generate actions based

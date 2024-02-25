@@ -89,6 +89,7 @@ func DefaultExecutor() *Executor {
 		stepExec,
 		stepExecAfter,
 		stepLogFinish,
+		stepTrigger,
 	}
 
 	return &e
@@ -354,6 +355,22 @@ func stepExecAfter(req *ExecutionRequest) bool {
 	}
 
 	req.logEntry.Stdout += fmt.Sprintf("Your shellAfterCommand exited with code %v", cmd.ProcessState.ExitCode())
+
+	return true
+}
+
+func stepTrigger(req *ExecutionRequest) bool {
+	if req.Action.Trigger != "" {
+		trigger := &ExecutionRequest{
+			ActionTitle:       req.Action.Trigger,
+			TrackingID:        uuid.NewString(),
+			Tags:              []string{"trigger"},
+			AuthenticatedUser: req.AuthenticatedUser,
+			Cfg:               req.Cfg,
+		}
+
+		req.executor.ExecRequest(trigger)
+	}
 
 	return true
 }
