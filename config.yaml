@@ -131,8 +131,8 @@ actions:
   # probably want a much longer timeout as well (so that ansible completes).
   #
   # Docs: https://docs.olivetin.app/ansible-playbook.html
-  - title: "Run Ansible Playbook"
-    icon: '&#x1F1E6;'
+  - title: "Run Automation Playbook"
+    icon: '&#129302;'
     shell: ansible-playbook -i /etc/hosts /root/myRepo/myPlaybook.yaml
     timeout: 120
 

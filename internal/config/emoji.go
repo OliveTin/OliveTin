@@ -14,6 +14,7 @@ var emojis = map[string]string{
 	"disk":        "&#128189;",
 	"logs":        "&#128269;",
 	"light":       "&#128161;",
+	"robot":       "&#129302;",
 }
 
 func lookupHTMLIcon(keyToLookup string) string {
