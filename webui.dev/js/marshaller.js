@@ -54,6 +54,10 @@ function onExecutionFinished (evt) {
 
   const actionButton = window.actionButtons[logEntry.actionTitle]
 
+  if (actionButton === undefined) {
+    return
+  }
+
   switch (actionButton.popupOnStart) {
     case 'execution-button':
       document.querySelector('execution-button#execution-' + logEntry.executionTrackingId).onExecutionFinished(logEntry)
