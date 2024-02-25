@@ -150,6 +150,8 @@ func loadEntityFileYaml(filename string, entityname string) {
 func updateEvmFromFile(entityname string, data []map[string]string) {
 	count := len(data)
 
+	sv.RemoveKeysThatStartWith("entities." + entityname)
+
 	sv.Contents["entities."+entityname+".count"] = fmt.Sprintf("%v", count)
 
 	for i, mapp := range data {
