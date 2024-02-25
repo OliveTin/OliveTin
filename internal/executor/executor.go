@@ -4,6 +4,7 @@ import (
 	acl "github.com/OliveTin/OliveTin/internal/acl"
 	config "github.com/OliveTin/OliveTin/internal/config"
 	sv "github.com/OliveTin/OliveTin/internal/stringvariables"
+	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 
 	"bytes"
@@ -121,6 +122,12 @@ func (e *Executor) ExecRequest(req *ExecutionRequest) (*sync.WaitGroup, string) 
 		ActionId:            "",
 		ActionTitle:         "notfound",
 		ActionIcon:          "&#x1f4a9;",
+	}
+
+	_, foundLog := e.Logs[req.TrackingID]
+
+	if foundLog || req.TrackingID == "" {
+		req.TrackingID = uuid.NewString()
 	}
 
 	e.Logs[req.TrackingID] = req.logEntry
