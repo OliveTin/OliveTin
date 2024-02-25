@@ -6,13 +6,14 @@ var emojis = map[string]string{
 	"smile":       "&#x1F600;",
 	"ping":        "&#x1f4e1;",
 	"backup":      "&#128190;",
-	"reboot":      "&#9211;",
-	"restart":     "&#9211;",
+	"reboot":      "&#128260;",
+	"restart":     "&#128260;",
 	"box":         "&#128230;",
 	"ashtonished": "&#128562;",
 	"clock":       "&#128338;",
 	"disk":        "&#128189;",
 	"logs":        "&#128269;",
+	"light":       "&#128161;",
 }
 
 func lookupHTMLIcon(keyToLookup string) string {

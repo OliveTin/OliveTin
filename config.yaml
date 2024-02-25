@@ -15,9 +15,9 @@ actions:
   #
   # If you are running OliveTin in a container remember to pass through the
   # docker socket! https://docs.olivetin.app/action-container-control.html
-  - title: Restart media container
-    shell: docker restart mediacontainer
-    icon: box
+  - title: Ping the Internet
+    shell: ping -c 1 1.1.1.1
+    icon: ping
 
   # This uses `popupOnStart: execution-dialog-stdout-only` to simply show just
   # the command output.
@@ -108,11 +108,18 @@ actions:
   #
   # Docs: https://docs.olivetin.app/action-ssh.html
   # Docs: https://docs.olivetin.app/action-service.html
-  - title: restart httpd on server1
+  - title: Restart httpd on server1
     id: restart_httpd
     icon: restart
     timeout: 1
     shell: ssh root@server1 'service httpd restart'
+
+  # Lots of people use OliveTin to build web interfaces for their electronics
+  # projects. It's best to install OliveTin as a native package (eg, .deb), and
+  # then you can use either a python script or the `gpio` command.
+  - title: Toggle GPIO light
+    shell: gpioset gpiochip1 9=1
+    icon: light
 
   # There are several built-in shortcuts for the `icon` option, but you
   # can also just specify any HTML, this includes any unicode character,
