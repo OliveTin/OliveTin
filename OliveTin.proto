@@ -3,6 +3,7 @@ syntax = "proto3";
 option go_package = "gen/grpc";
 
 import "google/api/annotations.proto";
+import "google/api/httpbody.proto";
 
 message Action {
 	string id = 1;
@@ -237,7 +238,7 @@ service OliveTinApiService {
 		};
 	}
 
-	rpc SosReport(SosReportRequest) returns (SosReportResponse) {
+	rpc SosReport(SosReportRequest) returns (google.api.HttpBody) {
 		option (google.api.http) = {
 			get: "/api/sosreport"
 		};

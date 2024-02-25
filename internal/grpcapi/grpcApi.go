@@ -5,6 +5,7 @@ import (
 	pb "github.com/OliveTin/OliveTin/gen/grpc"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
+	"google.golang.org/genproto/googleapis/api/httpbody"
 	"google.golang.org/grpc"
 
 	"errors"
@@ -251,19 +252,20 @@ func (api *oliveTinAPI) WhoAmI(ctx ctx.Context, req *pb.WhoAmIRequest) (*pb.WhoA
 	return res, nil
 }
 
-func (api *oliveTinAPI) SosReport(ctx ctx.Context, req *pb.SosReportRequest) (*pb.SosReportResponse, error) {
+func (api *oliveTinAPI) SosReport(ctx ctx.Context, req *pb.SosReportRequest) (*httpbody.HttpBody, error) {
 	sos := installationinfo.GetSosReport()
 
-	res := &pb.SosReportResponse{}
-
-	if cfg.InsecureAllowDumpSos {
-		res.Alert = sos
-	} else {
-		res.Alert = "Your SOS Report has been logged to OliveTin logs."
+	if !cfg.InsecureAllowDumpSos {
 		log.Info(sos)
+		sos = "Your SOS Report has been logged to OliveTin logs.\n\nIf you are in a safe network, you can temporarily set `insecureAllowDumpSos: true` in your config.yaml, restart OliveTin, and refresh this page - it will put the output directly in the browser."
 	}
 
-	return res, nil
+	ret := &httpbody.HttpBody{
+		ContentType: "text/plain",
+		Data:        []byte(sos),
+	}
+
+	return ret, nil
 }
 
 func (api *oliveTinAPI) DumpVars(ctx ctx.Context, req *pb.DumpVarsRequest) (*pb.DumpVarsResponse, error) {

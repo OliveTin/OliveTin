@@ -4,19 +4,32 @@ import (
 	"fmt"
 	config "github.com/OliveTin/OliveTin/internal/config"
 	"gopkg.in/yaml.v3"
+	"time"
 )
 
 var Config *config.Config
 
 type sosReportConfig struct {
-	CountOfActions int
-	LogLevel       string
+	CountOfActions                  int
+	CountOfDashboards               int
+	LogLevel                        string
+	ListenAddressSingleHTTPFrontend string
+	ListenAddressWebUI              string
+	ListenAddressRestActions        string
+	ListenAddressGrpcActions        string
+	Timezone                        string
 }
 
 func configToSosreport(cfg *config.Config) *sosReportConfig {
 	return &sosReportConfig{
-		CountOfActions: len(cfg.Actions),
-		LogLevel:       cfg.LogLevel,
+		CountOfActions:                  len(cfg.Actions),
+		CountOfDashboards:               len(cfg.Dashboards),
+		LogLevel:                        cfg.LogLevel,
+		ListenAddressSingleHTTPFrontend: cfg.ListenAddressSingleHTTPFrontend,
+		ListenAddressWebUI:              cfg.ListenAddressWebUI,
+		ListenAddressRestActions:        cfg.ListenAddressRestActions,
+		ListenAddressGrpcActions:        cfg.ListenAddressGrpcActions,
+		Timezone:                        time.Now().Location().String(),
 	}
 }
 
