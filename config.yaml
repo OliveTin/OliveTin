@@ -8,7 +8,10 @@ listenAddressSingleHTTPFrontend: 0.0.0.0:1337
 # Choose from INFO (default), WARN and DEBUG
 logLevel: "INFO"
 
-# Actions (buttons) to show up on the WebUI:
+# Actions are commands that are executed by OliveTin, and normally show up as
+# buttons on the WebUI.
+#
+# Docs: https://docs.olivetin.app/create-your-first-action.html
 actions:
   # This is the most simple action, it just runs the command and flashes the
   # button to indicate status.
@@ -173,11 +176,11 @@ actions:
   # background helpers that execute only on startup or a cron, for updating
   # entity files.
 
-  - title: Update container entity file
-    shell: 'docker ps -a --format json > /etc/OliveTin/entities/containers.json'
-    hidden: true
-    execOnStartup: true
-    execOnCron: '*/1 * * * *'
+  # - title: Update container entity file
+  #   shell: 'docker ps -a --format json > /etc/OliveTin/entities/containers.json'
+  #   hidden: true
+  #   execOnStartup: true
+  #   execOnCron: '*/1 * * * *'
 
 # An entity is something that exists - a "thing", like a VM, or a Container
 # is an entity. OliveTin allows you to then dynamically generate actions based
