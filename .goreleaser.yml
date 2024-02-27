@@ -112,6 +112,8 @@ dockers:
       - "--label=org.opencontainers.image.version={{.Tag}}"
     extra_files:
       - webui
+      - var/entites
+      - comfig.yaml
 
 docker_manifests:
   - name_template: docker.io/jamesread/olivetin:{{ .Version }}
