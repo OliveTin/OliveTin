@@ -70,7 +70,7 @@ webui-codestyle:
 webui-dist:
 	rm -rf webui webui.dev/dist
 	cd webui.dev && npm install
-	cd webui.dev && parcel build && mv dist ../webui
+	cd webui.dev && parcel build --public-url "." && mv dist ../webui
 
 clean:
 	rm -rf dist OliveTin OliveTin.armhf OliveTin.exe reports gen
