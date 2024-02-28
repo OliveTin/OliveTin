@@ -51,7 +51,7 @@ func (api *oliveTinAPI) StartAction(ctx ctx.Context, req *pb.StartActionRequest)
 	api.executor.ExecRequest(&execReq)
 
 	return &pb.StartActionResponse{
-		ExecutionTrackingId: req.UniqueTrackingId,
+		ExecutionTrackingId: execReq.TrackingID,
 	}, nil
 }
 
