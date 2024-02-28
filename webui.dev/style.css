@@ -69,10 +69,10 @@ nav {
 nav.sidebar {
   position: fixed;
   width: 180px;
-  height: 100vh;
+  height: 100dvh;
   left: 0;
   top: 0;
-  transition: 0.5s ease;
+  transition: left 0.5s ease;
   box-shadow: 0 0 10px 0 #444;
   z-index: 3;
   display: flex;
