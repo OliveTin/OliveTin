@@ -219,7 +219,7 @@ entities:
 # The only way to properly use entities, are to use them with a `fieldset` on
 # a dashboard.
 dashboards:
-  # Top level items are dsahboards.
+  # Top level items are dashboards.
   - title: My Servers
     contents:
       # The contents of a dashboard will try to look for an action with a
