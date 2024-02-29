@@ -294,7 +294,7 @@ function changeDirectory (selected) {
   const title = document.querySelector('h1')
   title.innerHTML = ''
 
-  const rootLink = createDirectoryBreadcrumb('OliveTin', null)
+  const rootLink = createDirectoryBreadcrumb(window.pageTitle, null)
   title.appendChild(rootLink)
 
   for (const dir of window.directoryNavigation) {
