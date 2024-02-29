@@ -115,10 +115,15 @@ function processWebuiSettingsJson (settings) {
   document.querySelector('#perma-widget').hidden = !settings.ShowNavigation
   document.querySelector('footer[title="footer"]').hidden = !settings.ShowFooter
 
+  window.pageTitle = 'OliveTin'
+
   if (settings.PageTitle) {
-    document.title = settings.PageTitle
+    window.pageTitle = settings.PageTitle
+
+    document.title = window.pageTitle
+
     const titleElem = document.querySelector('#page-title')
-    if (titleElem) titleElem.innerText = settings.PageTitle
+    if (titleElem) titleElem.innerText = window.pageTitle
   }
 }
 
