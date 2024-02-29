@@ -8,15 +8,30 @@ import (
 	sv "github.com/OliveTin/OliveTin/internal/stringvariables"
 	"github.com/fsnotify/fsnotify"
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 	"gopkg.in/yaml.v3"
 	"io/ioutil"
+	"path/filepath"
 	"strings"
 )
 
 func SetupEntityFileWatchers(cfg *config.Config) {
+	configDir := filepath.Dir(viper.ConfigFileUsed())
+
 	for _, ef := range cfg.Entities {
-		go watch(ef.File, ef.Name)
-		loadEntityFile(ef.File, ef.Name)
+		p := ef.File
+
+		if !filepath.IsAbs(p) {
+			p = filepath.Join(configDir, p)
+
+			log.WithFields(log.Fields{
+				"entityFile": p,
+			}).Debugf("Adding config dir to entity file path")
+		}
+
+		go watch(p, ef.Name)
+
+		loadEntityFile(p, ef.Name)
 	}
 }
 
