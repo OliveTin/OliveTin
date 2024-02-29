@@ -5,6 +5,7 @@
 # Listen on all addresses available, port 1337
 listenAddressSingleHTTPFrontend: 0.0.0.0:1337
 
+
 # Choose from INFO (default), WARN and DEBUG
 logLevel: "INFO"
 
@@ -256,12 +257,13 @@ dashboards:
   # This is the second dashboard.
   - title: My Containers
     contents:
-      - title: Container {{ container.Names }}
+      - title: 'Container {{ container.Names }} ({{ container.Image }})'
         entity: container
         type: fieldset
         contents:
           - type: display
             title: |
-              {{ container.Names }} <br /><br /><strong>{{ container.State }}</strong>
+              {{ container.RunningFor }} <br /><br /><strong>{{ container.State }}</strong>
+
           - title: 'Start {{ container.Names }}'
           - title: 'Stop {{ container.Names }}'
