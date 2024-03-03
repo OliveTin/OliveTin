@@ -170,7 +170,7 @@ function marshalDashboardStructureToHtml (json) {
     document.getElementById('navigation-links').appendChild(navigationLi)
   }
 
-  if (document.getElementById('root-group').children.length === 0 && json.dashboards.length > 0) {
+  if (document.getElementById('root-group').querySelectorAll('action-button').length === 0 && json.dashboards.length > 0) {
     showSection(json.dashboards[0].title)
   } else {
     showSection('Actions')
