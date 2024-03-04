@@ -170,25 +170,20 @@ function marshalDashboardStructureToHtml (json) {
     document.getElementById('navigation-links').appendChild(navigationLi)
   }
 
-  if (document.getElementById('root-group').querySelectorAll('action-button').length === 0 && json.dashboards.length > 0) {
-    showSection(json.dashboards[0].title)
-  } else {
-    showSection('Actions')
-  }
-
   const rootGroup = document.querySelector('#root-group')
-
-  let hasRootActions = false
 
   for (const btn of Object.values(window.actionButtons)) {
     if (btn.parentElement === null) {
       rootGroup.appendChild(btn)
-      hasRootActions = true
     }
   }
 
-  if (!hasRootActions) {
+  if (rootGroup.querySelectorAll('action-button').length > 0 && json.dashboards.length > 0) {
     nav.querySelector('li[title="Actions"]').style.display = 'none'
+
+    showSection(json.dashboards[0].title)
+  } else {
+    showSection('Actions')
   }
 }
 
