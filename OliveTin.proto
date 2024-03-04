@@ -137,6 +137,7 @@ message WatchExecutionUpdate {
 
 message ExecutionStatusRequest {
 	string execution_tracking_id = 1;
+	string action_id = 2;
 }
 
 message ExecutionStatusResponse {

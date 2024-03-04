@@ -204,6 +204,37 @@ function marshalLink (item, fieldset) {
   fieldset.appendChild(btn)
 }
 
+function marshalMreOutput (item, fieldset) {
+  const pre = document.createElement('pre')
+  pre.classList.add('mre-output')
+  pre.innerHTML = 'Waiting...'
+
+  const executionStatus = {
+    actionId: item.title
+  }
+
+  window.fetch(window.restBaseUrl + 'ExecutionStatus', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(executionStatus)
+  }).then((res) => {
+    if (res.ok) {
+      return res.json()
+    } else {
+      pre.innerHTML = 'error'
+
+      throw new Error(res.statusText)
+    }
+  }).then((json) => {
+    console.log(json)
+    pre.innerHTML = json.logEntry.stdout
+  })
+
+  fieldset.appendChild(pre)
+}
+
 function marshalContainerContents (json, section, fieldset, parentDashboard) {
   for (const item of json.contents) {
     switch (item.type) {
@@ -216,6 +247,9 @@ function marshalContainerContents (json, section, fieldset, parentDashboard) {
         break
       case 'display':
         marshalDisplay(item, fieldset)
+        break
+      case 'stdout-most-recent-execution':
+        marshalMreOutput(item, fieldset)
         break
       case 'link':
         marshalLink(item, fieldset)

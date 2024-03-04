@@ -142,16 +142,40 @@ func internalLogEntryToPb(logEntry *executor.InternalLogEntry) *pb.LogEntry {
 	}
 }
 
+func getExecutionStatusByTrackingID(api *oliveTinAPI, executionTrackingId string) *executor.InternalLogEntry {
+	logEntry, ok := api.executor.Logs[executionTrackingId]
+
+	if !ok {
+		return nil
+	}
+
+	return logEntry
+}
+
+func getMostRecentExecutionStatusById(api *oliveTinAPI, actionId string) *executor.InternalLogEntry {
+	var ile *executor.InternalLogEntry
+
+	for _, candidateLe := range api.executor.Logs {
+		if actionId == candidateLe.ActionId {
+			ile = candidateLe
+		}
+	}
+
+	return ile
+}
+
 func (api *oliveTinAPI) ExecutionStatus(ctx ctx.Context, req *pb.ExecutionStatusRequest) (*pb.ExecutionStatusResponse, error) {
 	res := &pb.ExecutionStatusResponse{}
 
-	logEntry, ok := api.executor.Logs[req.ExecutionTrackingId]
+	var ile *executor.InternalLogEntry
 
-	if !ok {
-		return res, nil
+	if req.ExecutionTrackingId != "" {
+		ile = getExecutionStatusByTrackingID(api, req.ExecutionTrackingId)
+	} else {
+		ile = getMostRecentExecutionStatusById(api, req.ActionId)
 	}
 
-	res.LogEntry = internalLogEntryToPb(logEntry)
+	res.LogEntry = internalLogEntryToPb(ile)
 
 	return res, nil
 }
