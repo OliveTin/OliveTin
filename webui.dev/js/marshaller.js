@@ -204,13 +204,13 @@ function marshalLink (item, fieldset) {
   fieldset.appendChild(btn)
 }
 
-function marshalMreOutput (item, fieldset) {
+function marshalMreOutput (dashboardComponent, fieldset) {
   const pre = document.createElement('pre')
   pre.classList.add('mre-output')
   pre.innerHTML = 'Waiting...'
 
   const executionStatus = {
-    actionId: item.title
+    actionId: dashboardComponent.title
   }
 
   window.fetch(window.restBaseUrl + 'ExecutionStatus', {
@@ -228,8 +228,21 @@ function marshalMreOutput (item, fieldset) {
       throw new Error(res.statusText)
     }
   }).then((json) => {
-    console.log(json)
-    pre.innerHTML = json.logEntry.stdout
+    updateMre(pre, json.logEntry)
+  })
+
+  const updateMre = (pre, json) => {
+    pre.innerHTML = json.stdout
+  }
+
+  window.addEventListener('ExecutionFinished', (e) => {
+    // The dashboard component "title" field is used for lots of things
+    // and in this context for MreOutput it's just to refer an an actionId.
+    //
+    // So this is not a typo.
+    if (e.payload.actionId === dashboardComponent.title) {
+      updateMre(pre, e.payload)
+    }
   })
 
   fieldset.appendChild(pre)

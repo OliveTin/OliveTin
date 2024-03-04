@@ -429,6 +429,7 @@ pre {
   padding: 1em;
   min-height: 1em;
   overflow: auto;
+  text-align: left;
 }
 
 td.exit-code {
