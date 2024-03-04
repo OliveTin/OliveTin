@@ -3,6 +3,7 @@ package grpcapi
 import (
 	pb "github.com/OliveTin/OliveTin/gen/grpc"
 	config "github.com/OliveTin/OliveTin/internal/config"
+	"golang.org/x/exp/slices"
 )
 
 func dashboardCfgToPb(res *pb.GetDashboardComponentsResponse, dashboards []*config.DashboardComponent) {
@@ -37,14 +38,19 @@ func getDashboardComponentContents(dashboard *config.DashboardComponent) []*pb.D
 }
 
 func getDashboardComponentType(item *config.DashboardComponent) string {
+	allowedTypes := []string{
+		"stdout-most-recent-execution",
+		"display",
+	}
+
 	if len(item.Contents) > 0 {
 		if item.Type != "fieldset" {
 			return "directory"
 		}
 
 		return "fieldset"
-	} else if item.Type == "display" {
-		return "display"
+	} else if slices.Contains(allowedTypes, item.Type) {
+		return item.Type
 	}
 
 	return "link"

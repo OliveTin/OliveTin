@@ -199,6 +199,50 @@ function marshalLink (item, fieldset) {
   fieldset.appendChild(btn)
 }
 
+function marshalMreOutput (dashboardComponent, fieldset) {
+  const pre = document.createElement('pre')
+  pre.classList.add('mre-output')
+  pre.innerHTML = 'Waiting...'
+
+  const executionStatus = {
+    actionId: dashboardComponent.title
+  }
+
+  window.fetch(window.restBaseUrl + 'ExecutionStatus', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(executionStatus)
+  }).then((res) => {
+    if (res.ok) {
+      return res.json()
+    } else {
+      pre.innerHTML = 'error'
+
+      throw new Error(res.statusText)
+    }
+  }).then((json) => {
+    updateMre(pre, json.logEntry)
+  })
+
+  const updateMre = (pre, json) => {
+    pre.innerHTML = json.stdout
+  }
+
+  window.addEventListener('ExecutionFinished', (e) => {
+    // The dashboard component "title" field is used for lots of things
+    // and in this context for MreOutput it's just to refer an an actionId.
+    //
+    // So this is not a typo.
+    if (e.payload.actionId === dashboardComponent.title) {
+      updateMre(pre, e.payload)
+    }
+  })
+
+  fieldset.appendChild(pre)
+}
+
 function marshalContainerContents (json, section, fieldset, parentDashboard) {
   for (const item of json.contents) {
     switch (item.type) {
@@ -211,6 +255,9 @@ function marshalContainerContents (json, section, fieldset, parentDashboard) {
         break
       case 'display':
         marshalDisplay(item, fieldset)
+        break
+      case 'stdout-most-recent-execution':
+        marshalMreOutput(item, fieldset)
         break
       case 'link':
         marshalLink(item, fieldset)
