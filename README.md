@@ -1,6 +1,6 @@
 # OliveTin
 
-<img alt = "project logo" src = "https://github.com/OliveTin/OliveTin/blob/main/webui/OliveTinLogo.png" align = "right" width = "160px" />
+<img alt = "project logo" src = "https://github.com/OliveTin/OliveTin/blob/main/webui.dev/OliveTinLogo.png" align = "right" width = "160px" />
 
 OliveTin gives **safe** and **simple** access to predefined shell commands from a web interface.
 
