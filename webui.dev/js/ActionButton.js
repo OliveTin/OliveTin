@@ -129,6 +129,8 @@ class ActionButton extends ExecutionFeedbackButton {
     if (this.popupOnStart === 'execution-button') {
       const btnExecution = document.createElement('execution-button')
       btnExecution.constructFromJson(executionTrackingId)
+      this.querySelector('.action-button-footer').hidden = false
+      this.querySelector('.action-button-footer').style.display = 'flex'
       this.querySelector('.action-button-footer').prepend(btnExecution)
 
       return

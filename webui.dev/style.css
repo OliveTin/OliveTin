@@ -252,6 +252,7 @@ action-button button {
   flex-grow: 1;
   width: 100%;
   z-index: 2;
+  border-radius: .7em;
 }
 
 action-button details {
@@ -271,14 +272,8 @@ action-button details summary div span:first-child {
 }
 
 .action-button-footer {
-  display: flex;
   text-align: left;
   font-size: smaller;
-  background-color: #efefef;
-  border-top: 0;
-  border-left: 1px solid #666;
-  border-right: 1px solid #666;
-  border-bottom: 1px solid #666;
   overflow: auto;
 }
 
@@ -542,10 +537,6 @@ div.toolbar * {
   nav ul li a:hover {
     background-color: #666;
     color: white;
-  }
-
-  .action-button-footer {
-    background-color: #111;
   }
 
   button:disabled {
