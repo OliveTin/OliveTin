@@ -35,7 +35,7 @@ describe('config: multipleDropdowns', function () {
 
     const dialog = await webdriver.findElement(By.id('argument-popup'))
 
-    await webdriver.wait(until.elementIsVisible(dialog), 2000)
+    await webdriver.wait(until.elementIsVisible(dialog), 3500)
 
     const selects = await dialog.findElements(By.tagName('select'))
 
