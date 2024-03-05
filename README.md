@@ -11,6 +11,8 @@ OliveTin gives **safe** and **simple** access to predefined shell commands from 
 [![Go Report Card](https://goreportcard.com/badge/github.com/Olivetin/OliveTin)](https://goreportcard.com/report/github.com/OliveTin/OliveTin)
 [![Build Snapshot](https://github.com/OliveTin/OliveTin/actions/workflows/build-snapshot.yml/badge.svg)](https://github.com/OliveTin/OliveTin/actions/workflows/build-snapshot.yml)
 
+<img alt = "screenshot" src = "https://github.com/OliveTin/OliveTin/blob/main/var/marketing/OliveTin-screenshot-dropshadow.png" />
+
 ## Use cases
 
 **Safely** give access to commands, for less technical people;
