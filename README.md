@@ -31,7 +31,7 @@ OliveTin gives **safe** and **simple** access to predefined shell commands from 
 
 ## YouTube demo video (6 mins)
 
-[![6 minute demo video](https://img.youtube.com/vi/Ej6NM9rmZtk/0.jpg)](https://www.youtube.com/watch?v=Ej6NM9rmZtk)
+[![10 minute demo video](https://img.youtube.com/vi/UBgOfNrzId4/0.jpg)](https://www.youtube.com/watch?v=UBgOfNrzId4)
 
 ## Features
 
