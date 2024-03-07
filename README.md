@@ -29,9 +29,9 @@ OliveTin gives **safe** and **simple** access to predefined shell commands from 
 
 [Join the community on Discord](https://discord.gg/jhYWWpNJ3v) to talk with other users about use cases, or to ask for support in getting started.
 
-## YouTube demo video (6 mins)
+## YouTube demo video
 
-[![10 minute demo video](https://img.youtube.com/vi/UBgOfNrzId4/0.jpg)](https://www.youtube.com/watch?v=UBgOfNrzId4)
+[![YouTube demo video](https://img.youtube.com/vi/UBgOfNrzId4/maxresdefault.jpg)](https://www.youtube.com/watch?v=UBgOfNrzId4)
 
 ## Features
 
