@@ -31,7 +31,7 @@ OliveTin gives **safe** and **simple** access to predefined shell commands from 
 
 ## YouTube demo video
 
-[![YouTube demo video](https://img.youtube.com/vi/UBgOfNrzId4/maxresdefault.jpg)](https://www.youtube.com/watch?v=UBgOfNrzId4)
+[![YouTube demo video](https://raw.githubusercontent.com/OliveTin/OliveTin/main/var/marketing/YouTubeBanner.png)](https://www.youtube.com/watch?v=UBgOfNrzId4)
 
 ## Features
 
