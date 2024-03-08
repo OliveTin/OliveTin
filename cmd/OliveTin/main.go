@@ -9,6 +9,7 @@ import (
 	"github.com/OliveTin/OliveTin/internal/executor"
 	grpcapi "github.com/OliveTin/OliveTin/internal/grpcapi"
 	"github.com/OliveTin/OliveTin/internal/installationinfo"
+	"github.com/OliveTin/OliveTin/internal/oncalendarfile"
 	"github.com/OliveTin/OliveTin/internal/oncron"
 	"github.com/OliveTin/OliveTin/internal/onfileindir"
 	"github.com/OliveTin/OliveTin/internal/onstartup"
@@ -153,6 +154,7 @@ func main() {
 	go onstartup.Execute(cfg, executor)
 	go oncron.Schedule(cfg, executor)
 	go onfileindir.WatchFilesInDirectory(cfg, executor)
+	go oncalendarfile.Schedule(cfg, executor)
 
 	go entityfiles.SetupEntityFileWatchers(cfg)
 
