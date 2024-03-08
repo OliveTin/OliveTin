@@ -102,6 +102,10 @@ class ArgumentForm extends window.HTMLElement {
         this.domBtnStart.disabled = false
         domEl.disabled = true
       }
+    } else if (arg.type === 'datetime') {
+      domEl = document.createElement('input')
+      domEl.setAttribute('type', 'datetime-local')
+      domEl.setAttribute('step', '1')
     } else {
       domEl = document.createElement('input')
       domEl.onchange = () => {

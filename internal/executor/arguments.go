@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"regexp"
 	"strings"
+	"time"
 )
 
 var (
@@ -92,6 +93,16 @@ func typecheckChoice(value string, arg *config.ActionArgument) error {
 func TypeSafetyCheck(name string, value string, argumentType string) error {
 	if argumentType == "url" {
 		return typeSafetyCheckUrl(name, value)
+	}
+
+	if argumentType == "datetime" {
+		_, err := time.Parse("2006-01-02T15:04:05", value)
+
+		if err != nil {
+			return err
+		}
+
+		return nil
 	}
 
 	return typeSafetyCheckRegex(name, value, argumentType)

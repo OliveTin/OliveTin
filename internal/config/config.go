@@ -17,6 +17,7 @@ type Action struct {
 	ExecOnCron             []string
 	ExecOnFileCreatedInDir []string
 	ExecOnFileChangedInDir []string
+	ExecOnCalendarFile     string
 	Trigger                string
 	MaxConcurrent          int
 	Arguments              []ActionArgument
