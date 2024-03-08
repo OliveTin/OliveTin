@@ -2,6 +2,7 @@ package oncalendarfile
 
 import (
 	"context"
+	"github.com/OliveTin/OliveTin/internal/acl"
 	"github.com/OliveTin/OliveTin/internal/config"
 	"github.com/OliveTin/OliveTin/internal/executor"
 	"github.com/OliveTin/OliveTin/internal/filehelper"
@@ -103,4 +104,15 @@ func exec(instant time.Time, action *config.Action, cfg *config.Config, ex *exec
 		"instant":     instant,
 		"actionTitle": action.Title,
 	}).Infof("Executing action from calendar")
+
+	req := &executor.ExecutionRequest{
+		Action: action,
+		Cfg:    cfg,
+		Tags:   []string{"calendar"},
+		AuthenticatedUser: &acl.AuthenticatedUser{
+			Username: "calendar",
+		},
+	}
+
+	ex.ExecRequest(req)
 }

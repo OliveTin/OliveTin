@@ -105,6 +105,7 @@ class ArgumentForm extends window.HTMLElement {
     } else if (arg.type === 'datetime') {
       domEl = document.createElement('input')
       domEl.setAttribute('type', 'datetime-local')
+      domEl.setAttribute('step', '1')
     } else {
       domEl = document.createElement('input')
       domEl.onchange = () => {
