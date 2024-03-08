@@ -109,19 +109,27 @@ func TypeSafetyCheck(name string, value string, argumentType string) error {
 }
 
 func typeSafetyCheckRegex(name string, value string, argumentType string) error {
-	pattern, found := typecheckRegex[argumentType]
+	pattern := ""
 
-	if !found {
-		return errors.New("argument type not implemented " + argumentType)
+	if strings.HasPrefix(argumentType, "regex:") {
+		pattern = strings.Replace(argumentType, "regex:", "", 1)
+	} else {
+		found := false
+		pattern, found = typecheckRegex[argumentType]
+
+		if !found {
+			return errors.New("argument type not implemented " + argumentType)
+		}
 	}
 
 	matches, _ := regexp.MatchString(pattern, value)
 
 	if !matches {
 		log.WithFields(log.Fields{
-			"name":  name,
-			"value": value,
-			"type":  argumentType,
+			"name":    name,
+			"value":   value,
+			"type":    argumentType,
+			"pattern": pattern,
 		}).Warn("Arg type check safety failure")
 
 		return errors.New("invalid argument, doesn't match " + argumentType)

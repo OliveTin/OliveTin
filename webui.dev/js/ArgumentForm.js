@@ -108,6 +108,11 @@ class ArgumentForm extends window.HTMLElement {
       domEl.setAttribute('step', '1')
     } else {
       domEl = document.createElement('input')
+
+      if (arg.type.startsWith(':regex')) {
+        domEl.setAttribute('pattern', arg.type.replace('regex:', ''))
+      }
+
       domEl.onchange = () => {
         const validateArgumentTypeArgs = {
           value: domEl.value,
