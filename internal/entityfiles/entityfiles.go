@@ -11,12 +11,19 @@ import (
 	"github.com/spf13/viper"
 	"gopkg.in/yaml.v3"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
 )
 
 func SetupEntityFileWatchers(cfg *config.Config) {
 	configDir := filepath.Dir(viper.ConfigFileUsed())
+
+	configDirVar := filepath.Join(configDir, "var") // for development purposes
+
+	if _, err := os.Stat(configDirVar); err == nil {
+		configDir = configDirVar
+	}
 
 	for _, ef := range cfg.Entities {
 		p := ef.File
