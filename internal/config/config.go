@@ -32,6 +32,7 @@ type ActionArgument struct {
 	Type        string
 	Default     string
 	Choices     []ActionArgumentChoice
+	Entity      string
 }
 
 // ActionArgumentChoice represents a predefined choice for an argument.

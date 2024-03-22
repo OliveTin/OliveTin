@@ -1,7 +1,9 @@
 package stringvariables
 
 import (
+	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 	// log "github.com/sirupsen/logrus"
 )
@@ -34,4 +36,28 @@ func RemoveKeysThatStartWith(search string) {
 			delete(Contents, k)
 		}
 	}
+}
+
+func GetEntities(entityTitle string) []string {
+	var ret []string
+
+	count := GetEntityCount(entityTitle)
+
+	for i := 0; i < count; i++ {
+		prefix := GetEntityPrefix(entityTitle, i)
+
+		ret = append(ret, prefix)
+	}
+
+	return ret
+}
+
+func GetEntityPrefix(entityTitle string, entityIndex int) string {
+	return "entities." + entityTitle + "." + fmt.Sprintf("%v", entityIndex)
+}
+
+func GetEntityCount(entityTitle string) int {
+	count, _ := strconv.Atoi(Get("entities." + entityTitle + ".count"))
+
+	return count
 }

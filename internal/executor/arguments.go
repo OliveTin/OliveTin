@@ -78,6 +78,10 @@ func typecheckActionArgument(name string, value string, action *config.Action) e
 }
 
 func typecheckChoice(value string, arg *config.ActionArgument) error {
+	if arg.Entity != "" {
+		return typecheckChoiceEntity(value, arg)
+	}
+
 	for _, choice := range arg.Choices {
 		if value == choice.Value {
 			return nil
@@ -85,6 +89,20 @@ func typecheckChoice(value string, arg *config.ActionArgument) error {
 	}
 
 	return errors.New("argument value is not one of the predefined choices")
+}
+
+func typecheckChoiceEntity(value string, arg *config.ActionArgument) error {
+	templateChoice := arg.Choices[0].Value
+
+	for _, ent := range sv.GetEntities(arg.Entity) {
+		choice := sv.ReplaceEntityVars(ent, templateChoice)
+
+		if value == choice {
+			return nil
+		}
+	}
+
+	return errors.New("argument value cannot be found in entities")
 }
 
 // TypeSafetyCheck checks argument values match a specific type. The types are

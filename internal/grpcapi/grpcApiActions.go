@@ -54,7 +54,7 @@ func buildActionEntities(entityTitle string, tpl *config.Action) []*pb.Action {
 }
 
 func buildEntityAction(tpl *config.Action, entityTitle string, entityIndex int) *pb.Action {
-	prefix := getEntityPrefix(entityTitle, entityIndex)
+	prefix := sv.GetEntityPrefix(entityTitle, entityIndex)
 
 	virtualActionId := createPublicID(tpl, prefix)
 
@@ -93,7 +93,7 @@ func actionCfgToPb(action *config.Action, user *acl.AuthenticatedUser) *pb.Actio
 			Type:         cfgArg.Type,
 			Description:  cfgArg.Description,
 			DefaultValue: cfgArg.Default,
-			Choices:      buildChoices(cfgArg.Choices),
+			Choices:      buildChoices(cfgArg),
 		}
 
 		btn.Arguments = append(btn.Arguments, &pbArg)
@@ -102,7 +102,32 @@ func actionCfgToPb(action *config.Action, user *acl.AuthenticatedUser) *pb.Actio
 	return &btn
 }
 
-func buildChoices(choices []config.ActionArgumentChoice) []*pb.ActionArgumentChoice {
+func buildChoices(arg config.ActionArgument) []*pb.ActionArgumentChoice {
+	if arg.Entity != "" && len(arg.Choices) == 1 {
+		return buildChoicesEntity(arg.Choices[0], arg.Entity)
+	} else {
+		return buildChoicesSimple(arg.Choices)
+	}
+}
+
+func buildChoicesEntity(firstChoice config.ActionArgumentChoice, entityTitle string) []*pb.ActionArgumentChoice {
+	ret := []*pb.ActionArgumentChoice{}
+
+	entityCount := sv.GetEntityCount(entityTitle)
+
+	for i := 0; i < entityCount; i++ {
+		prefix := sv.GetEntityPrefix(entityTitle, i)
+
+		ret = append(ret, &pb.ActionArgumentChoice{
+			Value: sv.ReplaceEntityVars(prefix, firstChoice.Value),
+			Title: sv.ReplaceEntityVars(prefix, firstChoice.Title),
+		})
+	}
+
+	return ret
+}
+
+func buildChoicesSimple(choices []config.ActionArgumentChoice) []*pb.ActionArgumentChoice {
 	ret := []*pb.ActionArgumentChoice{}
 
 	for _, cfgChoice := range choices {
