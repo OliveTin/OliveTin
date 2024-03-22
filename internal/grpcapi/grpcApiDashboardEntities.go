@@ -4,19 +4,12 @@ import (
 	pb "github.com/OliveTin/OliveTin/gen/grpc"
 	config "github.com/OliveTin/OliveTin/internal/config"
 	sv "github.com/OliveTin/OliveTin/internal/stringvariables"
-
-	"fmt"
-	"strconv"
 )
-
-func getEntityPrefix(entityTitle string, entityIndex int) string {
-	return "entities." + entityTitle + "." + fmt.Sprintf("%v", entityIndex)
-}
 
 func buildEntityFieldsets(entityTitle string, tpl *config.DashboardComponent) []*pb.DashboardComponent {
 	ret := make([]*pb.DashboardComponent, 0)
 
-	entityCount, _ := strconv.Atoi(sv.Get("entities." + entityTitle + ".count"))
+	entityCount := sv.GetEntityCount(entityTitle)
 
 	for i := 0; i < entityCount; i++ {
 		ret = append(ret, buildEntityFieldset(tpl, entityTitle, i))
@@ -26,7 +19,7 @@ func buildEntityFieldsets(entityTitle string, tpl *config.DashboardComponent) []
 }
 
 func buildEntityFieldset(tpl *config.DashboardComponent, entityTitle string, entityIndex int) *pb.DashboardComponent {
-	prefix := getEntityPrefix(entityTitle, entityIndex)
+	prefix := sv.GetEntityPrefix(entityTitle, entityIndex)
 
 	return &pb.DashboardComponent{
 		Title:    sv.ReplaceEntityVars(prefix, tpl.Title),
