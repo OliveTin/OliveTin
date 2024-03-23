@@ -93,6 +93,10 @@ class ArgumentForm extends window.HTMLElement {
 
       opt.setAttribute('value', suggestion)
 
+      if (typeof arg.suggestions[suggestion] !== 'undefined' && arg.suggestions[suggestion].length > 0) {
+        opt.innerText = arg.suggestions[suggestion]
+      }
+
       ret.appendChild(opt)
     }
 
@@ -164,7 +168,7 @@ class ArgumentForm extends window.HTMLElement {
     domEl.name = arg.name
     domEl.value = arg.defaultValue
 
-    if (typeof arg.suggestions === 'object' && arg.suggestions.length > 0) {
+    if (typeof arg.suggestions === 'object' && Object.keys(arg.suggestions).length > 0) {
       domEl.setAttribute('list', arg.name + '-choices')
     }
 

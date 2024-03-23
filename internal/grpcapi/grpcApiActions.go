@@ -94,6 +94,7 @@ func actionCfgToPb(action *config.Action, user *acl.AuthenticatedUser) *pb.Actio
 			Description:  cfgArg.Description,
 			DefaultValue: cfgArg.Default,
 			Choices:      buildChoices(cfgArg),
+			Suggestions:  cfgArg.Suggestions,
 		}
 
 		btn.Arguments = append(btn.Arguments, &pbArg)
