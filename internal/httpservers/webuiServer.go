@@ -33,8 +33,10 @@ func findWebuiDir() string {
 		"/etc/OliveTin/webui/",
 	}
 
-	for index, _ := range directoriesToSearch {
-		dir := directoriesToSearch[index]
+	// Use a classic i := 0 style for loop here instead of range, as the
+	// search order must be deterministic - the order that the slice was defined in.
+	for i := 0; i < len(directoriesToSearch); i++ {
+		dir := directoriesToSearch[i]
 
 		if _, err := os.Stat(dir); !os.IsNotExist(err) {
 			log.WithFields(log.Fields{
