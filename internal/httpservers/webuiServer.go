@@ -33,7 +33,9 @@ func findWebuiDir() string {
 		"/etc/OliveTin/webui/",
 	}
 
-	for _, dir := range directoriesToSearch {
+	for index, _ := range directoriesToSearch {
+		dir := directoriesToSearch[index]
+
 		if _, err := os.Stat(dir); !os.IsNotExist(err) {
 			log.WithFields(log.Fields{
 				"dir": dir,
