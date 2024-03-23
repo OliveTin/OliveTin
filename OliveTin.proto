@@ -23,6 +23,7 @@ message ActionArgument {
 	repeated ActionArgumentChoice choices = 5;
 
 	string description = 6;
+	map<string, string> suggestions = 7;
 }
 
 message ActionArgumentChoice {
