@@ -64,6 +64,7 @@ class ArgumentForm extends window.HTMLElement {
       domArgumentWrapper.classList.add('argument-wrapper')
 
       domArgumentWrapper.appendChild(this.createDomLabel(arg))
+      domArgumentWrapper.appendChild(this.createDomSuggestions(arg))
       domArgumentWrapper.appendChild(this.createDomInput(arg))
       domArgumentWrapper.appendChild(this.createDomDescription(arg))
 
@@ -77,6 +78,25 @@ class ArgumentForm extends window.HTMLElement {
     domLbl.setAttribute('for', arg.name)
 
     return domLbl
+  }
+
+  createDomSuggestions (arg) {
+    if (typeof arg.suggestions !== 'object' || arg.suggestions.length === 0) {
+      return document.createElement('span')
+    }
+
+    const ret = document.createElement('datalist')
+    ret.setAttribute('id', arg.name + '-choices')
+
+    for (const suggestion of Object.keys(arg.suggestions)) {
+      const opt = document.createElement('option')
+
+      opt.setAttribute('value', suggestion)
+
+      ret.appendChild(opt)
+    }
+
+    return ret
   }
 
   createDomInput (arg) {
@@ -143,6 +163,10 @@ class ArgumentForm extends window.HTMLElement {
 
     domEl.name = arg.name
     domEl.value = arg.defaultValue
+
+    if (typeof arg.suggestions === 'object' && arg.suggestions.length > 0) {
+      domEl.setAttribute('list', arg.name + '-choices')
+    }
 
     this.argInputs.push(domEl)
 
