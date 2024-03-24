@@ -64,9 +64,10 @@ func buildEntityAction(tpl *config.Action, entityTitle string, entityIndex int) 
 	}
 
 	return &pb.Action{
-		Id:    virtualActionId,
-		Title: sv.ReplaceEntityVars(prefix, tpl.Title),
-		Icon:  tpl.Icon,
+		Id:           virtualActionId,
+		Title:        sv.ReplaceEntityVars(prefix, tpl.Title),
+		Icon:         tpl.Icon,
+		PopupOnStart: tpl.PopupOnStart,
 	}
 }
 
