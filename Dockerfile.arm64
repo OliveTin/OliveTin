@@ -10,7 +10,7 @@ RUN mkdir -p /config /config/entities/ /var/www/olivetin \
 		openssh-clients \
 		shadow-utils \
 		apprise \
-		docker
+		docker \
 	&& microdnf clean all
 
 RUN useradd --system --create-home olivetin -u 1000
