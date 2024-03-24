@@ -31,6 +31,9 @@ class ActionButton extends ExecutionFeedbackButton {
 
     // DOM Attributes
     this.setAttribute('role', 'none')
+    this.setAttribute('id', 'actionButton-' + this.actionId)
+
+    this.btn.setAttribute('id', 'actionButtonInner-' + this.actionId)
     this.btn.title = json.title
     this.btn.onclick = () => {
       if (json.arguments.length > 0) {
@@ -56,8 +59,6 @@ class ActionButton extends ExecutionFeedbackButton {
 
     this.domTitle.innerText = this.btn.title
     this.domIcon.innerHTML = this.unicodeIcon
-
-    this.setAttribute('id', 'actionButton-' + this.actionId)
   }
 
   updateFromJson (json) {
