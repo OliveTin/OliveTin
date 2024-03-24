@@ -8,7 +8,6 @@ type Action struct {
 	Icon                   string
 	Shell                  string
 	ShellAfterCompleted    string
-	CSS                    map[string]string `mapstructure:"omitempty"`
 	Timeout                int
 	Acls                   []string
 	Entity                 string
@@ -48,7 +47,6 @@ type EntityFile struct {
 	File string
 	Name string
 	Icon string
-	CSS  map[string]string
 }
 
 // PermissionsList defines what users can do with an action.
