@@ -302,7 +302,7 @@ func (api *oliveTinAPI) DumpVars(ctx ctx.Context, req *pb.DumpVarsRequest) (*pb.
 	}
 
 	res.Alert = "Dumping variables has been enabled in the configuration. Please set InsecureAllowDumpVars = false again after you don't need it anymore"
-	res.Contents = sv.Contents
+	res.Contents = sv.GetAll()
 
 	return res, nil
 }

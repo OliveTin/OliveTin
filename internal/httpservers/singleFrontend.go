@@ -47,6 +47,16 @@ func StartSingleHTTPFrontend(cfg *config.Config) {
 		webuiProxy.ServeHTTP(w, r)
 	})
 
+	if cfg.Prometheus.Enabled {
+		promURL, _ := url.Parse("http://" + cfg.ListenAddressPrometheus)
+		promProxy := httputil.NewSingleHostReverseProxy(promURL)
+
+		mux.HandleFunc("/metrics", func(w http.ResponseWriter, r *http.Request) {
+			log.Debugf("prom req: %q", r.URL)
+			promProxy.ServeHTTP(w, r)
+		})
+	}
+
 	srv := &http.Server{
 		Addr:    cfg.ListenAddressSingleHTTPFrontend,
 		Handler: mux,

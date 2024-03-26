@@ -64,14 +64,20 @@ type AccessControlList struct {
 	Permissions      PermissionsList
 }
 
+type PrometheusConfig struct {
+	Enabled          bool
+	DefaultGoMetrics bool
+}
+
 // Config is the global config used through the whole app.
 type Config struct {
 	UseSingleHTTPFrontend           bool
 	ThemeName                       string
 	ListenAddressSingleHTTPFrontend string
-	ListenAddressWebUI              string
 	ListenAddressRestActions        string
 	ListenAddressGrpcActions        string
+	ListenAddressWebUI              string
+	ListenAddressPrometheus         string
 	ExternalRestAddress             string
 	LogLevel                        string
 	Actions                         []*Action             `mapstructure:"actions"`
@@ -98,6 +104,7 @@ type Config struct {
 	InsecureAllowDumpVars           bool
 	InsecureAllowDumpSos            bool
 	InsecureAllowDumpActionMap      bool
+	Prometheus                      PrometheusConfig
 }
 
 type DashboardComponent struct {
@@ -119,6 +126,7 @@ func DefaultConfig() *Config {
 	config.ListenAddressRestActions = "localhost:1338"
 	config.ListenAddressGrpcActions = "localhost:1339"
 	config.ListenAddressWebUI = "localhost:1340"
+	config.ListenAddressPrometheus = "localhost:1341"
 	config.ExternalRestAddress = "."
 	config.LogLevel = "INFO"
 	config.CheckForUpdates = true
@@ -133,6 +141,8 @@ func DefaultConfig() *Config {
 	config.InsecureAllowDumpVars = false
 	config.InsecureAllowDumpSos = false
 	config.InsecureAllowDumpActionMap = false
+	config.Prometheus.Enabled = false
+	config.Prometheus.DefaultGoMetrics = false
 
 	return &config
 }

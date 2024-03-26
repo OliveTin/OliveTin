@@ -9,18 +9,40 @@
 
 package stringvariables
 
-var Contents map[string]string
+import (
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
+)
+
+var (
+	contents map[string]string
+
+	metricSvCount = promauto.NewGauge(prometheus.GaugeOpts{
+		Name: "olivetin_sv_count",
+		Help: "The number entries in the sv map",
+	})
+)
 
 func init() {
-	Contents = make(map[string]string)
+	contents = make(map[string]string)
 }
 
 func Get(key string) string {
-	v, ok := Contents[key]
+	v, ok := contents[key]
 
 	if !ok {
 		return ""
 	} else {
 		return v
 	}
+}
+
+func GetAll() map[string]string {
+	return contents
+}
+
+func Set(key string, value string) {
+	contents[key] = value
+
+	metricSvCount.Set(float64(len(contents)))
 }
