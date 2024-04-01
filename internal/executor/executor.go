@@ -292,10 +292,7 @@ func stepExec(req *ExecutionRequest) bool {
 
 	runerr := cmd.Start()
 
-	cmd.Wait()
-
-	// req.logEntry.Stdout = req.logEntry.StdoutBuffer.String()
-	// req.logEntry.Stderr = req.logEntry.StderrBuffer.String()
+	waiterr := cmd.Wait()
 
 	req.logEntry.ExitCode = int32(cmd.ProcessState.ExitCode())
 	req.logEntry.Stdout = stdout.String()
@@ -303,6 +300,10 @@ func stepExec(req *ExecutionRequest) bool {
 
 	if runerr != nil {
 		req.logEntry.Stderr = runerr.Error() + "\n\n" + req.logEntry.Stderr
+	}
+
+	if waiterr != nil {
+		req.logEntry.Stderr = waiterr.Error() + "\n\n" + req.logEntry.Stderr
 	}
 
 	if ctx.Err() == context.DeadlineExceeded {
