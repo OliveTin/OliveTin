@@ -275,6 +275,12 @@ func wrapCommandInShell(ctx context.Context, finalParsedCommand string) *exec.Cm
 	return exec.CommandContext(ctx, "sh", "-c", finalParsedCommand)
 }
 
+func appendErrorToStderr(err error, logEntry *InternalLogEntry) {
+	if err != nil {
+		logEntry.Stderr = err.Error() + "\n\n" + logEntry.Stderr
+	}
+}
+
 func stepExec(req *ExecutionRequest) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(req.Action.Timeout)*time.Second)
 	defer cancel()
@@ -292,18 +298,14 @@ func stepExec(req *ExecutionRequest) bool {
 
 	runerr := cmd.Start()
 
-	cmd.Wait()
-
-	// req.logEntry.Stdout = req.logEntry.StdoutBuffer.String()
-	// req.logEntry.Stderr = req.logEntry.StderrBuffer.String()
+	waiterr := cmd.Wait()
 
 	req.logEntry.ExitCode = int32(cmd.ProcessState.ExitCode())
 	req.logEntry.Stdout = stdout.String()
 	req.logEntry.Stderr = stderr.String()
 
-	if runerr != nil {
-		req.logEntry.Stderr = runerr.Error() + "\n\n" + req.logEntry.Stderr
-	}
+	appendErrorToStderr(runerr, req.logEntry)
+	appendErrorToStderr(waiterr, req.logEntry)
 
 	if ctx.Err() == context.DeadlineExceeded {
 		req.logEntry.TimedOut = true
@@ -336,19 +338,16 @@ func stepExecAfter(req *ExecutionRequest) bool {
 	cmd := wrapCommandInShell(ctx, finalParsedCommand)
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
-	req.logEntry.StdoutBuffer, _ = cmd.StdoutPipe()
-	req.logEntry.StderrBuffer, _ = cmd.StderrPipe()
 
 	runerr := cmd.Start()
 
-	cmd.Wait()
+	waiterr := cmd.Wait()
 
 	req.logEntry.Stdout += "---\n" + stdout.String()
 	req.logEntry.Stderr += "---\n" + stderr.String()
 
-	if runerr != nil {
-		req.logEntry.Stderr = runerr.Error() + "\n\n" + req.logEntry.Stderr
-	}
+	appendErrorToStderr(runerr, req.logEntry)
+	appendErrorToStderr(waiterr, req.logEntry)
 
 	if ctx.Err() == context.DeadlineExceeded {
 		req.logEntry.Stderr += "Your shellAfterCommand command timed out."
