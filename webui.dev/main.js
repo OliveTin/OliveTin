@@ -1,6 +1,11 @@
 'use strict'
 
-import { initMarshaller, setupSectionNavigation, marshalDashboardComponentsJsonToHtml, marshalLogsJsonToHtml } from './js/marshaller.js'
+import {
+  initMarshaller,
+  setupSectionNavigation,
+  marshalDashboardComponentsJsonToHtml,
+  marshalLogsJsonToHtml
+} from './js/marshaller.js'
 import { checkWebsocketConnection } from './js/websocket.js'
 
 function searchLogs (e) {
@@ -68,7 +73,7 @@ function fetchGetDashboardComponents () {
     return res.json()
   }).then(res => {
     if (!window.restAvailable) {
-      window.clearBigErrors('fetch-buttons')
+      window.clearBigErrors()
     }
 
     window.restAvailable = true
@@ -77,7 +82,7 @@ function fetchGetDashboardComponents () {
     refreshServerConnectionLabel() // in-case it changed, update the label quicker
   }).catch((err) => { // err is 1st arg
     window.restAvailable = false
-    window.showBigError('fetch-buttons', 'getting buttons', err, 'blat')
+    window.showBigError('fetch-buttons', 'getting buttons', err, false)
   })
 }
 
@@ -89,11 +94,13 @@ function fetchGetLogs () {
   }).then(res => {
     marshalLogsJsonToHtml(res)
   }).catch(err => {
-    window.showBigError('fetch-buttons', 'getting buttons', err, 'blat')
+    window.showBigError('fetch-buttons', 'getting buttons', err, false)
   })
 }
 
 function processWebuiSettingsJson (settings) {
+  setupSectionNavigation(settings.SectionNavigationStyle)
+
   window.restBaseUrl = settings.Rest
 
   if (settings.ThemeName) {
@@ -112,8 +119,13 @@ function processWebuiSettingsJson (settings) {
     document.querySelector('#available-version').hidden = false
   }
 
-  document.querySelector('#perma-widget').hidden = !settings.ShowNavigation
-  document.querySelector('footer[title="footer"]').hidden = !settings.ShowFooter
+  if (!settings.ShowNavigation) {
+    document.querySelector('header').style.display = 'none'
+  }
+
+  if (!settings.ShowFooter) {
+    document.querySelector('footer[title="footer"]').style.display = 'none'
+  }
 
   window.pageTitle = 'OliveTin'
 
@@ -130,7 +142,6 @@ function processWebuiSettingsJson (settings) {
 function main () {
   initMarshaller()
   setupLogSearchBox()
-  setupSectionNavigation('sidebar')
 
   window.fetch('webUiSettings.json').then(res => {
     return res.json()
