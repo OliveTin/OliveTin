@@ -10,7 +10,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io"
 	"os/exec"
 	"runtime"
 	"sync"
@@ -52,8 +51,6 @@ type InternalLogEntry struct {
 	DatetimeFinished    string
 	Stdout              string
 	Stderr              string
-	StdoutBuffer        io.ReadCloser
-	StderrBuffer        io.ReadCloser
 	TimedOut            bool
 	Blocked             bool
 	ExitCode            int32
@@ -98,6 +95,7 @@ func DefaultExecutor() *Executor {
 type listener interface {
 	OnExecutionStarted(actionTitle string)
 	OnExecutionFinished(logEntry *InternalLogEntry)
+	OnOutputChunk(o []byte, executionTrackingId string)
 }
 
 func (e *Executor) AddListener(m listener) {
@@ -281,18 +279,33 @@ func appendErrorToStderr(err error, logEntry *InternalLogEntry) {
 	}
 }
 
+type OutputStreamer struct {
+	Req    *ExecutionRequest
+	output bytes.Buffer
+}
+
+func (so *OutputStreamer) Write(o []byte) (n int, err error) {
+	for _, listener := range so.Req.executor.listeners {
+		listener.OnOutputChunk(o, so.Req.TrackingID)
+	}
+
+	return so.output.Write(o)
+}
+
+func (so *OutputStreamer) String() string {
+	return so.output.String()
+}
+
 func stepExec(req *ExecutionRequest) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(req.Action.Timeout)*time.Second)
 	defer cancel()
 
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
+	stdout := &OutputStreamer{Req: req}
+	stderr := &OutputStreamer{Req: req}
 
 	cmd := wrapCommandInShell(ctx, req.finalParsedCommand)
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-	req.logEntry.StdoutBuffer, _ = cmd.StdoutPipe()
-	req.logEntry.StderrBuffer, _ = cmd.StderrPipe()
+	cmd.Stdout = stdout
+	cmd.Stderr = stderr
 
 	req.logEntry.ExecutionStarted = true
 

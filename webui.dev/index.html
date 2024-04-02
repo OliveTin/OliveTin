@@ -2,7 +2,8 @@
 
 <html lang = "en">
 	<head>
-		<meta name = "viewport" content = "width=device-width, initial-scale=1.0">
+		<meta charset = "UTF-8" />
+		<meta name = "viewport" content = "width=device-width, initial-scale=1.0" />
 		<meta name = "description" content = "Give safe and simple access to predefined shell commands from a web interface." />
 
 		<title>OliveTin</title>
@@ -19,13 +20,12 @@
 		<main title = "main content">
 			<div id = "perma-widget">
 				<div id = "sidebar-toggle-wrapper">
-					<label for = "hide-sidebar-checkbox" id = "sidebar-toggler-button" title = "Toggle sidebar" tabindex = "0">&#9776;</label>
+					<button id = "sidebar-toggler-button" tabindex = "0" aria-label = "Open sidebar navigation" aria-pressed = "false" aria-haspopup = "menu">&#9776;</button>
 				</div>
 				<h1 id = "page-title">OliveTin</h1>
 			</div>
 
-			<input type = "checkbox" id = "hide-sidebar-checkbox" hidden checked />
-			<nav hidden>
+			<nav hidden class = "hidden" tabindex = "1">
 				<ul id = "navigation-links">
 					<li title = "Actions"><a id = "showActions">Actions</a></li>
 				</ul>
@@ -107,16 +107,12 @@
 			<div id = "execution-dialog-output">
 				<details>
 					<summary>Standard Output</summary>
-					<pre id = "execution-dialog-stdout">
-						?
-					</pre>
+					<pre id = "execution-dialog-stdout">?</pre>
 				</details>
 
 				<details>
 					<summary>Standard Error</summary>
-					<pre id = "execution-dialog-stderr">
-						?
-					</pre>
+					<pre id = "execution-dialog-stderr">?</pre>
 				</details>
 			</div>
 
@@ -165,16 +161,12 @@
 
 					<details>
 						<summary>stdout</summary>
-						<pre class = "stdout">
-							?
-						</pre>
+						<pre class = "stdout">?</pre>
 					</details>
 
 					<details>
 						<summary>stderr</summary>
-						<pre class = "stderr">
-							?
-						</pre>
+						<pre class = "stderr">?</pre>
 					</details>
 
 					<div class = "tags"></div>

@@ -6,6 +6,7 @@ import (
 	ws "github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/reflect/protoreflect"
 	"net/http"
 )
 
@@ -54,6 +55,17 @@ func checkOriginPermissive(r *http.Request) bool {
 	return true
 }
 
+func (WebsocketExecutionListener) OnOutputChunk(chunk []byte, executionTrackingId string) {
+	log.Warnf("chunk: %s", string(chunk))
+
+	oc := &pb.OutputChunk{
+		Output:              string(chunk),
+		ExecutionTrackingId: executionTrackingId,
+	}
+
+	broadcast("OutputChunk", oc)
+}
+
 func (WebsocketExecutionListener) OnExecutionFinished(logEntry *executor.InternalLogEntry) {
 	le := &pb.LogEntry{
 		ActionTitle:         logEntry.ActionTitle,
@@ -75,7 +87,7 @@ func (WebsocketExecutionListener) OnExecutionFinished(logEntry *executor.Interna
 	broadcast("ExecutionFinished", le)
 }
 
-func broadcast(messageType string, pbmsg *pb.LogEntry) {
+func broadcast(messageType string, pbmsg protoreflect.ProtoMessage) {
 	payload, err := marshalOptions.Marshal(pbmsg)
 
 	// <EVIL>
@@ -103,7 +115,7 @@ func broadcast(messageType string, pbmsg *pb.LogEntry) {
 	}
 
 	for _, client := range clients {
-		client.conn.WriteMessage(1, hackyMessage)
+		client.conn.WriteMessage(ws.TextMessage, hackyMessage)
 	}
 }
 

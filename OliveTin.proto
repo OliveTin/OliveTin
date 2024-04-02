@@ -181,6 +181,12 @@ message GetReadyzResponse {
 	string status = 1;
 }
 
+message OutputChunk {
+	string execution_tracking_id = 1;
+
+	string output = 2;
+}
+
 service OliveTinApiService {
 	rpc GetDashboardComponents(GetDashboardComponentsRequest) returns (GetDashboardComponentsResponse) {
 		option (google.api.http) = {

@@ -40,11 +40,12 @@ function websocketOnMessage (msg) {
   e.payload = j.payload
 
   switch (j.type) {
+    case 'OutputChunk':
     case 'ExecutionFinished':
       window.dispatchEvent(e)
       break
     default:
-      window.showBigError('Unknown message type from server: ' + j.type)
+      window.showBigError('unknown-message-type', 'Unknown Message Type from Server', 'Unknown message type from server: ' + j.type)
   }
 }
 

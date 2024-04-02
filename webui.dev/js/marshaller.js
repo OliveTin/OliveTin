@@ -13,13 +13,12 @@ export function initMarshaller () {
   window.logEntries = {}
 
   window.addEventListener('ExecutionFinished', onExecutionFinished)
+  window.addEventListener('OutputChunk', onOutputChunk)
 }
 
 export function marshalDashboardComponentsJsonToHtml (json) {
   marshalActionsJsonToHtml(json)
   marshalDashboardStructureToHtml(json)
-
-  changeDirectory(null)
 }
 
 function marshalActionsJsonToHtml (json) {
@@ -47,6 +46,15 @@ function marshalActionsJsonToHtml (json) {
       existingButton.remove()
     }
   }
+}
+
+function onOutputChunk (evt) {
+  const chunk = evt.payload
+
+  window.executionDialog.domStdout.append(chunk.output)
+  window.executionDialog.domStdout.hidden = false
+  window.executionDialog.domStdout.parentElement.open = true
+  window.executionDialog.domExecutionOutput.hidden = false
 }
 
 function onExecutionFinished (evt) {
