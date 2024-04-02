@@ -97,12 +97,12 @@ nav.sidebar {
   top: 0;
   transition: left 0.5s ease;
   box-shadow: 0 0 10px 0 #444;
+  z-index: -1;
+  flex-direction: column;
+  display: flex;
 }
 
 nav.shown {
-  display: flex;
-  z-index: -1;
-  flex-direction: column;
   left: 0;
 }
 
@@ -245,6 +245,10 @@ input[type="submit"]
   transition: background-color 1s ease, color 1s ease;
 }
 
+fieldset button {
+  border-radius: .7em;
+}
+
 /* Action Buttons */
 action-button {
   display: flex;
@@ -255,7 +259,6 @@ action-button button {
   flex-grow: 1;
   width: 100%;
   z-index: 1;
-  border-radius: .7em;
 }
 
 span.title {
