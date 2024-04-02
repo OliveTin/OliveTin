@@ -492,7 +492,7 @@ div.toolbar * {
 }
 
 @media (prefers-color-scheme: dark) {
-  body {
+  body, header {
     background-color: #333;
     color: white;
   }
