@@ -143,7 +143,6 @@ function main () {
   }).then(res => {
     processWebuiSettingsJson(res)
 
-
     window.restAvailable = true
     window.refreshLoop = refreshLoop
     window.refreshLoop()

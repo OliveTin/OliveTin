@@ -35,22 +35,38 @@ fieldset {
   border: 0;
 }
 
-a, a:visited {
-  color: black;
-}
-
-a:focus {
-  outline: 1px solid black;
-  color: white;
-  background-color: black;
-}
-
 footer {
   font-size: smaller;
 }
 
 footer span {
   display: inline-block;
+}
+
+a {
+  color: black;
+}
+
+nav ul li a {
+  display: block;
+  padding: 0.5em 1em;
+  user-select: none;
+}
+
+a:focus {
+  background-color: black;
+  color: white;
+  outline: 1px solid black;
+}
+
+a:visited {
+  color: black;
+}
+
+nav ul li a:hover {
+  background-color: #efefef;
+  color: black;
+  cursor: pointer;
 }
 
 #sidebar-toggler-button {
@@ -77,10 +93,6 @@ nav.topbar {
   flex-grow: 1;
 }
 
-nav.topbar ul {
-  display: inline-block;
-}
-
 nav.sidebar {
   background-color: white;
   position: fixed;
@@ -95,7 +107,7 @@ nav.shown {
   display: flex;
   z-index: -1;
   flex-direction: column;
-  left: 0px;
+  left: 0;
 }
 
 .sidebar #navigation-links {
@@ -113,34 +125,13 @@ h1 {
   padding-left: .5em;
 }
 
-h1 a {
-  color: black;
-}
-
 nav ul {
   margin: 0;
   padding: 0;
 }
 
-nav.sidebar ul li {
-  list-style: none;
-  text-align: left;
-  border-bottom: 1px inset black;
-}
-
-nav ul li a {
-  display: block;
-  padding-left: 1em;
-  padding-top: 0.5em;
-  padding-bottom: 0.5em;
-  padding-right: 1em;
-  user-select: none;
-}
-
-nav ul li a:hover {
-  color: black;
-  background-color: #efefef;
-  cursor: pointer;
+nav.topbar ul {
+  display: inline-block;
 }
 
 nav.topbar ul li {
@@ -150,6 +141,12 @@ nav.topbar ul li {
 
 nav.topbar ul li a {
   border-radius: .5em;
+}
+
+nav.sidebar ul li {
+  list-style: none;
+  text-align: left;
+  border-bottom: 1px inset black;
 }
 
 table {
@@ -357,7 +354,7 @@ img.logo {
 
 main {
   padding: 1em;
-  padding-top: 3em;
+  padding-top: 3.5em;
 }
 
 summary {
@@ -384,7 +381,7 @@ header {
   align-items: center;
   padding-left: 1em;
   padding-bottom: .2em;
-  padding-top: .2em;
+  padding-top: 1em;
   position: fixed;
   background-color: #dee3e7;
   width: 100vw;
