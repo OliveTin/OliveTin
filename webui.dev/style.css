@@ -322,7 +322,7 @@ input[type="submit"]:focus {
 
 button:disabled,
 input[type="submit"]:disabled {
-  color: gray;
+  color: #3c3c3c;
   background-color: #cecece;
   cursor: not-allowed;
 }
@@ -382,8 +382,12 @@ header {
   flex-direction: row;
   z-index: 3;
   align-items: center;
-  padding: 1em;
+  padding-left: 1em;
+  padding-bottom: .2em;
+  padding-top: .2em;
   position: fixed;
+  background-color: #dee3e7;
+  width: 100vw;
 }
 
 input {
