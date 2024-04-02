@@ -119,8 +119,13 @@ function processWebuiSettingsJson (settings) {
     document.querySelector('#available-version').hidden = false
   }
 
-  document.querySelector('header').hidden = !settings.ShowNavigation
-  document.querySelector('footer[title="footer"]').hidden = !settings.ShowFooter
+  if (!settings.ShowNavigation) {
+    document.querySelector('header').style.display = 'none'
+  }
+
+  if (!settings.ShowFooter) {
+    document.querySelector('footer[title="footer"]').style.display = 'none'
+  }
 
   window.pageTitle = 'OliveTin'
 

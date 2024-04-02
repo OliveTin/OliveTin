@@ -59,10 +59,6 @@ a:focus {
   outline: 1px solid black;
 }
 
-a:visited {
-  color: black;
-}
-
 nav ul li a:hover {
   background-color: #efefef;
   color: black;
