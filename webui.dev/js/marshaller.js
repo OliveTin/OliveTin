@@ -110,15 +110,21 @@ function setSectionNavigationVisible (visible) {
 
   if (document.body.classList.contains('has-sidebar')) {
     if (visible) {
-      nav.classList.add('shown')
       btn.setAttribute('aria-pressed', false)
       btn.setAttribute('aria-label', 'Open sidebar navigation')
       btn.innerHTML = '&laquo;'
+
+      nav.classList.add('shown')
+      nav.style.display = 'flex'
     } else {
-      nav.classList.remove('shown')
       btn.setAttribute('aria-pressed', true)
       btn.setAttribute('aria-label', 'Close sidebar navigation')
       btn.innerHTML = '&#9776;'
+
+      nav.classList.remove('shown')
+      setTimeout(() => {
+        nav.style.display = 'none'
+      }, 600)
     }
   } else {
     btn.disabled = true
