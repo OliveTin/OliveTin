@@ -81,6 +81,10 @@
 			</p>
 		</footer>
 
+		<dialog title = "Big Error Message" id = "big-error" class = "error">
+
+		</dialog>
+
 		<dialog title = "Execution Results" id = "execution-results-popup">
 			<div class = "action-header">
 				<span id = "execution-dialog-icon" class = "icon" role = "img"></span>
@@ -178,34 +182,28 @@
 		</template>
 
 		<script type = "text/javascript">
+			const bigErrorDialog = document.getElementById('big-error')
+
 			/**
 			This is the bootstrap code, which relies on very simple, old javascript
 		  	to at least display a helpful error message if we can't use OliveTin.
 			*/
-			window.showBigError = function (type, friendlyType, message) {
-			  clearBigErrors(type)
+			window.showBigError = function (type, friendlyType, message, isFatal) {
+			  bigErrorDialog.innerHTML = '<h1>Error ' + friendlyType + '</h1><p>' + message + "</p><p><a href = 'http://docs.olivetin.app/err-" + type + ".html' target = 'blank'/>" + type + " error in OliveTin Documentation</a></p>"
+
+			  if (isFatal) {
+				  bigErrorDialog.innerHTML += '<p>You will need to refresh your browser to clear this message.</p>'
+			  } else {
+				  bigErrorDialog.innerHTML += '<p>This error message will go away automatically if the problem is solved.</p>'
+			  }
+
+			  bigErrorDialog.showModal()
 
 			  console.error('Error ' + type + ': ', message)
-
-			  const domErr = document.createElement('div')
-			  domErr.classList.add('error')
-			  domErr.classList.add(type)
-			  domErr.innerHTML = '<h1>Error ' + friendlyType + '</h1><p>' + message + "</p><p><a href = 'http://docs.olivetin.app/err-" + type + ".html' target = 'blank'/>" + type + " error in OliveTin Documentation</a></p>"
-
-			  document.body.prepend(domErr)
 			}
 
-			window.clearBigErrors = function (additionalClass) {
-			  let selector = 'div.error'
-
-		      if (additionalClass != null) {
-				  selector += '.' + additionalClass
-			  }
-
-			  for (const oldError of document.querySelectorAll(selector).values()) {
-				window.old = oldError;
-				oldError.remove();
-			  }
+			window.clearBigErrors = function () {
+			  bigErrorDialog.close()
 			}
 		</script>
 

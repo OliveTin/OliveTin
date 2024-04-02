@@ -196,10 +196,6 @@ tr.log-row span.icon {
   background-color: salmon;
 }
 
-div.error {
-  padding: 1em;
-}
-
 .title.temporary-status-message {
   color: gray;
 }

@@ -73,7 +73,7 @@ function fetchGetDashboardComponents () {
     return res.json()
   }).then(res => {
     if (!window.restAvailable) {
-      window.clearBigErrors('fetch-buttons')
+      window.clearBigErrors()
     }
 
     window.restAvailable = true
@@ -82,7 +82,7 @@ function fetchGetDashboardComponents () {
     refreshServerConnectionLabel() // in-case it changed, update the label quicker
   }).catch((err) => { // err is 1st arg
     window.restAvailable = false
-    window.showBigError('fetch-buttons', 'getting buttons', err, 'blat')
+    window.showBigError('fetch-buttons', 'getting buttons', err, false)
   })
 }
 
@@ -94,7 +94,7 @@ function fetchGetLogs () {
   }).then(res => {
     marshalLogsJsonToHtml(res)
   }).catch(err => {
-    window.showBigError('fetch-buttons', 'getting buttons', err, 'blat')
+    window.showBigError('fetch-buttons', 'getting buttons', err, false)
   })
 }
 
