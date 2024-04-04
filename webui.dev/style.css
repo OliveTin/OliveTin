@@ -51,6 +51,7 @@ nav ul li a {
   display: block;
   padding: 0.5em 1em;
   user-select: none;
+  text-decoration: none;
 }
 
 a:focus {
