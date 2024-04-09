@@ -103,15 +103,6 @@ function processWebuiSettingsJson (settings) {
 
   window.restBaseUrl = settings.Rest
 
-  if (settings.ThemeName) {
-    const themeCss = document.createElement('link')
-    themeCss.setAttribute('rel', 'stylesheet')
-    themeCss.setAttribute('type', 'text/css')
-    themeCss.setAttribute('href', '/themes/' + settings.ThemeName + '/theme.css')
-
-    document.head.appendChild(themeCss)
-  }
-
   document.querySelector('#currentVersion').innerText = settings.CurrentVersion
 
   if (settings.ShowNewVersions && settings.AvailableVersion !== 'none') {

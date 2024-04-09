@@ -42,3 +42,11 @@ func (cfg *Config) FindAcl(aclTitle string) *AccessControlList {
 
 	return nil
 }
+
+func (cfg *Config) SetDir(dir string) {
+	cfg.usedConfigDir = dir
+}
+
+func (cfg *Config) GetDir() string {
+	return cfg.usedConfigDir
+}
