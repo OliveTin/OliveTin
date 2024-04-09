@@ -4,17 +4,17 @@ import (
 	"encoding/json"
 	//	cors "github.com/OliveTin/OliveTin/internal/cors"
 	log "github.com/sirupsen/logrus"
-	"net/http"
-	"path"
 	"io/ioutil"
+	"net/http"
 	"os"
+	"path"
 
 	config "github.com/OliveTin/OliveTin/internal/config"
 	updatecheck "github.com/OliveTin/OliveTin/internal/updatecheck"
 )
 
 var (
-	customThemeCss []byte
+	customThemeCss     []byte
 	customThemeCssRead = false
 )
 
@@ -76,7 +76,6 @@ func setupCustomWebuiDir() {
 
 func generateThemeCss(w http.ResponseWriter, r *http.Request) {
 	themeCssFilename := path.Join(findCustomWebuiDir(), "themes", cfg.ThemeName, "theme.css")
-
 
 	if !customThemeCssRead {
 		customThemeCssRead = true

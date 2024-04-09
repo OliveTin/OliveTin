@@ -99,7 +99,7 @@ type Config struct {
 	InsecureAllowDumpSos            bool
 	InsecureAllowDumpActionMap      bool
 
-	usedConfigDir                   string
+	usedConfigDir string
 }
 
 type DashboardComponent struct {
