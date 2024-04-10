@@ -146,7 +146,7 @@ func parseJwtHeader(headerValue string) (string, string) {
 		return "", ""
 	}
 
-	_, err := verifier.Verify(context.TODO(), headerValue)
+	_, err := getVerifier().Verify(context.TODO(), headerValue)
 
 	if err != nil {
 		log.Errorf("JWT Header verification error: %v", err)
