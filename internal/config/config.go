@@ -74,6 +74,7 @@ type Config struct {
 	ListenAddressGrpcActions        string
 	ExternalRestAddress             string
 	LogLevel                        string
+	LogDebugOptions                 LogDebugOptions
 	Actions                         []*Action             `mapstructure:"actions"`
 	Entities                        []*EntityFile         `mapstructure:"entities"`
 	Dashboards                      []*DashboardComponent `mapstructure:"dashboards"`
@@ -83,6 +84,10 @@ type Config struct {
 	ShowNavigation                  bool
 	ShowNewVersions                 bool
 	AuthJwtCookieName               string
+	AuthJwtHeaderName               string
+	AuthJwtAud                      string
+	AuthJwtDomain                   string
+	AuthJwtCertsURL                 string
 	AuthJwtSecret                   string // mutually exclusive with pub key config fields
 	AuthJwtClaimUsername            string
 	AuthJwtClaimUserGroup           string
@@ -100,6 +105,11 @@ type Config struct {
 	InsecureAllowDumpActionMap      bool
 
 	usedConfigDir string
+}
+
+type LogDebugOptions struct {
+	SingleFrontendRequests       bool
+	SingleFrontendRequestHeaders bool
 }
 
 type DashboardComponent struct {

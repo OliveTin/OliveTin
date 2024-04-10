@@ -49,6 +49,10 @@ func parseRequestMetadata(ctx context.Context, req *http.Request) metadata.MD {
 	username := ""
 	usergroup := ""
 
+	if cfg.AuthJwtHeaderName != "" {
+		username, usergroup = parseJwtHeader(req.Header.Get(cfg.AuthJwtHeaderName))
+	}
+
 	if cfg.AuthJwtCookieName != "" {
 		username, usergroup = parseJwtCookie(req)
 	}
