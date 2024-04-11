@@ -24,7 +24,7 @@ OliveTin gives **safe** and **simple** access to predefined shell commands from 
 **Simplify** complex commands, make them accessible and repeatable;
 
 * eg: Expose complex commands on touchscreen tablets stuck on walls around your house. `wake-on-lan aa:bb:cc:11:22:33`
-* eg: Run long running on your servers from your cell phone. `dnf update -y`
+* eg: Run long-lived commands on your servers from your cell phone. `dnf update -y`
 * eg: Define complex commands with lots of preset arguments, and turn a few arguments into dropdown select boxes. `docker rm {{ container }} && docker create {{ container }} && docker start {{ container }}`
 
 [Join the community on Discord](https://discord.gg/jhYWWpNJ3v) to talk with other users about use cases, or to ask for support in getting started.
