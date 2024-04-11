@@ -48,15 +48,21 @@ OliveTin gives **safe** and **simple** access to predefined shell commands from 
 
 Desktop web browser;
 
-![Desktop screenshot](media/screenshotDesktop.png)
+<p align = "center">
+<img alt = "screenshot" src = "https://github.com/OliveTin/OliveTin/blob/main/media/screenshotDesktop.png" />  
+</p>
 
 Desktop web browser (dark mode);
 
-![Desktop screenshot](media/screenshotDesktopDark.png)
+<p align = "center">
+<img alt = "screenshot" src = "https://github.com/OliveTin/OliveTin/blob/main/media/screenshotDesktopDark.png" />  
+</p>
 
 Mobile screen size (responsive layout);
 
-![Mobile screenshot](media/screenshotMobile.png)
+<p align = "center">
+<img alt = "screenshot" src = "https://github.com/OliveTin/OliveTin/blob/main/media/screenshotMobile.png" style = "height: 700px;" />
+</p>
 
 ## Documentation
 
