@@ -6,6 +6,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"os"
+	"path"
 
 	"github.com/spf13/viper"
 )
