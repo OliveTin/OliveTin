@@ -8,6 +8,7 @@ import (
 	"github.com/OliveTin/OliveTin/internal/entityfiles"
 	"github.com/OliveTin/OliveTin/internal/executor"
 	grpcapi "github.com/OliveTin/OliveTin/internal/grpcapi"
+	"github.com/OliveTin/OliveTin/internal/httpservers"
 	"github.com/OliveTin/OliveTin/internal/installationinfo"
 	"github.com/OliveTin/OliveTin/internal/oncalendarfile"
 	"github.com/OliveTin/OliveTin/internal/oncron"
@@ -16,13 +17,10 @@ import (
 	updatecheck "github.com/OliveTin/OliveTin/internal/updatecheck"
 	"github.com/OliveTin/OliveTin/internal/websocket"
 
-	"github.com/OliveTin/OliveTin/internal/httpservers"
-
 	config "github.com/OliveTin/OliveTin/internal/config"
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
 	"os"
-	"path"
 )
 
 var (
@@ -98,11 +96,11 @@ func initViperConfig(configDir string) {
 		if e.Op == fsnotify.Write {
 			log.Info("Config file changed:", e.String())
 
-			reloadConfig()
+			config.Reload(cfg)
 		}
 	})
 
-	reloadConfig()
+	config.Reload(cfg)
 }
 
 func initInstallationInfo() {
@@ -128,16 +126,6 @@ func warnIfPuidGuid() {
 	if os.Getenv("PUID") != "" || os.Getenv("PGID") != "" {
 		log.Warnf("PUID or PGID seem to be set to something, but they are ignored by OliveTin. Please check https://docs.olivetin.app/no-puid-pgid.html")
 	}
-}
-
-func reloadConfig() {
-	if err := viper.UnmarshalExact(&cfg); err != nil {
-		log.Errorf("Config unmarshal error %+v", err)
-		os.Exit(1)
-	}
-
-	cfg.SetDir(path.Dir(viper.ConfigFileUsed()))
-	cfg.Sanitize()
 }
 
 func main() {

@@ -7,6 +7,9 @@ import (
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
+
 	"bytes"
 	"context"
 	"fmt"
@@ -15,6 +18,13 @@ import (
 	"runtime"
 	"sync"
 	"time"
+)
+
+var (
+	metricActionsRequested = promauto.NewGauge(prometheus.GaugeOpts{
+		Name: "olivetin_actions_requested_count",
+		Help: "The actions requested count",
+	})
 )
 
 // Executor represents a helper class for executing commands. It's main method
@@ -228,6 +238,8 @@ func stepRequestAction(req *ExecutionRequest) bool {
 			return false
 		}
 	}
+
+	metricActionsRequested.Inc()
 
 	req.logEntry.ActionTitle = sv.ReplaceEntityVars(req.EntityPrefix, req.Action.Title)
 	req.logEntry.ActionIcon = req.Action.Icon

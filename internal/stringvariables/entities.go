@@ -31,9 +31,9 @@ func ReplaceEntityVars(prefix string, source string) string {
 }
 
 func RemoveKeysThatStartWith(search string) {
-	for k, _ := range Contents {
+	for k, _ := range contents {
 		if strings.HasPrefix(k, search) {
-			delete(Contents, k)
+			delete(contents, k)
 		}
 	}
 }

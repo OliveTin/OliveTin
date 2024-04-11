@@ -13,5 +13,9 @@ func StartServers(cfg *config.Config) {
 		go StartSingleHTTPFrontend(cfg)
 	}
 
+	if cfg.Prometheus.Enabled {
+		go StartPrometheus(cfg)
+	}
+
 	startRestAPIServer(cfg)
 }
