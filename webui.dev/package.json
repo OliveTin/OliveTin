@@ -11,6 +11,7 @@
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-promise": "^4.3.1",
     "parcel": "^2.11.0",
+    "parcel-resolver-ignore": "^2.2.0",
     "stylelint": "^15.6.0",
     "stylelint-config-standard": "^33.0.0"
   },
@@ -18,5 +19,8 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
+  "parcelIgnore": [
+	  "theme.css"
+  ],
   "license": "ISC"
 }

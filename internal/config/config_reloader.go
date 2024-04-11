@@ -31,5 +31,6 @@ func Reload(cfg *Config) {
 	metricConfigReloadedCount.Inc()
 	metricConfigActionCount.Set(float64(len(cfg.Actions)))
 
+	cfg.SetDir(path.Dir(viper.ConfigFileUsed()))
 	cfg.Sanitize()
 }

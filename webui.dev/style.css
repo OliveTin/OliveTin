@@ -5,6 +5,8 @@ body {
   margin: 0;
   padding: 0;
   text-align: center;
+  display: flex;
+  flex-direction: column;
 }
 
 dialog {
@@ -33,53 +35,79 @@ fieldset {
   border: 0;
 }
 
-#sidebar-toggle-wrapper {
-  display: inline;
+footer {
+  font-size: smaller;
 }
 
-footer,
-footer a {
+footer span {
+  display: inline-block;
+}
+
+a {
   color: black;
 }
 
-#sidebar-toggler-button {
-  top: 1em;
-  left: 0.5em;
-  height: 2em;
-  width: 2em;
-  background-color: white;
-  text-align: center;
-  display: inline-grid;
-  place-items: center;
-  padding: .2em;
-  box-shadow: 0 0 5px 0 #444;
-  color: #666;
+nav ul li a {
+  display: block;
+  padding: 0.5em 1em;
+  user-select: none;
+  text-decoration: none;
 }
 
-#sidebar-toggler-button:hover,
-#sidebar-toggler-button:focus {
+a:focus {
+  background-color: black;
+  color: white;
+  outline: 1px solid black;
+}
+
+nav ul li a:hover {
+  background-color: #efefef;
   color: black;
   cursor: pointer;
 }
 
+#sidebar-toggler-button {
+  height: 2em;
+  width: 2em;
+  text-align: center;
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+}
+
 nav {
-  background-color: white;
+  display: none;
+  left: -250px;
+}
+
+nav.topbar {
+  display: flex;
+  flex-direction: row;
+  place-content: end;
+  border-radius: .5em;
+  padding-right: 1em;
+  padding-left: 1em;
+  flex-grow: 1;
 }
 
 nav.sidebar {
+  background-color: white;
   position: fixed;
   width: 180px;
   height: 100dvh;
-  left: 0;
   top: 0;
   transition: left 0.5s ease;
   box-shadow: 0 0 10px 0 #444;
-  z-index: 3;
-  display: flex;
+  z-index: -1;
   flex-direction: column;
+  display: flex;
 }
 
-#navigation-links {
+nav.shown {
+  left: 0;
+}
+
+.sidebar #navigation-links {
   padding-top: 4em;
   flex-grow: 1;
 }
@@ -88,18 +116,10 @@ nav.sidebar {
   flex-grow: 0;
 }
 
-input:checked ~ nav.sidebar {
-  left: -250px;
-}
-
 h1 {
   display: inline;
   font-size: small;
   padding-left: .5em;
-}
-
-h1 a {
-  color: black;
 }
 
 nav ul {
@@ -107,36 +127,23 @@ nav ul {
   padding: 0;
 }
 
-nav ul li {
-  list-style: none;
-  text-align: left;
-  border-bottom: 1px inset black;
-}
-
-nav ul li a {
-  display: block;
-  padding-left: 1em;
-  padding-top: 0.5em;
-  padding-bottom: 0.5em;
-  user-select: none;
-}
-
-h1 a:visited {
-  color: black;
-}
-
-nav ul li a:hover {
-  color: black;
-  background-color: #efefef;
-  cursor: pointer;
-}
-
-nav.topbar {
-  background-color: white;
+nav.topbar ul {
+  display: inline-block;
 }
 
 nav.topbar ul li {
   display: inline-block;
+  font-size: small;
+}
+
+nav.topbar ul li a {
+  border-radius: .5em;
+}
+
+nav.sidebar ul li {
+  list-style: none;
+  text-align: left;
+  border-bottom: 1px inset black;
 }
 
 table {
@@ -190,10 +197,6 @@ tr.log-row span.icon {
   background-color: salmon;
 }
 
-div.error {
-  padding: 1em;
-}
-
 .title.temporary-status-message {
   color: gray;
 }
@@ -240,6 +243,11 @@ input[type="submit"]
   background-color: white;
   box-shadow: 0 0 6px 0 #aaa;
   user-select: none;
+  transition: background-color 1s ease, color 1s ease;
+}
+
+fieldset button {
+  border-radius: .7em;
 }
 
 /* Action Buttons */
@@ -251,8 +259,11 @@ action-button {
 action-button button {
   flex-grow: 1;
   width: 100%;
-  z-index: 2;
-  border-radius: .7em;
+  z-index: 1;
+}
+
+span.title {
+  display: inline;
 }
 
 action-button details {
@@ -304,37 +315,29 @@ input[type="submit"]:focus {
 
 button:disabled,
 input[type="submit"]:disabled {
-  color: gray;
-  background-color: #333;
+  color: #3c3c3c;
+  background-color: #cecece;
   cursor: not-allowed;
 }
 
 
-/* Button animations */
-
 .action-failed {
-  transition: 1s;
   background-color: red;
 }
 
 .action-success {
-  transition: 1s;
   background-color: limegreen;
 }
 
 .action-nonzero-exit {
-  animation: kf-action-nonzero-exit 1s;
-  transition: 1s;
   background-color: orange;
 }
 
 .action-timeout {
-  transition: 1s;
   background-color: cyan;
 }
 
 .action-blocked {
-  transition: 1s;
   background-color: purple;
   color: white;
 }
@@ -347,10 +350,7 @@ img.logo {
 
 main {
   padding: 1em;
-}
-
-body.has-sidebar main {
-  padding-top: 3em;
+  padding-top: 3.5em;
 }
 
 summary {
@@ -369,15 +369,18 @@ label {
   padding-right: 1em;
 }
 
-#perma-widget {
-  position: absolute;
-  top: 1em;
-  left: 1em;
-  z-index: 9;
-}
-
-#perma-widget label {
-  display: inline;
+header {
+  text-align: left;
+  display: flex;
+  flex-direction: row;
+  z-index: 3;
+  align-items: center;
+  padding-left: 1em;
+  padding-bottom: .2em;
+  padding-top: 1em;
+  position: fixed;
+  background-color: #dee3e7;
+  width: 100vw;
 }
 
 input {
@@ -490,7 +493,7 @@ div.toolbar * {
 }
 
 @media (prefers-color-scheme: dark) {
-  body {
+  body, header {
     background-color: #333;
     color: white;
   }
@@ -505,31 +508,33 @@ div.toolbar * {
   }
 
   button,
-  input[type="submit"],
-  #sidebar-toggler-button {
+  input[type="submit"] {
     border: 1px solid #666;
     background-color: #222;
     box-shadow: 0 0 6px 0 #444;
     color: white;
   }
 
-  #sidebar-toggler-button:focus,
-  #sidebar-toggler-button:hover
-  {
-    color: white;
+  button:focus,
+  input[type="submit"]:focus {
+    outline: 2px solid #72B7F4;
   }
 
-  footer,
-  footer a {
-    color: gray;
+  footer {
+    color: #bbb;
   }
 
-
-  h1 a, h1 a:visited {
-    color: white;
+  a, a:visited {
+    color: #bbb;
   }
 
-  nav {
+  a:focus {
+    background-color: #72B7F4;
+    color: black;
+    outline: 1px solid #72B7F4;
+  }
+
+  nav.sidebar {
     background-color: #111;
     color: white;
   }

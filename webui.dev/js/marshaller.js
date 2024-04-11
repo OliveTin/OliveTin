@@ -99,33 +99,59 @@ function showSection (title) {
     }
   }
 
-  for (const otherName of ['Actions', 'Logs']) {
-    document.getElementById('show' + otherName).classList.remove('activeSection')
-    document.getElementById('content' + otherName).hidden = true
-  }
-
-  //  document.getElementById('show' + name).classList.add('activeSection')
-  // document.getElementById('content' + name).hidden = false
-
-  document.getElementById('hide-sidebar-checkbox').checked = true
+  setSectionNavigationVisible(false)
 
   changeDirectory(null)
 }
 
+function setSectionNavigationVisible (visible) {
+  const nav = document.querySelector('nav')
+  const btn = document.getElementById('sidebar-toggler-button')
+
+  if (document.body.classList.contains('has-sidebar')) {
+    if (visible) {
+      btn.setAttribute('aria-pressed', false)
+      btn.setAttribute('aria-label', 'Open sidebar navigation')
+      btn.innerHTML = '&laquo;'
+
+      nav.classList.add('shown')
+      nav.style.display = 'flex'
+    } else {
+      btn.setAttribute('aria-pressed', true)
+      btn.setAttribute('aria-label', 'Close sidebar navigation')
+      btn.innerHTML = '&#9776;'
+
+      nav.classList.remove('shown')
+      setTimeout(() => {
+        nav.style.display = 'none'
+      }, 600)
+    }
+  } else {
+    btn.disabled = true
+  }
+}
+
 export function setupSectionNavigation (style) {
   const nav = document.querySelector('nav')
+  const btn = document.getElementById('sidebar-toggler-button')
 
   if (style === 'sidebar') {
-    nav.classList += 'sidebar'
+    nav.classList.add('sidebar')
 
-    document.body.classList += 'has-sidebar'
+    document.body.classList.add('has-sidebar')
+
+    btn.onclick = () => {
+      if (nav.classList.contains('shown')) {
+        setSectionNavigationVisible(false)
+      } else {
+        setSectionNavigationVisible(true)
+      }
+    }
   } else {
-    nav.classList += 'topbar'
+    nav.classList.add('topbar')
 
-    document.body.classList += 'has-topbar'
+    document.body.classList.add('has-topbar')
   }
-
-  nav.hidden = false
 
   document.getElementById('showActions').onclick = () => { showSection('Actions') }
   document.getElementById('showLogs').onclick = () => { showSection('Logs') }
@@ -159,6 +185,7 @@ function marshalDashboardStructureToHtml (json) {
     const navigationA = document.createElement('a')
     navigationA.title = dashboard.title
     navigationA.innerText = dashboard.title
+    navigationA.setAttribute('href', '#' + dashboard.title)
     navigationA.onclick = () => {
       showSection(dashboard.title)
     }

@@ -17,6 +17,18 @@ import (
 	"net/url"
 )
 
+func logDebugRequest(cfg *config.Config, source string, r *http.Request) {
+	if cfg.LogDebugOptions.SingleFrontendRequests {
+		log.Debugf("SingleFrontend HTTP Req URL %v: %q", source, r.URL)
+
+		if cfg.LogDebugOptions.SingleFrontendRequestHeaders {
+			for name, values := range r.Header {
+				log.Debugf("SingleFrontend HTTP Req Hdr: %v = %v", name, values)
+			}
+		}
+	}
+}
+
 // StartSingleHTTPFrontend will create a reverse proxy that proxies the API
 // and webui internally.
 func StartSingleHTTPFrontend(cfg *config.Config) {
@@ -33,17 +45,20 @@ func StartSingleHTTPFrontend(cfg *config.Config) {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/api/", func(w http.ResponseWriter, r *http.Request) {
-		log.Debugf("api req: %q", r.URL)
+		logDebugRequest(cfg, "api ", r)
+
 		apiProxy.ServeHTTP(w, r)
 	})
 
 	mux.HandleFunc("/websocket", func(w http.ResponseWriter, r *http.Request) {
-		log.Debugf("ws  req: %q", r.URL)
+		logDebugRequest(cfg, "ws  ", r)
+
 		websocket.HandleWebsocket(w, r)
 	})
 
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		log.Debugf("ui  req: %q", r.URL)
+		logDebugRequest(cfg, "ui  ", r)
+
 		webuiProxy.ServeHTTP(w, r)
 	})
 

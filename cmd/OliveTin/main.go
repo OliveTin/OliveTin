@@ -130,10 +130,8 @@ func warnIfPuidGuid() {
 }
 
 func main() {
-	configDir := path.Dir(viper.ConfigFileUsed())
-
 	log.WithFields(log.Fields{
-		"configDir": configDir,
+		"configDir": cfg.GetDir(),
 	}).Infof("OliveTin started")
 
 	log.Debugf("Config: %+v", cfg)
@@ -148,7 +146,7 @@ func main() {
 
 	go entityfiles.SetupEntityFileWatchers(cfg)
 
-	go updatecheck.StartUpdateChecker(version, commit, cfg, configDir)
+	go updatecheck.StartUpdateChecker(version, commit, cfg, cfg.GetDir())
 
 	go grpcapi.Start(cfg, executor)
 

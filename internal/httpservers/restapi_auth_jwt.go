@@ -1,6 +1,7 @@
 package httpservers
 
 import (
+	"context"
 	"crypto/rsa"
 	"errors"
 	"fmt"
@@ -8,12 +9,32 @@ import (
 	log "github.com/sirupsen/logrus"
 	"net/http"
 	"os"
+
+	"github.com/coreos/go-oidc/v3/oidc"
 )
 
 var (
 	pubKeyBytes []byte = nil
 	pubKey      *rsa.PublicKey
+
+	verifier *oidc.IDTokenVerifier
 )
+
+func getVerifier() *oidc.IDTokenVerifier {
+	if verifier == nil {
+		ctx := context.TODO()
+
+		config := &oidc.Config{
+			ClientID: cfg.AuthJwtAud,
+		}
+
+		keySet := oidc.NewRemoteKeySet(ctx, cfg.AuthJwtCertsURL)
+
+		verifier = oidc.NewVerifier(cfg.AuthJwtDomain, keySet, config)
+	}
+
+	return verifier
+}
 
 func readPublicKey() error {
 	if pubKeyBytes != nil {
@@ -116,4 +137,23 @@ func parseJwtCookie(request *http.Request) (string, string) {
 	usergroup := lookupClaimValueOrDefault(claims, cfg.AuthJwtClaimUserGroup, "")
 
 	return username, usergroup
+}
+
+func parseJwtHeader(headerValue string) (string, string) {
+	if headerValue == "" {
+		log.Warnf("JWT Header is configured, but got a request with an empty JWT auth header value")
+
+		return "", ""
+	}
+
+	_, err := getVerifier().Verify(context.TODO(), headerValue)
+
+	if err != nil {
+		log.Errorf("JWT Header verification error: %v", err)
+		return "", ""
+	}
+
+	log.Debugf("JWT Header validation succeeded!")
+
+	return "", ""
 }
