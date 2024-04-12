@@ -120,7 +120,7 @@ func startWebUIServer(cfg *config.Config) {
 
 	mux := http.NewServeMux()
 	mux.Handle("/", http.FileServer(http.Dir(findWebuiDir())))
-	mux.Handle("/custom-webui/", http.FileServer(http.Dir(findCustomWebuiDir())))
+	mux.Handle("/custom-webui/", http.StripPrefix("/custom-webui/", http.FileServer(http.Dir(findCustomWebuiDir()))))
 	mux.HandleFunc("/theme.css", generateThemeCss)
 	mux.HandleFunc("/webUiSettings.json", generateWebUISettings)
 
