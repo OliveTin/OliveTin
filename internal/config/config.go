@@ -90,7 +90,6 @@ type Config struct {
 	ShowNavigation                  bool
 	ShowNewVersions                 bool
 	AuthJwtCookieName               string
-	AuthJwtHeaderName               string
 	AuthJwtAud                      string
 	AuthJwtDomain                   string
 	AuthJwtCertsURL                 string
@@ -109,6 +108,7 @@ type Config struct {
 	InsecureAllowDumpVars           bool
 	InsecureAllowDumpSos            bool
 	InsecureAllowDumpActionMap      bool
+	InsecureAllowDumpJwtClaims      bool
 	Prometheus                      PrometheusConfig
 
 	usedConfigDir string
@@ -153,6 +153,7 @@ func DefaultConfig() *Config {
 	config.InsecureAllowDumpVars = false
 	config.InsecureAllowDumpSos = false
 	config.InsecureAllowDumpActionMap = false
+	config.InsecureAllowDumpJwtClaims = false
 	config.Prometheus.Enabled = false
 	config.Prometheus.DefaultGoMetrics = false
 
