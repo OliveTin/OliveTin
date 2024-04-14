@@ -19,6 +19,8 @@ export function marshalDashboardComponentsJsonToHtml (json) {
   marshalActionsJsonToHtml(json)
   marshalDashboardStructureToHtml(json)
 
+  document.getElementById('username').innerText = json.authenticatedUser
+
   changeDirectory(null)
 }
 

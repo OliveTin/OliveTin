@@ -39,9 +39,12 @@ message Entity {
 
 message GetDashboardComponentsResponse {
 	string title = 1;
+
 	repeated Action actions = 2;
 	repeated Entity entities = 3;
 	repeated DashboardComponent dashboards = 4;
+
+	string authenticated_user = 5;
 }
 
 message GetDashboardComponentsRequest {}
