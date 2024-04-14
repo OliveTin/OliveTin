@@ -5,38 +5,44 @@ import (
 	"crypto/rsa"
 	"errors"
 	"fmt"
-	"github.com/golang-jwt/jwt/v4"
+	"github.com/golang-jwt/jwt/v5"
 	log "github.com/sirupsen/logrus"
 	"net/http"
 	"os"
 
-	"github.com/coreos/go-oidc/v3/oidc"
+	//	"github.com/coreos/go-oidc/v3/oidc"
+	"github.com/MicahParks/keyfunc/v3"
+	"time"
 )
 
 var (
 	pubKeyBytes []byte = nil
 	pubKey      *rsa.PublicKey
 
-	verifier *oidc.IDTokenVerifier
+	jwksVerifier keyfunc.Keyfunc
 )
 
-func getVerifier() *oidc.IDTokenVerifier {
-	if verifier == nil {
-		ctx := context.TODO()
+func initJwks() {
+	if jwksVerifier == nil {
+		var err error
 
-		config := &oidc.Config{
-			ClientID: cfg.AuthJwtAud,
+		if cfg.AuthJwtCertsURL != "" {
+			ctx, cancel := context.WithTimeout(context.Background(), 300*time.Second)
+
+			jwksVerifier, err = keyfunc.NewDefaultCtx(ctx, []string{
+				cfg.AuthJwtCertsURL,
+			})
+
+			if err != nil {
+				log.Errorf("Init JWKS Failure: %v", err)
+			}
+
+			defer cancel()
 		}
-
-		keySet := oidc.NewRemoteKeySet(ctx, cfg.AuthJwtCertsURL)
-
-		verifier = oidc.NewVerifier(cfg.AuthJwtDomain, keySet, config)
 	}
-
-	return verifier
 }
 
-func readPublicKey() error {
+func readLocalPublicKey() error {
 	if pubKeyBytes != nil {
 		return nil // Already read.
 	}
@@ -55,45 +61,53 @@ func readPublicKey() error {
 	return nil
 }
 
-func parseJwtTokenWithKey(cookieValue string) (*jwt.Token, error) {
-	err := readPublicKey()
+func parseJwtTokenWithRemoteKey(jwtToken string) (*jwt.Token, error) {
+	initJwks()
+
+	return jwt.Parse(jwtToken, jwksVerifier.Keyfunc, jwt.WithAudience(cfg.AuthJwtAud))
+}
+
+func parseJwtTokenWithLocalKey(jwtString string) (*jwt.Token, error) {
+	err := readLocalPublicKey()
 
 	if err != nil {
 		return nil, err
 	}
 
-	return jwt.Parse(cookieValue, func(token *jwt.Token) (interface{}, error) {
+	return jwt.Parse(jwtString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
-			return nil, fmt.Errorf(
-				"expected token algorithm '%v' but got '%v'",
-				jwt.SigningMethodRS256.Name,
-				token.Header)
+			return nil, fmt.Errorf("parseJwt expected token algorithm RSA but got: %v", token.Header["alg"])
 		}
+
 		return pubKey, nil
 	})
 }
 
-func parseJwtTokenWithoutKey(cookieValue string) (*jwt.Token, error) {
-	return jwt.Parse(cookieValue, func(token *jwt.Token) (interface{}, error) {
-		// Don't forget to validate the alg is what you expect:
+// Hash-based Message Authentication Code
+func parseJwtTokenWithHMAC(jwtString string) (*jwt.Token, error) {
+	return jwt.Parse(jwtString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+			return nil, fmt.Errorf("parseJwt expected token algorithm HMAC but got: %v", token.Header["alg"])
 		}
 
 		return []byte(cfg.AuthJwtHmacSecret), nil
 	})
 }
 
-func parseJwtToken(cookieValue string) (*jwt.Token, error) {
-	if cfg.AuthJwtPubKeyPath != "" { // activate this path only if pub key is specified
-		return parseJwtTokenWithKey(cookieValue)
-	} else {
-		return parseJwtTokenWithoutKey(cookieValue)
+func parseJwtToken(jwtString string) (*jwt.Token, error) {
+	if cfg.AuthJwtCertsURL != "" {
+		return parseJwtTokenWithRemoteKey(jwtString)
 	}
+
+	if cfg.AuthJwtPubKeyPath != "" {
+		return parseJwtTokenWithLocalKey(jwtString)
+	}
+
+	return parseJwtTokenWithHMAC(jwtString)
 }
 
-func getClaimsFromJwtToken(cookieValue string) (jwt.MapClaims, error) {
-	token, err := parseJwtToken(cookieValue)
+func getClaimsFromJwtToken(jwtString string) (jwt.MapClaims, error) {
+	token, err := parseJwtToken(jwtString)
 
 	if err != nil {
 		log.Errorf("jwt parse failure: %v", err)
@@ -125,34 +139,17 @@ func parseJwtCookie(request *http.Request) (string, string) {
 
 	claims, err := getClaimsFromJwtToken(cookie.Value)
 
-	log.Debugf("jwt claims data: %+v", claims)
-
 	if err != nil {
 		log.Warnf("jwt claim error: %+v", err)
 		return "", ""
+	}
+
+	if cfg.InsecureAllowDumpJwtClaims {
+		log.Debugf("JWT Claims %+v", claims)
 	}
 
 	username := lookupClaimValueOrDefault(claims, cfg.AuthJwtClaimUsername, "")
 	usergroup := lookupClaimValueOrDefault(claims, cfg.AuthJwtClaimUserGroup, "")
 
 	return username, usergroup
-}
-
-func parseJwtHeader(headerValue string) (string, string) {
-	if headerValue == "" {
-		log.Warnf("JWT Header is configured, but got a request with an empty JWT auth header value")
-
-		return "", ""
-	}
-
-	_, err := getVerifier().Verify(context.TODO(), headerValue)
-
-	if err != nil {
-		log.Errorf("JWT Header verification error: %v", err)
-		return "", ""
-	}
-
-	log.Debugf("JWT Header validation succeeded!")
-
-	return "", ""
 }
