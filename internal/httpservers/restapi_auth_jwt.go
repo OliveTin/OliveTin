@@ -90,7 +90,7 @@ func parseJwtTokenWithHMAC(jwtString string) (*jwt.Token, error) {
 			return nil, fmt.Errorf("parseJwt expected token algorithm HMAC but got: %v", token.Header["alg"])
 		}
 
-		return []byte(cfg.AuthJwtSecret), nil
+		return []byte(cfg.AuthJwtHmacSecret), nil
 	})
 }
 
