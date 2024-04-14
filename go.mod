@@ -5,12 +5,13 @@ go 1.21
 toolchain go1.21.9
 
 require (
+	github.com/MicahParks/keyfunc/v3 v3.3.2
 	github.com/bufbuild/buf v1.30.1
-	github.com/coreos/go-oidc/v3 v3.10.0
 	github.com/fsnotify/fsnotify v1.6.0
 	github.com/fzipp/gocyclo v0.6.0
 	github.com/go-critic/go-critic v0.11.1
 	github.com/golang-jwt/jwt/v4 v4.5.0
+	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/websocket v1.4.1
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.19.1
@@ -32,6 +33,7 @@ require (
 	connectrpc.com/connect v1.16.0 // indirect
 	connectrpc.com/otelconnect v0.7.0 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161 // indirect
+	github.com/MicahParks/jwkset v0.5.17 // indirect
 	github.com/Microsoft/go-winio v0.6.1 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
@@ -54,7 +56,6 @@ require (
 	github.com/felixge/fgprof v0.9.4 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/go-chi/chi/v5 v5.0.12 // indirect
-	github.com/go-jose/go-jose/v4 v4.0.1 // indirect
 	github.com/go-logr/logr v1.4.1 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-toolsmith/astcast v1.1.0 // indirect
@@ -121,13 +122,12 @@ require (
 	golang.org/x/exp/typeparams v0.0.0-20240222234643-814bf88cf225 // indirect
 	golang.org/x/mod v0.16.0 // indirect
 	golang.org/x/net v0.22.0 // indirect
-	golang.org/x/oauth2 v0.16.0 // indirect
 	golang.org/x/sync v0.6.0 // indirect
 	golang.org/x/sys v0.18.0 // indirect
 	golang.org/x/term v0.18.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
+	golang.org/x/time v0.5.0 // indirect
 	golang.org/x/tools v0.19.0 // indirect
-	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240325203815-454cdb8f5daa // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 )
