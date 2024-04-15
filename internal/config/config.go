@@ -93,7 +93,7 @@ type Config struct {
 	AuthJwtAud                      string
 	AuthJwtDomain                   string
 	AuthJwtCertsURL                 string
-	AuthJwtSecret                   string // mutually exclusive with pub key config fields
+	AuthJwtHmacSecret               string // mutually exclusive with pub key config fields
 	AuthJwtClaimUsername            string
 	AuthJwtClaimUserGroup           string
 	AuthJwtPubKeyPath               string // will read pub key from file on disk
