@@ -72,7 +72,13 @@ nav ul li a:hover {
   text-align: center;
   display: inline-grid;
   place-items: center;
+  margin-left: 1em;
   padding: 0;
+}
+
+#username {
+  margin-right: 1em;
+  font-size: small;
 }
 
 nav {
@@ -120,6 +126,7 @@ h1 {
   display: inline;
   font-size: small;
   padding-left: .5em;
+  flex-grow: 1;
 }
 
 nav ul {
@@ -375,7 +382,6 @@ header {
   flex-direction: row;
   z-index: 3;
   align-items: center;
-  padding-left: 1em;
   padding-bottom: .2em;
   padding-top: 1em;
   position: fixed;
