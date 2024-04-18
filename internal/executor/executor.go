@@ -30,7 +30,8 @@ var (
 // Executor represents a helper class for executing commands. It's main method
 // is ExecRequest
 type Executor struct {
-	Logs map[string]*InternalLogEntry
+	Logs           map[string]*InternalLogEntry
+	LogsByActionId map[string][]*InternalLogEntry
 
 	listeners []listener
 
@@ -58,8 +59,8 @@ type ExecutionRequest struct {
 // state of execution (even if the command is not executed). It's designed to be
 // easily serializable.
 type InternalLogEntry struct {
-	DatetimeStarted     string
-	DatetimeFinished    string
+	DatetimeStarted     time.Time
+	DatetimeFinished    time.Time
 	Stdout              string
 	Stderr              string
 	StdoutBuffer        io.ReadCloser
@@ -89,10 +90,12 @@ type executorStepFunc func(*ExecutionRequest) bool
 func DefaultExecutor() *Executor {
 	e := Executor{}
 	e.Logs = make(map[string]*InternalLogEntry)
+	e.LogsByActionId = make(map[string][]*InternalLogEntry)
 
 	e.chainOfCommand = []executorStepFunc{
 		stepRequestAction,
 		stepConcurrencyCheck,
+		stepRateCheck,
 		stepACLCheck,
 		stepParseArgs,
 		stepLogStart,
@@ -123,7 +126,7 @@ func (e *Executor) ExecRequest(req *ExecutionRequest) (*sync.WaitGroup, string) 
 	// duplicate UUIDs (or just random strings), but this is the only way.
 
 	req.logEntry = &InternalLogEntry{
-		DatetimeStarted:     time.Now().Format("2006-01-02 15:04:05"),
+		DatetimeStarted:     time.Now(),
 		ExecutionTrackingID: req.TrackingID,
 		Stdout:              "",
 		Stderr:              "",
@@ -171,8 +174,8 @@ func (e *Executor) execChain(req *ExecutionRequest) {
 func getConcurrentCount(req *ExecutionRequest) int {
 	concurrentCount := 0
 
-	for _, log := range req.executor.Logs {
-		if log.ActionId == req.Action.ID && !log.ExecutionFinished {
+	for _, log := range req.executor.LogsByActionId[req.Action.ID] {
+		if !log.ExecutionFinished {
 			concurrentCount += 1
 		}
 	}
@@ -194,6 +197,57 @@ func stepConcurrencyCheck(req *ExecutionRequest) bool {
 		req.logEntry.Stdout = msg
 		req.logEntry.Blocked = true
 		return false
+	}
+
+	return true
+}
+
+func parseDuration(rate config.RateSpec) time.Duration {
+	duration, err := time.ParseDuration(rate.Duration)
+
+	if err != nil {
+		log.Warnf("Could not parse duration: %v", rate.Duration)
+
+		return -1 * time.Minute
+	}
+
+	return duration
+}
+
+func getExecutionsCount(rate config.RateSpec, req *ExecutionRequest) int {
+	executions := -1 // Because we will find ourself when checking execution logs
+
+	duration := parseDuration(rate)
+
+	then := time.Now().Add(-duration)
+
+	for _, logEntry := range req.executor.LogsByActionId[req.Action.ID] {
+		log.Debugf("Rate check %v", logEntry)
+
+		if logEntry.DatetimeStarted.After(then) && !logEntry.Blocked {
+
+			executions += 1
+		}
+	}
+
+	return executions
+}
+
+func stepRateCheck(req *ExecutionRequest) bool {
+	for _, rate := range req.Action.MaxRate {
+		executions := getExecutionsCount(rate, req)
+
+		if executions >= rate.Limit {
+			msg := fmt.Sprintf("Blocked from executing. This action has run %d out of %d allowed times in the last %s.", executions, rate.Limit, rate.Duration)
+
+			log.WithFields(log.Fields{
+				"actionTitle": req.logEntry.ActionTitle,
+			}).Infof(msg)
+
+			req.logEntry.Stdout = msg
+			req.logEntry.Blocked = true
+			return false
+		}
 	}
 
 	return true
@@ -244,6 +298,12 @@ func stepRequestAction(req *ExecutionRequest) bool {
 	req.logEntry.ActionTitle = sv.ReplaceEntityVars(req.EntityPrefix, req.Action.Title)
 	req.logEntry.ActionIcon = req.Action.Icon
 	req.logEntry.ActionId = req.Action.ID
+
+	if _, containsKey := req.executor.LogsByActionId[req.Action.ID]; !containsKey {
+		req.executor.LogsByActionId[req.Action.ID] = make([]*InternalLogEntry, 0)
+	}
+
+	req.executor.LogsByActionId[req.Action.ID] = append(req.executor.LogsByActionId[req.Action.ID], req.logEntry)
 
 	log.WithFields(log.Fields{
 		"actionTitle": req.logEntry.ActionTitle,
@@ -324,7 +384,7 @@ func stepExec(req *ExecutionRequest) bool {
 	}
 
 	req.logEntry.Tags = req.Tags
-	req.logEntry.DatetimeFinished = time.Now().Format("2006-01-02 15:04:05")
+	req.logEntry.DatetimeFinished = time.Now()
 
 	return true
 }
