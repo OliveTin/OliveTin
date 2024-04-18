@@ -222,8 +222,6 @@ func getExecutionsCount(rate config.RateSpec, req *ExecutionRequest) int {
 	then := time.Now().Add(-duration)
 
 	for _, logEntry := range req.executor.LogsByActionId[req.Action.ID] {
-		log.Debugf("Rate check %v", logEntry)
-
 		if logEntry.DatetimeStarted.After(then) && !logEntry.Blocked {
 
 			executions += 1
