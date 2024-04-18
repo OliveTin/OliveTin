@@ -19,6 +19,7 @@ type Action struct {
 	ExecOnCalendarFile     string
 	Trigger                string
 	MaxConcurrent          int
+	MaxRate                []RateSpec
 	Arguments              []ActionArgument
 	PopupOnStart           string
 }
@@ -39,6 +40,12 @@ type ActionArgument struct {
 type ActionArgumentChoice struct {
 	Value string
 	Title string
+}
+
+// RateSpec allows you to set a max frequency for an action.
+type RateSpec struct {
+	Limit    int
+	Duration string
 }
 
 // Entity represents a "thing" that can have multiple actions associated with it.
