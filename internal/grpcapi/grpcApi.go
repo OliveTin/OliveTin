@@ -225,15 +225,21 @@ func (api *oliveTinAPI) GetDashboardComponents(ctx ctx.Context, req *pb.GetDashb
 }
 
 func (api *oliveTinAPI) GetLogs(ctx ctx.Context, req *pb.GetLogsRequest) (*pb.GetLogsResponse, error) {
+	user := acl.UserFromContext(ctx, cfg)
+
 	ret := &pb.GetLogsResponse{}
 
 	// TODO Limit to 10 entries or something to prevent browser lag.
 
 	for trackingId, logEntry := range api.executor.Logs {
-		pbLogEntry := internalLogEntryToPb(logEntry)
-		pbLogEntry.ExecutionTrackingId = trackingId
+		action := cfg.FindAction(logEntry.ActionTitle)
 
-		ret.Logs = append(ret.Logs, pbLogEntry)
+		if action == nil || acl.IsAllowedLogs(cfg, user, action) {
+			pbLogEntry := internalLogEntryToPb(logEntry)
+			pbLogEntry.ExecutionTrackingId = trackingId
+
+			ret.Logs = append(ret.Logs, pbLogEntry)
+		}
 	}
 
 	sorter := func(i, j int) bool {

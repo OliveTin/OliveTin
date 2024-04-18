@@ -53,6 +53,7 @@ type EntityFile struct {
 type PermissionsList struct {
 	View bool
 	Exec bool
+	Logs bool
 }
 
 // AccessControlList defines what permissions apply to a user or user group.
@@ -110,6 +111,8 @@ type Config struct {
 type LogDebugOptions struct {
 	SingleFrontendRequests       bool
 	SingleFrontendRequestHeaders bool
+	AclMatched                   bool
+	AclNotMatched                bool
 }
 
 type DashboardComponent struct {
@@ -136,6 +139,7 @@ func DefaultConfig() *Config {
 	config.CheckForUpdates = true
 	config.DefaultPermissions.Exec = true
 	config.DefaultPermissions.View = true
+	config.DefaultPermissions.Logs = true
 	config.AuthJwtClaimUsername = "name"
 	config.AuthJwtClaimUserGroup = "group"
 	config.WebUIDir = "./webui"
