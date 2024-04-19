@@ -137,6 +137,7 @@ func main() {
 
 	executor := executor.DefaultExecutor()
 	executor.AddListener(websocket.ExecutionListener)
+	config.AddListener(websocket.OnConfigChanged)
 
 	go onstartup.Execute(cfg, executor)
 	go oncron.Schedule(cfg, executor)

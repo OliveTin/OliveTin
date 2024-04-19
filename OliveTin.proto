@@ -184,6 +184,8 @@ message GetReadyzResponse {
 	string status = 1;
 }
 
+message EventConfigChanged {}
+
 service OliveTinApiService {
 	rpc GetDashboardComponents(GetDashboardComponentsRequest) returns (GetDashboardComponentsResponse) {
 		option (google.api.http) = {

@@ -21,7 +21,13 @@ var (
 		Name: "olivetin_config_reloaded_count",
 		Help: "The number of times the config has been reloaded",
 	})
+
+	listeners []func()
 )
+
+func AddListener(l func()) {
+	listeners = append(listeners, l)
+}
 
 func Reload(cfg *Config) {
 	if err := viper.UnmarshalExact(&cfg); err != nil {
@@ -34,4 +40,8 @@ func Reload(cfg *Config) {
 
 	cfg.SetDir(path.Dir(viper.ConfigFileUsed()))
 	cfg.Sanitize()
+
+	for _, l := range listeners {
+		l()
+	}
 }
