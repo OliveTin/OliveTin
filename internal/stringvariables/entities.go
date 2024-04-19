@@ -61,3 +61,7 @@ func GetEntityCount(entityTitle string) int {
 
 	return count
 }
+
+func SetEntityCount(entityTitle string, count int) {
+	Set("entities."+entityTitle+".count", fmt.Sprintf("%v", count))
+}
