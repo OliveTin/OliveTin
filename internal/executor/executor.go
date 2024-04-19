@@ -305,6 +305,7 @@ func stepRequestAction(req *ExecutionRequest) bool {
 
 	log.WithFields(log.Fields{
 		"actionTitle": req.logEntry.ActionTitle,
+		"tags":        req.Tags,
 	}).Infof("Action requested")
 
 	return true
