@@ -174,7 +174,7 @@ func updateEvmFromFile(entityname string, data []map[string]string) {
 
 	sv.RemoveKeysThatStartWith("entities." + entityname)
 
-	sv.Set("entities."+entityname+".count", fmt.Sprintf("%v", count))
+	sv.SetEntityCount(entityname, count)
 
 	for i, mapp := range data {
 		prefix := "entities." + entityname + "." + fmt.Sprintf("%v", i)
