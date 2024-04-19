@@ -71,6 +71,7 @@ webui-dist:
 	rm -rf webui webui.dev/dist
 	cd webui.dev && npm install
 	cd webui.dev && parcel build --public-url "." && mv dist ../webui
+	cp webui.dev/*.png webui/
 
 clean:
 	rm -rf dist OliveTin OliveTin.armhf OliveTin.exe reports gen
