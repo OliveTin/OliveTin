@@ -185,6 +185,9 @@ message GetReadyzResponse {
 }
 
 message EventConfigChanged {}
+message EventExecutionFinished {
+	LogEntry log_entry = 1;
+}
 
 service OliveTinApiService {
 	rpc GetDashboardComponents(GetDashboardComponentsRequest) returns (GetDashboardComponentsResponse) {

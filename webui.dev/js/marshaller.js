@@ -12,7 +12,7 @@ export function initMarshaller () {
 
   window.logEntries = {}
 
-  window.addEventListener('ExecutionFinished', onExecutionFinished)
+  window.addEventListener('EventExecutionFinished', onExecutionFinished)
 }
 
 export function marshalDashboardComponentsJsonToHtml (json) {
@@ -52,7 +52,7 @@ function marshalActionsJsonToHtml (json) {
 }
 
 function onExecutionFinished (evt) {
-  const logEntry = evt.payload
+  const logEntry = evt.payload.logEntry
 
   const actionButton = window.actionButtons[logEntry.actionTitle]
 

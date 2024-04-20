@@ -62,24 +62,26 @@ func checkOriginPermissive(r *http.Request) bool {
 }
 
 func (WebsocketExecutionListener) OnExecutionFinished(logEntry *executor.InternalLogEntry) {
-	le := &pb.LogEntry{
-		ActionTitle:         logEntry.ActionTitle,
-		ActionIcon:          logEntry.ActionIcon,
-		ActionId:            logEntry.ActionId,
-		DatetimeStarted:     logEntry.DatetimeStarted.Format("2006-01-02 15:04:05"),
-		DatetimeFinished:    logEntry.DatetimeFinished.Format("2006-01-02 15:04:05"),
-		Stdout:              logEntry.Stdout,
-		Stderr:              logEntry.Stderr,
-		TimedOut:            logEntry.TimedOut,
-		Blocked:             logEntry.Blocked,
-		ExitCode:            logEntry.ExitCode,
-		Tags:                logEntry.Tags,
-		ExecutionTrackingId: logEntry.ExecutionTrackingID,
-		ExecutionStarted:    logEntry.ExecutionStarted,
-		ExecutionFinished:   logEntry.ExecutionFinished,
+	evt := &pb.EventExecutionFinished{
+		LogEntry: &pb.LogEntry{
+			ActionTitle:         logEntry.ActionTitle,
+			ActionIcon:          logEntry.ActionIcon,
+			ActionId:            logEntry.ActionId,
+			DatetimeStarted:     logEntry.DatetimeStarted.Format("2006-01-02 15:04:05"),
+			DatetimeFinished:    logEntry.DatetimeFinished.Format("2006-01-02 15:04:05"),
+			Stdout:              logEntry.Stdout,
+			Stderr:              logEntry.Stderr,
+			TimedOut:            logEntry.TimedOut,
+			Blocked:             logEntry.Blocked,
+			ExitCode:            logEntry.ExitCode,
+			Tags:                logEntry.Tags,
+			ExecutionTrackingId: logEntry.ExecutionTrackingID,
+			ExecutionStarted:    logEntry.ExecutionStarted,
+			ExecutionFinished:   logEntry.ExecutionFinished,
+		},
 	}
 
-	broadcast(le)
+	broadcast(evt)
 }
 
 func broadcast(pbmsg protoreflect.ProtoMessage) {
