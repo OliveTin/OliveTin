@@ -35,9 +35,11 @@ func SetupEntityFileWatchers(cfg *config.Config) {
 			}).Debugf("Adding config dir to entity file path")
 		}
 
-		filehelper.WatchFileWrite(p, func(filename string) {
+		go filehelper.WatchFileWrite(p, func(filename string) {
 			loadEntityFile(p, ef.Name)
 		})
+
+		loadEntityFile(p, ef.Name)
 	}
 }
 

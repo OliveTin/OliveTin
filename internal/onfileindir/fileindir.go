@@ -10,13 +10,13 @@ import (
 func WatchFilesInDirectory(cfg *config.Config, ex *executor.Executor) {
 	for _, action := range cfg.Actions {
 		for _, dirname := range action.ExecOnFileChangedInDir {
-			filehelper.WatchDirectoryWrite(dirname, func(filename string) {
+			go filehelper.WatchDirectoryWrite(dirname, func(filename string) {
 				scheduleExec(action, cfg, ex, filename)
 			})
 		}
 
 		for _, dirname := range action.ExecOnFileCreatedInDir {
-			filehelper.WatchDirectoryCreate(dirname, func(filename string) {
+			go filehelper.WatchDirectoryCreate(dirname, func(filename string) {
 				scheduleExec(action, cfg, ex, filename)
 			})
 		}
