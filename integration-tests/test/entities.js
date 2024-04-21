@@ -13,9 +13,9 @@ describe('config: entities', function () {
   })
 
   it('Entity buttons are rendered', async function() {
-    await webdriver.get(runner.baseUrl())
-
     await webdriver.manage().setTimeouts({ implicit: 2000 })
+
+    await webdriver.get(runner.baseUrl())
 
     const buttons = await webdriver.findElement(By.id('root-group')).findElements(By.tagName('button'))
 
