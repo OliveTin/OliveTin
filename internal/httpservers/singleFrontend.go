@@ -67,7 +67,8 @@ func StartSingleHTTPFrontend(cfg *config.Config) {
 		promProxy := httputil.NewSingleHostReverseProxy(promURL)
 
 		mux.HandleFunc("/metrics", func(w http.ResponseWriter, r *http.Request) {
-			log.Debugf("prom req: %q", r.URL)
+			logDebugRequest(cfg, "prom", r)
+
 			promProxy.ServeHTTP(w, r)
 		})
 	}
