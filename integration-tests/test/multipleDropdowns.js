@@ -22,7 +22,6 @@ describe('config: multipleDropdowns', function () {
     for (const b of buttons) {
       const title = await b.getAttribute('title')
 
-      console.log('title: ' + title)
       if (title === 'Test multiple dropdowns') {
         button = b
       }

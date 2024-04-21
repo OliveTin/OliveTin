@@ -1,0 +1,18 @@
+#
+# Integration Test Config: Entities
+#
+
+listenAddressSingleHTTPFrontend: 0.0.0.0:1337
+
+logLevel: "DEBUG"
+checkForUpdates: false
+
+actions:
+  - title: Ping {{ server.hostname }}
+    shell: ping {{ server.hostname }}
+    icon: ping
+    entity: server
+
+entities:
+  - file: entities/servers.yaml
+    name: server
