@@ -71,6 +71,8 @@ class ActionButton extends ExecutionFeedbackButton {
     } else {
       this.unicodeIcon = unescape(json.icon)
     }
+
+    this.domIcon.innerHTML = this.unicodeIcon
   }
 
   onExecStatusChanged () {
