@@ -24,6 +24,13 @@ actions:
   shell: sleep 5
   icon: "&#x1F62A"
 
+- title: date-popup
+  shell: date
+  popupOnStart: execution-dialog-stdout-only
+
+- title: date-passive
+  shell: date
+
 - title: "Run Ansible Playbook"
   icon: "&#x1F1E6"
   shell: ansible-playbook -i /etc/hosts /root/myRepo/myPlaybook.yaml

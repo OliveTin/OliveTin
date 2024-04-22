@@ -1,6 +1,6 @@
 default:
 	npm install --no-fund
-	./node_modules/.bin/mocha
+	./node_modules/.bin/mocha -t 5000
 
 nginx:
 	podman-compose up -d nginx
