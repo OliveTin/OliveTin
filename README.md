@@ -12,6 +12,7 @@ OliveTin gives **safe** and **simple** access to predefined shell commands from 
 [![Build Snapshot](https://github.com/OliveTin/OliveTin/actions/workflows/build-snapshot.yml/badge.svg)](https://github.com/OliveTin/OliveTin/actions/workflows/build-snapshot.yml)
 
 <img alt = "screenshot" src = "https://github.com/OliveTin/OliveTin/blob/main/var/marketing/OliveTin-screenshot-dropshadow.png" />
+<a href = "#screenshots">More screenshots below</a>
 
 ## Use cases
 
