@@ -14,7 +14,6 @@ describe('config: multipleDropdowns', function () {
 
   it('Multiple dropdowns are possible', async function() {
     await webdriver.get(runner.baseUrl())
-    await webdriver.manage().setTimeouts({ implicit: 2000 })
 
     const buttons = await getActionButtons(webdriver)
 

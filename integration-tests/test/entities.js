@@ -1,7 +1,7 @@
 import { describe, it, before, after } from 'mocha'
 import { expect } from 'chai'
-import { By } from 'selenium-webdriver'
-//import * as waitOn from 'wait-on'
+import { By, until } from 'selenium-webdriver'
+import { takeScreenshot } from '../lib/elements.js'
 
 describe('config: entities', function () {
   before(async function () {
@@ -13,15 +13,18 @@ describe('config: entities', function () {
   })
 
   it('Entity buttons are rendered', async function() {
-    await webdriver.manage().setTimeouts({ implicit: 2000 })
-
-    await webdriver.get(runner.baseUrl())
+    webdriver.get(runner.baseUrl())
 
     const buttons = await webdriver.findElement(By.id('root-group')).findElements(By.tagName('button'))
-
+    expect(buttons).to.not.be.null
     expect(buttons).to.have.length(3)
+
     expect(await buttons[0].getAttribute('title')).to.be.equal('Ping server1')
     expect(await buttons[1].getAttribute('title')).to.be.equal('Ping server2')
     expect(await buttons[2].getAttribute('title')).to.be.equal('Ping server3')
+
+    const dialogErr = await webdriver.findElement(By.id('big-error'))
+    expect(dialogErr).to.not.be.null
+    expect(await dialogErr.isDisplayed()).to.be.false
   })
 })
