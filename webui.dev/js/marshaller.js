@@ -20,6 +20,7 @@ export function marshalDashboardComponentsJsonToHtml (json) {
   marshalDashboardStructureToHtml(json)
 
   document.getElementById('username').innerText = json.authenticatedUser
+  document.body.setAttribute('initial-marshal-complete', 'true')
 
   changeDirectory(null)
 }

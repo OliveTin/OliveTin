@@ -1,7 +1,7 @@
 import { describe, it, before, after } from 'mocha'
 import { expect } from 'chai'
 import { By, until } from 'selenium-webdriver'
-import { takeScreenshot } from '../lib/elements.js'
+import { getRootAndWait, takeScreenshot } from '../lib/elements.js'
 
 describe('config: entities', function () {
   before(async function () {
@@ -13,7 +13,7 @@ describe('config: entities', function () {
   })
 
   it('Entity buttons are rendered', async function() {
-    webdriver.get(runner.baseUrl())
+    await getRootAndWait()
 
     const buttons = await webdriver.findElement(By.id('root-group')).findElements(By.tagName('button'))
     expect(buttons).to.not.be.null

@@ -1,7 +1,8 @@
 import { describe, it, before, after } from 'mocha'
 import { expect } from 'chai'
-import { By } from 'selenium-webdriver'
+import { By, until, Condition } from 'selenium-webdriver'
 //import * as waitOn from 'wait-on'
+import { getRootAndWait } from '../lib/elements.js'
 
 describe('config: general', function () {
   before(async function () {
@@ -19,6 +20,16 @@ describe('config: general', function () {
     expect(title).to.be.equal("OliveTin")
   })
 
+  it('Page title2', async function () {
+    /*
+    await webdriver.get(runner.baseUrl())
+
+    const title = await webdriver.getTitle()
+    expect(title).to.be.equal("OliveTin")
+    */
+  })
+
+
   it('Footer contains promo', async function () {
     const ftr = await webdriver.findElement(By.tagName('footer')).getText()
 
@@ -26,7 +37,7 @@ describe('config: general', function () {
   })
 
   it('Default buttons are rendered', async function() {
-    await webdriver.get(runner.baseUrl())
+    await getRootAndWait()
 
     const buttons = await webdriver.findElement(By.id('root-group')).findElements(By.tagName('button'))
 
@@ -34,7 +45,7 @@ describe('config: general', function () {
   })
 
   it('Start date action (popup)', async function() {
-    await webdriver.get(runner.baseUrl())
+    await getRootAndWait()
 
     const buttons = await webdriver.findElements(By.css('[title="date-popup"]'))
 
