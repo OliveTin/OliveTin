@@ -54,7 +54,10 @@ class OliveTinTestRunnerStartLocalProcess extends OliveTinTestRunner {
 
     this.ot.on('close', (code) => {
       if (code != null) {
-        console.log(`child process exited with code ${code}`)
+        console.log(`OliveTin local process exited with code ${code}`)
+        console.log(stdout)
+        console.log(stderr)
+        console.log(this.ot.exitCode)
       }
     })
 
