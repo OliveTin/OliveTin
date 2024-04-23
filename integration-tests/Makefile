@@ -1,5 +1,9 @@
-default:
+default: test-install test-run
+
+test-install:
 	npm install --no-fund
+
+test-run:
 	./node_modules/.bin/mocha -t 10000
 
 nginx:
