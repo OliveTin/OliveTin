@@ -12,16 +12,7 @@ describe('config: general', function () {
     await runner.stop()
   })
 
-  it('zzz', async function () {
-    console.log('zzz')
-  })
-
-  it('aaa', async function () {
-    console.log('aaa')
-  })
-
   it('Page title', async function () {
-    console.log("Page title started")
     await webdriver.get(runner.baseUrl())
 
     const title = await webdriver.getTitle()

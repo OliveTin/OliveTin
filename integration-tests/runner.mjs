@@ -29,19 +29,28 @@ class OliveTinTestRunner {
 
 class OliveTinTestRunnerStartLocalProcess extends OliveTinTestRunner {
   async start (cfg) {
+    let stdout = ""
+    let stderr = ""
+
     this.ot = spawn('./../OliveTin', ['-configdir', 'configs/' + cfg + '/'])
 
     const logStdout = process.env.OLIVETIN_TEST_RUNNER_LOG_STDOUT === '1'
 
-    if (logStdout) {
-      this.ot.stdout.on('data', (data) => {
-        console.log(`stdout: ${data}`)
-      })
+    this.ot.stdout.on('data', (data) => {
+      stdout += data
 
-      this.ot.stderr.on('data', (data) => {
-        console.error(`stderr: ${data}`)
-      })
-    }
+      if (logStdout) {
+        console.log(`stdout: ${data}`)
+      }
+    })
+
+    this.ot.stderr.on('data', (data) => {
+      stderr += data
+
+      if (logStdout) {
+        console.log(`stderr: ${data}`)
+      }
+    })
 
     this.ot.on('close', (code) => {
       if (code != null) {
@@ -49,20 +58,25 @@ class OliveTinTestRunnerStartLocalProcess extends OliveTinTestRunner {
       }
     })
 
-    /*
-      this.server = await startSomeServer({port: process.env.TEST_PORT});
-      console.log(`server running on port ${this.server.port}`);
-      */
+    if (this.ot.exitCode == null) {
+      this.BASE_URL = 'http://localhost:1337/'
 
-    this.BASE_URL = 'http://localhost:1337/'
+      await waitOn({
+        resources: [this.BASE_URL]
+      })
 
-    await waitOn({
-      resources: [this.BASE_URL]
-    })
+      console.log("      OliveTin local process started and webUI accessible")
+    } else {
+      console.log("      OliveTin local process start FAILED!")
+      console.log(stdout)
+      console.log(stderr)
+      console.log(this.ot.exitCode)
+    }
   }
 
   async stop () {
     await this.ot.kill()
+    console.log("      OliveTin local process killed")
   }
 }
 
