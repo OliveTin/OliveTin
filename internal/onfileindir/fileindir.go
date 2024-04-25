@@ -5,6 +5,7 @@ import (
 	"github.com/OliveTin/OliveTin/internal/config"
 	"github.com/OliveTin/OliveTin/internal/executor"
 	"github.com/OliveTin/OliveTin/internal/filehelper"
+	"path/filepath"
 )
 
 func WatchFilesInDirectory(cfg *config.Config, ex *executor.Executor) {
@@ -23,13 +24,17 @@ func WatchFilesInDirectory(cfg *config.Config, ex *executor.Executor) {
 	}
 }
 
-func scheduleExec(action *config.Action, cfg *config.Config, ex *executor.Executor, filename string) {
+func scheduleExec(action *config.Action, cfg *config.Config, ex *executor.Executor, path string) {
 	req := &executor.ExecutionRequest{
 		ActionTitle: action.Title,
 		Cfg:         cfg,
 		Tags:        []string{"fileindir"},
 		Arguments: map[string]string{
-			"filename": filename,
+			"filepath": filepath.Base(path),
+			"filename": filepath.Base(path),
+			"filedir": filepath.Dir(path),
+			"fileext": filepath.Ext(path),
+
 		},
 		AuthenticatedUser: &acl.AuthenticatedUser{
 			Username: "fileindir",
