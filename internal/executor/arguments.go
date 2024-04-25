@@ -16,6 +16,7 @@ var (
 	typecheckRegex = map[string]string{
 		"very_dangerous_raw_string": "",
 		"int":                       "^[\\d]+$",
+		"unicode_identifier":        "^[\\w\\/\\\\.\\_ \\d]+$",
 		"ascii":                     "^[a-zA-Z0-9]+$",
 		"ascii_identifier":          "^[a-zA-Z0-9\\-\\.\\_]+$",
 		"ascii_sentence":            "^[a-zA-Z0-9 \\,\\.]+$",
