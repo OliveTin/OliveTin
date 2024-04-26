@@ -75,6 +75,8 @@ type InternalLogEntry struct {
 	ExecutionFinished   bool
 	ExecutionTrackingID string
 
+	Process             *os.Process
+
 	/*
 		The following 3 properties are obviously on Action normally, but it's useful
 		that logs are lightweight (so we don't need to have an action associated to
@@ -381,6 +383,8 @@ func stepExec(req *ExecutionRequest) bool {
 	req.logEntry.ExecutionStarted = true
 
 	runerr := cmd.Start()
+
+	req.logEntry.Process = cmd.Process
 
 	waiterr := cmd.Wait()
 

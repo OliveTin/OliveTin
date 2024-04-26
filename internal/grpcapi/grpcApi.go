@@ -30,6 +30,28 @@ type oliveTinAPI struct {
 	executor *executor.Executor
 }
 
+func (api *oliveTinAPI) KillAction (ctx ctx.Context, req *pb.KillActionRequest) (*pb.KillActionResponse, error) {
+	ret := &pb.KillActionResponse {
+		ExecutionTrackingId: req.ExecutionTrackingId,
+	}
+
+	execReq, found := api.executor.Logs[req.ExecutionTrackingId]
+
+	ret.Found = found
+
+	if found {
+		err := execReq.Process.Kill()
+
+		if err == nil {
+			ret.AlreadyCompleted = true
+		} else {
+			ret.Killed = true
+		}
+	}
+
+	return ret, nil
+}
+
 func (api *oliveTinAPI) StartAction(ctx ctx.Context, req *pb.StartActionRequest) (*pb.StartActionResponse, error) {
 	args := make(map[string]string)
 
