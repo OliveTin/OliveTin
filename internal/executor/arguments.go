@@ -71,11 +71,23 @@ func typecheckActionArgument(name string, value string, action *config.Action) e
 		return errors.New("Action arg not defined: " + name)
 	}
 
+	if value == "" {
+		return typecheckNull(arg)
+	}
+
 	if len(arg.Choices) > 0 {
 		return typecheckChoice(value, arg)
 	}
 
 	return TypeSafetyCheck(name, value, arg.Type)
+}
+
+func typecheckNull(arg *config.ActionArgument) error {
+	if arg.RejectNull {
+		return errors.New("Null values are not allowed")
+	}
+
+	return nil
 }
 
 func typecheckChoice(value string, arg *config.ActionArgument) error {
