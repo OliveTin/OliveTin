@@ -33,6 +33,7 @@ type ActionArgument struct {
 	Default     string
 	Choices     []ActionArgumentChoice
 	Entity      string
+	RejectNull  bool
 	Suggestions map[string]string
 }
 
