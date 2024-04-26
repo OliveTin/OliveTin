@@ -14,8 +14,10 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
 	"os/exec"
 	"runtime"
+	"strings"
 	"sync"
 	"time"
 )
@@ -352,6 +354,16 @@ func appendErrorToStderr(err error, logEntry *InternalLogEntry) {
 	}
 }
 
+func buildEnv(req *ExecutionRequest) []string {
+	ret := append(os.Environ(), "OLIVETIN=1")
+
+	for k, v := range req.Arguments {
+		ret = append(ret, fmt.Sprintf("%v=%v", strings.ToUpper(k), v))
+	}
+
+	return ret
+}
+
 func stepExec(req *ExecutionRequest) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(req.Action.Timeout)*time.Second)
 	defer cancel()
@@ -360,6 +372,7 @@ func stepExec(req *ExecutionRequest) bool {
 	var stderr bytes.Buffer
 
 	cmd := wrapCommandInShell(ctx, req.finalParsedCommand)
+	cmd.Env = buildEnv(req)
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	req.logEntry.StdoutBuffer, _ = cmd.StdoutPipe()
