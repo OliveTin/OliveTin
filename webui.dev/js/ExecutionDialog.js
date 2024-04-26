@@ -75,6 +75,10 @@ export class ExecutionDialog {
       this.executionTick()
     }, 1000)
 
+    if (this.dlg.open) {
+      this.dlg.close()
+    }
+
     this.dlg.showModal()
   }
 
