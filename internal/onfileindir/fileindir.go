@@ -1,13 +1,13 @@
 package onfileindir
 
 import (
+	"fmt"
 	"github.com/OliveTin/OliveTin/internal/acl"
 	"github.com/OliveTin/OliveTin/internal/config"
 	"github.com/OliveTin/OliveTin/internal/executor"
 	"github.com/OliveTin/OliveTin/internal/filehelper"
-	"path/filepath"
 	"os"
-	"fmt"
+	"path/filepath"
 )
 
 func WatchFilesInDirectory(cfg *config.Config, ex *executor.Executor) {
@@ -30,8 +30,8 @@ func scheduleExec(action *config.Action, cfg *config.Config, ex *executor.Execut
 	args := map[string]string{
 		"filepath": path,
 		"filename": filepath.Base(path),
-		"filedir": filepath.Dir(path),
-		"fileext": filepath.Ext(path),
+		"filedir":  filepath.Dir(path),
+		"fileext":  filepath.Ext(path),
 	}
 
 	if stat, err := os.Stat(path); err == nil {
@@ -47,7 +47,7 @@ func scheduleExec(action *config.Action, cfg *config.Config, ex *executor.Execut
 		ActionTitle: action.Title,
 		Cfg:         cfg,
 		Tags:        []string{"fileindir"},
-		Arguments: args,
+		Arguments:   args,
 		AuthenticatedUser: &acl.AuthenticatedUser{
 			Username: "fileindir",
 		},
