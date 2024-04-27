@@ -146,6 +146,7 @@ class ActionButton extends ExecutionFeedbackButton {
         window.executionDialog.hideEverythingApartFromOutput()
       }
 
+      window.executionDialog.executionTrackingId = executionTrackingId
       window.executionDialog.show(this)
     }
 
