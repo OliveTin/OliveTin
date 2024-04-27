@@ -74,7 +74,6 @@ type InternalLogEntry struct {
 	ExecutionStarted    bool
 	ExecutionFinished   bool
 	ExecutionTrackingID string
-
 	Process             *os.Process
 
 	/*

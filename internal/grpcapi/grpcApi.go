@@ -30,8 +30,8 @@ type oliveTinAPI struct {
 	executor *executor.Executor
 }
 
-func (api *oliveTinAPI) KillAction (ctx ctx.Context, req *pb.KillActionRequest) (*pb.KillActionResponse, error) {
-	ret := &pb.KillActionResponse {
+func (api *oliveTinAPI) KillAction(ctx ctx.Context, req *pb.KillActionRequest) (*pb.KillActionResponse, error) {
+	ret := &pb.KillActionResponse{
 		ExecutionTrackingId: req.ExecutionTrackingId,
 	}
 

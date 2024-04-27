@@ -424,8 +424,10 @@ p.argument-wrapper {
   display: flex;
 }
 
-form div.buttons {
-  text-align: right;
+div.buttons {
+  display: flex;
+  justify-content: end;
+  gap: 1em;
 }
 
 pre {
