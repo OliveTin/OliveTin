@@ -5,10 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	config "github.com/OliveTin/OliveTin/internal/config"
+	"github.com/OliveTin/OliveTin/internal/filehelper"
 	sv "github.com/OliveTin/OliveTin/internal/stringvariables"
-	"github.com/fsnotify/fsnotify"
 	log "github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 	"gopkg.in/yaml.v3"
 	"io/ioutil"
 	"os"
@@ -17,7 +16,7 @@ import (
 )
 
 func SetupEntityFileWatchers(cfg *config.Config) {
-	configDir := filepath.Dir(viper.ConfigFileUsed())
+	configDir := cfg.GetDir()
 
 	configDirVar := filepath.Join(configDir, "var") // for development purposes
 
@@ -36,71 +35,11 @@ func SetupEntityFileWatchers(cfg *config.Config) {
 			}).Debugf("Adding config dir to entity file path")
 		}
 
-		go watch(p, ef.Name)
+		go filehelper.WatchFileWrite(p, func(filename string) {
+			loadEntityFile(p, ef.Name)
+		})
 
 		loadEntityFile(p, ef.Name)
-	}
-}
-
-func watch(file string, entityname string) {
-	log.WithFields(log.Fields{
-		"file": file,
-		"name": entityname,
-	}).Infof("Watching entity file")
-
-	watcher, err := fsnotify.NewWatcher()
-
-	if err != nil {
-		log.Errorf("Could not watch entity file: %v", err)
-		return
-	}
-
-	defer watcher.Close()
-
-	done := make(chan bool)
-
-	go func() {
-		for {
-			processEvent(watcher, file, entityname)
-		}
-	}()
-
-	err = watcher.Add(file)
-
-	if err != nil {
-		log.WithFields(log.Fields{
-			"file": file,
-		}).Errorf("Could not create entity watcher: %v", err)
-	}
-
-	<-done
-}
-
-func processEvent(watcher *fsnotify.Watcher, filename string, entityname string) {
-	select {
-	case event, ok := <-watcher.Events:
-		if !ok {
-			return
-		}
-
-		loadEntityFileIfWritten(&event, filename, entityname)
-
-		return
-	case err := <-watcher.Errors:
-		log.Errorf("Error in fsnotify: %v", err)
-		return
-	}
-}
-
-func loadEntityFileIfWritten(event *fsnotify.Event, filename string, entityname string) {
-	if event.Has(fsnotify.Remove) {
-		log.WithFields(log.Fields{
-			"file": filename,
-		}).Warnf("Entity file deleted! Will no longer be able to watch for changes!")
-	}
-
-	if event.Has(fsnotify.Write) {
-		loadEntityFile(filename, entityname)
 	}
 }
 
@@ -174,13 +113,13 @@ func updateEvmFromFile(entityname string, data []map[string]string) {
 
 	sv.RemoveKeysThatStartWith("entities." + entityname)
 
-	sv.Contents["entities."+entityname+".count"] = fmt.Sprintf("%v", count)
+	sv.SetEntityCount(entityname, count)
 
 	for i, mapp := range data {
 		prefix := "entities." + entityname + "." + fmt.Sprintf("%v", i)
 
 		for k, v := range mapp {
-			sv.Contents[prefix+"."+k] = v
+			sv.Set(prefix+"."+k, v)
 		}
 	}
 }

@@ -1,22 +1,30 @@
 {
-  "name": "olivetin-webui",
-  "version": "1.0.0",
-  "description": "The WebUI for OliveTin",
-  "repository": "https://github.com/OliveTin/OliveTin",
-  "source": "index.html",
-  "devDependencies": {
-    "eslint": "^7.25.0",
-    "eslint-config-standard": "^16.0.2",
-    "eslint-plugin-import": "^2.22.1",
-    "eslint-plugin-node": "^11.1.0",
-    "eslint-plugin-promise": "^4.3.1",
-    "parcel": "^2.11.0",
-    "stylelint": "^15.6.0",
-    "stylelint-config-standard": "^33.0.0"
-  },
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "author": "",
+	"name": "olivetin-webui",
+	"version": "1.0.0",
+	"description": "The WebUI for OliveTin",
+	"repository": "https://github.com/OliveTin/OliveTin",
+	"source": "index.html",
+	"devDependencies": {
+		"eslint": "^7.25.0",
+		"eslint-config-standard": "^16.0.2",
+		"eslint-plugin-import": "^2.22.1",
+		"eslint-plugin-node": "^11.1.0",
+		"eslint-plugin-promise": "^4.3.1",
+		"parcel": "^2.11.0",
+		"parcel-resolver-ignore": "^2.2.0",
+		"stylelint": "^15.6.0",
+		"stylelint-config-standard": "^33.0.0"
+	},
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"author": "",
+	"parcelIgnore": [
+		"theme.css",
+		"OliveTinLogo.png",
+		"OliveTinLogo-57px.png",
+		"OliveTinLogo-120px.png",
+		"OliveTinLogo-180px.png"
+  ],
   "license": "ISC"
 }

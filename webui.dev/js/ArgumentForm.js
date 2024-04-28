@@ -133,7 +133,7 @@ class ArgumentForm extends window.HTMLElement {
     } else {
       domEl = document.createElement('input')
 
-      if (arg.type.startsWith(':regex')) {
+      if (arg.type.startsWith('regex:')) {
         domEl.setAttribute('pattern', arg.type.replace('regex:', ''))
       }
 

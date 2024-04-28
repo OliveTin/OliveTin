@@ -8,6 +8,7 @@ import (
 	"github.com/OliveTin/OliveTin/internal/entityfiles"
 	"github.com/OliveTin/OliveTin/internal/executor"
 	grpcapi "github.com/OliveTin/OliveTin/internal/grpcapi"
+	"github.com/OliveTin/OliveTin/internal/httpservers"
 	"github.com/OliveTin/OliveTin/internal/installationinfo"
 	"github.com/OliveTin/OliveTin/internal/oncalendarfile"
 	"github.com/OliveTin/OliveTin/internal/oncron"
@@ -16,13 +17,10 @@ import (
 	updatecheck "github.com/OliveTin/OliveTin/internal/updatecheck"
 	"github.com/OliveTin/OliveTin/internal/websocket"
 
-	"github.com/OliveTin/OliveTin/internal/httpservers"
-
 	config "github.com/OliveTin/OliveTin/internal/config"
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
 	"os"
-	"path"
 )
 
 var (
@@ -98,11 +96,11 @@ func initViperConfig(configDir string) {
 		if e.Op == fsnotify.Write {
 			log.Info("Config file changed:", e.String())
 
-			reloadConfig()
+			config.Reload(cfg)
 		}
 	})
 
-	reloadConfig()
+	config.Reload(cfg)
 }
 
 func initInstallationInfo() {
@@ -130,26 +128,16 @@ func warnIfPuidGuid() {
 	}
 }
 
-func reloadConfig() {
-	if err := viper.UnmarshalExact(&cfg); err != nil {
-		log.Errorf("Config unmarshal error %+v", err)
-		os.Exit(1)
-	}
-
-	cfg.Sanitize()
-}
-
 func main() {
-	configDir := path.Dir(viper.ConfigFileUsed())
-
 	log.WithFields(log.Fields{
-		"configDir": configDir,
+		"configDir": cfg.GetDir(),
 	}).Infof("OliveTin started")
 
 	log.Debugf("Config: %+v", cfg)
 
 	executor := executor.DefaultExecutor()
 	executor.AddListener(websocket.ExecutionListener)
+	config.AddListener(websocket.OnConfigChanged)
 
 	go onstartup.Execute(cfg, executor)
 	go oncron.Schedule(cfg, executor)
@@ -158,7 +146,7 @@ func main() {
 
 	go entityfiles.SetupEntityFileWatchers(cfg)
 
-	go updatecheck.StartUpdateChecker(version, commit, cfg, configDir)
+	go updatecheck.StartUpdateChecker(version, commit, cfg, cfg.GetDir())
 
 	go grpcapi.Start(cfg, executor)
 

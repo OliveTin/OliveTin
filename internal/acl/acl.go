@@ -17,24 +17,51 @@ type AuthenticatedUser struct {
 	acls []string
 }
 
-// IsAllowedExec checks if a AuthenticatedUser is allowed to execute an Action
-func IsAllowedExec(cfg *config.Config, user *AuthenticatedUser, action *config.Action) bool {
+func logAclNotMatched(cfg *config.Config, aclFunction string, user *AuthenticatedUser, action *config.Action) {
+	if cfg.LogDebugOptions.AclNotMatched {
+		log.WithFields(log.Fields{
+			"User":   user.Username,
+			"Action": action.Title,
+		}).Debugf("%v - No ACLs Matched", aclFunction)
+	}
+}
+
+func logAclMatched(cfg *config.Config, aclFunction string, user *AuthenticatedUser, action *config.Action, acl *config.AccessControlList) {
+	if cfg.LogDebugOptions.AclMatched {
+		log.WithFields(log.Fields{
+			"User":   user.Username,
+			"Action": action.Title,
+			"ACL":    acl.Name,
+		}).Debugf("%v - Matched ACL", aclFunction)
+	}
+}
+
+// IsAllowedLogs checks if a AuthenticatedUser is allowed to view an action's logs
+func IsAllowedLogs(cfg *config.Config, user *AuthenticatedUser, action *config.Action) bool {
 	for _, acl := range getRelevantAcls(cfg, action.Acls, user) {
-		if acl.Permissions.Exec {
-			log.WithFields(log.Fields{
-				"User":   user.Username,
-				"Action": action.Title,
-				"ACL":    acl.Name,
-			}).Trace("isAllowedExec - Matched ACL")
+		if acl.Permissions.Logs {
+			logAclMatched(cfg, "isAllowedLogs", user, action, acl)
 
 			return true
 		}
 	}
 
-	log.WithFields(log.Fields{
-		"User":   user.Username,
-		"Action": action.Title,
-	}).Trace("isAllowedExec - No ACLs matched")
+	logAclNotMatched(cfg, "isAllowedLogs", user, action)
+
+	return cfg.DefaultPermissions.Logs
+}
+
+// IsAllowedExec checks if a AuthenticatedUser is allowed to execute an Action
+func IsAllowedExec(cfg *config.Config, user *AuthenticatedUser, action *config.Action) bool {
+	for _, acl := range getRelevantAcls(cfg, action.Acls, user) {
+		if acl.Permissions.Exec {
+			logAclMatched(cfg, "isAllowedExec", user, action, acl)
+
+			return true
+		}
+	}
+
+	logAclNotMatched(cfg, "isAllowedExec", user, action)
 
 	return cfg.DefaultPermissions.Exec
 }
@@ -47,20 +74,13 @@ func IsAllowedView(cfg *config.Config, user *AuthenticatedUser, action *config.A
 
 	for _, acl := range getRelevantAcls(cfg, action.Acls, user) {
 		if acl.Permissions.View {
-			log.WithFields(log.Fields{
-				"User":   user.Username,
-				"Action": action.Title,
-				"ACL":    acl.Name,
-			}).Trace("isAllowedView - Matched ACL")
+			logAclMatched(cfg, "isAllowedView", user, action, acl)
 
 			return true
 		}
 	}
 
-	log.WithFields(log.Fields{
-		"User":   user.Username,
-		"Action": action.Title,
-	}).Trace("isAllowedView - No ACLs matched")
+	logAclNotMatched(cfg, "isAllowedView", user, action)
 
 	return cfg.DefaultPermissions.View
 }

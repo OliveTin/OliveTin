@@ -7,20 +7,36 @@ import (
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
+	"gopkg.in/yaml.v3"
+
 	"bytes"
 	"context"
 	"fmt"
 	"io"
+	"io/ioutil"
+	"os"
 	"os/exec"
+	"path"
 	"runtime"
+	"strings"
 	"sync"
 	"time"
+)
+
+var (
+	metricActionsRequested = promauto.NewGauge(prometheus.GaugeOpts{
+		Name: "olivetin_actions_requested_count",
+		Help: "The actions requested count",
+	})
 )
 
 // Executor represents a helper class for executing commands. It's main method
 // is ExecRequest
 type Executor struct {
-	Logs map[string]*InternalLogEntry
+	Logs           map[string]*InternalLogEntry
+	LogsByActionId map[string][]*InternalLogEntry
 
 	listeners []listener
 
@@ -48,8 +64,8 @@ type ExecutionRequest struct {
 // state of execution (even if the command is not executed). It's designed to be
 // easily serializable.
 type InternalLogEntry struct {
-	DatetimeStarted     string
-	DatetimeFinished    string
+	DatetimeStarted     time.Time
+	DatetimeFinished    time.Time
 	Stdout              string
 	Stderr              string
 	StdoutBuffer        io.ReadCloser
@@ -61,6 +77,7 @@ type InternalLogEntry struct {
 	ExecutionStarted    bool
 	ExecutionFinished   bool
 	ExecutionTrackingID string
+	Process             *os.Process
 
 	/*
 		The following 3 properties are obviously on Action normally, but it's useful
@@ -79,16 +96,19 @@ type executorStepFunc func(*ExecutionRequest) bool
 func DefaultExecutor() *Executor {
 	e := Executor{}
 	e.Logs = make(map[string]*InternalLogEntry)
+	e.LogsByActionId = make(map[string][]*InternalLogEntry)
 
 	e.chainOfCommand = []executorStepFunc{
 		stepRequestAction,
 		stepConcurrencyCheck,
+		stepRateCheck,
 		stepACLCheck,
 		stepParseArgs,
 		stepLogStart,
 		stepExec,
 		stepExecAfter,
 		stepLogFinish,
+		stepSaveLog,
 		stepTrigger,
 	}
 
@@ -113,7 +133,7 @@ func (e *Executor) ExecRequest(req *ExecutionRequest) (*sync.WaitGroup, string) 
 	// duplicate UUIDs (or just random strings), but this is the only way.
 
 	req.logEntry = &InternalLogEntry{
-		DatetimeStarted:     time.Now().Format("2006-01-02 15:04:05"),
+		DatetimeStarted:     time.Now(),
 		ExecutionTrackingID: req.TrackingID,
 		Stdout:              "",
 		Stderr:              "",
@@ -161,8 +181,8 @@ func (e *Executor) execChain(req *ExecutionRequest) {
 func getConcurrentCount(req *ExecutionRequest) int {
 	concurrentCount := 0
 
-	for _, log := range req.executor.Logs {
-		if log.ActionId == req.Action.ID && !log.ExecutionFinished {
+	for _, log := range req.executor.LogsByActionId[req.Action.ID] {
+		if !log.ExecutionFinished {
 			concurrentCount += 1
 		}
 	}
@@ -184,6 +204,55 @@ func stepConcurrencyCheck(req *ExecutionRequest) bool {
 		req.logEntry.Stdout = msg
 		req.logEntry.Blocked = true
 		return false
+	}
+
+	return true
+}
+
+func parseDuration(rate config.RateSpec) time.Duration {
+	duration, err := time.ParseDuration(rate.Duration)
+
+	if err != nil {
+		log.Warnf("Could not parse duration: %v", rate.Duration)
+
+		return -1 * time.Minute
+	}
+
+	return duration
+}
+
+func getExecutionsCount(rate config.RateSpec, req *ExecutionRequest) int {
+	executions := -1 // Because we will find ourself when checking execution logs
+
+	duration := parseDuration(rate)
+
+	then := time.Now().Add(-duration)
+
+	for _, logEntry := range req.executor.LogsByActionId[req.Action.ID] {
+		if logEntry.DatetimeStarted.After(then) && !logEntry.Blocked {
+
+			executions += 1
+		}
+	}
+
+	return executions
+}
+
+func stepRateCheck(req *ExecutionRequest) bool {
+	for _, rate := range req.Action.MaxRate {
+		executions := getExecutionsCount(rate, req)
+
+		if executions >= rate.Limit {
+			msg := fmt.Sprintf("Blocked from executing. This action has run %d out of %d allowed times in the last %s.", executions, rate.Limit, rate.Duration)
+
+			log.WithFields(log.Fields{
+				"actionTitle": req.logEntry.ActionTitle,
+			}).Infof(msg)
+
+			req.logEntry.Stdout = msg
+			req.logEntry.Blocked = true
+			return false
+		}
 	}
 
 	return true
@@ -229,12 +298,21 @@ func stepRequestAction(req *ExecutionRequest) bool {
 		}
 	}
 
+	metricActionsRequested.Inc()
+
 	req.logEntry.ActionTitle = sv.ReplaceEntityVars(req.EntityPrefix, req.Action.Title)
 	req.logEntry.ActionIcon = req.Action.Icon
 	req.logEntry.ActionId = req.Action.ID
 
+	if _, containsKey := req.executor.LogsByActionId[req.Action.ID]; !containsKey {
+		req.executor.LogsByActionId[req.Action.ID] = make([]*InternalLogEntry, 0)
+	}
+
+	req.executor.LogsByActionId[req.Action.ID] = append(req.executor.LogsByActionId[req.Action.ID], req.logEntry)
+
 	log.WithFields(log.Fields{
 		"actionTitle": req.logEntry.ActionTitle,
+		"tags":        req.Tags,
 	}).Infof("Action requested")
 
 	return true
@@ -250,6 +328,8 @@ func stepLogStart(req *ExecutionRequest) bool {
 }
 
 func stepLogFinish(req *ExecutionRequest) bool {
+	req.logEntry.ExecutionFinished = true
+
 	log.WithFields(log.Fields{
 		"actionTitle": req.logEntry.ActionTitle,
 		"stdout":      req.logEntry.Stdout,
@@ -275,6 +355,22 @@ func wrapCommandInShell(ctx context.Context, finalParsedCommand string) *exec.Cm
 	return exec.CommandContext(ctx, "sh", "-c", finalParsedCommand)
 }
 
+func appendErrorToStderr(err error, logEntry *InternalLogEntry) {
+	if err != nil {
+		logEntry.Stderr = err.Error() + "\n\n" + logEntry.Stderr
+	}
+}
+
+func buildEnv(req *ExecutionRequest) []string {
+	ret := append(os.Environ(), "OLIVETIN=1")
+
+	for k, v := range req.Arguments {
+		ret = append(ret, fmt.Sprintf("%v=%v", strings.ToUpper(k), v))
+	}
+
+	return ret
+}
+
 func stepExec(req *ExecutionRequest) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(req.Action.Timeout)*time.Second)
 	defer cancel()
@@ -283,6 +379,7 @@ func stepExec(req *ExecutionRequest) bool {
 	var stderr bytes.Buffer
 
 	cmd := wrapCommandInShell(ctx, req.finalParsedCommand)
+	cmd.Env = buildEnv(req)
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 	req.logEntry.StdoutBuffer, _ = cmd.StdoutPipe()
@@ -292,25 +389,23 @@ func stepExec(req *ExecutionRequest) bool {
 
 	runerr := cmd.Start()
 
-	cmd.Wait()
+	req.logEntry.Process = cmd.Process
 
-	// req.logEntry.Stdout = req.logEntry.StdoutBuffer.String()
-	// req.logEntry.Stderr = req.logEntry.StderrBuffer.String()
+	waiterr := cmd.Wait()
 
 	req.logEntry.ExitCode = int32(cmd.ProcessState.ExitCode())
 	req.logEntry.Stdout = stdout.String()
 	req.logEntry.Stderr = stderr.String()
 
-	if runerr != nil {
-		req.logEntry.Stderr = runerr.Error() + "\n\n" + req.logEntry.Stderr
-	}
+	appendErrorToStderr(runerr, req.logEntry)
+	appendErrorToStderr(waiterr, req.logEntry)
 
 	if ctx.Err() == context.DeadlineExceeded {
 		req.logEntry.TimedOut = true
 	}
 
 	req.logEntry.Tags = req.Tags
-	req.logEntry.DatetimeFinished = time.Now().Format("2006-01-02 15:04:05")
+	req.logEntry.DatetimeFinished = time.Now()
 
 	return true
 }
@@ -336,19 +431,16 @@ func stepExecAfter(req *ExecutionRequest) bool {
 	cmd := wrapCommandInShell(ctx, finalParsedCommand)
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
-	req.logEntry.StdoutBuffer, _ = cmd.StdoutPipe()
-	req.logEntry.StderrBuffer, _ = cmd.StderrPipe()
 
 	runerr := cmd.Start()
 
-	cmd.Wait()
+	waiterr := cmd.Wait()
 
 	req.logEntry.Stdout += "---\n" + stdout.String()
 	req.logEntry.Stderr += "---\n" + stderr.String()
 
-	if runerr != nil {
-		req.logEntry.Stderr = runerr.Error() + "\n\n" + req.logEntry.Stderr
-	}
+	appendErrorToStderr(runerr, req.logEntry)
+	appendErrorToStderr(waiterr, req.logEntry)
 
 	if ctx.Err() == context.DeadlineExceeded {
 		req.logEntry.Stderr += "Your shellAfterCommand command timed out."
@@ -373,4 +465,54 @@ func stepTrigger(req *ExecutionRequest) bool {
 	}
 
 	return true
+}
+
+func stepSaveLog(req *ExecutionRequest) bool {
+	filename := fmt.Sprintf("%v.%v.%v", req.logEntry.ActionTitle, req.logEntry.DatetimeStarted.Unix(), req.logEntry.ExecutionTrackingID)
+
+	saveLogResults(req, filename)
+	saveLogOutput(req, filename)
+
+	return true
+}
+
+func firstNonEmpty(one, two string) string {
+	if one != "" {
+		return one
+	}
+
+	return two
+}
+
+func saveLogResults(req *ExecutionRequest, filename string) {
+	dir := firstNonEmpty(req.Action.SaveLogs.ResultsDirectory, req.Cfg.SaveLogs.ResultsDirectory)
+
+	if dir != "" {
+		data, err := yaml.Marshal(req.logEntry)
+
+		if err != nil {
+			log.Warnf("%v", err)
+		}
+
+		filepath := path.Join(dir, filename+".yaml")
+		err = ioutil.WriteFile(filepath, data, 0644)
+
+		if err != nil {
+			log.Warnf("%v", err)
+		}
+	}
+}
+
+func saveLogOutput(req *ExecutionRequest, filename string) {
+	dir := firstNonEmpty(req.Action.SaveLogs.OutputDirectory, req.Cfg.SaveLogs.OutputDirectory)
+
+	if dir != "" {
+		data := req.logEntry.Stdout + "\n" + req.logEntry.Stderr
+		filepath := path.Join(dir, filename+".log")
+		err := ioutil.WriteFile(filepath, []byte(data), 0644)
+
+		if err != nil {
+			log.Warnf("%v", err)
+		}
+	}
 }

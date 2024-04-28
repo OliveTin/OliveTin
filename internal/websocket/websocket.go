@@ -6,6 +6,7 @@ import (
 	ws "github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/reflect/protoreflect"
 	"net/http"
 )
 
@@ -22,6 +23,12 @@ var clients []*WebsocketClient
 var marshalOptions = protojson.MarshalOptions{
 	UseProtoNames:   false, // eg: canExec for js instead of can_exec from protobuf
 	EmitUnpopulated: true,
+}
+
+func OnConfigChanged() {
+	evt := &pb.EventConfigChanged{}
+
+	broadcast(evt)
 }
 
 var ExecutionListener WebsocketExecutionListener
@@ -55,28 +62,37 @@ func checkOriginPermissive(r *http.Request) bool {
 }
 
 func (WebsocketExecutionListener) OnExecutionFinished(logEntry *executor.InternalLogEntry) {
-	le := &pb.LogEntry{
-		ActionTitle:         logEntry.ActionTitle,
-		ActionIcon:          logEntry.ActionIcon,
-		ActionId:            logEntry.ActionId,
-		DatetimeStarted:     logEntry.DatetimeStarted,
-		DatetimeFinished:    logEntry.DatetimeFinished,
-		Stdout:              logEntry.Stdout,
-		Stderr:              logEntry.Stderr,
-		TimedOut:            logEntry.TimedOut,
-		Blocked:             logEntry.Blocked,
-		ExitCode:            logEntry.ExitCode,
-		Tags:                logEntry.Tags,
-		ExecutionTrackingId: logEntry.ExecutionTrackingID,
-		ExecutionStarted:    logEntry.ExecutionStarted,
-		ExecutionFinished:   logEntry.ExecutionFinished,
+	evt := &pb.EventExecutionFinished{
+		LogEntry: &pb.LogEntry{
+			ActionTitle:         logEntry.ActionTitle,
+			ActionIcon:          logEntry.ActionIcon,
+			ActionId:            logEntry.ActionId,
+			DatetimeStarted:     logEntry.DatetimeStarted.Format("2006-01-02 15:04:05"),
+			DatetimeFinished:    logEntry.DatetimeFinished.Format("2006-01-02 15:04:05"),
+			Stdout:              logEntry.Stdout,
+			Stderr:              logEntry.Stderr,
+			TimedOut:            logEntry.TimedOut,
+			Blocked:             logEntry.Blocked,
+			ExitCode:            logEntry.ExitCode,
+			Tags:                logEntry.Tags,
+			ExecutionTrackingId: logEntry.ExecutionTrackingID,
+			ExecutionStarted:    logEntry.ExecutionStarted,
+			ExecutionFinished:   logEntry.ExecutionFinished,
+		},
 	}
 
-	broadcast("ExecutionFinished", le)
+	broadcast(evt)
 }
 
-func broadcast(messageType string, pbmsg *pb.LogEntry) {
+func broadcast(pbmsg protoreflect.ProtoMessage) {
 	payload, err := marshalOptions.Marshal(pbmsg)
+
+	if err != nil {
+		log.Errorf("websocket marshal error: %v", err)
+		return
+	}
+
+	messageType := pbmsg.ProtoReflect().Descriptor().FullName()
 
 	// <EVIL>
 	// So, the websocket wants to encode messages using the same protomarshaller
@@ -97,13 +113,8 @@ func broadcast(messageType string, pbmsg *pb.LogEntry) {
 	hackyMessage = append(hackyMessage, []byte("}")...)
 	// </EVIL>
 
-	if err != nil {
-		log.Errorf("websocket marshal error: %v", err)
-		return
-	}
-
 	for _, client := range clients {
-		client.conn.WriteMessage(1, hackyMessage)
+		client.conn.WriteMessage(ws.TextMessage, hackyMessage)
 	}
 }
 

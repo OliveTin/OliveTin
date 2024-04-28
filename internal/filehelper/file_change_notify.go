@@ -6,7 +6,44 @@ import (
 	"path/filepath"
 )
 
-func WatchFile(fullpath string, callback func()) {
+type watchContext struct {
+	filename        string
+	filedir         string
+	callback        func(filename string)
+	interestedEvent fsnotify.Op
+}
+
+func WatchDirectoryCreate(fullpath string, callback func(filename string)) {
+	watchPath(&watchContext{
+		filedir:         fullpath,
+		filename:        "",
+		callback:        callback,
+		interestedEvent: fsnotify.Create,
+	})
+}
+
+func WatchDirectoryWrite(fullpath string, callback func(filename string)) {
+	watchPath(&watchContext{
+		filedir:         fullpath,
+		filename:        "",
+		callback:        callback,
+		interestedEvent: fsnotify.Write,
+	})
+}
+
+func WatchFileWrite(fullpath string, callback func(filename string)) {
+	filename := filepath.Base(fullpath)
+	filedir := filepath.Dir(fullpath)
+
+	watchPath(&watchContext{
+		filedir:         filedir,
+		filename:        filename,
+		callback:        callback,
+		interestedEvent: fsnotify.Write,
+	})
+}
+
+func watchPath(ctx *watchContext) {
 	watcher, err := fsnotify.NewWatcher()
 
 	if err != nil {
@@ -18,16 +55,13 @@ func WatchFile(fullpath string, callback func()) {
 
 	done := make(chan bool)
 
-	filename := filepath.Base(fullpath)
-	filedir := filepath.Dir(fullpath)
-
 	go func() {
 		for {
-			processEvent(filename, watcher, fsnotify.Write, callback)
+			processEvent(ctx, watcher)
 		}
 	}()
 
-	err = watcher.Add(filedir)
+	err = watcher.Add(ctx.filedir)
 
 	if err != nil {
 		log.Errorf("Could not create watcher: %v", err)
@@ -36,10 +70,10 @@ func WatchFile(fullpath string, callback func()) {
 	<-done
 }
 
-func processEvent(filename string, watcher *fsnotify.Watcher, eventType fsnotify.Op, callback func()) {
+func processEvent(ctx *watchContext, watcher *fsnotify.Watcher) {
 	select {
 	case event, ok := <-watcher.Events:
-		if !consumeEvent(ok, filename, &event, callback) {
+		if !consumeEvent(ok, ctx, &event) {
 			return
 		}
 
@@ -50,25 +84,25 @@ func processEvent(filename string, watcher *fsnotify.Watcher, eventType fsnotify
 	}
 }
 
-func consumeEvent(ok bool, filename string, event *fsnotify.Event, callback func()) bool {
+func consumeEvent(ok bool, ctx *watchContext, event *fsnotify.Event) bool {
 	if !ok {
 		return false
 	}
 
-	if filepath.Base(event.Name) != filename {
+	if ctx.filename != "" && filepath.Base(event.Name) != ctx.filename {
 		log.Tracef("fsnotify irreleventa event different file %+v", event)
 		return true
 	}
 
-	consumeWriteEvents(event, callback)
+	consumeRelevantEvents(ctx, event)
 
 	return true
 }
 
-func consumeWriteEvents(event *fsnotify.Event, callback func()) {
-	if event.Has(fsnotify.Write) {
+func consumeRelevantEvents(ctx *watchContext, event *fsnotify.Event) {
+	if event.Has(ctx.interestedEvent) {
 		log.Debugf("fsnotify write event: %v", event)
-		callback()
+		ctx.callback(event.Name)
 	} else {
 		log.Debugf("fsnotify irrelevant event on file %v", event)
 	}

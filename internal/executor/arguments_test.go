@@ -17,6 +17,34 @@ func TestSanitizeUnimplemented(t *testing.T) {
 	assert.NotNil(t, err, "Test an argument type that does not exist")
 }
 
+func TestArgumentValueNullable(t *testing.T) {
+	a1 := config.Action{
+		Title: "Release the hounds",
+		Shell: "echo 'Releasing {{ count }} hounds'",
+		Arguments: []config.ActionArgument{
+			{
+				Name: "count",
+				Type: "int",
+			},
+		},
+	}
+
+	values := map[string]string{
+		"count": "",
+	}
+
+	out, err := parseActionArguments(a1.Shell, values, &a1, a1.Title, "")
+
+	assert.Equal(t, "echo 'Releasing  hounds'", out)
+	assert.Nil(t, err)
+
+	a1.Arguments[0].RejectNull = true
+
+	_, err = parseActionArguments(a1.Shell, values, &a1, a1.Title, "")
+
+	assert.NotNil(t, err)
+}
+
 func TestArgumentNameNumbers(t *testing.T) {
 	a1 := config.Action{
 		Title: "Do some tickles",

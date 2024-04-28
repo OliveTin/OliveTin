@@ -8,6 +8,7 @@
 		<title>OliveTin</title>
 
 		<link rel = "stylesheet" type = "text/css" href = "style.css" />
+		<link rel = "stylesheet" type = "text/css" href = "theme.css" />
 		<link rel = "shortcut icon" type = "image/png" href = "OliveTinLogo.png" />
 
 		<link rel = "apple-touch-icon" sizes="57x57" href="OliveTinLogo-57px.png" />
@@ -16,25 +17,29 @@
 	</head>
 
 	<body>
-		<main title = "main content">
-			<div id = "perma-widget">
-				<div id = "sidebar-toggle-wrapper">
-					<label for = "hide-sidebar-checkbox" id = "sidebar-toggler-button" title = "Toggle sidebar" tabindex = "0">&#9776;</label>
-				</div>
-				<h1 id = "page-title">OliveTin</h1>
-			</div>
+		<header>
+			<button id = "sidebar-toggler-button" aria-label = "Open sidebar navigation" aria-pressed = "false" aria-haspopup = "menu">&#9776;</button>
 
-			<input type = "checkbox" id = "hide-sidebar-checkbox" hidden checked />
-			<nav hidden>
+			<h1 id = "page-title">OliveTin</h1>
+
+			<nav>
 				<ul id = "navigation-links">
-					<li title = "Actions"><a id = "showActions">Actions</a></li>
+					<li title = "Actions">
+						<a id = "showActions" href = "#actions">Actions</a>
+					</li>
 				</ul>
 
 				<ul id = "supplemental-links">
-					<li title = "Logs"><a id = "showLogs">Logs</a></li>
+					<li title = "Logs">
+						<a id = "showLogs" href = "#logs">Logs</a>
+					</li>
 				</ul>
 			</nav>
 
+			<span id = "username">&nbsp;</span>
+		</header>
+
+		<main title = "main content">
 			<section id = "contentLogs" title = "Logs" hidden>
 				<div class = "toolbar">
 					<input placeholder = "Search for action name" id = "logSearchBox" />
@@ -79,6 +84,10 @@
 			</p>
 		</footer>
 
+		<dialog title = "Big Error Message" id = "big-error" class = "error">
+
+		</dialog>
+
 		<dialog title = "Execution Results" id = "execution-results-popup">
 			<div class = "action-header">
 				<span id = "execution-dialog-icon" class = "icon" role = "img"></span>
@@ -107,24 +116,22 @@
 			<div id = "execution-dialog-output">
 				<details>
 					<summary>Standard Output</summary>
-					<pre id = "execution-dialog-stdout">
-						?
-					</pre>
+					<pre id = "execution-dialog-stdout">?</pre>
 				</details>
 
 				<details>
 					<summary>Standard Error</summary>
-					<pre id = "execution-dialog-stderr">
-						?
-					</pre>
+					<pre id = "execution-dialog-stderr">?</pre>
 				</details>
 			</div>
 
-			<form method = "dialog">
-				<div class = "buttons">
+			<div class = "buttons">
+				<button name = "kill" title = "Kill" id = "execution-dialog-kill-action">Kill</button>
+
+				<form method = "dialog">
 					<button name = "Cancel" title = "Close">Close</button>
-				</div>
-			</form>
+				</form>
+			</div>
 		</dialog>
 
 		<template id = "tplArgumentForm">
@@ -150,7 +157,7 @@
 		<template id = "tplActionButton">
 			<button>
 				<span title = "action button icon" class = "icon">&#x1f4a9;</span>
-				<span class = "title">Untitled Button</span>
+				<span class = "title" aria-live = "polite">Untitled Button</span>
 			</button>
 
 			<div class = "action-button-footer" hidden></div>
@@ -165,16 +172,12 @@
 
 					<details>
 						<summary>stdout</summary>
-						<pre class = "stdout">
-							?
-						</pre>
+						<pre class = "stdout">?</pre>
 					</details>
 
 					<details>
 						<summary>stderr</summary>
-						<pre class = "stderr">
-							?
-						</pre>
+						<pre class = "stderr">?</pre>
 					</details>
 
 					<div class = "tags"></div>
@@ -184,34 +187,28 @@
 		</template>
 
 		<script type = "text/javascript">
+			const bigErrorDialog = document.getElementById('big-error')
+
 			/**
 			This is the bootstrap code, which relies on very simple, old javascript
 		  	to at least display a helpful error message if we can't use OliveTin.
 			*/
-			window.showBigError = function (type, friendlyType, message) {
-			  clearBigErrors(type)
+			window.showBigError = function (type, friendlyType, message, isFatal) {
+			  bigErrorDialog.innerHTML = '<h1>Error ' + friendlyType + '</h1><p>' + message + "</p><p><a href = 'http://docs.olivetin.app/err-" + type + ".html' target = 'blank'/>" + type + " error in OliveTin Documentation</a></p>"
+
+			  if (isFatal) {
+				  bigErrorDialog.innerHTML += '<p>You will need to refresh your browser to clear this message.</p>'
+			  } else {
+				  bigErrorDialog.innerHTML += '<p>This error message will go away automatically if the problem is solved.</p>'
+			  }
+
+			  bigErrorDialog.showModal()
 
 			  console.error('Error ' + type + ': ', message)
-
-			  const domErr = document.createElement('div')
-			  domErr.classList.add('error')
-			  domErr.classList.add(type)
-			  domErr.innerHTML = '<h1>Error ' + friendlyType + '</h1><p>' + message + "</p><p><a href = 'http://docs.olivetin.app/err-" + type + ".html' target = 'blank'/>" + type + " error in OliveTin Documentation</a></p>"
-
-			  document.body.prepend(domErr)
 			}
 
-			window.clearBigErrors = function (additionalClass) {
-			  let selector = 'div.error'
-
-		      if (additionalClass != null) {
-				  selector += '.' + additionalClass
-			  }
-
-			  for (const oldError of document.querySelectorAll(selector).values()) {
-				window.old = oldError;
-				oldError.remove();
-			  }
+			window.clearBigErrors = function () {
+			  bigErrorDialog.close()
 			}
 		</script>
 

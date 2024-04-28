@@ -40,7 +40,8 @@ function websocketOnMessage (msg) {
   e.payload = j.payload
 
   switch (j.type) {
-    case 'ExecutionFinished':
+    case 'EventConfigChanged':
+    case 'EventExecutionFinished':
       window.dispatchEvent(e)
       break
     default:
