@@ -22,6 +22,7 @@ type Action struct {
 	MaxRate                []RateSpec
 	Arguments              []ActionArgument
 	PopupOnStart           string
+	SaveLogs               SaveLogsConfig
 }
 
 // ActionArgument objects appear on Actions.
@@ -119,8 +120,14 @@ type Config struct {
 	InsecureAllowDumpActionMap      bool
 	InsecureAllowDumpJwtClaims      bool
 	Prometheus                      PrometheusConfig
+	SaveLogs                        SaveLogsConfig
 
 	usedConfigDir string
+}
+
+type SaveLogsConfig struct {
+	ResultsDirectory string
+	OutputDirectory  string
 }
 
 type LogDebugOptions struct {
