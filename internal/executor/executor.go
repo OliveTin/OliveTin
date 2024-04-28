@@ -9,13 +9,16 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+	"gopkg.in/yaml.v3"
 
 	"bytes"
 	"context"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"os/exec"
+	"path"
 	"runtime"
 	"strings"
 	"sync"
@@ -105,6 +108,7 @@ func DefaultExecutor() *Executor {
 		stepExec,
 		stepExecAfter,
 		stepLogFinish,
+		stepSaveLog,
 		stepTrigger,
 	}
 
@@ -324,6 +328,8 @@ func stepLogStart(req *ExecutionRequest) bool {
 }
 
 func stepLogFinish(req *ExecutionRequest) bool {
+	req.logEntry.ExecutionFinished = true
+
 	log.WithFields(log.Fields{
 		"actionTitle": req.logEntry.ActionTitle,
 		"stdout":      req.logEntry.Stdout,
@@ -459,4 +465,54 @@ func stepTrigger(req *ExecutionRequest) bool {
 	}
 
 	return true
+}
+
+func stepSaveLog(req *ExecutionRequest) bool {
+	filename := fmt.Sprintf("%v.%v.%v", req.logEntry.ActionTitle, req.logEntry.DatetimeStarted.Unix(), req.logEntry.ExecutionTrackingID)
+
+	saveLogResults(req, filename)
+	saveLogOutput(req, filename)
+
+	return true
+}
+
+func firstNonEmpty(one, two string) string {
+	if one != "" {
+		return one
+	}
+
+	return two
+}
+
+func saveLogResults(req *ExecutionRequest, filename string) {
+	dir := firstNonEmpty(req.Action.SaveLogs.ResultsDirectory, req.Cfg.SaveLogs.ResultsDirectory)
+
+	if dir != "" {
+		data, err := yaml.Marshal(req.logEntry)
+
+		if err != nil {
+			log.Warnf("%v", err)
+		}
+
+		filepath := path.Join(dir, filename+".yaml")
+		err = ioutil.WriteFile(filepath, data, 0644)
+
+		if err != nil {
+			log.Warnf("%v", err)
+		}
+	}
+}
+
+func saveLogOutput(req *ExecutionRequest, filename string) {
+	dir := firstNonEmpty(req.Action.SaveLogs.OutputDirectory, req.Cfg.SaveLogs.OutputDirectory)
+
+	if dir != "" {
+		data := req.logEntry.Stdout + "\n" + req.logEntry.Stderr
+		filepath := path.Join(dir, filename+".log")
+		err := ioutil.WriteFile(filepath, []byte(data), 0644)
+
+		if err != nil {
+			log.Warnf("%v", err)
+		}
+	}
 }
