@@ -7,6 +7,7 @@ OliveTin gives **safe** and **simple** access to predefined shell commands from 
 [![Discord](https://img.shields.io/discord/846737624960860180?label=Discord%20Server)](https://discord.gg/jhYWWpNJ3v)
 [![Awesome](https://cdn.rawgit.com/sindresorhus/awesome/d7305f38d29fed78fa85652e3a63e154dd8e8829/media/badge.svg)](https://github.com/awesome-selfhosted/awesome-selfhosted#automation)
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/5050/badge)](https://bestpractices.coreinfrastructure.org/projects/5050)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FOliveTin%2FOliveTin.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2FOliveTin%2FOliveTin?ref=badge_shield)
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/Olivetin/OliveTin)](https://goreportcard.com/report/github.com/OliveTin/OliveTin)
 [![Build Snapshot](https://github.com/OliveTin/OliveTin/actions/workflows/build-snapshot.yml/badge.svg)](https://github.com/OliveTin/OliveTin/actions/workflows/build-snapshot.yml)
@@ -120,3 +121,7 @@ actions:
 ```
 
 A full example config can be found at in this repository - [config.yaml](https://github.com/OliveTin/OliveTin/blob/main/config.yaml).
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FOliveTin%2FOliveTin.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2FOliveTin%2FOliveTin?ref=badge_large)
