@@ -22,6 +22,10 @@ daemon-unittests:
 	go test ./... -coverprofile reports/unittests.out
 	go tool cover -html=reports/unittests.out -o reports/unittests.html
 
+
+it:
+	cd integration-tests && make
+
 githooks:
 	cp -v .githooks/* .git/hooks/
 
