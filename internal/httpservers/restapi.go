@@ -78,31 +78,34 @@ func startRestAPIServer(globalConfig *config.Config) error {
 		"address": cfg.ListenAddressGrpcActions,
 	}).Info("Starting REST API")
 
-	ctx := context.Background()
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
+	mux := newMux()
 
-	// The JSONPb.EmitDefaults is necssary, so "empty" fields are returned in JSON.
+	return http.ListenAndServe(cfg.ListenAddressRestActions, cors.AllowCors(mux))
+}
+
+func newMux() *runtime.ServeMux {
+	// The MarshalOptions set some important compatibility settings for the webui. See below.
 	mux := runtime.NewServeMux(
 		runtime.WithMetadata(parseRequestMetadata),
 		runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.HTTPBodyMarshaler{
 			Marshaler: &runtime.JSONPb{
 				MarshalOptions: protojson.MarshalOptions{
 					UseProtoNames:   false, // eg: canExec for js instead of can_exec from protobuf
-					EmitUnpopulated: true,
+					EmitUnpopulated: true,  // Emit empty fields so that javascript does not get "undefined" when accessing fields with empty values.
 				},
 			},
 		}),
 	)
+
+	ctx := context.Background()
+
 	opts := []grpc.DialOption{grpc.WithInsecure()}
 
 	err := gw.RegisterOliveTinApiServiceHandlerFromEndpoint(ctx, mux, cfg.ListenAddressGrpcActions, opts)
 
 	if err != nil {
-		log.Errorf("Could not register REST API Handler %v", err)
-
-		return err
+		log.Panicf("Could not register REST API Handler %v", err)
 	}
 
-	return http.ListenAndServe(cfg.ListenAddressRestActions, cors.AllowCors(mux))
+	return mux
 }
