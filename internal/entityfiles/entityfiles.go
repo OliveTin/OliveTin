@@ -9,7 +9,6 @@ import (
 	sv "github.com/OliveTin/OliveTin/internal/stringvariables"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -57,7 +56,7 @@ func loadEntityFileJson(filename string, entityname string) {
 		"name": entityname,
 	}).Infof("Loading entity file with JSON format")
 
-	jfile, err := ioutil.ReadFile(filename)
+	jfile, err := os.ReadFile(filename)
 
 	if err != nil {
 		log.Errorf("ReadIn: %v", err)
@@ -90,7 +89,7 @@ func loadEntityFileYaml(filename string, entityname string) {
 		"name": entityname,
 	}).Infof("Loading entity file with YAML format")
 
-	yfile, err := ioutil.ReadFile(filename)
+	yfile, err := os.ReadFile(filename)
 
 	if err != nil {
 		log.Errorf("ReadIn: %v", err)

@@ -15,7 +15,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path"
@@ -495,7 +494,7 @@ func saveLogResults(req *ExecutionRequest, filename string) {
 		}
 
 		filepath := path.Join(dir, filename+".yaml")
-		err = ioutil.WriteFile(filepath, data, 0644)
+		err = os.WriteFile(filepath, data, 0644)
 
 		if err != nil {
 			log.Warnf("%v", err)
@@ -509,7 +508,7 @@ func saveLogOutput(req *ExecutionRequest, filename string) {
 	if dir != "" {
 		data := req.logEntry.Stdout + "\n" + req.logEntry.Stderr
 		filepath := path.Join(dir, filename+".log")
-		err := ioutil.WriteFile(filepath, []byte(data), 0644)
+		err := os.WriteFile(filepath, []byte(data), 0644)
 
 		if err != nil {
 			log.Warnf("%v", err)
