@@ -12,6 +12,8 @@ export function initMarshaller () {
 
   window.logEntries = {}
 
+  window.initialHash = window.location.hash
+
   window.addEventListener('EventExecutionFinished', onExecutionFinished)
 }
 
@@ -20,9 +22,10 @@ export function marshalDashboardComponentsJsonToHtml (json) {
   marshalDashboardStructureToHtml(json)
 
   document.getElementById('username').innerText = json.authenticatedUser
-  document.body.setAttribute('initial-marshal-complete', 'true')
 
   changeDirectory(null)
+
+  document.body.setAttribute('initial-marshal-complete', 'true')
 }
 
 function marshalActionsJsonToHtml (json) {
@@ -95,7 +98,7 @@ function onExecutionFinished (evt) {
 
 function showSection (title) {
   for (const section of document.querySelectorAll('section')) {
-    if (section.title === title) {
+    if (section.title.replace(' ', '') === title) {
       section.style.display = 'block'
     } else {
       section.style.display = 'none'
@@ -188,9 +191,9 @@ function marshalDashboardStructureToHtml (json) {
     const navigationA = document.createElement('a')
     navigationA.title = dashboard.title
     navigationA.innerText = dashboard.title
-    navigationA.setAttribute('href', '#' + dashboard.title)
+    navigationA.setAttribute('href', '#' + dashboard.title.replace(' ', ''))
     navigationA.onclick = () => {
-      showSection(dashboard.title)
+      showSection(dashboard.title.replace(' ', ''))
     }
 
     const navigationLi = document.createElement('li')
@@ -208,12 +211,16 @@ function marshalDashboardStructureToHtml (json) {
     }
   }
 
-  if (rootGroup.querySelectorAll('action-button').length === 0 && json.dashboards.length > 0) {
-    nav.querySelector('li[title="Actions"]').style.display = 'none'
-
-    showSection(json.dashboards[0].title)
+  if (window.initialHash !== '' && document.body.getAttribute('initial-marshal-complete') === null) {
+    showSection(window.initialHash.replace('#', ''))
   } else {
-    showSection('Actions')
+    if (rootGroup.querySelectorAll('action-button').length === 0 && json.dashboards.length > 0) {
+      nav.querySelector('li[title="Actions"]').style.display = 'none'
+
+      showSection(json.dashboards[0].title)
+    } else {
+      showSection('Actions')
+    }
   }
 }
 
@@ -384,12 +391,8 @@ function changeDirectory (selected) {
   document.title = title.innerText
 
   if (selected === null) {
-    window.location.hash = null
-
     window.history.pushState({ dir: null }, null, '#')
   } else {
-    window.location.hash = selected
-
     window.history.pushState({ dir: selected }, null, '#' + selected)
   }
 }
