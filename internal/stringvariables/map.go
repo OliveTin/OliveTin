@@ -12,6 +12,8 @@ package stringvariables
 import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+	"strings"
+	"sync"
 )
 
 var (
@@ -21,14 +23,24 @@ var (
 		Name: "olivetin_sv_count",
 		Help: "The number entries in the sv map",
 	})
+
+	rwmutex = sync.RWMutex{}
 )
 
 func init() {
+	rwmutex.Lock()
+
 	contents = make(map[string]string)
+
+	rwmutex.Unlock()
 }
 
 func Get(key string) string {
+	rwmutex.RLock()
+
 	v, ok := contents[key]
+
+	rwmutex.RUnlock()
 
 	if !ok {
 		return ""
@@ -42,7 +54,23 @@ func GetAll() map[string]string {
 }
 
 func Set(key string, value string) {
+	rwmutex.Lock()
+
 	contents[key] = value
 
 	metricSvCount.Set(float64(len(contents)))
+
+	rwmutex.Unlock()
+}
+
+func RemoveKeysThatStartWith(search string) {
+	rwmutex.Lock()
+
+	for k, _ := range contents {
+		if strings.HasPrefix(k, search) {
+			delete(contents, k)
+		}
+	}
+
+	rwmutex.Unlock()
 }
