@@ -8,7 +8,7 @@ import (
 	"github.com/OliveTin/OliveTin/internal/filehelper"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
-	"io/ioutil"
+	"os"
 	"time"
 )
 
@@ -38,7 +38,7 @@ func parseCalendarFile(action *config.Action, cfg *config.Config, ex *executor.E
 		"filename":    filename,
 	}).Infof("Parsing calendar file")
 
-	yfile, err := ioutil.ReadFile(action.ExecOnCalendarFile)
+	yfile, err := os.ReadFile(action.ExecOnCalendarFile)
 
 	if err != nil {
 		log.Errorf("ReadIn: %v", err)

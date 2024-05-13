@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	//	cors "github.com/OliveTin/OliveTin/internal/cors"
 	log "github.com/sirupsen/logrus"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path"
@@ -89,7 +88,7 @@ func generateThemeCss(w http.ResponseWriter, r *http.Request) {
 		customThemeCssRead = true
 
 		if _, err := os.Stat(themeCssFilename); err == nil {
-			customThemeCss, err = ioutil.ReadFile(themeCssFilename)
+			customThemeCss, err = os.ReadFile(themeCssFilename)
 		} else {
 			log.Debugf("Theme CSS not read: %v", err)
 			customThemeCss = []byte("/* not found */")
