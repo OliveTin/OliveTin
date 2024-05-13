@@ -280,7 +280,7 @@ service OliveTinApiService {
 
 	rpc DumpPublicIdActionMap(DumpPublicIdActionMapRequest) returns (DumpPublicIdActionMapResponse) {
 		option (google.api.http) = {
-			get: "/api/DumpPublicActionMap"
+			get: "/api/DumpActionMap"
 		};
 	}
 
