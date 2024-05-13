@@ -3,6 +3,7 @@ package installationinfo
 import (
 	"fmt"
 	config "github.com/OliveTin/OliveTin/internal/config"
+	sv "github.com/OliveTin/OliveTin/internal/stringvariables"
 	"gopkg.in/yaml.v3"
 	"time"
 )
@@ -18,6 +19,10 @@ type sosReportConfig struct {
 	ListenAddressRestActions        string
 	ListenAddressGrpcActions        string
 	Timezone                        string
+	TimeNow                         string
+	ConfigDirectory                 string
+	WebuiDirectory                  string
+	ThemesDirectory                 string
 }
 
 func configToSosreport(cfg *config.Config) *sosReportConfig {
@@ -30,10 +35,16 @@ func configToSosreport(cfg *config.Config) *sosReportConfig {
 		ListenAddressRestActions:        cfg.ListenAddressRestActions,
 		ListenAddressGrpcActions:        cfg.ListenAddressGrpcActions,
 		Timezone:                        time.Now().Location().String(),
+		TimeNow:                         time.Now().String(),
+		ConfigDirectory:                 cfg.GetDir(),
+		WebuiDirectory:                  sv.Get("internal.webuidir"),
+		ThemesDirectory:                 sv.Get("internal.themesdir"),
 	}
 }
 
 func GetSosReport() string {
+	refreshRuntimeInfo()
+
 	ret := ""
 
 	ret += "### SOSREPORT START (copy all text to SOSREPORT END)\n"

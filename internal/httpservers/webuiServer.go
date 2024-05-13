@@ -8,8 +8,10 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"path/filepath"
 
 	config "github.com/OliveTin/OliveTin/internal/config"
+	sv "github.com/OliveTin/OliveTin/internal/stringvariables"
 	updatecheck "github.com/OliveTin/OliveTin/internal/updatecheck"
 )
 
@@ -43,11 +45,14 @@ func findWebuiDir() string {
 	// search order must be deterministic - the order that the slice was defined in.
 	for i := 0; i < len(directoriesToSearch); i++ {
 		dir := directoriesToSearch[i]
+		absdir, _ := filepath.Abs(dir)
 
-		if _, err := os.Stat(dir); !os.IsNotExist(err) {
+		if _, err := os.Stat(absdir); !os.IsNotExist(err) {
 			log.WithFields(log.Fields{
-				"dir": dir,
+				"dir": absdir,
 			}).Infof("Found the webui directory")
+
+			sv.Set("internal.webuidir", absdir+" ("+dir+")")
 
 			return dir
 		}
@@ -71,6 +76,9 @@ func setupCustomWebuiDir() {
 
 	if err != nil {
 		log.Warnf("Could not create themes directory: %v", err)
+		sv.Set("internal.themesdir", err.Error())
+	} else {
+		sv.Set("internal.themesdir", dir)
 	}
 }
 
