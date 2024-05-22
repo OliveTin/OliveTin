@@ -422,6 +422,7 @@ function createDirectoryBreadcrumb (title, link) {
 function marshalDisplay (item, fieldset) {
   const display = document.createElement('div')
   display.innerHTML = item.title
+  display.classList.add('display')
 
   fieldset.appendChild(display)
 }
