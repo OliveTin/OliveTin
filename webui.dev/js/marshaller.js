@@ -97,8 +97,10 @@ function onExecutionFinished (evt) {
 }
 
 function showSection (title) {
+  title = title.replaceAll(' ', '')
+
   for (const section of document.querySelectorAll('section')) {
-    if (section.title.replace(' ', '') === title) {
+    if (section.title === title) {
       section.style.display = 'block'
     } else {
       section.style.display = 'none'
@@ -174,7 +176,7 @@ function marshalDashboardStructureToHtml (json) {
     }
 
     const section = document.createElement('section')
-    section.title = dashboard.title
+    section.title = dashboard.title.replaceAll(' ', '')
 
     const def = createFieldset('default', section)
     section.appendChild(def)
