@@ -202,20 +202,11 @@ tr.log-row span.icon {
 
 .error {
   background-color: salmon;
+  color: black;
 }
 
 .title.temporary-status-message {
   color: gray;
-}
-
-div.entity {
-  background-color: white;
-  box-shadow: 0 0 10px 0 #444;
-  display: grid;
-  grid-column: auto / span 2;
-  grid-row: auto / span 2;
-  grid-template-rows: auto min-content;
-  grid-template-columns: minmax(min-content, auto);
 }
 
 h2 {
@@ -472,6 +463,13 @@ div.toolbar * {
   margin-right: 1em;
 }
 
+div.display {
+  align-content: center;
+  border: 1px solid #666;
+  box-shadow: 0 0 6px 0 #aaa;
+  border-radius: .7em;
+}
+
 @media screen and (width <= 600px) {
   fieldset {
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -574,5 +572,9 @@ div.toolbar * {
 
   div.toolbar {
     background-color: black;
+  }
+
+  div.display {
+    box-shadow: 0 0 6px 0 #444;
   }
 }
