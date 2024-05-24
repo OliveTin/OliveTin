@@ -144,6 +144,7 @@ func main() {
 	go onfileindir.WatchFilesInDirectory(cfg, executor)
 	go oncalendarfile.Schedule(cfg, executor)
 
+	entityfiles.AddListener(websocket.OnEntityChanged)
 	go entityfiles.SetupEntityFileWatchers(cfg)
 
 	go updatecheck.StartUpdateChecker(version, commit, cfg, cfg.GetDir())

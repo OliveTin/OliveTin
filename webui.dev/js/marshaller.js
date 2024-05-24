@@ -14,6 +14,8 @@ export function initMarshaller () {
 
   window.initialHash = window.location.hash
 
+  window.currentSection = ''
+
   window.addEventListener('EventExecutionFinished', onExecutionFinished)
 }
 
@@ -98,6 +100,8 @@ function onExecutionFinished (evt) {
 
 function showSection (title) {
   title = title.replaceAll(' ', '')
+
+  window.currentSection = title
 
   for (const section of document.querySelectorAll('section')) {
     if (section.title === title) {
@@ -213,7 +217,9 @@ function marshalDashboardStructureToHtml (json) {
     }
   }
 
-  if (window.initialHash !== '' && document.body.getAttribute('initial-marshal-complete') === null) {
+  if (window.currentSection !== '') {
+    showSection(window.currentSection)
+  } else if (window.initialHash !== '' && document.body.getAttribute('initial-marshal-complete') === null) {
     showSection(window.initialHash.replace('#', ''))
   } else {
     if (rootGroup.querySelectorAll('action-button').length === 0 && json.dashboards.length > 0) {

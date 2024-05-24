@@ -42,10 +42,11 @@ function websocketOnMessage (msg) {
   switch (j.type) {
     case 'EventConfigChanged':
     case 'EventExecutionFinished':
+    case 'EventEntityChanged':
       window.dispatchEvent(e)
       break
     default:
-      window.showBigError('Unknown message type from server: ' + j.type)
+      window.showBigError('ws-unhandled-message', 'handling websocket message', 'Unhandled websocket message type from server: ' + j.type, true)
   }
 }
 

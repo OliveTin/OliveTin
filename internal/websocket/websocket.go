@@ -8,11 +8,16 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"net/http"
+	"sync"
 )
 
 var upgrader = ws.Upgrader{
 	CheckOrigin: checkOriginPermissive,
 }
+
+var (
+	sendmutex = sync.Mutex{}
+)
 
 type WebsocketClient struct {
 	conn *ws.Conn
@@ -42,6 +47,10 @@ func (WebsocketExecutionListener) OnExecutionStarted(title string) {
 			Action: title,
 		});
 	*/
+}
+
+func OnEntityChanged() {
+	broadcast(&pb.EventEntityChanged{})
 }
 
 /*
@@ -113,9 +122,11 @@ func broadcast(pbmsg protoreflect.ProtoMessage) {
 	hackyMessage = append(hackyMessage, []byte("}")...)
 	// </EVIL>
 
+	sendmutex.Lock()
 	for _, client := range clients {
 		client.conn.WriteMessage(ws.TextMessage, hackyMessage)
 	}
+	sendmutex.Unlock()
 }
 
 func (c *WebsocketClient) messageLoop() {

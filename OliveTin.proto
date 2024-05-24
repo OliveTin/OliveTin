@@ -184,6 +184,7 @@ message GetReadyzResponse {
 	string status = 1;
 }
 
+message EventEntityChanged {}
 message EventConfigChanged {}
 message EventExecutionFinished {
 	LogEntry log_entry = 1;
