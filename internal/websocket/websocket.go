@@ -45,8 +45,7 @@ func (WebsocketExecutionListener) OnExecutionStarted(title string) {
 }
 
 func OnEntityChanged() {
-	broadcast(&pb.EventEntityChanged{
-	})
+	broadcast(&pb.EventEntityChanged{})
 }
 
 /*

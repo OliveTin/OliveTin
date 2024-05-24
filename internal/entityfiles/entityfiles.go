@@ -16,7 +16,7 @@ import (
 
 var (
 	EntityChangedSender chan bool
-	listeners []func()
+	listeners           []func()
 )
 
 func AddListener(l func()) {
