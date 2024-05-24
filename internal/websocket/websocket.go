@@ -44,6 +44,11 @@ func (WebsocketExecutionListener) OnExecutionStarted(title string) {
 	*/
 }
 
+func OnEntityChanged() {
+	broadcast(&pb.EventEntityChanged{
+	})
+}
+
 /*
 The default checkOrigin function checks that the origin (browser) matches the
 request origin. However in OliveTin we expect many users to deliberately proxy

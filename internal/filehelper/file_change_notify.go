@@ -4,6 +4,19 @@ import (
 	"github.com/fsnotify/fsnotify"
 	log "github.com/sirupsen/logrus"
 	"path/filepath"
+	"time"
+)
+
+var (
+	debounceWriteLog map[string]time.Time
+)
+
+func init() {
+	debounceWriteLog = make(map[string]time.Time)
+}
+
+const (
+	debounceDelay = 300
 )
 
 type watchContext struct {
@@ -11,6 +24,7 @@ type watchContext struct {
 	filedir         string
 	callback        func(filename string)
 	interestedEvent fsnotify.Op
+	event           *fsnotify.Event
 }
 
 func WatchDirectoryCreate(fullpath string, callback func(filename string)) {
@@ -73,7 +87,9 @@ func watchPath(ctx *watchContext) {
 func processEvent(ctx *watchContext, watcher *fsnotify.Watcher) {
 	select {
 	case event, ok := <-watcher.Events:
-		if !consumeEvent(ok, ctx, &event) {
+		ctx.event = &event
+
+		if !consumeEvent(ok, ctx) {
 			return
 		}
 
@@ -84,26 +100,39 @@ func processEvent(ctx *watchContext, watcher *fsnotify.Watcher) {
 	}
 }
 
-func consumeEvent(ok bool, ctx *watchContext, event *fsnotify.Event) bool {
+func consumeEvent(ok bool, ctx *watchContext) bool {
 	if !ok {
 		return false
 	}
 
-	if ctx.filename != "" && filepath.Base(event.Name) != ctx.filename {
-		log.Tracef("fsnotify irreleventa event different file %+v", event)
+	if ctx.filename != "" && filepath.Base(ctx.event.Name) != ctx.filename {
+		log.Tracef("fsnotify irreleventa event different file %+v", ctx.event)
 		return true
 	}
 
-	consumeRelevantEvents(ctx, event)
+	consumeRelevantEvents(ctx)
 
 	return true
 }
 
-func consumeRelevantEvents(ctx *watchContext, event *fsnotify.Event) {
-	if event.Has(ctx.interestedEvent) {
-		log.Debugf("fsnotify write event: %v", event)
-		ctx.callback(event.Name)
+func consumeRelevantEvents(ctx *watchContext) {
+	if ctx.event.Has(ctx.interestedEvent) {
+		log.Debugf("fsnotify write event: %v", ctx.event)
+
+		processDebounce(ctx)
 	} else {
-		log.Debugf("fsnotify irrelevant event on file %v", event)
+		log.Debugf("fsnotify irrelevant event on file %v", ctx.event)
+	}
+}
+
+func processDebounce(ctx *watchContext) {
+	entry, found := debounceWriteLog[ctx.filename]
+
+	if !found || time.Since(entry) < debounceDelay {
+		debounceWriteLog[ctx.filename] = time.Now()
+
+		ctx.callback(ctx.event.Name)
+	} else {
+		log.Debugf("Supressing write event because it's within the debounce delay: %v", ctx.filename)
 	}
 }

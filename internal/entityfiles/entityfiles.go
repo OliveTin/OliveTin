@@ -14,6 +14,15 @@ import (
 	"strings"
 )
 
+var (
+	EntityChangedSender chan bool
+	listeners []func()
+)
+
+func AddListener(l func()) {
+	listeners = append(listeners, l)
+}
+
 func SetupEntityFileWatchers(cfg *config.Config) {
 	configDir := cfg.GetDir()
 
@@ -120,5 +129,9 @@ func updateEvmFromFile(entityname string, data []map[string]string) {
 		for k, v := range mapp {
 			sv.Set(prefix+"."+k, v)
 		}
+	}
+
+	for _, l := range listeners {
+		l()
 	}
 }
