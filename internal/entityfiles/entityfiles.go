@@ -89,7 +89,7 @@ func loadEntityFileJson(filename string, entityname string) {
 		data = append(data, d)
 	}
 
-	updateEvmFromFile(entityname, data)
+	updateSvFromFile(entityname, data)
 }
 
 func loadEntityFileYaml(filename string, entityname string) {
@@ -113,10 +113,12 @@ func loadEntityFileYaml(filename string, entityname string) {
 		log.Errorf("Unmarshal: %v", err)
 	}
 
-	updateEvmFromFile(entityname, data)
+	updateSvFromFile(entityname, data)
 }
 
-func updateEvmFromFile(entityname string, data []map[string]string) {
+func updateSvFromFile(entityname string, data []map[string]string) {
+	log.Debugf("updateSvFromFile: %+v", data)
+
 	count := len(data)
 
 	sv.RemoveKeysThatStartWith("entities." + entityname)

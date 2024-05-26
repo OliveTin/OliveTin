@@ -173,7 +173,7 @@ function marshalDashboardStructureToHtml (json) {
   const nav = document.getElementById('navigation-links')
 
   for (const dashboard of json.dashboards) {
-    const oldsection = document.querySelector('section[title="' + dashboard.title + '"]')
+    const oldsection = document.querySelector('section[title="' + dashboard.title.replace(' ', '') + '"]')
 
     if (oldsection != null) {
       oldsection.remove()
