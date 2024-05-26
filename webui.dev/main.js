@@ -134,7 +134,8 @@ function main () {
   initMarshaller()
   setupLogSearchBox()
 
-  window.addEventListener('EventConfigChanged', fetchGetDashboardComponents) // For websocket
+  window.addEventListener('EventConfigChanged', fetchGetDashboardComponents)
+  window.addEventListener('EventEntityChanged', fetchGetDashboardComponents)
 
   window.fetch('webUiSettings.json').then(res => {
     return res.json()
