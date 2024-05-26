@@ -544,4 +544,3 @@ export function refreshServerConnectionLabel () {
     document.querySelector('#serverConnectionWebSocket').innerText = 'WebSocket Error'
   }
 }
-

@@ -1,8 +1,8 @@
-window.ws = null
-
 import {
   refreshServerConnectionLabel
 } from './marshaller.js'
+
+window.ws = null
 
 export function checkWebsocketConnection () {
   if (window.ws === null || window.ws.readyState === 3) {
@@ -65,7 +65,7 @@ function websocketOnError (err) {
   window.websocketAvailable = false
   window.refreshLoop()
   console.log(err)
-  
+
   window.showBigError('ws-connect-error', 'connecting to the websocket', 'Please see your browser console for debugging information.', true)
 
   refreshServerConnectionLabel()
