@@ -528,3 +528,20 @@ window.addEventListener('popstate', (e) => {
     changeDirectory(e.state.dir)
   }
 })
+
+export function refreshServerConnectionLabel () {
+  if (window.restAvailable) {
+    document.querySelector('#serverConnectionRest').classList.remove('error')
+  } else {
+    document.querySelector('#serverConnectionRest').classList.add('error')
+  }
+
+  if (window.websocketAvailable) {
+    document.querySelector('#serverConnectionWebSocket').classList.remove('error')
+    document.querySelector('#serverConnectionWebSocket').innerText = 'WebSocket'
+  } else {
+    document.querySelector('#serverConnectionWebSocket').classList.add('error')
+    document.querySelector('#serverConnectionWebSocket').innerText = 'WebSocket Error'
+  }
+}
+
