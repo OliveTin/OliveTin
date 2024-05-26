@@ -9,14 +9,19 @@ export function checkWebsocketConnection () {
 function reconnectWebsocket () {
   window.websocketAvailable = false
 
-  let proto = 'ws:'
+  const websocketConnectionUrl = new URL(window.location.toString())
+  websocketConnectionUrl.hash = ''
+  websocketConnectionUrl.pathname += 'websocket'
 
   if (window.location.protocol === 'https:') {
-    proto = 'wss:'
+    websocketConnectionUrl.protocol = 'wss'
+  } else {
+    websocketConnectionUrl.protocol = 'ws'
   }
 
-  const websocketConnectionUrl = proto + window.location.host + '/websocket'
-  const ws = window.ws = new WebSocket(websocketConnectionUrl)
+  window.websocketConnectionUrl = websocketConnectionUrl
+
+  const ws = window.ws = new WebSocket(websocketConnectionUrl.toString())
 
   ws.addEventListener('open', websocketOnOpen)
   ws.addEventListener('message', websocketOnMessage)
