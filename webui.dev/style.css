@@ -468,6 +468,11 @@ div.display {
   border: 1px solid #666;
   box-shadow: 0 0 6px 0 #aaa;
   border-radius: .7em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  font-size: small;
 }
 
 @media screen and (width <= 600px) {
