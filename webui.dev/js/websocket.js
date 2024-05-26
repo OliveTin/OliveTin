@@ -1,3 +1,7 @@
+import {
+  refreshServerConnectionLabel
+} from './marshaller.js'
+
 window.ws = null
 
 export function checkWebsocketConnection () {
@@ -34,6 +38,8 @@ function websocketOnOpen (evt) {
 
   window.ws.send('monitor')
 
+  refreshServerConnectionLabel()
+
   window.refreshLoop()
 }
 
@@ -58,9 +64,15 @@ function websocketOnMessage (msg) {
 function websocketOnError (err) {
   window.websocketAvailable = false
   window.refreshLoop()
-  console.error(err)
+  console.log(err)
+
+  window.showBigError('ws-connect-error', 'connecting to the websocket', 'Please see your browser console for debugging information.', true)
+
+  refreshServerConnectionLabel()
 }
 
 function websocketOnClose () {
   window.websocketAvailable = false
+
+  refreshServerConnectionLabel()
 }

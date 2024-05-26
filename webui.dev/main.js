@@ -4,7 +4,8 @@ import {
   initMarshaller,
   setupSectionNavigation,
   marshalDashboardComponentsJsonToHtml,
-  marshalLogsJsonToHtml
+  marshalLogsJsonToHtml,
+  refreshServerConnectionLabel
 } from './js/marshaller.js'
 import { checkWebsocketConnection } from './js/websocket.js'
 
@@ -50,20 +51,6 @@ function refreshLoop () {
   }
 
   refreshServerConnectionLabel()
-}
-
-function refreshServerConnectionLabel () {
-  if (window.restAvailable) {
-    document.querySelector('#serverConnectionRest').classList.remove('error')
-  } else {
-    document.querySelector('#serverConnectionRest').classList.add('error')
-  }
-
-  if (window.websocketAvailable) {
-    document.querySelector('#serverConnectionWebSocket').classList.remove('error')
-  } else {
-    document.querySelector('#serverConnectionWebSocket').classList.add('error')
-  }
 }
 
 function fetchGetDashboardComponents () {
