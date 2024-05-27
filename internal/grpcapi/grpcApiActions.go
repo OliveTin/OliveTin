@@ -25,8 +25,11 @@ func buildDashboardResponse(ex *executor.Executor, cfg *config.Config, user *acl
 	ex.MapActionIdToBindingLock.RUnlock()
 
 	sort.Slice(res.Actions, func(i, j int) bool {
-		return res.Actions[i].Order < res.Actions[j].Order
-
+		if res.Actions[i].Order == res.Actions[j].Order {
+			return res.Actions[i].Title < res.Actions[j].Title
+		} else {
+			return res.Actions[i].Order < res.Actions[j].Order
+		}
 	})
 
 	return res
