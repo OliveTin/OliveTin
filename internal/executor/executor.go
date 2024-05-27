@@ -31,11 +31,22 @@ var (
 	})
 )
 
+type ActionBinding struct {
+	Action       *config.Action
+	EntityPrefix string
+	ConfigOrder  int
+}
+
 // Executor represents a helper class for executing commands. It's main method
 // is ExecRequest
 type Executor struct {
 	Logs           map[string]*InternalLogEntry
 	LogsByActionId map[string][]*InternalLogEntry
+
+	MapActionIdToBinding     map[string]*ActionBinding
+	MapActionIdToBindingLock sync.RWMutex
+
+	Cfg *config.Config
 
 	listeners []listener
 
@@ -92,10 +103,12 @@ type executorStepFunc func(*ExecutionRequest) bool
 
 // DefaultExecutor returns an Executor, with a sensible "chain of command" for
 // executing actions.
-func DefaultExecutor() *Executor {
+func DefaultExecutor(cfg *config.Config) *Executor {
 	e := Executor{}
+	e.Cfg = cfg
 	e.Logs = make(map[string]*InternalLogEntry)
 	e.LogsByActionId = make(map[string][]*InternalLogEntry)
+	e.MapActionIdToBinding = make(map[string]*ActionBinding)
 
 	e.chainOfCommand = []executorStepFunc{
 		stepRequestAction,
@@ -117,6 +130,7 @@ func DefaultExecutor() *Executor {
 type listener interface {
 	OnExecutionStarted(actionTitle string)
 	OnExecutionFinished(logEntry *InternalLogEntry)
+	OnActionMapRebuilt()
 }
 
 func (e *Executor) AddListener(m listener) {

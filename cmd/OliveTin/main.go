@@ -135,9 +135,9 @@ func main() {
 
 	log.Debugf("Config: %+v", cfg)
 
-	executor := executor.DefaultExecutor()
+	executor := executor.DefaultExecutor(cfg)
 	executor.AddListener(websocket.ExecutionListener)
-	config.AddListener(websocket.OnConfigChanged)
+	config.AddListener(executor.RebuildActionMap)
 
 	go onstartup.Execute(cfg, executor)
 	go oncron.Schedule(cfg, executor)
@@ -145,6 +145,7 @@ func main() {
 	go oncalendarfile.Schedule(cfg, executor)
 
 	entityfiles.AddListener(websocket.OnEntityChanged)
+	entityfiles.AddListener(executor.RebuildActionMap)
 	go entityfiles.SetupEntityFileWatchers(cfg)
 
 	go updatecheck.StartUpdateChecker(version, commit, cfg, cfg.GetDir())
