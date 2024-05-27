@@ -30,12 +30,6 @@ var marshalOptions = protojson.MarshalOptions{
 	EmitUnpopulated: true,
 }
 
-func OnConfigChanged() {
-	evt := &pb.EventConfigChanged{}
-
-	broadcast(evt)
-}
-
 var ExecutionListener WebsocketExecutionListener
 
 type WebsocketExecutionListener struct{}
@@ -51,6 +45,10 @@ func (WebsocketExecutionListener) OnExecutionStarted(title string) {
 
 func OnEntityChanged() {
 	broadcast(&pb.EventEntityChanged{})
+}
+
+func (WebsocketExecutionListener) OnActionMapRebuilt() {
+	broadcast(&pb.EventConfigChanged{})
 }
 
 /*
@@ -156,7 +154,11 @@ func HandleWebsocket(w http.ResponseWriter, r *http.Request) bool {
 		conn: c,
 	}
 
+	sendmutex.Lock()
+
 	clients = append(clients, wsclient)
+
+	sendmutex.Unlock()
 
 	go wsclient.messageLoop()
 

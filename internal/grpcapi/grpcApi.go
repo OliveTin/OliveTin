@@ -59,7 +59,9 @@ func (api *oliveTinAPI) StartAction(ctx ctx.Context, req *pb.StartActionRequest)
 		args[arg.Name] = arg.Value
 	}
 
-	pair := publicActionIdToActionMap[req.ActionId]
+	api.executor.MapActionIdToBindingLock.RLock()
+	pair := api.executor.MapActionIdToBinding[req.ActionId]
+	api.executor.MapActionIdToBindingLock.RUnlock()
 
 	execReq := executor.ExecutionRequest{
 		Action:            pair.Action,
@@ -81,7 +83,7 @@ func (api *oliveTinAPI) StartActionAndWait(ctx ctx.Context, req *pb.StartActionA
 	args := make(map[string]string)
 
 	execReq := executor.ExecutionRequest{
-		Action:            findActionByPublicID(req.ActionId),
+		Action:            api.executor.FindActionBindingByID(req.ActionId),
 		TrackingID:        uuid.NewString(),
 		Arguments:         args,
 		AuthenticatedUser: acl.UserFromContext(ctx, cfg),
@@ -106,7 +108,7 @@ func (api *oliveTinAPI) StartActionByGet(ctx ctx.Context, req *pb.StartActionByG
 	args := make(map[string]string)
 
 	execReq := executor.ExecutionRequest{
-		Action:            findActionByPublicID(req.ActionId),
+		Action:            api.executor.FindActionBindingByID(req.ActionId),
 		TrackingID:        uuid.NewString(),
 		Arguments:         args,
 		AuthenticatedUser: acl.UserFromContext(ctx, cfg),
@@ -124,7 +126,7 @@ func (api *oliveTinAPI) StartActionByGetAndWait(ctx ctx.Context, req *pb.StartAc
 	args := make(map[string]string)
 
 	execReq := executor.ExecutionRequest{
-		Action:            findActionByPublicID(req.ActionId),
+		Action:            api.executor.FindActionBindingByID(req.ActionId),
 		TrackingID:        uuid.NewString(),
 		Arguments:         args,
 		AuthenticatedUser: acl.UserFromContext(ctx, cfg),
@@ -233,7 +235,7 @@ func (api *oliveTinAPI) WatchExecution(req *pb.WatchExecutionRequest, srv pb.Oli
 func (api *oliveTinAPI) GetDashboardComponents(ctx ctx.Context, req *pb.GetDashboardComponentsRequest) (*pb.GetDashboardComponentsResponse, error) {
 	user := acl.UserFromContext(ctx, cfg)
 
-	res := actionsCfgToPb(cfg.Actions, user)
+	res := buildDashboardResponse(api.executor, cfg, user)
 
 	if len(res.Actions) == 0 {
 		log.Warn("Zero actions found - check that you have some actions defined, with a view permission")
@@ -347,12 +349,16 @@ func (api *oliveTinAPI) DumpPublicIdActionMap(ctx ctx.Context, req *pb.DumpPubli
 		return res, nil
 	}
 
-	for k, v := range publicActionIdToActionMap {
+	api.executor.MapActionIdToBindingLock.RLock()
+
+	for k, v := range api.executor.MapActionIdToBinding {
 		res.Contents[k] = &pb.ActionEntityPair{
 			ActionTitle:  v.Action.Title,
 			EntityPrefix: v.EntityPrefix,
 		}
 	}
+
+	api.executor.MapActionIdToBindingLock.RUnlock()
 
 	res.Alert = "Dumping variables has been enabled in the configuration. Please set InsecureAllowDumpActionMap = false again after you don't need it anymore"
 

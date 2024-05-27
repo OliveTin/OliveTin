@@ -9,9 +9,9 @@ import (
 )
 
 func testingExecutor() (*Executor, *config.Config) {
-	e := DefaultExecutor()
-
 	cfg := config.DefaultConfig()
+
+	e := DefaultExecutor(cfg)
 
 	a1 := &config.Action{
 		Title: "Do some tickles",

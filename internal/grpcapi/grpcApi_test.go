@@ -21,8 +21,8 @@ const bufSize = 1024 * 1024
 
 var lis *bufconn.Listener
 
-func init() {
-	ex := executor.DefaultExecutor()
+func initServer(cfg *config.Config) *executor.Executor {
+	ex := executor.DefaultExecutor(cfg)
 
 	lis = bufconn.Listen(bufSize)
 	s := grpc.NewServer()
@@ -33,6 +33,8 @@ func init() {
 			log.Fatalf("Server exited with error: %v", err)
 		}
 	}()
+
+	return ex
 }
 
 func bufDialer(context.Context, string) (net.Conn, error) {
@@ -57,11 +59,16 @@ func getNewTestServerAndClient(t *testing.T, injectedConfig *config.Config) (*gr
 
 func TestGetActionsAndStart(t *testing.T) {
 	cfg = config.DefaultConfig()
+
+	ex := initServer(cfg)
+
 	btn1 := &config.Action{}
 	btn1.Title = "blat"
 	btn1.ID = "blat"
 	btn1.Shell = "echo 'test'"
 	cfg.Actions = append(cfg.Actions, btn1)
+
+	ex.RebuildActionMap()
 
 	conn, client := getNewTestServerAndClient(t, cfg)
 

@@ -12,6 +12,7 @@ message Action {
 	bool can_exec = 4;
 	repeated ActionArgument arguments = 5;
 	string popup_on_start = 6;
+	int32 order = 7;
 }
 
 message ActionArgument {
