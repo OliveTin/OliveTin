@@ -136,6 +136,7 @@ func main() {
 	log.Debugf("Config: %+v", cfg)
 
 	executor := executor.DefaultExecutor(cfg)
+	executor.RebuildActionMap()
 	executor.AddListener(websocket.ExecutionListener)
 	config.AddListener(executor.RebuildActionMap)
 
