@@ -14,6 +14,8 @@ export class ExecutionDialog {
       this.toggleSize()
     }
 
+    this.domBtnKill = document.getElementById('execution-dialog-kill-action')
+
     this.domDatetimeStarted = document.getElementById('execution-dialog-datetime-started')
     this.domDatetimeFinished = document.getElementById('execution-dialog-datetime-finished')
     this.domExitCode = document.getElementById('execution-dialog-exit-code')
@@ -36,6 +38,7 @@ export class ExecutionDialog {
 
   reset () {
     this.executionSeconds = 0
+    this.executionTrackingId = 'notset'
 
     this.dlg.classList.remove('big')
     this.dlg.style.maxWidth = 'calc(100vw - 2em)'
@@ -54,6 +57,9 @@ export class ExecutionDialog {
     this.domStdout.innerText = ''
     this.domStderr.innerText = ''
 
+    this.domBtnKill.disabled = true
+    this.domBtnKill.onclick = () => {}
+
     this.hideDetailsOnResult = false
     this.domExecutionBasics.hidden = false
 
@@ -68,6 +74,11 @@ export class ExecutionDialog {
       this.domIcon.innerText = actionButton.domIcon.innerText
     }
 
+    this.domBtnKill.disabled = false
+    this.domBtnKill.onclick = () => {
+      this.killAction()
+    }
+
     clearInterval(window.executionDialogTicker)
     this.executionSeconds = 0
     this.executionTick()
@@ -75,7 +86,29 @@ export class ExecutionDialog {
       this.executionTick()
     }, 1000)
 
+    if (this.dlg.open) {
+      this.dlg.close()
+    }
+
     this.dlg.showModal()
+  }
+
+  killAction () {
+    const killActionArgs = {
+      executionTrackingId: this.executionTrackingId
+    }
+
+    window.fetch(window.restBaseUrl + 'KillAction', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(killActionArgs)
+    }).then((res) => {
+      console.log(res)
+    }).catch(err => {
+      throw err
+    })
   }
 
   executionTick () {
@@ -89,8 +122,8 @@ export class ExecutionDialog {
     this.domExecutionBasics.hidden = true
   }
 
-  fetchExecutionResult (uuid) {
-    this.executionTrackingId = uuid
+  fetchExecutionResult (executionTrackingId) {
+    this.executionTrackingId = executionTrackingId
 
     const executionStatusArgs = {
       executionTrackingId: this.executionTrackingId
@@ -128,6 +161,8 @@ export class ExecutionDialog {
     }
 
     this.executionTrackingId = res.logEntry.executionTrackingId
+
+    this.domBtnKill.disabled = res.logEntry.executionFinished
 
     if (res.logEntry.executionFinished) {
       this.domStatus.innerText = 'Completed'

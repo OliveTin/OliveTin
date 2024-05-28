@@ -4,9 +4,69 @@ import (
 	"github.com/fsnotify/fsnotify"
 	log "github.com/sirupsen/logrus"
 	"path/filepath"
+	"time"
+
+	"sync"
 )
 
-func WatchFile(fullpath string, callback func()) {
+var (
+	debounceWriteLog map[string]*FsNotifyLogEntry
+
+	debounceWriteLogMutex = sync.Mutex{}
+)
+
+func init() {
+	debounceWriteLog = make(map[string]*FsNotifyLogEntry)
+}
+
+type FsNotifyLogEntry struct {
+	callbackWrapper  *time.Timer
+	callbackComplete bool
+}
+
+const (
+	debounceDelay = 300 * time.Millisecond
+)
+
+type watchContext struct {
+	filename        string
+	filedir         string
+	callback        func(filename string)
+	interestedEvent fsnotify.Op
+	event           *fsnotify.Event
+}
+
+func WatchDirectoryCreate(fullpath string, callback func(filename string)) {
+	watchPath(&watchContext{
+		filedir:         fullpath,
+		filename:        "",
+		callback:        callback,
+		interestedEvent: fsnotify.Create,
+	})
+}
+
+func WatchDirectoryWrite(fullpath string, callback func(filename string)) {
+	watchPath(&watchContext{
+		filedir:         fullpath,
+		filename:        "",
+		callback:        callback,
+		interestedEvent: fsnotify.Write,
+	})
+}
+
+func WatchFileWrite(fullpath string, callback func(filename string)) {
+	filename := filepath.Base(fullpath)
+	filedir := filepath.Dir(fullpath)
+
+	watchPath(&watchContext{
+		filedir:         filedir,
+		filename:        filename,
+		callback:        callback,
+		interestedEvent: fsnotify.Write,
+	})
+}
+
+func watchPath(ctx *watchContext) {
 	watcher, err := fsnotify.NewWatcher()
 
 	if err != nil {
@@ -18,16 +78,13 @@ func WatchFile(fullpath string, callback func()) {
 
 	done := make(chan bool)
 
-	filename := filepath.Base(fullpath)
-	filedir := filepath.Dir(fullpath)
-
 	go func() {
 		for {
-			processEvent(filename, watcher, fsnotify.Write, callback)
+			processEvent(ctx, watcher)
 		}
 	}()
 
-	err = watcher.Add(filedir)
+	err = watcher.Add(ctx.filedir)
 
 	if err != nil {
 		log.Errorf("Could not create watcher: %v", err)
@@ -36,10 +93,12 @@ func WatchFile(fullpath string, callback func()) {
 	<-done
 }
 
-func processEvent(filename string, watcher *fsnotify.Watcher, eventType fsnotify.Op, callback func()) {
+func processEvent(ctx *watchContext, watcher *fsnotify.Watcher) {
 	select {
 	case event, ok := <-watcher.Events:
-		if !consumeEvent(ok, filename, &event, callback) {
+		ctx.event = &event
+
+		if !consumeEvent(ok, ctx) {
 			return
 		}
 
@@ -50,26 +109,61 @@ func processEvent(filename string, watcher *fsnotify.Watcher, eventType fsnotify
 	}
 }
 
-func consumeEvent(ok bool, filename string, event *fsnotify.Event, callback func()) bool {
+func consumeEvent(ok bool, ctx *watchContext) bool {
 	if !ok {
 		return false
 	}
 
-	if filepath.Base(event.Name) != filename {
-		log.Tracef("fsnotify irreleventa event different file %+v", event)
+	if ctx.filename != "" && filepath.Base(ctx.event.Name) != ctx.filename {
+		log.Tracef("fsnotify irreleventa event different file %+v", ctx.event)
 		return true
 	}
 
-	consumeWriteEvents(event, callback)
+	consumeRelevantEvents(ctx)
 
 	return true
 }
 
-func consumeWriteEvents(event *fsnotify.Event, callback func()) {
-	if event.Has(fsnotify.Write) {
-		log.Debugf("fsnotify write event: %v", event)
-		callback()
+func consumeRelevantEvents(ctx *watchContext) {
+	if ctx.event.Has(ctx.interestedEvent) {
+		log.Debugf("fsnotify event relevant: %v", ctx.event)
+
+		processDebounce(ctx)
 	} else {
-		log.Debugf("fsnotify irrelevant event on file %v", event)
+		log.Debugf("fsnotify event irrelevant: %v", ctx.event)
 	}
+}
+
+func processDebounce(ctx *watchContext) {
+	debounceWriteLogMutex.Lock()
+
+	logEntry, found := debounceWriteLog[ctx.filename]
+
+	if !found {
+		logEntry = &FsNotifyLogEntry{
+			callbackComplete: false,
+			callbackWrapper:  nil,
+		}
+
+		debounceWriteLog[ctx.filename] = logEntry
+	}
+
+	log.Infof("fsnotify event %+v", logEntry)
+
+	if logEntry.callbackComplete || logEntry.callbackWrapper == nil {
+		log.Debugf("fsnotify event callback queued within debounce delay: %v", ctx.filename)
+
+		logEntry.callbackComplete = false
+		logEntry.callbackWrapper = time.AfterFunc(debounceDelay, func() {
+			log.Debugf("fsnotify event callback being fired: %v", ctx.filename)
+
+			ctx.callback(ctx.event.Name)
+
+			logEntry.callbackComplete = true
+		})
+	} else {
+		log.Debugf("fsnotify event suppressed because it's within the debounce delay: %v", ctx.filename)
+	}
+
+	debounceWriteLogMutex.Unlock()
 }

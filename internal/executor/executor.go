@@ -7,19 +7,46 @@ import (
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
+	"gopkg.in/yaml.v3"
+
 	"bytes"
 	"context"
 	"fmt"
+	"io"
+	"os"
 	"os/exec"
+	"path"
 	"runtime"
+	"strings"
 	"sync"
 	"time"
 )
 
+var (
+	metricActionsRequested = promauto.NewGauge(prometheus.GaugeOpts{
+		Name: "olivetin_actions_requested_count",
+		Help: "The actions requested count",
+	})
+)
+
+type ActionBinding struct {
+	Action       *config.Action
+	EntityPrefix string
+	ConfigOrder  int
+}
+
 // Executor represents a helper class for executing commands. It's main method
 // is ExecRequest
 type Executor struct {
-	Logs map[string]*InternalLogEntry
+	Logs           map[string]*InternalLogEntry
+	LogsByActionId map[string][]*InternalLogEntry
+
+	MapActionIdToBinding     map[string]*ActionBinding
+	MapActionIdToBindingLock sync.RWMutex
+
+	Cfg *config.Config
 
 	listeners []listener
 
@@ -47,8 +74,8 @@ type ExecutionRequest struct {
 // state of execution (even if the command is not executed). It's designed to be
 // easily serializable.
 type InternalLogEntry struct {
-	DatetimeStarted     string
-	DatetimeFinished    string
+	DatetimeStarted     time.Time
+	DatetimeFinished    time.Time
 	Stdout              string
 	Stderr              string
 	TimedOut            bool
@@ -58,6 +85,7 @@ type InternalLogEntry struct {
 	ExecutionStarted    bool
 	ExecutionFinished   bool
 	ExecutionTrackingID string
+	Process             *os.Process
 
 	/*
 		The following 3 properties are obviously on Action normally, but it's useful
@@ -73,19 +101,24 @@ type executorStepFunc func(*ExecutionRequest) bool
 
 // DefaultExecutor returns an Executor, with a sensible "chain of command" for
 // executing actions.
-func DefaultExecutor() *Executor {
+func DefaultExecutor(cfg *config.Config) *Executor {
 	e := Executor{}
+	e.Cfg = cfg
 	e.Logs = make(map[string]*InternalLogEntry)
+	e.LogsByActionId = make(map[string][]*InternalLogEntry)
+	e.MapActionIdToBinding = make(map[string]*ActionBinding)
 
 	e.chainOfCommand = []executorStepFunc{
 		stepRequestAction,
 		stepConcurrencyCheck,
+		stepRateCheck,
 		stepACLCheck,
 		stepParseArgs,
 		stepLogStart,
 		stepExec,
 		stepExecAfter,
 		stepLogFinish,
+		stepSaveLog,
 		stepTrigger,
 	}
 
@@ -96,6 +129,7 @@ type listener interface {
 	OnExecutionStarted(actionTitle string)
 	OnExecutionFinished(logEntry *InternalLogEntry)
 	OnOutputChunk(o []byte, executionTrackingId string)
+	OnActionMapRebuilt()
 }
 
 func (e *Executor) AddListener(m listener) {
@@ -111,7 +145,7 @@ func (e *Executor) ExecRequest(req *ExecutionRequest) (*sync.WaitGroup, string) 
 	// duplicate UUIDs (or just random strings), but this is the only way.
 
 	req.logEntry = &InternalLogEntry{
-		DatetimeStarted:     time.Now().Format("2006-01-02 15:04:05"),
+		DatetimeStarted:     time.Now(),
 		ExecutionTrackingID: req.TrackingID,
 		Stdout:              "",
 		Stderr:              "",
@@ -159,8 +193,8 @@ func (e *Executor) execChain(req *ExecutionRequest) {
 func getConcurrentCount(req *ExecutionRequest) int {
 	concurrentCount := 0
 
-	for _, log := range req.executor.Logs {
-		if log.ActionId == req.Action.ID && !log.ExecutionFinished {
+	for _, log := range req.executor.LogsByActionId[req.Action.ID] {
+		if !log.ExecutionFinished {
 			concurrentCount += 1
 		}
 	}
@@ -182,6 +216,55 @@ func stepConcurrencyCheck(req *ExecutionRequest) bool {
 		req.logEntry.Stdout = msg
 		req.logEntry.Blocked = true
 		return false
+	}
+
+	return true
+}
+
+func parseDuration(rate config.RateSpec) time.Duration {
+	duration, err := time.ParseDuration(rate.Duration)
+
+	if err != nil {
+		log.Warnf("Could not parse duration: %v", rate.Duration)
+
+		return -1 * time.Minute
+	}
+
+	return duration
+}
+
+func getExecutionsCount(rate config.RateSpec, req *ExecutionRequest) int {
+	executions := -1 // Because we will find ourself when checking execution logs
+
+	duration := parseDuration(rate)
+
+	then := time.Now().Add(-duration)
+
+	for _, logEntry := range req.executor.LogsByActionId[req.Action.ID] {
+		if logEntry.DatetimeStarted.After(then) && !logEntry.Blocked {
+
+			executions += 1
+		}
+	}
+
+	return executions
+}
+
+func stepRateCheck(req *ExecutionRequest) bool {
+	for _, rate := range req.Action.MaxRate {
+		executions := getExecutionsCount(rate, req)
+
+		if executions >= rate.Limit {
+			msg := fmt.Sprintf("Blocked from executing. This action has run %d out of %d allowed times in the last %s.", executions, rate.Limit, rate.Duration)
+
+			log.WithFields(log.Fields{
+				"actionTitle": req.logEntry.ActionTitle,
+			}).Infof(msg)
+
+			req.logEntry.Stdout = msg
+			req.logEntry.Blocked = true
+			return false
+		}
 	}
 
 	return true
@@ -227,12 +310,21 @@ func stepRequestAction(req *ExecutionRequest) bool {
 		}
 	}
 
+	metricActionsRequested.Inc()
+
 	req.logEntry.ActionTitle = sv.ReplaceEntityVars(req.EntityPrefix, req.Action.Title)
 	req.logEntry.ActionIcon = req.Action.Icon
 	req.logEntry.ActionId = req.Action.ID
 
+	if _, containsKey := req.executor.LogsByActionId[req.Action.ID]; !containsKey {
+		req.executor.LogsByActionId[req.Action.ID] = make([]*InternalLogEntry, 0)
+	}
+
+	req.executor.LogsByActionId[req.Action.ID] = append(req.executor.LogsByActionId[req.Action.ID], req.logEntry)
+
 	log.WithFields(log.Fields{
 		"actionTitle": req.logEntry.ActionTitle,
+		"tags":        req.Tags,
 	}).Infof("Action requested")
 
 	return true
@@ -248,6 +340,8 @@ func stepLogStart(req *ExecutionRequest) bool {
 }
 
 func stepLogFinish(req *ExecutionRequest) bool {
+	req.logEntry.ExecutionFinished = true
+
 	log.WithFields(log.Fields{
 		"actionTitle": req.logEntry.ActionTitle,
 		"stdout":      req.logEntry.Stdout,
@@ -296,6 +390,16 @@ func (so *OutputStreamer) String() string {
 	return so.output.String()
 }
 
+func buildEnv(req *ExecutionRequest) []string {
+	ret := append(os.Environ(), "OLIVETIN=1")
+
+	for k, v := range req.Arguments {
+		ret = append(ret, fmt.Sprintf("%v=%v", strings.ToUpper(k), v))
+	}
+
+	return ret
+}
+
 func stepExec(req *ExecutionRequest) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(req.Action.Timeout)*time.Second)
 	defer cancel()
@@ -306,10 +410,15 @@ func stepExec(req *ExecutionRequest) bool {
 	cmd := wrapCommandInShell(ctx, req.finalParsedCommand)
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
+	cmd.Env = buildEnv(req)
+	req.logEntry.StdoutBuffer, _ = cmd.StdoutPipe()
+	req.logEntry.StderrBuffer, _ = cmd.StderrPipe()
 
 	req.logEntry.ExecutionStarted = true
 
 	runerr := cmd.Start()
+
+	req.logEntry.Process = cmd.Process
 
 	waiterr := cmd.Wait()
 
@@ -325,7 +434,7 @@ func stepExec(req *ExecutionRequest) bool {
 	}
 
 	req.logEntry.Tags = req.Tags
-	req.logEntry.DatetimeFinished = time.Now().Format("2006-01-02 15:04:05")
+	req.logEntry.DatetimeFinished = time.Now()
 
 	return true
 }
@@ -385,4 +494,54 @@ func stepTrigger(req *ExecutionRequest) bool {
 	}
 
 	return true
+}
+
+func stepSaveLog(req *ExecutionRequest) bool {
+	filename := fmt.Sprintf("%v.%v.%v", req.logEntry.ActionTitle, req.logEntry.DatetimeStarted.Unix(), req.logEntry.ExecutionTrackingID)
+
+	saveLogResults(req, filename)
+	saveLogOutput(req, filename)
+
+	return true
+}
+
+func firstNonEmpty(one, two string) string {
+	if one != "" {
+		return one
+	}
+
+	return two
+}
+
+func saveLogResults(req *ExecutionRequest, filename string) {
+	dir := firstNonEmpty(req.Action.SaveLogs.ResultsDirectory, req.Cfg.SaveLogs.ResultsDirectory)
+
+	if dir != "" {
+		data, err := yaml.Marshal(req.logEntry)
+
+		if err != nil {
+			log.Warnf("%v", err)
+		}
+
+		filepath := path.Join(dir, filename+".yaml")
+		err = os.WriteFile(filepath, data, 0644)
+
+		if err != nil {
+			log.Warnf("%v", err)
+		}
+	}
+}
+
+func saveLogOutput(req *ExecutionRequest, filename string) {
+	dir := firstNonEmpty(req.Action.SaveLogs.OutputDirectory, req.Cfg.SaveLogs.OutputDirectory)
+
+	if dir != "" {
+		data := req.logEntry.Stdout + "\n" + req.logEntry.Stderr
+		filepath := path.Join(dir, filename+".log")
+		err := os.WriteFile(filepath, []byte(data), 0644)
+
+		if err != nil {
+			log.Warnf("%v", err)
+		}
+	}
 }

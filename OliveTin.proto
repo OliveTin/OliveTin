@@ -12,6 +12,7 @@ message Action {
 	bool can_exec = 4;
 	repeated ActionArgument arguments = 5;
 	string popup_on_start = 6;
+	int32 order = 7;
 }
 
 message ActionArgument {
@@ -39,9 +40,12 @@ message Entity {
 
 message GetDashboardComponentsResponse {
 	string title = 1;
+
 	repeated Action actions = 2;
 	repeated Entity entities = 3;
 	repeated DashboardComponent dashboards = 4;
+
+	string authenticated_user = 5;
 }
 
 message GetDashboardComponentsRequest {}
@@ -185,6 +189,25 @@ message OutputChunk {
 	string execution_tracking_id = 1;
 
 	string output = 2;
+  
+  int32 order = 3;
+}
+
+message EventEntityChanged {}
+message EventConfigChanged {}
+message EventExecutionFinished {
+	LogEntry log_entry = 1;
+}
+
+message KillActionRequest {
+	string execution_tracking_id = 1;
+}
+
+message KillActionResponse {
+	string execution_tracking_id = 1;
+	bool killed = 2;
+	bool already_completed = 3;
+	bool found = 4;
 }
 
 service OliveTinApiService {
@@ -217,6 +240,13 @@ service OliveTinApiService {
 	rpc StartActionByGetAndWait(StartActionByGetAndWaitRequest) returns (StartActionByGetAndWaitResponse) {
 		option (google.api.http) = {
 			get: "/api/StartActionByGetAndWait/{action_id}"
+		};
+	}
+
+	rpc KillAction(KillActionRequest) returns (KillActionResponse) {
+		option (google.api.http) = {
+			post: "/api/KillAction"
+			body: "*"
 		};
 	}
 
@@ -260,7 +290,7 @@ service OliveTinApiService {
 
 	rpc DumpPublicIdActionMap(DumpPublicIdActionMapRequest) returns (DumpPublicIdActionMapResponse) {
 		option (google.api.http) = {
-			get: "/api/DumpPublicActionMap"
+			get: "/api/DumpActionMap"
 		};
 	}
 

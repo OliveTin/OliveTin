@@ -30,6 +30,28 @@ type oliveTinAPI struct {
 	executor *executor.Executor
 }
 
+func (api *oliveTinAPI) KillAction(ctx ctx.Context, req *pb.KillActionRequest) (*pb.KillActionResponse, error) {
+	ret := &pb.KillActionResponse{
+		ExecutionTrackingId: req.ExecutionTrackingId,
+	}
+
+	execReq, found := api.executor.Logs[req.ExecutionTrackingId]
+
+	ret.Found = found
+
+	if found {
+		err := execReq.Process.Kill()
+
+		if err == nil {
+			ret.AlreadyCompleted = true
+		} else {
+			ret.Killed = true
+		}
+	}
+
+	return ret, nil
+}
+
 func (api *oliveTinAPI) StartAction(ctx ctx.Context, req *pb.StartActionRequest) (*pb.StartActionResponse, error) {
 	args := make(map[string]string)
 
@@ -37,7 +59,9 @@ func (api *oliveTinAPI) StartAction(ctx ctx.Context, req *pb.StartActionRequest)
 		args[arg.Name] = arg.Value
 	}
 
-	pair := publicActionIdToActionMap[req.ActionId]
+	api.executor.MapActionIdToBindingLock.RLock()
+	pair := api.executor.MapActionIdToBinding[req.ActionId]
+	api.executor.MapActionIdToBindingLock.RUnlock()
 
 	execReq := executor.ExecutionRequest{
 		Action:            pair.Action,
@@ -59,7 +83,7 @@ func (api *oliveTinAPI) StartActionAndWait(ctx ctx.Context, req *pb.StartActionA
 	args := make(map[string]string)
 
 	execReq := executor.ExecutionRequest{
-		Action:            findActionByPublicID(req.ActionId),
+		Action:            api.executor.FindActionBindingByID(req.ActionId),
 		TrackingID:        uuid.NewString(),
 		Arguments:         args,
 		AuthenticatedUser: acl.UserFromContext(ctx, cfg),
@@ -84,7 +108,7 @@ func (api *oliveTinAPI) StartActionByGet(ctx ctx.Context, req *pb.StartActionByG
 	args := make(map[string]string)
 
 	execReq := executor.ExecutionRequest{
-		Action:            findActionByPublicID(req.ActionId),
+		Action:            api.executor.FindActionBindingByID(req.ActionId),
 		TrackingID:        uuid.NewString(),
 		Arguments:         args,
 		AuthenticatedUser: acl.UserFromContext(ctx, cfg),
@@ -102,7 +126,7 @@ func (api *oliveTinAPI) StartActionByGetAndWait(ctx ctx.Context, req *pb.StartAc
 	args := make(map[string]string)
 
 	execReq := executor.ExecutionRequest{
-		Action:            findActionByPublicID(req.ActionId),
+		Action:            api.executor.FindActionBindingByID(req.ActionId),
 		TrackingID:        uuid.NewString(),
 		Arguments:         args,
 		AuthenticatedUser: acl.UserFromContext(ctx, cfg),
@@ -128,8 +152,8 @@ func internalLogEntryToPb(logEntry *executor.InternalLogEntry) *pb.LogEntry {
 		ActionTitle:         logEntry.ActionTitle,
 		ActionIcon:          logEntry.ActionIcon,
 		ActionId:            logEntry.ActionId,
-		DatetimeStarted:     logEntry.DatetimeStarted,
-		DatetimeFinished:    logEntry.DatetimeFinished,
+		DatetimeStarted:     logEntry.DatetimeStarted.Format("2006-01-02 15:04:05"),
+		DatetimeFinished:    logEntry.DatetimeFinished.Format("2006-01-02 15:04:05"),
 		Stdout:              logEntry.Stdout,
 		Stderr:              logEntry.Stderr,
 		TimedOut:            logEntry.TimedOut,
@@ -211,7 +235,7 @@ func (api *oliveTinAPI) WatchExecution(req *pb.WatchExecutionRequest, srv pb.Oli
 func (api *oliveTinAPI) GetDashboardComponents(ctx ctx.Context, req *pb.GetDashboardComponentsRequest) (*pb.GetDashboardComponentsResponse, error) {
 	user := acl.UserFromContext(ctx, cfg)
 
-	res := actionsCfgToPb(cfg.Actions, user)
+	res := buildDashboardResponse(api.executor, cfg, user)
 
 	if len(res.Actions) == 0 {
 		log.Warn("Zero actions found - check that you have some actions defined, with a view permission")
@@ -221,19 +245,27 @@ func (api *oliveTinAPI) GetDashboardComponents(ctx ctx.Context, req *pb.GetDashb
 
 	dashboardCfgToPb(res, cfg.Dashboards)
 
+	res.AuthenticatedUser = user.Username
+
 	return res, nil
 }
 
 func (api *oliveTinAPI) GetLogs(ctx ctx.Context, req *pb.GetLogsRequest) (*pb.GetLogsResponse, error) {
+	user := acl.UserFromContext(ctx, cfg)
+
 	ret := &pb.GetLogsResponse{}
 
 	// TODO Limit to 10 entries or something to prevent browser lag.
 
 	for trackingId, logEntry := range api.executor.Logs {
-		pbLogEntry := internalLogEntryToPb(logEntry)
-		pbLogEntry.ExecutionTrackingId = trackingId
+		action := cfg.FindAction(logEntry.ActionTitle)
 
-		ret.Logs = append(ret.Logs, pbLogEntry)
+		if action == nil || acl.IsAllowedLogs(cfg, user, action) {
+			pbLogEntry := internalLogEntryToPb(logEntry)
+			pbLogEntry.ExecutionTrackingId = trackingId
+
+			ret.Logs = append(ret.Logs, pbLogEntry)
+		}
 	}
 
 	sorter := func(i, j int) bool {
@@ -302,7 +334,7 @@ func (api *oliveTinAPI) DumpVars(ctx ctx.Context, req *pb.DumpVarsRequest) (*pb.
 	}
 
 	res.Alert = "Dumping variables has been enabled in the configuration. Please set InsecureAllowDumpVars = false again after you don't need it anymore"
-	res.Contents = sv.Contents
+	res.Contents = sv.GetAll()
 
 	return res, nil
 }
@@ -317,12 +349,16 @@ func (api *oliveTinAPI) DumpPublicIdActionMap(ctx ctx.Context, req *pb.DumpPubli
 		return res, nil
 	}
 
-	for k, v := range publicActionIdToActionMap {
+	api.executor.MapActionIdToBindingLock.RLock()
+
+	for k, v := range api.executor.MapActionIdToBinding {
 		res.Contents[k] = &pb.ActionEntityPair{
 			ActionTitle:  v.Action.Title,
 			EntityPrefix: v.EntityPrefix,
 		}
 	}
+
+	api.executor.MapActionIdToBindingLock.RUnlock()
 
 	res.Alert = "Dumping variables has been enabled in the configuration. Please set InsecureAllowDumpActionMap = false again after you don't need it anymore"
 

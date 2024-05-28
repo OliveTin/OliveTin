@@ -11,7 +11,8 @@ OliveTin gives **safe** and **simple** access to predefined shell commands from 
 [![Go Report Card](https://goreportcard.com/badge/github.com/Olivetin/OliveTin)](https://goreportcard.com/report/github.com/OliveTin/OliveTin)
 [![Build Snapshot](https://github.com/OliveTin/OliveTin/actions/workflows/build-snapshot.yml/badge.svg)](https://github.com/OliveTin/OliveTin/actions/workflows/build-snapshot.yml)
 
-<img alt = "screenshot" src = "https://github.com/OliveTin/OliveTin/blob/main/var/marketing/OliveTin-screenshot-dropshadow.png" />
+<img alt = "screenshot" src = "https://github.com/OliveTin/OliveTin/blob/main/var/marketing/screenshotDesktop.png" />
+<a href = "#screenshots">More screenshots below</a>
 
 ## Use cases
 
@@ -24,7 +25,7 @@ OliveTin gives **safe** and **simple** access to predefined shell commands from 
 **Simplify** complex commands, make them accessible and repeatable;
 
 * eg: Expose complex commands on touchscreen tablets stuck on walls around your house. `wake-on-lan aa:bb:cc:11:22:33`
-* eg: Run long running on your servers from your cell phone. `dnf update -y`
+* eg: Run long-lived commands on your servers from your cell phone. `dnf update -y`
 * eg: Define complex commands with lots of preset arguments, and turn a few arguments into dropdown select boxes. `docker rm {{ container }} && docker create {{ container }} && docker start {{ container }}`
 
 [Join the community on Discord](https://discord.gg/jhYWWpNJ3v) to talk with other users about use cases, or to ask for support in getting started.
@@ -48,15 +49,21 @@ OliveTin gives **safe** and **simple** access to predefined shell commands from 
 
 Desktop web browser;
 
-![Desktop screenshot](media/screenshotDesktop.png)
+<p align = "center">
+<img alt = "screenshot" src = "https://github.com/OliveTin/OliveTin/blob/main/var/marketing/screenshotDesktop.png" />
+</p>
 
 Desktop web browser (dark mode);
 
-![Desktop screenshot](media/screenshotDesktopDark.png)
+<p align = "center">
+<img alt = "screenshot" src = "https://github.com/OliveTin/OliveTin/blob/main/var/marketing/screenshotDesktopDark.png" />
+</p>
 
 Mobile screen size (responsive layout);
 
-![Mobile screenshot](media/screenshotMobile.png)
+<p align = "center">
+<img alt = "screenshot" src = "https://github.com/OliveTin/OliveTin/blob/main/var/marketing/screenshotMobile.png" style = "height: 700px;" />
+</p>
 
 ## Documentation
 

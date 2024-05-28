@@ -1,90 +1,50 @@
 package grpcapi
 
 import (
-	"crypto/sha256"
-	"fmt"
 	pb "github.com/OliveTin/OliveTin/gen/grpc"
 	acl "github.com/OliveTin/OliveTin/internal/acl"
 	config "github.com/OliveTin/OliveTin/internal/config"
+	executor "github.com/OliveTin/OliveTin/internal/executor"
 	sv "github.com/OliveTin/OliveTin/internal/stringvariables"
-	log "github.com/sirupsen/logrus"
-	"strconv"
+	"sort"
 )
 
-type ActionWithEntity struct {
-	Action       *config.Action
-	EntityPrefix string
-}
-
-var publicActionIdToActionMap map[string]ActionWithEntity
-
-func init() {
-	publicActionIdToActionMap = make(map[string]ActionWithEntity)
-}
-
-func actionsCfgToPb(cfgActions []*config.Action, user *acl.AuthenticatedUser) *pb.GetDashboardComponentsResponse {
+func buildDashboardResponse(ex *executor.Executor, cfg *config.Config, user *acl.AuthenticatedUser) *pb.GetDashboardComponentsResponse {
 	res := &pb.GetDashboardComponentsResponse{}
 
-	for _, action := range cfgActions {
-		if !acl.IsAllowedView(cfg, user, action) {
+	ex.MapActionIdToBindingLock.RLock()
+
+	for actionId, actionBinding := range ex.MapActionIdToBinding {
+		if !acl.IsAllowedView(cfg, user, actionBinding.Action) {
 			continue
 		}
 
-		if action.Entity != "" {
-			res.Actions = append(res.Actions, buildActionEntities(action.Entity, action)...)
-		} else {
-			btn := actionCfgToPb(action, user)
-			res.Actions = append(res.Actions, btn)
-		}
+		res.Actions = append(res.Actions, buildAction(actionId, actionBinding, user))
 	}
+
+	ex.MapActionIdToBindingLock.RUnlock()
+
+	sort.Slice(res.Actions, func(i, j int) bool {
+		if res.Actions[i].Order == res.Actions[j].Order {
+			return res.Actions[i].Title < res.Actions[j].Title
+		} else {
+			return res.Actions[i].Order < res.Actions[j].Order
+		}
+	})
 
 	return res
 }
 
-func buildActionEntities(entityTitle string, tpl *config.Action) []*pb.Action {
-	ret := make([]*pb.Action, 0)
-
-	entityCount, _ := strconv.Atoi(sv.Get("entities." + entityTitle + ".count"))
-
-	for i := 0; i < entityCount; i++ {
-		ret = append(ret, buildEntityAction(tpl, entityTitle, i))
-	}
-
-	return ret
-}
-
-func buildEntityAction(tpl *config.Action, entityTitle string, entityIndex int) *pb.Action {
-	prefix := sv.GetEntityPrefix(entityTitle, entityIndex)
-
-	virtualActionId := createPublicID(tpl, prefix)
-
-	publicActionIdToActionMap[virtualActionId] = ActionWithEntity{
-		Action:       tpl,
-		EntityPrefix: prefix,
-	}
-
-	return &pb.Action{
-		Id:           virtualActionId,
-		Title:        sv.ReplaceEntityVars(prefix, tpl.Title),
-		Icon:         tpl.Icon,
-		PopupOnStart: tpl.PopupOnStart,
-	}
-}
-
-func actionCfgToPb(action *config.Action, user *acl.AuthenticatedUser) *pb.Action {
-	virtualActionId := createPublicID(action, "")
-
-	publicActionIdToActionMap[virtualActionId] = ActionWithEntity{
-		Action:       action,
-		EntityPrefix: "noent",
-	}
+func buildAction(actionId string, actionBinding *executor.ActionBinding, user *acl.AuthenticatedUser) *pb.Action {
+	action := actionBinding.Action
 
 	btn := pb.Action{
-		Id:           virtualActionId,
-		Title:        action.Title,
+		Id:           actionId,
+		Title:        sv.ReplaceEntityVars(actionBinding.EntityPrefix, action.Title),
 		Icon:         action.Icon,
 		CanExec:      acl.IsAllowedExec(cfg, user, action),
 		PopupOnStart: action.PopupOnStart,
+		Order:        int32(actionBinding.ConfigOrder),
 	}
 
 	for _, cfgArg := range action.Arguments {
@@ -142,26 +102,4 @@ func buildChoicesSimple(choices []config.ActionArgumentChoice) []*pb.ActionArgum
 	}
 
 	return ret
-}
-
-func createPublicID(action *config.Action, entityPrefix string) string {
-	if action.Entity == "" {
-		return action.ID
-	} else {
-		h := sha256.New()
-		h.Write([]byte(action.ID + "." + entityPrefix))
-
-		return fmt.Sprintf("%x", h.Sum(nil))
-	}
-}
-
-func findActionByPublicID(id string) *config.Action {
-	pair, found := publicActionIdToActionMap[id]
-
-	if found {
-		log.Infof("findPublic %v, %v", id, pair.Action.ID)
-		return pair.Action
-	}
-
-	return nil
 }

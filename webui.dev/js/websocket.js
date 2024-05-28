@@ -1,3 +1,7 @@
+import {
+  refreshServerConnectionLabel
+} from './marshaller.js'
+
 window.ws = null
 
 export function checkWebsocketConnection () {
@@ -9,14 +13,19 @@ export function checkWebsocketConnection () {
 function reconnectWebsocket () {
   window.websocketAvailable = false
 
-  let proto = 'ws:'
+  const websocketConnectionUrl = new URL(window.location.toString())
+  websocketConnectionUrl.hash = ''
+  websocketConnectionUrl.pathname += 'websocket'
 
   if (window.location.protocol === 'https:') {
-    proto = 'wss:'
+    websocketConnectionUrl.protocol = 'wss'
+  } else {
+    websocketConnectionUrl.protocol = 'ws'
   }
 
-  const websocketConnectionUrl = proto + window.location.host + '/websocket'
-  const ws = window.ws = new WebSocket(websocketConnectionUrl)
+  window.websocketConnectionUrl = websocketConnectionUrl
+
+  const ws = window.ws = new WebSocket(websocketConnectionUrl.toString())
 
   ws.addEventListener('open', websocketOnOpen)
   ws.addEventListener('message', websocketOnMessage)
@@ -29,6 +38,8 @@ function websocketOnOpen (evt) {
 
   window.ws.send('monitor')
 
+  refreshServerConnectionLabel()
+
   window.refreshLoop()
 }
 
@@ -40,21 +51,29 @@ function websocketOnMessage (msg) {
   e.payload = j.payload
 
   switch (j.type) {
-    case 'OutputChunk':
-    case 'ExecutionFinished':
+    case 'EventOutputChunk':
+    case 'EventConfigChanged':
+    case 'EventExecutionFinished':
+    case 'EventEntityChanged':
       window.dispatchEvent(e)
       break
     default:
-      window.showBigError('unknown-message-type', 'Unknown Message Type from Server', 'Unknown message type from server: ' + j.type)
+      window.showBigError('ws-unhandled-message', 'handling websocket message', 'Unhandled websocket message type from server: ' + j.type, true)
   }
 }
 
 function websocketOnError (err) {
   window.websocketAvailable = false
   window.refreshLoop()
-  console.error(err)
+  console.log(err)
+
+  window.showBigError('ws-connect-error', 'connecting to the websocket', 'Please see your browser console for debugging information.', true)
+
+  refreshServerConnectionLabel()
 }
 
 function websocketOnClose () {
   window.websocketAvailable = false
+
+  refreshServerConnectionLabel()
 }

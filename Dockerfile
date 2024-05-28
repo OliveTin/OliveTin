@@ -10,6 +10,7 @@ RUN mkdir -p /config /config/entities/ /var/www/olivetin \
 		openssh-clients \
 		shadow-utils \
 		apprise \
+		jq \
 		docker \
 	&& microdnf clean all
 

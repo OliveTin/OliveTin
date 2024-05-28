@@ -71,6 +71,8 @@ class ActionButton extends ExecutionFeedbackButton {
     } else {
       this.unicodeIcon = unescape(json.icon)
     }
+
+    this.domIcon.innerHTML = this.unicodeIcon
   }
 
   onExecStatusChanged () {
@@ -144,6 +146,7 @@ class ActionButton extends ExecutionFeedbackButton {
         window.executionDialog.hideEverythingApartFromOutput()
       }
 
+      window.executionDialog.executionTrackingId = executionTrackingId
       window.executionDialog.show(this)
     }
 

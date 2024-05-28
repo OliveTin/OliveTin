@@ -6,14 +6,21 @@ import (
 	log "github.com/sirupsen/logrus"
 	"net/http"
 	"os"
+	"path"
+	"path/filepath"
 
 	config "github.com/OliveTin/OliveTin/internal/config"
+	sv "github.com/OliveTin/OliveTin/internal/stringvariables"
 	updatecheck "github.com/OliveTin/OliveTin/internal/updatecheck"
+)
+
+var (
+	customThemeCss     []byte
+	customThemeCssRead = false
 )
 
 type webUISettings struct {
 	Rest                   string
-	ThemeName              string
 	ShowFooter             bool
 	ShowNavigation         bool
 	ShowNewVersions        bool
@@ -37,11 +44,14 @@ func findWebuiDir() string {
 	// search order must be deterministic - the order that the slice was defined in.
 	for i := 0; i < len(directoriesToSearch); i++ {
 		dir := directoriesToSearch[i]
+		absdir, _ := filepath.Abs(dir)
 
-		if _, err := os.Stat(dir); !os.IsNotExist(err) {
+		if _, err := os.Stat(absdir); !os.IsNotExist(err) {
 			log.WithFields(log.Fields{
-				"dir": dir,
+				"dir": absdir,
 			}).Infof("Found the webui directory")
+
+			sv.Set("internal.webuidir", absdir+" ("+dir+")")
 
 			return dir
 		}
@@ -52,10 +62,46 @@ func findWebuiDir() string {
 	return "./webui" // Should not exist
 }
 
+func findCustomWebuiDir() string {
+	dir := path.Join(cfg.GetDir(), "custom-webui")
+
+	return dir
+}
+
+func setupCustomWebuiDir() {
+	dir := findCustomWebuiDir()
+
+	err := os.MkdirAll(path.Join(dir, "themes/"), 0775)
+
+	if err != nil {
+		log.Warnf("Could not create themes directory: %v", err)
+		sv.Set("internal.themesdir", err.Error())
+	} else {
+		sv.Set("internal.themesdir", dir)
+	}
+}
+
+func generateThemeCss(w http.ResponseWriter, r *http.Request) {
+	themeCssFilename := path.Join(findCustomWebuiDir(), "themes", cfg.ThemeName, "theme.css")
+
+	if !customThemeCssRead {
+		customThemeCssRead = true
+
+		if _, err := os.Stat(themeCssFilename); err == nil {
+			customThemeCss, err = os.ReadFile(themeCssFilename)
+		} else {
+			log.Debugf("Theme CSS not read: %v", err)
+			customThemeCss = []byte("/* not found */")
+		}
+	}
+
+	w.Header().Add("Content-Type", "text/css")
+	w.Write(customThemeCss)
+}
+
 func generateWebUISettings(w http.ResponseWriter, r *http.Request) {
 	jsonRet, _ := json.Marshal(webUISettings{
 		Rest:                   cfg.ExternalRestAddress + "/api/",
-		ThemeName:              cfg.ThemeName,
 		ShowFooter:             cfg.ShowFooter,
 		ShowNavigation:         cfg.ShowNavigation,
 		ShowNewVersions:        cfg.ShowNewVersions,
@@ -77,8 +123,12 @@ func startWebUIServer(cfg *config.Config) {
 		"address": cfg.ListenAddressWebUI,
 	}).Info("Starting WebUI server")
 
+	setupCustomWebuiDir()
+
 	mux := http.NewServeMux()
 	mux.Handle("/", http.FileServer(http.Dir(findWebuiDir())))
+	mux.Handle("/custom-webui/", http.StripPrefix("/custom-webui/", http.FileServer(http.Dir(findCustomWebuiDir()))))
+	mux.HandleFunc("/theme.css", generateThemeCss)
 	mux.HandleFunc("/webUiSettings.json", generateWebUISettings)
 
 	srv := &http.Server{

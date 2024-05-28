@@ -19,8 +19,10 @@ type Action struct {
 	ExecOnCalendarFile     string
 	Trigger                string
 	MaxConcurrent          int
+	MaxRate                []RateSpec
 	Arguments              []ActionArgument
 	PopupOnStart           string
+	SaveLogs               SaveLogsConfig
 }
 
 // ActionArgument objects appear on Actions.
@@ -32,6 +34,7 @@ type ActionArgument struct {
 	Default     string
 	Choices     []ActionArgumentChoice
 	Entity      string
+	RejectNull  bool
 	Suggestions map[string]string
 }
 
@@ -39,6 +42,12 @@ type ActionArgument struct {
 type ActionArgumentChoice struct {
 	Value string
 	Title string
+}
+
+// RateSpec allows you to set a max frequency for an action.
+type RateSpec struct {
+	Limit    int
+	Duration string
 }
 
 // Entity represents a "thing" that can have multiple actions associated with it.
@@ -53,6 +62,7 @@ type EntityFile struct {
 type PermissionsList struct {
 	View bool
 	Exec bool
+	Logs bool
 }
 
 // AccessControlList defines what permissions apply to a user or user group.
@@ -64,6 +74,11 @@ type AccessControlList struct {
 	Permissions      PermissionsList
 }
 
+type PrometheusConfig struct {
+	Enabled          bool
+	DefaultGoMetrics bool
+}
+
 // Config is the global config used through the whole app.
 type Config struct {
 	UseSingleHTTPFrontend           bool
@@ -72,8 +87,10 @@ type Config struct {
 	ListenAddressWebUI              string
 	ListenAddressRestActions        string
 	ListenAddressGrpcActions        string
+	ListenAddressPrometheus         string
 	ExternalRestAddress             string
 	LogLevel                        string
+	LogDebugOptions                 LogDebugOptions
 	Actions                         []*Action             `mapstructure:"actions"`
 	Entities                        []*EntityFile         `mapstructure:"entities"`
 	Dashboards                      []*DashboardComponent `mapstructure:"dashboards"`
@@ -83,7 +100,10 @@ type Config struct {
 	ShowNavigation                  bool
 	ShowNewVersions                 bool
 	AuthJwtCookieName               string
-	AuthJwtSecret                   string // mutually exclusive with pub key config fields
+	AuthJwtAud                      string
+	AuthJwtDomain                   string
+	AuthJwtCertsURL                 string
+	AuthJwtHmacSecret               string // mutually exclusive with pub key config fields
 	AuthJwtClaimUsername            string
 	AuthJwtClaimUserGroup           string
 	AuthJwtPubKeyPath               string // will read pub key from file on disk
@@ -98,6 +118,23 @@ type Config struct {
 	InsecureAllowDumpVars           bool
 	InsecureAllowDumpSos            bool
 	InsecureAllowDumpActionMap      bool
+	InsecureAllowDumpJwtClaims      bool
+	Prometheus                      PrometheusConfig
+	SaveLogs                        SaveLogsConfig
+
+	usedConfigDir string
+}
+
+type SaveLogsConfig struct {
+	ResultsDirectory string
+	OutputDirectory  string
+}
+
+type LogDebugOptions struct {
+	SingleFrontendRequests       bool
+	SingleFrontendRequestHeaders bool
+	AclMatched                   bool
+	AclNotMatched                bool
 }
 
 type DashboardComponent struct {
@@ -119,11 +156,13 @@ func DefaultConfig() *Config {
 	config.ListenAddressRestActions = "localhost:1338"
 	config.ListenAddressGrpcActions = "localhost:1339"
 	config.ListenAddressWebUI = "localhost:1340"
+	config.ListenAddressPrometheus = "localhost:1341"
 	config.ExternalRestAddress = "."
 	config.LogLevel = "INFO"
 	config.CheckForUpdates = true
 	config.DefaultPermissions.Exec = true
 	config.DefaultPermissions.View = true
+	config.DefaultPermissions.Logs = true
 	config.AuthJwtClaimUsername = "name"
 	config.AuthJwtClaimUserGroup = "group"
 	config.WebUIDir = "./webui"
@@ -133,6 +172,9 @@ func DefaultConfig() *Config {
 	config.InsecureAllowDumpVars = false
 	config.InsecureAllowDumpSos = false
 	config.InsecureAllowDumpActionMap = false
+	config.InsecureAllowDumpJwtClaims = false
+	config.Prometheus.Enabled = false
+	config.Prometheus.DefaultGoMetrics = false
 
 	return &config
 }

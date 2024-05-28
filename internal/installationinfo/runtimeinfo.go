@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"errors"
 	"os"
+	"path"
+	"path/filepath"
 	"runtime"
 	"strings"
 )
@@ -14,6 +16,32 @@ type runtimeInfo struct {
 	Arch                 string
 	InContainer          bool
 	LastBrowserUserAgent string
+	User                 string
+	Uid                  string
+	FoundSshKey          string
+}
+
+var Runtime = &runtimeInfo{
+	OS:                  runtime.GOOS,
+	Arch:                runtime.GOARCH,
+	InContainer:         isInContainer(),
+	OSReleasePrettyName: getOsReleasePrettyName(),
+	User:                os.Getenv("USER"),
+	Uid:                 os.Getenv("UID"),
+}
+
+func refreshRuntimeInfo() {
+	Runtime.FoundSshKey = searchForSshKey()
+}
+
+func searchForSshKey() string {
+	path, _ := filepath.Abs(path.Join(os.Getenv("HOME"), ".ssh/id_rsa"))
+
+	if _, err := os.Stat(path); err == nil {
+		return path
+	}
+
+	return "none-found at " + path
 }
 
 func isInContainer() bool {
@@ -45,11 +73,4 @@ func getOsReleasePrettyName() string {
 	handle.Close()
 
 	return "notfound"
-}
-
-var Runtime = &runtimeInfo{
-	OS:                  runtime.GOOS,
-	Arch:                runtime.GOARCH,
-	InContainer:         isInContainer(),
-	OSReleasePrettyName: getOsReleasePrettyName(),
 }

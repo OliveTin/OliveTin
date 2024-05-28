@@ -8,7 +8,7 @@ import (
 	"github.com/OliveTin/OliveTin/internal/filehelper"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
-	"io/ioutil"
+	"os"
 	"time"
 )
 
@@ -19,25 +19,26 @@ func Schedule(cfg *config.Config, ex *executor.Executor) {
 
 	for _, action := range cfg.Actions {
 		if action.ExecOnCalendarFile != "" {
-			x := func() {
-				parseCalendarFile(action, cfg, ex)
+			x := func(filename string) {
+				parseCalendarFile(action, cfg, ex, filename)
 			}
 
-			go filehelper.WatchFile(action.ExecOnCalendarFile, x)
+			go filehelper.WatchFileWrite(action.ExecOnCalendarFile, x)
 
-			x()
+			x(action.ExecOnCalendarFile)
 		}
 	}
 }
 
-func parseCalendarFile(action *config.Action, cfg *config.Config, ex *executor.Executor) {
+func parseCalendarFile(action *config.Action, cfg *config.Config, ex *executor.Executor, filename string) {
 	filehelper.Touch(action.ExecOnCalendarFile, "calendar file")
 
 	log.WithFields(log.Fields{
 		"actionTitle": action.Title,
+		"filename":    filename,
 	}).Infof("Parsing calendar file")
 
-	yfile, err := ioutil.ReadFile(action.ExecOnCalendarFile)
+	yfile, err := os.ReadFile(action.ExecOnCalendarFile)
 
 	if err != nil {
 		log.Errorf("ReadIn: %v", err)

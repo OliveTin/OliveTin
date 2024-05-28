@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/robfig/cron/v3"
 	log "github.com/sirupsen/logrus"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 )
@@ -30,7 +30,7 @@ var CurrentVersion = "?"
 
 func installationID(filename string) string {
 	var content string
-	contentBytes, err := ioutil.ReadFile(filename)
+	contentBytes, err := os.ReadFile(filename)
 
 	if err != nil {
 		fileHandle, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_RDWR, 0644)
@@ -113,7 +113,7 @@ func doRequest(jsonUpdateRequest []byte) string {
 		return ""
 	}
 
-	newVersion, _ := ioutil.ReadAll(resp.Body)
+	newVersion, _ := io.ReadAll(resp.Body)
 
 	defer resp.Body.Close()
 

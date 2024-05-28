@@ -2,12 +2,15 @@
 name: "Build Snapshot"
 
 on:
-  - push
-  - workflow_dispatch
+  push:
+  workflow_dispatch:
+  pull_request:
+    branches: [main]
 
 jobs:
   build-snapshot:
     runs-on: ubuntu-latest
+    if: github.ref_type != 'tag'
     steps:
       - name: Checkout
         uses: actions/checkout@v4

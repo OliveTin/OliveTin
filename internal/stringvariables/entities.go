@@ -30,14 +30,6 @@ func ReplaceEntityVars(prefix string, source string) string {
 	return source
 }
 
-func RemoveKeysThatStartWith(search string) {
-	for k, _ := range Contents {
-		if strings.HasPrefix(k, search) {
-			delete(Contents, k)
-		}
-	}
-}
-
 func GetEntities(entityTitle string) []string {
 	var ret []string
 
@@ -60,4 +52,8 @@ func GetEntityCount(entityTitle string) int {
 	count, _ := strconv.Atoi(Get("entities." + entityTitle + ".count"))
 
 	return count
+}
+
+func SetEntityCount(entityTitle string, count int) {
+	Set("entities."+entityTitle+".count", fmt.Sprintf("%v", count))
 }
