@@ -10,6 +10,8 @@
 
 		<link rel = "stylesheet" type = "text/css" href = "style.css" />
 		<link rel = "stylesheet" type = "text/css" href = "theme.css" />
+		<link rel = "stylesheet" href = "node_modules/@xterm/xterm/css/xterm.css" />
+
 		<link rel = "shortcut icon" type = "image/png" href = "OliveTinLogo.png" />
 
 		<link rel = "apple-touch-icon" sizes="57x57" href="OliveTinLogo-57px.png" />
@@ -116,13 +118,8 @@
 
 			<div id = "execution-dialog-output">
 				<details>
-					<summary>Standard Output</summary>
-					<pre id = "execution-dialog-stdout">?</pre>
-				</details>
-
-				<details>
-					<summary>Standard Error</summary>
-					<pre id = "execution-dialog-stderr">?</pre>
+					<summary>Output</summary>
+					<pre id = "execution-dialog-xterm">?</pre>
 				</details>
 			</div>
 
@@ -170,16 +167,6 @@
 				<td>
 					<span role = "img" class = "icon"></span>
 					<a href = "#" class = "content">?</a>
-
-					<details>
-						<summary>stdout</summary>
-						<pre class = "stdout">?</pre>
-					</details>
-
-					<details>
-						<summary>stderr</summary>
-						<pre class = "stderr">?</pre>
-					</details>
 
 					<div class = "tags"></div>
 				</td>

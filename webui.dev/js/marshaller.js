@@ -17,7 +17,7 @@ export function initMarshaller () {
   window.currentSection = ''
 
   window.addEventListener('EventExecutionFinished', onExecutionFinished)
-  window.addEventListener('OutputChunk', onOutputChunk)
+  window.addEventListener('EventOutputChunk', onOutputChunk)
 }
 
 export function marshalDashboardComponentsJsonToHtml (json) {
@@ -61,9 +61,9 @@ function marshalActionsJsonToHtml (json) {
 function onOutputChunk (evt) {
   const chunk = evt.payload
 
-  window.executionDialog.domStdout.append(chunk.output)
-  window.executionDialog.domStdout.hidden = false
-  window.executionDialog.domStdout.parentElement.open = true
+  window.terminal.write(chunk.output)
+  window.executionDialog.domOutput.hidden = false
+  window.executionDialog.domOutput.parentElement.open = true
   window.executionDialog.domExecutionOutput.hidden = false
 }
 
@@ -486,14 +486,6 @@ export function marshalLogsJsonToHtml (json) {
     const tpl = document.getElementById('tplLogRow')
     const row = tpl.content.querySelector('tr').cloneNode(true)
 
-    if (logEntry.stdout.length === 0) {
-      logEntry.stdout = '(empty)'
-    }
-
-    if (logEntry.stderr.length === 0) {
-      logEntry.stderr = '(empty)'
-    }
-
     let logTableExitCode = logEntry.exitCode
 
     if (logEntry.exitCode === 0) {
@@ -507,8 +499,6 @@ export function marshalLogsJsonToHtml (json) {
     row.querySelector('.timestamp').innerText = logEntry.datetimeStarted
     row.querySelector('.content').innerText = logEntry.actionTitle
     row.querySelector('.icon').innerHTML = logEntry.actionIcon
-    row.querySelector('pre.stdout').innerText = logEntry.stdout
-    row.querySelector('pre.stderr').innerText = logEntry.stderr
     row.querySelector('.exit-code').innerText = logTableExitCode
     row.setAttribute('title', logEntry.actionTitle)
 

@@ -423,7 +423,6 @@ div.buttons {
 
 pre {
   border: 1px solid gray;
-  padding: 1em;
   min-height: 1em;
   overflow: auto;
   text-align: left;
@@ -473,6 +472,10 @@ div.display {
   justify-content: center;
   flex-direction: column;
   font-size: small;
+}
+
+.xterm {
+  padding: 1em;
 }
 
 @media screen and (width <= 600px) {

@@ -189,8 +189,6 @@ message EventOutputChunk {
 	string execution_tracking_id = 1;
 
 	string output = 2;
-  
-  int32 order = 3;
 }
 
 message EventEntityChanged {}

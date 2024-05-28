@@ -69,7 +69,7 @@ func checkOriginPermissive(r *http.Request) bool {
 }
 
 func (WebsocketExecutionListener) OnOutputChunk(chunk []byte, executionTrackingId string) {
-	log.Warnf("chunk: %s", string(chunk))
+	log.Tracef("outputchunk: %s", string(chunk))
 
 	oc := &pb.EventOutputChunk{
 		Output:              string(chunk),
