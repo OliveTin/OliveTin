@@ -14,7 +14,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io"
 	"os"
 	"os/exec"
 	"path"
@@ -411,8 +410,6 @@ func stepExec(req *ExecutionRequest) bool {
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
 	cmd.Env = buildEnv(req)
-	req.logEntry.StdoutBuffer, _ = cmd.StdoutPipe()
-	req.logEntry.StderrBuffer, _ = cmd.StderrPipe()
 
 	req.logEntry.ExecutionStarted = true
 

@@ -185,7 +185,7 @@ message GetReadyzResponse {
 	string status = 1;
 }
 
-message OutputChunk {
+message EventOutputChunk {
 	string execution_tracking_id = 1;
 
 	string output = 2;
