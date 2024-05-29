@@ -374,16 +374,16 @@ type OutputStreamer struct {
 	output bytes.Buffer
 }
 
-func (so *OutputStreamer) Write(o []byte) (n int, err error) {
+func (ost *OutputStreamer) Write(o []byte) (n int, err error) {
 	for _, listener := range so.Req.executor.listeners {
 		listener.OnOutputChunk(o, so.Req.TrackingID)
 	}
 
-	return so.output.Write(o)
+	return ost.output.Write(o)
 }
 
-func (so *OutputStreamer) String() string {
-	return so.output.String()
+func (ost *OutputStreamer) String() string {
+	return ost.output.String()
 }
 
 func buildEnv(req *ExecutionRequest) []string {
@@ -443,6 +443,7 @@ func stepExecAfter(req *ExecutionRequest) bool {
 	var stderr bytes.Buffer
 
 	args := map[string]string{
+		"output":   req.logEntry.Output,
 		"exitCode": fmt.Sprintf("%v", req.logEntry.ExitCode),
 	}
 
