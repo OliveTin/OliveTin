@@ -9,8 +9,6 @@ import {
 } from './js/marshaller.js'
 import { checkWebsocketConnection } from './js/websocket.js'
 
-import { Terminal } from '@xterm/xterm'
-
 function searchLogs (e) {
   document.getElementById('searchLogsClear').disabled = false
 
@@ -138,10 +136,6 @@ function main () {
     setInterval(refreshLoop, 3000)
   }).catch(err => {
     window.showBigError('fetch-webui-settings', 'getting webui settings', err)
-  })
-
-  window.terminal = new Terminal({
-    convertEol: true
   })
 }
 

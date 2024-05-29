@@ -1,5 +1,6 @@
 import './ActionButton.js' // To define action-button
 import { ExecutionDialog } from './ExecutionDialog.js'
+import { Terminal } from '@xterm/xterm'
 
 /**
  * This is a weird function that just sets some globals.
@@ -7,6 +8,10 @@ import { ExecutionDialog } from './ExecutionDialog.js'
 export function initMarshaller () {
   window.changeDirectory = changeDirectory
   window.showSection = showSection
+
+  window.terminal = new Terminal({
+    convertEol: true
+  })
 
   window.executionDialog = new ExecutionDialog()
 
@@ -61,10 +66,11 @@ function marshalActionsJsonToHtml (json) {
 function onOutputChunk (evt) {
   const chunk = evt.payload
 
-  window.terminal.write(chunk.output)
-  window.executionDialog.domOutput.hidden = false
-  window.executionDialog.domOutput.parentElement.open = true
-  window.executionDialog.domExecutionOutput.hidden = false
+  if (chunk.executionTrackingId === window.executionDialog.executionTrackingId) {
+    window.terminal.write(chunk.output)
+
+    window.executionDialog.showOutput()
+  }
 }
 
 function onExecutionFinished (evt) {
@@ -88,7 +94,7 @@ function onExecutionFinished (evt) {
       // have it, so we open the dialog and it will get updated below.
 
       window.executionDialog.show()
-      window.executionDialog.executionUuid = logEntry.uuid
+      window.executionDialog.executionTrackingId = logEntry.uuid
 
       break
     default:

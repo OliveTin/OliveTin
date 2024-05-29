@@ -421,13 +421,6 @@ div.buttons {
   gap: 1em;
 }
 
-pre {
-  border: 1px solid gray;
-  min-height: 1em;
-  overflow: auto;
-  text-align: left;
-}
-
 td.exit-code {
   text-align: center;
 }
@@ -476,6 +469,7 @@ div.display {
 
 .xterm {
   padding: 1em;
+  margin-bottom: 1em;
 }
 
 @media screen and (width <= 600px) {

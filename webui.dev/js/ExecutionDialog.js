@@ -8,6 +8,7 @@ export class ExecutionDialog {
     this.domIcon = document.getElementById('execution-dialog-icon')
     this.domTitle = document.getElementById('execution-dialog-title')
     this.domOutput = document.getElementById('execution-dialog-xterm')
+    this.domOutputDetails = document.getElementById('execution-dialog-output-details')
     this.domOutputToggleBig = document.getElementById('execution-dialog-toggle-size')
     this.domOutputToggleBig.onclick = () => {
       this.toggleSize()
@@ -23,15 +24,23 @@ export class ExecutionDialog {
     this.domExecutionBasics = document.getElementById('execution-dialog-basics')
     this.domExecutionDetails = document.getElementById('execution-dialog-details')
     this.domExecutionOutput = document.getElementById('execution-dialog-output')
+
+    window.terminal.open(this.domOutput)
+  }
+
+  showOutput () {
+    this.domOutput.hidden = false
+    this.domOutputDetails.open = true
+    this.domExecutionOutput.hidden = false
   }
 
   toggleSize () {
     if (this.dlg.classList.contains('big')) {
       this.dlg.classList.remove('big')
-      this.domOutput.parentElement.open = false
+      this.domOutputDetails.open = false
     } else {
       this.dlg.classList.add('big')
-      this.domOutput.parentElement.open = true
+      this.domOutputDetails.open = true
     }
   }
 
@@ -53,7 +62,6 @@ export class ExecutionDialog {
     this.domStatus.className = ''
     this.domDatetimeStarted.innerText = ''
     this.domDatetimeFinished.innerText = ''
-    this.domOutput.innerText = ''
 
     //    window.terminal.close()
 
@@ -64,7 +72,9 @@ export class ExecutionDialog {
     this.domExecutionBasics.hidden = false
 
     this.domExecutionDetails.hidden = true
-    this.domOutput.parentElement.open = false
+    this.domOutputDetails.open = false
+
+    window.terminal.reset()
 
     this.domExecutionOutput.hidden = true
   }
@@ -86,8 +96,6 @@ export class ExecutionDialog {
       this.executionTick()
     }, 1000)
 
-    window.terminal.open(this.domOutput)
-
     if (this.dlg.open) {
       this.dlg.close()
     }
@@ -107,7 +115,7 @@ export class ExecutionDialog {
       },
       body: JSON.stringify(killActionArgs)
     }).then((res) => {
-      console.log(res)
+      console.log(res.json())
     }).catch(err => {
       throw err
     })
@@ -159,7 +167,7 @@ export class ExecutionDialog {
     if (!this.hideDetailsOnResult) {
       this.domExecutionDetails.hidden = false
     } else {
-      this.domOutput.parentElement.open = true
+      this.domOutputDetails.open = true
     }
 
     this.executionTrackingId = res.logEntry.executionTrackingId
@@ -194,8 +202,8 @@ export class ExecutionDialog {
 
     this.domDatetimeStarted.innerText = res.logEntry.datetimeStarted
 
-    window.terminal.clear()
-    window.terminal.write(res.logEntry.stdout)
+    window.terminal.reset()
+    window.terminal.write(res.logEntry.output)
   }
 
   renderError (err) {
