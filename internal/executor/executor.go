@@ -375,8 +375,8 @@ type OutputStreamer struct {
 }
 
 func (ost *OutputStreamer) Write(o []byte) (n int, err error) {
-	for _, listener := range so.Req.executor.listeners {
-		listener.OnOutputChunk(o, so.Req.TrackingID)
+	for _, listener := range ost.Req.executor.listeners {
+		listener.OnOutputChunk(o, ost.Req.TrackingID)
 	}
 
 	return ost.output.Write(o)
