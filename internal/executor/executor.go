@@ -340,10 +340,10 @@ func stepLogFinish(req *ExecutionRequest) bool {
 	req.logEntry.ExecutionFinished = true
 
 	log.WithFields(log.Fields{
-		"actionTitle": req.logEntry.ActionTitle,
-		"output":      req.logEntry.Output,
-		"timedOut":    req.logEntry.TimedOut,
-		"exit":        req.logEntry.ExitCode,
+		"actionTitle":  req.logEntry.ActionTitle,
+		"outputLength": len(req.logEntry.Output),
+		"timedOut":     req.logEntry.TimedOut,
+		"exit":         req.logEntry.ExitCode,
 	}).Infof("Action finished")
 
 	return true
