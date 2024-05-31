@@ -31,7 +31,7 @@ func (action *Action) sanitize(cfg *Config) {
 	}
 
 	action.ID = getActionID(action)
-	action.Icon = lookupHTMLIcon(action.Icon)
+	action.Icon = lookupHTMLIcon(action.Icon, cfg.DefaultIconForActions)
 	action.PopupOnStart = sanitizePopupOnStart(action.PopupOnStart, cfg)
 
 	if action.MaxConcurrent < 1 {

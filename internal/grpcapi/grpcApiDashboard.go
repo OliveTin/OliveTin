@@ -6,17 +6,17 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-func dashboardCfgToPb(res *pb.GetDashboardComponentsResponse, dashboards []*config.DashboardComponent) {
+func dashboardCfgToPb(res *pb.GetDashboardComponentsResponse, dashboards []*config.DashboardComponent, cfg *config.Config) {
 	for _, dashboard := range dashboards {
 		res.Dashboards = append(res.Dashboards, &pb.DashboardComponent{
 			Type:     "dashboard",
 			Title:    dashboard.Title,
-			Contents: getDashboardComponentContents(dashboard),
+			Contents: getDashboardComponentContents(dashboard, cfg),
 		})
 	}
 }
 
-func getDashboardComponentContents(dashboard *config.DashboardComponent) []*pb.DashboardComponent {
+func getDashboardComponentContents(dashboard *config.DashboardComponent, cfg *config.Config) []*pb.DashboardComponent {
 	ret := make([]*pb.DashboardComponent, 0)
 
 	for _, subitem := range dashboard.Contents {
@@ -28,13 +28,22 @@ func getDashboardComponentContents(dashboard *config.DashboardComponent) []*pb.D
 		newitem := &pb.DashboardComponent{
 			Title:    subitem.Title,
 			Type:     getDashboardComponentType(&subitem),
-			Contents: getDashboardComponentContents(&subitem),
+			Contents: getDashboardComponentContents(&subitem, cfg),
+			Icon:     getDashboardComponentIcon(&subitem, cfg),
 		}
 
 		ret = append(ret, newitem)
 	}
 
 	return ret
+}
+
+func getDashboardComponentIcon(item *config.DashboardComponent, cfg *config.Config) string {
+	if item.Icon == "" {
+		return cfg.DefaultIconForDirectories
+	}
+
+	return item.Icon
 }
 
 func getDashboardComponentType(item *config.DashboardComponent) string {

@@ -1,7 +1,6 @@
 package config
 
 var emojis = map[string]string{
-	"":            "&#x1F600;", // default icon
 	"poop":        "&#x1f4a9;",
 	"smile":       "&#x1F600;",
 	"ping":        "&#x1f4e1;",
@@ -17,7 +16,11 @@ var emojis = map[string]string{
 	"robot":       "&#129302;",
 }
 
-func lookupHTMLIcon(keyToLookup string) string {
+func lookupHTMLIcon(keyToLookup string, defaultIcon string) string {
+	if keyToLookup == "" {
+		return defaultIcon
+	}
+
 	if emoji, found := emojis[keyToLookup]; found {
 		return emoji
 	}

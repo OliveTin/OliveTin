@@ -121,6 +121,9 @@ type Config struct {
 	InsecureAllowDumpJwtClaims      bool
 	Prometheus                      PrometheusConfig
 	SaveLogs                        SaveLogsConfig
+	DefaultIconForActions           string
+	DefaultIconForDirectories       string
+	DefaultIconForBack              string
 
 	usedConfigDir string
 }
@@ -141,6 +144,7 @@ type DashboardComponent struct {
 	Title    string
 	Type     string
 	Entity   string
+	Icon     string
 	Contents []DashboardComponent
 }
 
@@ -175,6 +179,9 @@ func DefaultConfig() *Config {
 	config.InsecureAllowDumpJwtClaims = false
 	config.Prometheus.Enabled = false
 	config.Prometheus.DefaultGoMetrics = false
+	config.DefaultIconForActions = "&#x1F600;"
+	config.DefaultIconForDirectories = "&#128193"
+	config.DefaultIconForBack = "&laquo;"
 
 	return &config
 }

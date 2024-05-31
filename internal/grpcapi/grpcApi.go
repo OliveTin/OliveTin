@@ -242,7 +242,7 @@ func (api *oliveTinAPI) GetDashboardComponents(ctx ctx.Context, req *pb.GetDashb
 
 	log.Tracef("GetDashboardComponents: %v", res)
 
-	dashboardCfgToPb(res, cfg.Dashboards)
+	dashboardCfgToPb(res, cfg.Dashboards, cfg)
 
 	res.AuthenticatedUser = user.Username
 
