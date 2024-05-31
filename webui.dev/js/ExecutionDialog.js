@@ -49,10 +49,6 @@ export class ExecutionDialog {
     this.executionTrackingId = 'notset'
 
     this.dlg.classList.remove('big')
-    this.dlg.style.maxWidth = 'calc(100vw - 2em)'
-    this.dlg.style.width = ''
-    this.dlg.style.height = ''
-    this.dlg.style.border = ''
 
     this.domOutputToggleBig.hidden = false
 

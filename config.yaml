@@ -20,8 +20,9 @@ actions:
   # If you are running OliveTin in a container remember to pass through the
   # docker socket! https://docs.olivetin.app/action-container-control.html
   - title: Ping the Internet
-    shell: ping -c 1 1.1.1.1
+    shell: ping -c 3 1.1.1.1
     icon: ping
+    popupOnStart: execution-dialog-stdout-only
 
   # This uses `popupOnStart: execution-dialog-stdout-only` to simply show just
   # the command output.
@@ -65,9 +66,10 @@ actions:
     shell: ping {{ host }} -c {{ count }}
     icon: ping
     timeout: 100
+    popupOnStart: execution-dialog-stdout-only
     arguments:
       - name: host
-        title: host
+        title: Host
         type: ascii_identifier
         default: example.com
         description: The host that you want to ping
@@ -75,7 +77,7 @@ actions:
       - name: count
         title: Count
         type: int
-        default: 1
+        default: 3
         description: How many times to do you want to ping?
 
   # OliveTin can control containers - docker is just a command line app.

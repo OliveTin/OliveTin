@@ -87,12 +87,12 @@
 			</p>
 		</footer>
 
-		<dialog title = "Big Error Message" id = "big-error" class = "error">
+		<dialog title = "Big Error Message" id = "big-error" class = "error padded-content">
 
 		</dialog>
 
 		<dialog title = "Execution Results" id = "execution-results-popup">
-			<div class = "action-header">
+			<div class = "action-header padded-content">
 				<span id = "execution-dialog-icon" class = "icon" role = "img"></span>
 
 				<h2>
@@ -101,10 +101,10 @@
 
 				<button id = "execution-dialog-toggle-size" title = "Toggle dialog size">&#128470;</button>
 			</div>
-			<div id = "execution-dialog-basics">
+			<div id = "execution-dialog-basics" class = "padded-content">
 					<strong>Started: </strong><span id = "execution-dialog-datetime-started">unknown</span>
 			</div>
-			<div id = "execution-dialog-details">
+			<div id = "execution-dialog-details" class = "padded-content">
 				<p>
 					<strong>Finished: </strong><span id = "execution-dialog-datetime-finished">unknown</span>
 				</p>
@@ -118,12 +118,12 @@
 
 			<div id = "execution-dialog-output">
 				<details id = "execution-dialog-output-details">
-					<summary>Output</summary>
+					<summary class = "padded-content">Output</summary>
 					<div id = "execution-dialog-xterm" />
 				</details>
 			</div>
 
-			<div class = "buttons">
+			<div class = "buttons padded-content">
 				<button name = "kill" title = "Kill" id = "execution-dialog-kill-action">Kill</button>
 
 				<form method = "dialog">
@@ -134,7 +134,7 @@
 
 		<template id = "tplArgumentForm">
 			<dialog title = "Arguments" id = "argument-popup">
-				<form class = "action-arguments">
+				<form class = "action-arguments padded-content">
 					<div class = "wrapper">
 						<div class = "action-header">
 							<span class = "icon" role = "img"></span>
