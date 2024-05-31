@@ -115,6 +115,8 @@ function processWebuiSettingsJson (settings) {
     const titleElem = document.querySelector('#page-title')
     if (titleElem) titleElem.innerText = window.pageTitle
   }
+
+  window.settings = settings
 }
 
 function main () {

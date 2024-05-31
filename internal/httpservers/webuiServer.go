@@ -28,6 +28,7 @@ type webUISettings struct {
 	CurrentVersion         string
 	PageTitle              string
 	SectionNavigationStyle string
+	DefaultIconForBack     string
 }
 
 func findWebuiDir() string {
@@ -109,6 +110,7 @@ func generateWebUISettings(w http.ResponseWriter, r *http.Request) {
 		CurrentVersion:         updatecheck.CurrentVersion,
 		PageTitle:              cfg.PageTitle,
 		SectionNavigationStyle: cfg.SectionNavigationStyle,
+		DefaultIconForBack:     cfg.DefaultIconForBack,
 	})
 
 	_, err := w.Write([]byte(jsonRet))
