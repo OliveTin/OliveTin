@@ -68,6 +68,17 @@ func checkOriginPermissive(r *http.Request) bool {
 	return true
 }
 
+func (WebsocketExecutionListener) OnOutputChunk(chunk []byte, executionTrackingId string) {
+	log.Tracef("outputchunk: %s", string(chunk))
+
+	oc := &pb.EventOutputChunk{
+		Output:              string(chunk),
+		ExecutionTrackingId: executionTrackingId,
+	}
+
+	broadcast(oc)
+}
+
 func (WebsocketExecutionListener) OnExecutionFinished(logEntry *executor.InternalLogEntry) {
 	evt := &pb.EventExecutionFinished{
 		LogEntry: &pb.LogEntry{
@@ -76,8 +87,7 @@ func (WebsocketExecutionListener) OnExecutionFinished(logEntry *executor.Interna
 			ActionId:            logEntry.ActionId,
 			DatetimeStarted:     logEntry.DatetimeStarted.Format("2006-01-02 15:04:05"),
 			DatetimeFinished:    logEntry.DatetimeFinished.Format("2006-01-02 15:04:05"),
-			Stdout:              logEntry.Stdout,
-			Stderr:              logEntry.Stderr,
+			Output:              logEntry.Output,
 			TimedOut:            logEntry.TimedOut,
 			Blocked:             logEntry.Blocked,
 			ExitCode:            logEntry.ExitCode,

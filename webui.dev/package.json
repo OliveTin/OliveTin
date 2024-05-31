@@ -12,6 +12,7 @@
 		"eslint-plugin-promise": "^4.3.1",
 		"parcel": "^2.11.0",
 		"parcel-resolver-ignore": "^2.2.0",
+		"process": "^0.11.10",
 		"stylelint": "^15.6.0",
 		"stylelint-config-standard": "^33.0.0"
 	},
@@ -25,6 +26,9 @@
 		"OliveTinLogo-57px.png",
 		"OliveTinLogo-120px.png",
 		"OliveTinLogo-180px.png"
-  ],
-  "license": "AGPL-3.0-only"
+	],
+	"license": "AGPL-3.0-only",
+	"dependencies": {
+		"@xterm/xterm": "^5.5.0"
+	}
 }

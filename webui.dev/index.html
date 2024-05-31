@@ -2,13 +2,16 @@
 
 <html lang = "en">
 	<head>
-		<meta name = "viewport" content = "width=device-width, initial-scale=1.0">
+		<meta charset = "UTF-8" />
+		<meta name = "viewport" content = "width=device-width, initial-scale=1.0" />
 		<meta name = "description" content = "Give safe and simple access to predefined shell commands from a web interface." />
 
 		<title>OliveTin</title>
 
 		<link rel = "stylesheet" type = "text/css" href = "style.css" />
 		<link rel = "stylesheet" type = "text/css" href = "theme.css" />
+		<link rel = "stylesheet" href = "node_modules/@xterm/xterm/css/xterm.css" />
+
 		<link rel = "shortcut icon" type = "image/png" href = "OliveTinLogo.png" />
 
 		<link rel = "apple-touch-icon" sizes="57x57" href="OliveTinLogo-57px.png" />
@@ -84,12 +87,12 @@
 			</p>
 		</footer>
 
-		<dialog title = "Big Error Message" id = "big-error" class = "error">
+		<dialog title = "Big Error Message" id = "big-error" class = "error padded-content">
 
 		</dialog>
 
 		<dialog title = "Execution Results" id = "execution-results-popup">
-			<div class = "action-header">
+			<div class = "action-header padded-content">
 				<span id = "execution-dialog-icon" class = "icon" role = "img"></span>
 
 				<h2>
@@ -98,10 +101,10 @@
 
 				<button id = "execution-dialog-toggle-size" title = "Toggle dialog size">&#128470;</button>
 			</div>
-			<div id = "execution-dialog-basics">
+			<div id = "execution-dialog-basics" class = "padded-content">
 					<strong>Started: </strong><span id = "execution-dialog-datetime-started">unknown</span>
 			</div>
-			<div id = "execution-dialog-details">
+			<div id = "execution-dialog-details" class = "padded-content">
 				<p>
 					<strong>Finished: </strong><span id = "execution-dialog-datetime-finished">unknown</span>
 				</p>
@@ -114,18 +117,13 @@
 			</div>
 
 			<div id = "execution-dialog-output">
-				<details>
-					<summary>Standard Output</summary>
-					<pre id = "execution-dialog-stdout">?</pre>
-				</details>
-
-				<details>
-					<summary>Standard Error</summary>
-					<pre id = "execution-dialog-stderr">?</pre>
+				<details id = "execution-dialog-output-details">
+					<summary class = "padded-content">Output</summary>
+					<div id = "execution-dialog-xterm" />
 				</details>
 			</div>
 
-			<div class = "buttons">
+			<div class = "buttons padded-content">
 				<button name = "kill" title = "Kill" id = "execution-dialog-kill-action">Kill</button>
 
 				<form method = "dialog">
@@ -136,7 +134,7 @@
 
 		<template id = "tplArgumentForm">
 			<dialog title = "Arguments" id = "argument-popup">
-				<form class = "action-arguments">
+				<form class = "action-arguments padded-content">
 					<div class = "wrapper">
 						<div class = "action-header">
 							<span class = "icon" role = "img"></span>
@@ -169,16 +167,6 @@
 				<td>
 					<span role = "img" class = "icon"></span>
 					<a href = "#" class = "content">?</a>
-
-					<details>
-						<summary>stdout</summary>
-						<pre class = "stdout">?</pre>
-					</details>
-
-					<details>
-						<summary>stderr</summary>
-						<pre class = "stderr">?</pre>
-					</details>
 
 					<div class = "tags"></div>
 				</td>

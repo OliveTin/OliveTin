@@ -102,8 +102,7 @@ message GetLogsRequest{};
 message LogEntry {
 	string datetime_started = 1;
 	string action_title = 2;
-	string stdout = 3;
-	string stderr = 4;
+	string output = 3;
 	bool timed_out = 5;
 	int32 exit_code = 6;
 	string user = 7;
@@ -183,6 +182,12 @@ message GetReadyzRequest {}
 
 message GetReadyzResponse {
 	string status = 1;
+}
+
+message EventOutputChunk {
+	string execution_tracking_id = 1;
+
+	string output = 2;
 }
 
 message EventEntityChanged {}

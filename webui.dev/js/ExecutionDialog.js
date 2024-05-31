@@ -7,10 +7,10 @@ export class ExecutionDialog {
 
     this.domIcon = document.getElementById('execution-dialog-icon')
     this.domTitle = document.getElementById('execution-dialog-title')
-    this.domStdout = document.getElementById('execution-dialog-stdout')
-    this.domStderr = document.getElementById('execution-dialog-stderr')
-    this.domStdoutToggleBig = document.getElementById('execution-dialog-toggle-size')
-    this.domStdoutToggleBig.onclick = () => {
+    this.domOutput = document.getElementById('execution-dialog-xterm')
+    this.domOutputDetails = document.getElementById('execution-dialog-output-details')
+    this.domOutputToggleBig = document.getElementById('execution-dialog-toggle-size')
+    this.domOutputToggleBig.onclick = () => {
       this.toggleSize()
     }
 
@@ -24,15 +24,23 @@ export class ExecutionDialog {
     this.domExecutionBasics = document.getElementById('execution-dialog-basics')
     this.domExecutionDetails = document.getElementById('execution-dialog-details')
     this.domExecutionOutput = document.getElementById('execution-dialog-output')
+
+    window.terminal.open(this.domOutput)
+  }
+
+  showOutput () {
+    this.domOutput.hidden = false
+    this.domOutputDetails.open = true
+    this.domExecutionOutput.hidden = false
   }
 
   toggleSize () {
     if (this.dlg.classList.contains('big')) {
       this.dlg.classList.remove('big')
-      this.domStdout.parentElement.open = false
+      this.domOutputDetails.open = false
     } else {
       this.dlg.classList.add('big')
-      this.domStdout.parentElement.open = true
+      this.domOutputDetails.open = true
     }
   }
 
@@ -41,12 +49,8 @@ export class ExecutionDialog {
     this.executionTrackingId = 'notset'
 
     this.dlg.classList.remove('big')
-    this.dlg.style.maxWidth = 'calc(100vw - 2em)'
-    this.dlg.style.width = ''
-    this.dlg.style.height = ''
-    this.dlg.style.border = ''
 
-    this.domStdoutToggleBig.hidden = false
+    this.domOutputToggleBig.hidden = false
 
     this.domIcon.innerText = ''
     this.domTitle.innerText = 'Waiting for result... '
@@ -54,8 +58,8 @@ export class ExecutionDialog {
     this.domStatus.className = ''
     this.domDatetimeStarted.innerText = ''
     this.domDatetimeFinished.innerText = ''
-    this.domStdout.innerText = ''
-    this.domStderr.innerText = ''
+
+    //    window.terminal.close()
 
     this.domBtnKill.disabled = true
     this.domBtnKill.onclick = () => {}
@@ -64,7 +68,9 @@ export class ExecutionDialog {
     this.domExecutionBasics.hidden = false
 
     this.domExecutionDetails.hidden = true
-    this.domStdout.parentElement.open = false
+    this.domOutputDetails.open = false
+
+    window.terminal.reset()
 
     this.domExecutionOutput.hidden = true
   }
@@ -105,7 +111,7 @@ export class ExecutionDialog {
       },
       body: JSON.stringify(killActionArgs)
     }).then((res) => {
-      console.log(res)
+      console.log(res.json())
     }).catch(err => {
       throw err
     })
@@ -157,7 +163,7 @@ export class ExecutionDialog {
     if (!this.hideDetailsOnResult) {
       this.domExecutionDetails.hidden = false
     } else {
-      this.domStdout.parentElement.open = true
+      this.domOutputDetails.open = true
     }
 
     this.executionTrackingId = res.logEntry.executionTrackingId
@@ -190,18 +196,10 @@ export class ExecutionDialog {
     this.domIcon.innerHTML = res.logEntry.actionIcon
     this.domTitle.innerText = res.logEntry.actionTitle
 
-    this.domStdout.innerText = res.logEntry.stdout
-    this.domStdout.innerText = res.logEntry.stdout
-
-    if (res.logEntry.stderr === '(empty)') {
-      this.domStderr.parentElement.style.display = 'none'
-      this.domStderr.innerText = res.logEntry.stderr
-    } else {
-      this.domStderr.parentElement.style.display = 'block'
-      this.domStderr.innerText = res.logEntry.stderr
-    }
-
     this.domDatetimeStarted.innerText = res.logEntry.datetimeStarted
+
+    window.terminal.reset()
+    window.terminal.write(res.logEntry.output)
   }
 
   renderError (err) {

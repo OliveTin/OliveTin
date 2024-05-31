@@ -14,7 +14,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io"
 	"os"
 	"os/exec"
 	"path"
@@ -76,10 +75,7 @@ type ExecutionRequest struct {
 type InternalLogEntry struct {
 	DatetimeStarted     time.Time
 	DatetimeFinished    time.Time
-	Stdout              string
-	Stderr              string
-	StdoutBuffer        io.ReadCloser
-	StderrBuffer        io.ReadCloser
+	Output              string
 	TimedOut            bool
 	Blocked             bool
 	ExitCode            int32
@@ -130,6 +126,7 @@ func DefaultExecutor(cfg *config.Config) *Executor {
 type listener interface {
 	OnExecutionStarted(actionTitle string)
 	OnExecutionFinished(logEntry *InternalLogEntry)
+	OnOutputChunk(o []byte, executionTrackingId string)
 	OnActionMapRebuilt()
 }
 
@@ -148,8 +145,7 @@ func (e *Executor) ExecRequest(req *ExecutionRequest) (*sync.WaitGroup, string) 
 	req.logEntry = &InternalLogEntry{
 		DatetimeStarted:     time.Now(),
 		ExecutionTrackingID: req.TrackingID,
-		Stdout:              "",
-		Stderr:              "",
+		Output:              "",
 		ExitCode:            -1337, // If an Action is not actually executed, this is the default exit code.
 		ExecutionStarted:    false,
 		ExecutionFinished:   false,
@@ -214,7 +210,7 @@ func stepConcurrencyCheck(req *ExecutionRequest) bool {
 			"actionTitle": req.logEntry.ActionTitle,
 		}).Warnf(msg)
 
-		req.logEntry.Stdout = msg
+		req.logEntry.Output = msg
 		req.logEntry.Blocked = true
 		return false
 	}
@@ -262,7 +258,7 @@ func stepRateCheck(req *ExecutionRequest) bool {
 				"actionTitle": req.logEntry.ActionTitle,
 			}).Infof(msg)
 
-			req.logEntry.Stdout = msg
+			req.logEntry.Output = msg
 			req.logEntry.Blocked = true
 			return false
 		}
@@ -281,7 +277,7 @@ func stepParseArgs(req *ExecutionRequest) bool {
 	req.finalParsedCommand, err = parseActionArguments(req.Action.Shell, req.Arguments, req.Action, req.logEntry.ActionTitle, req.EntityPrefix)
 
 	if err != nil {
-		req.logEntry.Stdout = err.Error()
+		req.logEntry.Output = err.Error()
 
 		log.Warnf(err.Error())
 
@@ -305,7 +301,7 @@ func stepRequestAction(req *ExecutionRequest) bool {
 				"actionTitle": req.ActionTitle,
 			}).Warnf("Action requested, but not found")
 
-			req.logEntry.Stderr = "Action not found: " + req.ActionTitle
+			req.logEntry.Output = "Action not found: " + req.ActionTitle
 
 			return false
 		}
@@ -344,11 +340,10 @@ func stepLogFinish(req *ExecutionRequest) bool {
 	req.logEntry.ExecutionFinished = true
 
 	log.WithFields(log.Fields{
-		"actionTitle": req.logEntry.ActionTitle,
-		"stdout":      req.logEntry.Stdout,
-		"stderr":      req.logEntry.Stderr,
-		"timedOut":    req.logEntry.TimedOut,
-		"exit":        req.logEntry.ExitCode,
+		"actionTitle":  req.logEntry.ActionTitle,
+		"outputLength": len(req.logEntry.Output),
+		"timedOut":     req.logEntry.TimedOut,
+		"exit":         req.logEntry.ExitCode,
 	}).Infof("Action finished")
 
 	return true
@@ -370,8 +365,25 @@ func wrapCommandInShell(ctx context.Context, finalParsedCommand string) *exec.Cm
 
 func appendErrorToStderr(err error, logEntry *InternalLogEntry) {
 	if err != nil {
-		logEntry.Stderr = err.Error() + "\n\n" + logEntry.Stderr
+		logEntry.Output = err.Error() + "\n\n" + logEntry.Output
 	}
+}
+
+type OutputStreamer struct {
+	Req    *ExecutionRequest
+	output bytes.Buffer
+}
+
+func (ost *OutputStreamer) Write(o []byte) (n int, err error) {
+	for _, listener := range ost.Req.executor.listeners {
+		listener.OnOutputChunk(o, ost.Req.TrackingID)
+	}
+
+	return ost.output.Write(o)
+}
+
+func (ost *OutputStreamer) String() string {
+	return ost.output.String()
 }
 
 func buildEnv(req *ExecutionRequest) []string {
@@ -388,15 +400,12 @@ func stepExec(req *ExecutionRequest) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(req.Action.Timeout)*time.Second)
 	defer cancel()
 
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
+	streamer := &OutputStreamer{Req: req}
 
 	cmd := wrapCommandInShell(ctx, req.finalParsedCommand)
+	cmd.Stdout = streamer
+	cmd.Stderr = streamer
 	cmd.Env = buildEnv(req)
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-	req.logEntry.StdoutBuffer, _ = cmd.StdoutPipe()
-	req.logEntry.StderrBuffer, _ = cmd.StderrPipe()
 
 	req.logEntry.ExecutionStarted = true
 
@@ -407,8 +416,7 @@ func stepExec(req *ExecutionRequest) bool {
 	waiterr := cmd.Wait()
 
 	req.logEntry.ExitCode = int32(cmd.ProcessState.ExitCode())
-	req.logEntry.Stdout = stdout.String()
-	req.logEntry.Stderr = stderr.String()
+	req.logEntry.Output = streamer.String()
 
 	appendErrorToStderr(runerr, req.logEntry)
 	appendErrorToStderr(waiterr, req.logEntry)
@@ -435,7 +443,7 @@ func stepExecAfter(req *ExecutionRequest) bool {
 	var stderr bytes.Buffer
 
 	args := map[string]string{
-		"stdout":   req.logEntry.Stdout,
+		"output":   req.logEntry.Output,
 		"exitCode": fmt.Sprintf("%v", req.logEntry.ExitCode),
 	}
 
@@ -449,17 +457,17 @@ func stepExecAfter(req *ExecutionRequest) bool {
 
 	waiterr := cmd.Wait()
 
-	req.logEntry.Stdout += "---\n" + stdout.String()
-	req.logEntry.Stderr += "---\n" + stderr.String()
+	req.logEntry.Output += "---\n" + stdout.String()
+	req.logEntry.Output += "---\n" + stderr.String()
 
 	appendErrorToStderr(runerr, req.logEntry)
 	appendErrorToStderr(waiterr, req.logEntry)
 
 	if ctx.Err() == context.DeadlineExceeded {
-		req.logEntry.Stderr += "Your shellAfterCommand command timed out."
+		req.logEntry.Output += "Your shellAfterCommand command timed out."
 	}
 
-	req.logEntry.Stdout += fmt.Sprintf("Your shellAfterCommand exited with code %v", cmd.ProcessState.ExitCode())
+	req.logEntry.Output += fmt.Sprintf("Your shellAfterCommand exited with code %v", cmd.ProcessState.ExitCode())
 
 	return true
 }
@@ -520,7 +528,7 @@ func saveLogOutput(req *ExecutionRequest, filename string) {
 	dir := firstNonEmpty(req.Action.SaveLogs.OutputDirectory, req.Cfg.SaveLogs.OutputDirectory)
 
 	if dir != "" {
-		data := req.logEntry.Stdout + "\n" + req.logEntry.Stderr
+		data := req.logEntry.Output
 		filepath := path.Join(dir, filename+".log")
 		err := os.WriteFile(filepath, []byte(data), 0644)
 

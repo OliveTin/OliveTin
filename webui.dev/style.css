@@ -13,15 +13,16 @@ dialog {
   box-shadow: 0 0 6px 0 #444;
   max-width: 600px;
   min-width: 60%;
-  padding: 1em;
   text-align: left;
+  padding: 0;
 }
 
 dialog.big {
-  max-width: 100%;
-  width: calc(100vw - 2em);
+  max-width: 100vw;
+  width: 100vw;
   height: 100vh;
   border: none;
+  margin: 0;
 }
 
 fieldset {
@@ -393,10 +394,6 @@ form .wrapper span.icon {
   vertical-align: middle;
 }
 
-form input[type="submit"]:first-child {
-  margin-right: 1em;
-}
-
 button[name="cancel"]:hover {
   background-color: salmon;
   color: black;
@@ -419,14 +416,6 @@ div.buttons {
   display: flex;
   justify-content: end;
   gap: 1em;
-}
-
-pre {
-  border: 1px solid gray;
-  padding: 1em;
-  min-height: 1em;
-  overflow: auto;
-  text-align: left;
 }
 
 td.exit-code {
@@ -475,6 +464,22 @@ div.display {
   font-size: small;
 }
 
+#execution-dialog-xterm {
+  overflow: scroll;
+}
+
+.padded-content {
+  padding: 1em;
+}
+
+.xterm {
+  padding: 1em;
+  margin-bottom: 1em;
+  margin-left: 1em;
+  margin-right: 1em;
+  width: fit-content;
+}
+
 @media screen and (width <= 600px) {
   fieldset {
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -499,7 +504,15 @@ div.display {
   dialog {
     border-left: 0;
     border-right: 0;
-    width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+    width: 100vw;
+    max-width: 100vw;
+  }
+
+  .xterm {
+    margin-left: 0;
+    margin-right: 0;
   }
 }
 

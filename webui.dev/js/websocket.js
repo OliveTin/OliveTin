@@ -51,6 +51,7 @@ function websocketOnMessage (msg) {
   e.payload = j.payload
 
   switch (j.type) {
+    case 'EventOutputChunk':
     case 'EventConfigChanged':
     case 'EventExecutionFinished':
     case 'EventEntityChanged':

@@ -1,5 +1,6 @@
 import './ActionButton.js' // To define action-button
 import { ExecutionDialog } from './ExecutionDialog.js'
+import { Terminal } from '@xterm/xterm'
 
 /**
  * This is a weird function that just sets some globals.
@@ -7,6 +8,10 @@ import { ExecutionDialog } from './ExecutionDialog.js'
 export function initMarshaller () {
   window.changeDirectory = changeDirectory
   window.showSection = showSection
+
+  window.terminal = new Terminal({
+    convertEol: true
+  })
 
   window.executionDialog = new ExecutionDialog()
 
@@ -17,6 +22,7 @@ export function initMarshaller () {
   window.currentSection = ''
 
   window.addEventListener('EventExecutionFinished', onExecutionFinished)
+  window.addEventListener('EventOutputChunk', onOutputChunk)
 }
 
 export function marshalDashboardComponentsJsonToHtml (json) {
@@ -57,6 +63,16 @@ function marshalActionsJsonToHtml (json) {
   }
 }
 
+function onOutputChunk (evt) {
+  const chunk = evt.payload
+
+  if (chunk.executionTrackingId === window.executionDialog.executionTrackingId) {
+    window.terminal.write(chunk.output)
+
+    window.executionDialog.showOutput()
+  }
+}
+
 function onExecutionFinished (evt) {
   const logEntry = evt.payload.logEntry
 
@@ -78,7 +94,7 @@ function onExecutionFinished (evt) {
       // have it, so we open the dialog and it will get updated below.
 
       window.executionDialog.show()
-      window.executionDialog.executionUuid = logEntry.uuid
+      window.executionDialog.executionTrackingId = logEntry.uuid
 
       break
     default:
@@ -476,14 +492,6 @@ export function marshalLogsJsonToHtml (json) {
     const tpl = document.getElementById('tplLogRow')
     const row = tpl.content.querySelector('tr').cloneNode(true)
 
-    if (logEntry.stdout.length === 0) {
-      logEntry.stdout = '(empty)'
-    }
-
-    if (logEntry.stderr.length === 0) {
-      logEntry.stderr = '(empty)'
-    }
-
     let logTableExitCode = logEntry.exitCode
 
     if (logEntry.exitCode === 0) {
@@ -497,8 +505,6 @@ export function marshalLogsJsonToHtml (json) {
     row.querySelector('.timestamp').innerText = logEntry.datetimeStarted
     row.querySelector('.content').innerText = logEntry.actionTitle
     row.querySelector('.icon').innerHTML = logEntry.actionIcon
-    row.querySelector('pre.stdout').innerText = logEntry.stdout
-    row.querySelector('pre.stderr').innerText = logEntry.stderr
     row.querySelector('.exit-code').innerText = logTableExitCode
     row.setAttribute('title', logEntry.actionTitle)
 
