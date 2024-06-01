@@ -474,10 +474,6 @@ div.display {
 
 .xterm {
   padding: 1em;
-  margin-bottom: 1em;
-  margin-left: 1em;
-  margin-right: 1em;
-  width: fit-content;
 }
 
 @media screen and (width <= 600px) {
@@ -513,6 +509,7 @@ div.display {
   .xterm {
     margin-left: 0;
     margin-right: 0;
+    width: fit-content;
   }
 }
 

@@ -1,6 +1,7 @@
 import './ActionButton.js' // To define action-button
 import { ExecutionDialog } from './ExecutionDialog.js'
 import { Terminal } from '@xterm/xterm'
+import { FitAddon } from '@xterm/addon-fit'
 
 /**
  * This is a weird function that just sets some globals.
@@ -12,6 +13,10 @@ export function initMarshaller () {
   window.terminal = new Terminal({
     convertEol: true
   })
+
+  const fitAddon = new FitAddon()
+  window.terminal.loadAddon(fitAddon)
+  window.terminal.fit = fitAddon
 
   window.executionDialog = new ExecutionDialog()
 
