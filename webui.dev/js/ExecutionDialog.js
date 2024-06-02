@@ -71,6 +71,7 @@ export class ExecutionDialog {
     this.domOutputDetails.open = false
 
     window.terminal.reset()
+    window.terminal.fit.fit()
 
     this.domExecutionOutput.hidden = true
   }
@@ -199,7 +200,9 @@ export class ExecutionDialog {
     this.domDatetimeStarted.innerText = res.logEntry.datetimeStarted
 
     window.terminal.reset()
-    window.terminal.write(res.logEntry.output)
+    window.terminal.write(res.logEntry.output, () => {
+      window.terminal.fit.fit()
+    })
   }
 
   renderError (err) {
