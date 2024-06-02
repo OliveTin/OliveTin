@@ -10,3 +10,5 @@ checkForUpdates: false
 actions:
 - title: Sleep
   shell: sleep 10
+  popupOnStart: execution-dialog
+  timeout: 9
