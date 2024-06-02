@@ -40,6 +40,8 @@ func (api *oliveTinAPI) KillAction(ctx ctx.Context, req *pb.KillActionRequest) (
 	ret.Found = found
 
 	if found {
+		log.Warnf("Killing execution request by tracking ID: %v", req.ExecutionTrackingId)
+
 		err := execReq.Process.Kill()
 
 		if err == nil {
@@ -47,6 +49,8 @@ func (api *oliveTinAPI) KillAction(ctx ctx.Context, req *pb.KillActionRequest) (
 		} else {
 			ret.Killed = true
 		}
+	} else {
+		log.Warnf("Killing execution request not possible - not found by tracking ID: %v", req.ExecutionTrackingId)
 	}
 
 	return ret, nil

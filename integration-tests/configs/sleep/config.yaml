@@ -1,0 +1,12 @@
+
+# Integration Test Config: Sleep
+#
+
+listenAddressSingleHTTPFrontend: 0.0.0.0:1337
+
+logLevel: "DEBUG"
+checkForUpdates: false
+
+actions:
+- title: Sleep
+  shell: sleep 10
