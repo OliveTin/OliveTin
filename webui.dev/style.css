@@ -410,6 +410,7 @@ span.argument-description {
 
 p.argument-wrapper {
   display: flex;
+  place-items: center;
 }
 
 div.buttons {
