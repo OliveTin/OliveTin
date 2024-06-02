@@ -453,13 +453,12 @@ div.toolbar * {
 }
 
 div.display {
-  align-content: center;
   border: 1px solid #666;
   box-shadow: 0 0 6px 0 #aaa;
   border-radius: .7em;
   display: flex;
   align-items: center;
-  justify-content: center;
+  place-content: center center;
   flex-direction: column;
   font-size: small;
 }
