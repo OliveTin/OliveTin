@@ -106,6 +106,7 @@ export class ExecutionDialog {
     }
 
     window.fetch(window.restBaseUrl + 'KillAction', {
+      cors: 'cors',
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -137,6 +138,7 @@ export class ExecutionDialog {
     }
 
     window.fetch(window.restBaseUrl + 'ExecutionStatus', {
+      cors: 'cors',
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
