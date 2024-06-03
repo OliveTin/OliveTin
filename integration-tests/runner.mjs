@@ -34,7 +34,7 @@ class OliveTinTestRunnerStartLocalProcess extends OliveTinTestRunner {
 
     this.ot = spawn('./../OliveTin', ['-configdir', 'configs/' + cfg + '/'])
 
-    const logStdout = process.env.OLIVETIN_TEST_RUNNER_LOG_STDOUT === '1'
+    const logStdout = true;// process.env.OLIVETIN_TEST_RUNNER_LOG_STDOUT === '1'
 
     this.ot.stdout.on('data', (data) => {
       stdout += data
