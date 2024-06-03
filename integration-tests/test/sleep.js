@@ -39,7 +39,8 @@ describe('config: sleep', function () {
 
     await killButton.click()
 
-    // FIXME hack
+    console.log("env CI:", process.env.CI)
+
     if (process.env.CI === 'true') {
       await requireExecutionDialogStatus(webdriver, "Non-Zero Exite")
     }
