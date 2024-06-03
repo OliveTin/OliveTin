@@ -6,6 +6,10 @@ test-install:
 test-run:
 	./node_modules/.bin/mocha -t 10000
 
+find-flakey-tests:
+	echo "Running test-run infinately"
+	sh -c "while make test-run; do :; done"
+
 nginx:
 	podman-compose up -d nginx
 

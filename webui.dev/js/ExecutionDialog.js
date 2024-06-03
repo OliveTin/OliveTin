@@ -106,13 +106,14 @@ export class ExecutionDialog {
     }
 
     window.fetch(window.restBaseUrl + 'KillAction', {
+      cors: 'cors',
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(killActionArgs)
     }).then((res) => {
-      console.log(res.json())
+      return res.json() // This isn't used by anything. UI is updated by OnExecutionFinished like normal.
     }).catch(err => {
       throw err
     })
@@ -137,6 +138,7 @@ export class ExecutionDialog {
     }
 
     window.fetch(window.restBaseUrl + 'ExecutionStatus', {
+      cors: 'cors',
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -157,6 +159,8 @@ export class ExecutionDialog {
   }
 
   renderExecutionResult (res) {
+    this.res = res
+
     clearInterval(window.executionDialogTicker)
 
     this.domExecutionOutput.hidden = false
