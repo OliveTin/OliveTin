@@ -40,6 +40,7 @@ export async function requireExecutionDialogStatus (webdriver, expected) {
       return true
     } else {
       console.log('Waiting for domStatus text to be: ', expected, ', it is currently: ', actual)
+      console.log(await webdriver.executeScript('return window.executionDialog.res'))
       return false
     }
   }))
