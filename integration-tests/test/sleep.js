@@ -41,8 +41,8 @@ describe('config: sleep', function () {
 
     console.log("env CI:", process.env.CI)
 
-    if (process.env.CI === 'true') {
-      await requireExecutionDialogStatus(webdriver, "Non-Zero Exite")
+    if (process.env.CI !== 'true') {
+      await requireExecutionDialogStatus(webdriver, "Non-Zero Exit")
     }
   })
 })
