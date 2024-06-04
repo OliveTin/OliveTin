@@ -19,6 +19,7 @@ type runtimeInfo struct {
 	User                 string
 	Uid                  string
 	FoundSshKey          string
+	AvailableVersion     string
 }
 
 var Runtime = &runtimeInfo{
