@@ -163,7 +163,7 @@ func DefaultConfig() *Config {
 	config.ListenAddressPrometheus = "localhost:1341"
 	config.ExternalRestAddress = "."
 	config.LogLevel = "INFO"
-	config.CheckForUpdates = true
+	config.CheckForUpdates = false
 	config.DefaultPermissions.Exec = true
 	config.DefaultPermissions.View = true
 	config.DefaultPermissions.Logs = true

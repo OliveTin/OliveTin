@@ -9,6 +9,9 @@ listenAddressSingleHTTPFrontend: 0.0.0.0:1337
 # Choose from INFO (default), WARN and DEBUG
 logLevel: "INFO"
 
+# Checking for updates https://docs.olivetin.app/update-checks.html
+checkForUpdates: false
+
 # Actions are commands that are executed by OliveTin, and normally show up as
 # buttons on the WebUI.
 #
