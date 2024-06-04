@@ -22,7 +22,7 @@ type versionMapType struct {
 func StartUpdateChecker(cfg *config.Config) {
 	if !cfg.CheckForUpdates {
 		installationinfo.Runtime.AvailableVersion = "none"
-		log.Warn("Update checking is disabled")
+		log.Infof("Update checking is disabled")
 		return
 	}
 
