@@ -10,8 +10,8 @@ import (
 	"path/filepath"
 
 	config "github.com/OliveTin/OliveTin/internal/config"
+	installationinfo "github.com/OliveTin/OliveTin/internal/installationinfo"
 	sv "github.com/OliveTin/OliveTin/internal/stringvariables"
-	updatecheck "github.com/OliveTin/OliveTin/internal/updatecheck"
 )
 
 var (
@@ -106,8 +106,8 @@ func generateWebUISettings(w http.ResponseWriter, r *http.Request) {
 		ShowFooter:             cfg.ShowFooter,
 		ShowNavigation:         cfg.ShowNavigation,
 		ShowNewVersions:        cfg.ShowNewVersions,
-		AvailableVersion:       updatecheck.AvailableVersion,
-		CurrentVersion:         updatecheck.CurrentVersion,
+		AvailableVersion:       installationinfo.Runtime.AvailableVersion,
+		CurrentVersion:         installationinfo.Build.Version,
 		PageTitle:              cfg.PageTitle,
 		SectionNavigationStyle: cfg.SectionNavigationStyle,
 		DefaultIconForBack:     cfg.DefaultIconForBack,

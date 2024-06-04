@@ -149,7 +149,7 @@ func main() {
 	entityfiles.AddListener(executor.RebuildActionMap)
 	go entityfiles.SetupEntityFileWatchers(cfg)
 
-	go updatecheck.StartUpdateChecker(version, commit, cfg, cfg.GetDir())
+	go updatecheck.StartUpdateChecker(cfg)
 
 	go grpcapi.Start(cfg, executor)
 
