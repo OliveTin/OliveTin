@@ -47,15 +47,15 @@ func parseVersion(input []byte) string {
 	err := json.Unmarshal(input, &versionMap)
 
 	if err != nil {
-		log.Warnf("Update check unmarshal failure: %v", err)
-		return "error-during-check"
+		log.Errorf("Update check unmarshal failure: %v", err)
+		return "none"
 	} else {
-		log.Infof("Update check remote version: %+v", versionMap)
+		log.Infof("Update check remote version: %+v, latest version: %+v", versionMap.Latest, installationinfo.Build.Version)
 
-		if installationinfo.Build.Version != versionMap.Latest {
-			return versionMap.Latest
-		} else {
+		if installationinfo.Build.Version == versionMap.Latest {
 			return "none"
+		} else {
+			return versionMap.Latest
 		}
 	}
 }
@@ -65,14 +65,14 @@ func doRequest() string {
 
 	if err != nil {
 		log.Errorf("Update check failed %v", err)
-		return ""
+		return "none"
 	}
 
 	resp, err := http.DefaultClient.Do(req)
 
 	if err != nil {
 		log.Errorf("Update check failed %v", err)
-		return ""
+		return "none"
 	}
 
 	versionMap, _ := io.ReadAll(resp.Body)
