@@ -122,21 +122,26 @@ func typecheckChoiceEntity(value string, arg *config.ActionArgument) error {
 // defined in typecheckRegex, and, you guessed it, uses regex to check for allowed
 // characters.
 func TypeSafetyCheck(name string, value string, argumentType string) error {
-	if argumentType == "url" {
-		return typeSafetyCheckUrl(name, value)
-	}
-
-	if argumentType == "datetime" {
-		_, err := time.Parse("2006-01-02T15:04:05", value)
-
-		if err != nil {
-			return err
-		}
-
+	switch argumentType {
+	case "password":
 		return nil
+	case "url":
+		return typeSafetyCheckUrl(name, value)
+	case "datetime":
+		return typeSafetyCheckDatetime(name, value)
 	}
 
 	return typeSafetyCheckRegex(name, value, argumentType)
+}
+
+func typeSafetyCheckDatetime(name string, value string) error {
+	_, err := time.Parse("2006-01-02T15:04:05", value)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func typeSafetyCheckRegex(name string, value string, argumentType string) error {
