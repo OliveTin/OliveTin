@@ -130,6 +130,9 @@ class ArgumentForm extends window.HTMLElement {
       domEl = document.createElement('input')
       domEl.setAttribute('type', 'datetime-local')
       domEl.setAttribute('step', '1')
+    } else if (arg.type === 'password') {
+      domEl = document.createElement('input')
+      domEl.setAttribute('type', 'password')
     } else {
       domEl = document.createElement('input')
 
