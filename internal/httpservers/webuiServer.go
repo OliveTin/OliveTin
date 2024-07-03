@@ -29,6 +29,8 @@ type webUISettings struct {
 	PageTitle              string
 	SectionNavigationStyle string
 	DefaultIconForBack     string
+	SshFoundKey            string
+	SshFoundConfig         string
 }
 
 func findWebuiDir() string {
@@ -111,8 +113,11 @@ func generateWebUISettings(w http.ResponseWriter, r *http.Request) {
 		PageTitle:              cfg.PageTitle,
 		SectionNavigationStyle: cfg.SectionNavigationStyle,
 		DefaultIconForBack:     cfg.DefaultIconForBack,
+		SshFoundKey:            installationinfo.Runtime.SshFoundKey,
+		SshFoundConfig:         installationinfo.Runtime.SshFoundConfig,
 	})
 
+	w.Header().Add("Content-Type", "application/json")
 	_, err := w.Write([]byte(jsonRet))
 
 	if err != nil {

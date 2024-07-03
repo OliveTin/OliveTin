@@ -43,8 +43,6 @@ func configToSosreport(cfg *config.Config) *sosReportConfig {
 }
 
 func GetSosReport() string {
-	refreshRuntimeInfo()
-
 	ret := ""
 
 	ret += "### SOSREPORT START (copy all text to SOSREPORT END)\n"
