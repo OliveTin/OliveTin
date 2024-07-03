@@ -20,6 +20,7 @@ import (
 	"runtime"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 )
 
@@ -121,6 +122,19 @@ func DefaultExecutor(cfg *config.Config) *Executor {
 	}
 
 	return &e
+}
+
+func (e *Executor) Kill(execReq *InternalLogEntry) error {
+	var err error
+
+	if runtime.GOOS == "windows" {
+		err = execReq.Process.Kill()
+	} else {
+		// A negative PID means to kill the whole process group. This is *nix specific behavior.
+		err = syscall.Kill(-execReq.Process.Pid, syscall.SIGKILL)
+	}
+
+	return err
 }
 
 type listener interface {
@@ -360,7 +374,13 @@ func wrapCommandInShell(ctx context.Context, finalParsedCommand string) *exec.Cm
 		return exec.CommandContext(ctx, "cmd", "/C", finalParsedCommand)
 	}
 
-	return exec.CommandContext(ctx, "sh", "-c", finalParsedCommand)
+	cmd := exec.CommandContext(ctx, "sh", "-c", finalParsedCommand)
+
+	// This is to ensure that the process group is killed when the parent process is killed.
+	// Does not work on Windows.
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+
+	return cmd
 }
 
 func appendErrorToStderr(err error, logEntry *InternalLogEntry) {
@@ -422,6 +442,8 @@ func stepExec(req *ExecutionRequest) bool {
 	appendErrorToStderr(waiterr, req.logEntry)
 
 	if ctx.Err() == context.DeadlineExceeded {
+		// The context timeout should kill the process, but let's make sure.
+		req.executor.Kill(req.logEntry)
 		req.logEntry.TimedOut = true
 	}
 
