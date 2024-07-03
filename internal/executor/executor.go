@@ -12,16 +12,13 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"bytes"
-	"context"
 	"fmt"
 	"os"
-	"os/exec"
 	"path"
-	"runtime"
 	"strings"
 	"sync"
-	"syscall"
 	"time"
+	"context"
 )
 
 var (
@@ -122,19 +119,6 @@ func DefaultExecutor(cfg *config.Config) *Executor {
 	}
 
 	return &e
-}
-
-func (e *Executor) Kill(execReq *InternalLogEntry) error {
-	var err error
-
-	if runtime.GOOS == "windows" {
-		err = execReq.Process.Kill()
-	} else {
-		// A negative PID means to kill the whole process group. This is *nix specific behavior.
-		err = syscall.Kill(-execReq.Process.Pid, syscall.SIGKILL)
-	}
-
-	return err
 }
 
 type listener interface {
@@ -367,20 +351,6 @@ func notifyListeners(req *ExecutionRequest) {
 	for _, listener := range req.executor.listeners {
 		listener.OnExecutionFinished(req.logEntry)
 	}
-}
-
-func wrapCommandInShell(ctx context.Context, finalParsedCommand string) *exec.Cmd {
-	if runtime.GOOS == "windows" {
-		return exec.CommandContext(ctx, "cmd", "/C", finalParsedCommand)
-	}
-
-	cmd := exec.CommandContext(ctx, "sh", "-c", finalParsedCommand)
-
-	// This is to ensure that the process group is killed when the parent process is killed.
-	// Does not work on Windows.
-	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
-
-	return cmd
 }
 
 func appendErrorToStderr(err error, logEntry *InternalLogEntry) {
