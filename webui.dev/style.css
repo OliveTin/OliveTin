@@ -223,6 +223,7 @@ div.entity h2 {
 
 details {
   display: inline-block;
+  flex-grow: 1;
 }
 
 details[open] {
@@ -464,8 +465,18 @@ div.display {
   font-size: small;
 }
 
+#execution-dialog-output {
+  display: flex;
+  flex-direction: row;
+  justify-content: start;
+}
+
 #execution-dialog-xterm {
-  overflow: scroll;
+  overflow: auto;
+}
+
+.xterm .xterm-viewport {
+  overflow-y: auto !important;
 }
 
 .padded-content {
