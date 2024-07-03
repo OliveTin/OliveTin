@@ -472,6 +472,10 @@ div.display {
   padding: 1em;
 }
 
+.ta-left {
+  text-align: left;
+}
+
 .xterm {
   padding: 1em;
 }

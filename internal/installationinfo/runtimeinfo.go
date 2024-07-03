@@ -18,7 +18,8 @@ type runtimeInfo struct {
 	LastBrowserUserAgent string
 	User                 string
 	Uid                  string
-	FoundSshKey          string
+	SshFoundKey          string
+	SshFoundConfig       string
 	AvailableVersion     string
 }
 
@@ -29,20 +30,26 @@ var Runtime = &runtimeInfo{
 	OSReleasePrettyName: getOsReleasePrettyName(),
 	User:                os.Getenv("USER"),
 	Uid:                 os.Getenv("UID"),
-}
-
-func refreshRuntimeInfo() {
-	Runtime.FoundSshKey = searchForSshKey()
+	SshFoundKey:         searchForSshKey(),
+	SshFoundConfig:      searchForSshConfig(),
 }
 
 func searchForSshKey() string {
-	path, _ := filepath.Abs(path.Join(os.Getenv("HOME"), ".ssh/id_rsa"))
+	return searchForHomeFile(".ssh/id_rsa")
+}
+
+func searchForSshConfig() string {
+	return searchForHomeFile(".ssh/config")
+}
+
+func searchForHomeFile(file string) string {
+	path, _ := filepath.Abs(path.Join(os.Getenv("HOME"), file))
 
 	if _, err := os.Stat(path); err == nil {
 		return path
 	}
 
-	return "none-found at " + path
+	return "not found at " + path
 }
 
 func isInContainer() bool {

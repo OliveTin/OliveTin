@@ -187,7 +187,16 @@ export function setupSectionNavigation (style) {
   }
 
   document.getElementById('showActions').onclick = () => { showSection('Actions') }
+  document.getElementById('showDiagnostics').onclick = () => {
+    refreshDiagnostics()
+    showSection('Diagnostics')
+  }
   document.getElementById('showLogs').onclick = () => { showSection('Logs') }
+}
+
+function refreshDiagnostics () {
+  document.getElementById('diagnostics-sshfoundkey').innerHTML = window.settings.SshFoundKey
+  document.getElementById('diagnostics-sshfoundconfig').innerHTML = window.settings.SshFoundConfig
 }
 
 function marshalDashboardStructureToHtml (json) {
