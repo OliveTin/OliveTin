@@ -15,9 +15,7 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"os/exec"
 	"path"
-	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -355,14 +353,6 @@ func notifyListeners(req *ExecutionRequest) {
 	}
 }
 
-func wrapCommandInShell(ctx context.Context, finalParsedCommand string) *exec.Cmd {
-	if runtime.GOOS == "windows" {
-		return exec.CommandContext(ctx, "cmd", "/C", finalParsedCommand)
-	}
-
-	return exec.CommandContext(ctx, "sh", "-c", finalParsedCommand)
-}
-
 func appendErrorToStderr(err error, logEntry *InternalLogEntry) {
 	if err != nil {
 		logEntry.Output = err.Error() + "\n\n" + logEntry.Output
@@ -422,6 +412,9 @@ func stepExec(req *ExecutionRequest) bool {
 	appendErrorToStderr(waiterr, req.logEntry)
 
 	if ctx.Err() == context.DeadlineExceeded {
+		log.Warnf("Command timed out: %v", req.finalParsedCommand)
+		// The context timeout should kill the process, but let's make sure.
+		req.executor.Kill(req.logEntry)
 		req.logEntry.TimedOut = true
 	}
 

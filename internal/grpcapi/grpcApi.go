@@ -35,14 +35,14 @@ func (api *oliveTinAPI) KillAction(ctx ctx.Context, req *pb.KillActionRequest) (
 		ExecutionTrackingId: req.ExecutionTrackingId,
 	}
 
-	execReq, found := api.executor.Logs[req.ExecutionTrackingId]
+	execReqLogEntry, found := api.executor.Logs[req.ExecutionTrackingId]
 
 	ret.Found = found
 
 	if found {
 		log.Warnf("Killing execution request by tracking ID: %v", req.ExecutionTrackingId)
 
-		err := execReq.Process.Kill()
+		err := api.executor.Kill(execReqLogEntry)
 
 		if err != nil {
 			log.Warnf("Killing execution request err: %v", err)
