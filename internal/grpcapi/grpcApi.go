@@ -2,6 +2,7 @@ package grpcapi
 
 import (
 	ctx "context"
+
 	pb "github.com/OliveTin/OliveTin/gen/grpc"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
@@ -254,6 +255,10 @@ func (api *oliveTinAPI) GetDashboardComponents(ctx ctx.Context, req *pb.GetDashb
 	dashboardCfgToPb(res, cfg.Dashboards, cfg)
 
 	res.AuthenticatedUser = user.Username
+
+	if res.AuthenticatedUser == "" && cfg.UrlOnUnauthenticated != "" {
+		return nil, errors.New("unauthenticated")
+	}
 
 	return res, nil
 }
