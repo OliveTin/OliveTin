@@ -1,9 +1,12 @@
+//go:build !windows
+// +build !windows
+
 package executor
 
 import (
-	"syscall"
 	"context"
 	"os/exec"
+	"syscall"
 )
 
 func (e *Executor) Kill(execReq *InternalLogEntry) error {
@@ -12,5 +15,11 @@ func (e *Executor) Kill(execReq *InternalLogEntry) error {
 }
 
 func wrapCommandInShell(ctx context.Context, finalParsedCommand string) *exec.Cmd {
-	return exec.CommandContext(ctx, "cmd", "/C", finalParsedCommand)
+	cmd := exec.CommandContext(ctx, "sh", "-c", finalParsedCommand)
+
+	// This is to ensure that the process group is killed when the parent process is killed.
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+
+	return cmd
+
 }

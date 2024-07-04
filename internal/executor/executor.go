@@ -12,13 +12,13 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"bytes"
+	"context"
 	"fmt"
 	"os"
 	"path"
 	"strings"
 	"sync"
 	"time"
-	"context"
 )
 
 var (
@@ -412,6 +412,7 @@ func stepExec(req *ExecutionRequest) bool {
 	appendErrorToStderr(waiterr, req.logEntry)
 
 	if ctx.Err() == context.DeadlineExceeded {
+		log.Warnf("Command timed out: %v", req.finalParsedCommand)
 		// The context timeout should kill the process, but let's make sure.
 		req.executor.Kill(req.logEntry)
 		req.logEntry.TimedOut = true
