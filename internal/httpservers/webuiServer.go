@@ -3,11 +3,12 @@ package httpservers
 import (
 	"encoding/json"
 	//	cors "github.com/OliveTin/OliveTin/internal/cors"
-	log "github.com/sirupsen/logrus"
 	"net/http"
 	"os"
 	"path"
 	"path/filepath"
+
+	log "github.com/sirupsen/logrus"
 
 	config "github.com/OliveTin/OliveTin/internal/config"
 	installationinfo "github.com/OliveTin/OliveTin/internal/installationinfo"
@@ -31,6 +32,7 @@ type webUISettings struct {
 	DefaultIconForBack     string
 	SshFoundKey            string
 	SshFoundConfig         string
+	UrlOnUnauthenticated   string
 }
 
 func findWebuiDir() string {
@@ -115,6 +117,7 @@ func generateWebUISettings(w http.ResponseWriter, r *http.Request) {
 		DefaultIconForBack:     cfg.DefaultIconForBack,
 		SshFoundKey:            installationinfo.Runtime.SshFoundKey,
 		SshFoundConfig:         installationinfo.Runtime.SshFoundConfig,
+		UrlOnUnauthenticated:   cfg.UrlOnUnauthenticated,
 	})
 
 	w.Header().Add("Content-Type", "application/json")
