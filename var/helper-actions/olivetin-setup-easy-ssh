@@ -18,13 +18,16 @@ echo "To use this SSH key with OliveTin, format your action line like this:"
 echo ""
 echo "actions:"
 echo "  - name: My SSH Action"
-echo "    shell: ssh -F /config/ssh/config user@host \"echo 'Hello, world!'\""
+echo "    shell: ssh -F /config/ssh/easy.cfg user@host \"echo 'Hello, world!'\""
 echo ""
-echo "Note: This config has ssh key checking turned off for convenience."
-echo "If validating SSH keys is important to you, you should not use this config."
+echo "Note: This config has ssh key checking turned off so you don't have to "
+echo "keep approving host keys inside the OliveTin container. This should only"
+echo "be used in environments where checking SSH host keys is not important."
+echo ""
+echo "If validating SSH host keys is important, you should not use this config."
 echo ""
 
-cat <<EOF > /config/ssh/config
+cat <<EOF > /config/ssh/easy.cfg
 Host *
 	StrictHostKeyChecking no
 	UserKnownHostsFile=/dev/null

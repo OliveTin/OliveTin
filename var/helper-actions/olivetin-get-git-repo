@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+REPO=$1
+DEST=$2
+
+git -C "$DEST" pull || git clone "$REPO" "$DEST"

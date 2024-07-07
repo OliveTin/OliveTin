@@ -1,4 +1,5 @@
 project_name: OliveTin
+version: 2
 before:
   hooks:
     - go mod download
@@ -98,7 +99,7 @@ dockers:
       - webui
       - var/entities/
       - config.yaml
-      - var/helper-actions/olivetin-setup-easy-ssh
+      - var/helper-actions/
 
   - image_templates:
       - "docker.io/jamesread/olivetin:{{ .Tag }}-arm64"
@@ -115,7 +116,7 @@ dockers:
       - webui
       - var/entities/
       - config.yaml
-      - var/helper-actions/olivetin-setup-easy-ssh
+      - var/helper-actions/
 
 docker_manifests:
   - name_template: docker.io/jamesread/olivetin:{{ .Version }}

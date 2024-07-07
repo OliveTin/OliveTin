@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+
+olivetin-get-git-repo "https://github.com/walkxcode/dashboard-icons.git" /config/custom-webui/dashboard-icons/
