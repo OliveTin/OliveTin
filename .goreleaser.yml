@@ -98,6 +98,7 @@ dockers:
       - webui
       - var/entities/
       - config.yaml
+      - var/helper-actions/olivetin-setup-easy-ssh
 
   - image_templates:
       - "docker.io/jamesread/olivetin:{{ .Tag }}-arm64"
@@ -114,6 +115,7 @@ dockers:
       - webui
       - var/entities/
       - config.yaml
+      - var/helper-actions/olivetin-setup-easy-ssh
 
 docker_manifests:
   - name_template: docker.io/jamesread/olivetin:{{ .Version }}

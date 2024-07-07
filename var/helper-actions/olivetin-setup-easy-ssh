@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+
+mkdir -p /config/ssh/
+
+SSH_KEY=/config/ssh/id_rsa
+
+echo "Documentation for this script: https://docs.olivetin.app/setup-ssh"
+echo ""
+
+if test -f "$SSH_KEY"; then
+	echo "Using existing SSH key at $SSH_KEY, not generating a new one"
+else
+	ssh-keygen -f $SSH_KEY -N ''
+	echo "Your new SSH key has been generated and saved to $SSH_KEY"
+fi
+
+echo "To use this SSH key with OliveTin, format your action line like this:"
+echo ""
+echo "actions:"
+echo "  - name: My SSH Action"
+echo "    shell: ssh -F /config/ssh/config user@host \"echo 'Hello, world!'\""
+echo ""
+echo "Note: This config has ssh key checking turned off for convenience."
+echo "If validating SSH keys is important to you, you should not use this config."
+echo ""
+
+cat <<EOF > /config/ssh/config
+Host *
+	StrictHostKeyChecking no
+	UserKnownHostsFile=/dev/null
+	IdentityFile /config/ssh/id_rsa
+EOF
+
+echo "Copy this line into your ~/.ssh/authorized_keys file to allow OliveTin to connect to your server:"
+cat /config/ssh/id_rsa.pub

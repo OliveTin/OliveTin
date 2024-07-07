@@ -34,11 +34,27 @@ var Runtime = &runtimeInfo{
 	SshFoundConfig:      searchForSshConfig(),
 }
 
+func fileExists(path string) bool {
+	if _, err := os.Stat(path); err == nil {
+		return true
+	}
+
+	return false
+}
+
 func searchForSshKey() string {
+	if fileExists("/config/ssh/id_rsa") {
+		return "/config/ssh/id_rsa"
+	}
+
 	return searchForHomeFile(".ssh/id_rsa")
 }
 
 func searchForSshConfig() string {
+	if fileExists("/config/ssh/config") {
+		return "/config/ssh/config"
+	}
+
 	return searchForHomeFile(".ssh/config")
 }
 
