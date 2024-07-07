@@ -4,7 +4,7 @@ mkdir -p /config/ssh/
 
 SSH_KEY=/config/ssh/id_rsa
 
-echo "Documentation for this script: https://docs.olivetin.app/setup-ssh"
+echo "Documentation for this script: https://docs.olivetin.app/action-ssh-easy.html"
 echo ""
 
 if test -f "$SSH_KEY"; then
