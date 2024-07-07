@@ -11,6 +11,7 @@ RUN mkdir -p /config /config/entities/ /var/www/olivetin \
 		shadow-utils \
 		apprise \
 		jq \
+		git \
 		docker \
 	&& microdnf clean all
 
@@ -24,7 +25,7 @@ VOLUME /config
 
 COPY OliveTin /usr/bin/OliveTin
 COPY webui /var/www/olivetin/
-COPY var/helper-actions/olivetin-setup-easy-ssh /usr/bin/olivetin-setup-easy-ssh
+COPY var/helper-actions/* /usr/bin/
 
 USER olivetin
 

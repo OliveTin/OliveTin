@@ -52,7 +52,7 @@ jobs:
         run: cd integration-tests && make -w
 
       - name: goreleaser
-        uses: goreleaser/goreleaser-action@v5
+        uses: goreleaser/goreleaser-action@v6
         with:
           distribution: goreleaser
           version: latest

@@ -5,7 +5,6 @@
 # Listen on all addresses available, port 1337
 listenAddressSingleHTTPFrontend: 0.0.0.0:1337
 
-
 # Choose from INFO (default), WARN and DEBUG
 logLevel: "INFO"
 
@@ -111,17 +110,44 @@ actions:
       - type: confirmation
         title: Are you sure?!
 
+  # This is an action that runs a script included with OliveTin, that will
+  # download themes. You will still need to set theme "themeName" in your config.
+  #
+  # Docs: https://docs.olivetin.app/themes.html
+  - title: Get OliveTin Theme
+    shell: olivetin-get-theme {{ themeGitRepo }} {{ themeFolderName }}
+    icon: theme
+    arguments:
+      - name: themeGitRepo
+        title: Theme's Git Repository
+        description: Find new themes at https://olivetin.app/themes
+        type: url
+
+      - name: themeFolderName
+        title: Theme's Folder Name
+        type: ascii_identifier
 
   # Sometimes you want to run actions on other servers - don't overcomplicate
-  # it, just use SSH!
+  # it, just use SSH! OliveTin includes a helper to make this easier, which is
+  # entirely optional. You can also setup SSH manually.
   #
+  # Docs: https://docs.olivetin.app/action-ssh-easy.html
   # Docs: https://docs.olivetin.app/action-ssh.html
+  - title: "Setup easy SSH"
+    icon: ssh
+    shell: olivetin-setup-easy-ssh
+    popupOnStart: execution-dialog
+
+  # Here's how to use SSH with the "easy" config, to restart a service on
+  # another server.
+  #
+  # Docs: https://docs.olivetin.app/action-ssh-easy.html
   # Docs: https://docs.olivetin.app/action-service.html
   - title: Restart httpd on server1
     id: restart_httpd
     icon: restart
     timeout: 1
-    shell: ssh root@server1 'service httpd restart'
+    shell: ssh -F /config/ssh/easy.cg root@server1 'service httpd restart'
 
   # Lots of people use OliveTin to build web interfaces for their electronics
   # projects. It's best to install OliveTin as a native package (eg, .deb), and
@@ -272,3 +298,4 @@ dashboards:
 
           - title: 'Start {{ container.Names }}'
           - title: 'Stop {{ container.Names }}'
+themeName: buttonbox

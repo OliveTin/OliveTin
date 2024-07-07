@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+olivetin-get-git-repo "$1" "/config/custom-webui/themes/$2"
+
+if grep -E -q "^themeName" /config/config.yaml; then
+	echo "Updating theme in config file"
+	sed -i "s/^themeName:.*/themeName: $2/g" /config/config.yaml
+else
+	echo "themeName: $2" >> /config/config.yaml
+fi
+
+echo "You must restart OliveTin for theme changes to take effect."
