@@ -380,7 +380,14 @@ func buildEnv(req *ExecutionRequest) []string {
 	ret := append(os.Environ(), "OLIVETIN=1")
 
 	for k, v := range req.Arguments {
-		ret = append(ret, fmt.Sprintf("%v=%v", strings.ToUpper(k), v))
+		varName := fmt.Sprintf("%v", strings.TrimSpace(strings.ToUpper(k)))
+
+		// Skip arguments that might not have a name (eg, confirmation), as this causes weird bugs on Windows.
+		if varName == "" {
+			continue
+		}
+
+		ret = append(ret, fmt.Sprintf("%v=%v", varName, v))
 	}
 
 	return ret
