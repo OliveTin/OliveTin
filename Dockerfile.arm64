@@ -1,4 +1,4 @@
-FROM --platform=linux/arm64 registry.fedoraproject.org/fedora-minimal:38-aarch64
+FROM --platform=linux/arm64 registry.fedoraproject.org/fedora-minimal:40-aarch64
 
 LABEL org.opencontainers.image.source https://github.com/OliveTin/OliveTin
 LABEL org.opencontainers.image.title=OliveTin
