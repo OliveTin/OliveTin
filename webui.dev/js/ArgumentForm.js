@@ -186,7 +186,7 @@ class ArgumentForm extends window.HTMLElement {
   createDomDescription (arg) {
     const domArgumentDescription = document.createElement('span')
     domArgumentDescription.classList.add('argument-description')
-    domArgumentDescription.innerText = arg.description
+    domArgumentDescription.innerHTML = arg.description
 
     return domArgumentDescription
   }
