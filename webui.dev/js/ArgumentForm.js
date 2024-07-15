@@ -74,7 +74,15 @@ class ArgumentForm extends window.HTMLElement {
 
   createDomLabel (arg) {
     const domLbl = document.createElement('label')
-    domLbl.innerText = arg.title + ':'
+
+    const lastChar = arg.title.charAt(arg.title.length - 1)
+
+    if (lastChar === '?' || lastChar === '.' || lastChar === ':') {
+      domLbl.innerHTML = arg.title
+    } else {
+      domLbl.innerHTML = arg.title + ':'
+    }
+
     domLbl.setAttribute('for', arg.name)
 
     return domLbl
