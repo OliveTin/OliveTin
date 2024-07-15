@@ -75,7 +75,7 @@ func startRestAPIServer(globalConfig *config.Config) error {
 	cfg = globalConfig
 
 	log.WithFields(log.Fields{
-		"address": cfg.ListenAddressGrpcActions,
+		"address": cfg.ListenAddressRestActions,
 	}).Info("Starting REST API")
 
 	mux := newMux()

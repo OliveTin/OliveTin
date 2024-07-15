@@ -382,6 +382,10 @@ func (api *oliveTinAPI) GetReadyz(ctx ctx.Context, req *pb.GetReadyzRequest) (*p
 func Start(globalConfig *config.Config, ex *executor.Executor) {
 	cfg = globalConfig
 
+	log.WithFields(log.Fields{
+		"address": cfg.ListenAddressGrpcActions,
+	}).Info("Starting gRPC API")
+
 	lis, err := net.Listen("tcp", cfg.ListenAddressGrpcActions)
 
 	if err != nil {

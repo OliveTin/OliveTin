@@ -20,6 +20,7 @@ import (
 	config "github.com/OliveTin/OliveTin/internal/config"
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
+	"strconv"
 	"os"
 )
 
@@ -76,6 +77,32 @@ func initCliFlags() string {
 	return configDir
 }
 
+func getBasePort() int {
+	var err error
+
+	defaultPort := 1337
+	basePort := defaultPort
+
+	envPort := os.Getenv("PORT")
+
+	if envPort != "" {
+		basePort, err = strconv.Atoi(os.Getenv("PORT"))
+
+		if err != nil {
+			log.Errorf("Error converting port to int. %s", err)
+			os.Exit(1)
+		}
+	}
+
+	if defaultPort != basePort {
+		log.WithFields(log.Fields{
+			"basePort": basePort,
+		}).Debug("Base port")
+	}
+
+	return basePort
+}
+
 func initViperConfig(configDir string) {
 	viper.AutomaticEnv()
 	viper.SetConfigName("config.yaml")
@@ -89,7 +116,7 @@ func initViperConfig(configDir string) {
 		os.Exit(1)
 	}
 
-	cfg = config.DefaultConfig()
+	cfg = config.DefaultConfigWithBasePort(getBasePort())
 
 	viper.WatchConfig()
 	viper.OnConfigChange(func(e fsnotify.Event) {

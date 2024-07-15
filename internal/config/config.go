@@ -1,5 +1,9 @@
 package config
 
+import (
+	"fmt"
+)
+
 // Action represents the core functionality of OliveTin - commands that show up
 // as buttons in the UI.
 type Action struct {
@@ -148,19 +152,18 @@ type DashboardComponent struct {
 	Contents []DashboardComponent
 }
 
-// DefaultConfig gets a new Config structure with sensible default values.
 func DefaultConfig() *Config {
+	return DefaultConfigWithBasePort(1337)
+}
+
+// DefaultConfig gets a new Config structure with sensible default values.
+func DefaultConfigWithBasePort(basePort int) *Config {
 	config := Config{}
 	config.UseSingleHTTPFrontend = true
 	config.PageTitle = "OliveTin"
 	config.ShowFooter = true
 	config.ShowNavigation = true
 	config.ShowNewVersions = true
-	config.ListenAddressSingleHTTPFrontend = "0.0.0.0:1337"
-	config.ListenAddressRestActions = "localhost:1338"
-	config.ListenAddressGrpcActions = "localhost:1339"
-	config.ListenAddressWebUI = "localhost:1340"
-	config.ListenAddressPrometheus = "localhost:1341"
 	config.ExternalRestAddress = "."
 	config.LogLevel = "INFO"
 	config.CheckForUpdates = false
@@ -182,6 +185,12 @@ func DefaultConfig() *Config {
 	config.DefaultIconForActions = "&#x1F600;"
 	config.DefaultIconForDirectories = "&#128193"
 	config.DefaultIconForBack = "&laquo;"
+
+	config.ListenAddressSingleHTTPFrontend = fmt.Sprintf("0.0.0.0:%d", basePort)
+	config.ListenAddressRestActions = fmt.Sprintf("localhost:%d", basePort+1)
+	config.ListenAddressGrpcActions = fmt.Sprintf("localhost:%d", basePort+2)
+	config.ListenAddressWebUI = fmt.Sprintf("localhost:%d", basePort+3)
+	config.ListenAddressPrometheus = fmt.Sprintf("localhost:%d", basePort+4)
 
 	return &config
 }
