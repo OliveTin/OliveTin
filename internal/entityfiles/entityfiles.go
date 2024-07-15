@@ -72,12 +72,12 @@ func loadEntityFileJson(filename string, entityname string) {
 		return
 	}
 
-	data := make([]map[string]string, 0)
+	data := make([]map[string]interface{}, 0)
 
 	decoder := json.NewDecoder(bytes.NewReader(jfile))
 
 	for decoder.More() {
-		d := make(map[string]string)
+		d := make(map[string]interface{})
 
 		err := decoder.Decode(&d)
 
@@ -105,7 +105,7 @@ func loadEntityFileYaml(filename string, entityname string) {
 		return
 	}
 
-	data := make([]map[string]string, 1)
+	data := make([]map[string]interface{}, 1)
 
 	err = yaml.Unmarshal(yfile, &data)
 
@@ -116,7 +116,7 @@ func loadEntityFileYaml(filename string, entityname string) {
 	updateSvFromFile(entityname, data)
 }
 
-func updateSvFromFile(entityname string, data []map[string]string) {
+func updateSvFromFile(entityname string, data []map[string]interface{}) {
 	log.Debugf("updateSvFromFile: %+v", data)
 
 	count := len(data)
@@ -128,12 +128,34 @@ func updateSvFromFile(entityname string, data []map[string]string) {
 	for i, mapp := range data {
 		prefix := "entities." + entityname + "." + fmt.Sprintf("%v", i)
 
-		for k, v := range mapp {
-			sv.Set(prefix+"."+k, v)
-		}
+		serializeValueToSv(prefix, mapp)
 	}
 
 	for _, l := range listeners {
 		l()
+	}
+}
+
+func serializeValueToSv(prefix string, value interface{}) {
+	if m, ok := value.(map[string]interface{}); ok { // if value is a map we need to flatten it
+		serializeMapToSv(prefix, m)
+	} else if s, ok := value.([]interface{}); ok { // if value is a slice we need to flatten it
+		serializeSliceToSv(prefix, s)
+	} else {
+		sv.Set(prefix, fmt.Sprintf("%v", value))
+	}
+}
+
+func serializeMapToSv(prefix string, m map[string]interface{}) {
+	for k, v := range m {
+		serializeValueToSv(prefix+"."+k, v)
+	}
+}
+
+func serializeSliceToSv(prefix string, s []interface{}) {
+	sv.Set(prefix+".count", fmt.Sprintf("%v", len(s)))
+
+	for i, v := range s {
+		serializeValueToSv(prefix+"."+fmt.Sprintf("%v", i), v)
 	}
 }
