@@ -247,7 +247,7 @@ input[type="submit"]
 }
 
 input[type="checkbox"] {
-  place-self: baseline;
+  justify-self: baseline;
 }
 
 fieldset button {
