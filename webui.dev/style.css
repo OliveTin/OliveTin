@@ -246,6 +246,10 @@ input[type="submit"]
   transition: background-color 1s ease, color 1s ease;
 }
 
+input[type="checkbox"] {
+  justify-self: baseline;
+}
+
 fieldset button {
   border-radius: .7em;
 }
@@ -363,10 +367,8 @@ form div.wrapper {
 }
 
 label {
-  min-width: 20%;
   text-align: right;
   display: inline-block;
-  padding-right: 1em;
 }
 
 header {
@@ -405,13 +407,17 @@ input[name="start"]:hover {
   color: black;
 }
 
-span.argument-description {
-  margin-left: 1em;
+div.arguments {
+  display: grid;
+  grid-template-columns: max-content auto auto; /* We don't want the label or the description to wrap, and the input to take up the rest of the space */
+  grid-template-rows: repeat(auto-fill, 1fr);
+  grid-gap: 1em;
+  align-items: center;
+
 }
 
 p.argument-wrapper {
   display: flex;
-  place-items: center;
 }
 
 div.buttons {
@@ -500,16 +506,14 @@ div.display {
     text-align: left;
     margin-bottom: .6em;
     font-weight: bold;
-    min-width: auto;
   }
 
   p.argument-wrapper {
     flex-direction: column;
   }
 
-  span.argument-description {
-    margin-left: 0;
-    margin-top: .6em;
+  div.arguments {
+    grid-template-columns: auto;
   }
 
   dialog {

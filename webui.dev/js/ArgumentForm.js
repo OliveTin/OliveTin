@@ -60,15 +60,10 @@ class ArgumentForm extends window.HTMLElement {
     this.argInputs = []
 
     for (const arg of args) {
-      const domArgumentWrapper = document.createElement('p')
-      domArgumentWrapper.classList.add('argument-wrapper')
-
-      domArgumentWrapper.appendChild(this.createDomLabel(arg))
-      domArgumentWrapper.appendChild(this.createDomSuggestions(arg))
-      domArgumentWrapper.appendChild(this.createDomInput(arg))
-      domArgumentWrapper.appendChild(this.createDomDescription(arg))
-
-      this.domArgs.appendChild(domArgumentWrapper)
+      this.domArgs.appendChild(this.createDomLabel(arg))
+      this.domArgs.appendChild(this.createDomSuggestions(arg))
+      this.domArgs.appendChild(this.createDomInput(arg))
+      this.domArgs.appendChild(this.createDomDescription(arg))
     }
   }
 
@@ -191,7 +186,7 @@ class ArgumentForm extends window.HTMLElement {
   createDomDescription (arg) {
     const domArgumentDescription = document.createElement('span')
     domArgumentDescription.classList.add('argument-description')
-    domArgumentDescription.innerText = arg.description
+    domArgumentDescription.innerHTML = arg.description
 
     return domArgumentDescription
   }
