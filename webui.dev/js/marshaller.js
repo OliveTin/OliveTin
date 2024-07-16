@@ -462,6 +462,10 @@ function marshalDisplay (item, fieldset) {
   display.innerHTML = item.title
   display.classList.add('display')
 
+  if (item.cssClass !== '') {
+    display.classList.add(item.cssClass)
+  }
+
   fieldset.appendChild(display)
 }
 

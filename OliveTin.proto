@@ -55,6 +55,7 @@ message DashboardComponent {
 	string type = 2;
 	repeated DashboardComponent contents = 3;
 	string icon = 4;
+	string css_class = 5;
 }
 
 message StartActionRequest {

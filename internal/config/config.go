@@ -149,6 +149,7 @@ type DashboardComponent struct {
 	Type     string
 	Entity   string
 	Icon     string
+	CssClass string
 	Contents []DashboardComponent
 }
 
