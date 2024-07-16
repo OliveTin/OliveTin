@@ -30,6 +30,7 @@ func getDashboardComponentContents(dashboard *config.DashboardComponent, cfg *co
 			Type:     getDashboardComponentType(&subitem),
 			Contents: getDashboardComponentContents(&subitem, cfg),
 			Icon:     getDashboardComponentIcon(&subitem, cfg),
+			CssClass: subitem.CssClass,
 		}
 
 		ret = append(ret, newitem)

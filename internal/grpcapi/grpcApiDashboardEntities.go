@@ -25,6 +25,7 @@ func buildEntityFieldset(tpl *config.DashboardComponent, entityTitle string, ent
 		Title:    sv.ReplaceEntityVars(prefix, tpl.Title),
 		Type:     "fieldset",
 		Contents: buildEntityFieldsetContents(tpl.Contents, prefix),
+		CssClass: sv.ReplaceEntityVars(prefix, tpl.CssClass),
 	}
 }
 
@@ -33,6 +34,7 @@ func buildEntityFieldsetContents(contents []config.DashboardComponent, prefix st
 
 	for _, subitem := range contents {
 		clone := &pb.DashboardComponent{}
+		clone.CssClass = sv.ReplaceEntityVars(prefix, subitem.CssClass)
 
 		if subitem.Type == "" || subitem.Type == "link" {
 			clone.Type = "link"
