@@ -1,13 +1,22 @@
-compile: daemon-compile-x64-lin
+compile: daemon-compile-currentenv
+
+daemon-compile-currentenv:
+	go build -o OliveTin github.com/OliveTin/OliveTin/cmd/OliveTin
 
 daemon-compile-armhf:
-	GOARCH=arm GOARM=6 go build -o OliveTin.armhf github.com/OliveTin/OliveTin/cmd/OliveTin
+	go env -w GOARCH=arm GOARM=6
+	go build -o OliveTin.armhf github.com/OliveTin/OliveTin/cmd/OliveTin
+	go env -u GOARCH GOARM
 
 daemon-compile-x64-lin:
-	GOOS=linux go build -o OliveTin github.com/OliveTin/OliveTin/cmd/OliveTin
+	go env -w GOOS=linux
+	go build -o OliveTin github.com/OliveTin/OliveTin/cmd/OliveTin
+	go env -u GOOS
 
 daemon-compile-x64-win:
-	GOOS=windows GOARCH=amd64 go build -o OliveTin.exe github.com/OliveTin/OliveTin/cmd/OliveTin
+	go env -w GOOS=windows GOARCH=amd64
+	go build -o OliveTin.exe github.com/OliveTin/OliveTin/cmd/OliveTin
+	go env -u GOOS GOARCH
 
 daemon-compile: daemon-compile-armhf daemon-compile-x64-lin daemon-compile-x64-win
 
@@ -27,7 +36,7 @@ it:
 	cd integration-tests && make
 
 githooks:
-	cp -v .githooks/* .git/hooks/
+	git config --local core.hooksPath .githooks
 
 go-tools:
 	go install "github.com/bufbuild/buf/cmd/buf"
@@ -68,8 +77,8 @@ devcontainer: compile podman-image podman-container
 
 webui-codestyle:
 	cd webui.dev && npm install
-	cd webui.dev && ./node_modules/.bin/eslint main.js js/*
-	cd webui.dev && ./node_modules/.bin/stylelint style.css
+	cd webui.dev && npx eslint main.js js/*
+	cd webui.dev && npx stylelint style.css
 
 webui-dist:
 	rm -rf webui webui.dev/dist
