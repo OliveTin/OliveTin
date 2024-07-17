@@ -1,3 +1,7 @@
+define delete-files
+	python -c "import shutil;shutil.rmtree('$(1)', ignore_errors=True)"
+endef
+
 compile: daemon-compile-currentenv
 
 daemon-compile-currentenv:
@@ -81,12 +85,19 @@ webui-codestyle:
 	cd webui.dev && npx stylelint style.css
 
 webui-dist:
-	rm -rf webui webui.dev/dist
+	$(call delete-files,webui)
+	$(call delete-files,webui.dev/dist)
 	cd webui.dev && npm install
-	cd webui.dev && parcel build --public-url "." && mv dist ../webui
-	cp webui.dev/*.png webui/
+	cd webui.dev && npx parcel build --public-url "."
+	python -c "import shutil;shutil.move('webui.dev/dist', 'webui')"
+	python -c "import shutil;import glob;[shutil.copy(f, 'webui') for f in glob.glob('webui.dev/*.png')]"
 
 clean:
-	rm -rf dist OliveTin OliveTin.armhf OliveTin.exe reports gen
+	$(call delete-files,dist)
+	$(call delete-files,OliveTin)
+	$(call delete-files,OliveTin.armhf)
+	$(call delete-files,OliveTin.exe)
+	$(call delete-files,reports)
+	$(call delete-files,gen)
 
 .PHONY: grpc
