@@ -254,16 +254,19 @@ dashboards:
   # Top level items are dashboards.
   - title: My Servers
     contents:
-      # The contents of a dashboard will try to look for an action with a
-      # matching title IF the `contents: ` property is empty.
-      - title: Ping All Servers
-
-      # If you create an item with some "contents:", OliveTin will show that as
-      # directory.
-      - title: Hypervisors
+      - title: All Servers
+        type: fieldset
         contents:
-          - title: Ping hypervisor1
-          - title: Ping hypervisor2
+          # The contents of a dashboard will try to look for an action with a
+          # matching title IF the `contents: ` property is empty.
+          - title: Ping All Servers
+
+          # If you create an item with some "contents:", OliveTin will show that as
+          # directory.
+          - title: Hypervisors
+            contents:
+              - title: Ping hypervisor1
+              - title: Ping hypervisor2
 
       # If you specify `type: fieldset` and some `contents`, it will show your
       # actions grouped together without a folder.
