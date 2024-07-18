@@ -44,3 +44,10 @@ func TestFindAcl(t *testing.T) {
 	assert.NotNil(t, c.FindAcl("Testing ACL"), "Find a ACL that should exist")
 	assert.Nil(t, c.FindAcl("Chocolate Cake"), "Find a ACL that does not exist")
 }
+
+func TestSetDir(t *testing.T) {
+	c := DefaultConfig()
+	c.SetDir("test")
+
+	assert.Equal(t, "test", c.GetDir(), "SetDir")
+}
