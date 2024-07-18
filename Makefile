@@ -1,13 +1,26 @@
-compile: daemon-compile-x64-lin
+define delete-files
+	python -c "import shutil;shutil.rmtree('$(1)', ignore_errors=True)"
+endef
+
+compile: daemon-compile-currentenv
+
+daemon-compile-currentenv:
+	go build -o OliveTin github.com/OliveTin/OliveTin/cmd/OliveTin
 
 daemon-compile-armhf:
-	GOARCH=arm GOARM=6 go build -o OliveTin.armhf github.com/OliveTin/OliveTin/cmd/OliveTin
+	go env -w GOARCH=arm GOARM=6
+	go build -o OliveTin.armhf github.com/OliveTin/OliveTin/cmd/OliveTin
+	go env -u GOARCH GOARM
 
 daemon-compile-x64-lin:
-	GOOS=linux go build -o OliveTin github.com/OliveTin/OliveTin/cmd/OliveTin
+	go env -w GOOS=linux
+	go build -o OliveTin github.com/OliveTin/OliveTin/cmd/OliveTin
+	go env -u GOOS
 
 daemon-compile-x64-win:
-	GOOS=windows GOARCH=amd64 go build -o OliveTin.exe github.com/OliveTin/OliveTin/cmd/OliveTin
+	go env -w GOOS=windows GOARCH=amd64
+	go build -o OliveTin.exe github.com/OliveTin/OliveTin/cmd/OliveTin
+	go env -u GOOS GOARCH
 
 daemon-compile: daemon-compile-armhf daemon-compile-x64-lin daemon-compile-x64-win
 
@@ -27,7 +40,7 @@ it:
 	cd integration-tests && make
 
 githooks:
-	cp -v .githooks/* .git/hooks/
+	git config --local core.hooksPath .githooks
 
 go-tools:
 	go install "github.com/bufbuild/buf/cmd/buf"
@@ -68,16 +81,23 @@ devcontainer: compile podman-image podman-container
 
 webui-codestyle:
 	cd webui.dev && npm install
-	cd webui.dev && ./node_modules/.bin/eslint main.js js/*
-	cd webui.dev && ./node_modules/.bin/stylelint style.css
+	cd webui.dev && npx eslint main.js js/*
+	cd webui.dev && npx stylelint style.css
 
 webui-dist:
-	rm -rf webui webui.dev/dist
+	$(call delete-files,webui)
+	$(call delete-files,webui.dev/dist)
 	cd webui.dev && npm install
-	cd webui.dev && parcel build --public-url "." && mv dist ../webui
-	cp webui.dev/*.png webui/
+	cd webui.dev && npx parcel build --public-url "."
+	python -c "import shutil;shutil.move('webui.dev/dist', 'webui')"
+	python -c "import shutil;import glob;[shutil.copy(f, 'webui') for f in glob.glob('webui.dev/*.png')]"
 
 clean:
-	rm -rf dist OliveTin OliveTin.armhf OliveTin.exe reports gen
+	$(call delete-files,dist)
+	$(call delete-files,OliveTin)
+	$(call delete-files,OliveTin.armhf)
+	$(call delete-files,OliveTin.exe)
+	$(call delete-files,reports)
+	$(call delete-files,gen)
 
 .PHONY: grpc

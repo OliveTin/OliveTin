@@ -22,13 +22,21 @@ the general direction and roadmap of this project without asking.
 
 The preferred way to communicate is probably via Discord or GitHub issues.
 
-=== Dev environment setup and clean build - Fedora
+=== Dev environment setup and clean build
 
 ```
+# Step1: setup compile env
+# - Fedora
 dnf install git go protobuf-compiler make -y
+# - Windows with chocolatey
+choco install git go protoc make python nodejs-lts -y
+
+# Step2: clone and setup repo
 git clone https://github.com/OliveTin/OliveTin.git
 cd OliveTin
+make githooks
 
+# Step3: compile binary for current dev env (OS, ARCH)
 # `make grpc` will also run `make go-tools`, which installs "buf". This binary
 # will be put in your GOPATH/bin/, which should be on your path. buf is used to
 # generate the protobuf / grpc stubs.
