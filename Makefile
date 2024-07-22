@@ -31,7 +31,8 @@ daemon-codestyle:
 	gocritic check ./...
 
 daemon-unittests:
-	mkdir -p reports
+	$(call delete-files,reports)
+	mkdir reports
 	go test ./... -coverprofile reports/unittests.out
 	go tool cover -html=reports/unittests.out -o reports/unittests.html
 
