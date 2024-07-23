@@ -15,7 +15,7 @@ import (
 var (
 	metricConfigActionCount = promauto.NewGauge(prometheus.GaugeOpts{
 		Name: "olivetin_config_action_count",
-		Help: "Then number of actions in the config file",
+		Help: "The number of actions in the config file",
 	})
 
 	metricConfigReloadedCount = promauto.NewCounter(prometheus.CounterOpts{
