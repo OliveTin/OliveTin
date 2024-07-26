@@ -22,7 +22,7 @@ import (
 )
 
 var (
-	metricActionsRequested = promauto.NewGauge(prometheus.GaugeOpts{
+	metricActionsRequested = promauto.NewCounter(prometheus.CounterOpts{
 		Name: "olivetin_actions_requested_count",
 		Help: "The actions requested count",
 	})

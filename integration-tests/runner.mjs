@@ -25,6 +25,10 @@ class OliveTinTestRunner {
   baseUrl() {
     return this.BASE_URL
   }
+
+  metricsUrl() {
+    return new URL('metrics', this.baseUrl());
+  }
 }
 
 class OliveTinTestRunnerStartLocalProcess extends OliveTinTestRunner {
