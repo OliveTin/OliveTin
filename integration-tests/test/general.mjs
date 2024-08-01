@@ -44,18 +44,18 @@ describe('config: general', function () {
     expect(buttons).to.have.length(8)
   })
 
-  it('Start date action (popup)', async function() {
+  it('Start dir action (popup)', async function () {
     await getRootAndWait()
 
-    const buttons = await webdriver.findElements(By.css('[title="date-popup"]'))
+    const buttons = await webdriver.findElements(By.css('[title="dir-popup"]'))
 
     expect(buttons).to.have.length(1)
 
-    const buttonDate = buttons[0]
+    const buttonCMD = buttons[0]
 
-    expect(buttonDate).to.not.be.null
+    expect(buttonCMD).to.not.be.null
 
-    buttonDate.click()
+    buttonCMD.click()
 
     const dialog = await webdriver.findElement(By.id('execution-results-popup'))
     expect(await dialog.isDisplayed()).to.be.true
@@ -68,18 +68,18 @@ describe('config: general', function () {
     expect(await dialogErr.isDisplayed()).to.be.false
   })
 
-  it('Start date action (passive)', async function() {
+  it('Start cd action (passive)', async function () {
     await getRootAndWait()
 
-    const buttons = await webdriver.findElements(By.css('[title="date-passive"]'))
+    const buttons = await webdriver.findElements(By.css('[title="cd-passive"]'))
 
     expect(buttons).to.have.length(1)
 
-    const buttonDate = buttons[0]
+    const buttonCMD = buttons[0]
 
-    expect(buttonDate).to.not.be.null
+    expect(buttonCMD).to.not.be.null
 
-    buttonDate.click()
+    buttonCMD.click()
 
     const dialog = await webdriver.findElement(By.id('execution-results-popup'))
     expect(await dialog.isDisplayed()).to.be.false
