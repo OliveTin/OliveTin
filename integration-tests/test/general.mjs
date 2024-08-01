@@ -61,7 +61,7 @@ describe('config: general', function () {
     expect(await dialog.isDisplayed()).to.be.true
 
     const title = await webdriver.findElement(By.id('execution-dialog-title'))
-    expect(await title.getAttribute('innerText')).to.be.equal('date-popup')
+    expect(await webdriver.wait(until.elementTextIs(title, 'dir-popup'), 2000))
 
     const dialogErr = await webdriver.findElement(By.id('big-error'))
     expect(dialogErr).to.not.be.null
