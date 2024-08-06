@@ -4,9 +4,10 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 
-	log "github.com/sirupsen/logrus"
 	"os"
-	"path"
+	"path/filepath"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/spf13/viper"
 )
@@ -14,7 +15,7 @@ import (
 var (
 	metricConfigActionCount = promauto.NewGauge(prometheus.GaugeOpts{
 		Name: "olivetin_config_action_count",
-		Help: "Then number of actions in the config file",
+		Help: "The number of actions in the config file",
 	})
 
 	metricConfigReloadedCount = promauto.NewCounter(prometheus.CounterOpts{
@@ -38,7 +39,7 @@ func Reload(cfg *Config) {
 	metricConfigReloadedCount.Inc()
 	metricConfigActionCount.Set(float64(len(cfg.Actions)))
 
-	cfg.SetDir(path.Dir(viper.ConfigFileUsed()))
+	cfg.SetDir(filepath.Dir(viper.ConfigFileUsed()))
 	cfg.Sanitize()
 
 	for _, l := range listeners {

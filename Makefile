@@ -5,7 +5,7 @@ endef
 compile: daemon-compile-currentenv
 
 daemon-compile-currentenv:
-	go build -o OliveTin github.com/OliveTin/OliveTin/cmd/OliveTin
+	go build github.com/OliveTin/OliveTin/cmd/OliveTin
 
 daemon-compile-armhf:
 	go env -w GOARCH=arm GOARM=6
@@ -31,7 +31,8 @@ daemon-codestyle:
 	gocritic check ./...
 
 daemon-unittests:
-	mkdir -p reports
+	$(call delete-files,reports)
+	mkdir reports
 	go test ./... -coverprofile reports/unittests.out
 	go tool cover -html=reports/unittests.out -o reports/unittests.html
 

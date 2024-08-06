@@ -22,7 +22,7 @@ import (
 )
 
 var (
-	metricActionsRequested = promauto.NewGauge(prometheus.GaugeOpts{
+	metricActionsRequested = promauto.NewCounter(prometheus.CounterOpts{
 		Name: "olivetin_actions_requested_count",
 		Help: "The actions requested count",
 	})
@@ -135,11 +135,6 @@ func (e *Executor) AddListener(m listener) {
 // ExecRequest processes an ExecutionRequest
 func (e *Executor) ExecRequest(req *ExecutionRequest) (*sync.WaitGroup, string) {
 	req.executor = e
-
-	// req.UUID is now set by the client, so that they can track the request
-	// from start to finish. This means that a malicious client could send
-	// duplicate UUIDs (or just random strings), but this is the only way.
-
 	req.logEntry = &InternalLogEntry{
 		DatetimeStarted:     time.Now(),
 		ExecutionTrackingID: req.TrackingID,
@@ -152,11 +147,13 @@ func (e *Executor) ExecRequest(req *ExecutionRequest) (*sync.WaitGroup, string) 
 		ActionIcon:          "&#x1f4a9;",
 	}
 
-	_, foundLog := e.Logs[req.TrackingID]
+	_, isDuplicate := e.Logs[req.TrackingID]
 
-	if foundLog || req.TrackingID == "" {
+	if isDuplicate || req.TrackingID == "" {
 		req.TrackingID = uuid.NewString()
 	}
+
+	log.Tracef("executor.ExecRequest(): %v", req)
 
 	e.Logs[req.TrackingID] = req.logEntry
 
