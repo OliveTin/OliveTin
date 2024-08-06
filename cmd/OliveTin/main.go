@@ -20,8 +20,8 @@ import (
 	config "github.com/OliveTin/OliveTin/internal/config"
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
-	"strconv"
 	"os"
+	"strconv"
 )
 
 var (
