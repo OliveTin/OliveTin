@@ -148,7 +148,7 @@ func processDebounce(ctx *watchContext) {
 		debounceWriteLog[ctx.filename] = logEntry
 	}
 
-	log.Infof("fsnotify event %+v", logEntry)
+	log.Debugf("fsnotify event %+v", logEntry)
 
 	if logEntry.callbackComplete || logEntry.callbackWrapper == nil {
 		log.Debugf("fsnotify event callback queued within debounce delay: %v", ctx.filename)
