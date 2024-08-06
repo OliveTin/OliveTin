@@ -24,12 +24,12 @@ actions:
   shell: sleep 5
   icon: "&#x1F62A"
 
-- title: date-popup
-  shell: date
+- title: dir-popup
+  shell: dir
   popupOnStart: execution-dialog-stdout-only
 
-- title: date-passive
-  shell: date
+- title: cd-passive
+  shell: cd
 
 - title: "Run Ansible Playbook"
   icon: "&#x1F1E6"
