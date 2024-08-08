@@ -8,6 +8,10 @@ export class ActionStatusDisplay {
     parentElement.appendChild(this.exitCodeElement)
   }
 
+  getText () {
+    return this.statusElement.innerText
+  }
+
   update (logEntry) {
     this.statusElement.classList.remove(...this.statusElement.classList)
 

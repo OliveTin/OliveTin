@@ -51,7 +51,6 @@ export class ExecutionDialog {
 
     this.domIcon.innerText = ''
     this.domTitle.innerText = 'Waiting for result... '
-    this.domStatus.className = ''
     this.domDuration.innerText = ''
 
     //    window.terminal.close()
