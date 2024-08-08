@@ -17,10 +17,16 @@ dialog {
   padding: 0;
 }
 
+dialog[open] {
+  display: flex;
+  flex-direction: column;
+}
+
 dialog.big {
   max-width: 100vw;
   width: 100vw;
   height: 100vh;
+  max-height: 100dvh;
   border: none;
   margin: 0;
 }
@@ -224,11 +230,6 @@ div.entity h2 {
 details {
   display: inline-block;
   flex-grow: 1;
-}
-
-details[open] {
-  margin-top: 1em;
-  display: block;
 }
 
 /* General Buttons */
@@ -471,22 +472,17 @@ div.display {
   font-size: small;
 }
 
-#execution-dialog-output {
-  display: flex;
-  flex-direction: row;
-  justify-content: start;
-}
-
 #execution-dialog-xterm {
-  overflow: auto;
-}
-
-.xterm .xterm-viewport {
-  overflow-y: auto !important;
+  flex-grow: 1;
 }
 
 .padded-content {
   padding: 1em;
+}
+
+.padded-content-sides {
+  padding-left: 1em;
+  padding-right: 1em;
 }
 
 .ta-left {

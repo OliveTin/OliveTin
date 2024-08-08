@@ -2,6 +2,7 @@ import './ActionButton.js' // To define action-button
 import { ExecutionDialog } from './ExecutionDialog.js'
 import { Terminal } from '@xterm/xterm'
 import { FitAddon } from '@xterm/addon-fit'
+import { ActionStatusDisplay } from './ActionStatusDisplay.js'
 
 /**
  * This is a weird function that just sets some globals.
@@ -510,21 +511,13 @@ export function marshalLogsJsonToHtml (json) {
     const tpl = document.getElementById('tplLogRow')
     const row = tpl.content.querySelector('tr').cloneNode(true)
 
-    let logTableExitCode = logEntry.exitCode
-
-    if (logEntry.exitCode === 0) {
-      logTableExitCode = 'OK'
-    }
-
-    if (logEntry.timedOut) {
-      logTableExitCode += ' (timed out)'
-    }
-
     row.querySelector('.timestamp').innerText = logEntry.datetimeStarted
     row.querySelector('.content').innerText = logEntry.actionTitle
     row.querySelector('.icon').innerHTML = logEntry.actionIcon
-    row.querySelector('.exit-code').innerText = logTableExitCode
     row.setAttribute('title', logEntry.actionTitle)
+
+    const exitCodeDisplay = new ActionStatusDisplay(row.querySelector('.exit-code'))
+    exitCodeDisplay.update(logEntry)
 
     row.querySelector('.content').onclick = () => {
       window.executionDialog.reset()

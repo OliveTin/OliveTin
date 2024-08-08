@@ -28,13 +28,11 @@ export async function getRootAndWait() {
 }
 
 export async function requireExecutionDialogStatus (webdriver, expected) {
-  const domStatus = await webdriver.findElement(By.id('execution-dialog-status'))
-
   // It seems that webdriver will not give us text if domStatus is hidden (which it will be until complete)
   await webdriver.executeScript('window.executionDialog.domExecutionDetails.hidden = false')
 
   await webdriver.wait(new Condition('wait for action to be running', async function () {
-    const actual = await domStatus.getText()
+    const actual = await webdriver.executeScript('return window.executionDialog.domStatus.getText()')
 
     if (actual === expected) {
       return true
