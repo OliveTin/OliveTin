@@ -2,6 +2,7 @@ export class ActionStatusDisplay {
   constructor (parentElement) {
     this.exitCodeElement = document.createElement('span')
     this.statusElement = document.createElement('span')
+    this.statusElement.innerText = 'unknown'
 
     parentElement.innerText = ''
     parentElement.appendChild(this.statusElement)
