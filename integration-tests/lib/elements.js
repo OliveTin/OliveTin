@@ -32,7 +32,7 @@ export async function requireExecutionDialogStatus (webdriver, expected) {
   await webdriver.executeScript('window.executionDialog.domExecutionDetails.hidden = false')
 
   await webdriver.wait(new Condition('wait for action to be running', async function () {
-    const actual = await webdriver.executeScript('window.executionDialog.domStatus.getText()')
+    const actual = await webdriver.executeScript('return window.executionDialog.domStatus.getText()')
 
     if (actual === expected) {
       return true
