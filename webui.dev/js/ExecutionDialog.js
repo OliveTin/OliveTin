@@ -180,7 +180,6 @@ export class ExecutionDialog {
 
     if (!this.hideDetailsOnResult) {
       this.domExecutionDetails.hidden = false
-    } else {
     }
 
     this.executionTrackingId = res.logEntry.executionTrackingId
