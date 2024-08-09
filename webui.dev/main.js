@@ -127,6 +127,7 @@ function processWebuiSettingsJson (settings) {
 
 function main () {
   initMarshaller()
+
   setupLogSearchBox()
 
   window.addEventListener('EventConfigChanged', fetchGetDashboardComponents)
