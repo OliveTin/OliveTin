@@ -105,6 +105,12 @@ function processWebuiSettingsJson (settings) {
     document.querySelector('footer[title="footer"]').style.display = 'none'
   }
 
+  if (settings.EnableCustomJs) {
+    const script = document.createElement('script')
+    script.src = './custom-webui/custom.js'
+    document.head.appendChild(script)
+  }
+
   window.pageTitle = 'OliveTin'
 
   if (settings.PageTitle) {
