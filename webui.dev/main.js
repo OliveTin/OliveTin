@@ -8,7 +8,6 @@ import {
   refreshServerConnectionLabel
 } from './js/marshaller.js'
 import { checkWebsocketConnection } from './js/websocket.js'
-import { OutputTerminal } from './js/OutputTerminal.js'
 
 function searchLogs (e) {
   document.getElementById('searchLogsClear').disabled = false
@@ -122,8 +121,6 @@ function processWebuiSettingsJson (settings) {
 
 function main () {
   initMarshaller()
-
-  window.terminal = new OutputTerminal()
 
   setupLogSearchBox()
 

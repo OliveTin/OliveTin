@@ -2,8 +2,8 @@ import { Terminal } from '@xterm/xterm'
 import { FitAddon } from '@xterm/addon-fit'
 
 export class OutputTerminal {
-  init () {
-    this.termianl = new Terminal({
+  constructor () {
+    this.terminal = new Terminal({
       convertEol: true
     })
 

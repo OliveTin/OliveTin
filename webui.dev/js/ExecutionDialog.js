@@ -1,4 +1,5 @@
 import { ActionStatusDisplay } from './ActionStatusDisplay.js'
+import { OutputTerminal } from './OutputTerminal.js'
 
 // This ExecutionDialog is NOT a custom HTML element, but rather just picks up
 // the <dialog /> element out of index.html and just re-uses that - as only
@@ -23,6 +24,7 @@ export class ExecutionDialog {
     this.domExecutionBasics = document.getElementById('execution-dialog-basics')
     this.domExecutionDetails = document.getElementById('execution-dialog-details')
 
+    window.terminal = new OutputTerminal()
     window.terminal.open(this.domOutput)
   }
 
@@ -113,7 +115,7 @@ export class ExecutionDialog {
   executionTick () {
     this.executionSeconds++
 
-    this.updateDuration(this.executionSeconds + ' seconds ago', '')
+    this.updateDuration(this.executionSeconds + ' seconds', '')
   }
 
   hideEverythingApartFromOutput () {
