@@ -326,7 +326,7 @@ func stepLogStart(req *ExecutionRequest) bool {
 	log.WithFields(log.Fields{
 		"actionTitle": req.logEntry.ActionTitle,
 		"timeout":     req.Action.Timeout,
-	}).Infof("Action starting")
+	}).Infof("Action started")
 
 	return true
 }
@@ -416,7 +416,10 @@ func stepExec(req *ExecutionRequest) bool {
 	appendErrorToStderr(waiterr, req.logEntry)
 
 	if ctx.Err() == context.DeadlineExceeded {
-		log.Warnf("Command timed out: %v", req.finalParsedCommand)
+		log.WithFields(log.Fields{
+			"actionTitle": req.logEntry.ActionTitle,
+		}).Warnf("Action timed out")
+
 		// The context timeout should kill the process, but let's make sure.
 		req.executor.Kill(req.logEntry)
 		req.logEntry.TimedOut = true
