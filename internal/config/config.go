@@ -103,6 +103,7 @@ type Config struct {
 	ShowFooter                      bool
 	ShowNavigation                  bool
 	ShowNewVersions                 bool
+	EnableCustomJs                  bool
 	AuthJwtCookieName               string
 	AuthJwtAud                      string
 	AuthJwtDomain                   string
@@ -165,6 +166,7 @@ func DefaultConfigWithBasePort(basePort int) *Config {
 	config.ShowFooter = true
 	config.ShowNavigation = true
 	config.ShowNewVersions = true
+	config.EnableCustomJs = false
 	config.ExternalRestAddress = "."
 	config.LogLevel = "INFO"
 	config.CheckForUpdates = false
