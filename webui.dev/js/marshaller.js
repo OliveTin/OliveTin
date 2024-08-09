@@ -1,7 +1,5 @@
 import './ActionButton.js' // To define action-button
 import { ExecutionDialog } from './ExecutionDialog.js'
-import { Terminal } from '@xterm/xterm'
-import { FitAddon } from '@xterm/addon-fit'
 import { ActionStatusDisplay } from './ActionStatusDisplay.js'
 
 /**
@@ -10,14 +8,6 @@ import { ActionStatusDisplay } from './ActionStatusDisplay.js'
 export function initMarshaller () {
   window.changeDirectory = changeDirectory
   window.showSection = showSection
-
-  window.terminal = new Terminal({
-    convertEol: true
-  })
-
-  const fitAddon = new FitAddon()
-  window.terminal.loadAddon(fitAddon)
-  window.terminal.fit = fitAddon
 
   window.executionDialog = new ExecutionDialog()
 

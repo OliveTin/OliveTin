@@ -38,7 +38,7 @@ export class ExecutionDialog {
       this.dlg.classList.add('big')
     }
 
-    window.terminal.fit.fit()
+    window.terminal.fit()
   }
 
   reset () {
@@ -64,7 +64,7 @@ export class ExecutionDialog {
     this.domExecutionDetails.hidden = true
 
     window.terminal.reset()
-    window.terminal.fit.fit()
+    window.terminal.fit()
   }
 
   show (actionButton) {
@@ -198,7 +198,7 @@ export class ExecutionDialog {
 
     window.terminal.reset()
     window.terminal.write(res.logEntry.output, () => {
-      window.terminal.fit.fit()
+      window.terminal.fit()
     })
   }
 
