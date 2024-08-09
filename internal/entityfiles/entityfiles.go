@@ -32,7 +32,8 @@ func SetupEntityFileWatchers(cfg *config.Config) {
 		configDir = configDirVar
 	}
 
-	for _, ef := range cfg.Entities {
+	for entityIndex, _ := range cfg.Entities { // #337 - iterate by key, not by value
+		ef := cfg.Entities[entityIndex]
 		p := ef.File
 
 		if !filepath.IsAbs(p) {
