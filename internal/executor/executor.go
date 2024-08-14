@@ -37,8 +37,10 @@ type ActionBinding struct {
 // Executor represents a helper class for executing commands. It's main method
 // is ExecRequest
 type Executor struct {
-	Logs           map[string]*InternalLogEntry
+	logs           map[string]*InternalLogEntry
 	LogsByActionId map[string][]*InternalLogEntry
+
+	logmutex sync.RWMutex
 
 	MapActionIdToBinding     map[string]*ActionBinding
 	MapActionIdToBindingLock sync.RWMutex
@@ -100,7 +102,7 @@ type executorStepFunc func(*ExecutionRequest) bool
 func DefaultExecutor(cfg *config.Config) *Executor {
 	e := Executor{}
 	e.Cfg = cfg
-	e.Logs = make(map[string]*InternalLogEntry)
+	e.logs = make(map[string]*InternalLogEntry)
 	e.LogsByActionId = make(map[string][]*InternalLogEntry)
 	e.MapActionIdToBinding = make(map[string]*ActionBinding)
 
@@ -132,6 +134,52 @@ func (e *Executor) AddListener(m listener) {
 	e.listeners = append(e.listeners, m)
 }
 
+func (e *Executor) GetLogsCopy() map[string]*InternalLogEntry {
+	e.logmutex.RLock()
+
+	copy := make(map[string]*InternalLogEntry)
+
+	for k, v := range e.logs {
+		copy[k] = v
+	}
+
+	e.logmutex.RUnlock()
+
+	return copy
+}
+
+func (e *Executor) GetLog(trackingID string) (*InternalLogEntry, bool) {
+	e.logmutex.RLock()
+
+	entry, found := e.logs[trackingID]
+
+	e.logmutex.RUnlock()
+
+	return entry, found
+}
+
+func (e *Executor) GetLogsByActionId(actionId string) []*InternalLogEntry {
+	e.logmutex.RLock()
+
+	logs, found := e.LogsByActionId[actionId]
+
+	e.logmutex.RUnlock()
+
+	if !found {
+		return make([]*InternalLogEntry, 0)
+	}
+
+	return logs
+}
+
+func (e *Executor) SetLog(trackingID string, entry *InternalLogEntry) {
+	e.logmutex.Lock()
+
+	e.logs[trackingID] = entry
+
+	e.logmutex.Unlock()
+}
+
 // ExecRequest processes an ExecutionRequest
 func (e *Executor) ExecRequest(req *ExecutionRequest) (*sync.WaitGroup, string) {
 	req.executor = e
@@ -147,7 +195,7 @@ func (e *Executor) ExecRequest(req *ExecutionRequest) (*sync.WaitGroup, string) 
 		ActionIcon:          "&#x1f4a9;",
 	}
 
-	_, isDuplicate := e.Logs[req.TrackingID]
+	_, isDuplicate := e.GetLog(req.TrackingID)
 
 	if isDuplicate || req.TrackingID == "" {
 		req.TrackingID = uuid.NewString()
@@ -155,7 +203,7 @@ func (e *Executor) ExecRequest(req *ExecutionRequest) (*sync.WaitGroup, string) 
 
 	log.Tracef("executor.ExecRequest(): %v", req)
 
-	e.Logs[req.TrackingID] = req.logEntry
+	e.SetLog(req.TrackingID, req.logEntry)
 
 	wg := new(sync.WaitGroup)
 	wg.Add(1)
@@ -185,11 +233,15 @@ func (e *Executor) execChain(req *ExecutionRequest) {
 func getConcurrentCount(req *ExecutionRequest) int {
 	concurrentCount := 0
 
-	for _, log := range req.executor.LogsByActionId[req.Action.ID] {
+	req.executor.logmutex.RLock()
+
+	for _, log := range req.executor.GetLogsByActionId(req.Action.ID) {
 		if !log.ExecutionFinished {
 			concurrentCount += 1
 		}
 	}
+
+	req.executor.logmutex.RUnlock()
 
 	return concurrentCount
 }
@@ -232,7 +284,7 @@ func getExecutionsCount(rate config.RateSpec, req *ExecutionRequest) int {
 
 	then := time.Now().Add(-duration)
 
-	for _, logEntry := range req.executor.LogsByActionId[req.Action.ID] {
+	for _, logEntry := range req.executor.GetLogsByActionId(req.Action.ID) {
 		if logEntry.DatetimeStarted.After(then) && !logEntry.Blocked {
 
 			executions += 1
@@ -308,11 +360,15 @@ func stepRequestAction(req *ExecutionRequest) bool {
 	req.logEntry.ActionIcon = req.Action.Icon
 	req.logEntry.ActionId = req.Action.ID
 
+	req.executor.logmutex.Lock()
+
 	if _, containsKey := req.executor.LogsByActionId[req.Action.ID]; !containsKey {
 		req.executor.LogsByActionId[req.Action.ID] = make([]*InternalLogEntry, 0)
 	}
 
 	req.executor.LogsByActionId[req.Action.ID] = append(req.executor.LogsByActionId[req.Action.ID], req.logEntry)
+
+	req.executor.logmutex.Unlock()
 
 	log.WithFields(log.Fields{
 		"actionTitle": req.logEntry.ActionTitle,

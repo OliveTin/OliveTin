@@ -35,7 +35,7 @@ func (api *oliveTinAPI) KillAction(ctx ctx.Context, req *pb.KillActionRequest) (
 		ExecutionTrackingId: req.ExecutionTrackingId,
 	}
 
-	execReqLogEntry, found := api.executor.Logs[req.ExecutionTrackingId]
+	execReqLogEntry, found := api.executor.GetLog(req.ExecutionTrackingId)
 
 	ret.Found = found
 
@@ -99,7 +99,7 @@ func (api *oliveTinAPI) StartActionAndWait(ctx ctx.Context, req *pb.StartActionA
 	wg, _ := api.executor.ExecRequest(&execReq)
 	wg.Wait()
 
-	internalLogEntry, ok := api.executor.Logs[execReq.TrackingID]
+	internalLogEntry, ok := api.executor.GetLog(execReq.TrackingID)
 
 	if ok {
 		return &pb.StartActionAndWaitResponse{
@@ -142,7 +142,7 @@ func (api *oliveTinAPI) StartActionByGetAndWait(ctx ctx.Context, req *pb.StartAc
 	wg, _ := api.executor.ExecRequest(&execReq)
 	wg.Wait()
 
-	internalLogEntry, ok := api.executor.Logs[execReq.TrackingID]
+	internalLogEntry, ok := api.executor.GetLog(execReq.TrackingID)
 
 	if ok {
 		return &pb.StartActionByGetAndWaitResponse{
@@ -172,7 +172,7 @@ func internalLogEntryToPb(logEntry *executor.InternalLogEntry) *pb.LogEntry {
 }
 
 func getExecutionStatusByTrackingID(api *oliveTinAPI, executionTrackingId string) *executor.InternalLogEntry {
-	logEntry, ok := api.executor.Logs[executionTrackingId]
+	logEntry, ok := api.executor.GetLog(executionTrackingId)
 
 	if !ok {
 		return nil
@@ -184,10 +184,13 @@ func getExecutionStatusByTrackingID(api *oliveTinAPI, executionTrackingId string
 func getMostRecentExecutionStatusById(api *oliveTinAPI, actionId string) *executor.InternalLogEntry {
 	var ile *executor.InternalLogEntry
 
-	for _, candidateLe := range api.executor.Logs {
-		if actionId == candidateLe.ActionId {
-			ile = candidateLe
-		}
+	logs := api.executor.GetLogsByActionId(actionId)
+
+	if len(logs) == 0 {
+		return nil
+	} else {
+		// Get last log entry
+		ile = logs[len(logs)-1]
 	}
 
 	return ile
@@ -262,7 +265,7 @@ func (api *oliveTinAPI) GetLogs(ctx ctx.Context, req *pb.GetLogsRequest) (*pb.Ge
 
 	// TODO Limit to 10 entries or something to prevent browser lag.
 
-	for trackingId, logEntry := range api.executor.Logs {
+	for trackingId, logEntry := range api.executor.GetLogsCopy() {
 		action := cfg.FindAction(logEntry.ActionTitle)
 
 		if action == nil || acl.IsAllowedLogs(cfg, user, action) {
