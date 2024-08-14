@@ -1,3 +1,9 @@
+html, body {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
 body {
   background-color: #dee3e7;
   color: black;
@@ -356,6 +362,7 @@ img.logo {
 main {
   padding: 1em;
   padding-top: 3.5em;
+  flex-grow: 1;
 }
 
 summary {
@@ -411,7 +418,7 @@ input[name="start"]:hover {
 div.arguments {
   display: grid;
   grid-template-columns: max-content auto auto; /* We don't want the label or the description to wrap, and the input to take up the rest of the space */
-  grid-template-rows: repeat(auto-fill, 1fr);
+  grid-template-rows: auto;
   grid-gap: 1em;
   align-items: center;
 
