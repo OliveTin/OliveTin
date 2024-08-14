@@ -302,7 +302,7 @@ function marshalDashboardStructureToHtml (json) {
     if (rootGroup.querySelectorAll('action-button').length === 0 && json.dashboards.length > 0) {
       nav.querySelector('li[title="Actions"]').style.display = 'none'
 
-      showSection(json.dashboards[0].title) // FIXME
+      showSection('/' + getSystemTitle(json.dashboards[0].title))
     } else {
       showSection('/')
     }
