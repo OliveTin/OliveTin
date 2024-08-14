@@ -5,7 +5,8 @@ import {
   setupSectionNavigation,
   marshalDashboardComponentsJsonToHtml,
   marshalLogsJsonToHtml,
-  refreshServerConnectionLabel
+  refreshServerConnectionLabel,
+  refreshDiagnostics
 } from './js/marshaller.js'
 import { checkWebsocketConnection } from './js/websocket.js'
 
@@ -123,6 +124,8 @@ function processWebuiSettingsJson (settings) {
   }
 
   window.settings = settings
+
+  refreshDiagnostics()
 }
 
 function main () {

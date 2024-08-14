@@ -6,16 +6,16 @@ import { ActionStatusDisplay } from './ActionStatusDisplay.js'
  * This is a weird function that just sets some globals.
  */
 export function initMarshaller () {
-  window.changeDirectory = changeDirectory
   window.showSection = showSection
+  window.showSectionView = showSectionView
 
   window.executionDialog = new ExecutionDialog()
 
   window.logEntries = {}
+  window.registeredPaths = new Map()
+  window.breadcrumbNavigation = []
 
-  window.initialHash = window.location.hash
-
-  window.currentSection = ''
+  window.currentPath = ''
 
   window.addEventListener('EventExecutionFinished', onExecutionFinished)
   window.addEventListener('EventOutputChunk', onOutputChunk)
@@ -26,8 +26,6 @@ export function marshalDashboardComponentsJsonToHtml (json) {
   marshalDashboardStructureToHtml(json)
 
   document.getElementById('username').innerText = json.authenticatedUser
-
-  changeDirectory(null)
 
   document.body.setAttribute('initial-marshal-complete', 'true')
 }
@@ -110,22 +108,55 @@ function onExecutionFinished (evt) {
   }
 }
 
-function showSection (title) {
-  title = title.replaceAll(' ', '')
+function convertPathToBreadcrumb (path) {
+  const parts = path.split('/')
 
-  window.currentSection = title
+  const result = []
+
+  for (let i = 0; i < parts.length; i++) {
+    if (parts[i] === '') {
+      continue
+    }
+
+    result.push(parts.slice(0, i + 1).join('/'))
+  }
+
+  return result
+}
+
+function showSection (pathName) {
+  const path = window.registeredPaths.get(pathName)
+
+  if (path === undefined) {
+    console.warn('Section not found by path: ' + pathName)
+
+    showSection('/')
+    return
+  }
+
+  window.convertPathToBreadcrumb = convertPathToBreadcrumb
+  window.currentPath = pathName
+  window.breadcrumbNavigation = convertPathToBreadcrumb(pathName)
 
   for (const section of document.querySelectorAll('section')) {
-    if (section.title === title) {
+    if (section.title === path.section) {
       section.style.display = 'block'
     } else {
       section.style.display = 'none'
     }
   }
 
+  pushNewNavigationPath(pathName)
+
   setSectionNavigationVisible(false)
 
-  changeDirectory(null)
+  showSectionView(path.view)
+}
+
+function pushNewNavigationPath (pathName) {
+  window.history.pushState({
+    path: pathName
+  }, null, pathName)
 }
 
 function setSectionNavigationVisible (visible) {
@@ -177,57 +208,82 @@ export function setupSectionNavigation (style) {
     document.body.classList.add('has-topbar')
   }
 
-  document.getElementById('showActions').onclick = () => { showSection('Actions') }
-  document.getElementById('showDiagnostics').onclick = () => {
-    refreshDiagnostics()
-    showSection('Diagnostics')
-  }
-  document.getElementById('showLogs').onclick = () => { showSection('Logs') }
+  registerSection('/', 'Actions', null, document.getElementById('showActions'))
+  registerSection('/diagnostics', 'Diagnostics', null, document.getElementById('showDiagnostics'))
+  registerSection('/logs', 'Logs', null, document.getElementById('showLogs'))
 }
 
-function refreshDiagnostics () {
+function registerSection (path, section, view, linkElement) {
+  window.registeredPaths.set(path, {
+    section: section,
+    view: view
+  })
+
+  if (linkElement != null) {
+    addLinkToSection(path, linkElement)
+  }
+}
+
+function addLinkToSection (pathName, element) {
+  const path = window.registeredPaths.get(pathName)
+
+  element.href = 'javascript:void(0)'
+  element.title = path.section
+  element.onclick = () => {
+    showSection(pathName)
+  }
+}
+
+export function refreshDiagnostics () {
   document.getElementById('diagnostics-sshfoundkey').innerHTML = window.settings.SshFoundKey
   document.getElementById('diagnostics-sshfoundconfig').innerHTML = window.settings.SshFoundConfig
+}
+
+function getSystemTitle (title) {
+  return title.replace(' ', '')
+}
+
+function marshalSingleDashboard (dashboard, nav) {
+  const oldsection = document.querySelector('section[title="' + getSystemTitle(dashboard.title) + '"]')
+
+  if (oldsection != null) {
+    oldsection.remove()
+  }
+
+  const section = document.createElement('section')
+  section.setAttribute('system-title', getSystemTitle(dashboard.title))
+  section.title = section.getAttribute('system-title')
+
+  const def = createFieldset('default', section)
+  section.appendChild(def)
+
+  document.getElementsByTagName('main')[0].appendChild(section)
+  marshalContainerContents(dashboard, section, def, dashboard.title)
+
+  const oldLi = nav.querySelector('li[title="' + dashboard.title + '"]')
+
+  if (oldLi != null) {
+    oldLi.remove()
+  }
+
+  const navigationA = document.createElement('a')
+  navigationA.title = dashboard.title
+  navigationA.innerText = dashboard.title
+
+  registerSection('/' + getSystemTitle(section.title), section.title, null, navigationA)
+
+  const navigationLi = document.createElement('li')
+  navigationLi.appendChild(navigationA)
+  navigationLi.title = dashboard.title
+
+  document.getElementById('navigation-links').appendChild(navigationLi)
 }
 
 function marshalDashboardStructureToHtml (json) {
   const nav = document.getElementById('navigation-links')
 
   for (const dashboard of json.dashboards) {
-    const oldsection = document.querySelector('section[title="' + dashboard.title.replace(' ', '') + '"]')
-
-    if (oldsection != null) {
-      oldsection.remove()
-    }
-
-    const section = document.createElement('section')
-    section.title = dashboard.title.replaceAll(' ', '')
-
-    const def = createFieldset('default', section)
-    section.appendChild(def)
-
-    document.getElementsByTagName('main')[0].appendChild(section)
-    marshalContainerContents(dashboard, section, def, dashboard.title)
-
-    const oldLi = nav.querySelector('li[title="' + dashboard.title + '"]')
-
-    if (oldLi != null) {
-      oldLi.remove()
-    }
-
-    const navigationA = document.createElement('a')
-    navigationA.title = dashboard.title
-    navigationA.innerText = dashboard.title
-    navigationA.setAttribute('href', '#' + dashboard.title.replace(' ', ''))
-    navigationA.onclick = () => {
-      showSection(dashboard.title.replace(' ', ''))
-    }
-
-    const navigationLi = document.createElement('li')
-    navigationLi.appendChild(navigationA)
-    navigationLi.title = dashboard.title
-
-    document.getElementById('navigation-links').appendChild(navigationLi)
+    marshalSingleDashboard(dashboard, nav)
   }
 
   const rootGroup = document.querySelector('#root-group')
@@ -238,17 +294,17 @@ function marshalDashboardStructureToHtml (json) {
     }
   }
 
-  if (window.currentSection !== '') {
-    showSection(window.currentSection)
-  } else if (window.initialHash !== '' && document.body.getAttribute('initial-marshal-complete') === null) {
-    showSection(window.initialHash.replace('#', ''))
+  if (window.currentPath !== '') {
+    showSection(window.currentPath)
+  } else if (window.location.pathname !== '/' && document.body.getAttribute('initial-marshal-complete') === null) {
+    showSection(window.location.pathname)
   } else {
     if (rootGroup.querySelectorAll('action-button').length === 0 && json.dashboards.length > 0) {
       nav.querySelector('li[title="Actions"]').style.display = 'none'
 
-      showSection(json.dashboards[0].title)
+      showSection('/' + getSystemTitle(json.dashboards[0].title))
     } else {
-      showSection('Actions')
+      showSection('/')
     }
   }
 }
@@ -315,9 +371,10 @@ function marshalContainerContents (json, section, fieldset, parentDashboard) {
       case 'fieldset':
         marshalFieldset(item, section, parentDashboard)
         break
-      case 'directory':
-        marshalDirectoryButton(item, fieldset)
-        marshalDirectory(item, section)
+      case 'directory': {
+        const directoryPath = marshalDirectory(item, section)
+        marshalDirectoryButton(item, fieldset, directoryPath)
+      }
         break
       case 'display':
         marshalDisplay(item, fieldset)
@@ -353,34 +410,14 @@ function createFieldset (title, parentDashboard) {
 function marshalFieldset (item, section, parentDashboard) {
   const fs = createFieldset(item.title, parentDashboard)
 
-  marshalContainerContents(item, section, fs)
+  marshalContainerContents(item, section, fs, parentDashboard)
 
   section.appendChild(fs)
 }
 
-function changeDirectory (selected) {
+function showSectionView (selected) {
   if (selected === '') {
     selected = null
-  }
-
-  if (selected === null) {
-    window.directoryNavigation = []
-  } else if (selected === '..') {
-    window.directoryNavigation.pop()
-
-    if (window.directoryNavigation.length > 0) {
-      selected = window.directoryNavigation[window.directoryNavigation.length - 1]
-    } else {
-      selected = null
-    }
-  } else {
-    // If the selected item is already in the nav list, pop elements until we get
-    // "back" to the existing nav item
-    while (window.directoryNavigation.includes(selected)) {
-      window.directoryNavigation.pop()
-    }
-
-    window.directoryNavigation.push(selected)
   }
 
   for (const fieldset of document.querySelectorAll('fieldset')) {
@@ -399,50 +436,51 @@ function changeDirectory (selected) {
     }
   }
 
+  rebuildH1BreadcrumbNavigation(selected)
+
+  pushNewNavigationPath(window.currentPath)
+}
+
+function rebuildH1BreadcrumbNavigation () {
   const title = document.querySelector('h1')
   title.innerHTML = ''
 
-  const rootLink = createDirectoryBreadcrumb(window.pageTitle, null)
+  const rootLink = document.createElement('a')
+  rootLink.innerText = window.pageTitle
+  rootLink.href = 'javascript:void(0)'
+  rootLink.onclick = () => {
+    showSection('/')
+  }
+
   title.appendChild(rootLink)
 
-  for (const dir of window.directoryNavigation) {
+  for (const pathName of window.breadcrumbNavigation) {
     const sep = document.createElement('span')
     sep.innerHTML = ' &raquo; '
     title.append(sep)
 
-    if (dir === selected) {
-      title.append(selected)
-    } else {
-      title.appendChild(createDirectoryBreadcrumb(dir))
-    }
+    const path = window.registeredPaths.get(pathName)
+
+    title.appendChild(createNavigationBreadcrumbDisplay(path))
   }
 
   document.title = title.innerText
-
-  if (selected === null) {
-    window.history.pushState({ dir: null }, null, '#')
-  } else {
-    window.history.pushState({ dir: selected }, null, '#' + selected)
-  }
 }
 
-function createDirectoryBreadcrumb (title, link) {
+function createNavigationBreadcrumbDisplay (path) {
   const a = document.createElement('a')
-  a.innerText = title
-  a.title = title
+  a.href = 'javascript:void(0)'
 
-  if (typeof link === 'undefined') {
-    link = title
-  }
-
-  if (link === null) {
-    a.href = '#'
+  if (path.view === null) {
+    a.title = path.section
+    a.innerText = path.section
   } else {
-    a.href = '#' + link
+    a.innerText = path.view
+    a.title = path.view
   }
 
   a.onclick = () => {
-    changeDirectory(link)
+    showSectionView(path.view)
   }
 
   return a
@@ -460,11 +498,11 @@ function marshalDisplay (item, fieldset) {
   fieldset.appendChild(display)
 }
 
-function marshalDirectoryButton (item, fieldset) {
+function marshalDirectoryButton (item, fieldset, path) {
   const directoryButton = document.createElement('button')
   directoryButton.innerHTML = '<span class = "icon">' + item.icon + '</span> ' + item.title
   directoryButton.onclick = () => {
-    changeDirectory(item.title)
+    showSection(path)
   }
 
   fieldset.appendChild(directoryButton)
@@ -478,7 +516,7 @@ function marshalDirectory (item, section) {
   directoryBackButton.innerHTML = window.settings.DefaultIconForBack
   directoryBackButton.title = 'Go back one directory'
   directoryBackButton.onclick = () => {
-    changeDirectory('..')
+    showSection('/' + section.title)
   }
 
   fs.appendChild(directoryBackButton)
@@ -486,6 +524,12 @@ function marshalDirectory (item, section) {
   marshalContainerContents(item, section, fs)
 
   section.appendChild(fs)
+
+  const path = '/' + section.title + '/' + getSystemTitle(item.title)
+
+  registerSection(path, section.title, item.title, null)
+
+  return path
 }
 
 export function marshalLogsJsonToHtml (json) {
@@ -531,8 +575,9 @@ export function marshalLogsJsonToHtml (json) {
 
 window.addEventListener('popstate', (e) => {
   e.preventDefault()
-  if (e.state != null && typeof e.state.dir !== 'undefined') {
-    changeDirectory(e.state.dir)
+
+  if (e.state != null && typeof e.state.path !== 'undefined') {
+    showSection(e.state.path)
   }
 })
 
