@@ -135,10 +135,23 @@ func startWebUIServer(cfg *config.Config) {
 	setupCustomWebuiDir()
 
 	mux := http.NewServeMux()
-	mux.Handle("/", http.FileServer(http.Dir(findWebuiDir())))
 	mux.Handle("/custom-webui/", http.StripPrefix("/custom-webui/", http.FileServer(http.Dir(findCustomWebuiDir()))))
 	mux.HandleFunc("/theme.css", generateThemeCss)
 	mux.HandleFunc("/webUiSettings.json", generateWebUISettings)
+
+	webuiDir := findWebuiDir()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		dirName := path.Dir(r.URL.Path)
+
+		// Mangle requests for any path like /logs or /config to load the webui index.html
+		if path.Ext(r.URL.Path) == "" && r.URL.Path != "/" {
+			log.Infof("Mangling request for %s to /index.html", r.URL.Path)
+
+			http.ServeFile(w, r, path.Join(webuiDir, "index.html"))
+		} else {
+			http.StripPrefix(dirName, http.FileServer(http.Dir(webuiDir))).ServeHTTP(w, r)
+		}
+	})
 
 	srv := &http.Server{
 		Addr:    cfg.ListenAddressWebUI,

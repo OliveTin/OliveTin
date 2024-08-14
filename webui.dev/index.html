@@ -8,8 +8,8 @@
 
 		<title>OliveTin</title>
 
-		<link rel = "stylesheet" type = "text/css" href = "style.css" />
-		<link rel = "stylesheet" type = "text/css" href = "theme.css" />
+		<link rel = "stylesheet" type = "text/css" href = "/style.css" />
+		<link rel = "stylesheet" type = "text/css" href = "/theme.css" />
 		<link rel = "stylesheet" href = "node_modules/@xterm/xterm/css/xterm.css" />
 
 		<link rel = "shortcut icon" type = "image/png" href = "OliveTinLogo.png" />
@@ -17,6 +17,8 @@
 		<link rel = "apple-touch-icon" sizes="57x57" href="OliveTinLogo-57px.png" />
 		<link rel = "apple-touch-icon" sizes="120x120" href="OliveTinLogo-120px.png" />
 		<link rel = "apple-touch-icon" sizes="180x180" href="OliveTinLogo-180px.png" />
+
+		<base href = "/" />
 	</head>
 
 	<body>
@@ -28,16 +30,16 @@
 			<nav>
 				<ul id = "navigation-links">
 					<li title = "Actions">
-						<a id = "showActions" href = "#Actions">Actions</a>
+						<a id = "showActions">Actions</a>
 					</li>
 				</ul>
 
 				<ul id = "supplemental-links">
 					<li title = "Diagnostics">
-						<a id = "showDiagnostics" href = "#Diagnostics">Diagnostics</a>
+						<a id = "showDiagnostics">Diagnostics</a>
 					</li>
 					<li title = "Logs">
-						<a id = "showLogs" href = "#Logs">Logs</a>
+						<a id = "showLogs">Logs</a>
 					</li>
 				</ul>
 			</nav>
@@ -64,7 +66,6 @@
 			</section>
 
 			<section id = "contentDiagnostics" title = "Diagnostics" hidden>
-				<h2>Diagnostics</h2>
 				<div id = "diagnostics" class = "ta-left">
 					<p><strong>Note:</strong> Diagnostics are only generated on OliveTin startup - they are not updated in real-time or when you refresh this page. They are intended as a "quick reference" to help you.</p>
 					<p>If you are having problems with OliveTin and want to raise a support request, please don't take a screenshot or copy text from this page, but instead it is highly recommended to include a <a href = "https://docs.olivetin.app/sosreport.html">sosreport</a> which is more detailed, and makes it easier to help you.</p>
@@ -181,7 +182,7 @@
 				<td class = "timestamp">?</td>
 				<td>
 					<span role = "img" class = "icon"></span>
-					<a href = "#" class = "content">?</a>
+					<a href = "javascript:void(0)" class = "content">?</a>
 
 					<div class = "tags"></div>
 				</td>
