@@ -170,16 +170,12 @@ function setSectionNavigationVisible (visible) {
       btn.innerHTML = '&laquo;'
 
       nav.classList.add('shown')
-      nav.style.display = 'flex'
     } else {
       btn.setAttribute('aria-pressed', true)
       btn.setAttribute('aria-label', 'Close sidebar navigation')
       btn.innerHTML = '&#9776;'
 
       nav.classList.remove('shown')
-      setTimeout(() => {
-        nav.style.display = 'none'
-      }, 600)
     }
   } else {
     btn.disabled = true

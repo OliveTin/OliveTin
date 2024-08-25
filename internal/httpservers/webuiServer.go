@@ -88,7 +88,7 @@ func setupCustomWebuiDir() {
 func generateThemeCss(w http.ResponseWriter, r *http.Request) {
 	themeCssFilename := path.Join(findCustomWebuiDir(), "themes", cfg.ThemeName, "theme.css")
 
-	if !customThemeCssRead {
+	if !customThemeCssRead || cfg.ThemeCacheDisabled {
 		customThemeCssRead = true
 
 		if _, err := os.Stat(themeCssFilename); err == nil {
