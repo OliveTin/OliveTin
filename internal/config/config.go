@@ -87,6 +87,7 @@ type PrometheusConfig struct {
 type Config struct {
 	UseSingleHTTPFrontend           bool
 	ThemeName                       string
+	ThemeCacheDisabled              bool
 	ListenAddressSingleHTTPFrontend string
 	ListenAddressWebUI              string
 	ListenAddressRestActions        string
@@ -188,6 +189,7 @@ func DefaultConfigWithBasePort(basePort int) *Config {
 	config.DefaultIconForActions = "&#x1F600;"
 	config.DefaultIconForDirectories = "&#128193"
 	config.DefaultIconForBack = "&laquo;"
+	config.ThemeCacheDisabled = false
 
 	config.ListenAddressSingleHTTPFrontend = fmt.Sprintf("0.0.0.0:%d", basePort)
 	config.ListenAddressRestActions = fmt.Sprintf("localhost:%d", basePort+1)

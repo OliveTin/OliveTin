@@ -95,7 +95,6 @@ nav ul li a:hover {
 }
 
 nav {
-  display: none;
   left: -250px;
 }
 
@@ -115,14 +114,16 @@ nav.sidebar {
   width: 180px;
   height: 100dvh;
   top: 0;
-  transition: left 0.5s ease;
+  transition: left 0.5s ease, visibility 0.5s ease;
   box-shadow: 0 0 10px 0 #444;
   z-index: -1;
   flex-direction: column;
   display: flex;
+  visibility: hidden;
 }
 
-nav.shown {
+nav.sidebar.shown {
+  visibility: visible;
   left: 0;
 }
 
