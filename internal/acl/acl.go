@@ -9,6 +9,18 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
+type PermissionBits int
+
+const (
+	View PermissionBits = 1 << iota
+	Exec
+	Logs
+)
+
+func (p PermissionBits) Has(permission PermissionBits) bool {
+	return p&permission != 0
+}
+
 // User respresents a person.
 type AuthenticatedUser struct {
 	Username  string
@@ -17,7 +29,7 @@ type AuthenticatedUser struct {
 	acls []string
 }
 
-func logAclNotMatched(cfg *config.Config, aclFunction string, user *AuthenticatedUser, action *config.Action) {
+func logAclNotMatched(cfg *config.Config, aclFunction string, user *AuthenticatedUser, action *config.Action, acl *config.AccessControlList) {
 	if cfg.LogDebugOptions.AclNotMatched {
 		log.WithFields(log.Fields{
 			"User":   user.Username,
@@ -36,34 +48,70 @@ func logAclMatched(cfg *config.Config, aclFunction string, user *AuthenticatedUs
 	}
 }
 
-// IsAllowedLogs checks if a AuthenticatedUser is allowed to view an action's logs
-func IsAllowedLogs(cfg *config.Config, user *AuthenticatedUser, action *config.Action) bool {
-	for _, acl := range getRelevantAcls(cfg, action.Acls, user) {
-		if acl.Permissions.Logs {
-			logAclMatched(cfg, "isAllowedLogs", user, action, acl)
+func logAclNoneMatched(cfg *config.Config, aclFunction string, user *AuthenticatedUser, action *config.Action, defaultPermission bool) {
+	if cfg.LogDebugOptions.AclNoneMatched {
+		log.WithFields(log.Fields{
+			"User":    user.Username,
+			"Action":  action.Title,
+			"Default": defaultPermission,
+		}).Debugf("%v - No ACLs Matched, returning default permission", aclFunction)
+	}
+}
+
+func permissionsConfigToBits(permissions config.PermissionsList) PermissionBits {
+	var ret PermissionBits
+
+	if permissions.View {
+		ret |= View
+	}
+
+	if permissions.Exec {
+		ret |= Exec
+	}
+
+	if permissions.Logs {
+		ret |= Logs
+	}
+
+	return ret
+}
+
+func aclCheck(requiredPermission PermissionBits, defaultValue bool, cfg *config.Config, aclFunction string, user *AuthenticatedUser, action *config.Action) bool {
+	relevantAcls := getRelevantAcls(cfg, action.Acls, user)
+
+	log.WithFields(log.Fields{
+		"actionTitle":        action.Title,
+		"username":           user.Username,
+		"usergroup":          user.Usergroup,
+		"relevantAcls":       len(relevantAcls),
+		"requiredPermission": requiredPermission,
+	}).Debugf("ACL check - %v", aclFunction)
+
+	for _, acl := range relevantAcls {
+		permissionBits := permissionsConfigToBits(acl.Permissions)
+
+		if permissionBits.Has(requiredPermission) {
+			logAclMatched(cfg, aclFunction, user, action, acl)
 
 			return true
+		} else {
+			logAclNotMatched(cfg, aclFunction, user, action, acl)
 		}
 	}
 
-	logAclNotMatched(cfg, "isAllowedLogs", user, action)
+	logAclNoneMatched(cfg, aclFunction, user, action, cfg.DefaultPermissions.Logs)
 
-	return cfg.DefaultPermissions.Logs
+	return defaultValue
+}
+
+// IsAllowedLogs checks if a AuthenticatedUser is allowed to view an action's logs
+func IsAllowedLogs(cfg *config.Config, user *AuthenticatedUser, action *config.Action) bool {
+	return aclCheck(Logs, cfg.DefaultPermissions.Logs, cfg, "isAllowedLogs", user, action)
 }
 
 // IsAllowedExec checks if a AuthenticatedUser is allowed to execute an Action
 func IsAllowedExec(cfg *config.Config, user *AuthenticatedUser, action *config.Action) bool {
-	for _, acl := range getRelevantAcls(cfg, action.Acls, user) {
-		if acl.Permissions.Exec {
-			logAclMatched(cfg, "isAllowedExec", user, action, acl)
-
-			return true
-		}
-	}
-
-	logAclNotMatched(cfg, "isAllowedExec", user, action)
-
-	return cfg.DefaultPermissions.Exec
+	return aclCheck(Exec, cfg.DefaultPermissions.Exec, cfg, "isAllowedExec", user, action)
 }
 
 // IsAllowedView checks if a User is allowed to view an Action
@@ -72,20 +120,10 @@ func IsAllowedView(cfg *config.Config, user *AuthenticatedUser, action *config.A
 		return false
 	}
 
-	for _, acl := range getRelevantAcls(cfg, action.Acls, user) {
-		if acl.Permissions.View {
-			logAclMatched(cfg, "isAllowedView", user, action, acl)
-
-			return true
-		}
-	}
-
-	logAclNotMatched(cfg, "isAllowedView", user, action)
-
-	return cfg.DefaultPermissions.View
+	return aclCheck(View, cfg.DefaultPermissions.View, cfg, "isAllowedView", user, action)
 }
 
-func getMetdataKeyOrEmpty(md metadata.MD, key string) string {
+func getMetadataKeyOrEmpty(md metadata.MD, key string) string {
 	mdValues := md.Get(key)
 
 	if len(mdValues) > 0 {
@@ -97,16 +135,21 @@ func getMetdataKeyOrEmpty(md metadata.MD, key string) string {
 
 // UserFromContext tries to find a user from a grpc context
 func UserFromContext(ctx context.Context, cfg *config.Config) *AuthenticatedUser {
+	ret := &AuthenticatedUser{}
+
 	md, ok := metadata.FromIncomingContext(ctx)
 
-	ret := &AuthenticatedUser{
-		Username:  "guest",
-		Usergroup: "guest",
+	if ok {
+		ret.Username = getMetadataKeyOrEmpty(md, "username")
+		ret.Usergroup = getMetadataKeyOrEmpty(md, "usergroup")
 	}
 
-	if ok {
-		ret.Username = getMetdataKeyOrEmpty(md, "username")
-		ret.Usergroup = getMetdataKeyOrEmpty(md, "usergroup")
+	if ret.Username == "" {
+		ret.Username = "guest"
+	}
+
+	if ret.Usergroup == "" {
+		ret.Usergroup = "guest"
 	}
 
 	buildUserAcls(cfg, ret)
@@ -115,6 +158,17 @@ func UserFromContext(ctx context.Context, cfg *config.Config) *AuthenticatedUser
 		"username":  ret.Username,
 		"usergroup": ret.Usergroup,
 	}).Debugf("UserFromContext")
+
+	return ret
+}
+
+func UserFromSystem(cfg *config.Config, username string) *AuthenticatedUser {
+	ret := &AuthenticatedUser{
+		Username:  username,
+		Usergroup: "system",
+	}
+
+	buildUserAcls(cfg, ret)
 
 	return ret
 }
