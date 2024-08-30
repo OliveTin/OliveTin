@@ -145,7 +145,7 @@ func startWebUIServer(cfg *config.Config) {
 
 		// Mangle requests for any path like /logs or /config to load the webui index.html
 		if path.Ext(r.URL.Path) == "" && r.URL.Path != "/" {
-			log.Infof("Mangling request for %s to /index.html", r.URL.Path)
+			log.Debugf("Mangling request for %s to /index.html", r.URL.Path)
 
 			http.ServeFile(w, r, path.Join(webuiDir, "index.html"))
 		} else {
