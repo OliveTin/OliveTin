@@ -115,7 +115,7 @@ export class ExecutionDialog {
   executionTick () {
     this.executionSeconds++
 
-    this.updateDuration(this.executionSeconds + ' seconds', '')
+    this.updateDuration(null)
   }
 
   hideEverythingApartFromOutput () {
@@ -151,20 +151,24 @@ export class ExecutionDialog {
     })
   }
 
-  updateDuration (started, finished) {
-    if (finished === '') {
-      this.domDuration.innerHTML = started
+  updateDuration (logEntry) {
+    if (logEntry == null) {
+      this.domDuration.innerHTML = this.executionSeconds + ' seconds'
+    } else if (!logEntry.executionStarted) {
+      this.domDuration.innerHTML = logEntry.datetimeStarted + ' (request time). Not executed.'
+    } else if (logEntry.executionStarted && !logEntry.executionFinished) {
+      this.domDuration.innerHTML = logEntry.datetimeStarted
     } else {
       let delta = ''
 
       try {
-        delta = (new Date(finished) - new Date(started)) / 1000
+        delta = (new Date(logEntry.datetimeStarted) - new Date(logEntry.datetimeStarted)) / 1000
         delta = new Intl.RelativeTimeFormat().format(delta, 'seconds').replace('in ', '').replace('ago', '')
       } catch (e) {
         console.warn('Failed to calculate delta', e)
       }
 
-      this.domDuration.innerHTML = started + ' &rarr; ' + finished
+      this.domDuration.innerHTML = logEntry.datetimeStarted + ' &rarr; ' + logEntry.datetimeFinished
 
       if (delta !== '') {
         this.domDuration.innerHTML += ' (' + delta + ')'
@@ -192,11 +196,7 @@ export class ExecutionDialog {
     this.domIcon.innerHTML = res.logEntry.actionIcon
     this.domTitle.innerText = res.logEntry.actionTitle
 
-    if (res.logEntry.executionFinished) {
-      this.updateDuration(res.logEntry.datetimeStarted, res.logEntry.datetimeFinished)
-    } else {
-      this.updateDuration(res.logEntry.datetimeStarted, 'Still running...')
-    }
+    this.updateDuration(res.logEntry)
 
     window.terminal.reset()
     window.terminal.write(res.logEntry.output, () => {
