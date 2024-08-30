@@ -251,7 +251,7 @@ input[type="submit"]
   background-color: white;
   box-shadow: 0 0 6px 0 #aaa;
   user-select: none;
-  transition: background-color 1s ease, color 1s ease;
+  transition: background-color 1s ease, color .3s ease;
 }
 
 input[type="checkbox"] {
@@ -332,26 +332,33 @@ input[type="submit"]:disabled {
   cursor: not-allowed;
 }
 
+.action-status {
+  padding: .4em;
+  border-radius: .4em;
+}
 
 .action-failed {
-  background-color: red;
+  background-color: #e78284;
 }
 
 .action-success {
-  background-color: limegreen;
+  background-color: #a6d189;
+  color: black;
 }
 
 .action-nonzero-exit {
-  background-color: orange;
+  background-color: #ef9f76;
+  color: black;
 }
 
 .action-timeout {
-  background-color: cyan;
+  background-color: #99d1db;
+  color: black;
 }
 
 .action-blocked {
-  background-color: purple;
-  color: white;
+  background-color: #ca9ee6;
+  color: black;
 }
 
 img.logo {
@@ -435,10 +442,6 @@ div.buttons {
   gap: 1em;
 }
 
-td.exit-code {
-  text-align: center;
-}
-
 input.invalid {
   background-color: salmon;
 }
@@ -451,8 +454,12 @@ input.invalid {
 
 span.tag {
   background-color: lightgray;
-  border-radius: 0.6em;
-  padding: 0.2em;
+  border-radius: 0.4em;
+  padding: 0.4em;
+  margin-top: .2em;
+  margin-right: .2em;
+  display: inline-block;
+  color: black;
 }
 
 div.toolbar {
