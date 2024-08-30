@@ -144,6 +144,7 @@ type LogDebugOptions struct {
 	SingleFrontendRequestHeaders bool
 	AclMatched                   bool
 	AclNotMatched                bool
+	AclNoneMatched               bool
 }
 
 type DashboardComponent struct {
