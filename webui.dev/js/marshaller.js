@@ -163,6 +163,8 @@ function setSectionNavigationVisible (visible) {
   const nav = document.querySelector('nav')
   const btn = document.getElementById('sidebar-toggler-button')
 
+  nav.removeAttribute('hidden')
+
   if (document.body.classList.contains('has-sidebar')) {
     if (visible) {
       btn.setAttribute('aria-pressed', false)
