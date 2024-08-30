@@ -119,6 +119,17 @@ func UserFromContext(ctx context.Context, cfg *config.Config) *AuthenticatedUser
 	return ret
 }
 
+func UserFromSystem(cfg *config.Config, username string) *AuthenticatedUser {
+	ret := &AuthenticatedUser{
+		Username:  username,
+		Usergroup: "system",
+	}
+
+	buildUserAcls(cfg, ret)
+
+	return ret
+}
+
 func buildUserAcls(cfg *config.Config, user *AuthenticatedUser) {
 	for _, acl := range cfg.AccessControlLists {
 		if slices.Contains(acl.MatchUsernames, user.Username) {
