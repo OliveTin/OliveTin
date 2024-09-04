@@ -347,7 +347,7 @@ function marshalMreOutput (dashboardComponent, fieldset) {
   })
 
   const updateMre = (pre, json) => {
-    pre.innerHTML = json.stdout
+    pre.innerHTML = json.output
   }
 
   window.addEventListener('ExecutionFinished', (e) => {

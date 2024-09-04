@@ -7,6 +7,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/genproto/googleapis/api/httpbody"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"errors"
 	"net"
@@ -203,13 +205,18 @@ func (api *oliveTinAPI) ExecutionStatus(ctx ctx.Context, req *pb.ExecutionStatus
 
 	if req.ExecutionTrackingId != "" {
 		ile = getExecutionStatusByTrackingID(api, req.ExecutionTrackingId)
+
 	} else {
 		ile = getMostRecentExecutionStatusById(api, req.ActionId)
 	}
 
-	res.LogEntry = internalLogEntryToPb(ile)
+	if ile == nil {
+		return nil, status.Error(codes.NotFound, "Execution not found")
+	} else {
+		res.LogEntry = internalLogEntryToPb(ile)
 
-	return res, nil
+		return res, nil
+	}
 }
 
 /**
