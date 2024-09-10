@@ -332,6 +332,9 @@ func stepACLCheck(req *ExecutionRequest) bool {
 func stepParseArgs(req *ExecutionRequest) bool {
 	var err error
 
+	req.Arguments["ot_executionTrackingId"] = req.TrackingID
+	req.Arguments["ot_username"] = req.AuthenticatedUser.Username
+
 	req.finalParsedCommand, err = parseActionArguments(req.Action.Shell, req.Arguments, req.Action, req.logEntry.ActionTitle, req.EntityPrefix)
 
 	if err != nil {
