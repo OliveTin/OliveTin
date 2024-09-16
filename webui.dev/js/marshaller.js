@@ -238,7 +238,7 @@ export function refreshDiagnostics () {
 }
 
 function getSystemTitle (title) {
-  return title.replace(' ', '')
+  return title.replaceAll(' ', '')
 }
 
 function marshalSingleDashboard (dashboard, nav) {
