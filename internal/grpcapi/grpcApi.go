@@ -69,6 +69,10 @@ func (api *oliveTinAPI) StartAction(ctx ctx.Context, req *pb.StartActionRequest)
 	pair := api.executor.MapActionIdToBinding[req.ActionId]
 	api.executor.MapActionIdToBindingLock.RUnlock()
 
+	if pair == nil || pair.Action == nil {
+		return nil, errors.New("Action not found")
+	}
+
 	execReq := executor.ExecutionRequest{
 		Action:            pair.Action,
 		EntityPrefix:      pair.EntityPrefix,
