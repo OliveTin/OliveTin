@@ -124,7 +124,19 @@ function convertPathToBreadcrumb (path) {
   return result
 }
 
+function showExecutionResult (pathName) {
+  const executionTrackingId = pathName.split('/')[2]
+  window.executionDialog.fetchExecutionResult(executionTrackingId)
+  window.executionDialog.show()
+}
+
 function showSection (pathName) {
+  if (pathName.startsWith('/logs/')) {
+    showExecutionResult(pathName)
+    pushNewNavigationPath(pathName)
+    return
+  }
+
   const path = window.registeredPaths.get(pathName)
 
   if (path === undefined) {
@@ -557,6 +569,7 @@ export function marshalLogsJsonToHtml (json) {
       window.executionDialog.renderExecutionResult({
         logEntry: window.logEntries[logEntry.executionTrackingId]
       })
+      pushNewNavigationPath('/logs/' + logEntry.executionTrackingId)
     }
 
     for (const tag of logEntry.tags) {

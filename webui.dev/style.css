@@ -143,6 +143,10 @@ h1 {
   flex-grow: 1;
 }
 
+dialog h1 {
+  padding-left: 0;
+}
+
 nav ul {
   margin: 0;
   padding: 0;
