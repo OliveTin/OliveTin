@@ -316,6 +316,10 @@ function marshalLink (item, fieldset) {
     btn.classList.add('error')
   }
 
+  if (item.cssClass !== '') {
+    btn.classList.add(item.cssClass)
+  }
+
   fieldset.appendChild(btn)
 }
 
