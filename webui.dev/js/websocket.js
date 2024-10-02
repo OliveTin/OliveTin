@@ -65,9 +65,10 @@ function websocketOnMessage (msg) {
 function websocketOnError (err) {
   window.websocketAvailable = false
   window.refreshLoop()
-  console.log(err)
 
-  window.showBigError('ws-connect-error', 'connecting to the websocket', 'Please see your browser console for debugging information.', true)
+  console.log('Websocket error is: ', err)
+
+  window.showBigError('websocket-connection', 'connecting to the websocket', 'This often means the connection was closed, sometimes this can happen due to reverse proxy timeouts. Sometimes your web browser can provide helpful diagnostic information in the web developer console. The reason given by your browser is:' + err, true)
 
   refreshServerConnectionLabel()
 }
