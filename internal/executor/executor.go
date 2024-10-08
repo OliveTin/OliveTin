@@ -518,8 +518,10 @@ func stepExecAfter(req *ExecutionRequest) bool {
 	var stderr bytes.Buffer
 
 	args := map[string]string{
-		"output":   req.logEntry.Output,
-		"exitCode": fmt.Sprintf("%v", req.logEntry.ExitCode),
+		"output":                 req.logEntry.Output,
+		"exitCode":               fmt.Sprintf("%v", req.logEntry.ExitCode),
+		"ot_executionTrackingId": req.TrackingID,
+		"ot_username":            req.AuthenticatedUser.Username,
 	}
 
 	finalParsedCommand, _ := parseActionArguments(req.Action.ShellAfterCompleted, args, req.Action, req.logEntry.ActionTitle, req.EntityPrefix)
@@ -527,6 +529,11 @@ func stepExecAfter(req *ExecutionRequest) bool {
 	cmd := wrapCommandInShell(ctx, finalParsedCommand)
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
+
+	fakeRequest := &ExecutionRequest{
+		Arguments: args,
+	}
+	cmd.Env = buildEnv(fakeRequest)
 
 	runerr := cmd.Start()
 
