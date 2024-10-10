@@ -1,14 +1,15 @@
 package websocket
 
 import (
+	"net/http"
+	"sync"
+
 	pb "github.com/OliveTin/OliveTin/gen/grpc"
 	"github.com/OliveTin/OliveTin/internal/executor"
 	ws "github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/reflect/protoreflect"
-	"net/http"
-	"sync"
 )
 
 var upgrader = ws.Upgrader{
@@ -95,8 +96,11 @@ func (WebsocketExecutionListener) OnExecutionFinished(logEntry *executor.Interna
 			ExecutionTrackingId: logEntry.ExecutionTrackingID,
 			ExecutionStarted:    logEntry.ExecutionStarted,
 			ExecutionFinished:   logEntry.ExecutionFinished,
+			User:                logEntry.Username,
 		},
 	}
+
+	log.Infof("Execution finished: %v+v", evt.LogEntry)
 
 	broadcast(evt)
 }

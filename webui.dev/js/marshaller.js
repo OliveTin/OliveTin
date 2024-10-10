@@ -2,6 +2,49 @@ import './ActionButton.js' // To define action-button
 import { ExecutionDialog } from './ExecutionDialog.js'
 import { ActionStatusDisplay } from './ActionStatusDisplay.js'
 
+function createElement (tag, attributes) {
+  const el = document.createElement(tag)
+
+  if (attributes !== null) {
+    if (attributes.classNames !== undefined) {
+      el.classList.add(...attributes.classNames)
+    }
+
+    if (attributes.innerText !== undefined) {
+      el.innerText = attributes.innerText
+    }
+  }
+
+  return el
+}
+
+function createTag (val) {
+  const domTag = createElement('span', {
+    innerText: val,
+    classNames: ['tag']
+  })
+
+  return domTag
+}
+
+function createAnnotation (key, val) {
+  const domAnnotation = createElement('span', {
+    classNames: ['annotation']
+  })
+
+  domAnnotation.appendChild(createElement('span', {
+    innerText: key,
+    classNames: ['annotation-key']
+  }))
+
+  domAnnotation.appendChild(createElement('span', {
+    innerText: val,
+    classNames: ['annotation-value']
+  }))
+
+  return domAnnotation
+}
+
 /**
  * This is a weird function that just sets some globals.
  */
@@ -577,12 +620,11 @@ export function marshalLogsJsonToHtml (json) {
     }
 
     for (const tag of logEntry.tags) {
-      const domTag = document.createElement('span')
-      domTag.classList.add('tag')
-      domTag.innerText = tag
-
-      row.querySelector('.tags').append(domTag)
+      row.querySelector('.tags').append(createTag(tag))
     }
+
+    console.log(logEntry)
+    row.querySelector('.tags').append(createAnnotation('user', logEntry.user))
 
     document.querySelector('#logTableBody').prepend(row)
   }

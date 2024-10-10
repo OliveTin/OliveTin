@@ -36,7 +36,7 @@ func scheduleAction(cfg *config.Config, scheduler *cron.Cron, cronline string, e
 		req := &executor.ExecutionRequest{
 			ActionTitle:       action.Title,
 			Cfg:               cfg,
-			Tags:              []string{"cron"},
+			Tags:              []string{},
 			AuthenticatedUser: acl.UserFromSystem(cfg, "cron"),
 		}
 
