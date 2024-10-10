@@ -457,12 +457,34 @@ input.invalid {
 }
 
 span.tag {
-  background-color: lightgray;
   border-radius: 0.4em;
-  padding: 0.4em;
   margin-top: .2em;
   margin-right: .2em;
   display: inline-block;
+  background-color: lightgray;
+  padding: .4em;
+  color: black;
+}
+
+span.annotation {
+  display: inline-block;
+  margin-top: .2em;
+  margin-right: .2em;
+}
+
+span.annotationKey {
+  padding: 0.4em;
+  border-radius: 0.4em 0 0 .4em;
+  display: inline-block;
+  background-color: lightgray;
+  color: #666;
+}
+
+span.annotationValue {
+  padding: 0.4em;
+  border-radius: 0 .4em .4em 0;
+  display: inline-block;
+  background-color: lightgray;
   color: black;
 }
 

@@ -84,6 +84,7 @@ type InternalLogEntry struct {
 	ExecutionFinished   bool
 	ExecutionTrackingID string
 	Process             *os.Process
+	Username            string
 
 	/*
 		The following 3 properties are obviously on Action normally, but it's useful
@@ -182,6 +183,10 @@ func (e *Executor) SetLog(trackingID string, entry *InternalLogEntry) {
 
 // ExecRequest processes an ExecutionRequest
 func (e *Executor) ExecRequest(req *ExecutionRequest) (*sync.WaitGroup, string) {
+	if req.AuthenticatedUser == nil {
+		req.AuthenticatedUser = acl.UserGuest(req.Cfg)
+	}
+
 	req.executor = e
 	req.logEntry = &InternalLogEntry{
 		DatetimeStarted:     time.Now(),
@@ -193,6 +198,7 @@ func (e *Executor) ExecRequest(req *ExecutionRequest) (*sync.WaitGroup, string) 
 		ActionId:            "",
 		ActionTitle:         "notfound",
 		ActionIcon:          "&#x1f4a9;",
+		Username:            req.AuthenticatedUser.Username,
 	}
 
 	_, isDuplicate := e.GetLog(req.TrackingID)

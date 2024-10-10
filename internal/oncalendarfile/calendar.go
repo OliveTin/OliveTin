@@ -109,7 +109,7 @@ func exec(instant time.Time, action *config.Action, cfg *config.Config, ex *exec
 	req := &executor.ExecutionRequest{
 		Action:            action,
 		Cfg:               cfg,
-		Tags:              []string{"calendar"},
+		Tags:              []string{},
 		AuthenticatedUser: acl.UserFromSystem(cfg, "calendar"),
 	}
 
