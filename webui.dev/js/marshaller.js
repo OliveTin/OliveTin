@@ -34,12 +34,12 @@ function createAnnotation (key, val) {
 
   domAnnotation.appendChild(createElement('span', {
     innerText: key,
-    classNames: ['annotationKey']
+    classNames: ['annotation-key']
   }))
 
   domAnnotation.appendChild(createElement('span', {
     innerText: val,
-    classNames: ['annotationValue']
+    classNames: ['annotation-value']
   }))
 
   return domAnnotation
