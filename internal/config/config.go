@@ -130,6 +130,7 @@ type Config struct {
 	DefaultIconForActions           string
 	DefaultIconForDirectories       string
 	DefaultIconForBack              string
+	UrlOnUnauthenticated            string
 
 	usedConfigDir string
 }
