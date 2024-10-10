@@ -528,7 +528,14 @@ func stepExecAfter(req *ExecutionRequest) bool {
 		"exitCode": fmt.Sprintf("%v", req.logEntry.ExitCode),
 	}
 
-	finalParsedCommand, _ := parseActionArguments(req.Action.ShellAfterCompleted, args, req.Action, req.logEntry.ActionTitle, req.EntityPrefix)
+	finalParsedCommand, _, err := parseCommandForReplacements(req.Action.ShellAfterCompleted, args)
+
+	if err != nil {
+		msg := "Could not prepare shellAfterCompleted command: " + err.Error() + "\n"
+		req.logEntry.Output += msg
+		log.Warnf(msg)
+		return true
+	}
 
 	cmd := wrapCommandInShell(ctx, finalParsedCommand)
 	cmd.Stdout = &stdout
@@ -538,14 +545,14 @@ func stepExecAfter(req *ExecutionRequest) bool {
 
 	waiterr := cmd.Wait()
 
-	req.logEntry.Output += "\n" + stdout.String()
-	req.logEntry.Output += "OliveTin::shellAfterCompleted stdout\n" + stdout.String()
+	req.logEntry.Output += "\n"
+	req.logEntry.Output += "OliveTin::shellAfterCompleted stdout\n"
 	req.logEntry.Output += stdout.String()
 
-	req.logEntry.Output += "OliveTin::shellAfterCompleted stderr\n" + stdout.String()
+	req.logEntry.Output += "OliveTin::shellAfterCompleted stderr\n"
 	req.logEntry.Output += stderr.String()
 
-	req.logEntry.Output += "OliveTin::shellAfterCompleted errors and summary\n" + stdout.String()
+	req.logEntry.Output += "OliveTin::shellAfterCompleted errors and summary\n"
 	appendErrorToStderr(runerr, req.logEntry)
 	appendErrorToStderr(waiterr, req.logEntry)
 
@@ -555,7 +562,7 @@ func stepExecAfter(req *ExecutionRequest) bool {
 
 	req.logEntry.Output += fmt.Sprintf("Your shellAfterCompleted exited with code %v\n", cmd.ProcessState.ExitCode())
 
-	req.logEntry.Output += "OliveTin::shellAfterCompleted output complete\n" + stdout.String()
+	req.logEntry.Output += "OliveTin::shellAfterCompleted output complete\n"
 
 	return true
 }
