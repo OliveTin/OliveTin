@@ -46,7 +46,7 @@ func scheduleExec(action *config.Action, cfg *config.Config, ex *executor.Execut
 	req := &executor.ExecutionRequest{
 		ActionTitle:       action.Title,
 		Cfg:               cfg,
-		Tags:              []string{"fileindir"},
+		Tags:              []string{},
 		Arguments:         args,
 		AuthenticatedUser: acl.UserFromSystem(cfg, "fileindir"),
 	}
