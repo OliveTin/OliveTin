@@ -472,7 +472,7 @@ span.annotation {
   margin-right: .2em;
 }
 
-span.annotationKey {
+span.annotation-key {
   padding: 0.4em;
   border-radius: 0.4em 0 0 .4em;
   display: inline-block;
@@ -480,7 +480,7 @@ span.annotationKey {
   color: #666;
 }
 
-span.annotationValue {
+span.annotation-value {
   padding: 0.4em;
   border-radius: 0 .4em .4em 0;
   display: inline-block;
