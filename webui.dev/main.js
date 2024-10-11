@@ -59,7 +59,7 @@ function fetchGetDashboardComponents () {
     cors: 'cors'
   }).then(res => {
     if (!res.ok && res.status === 401) {
-      window.location.href = window.settings.UrlOnUnauthenticated
+      window.location.href = window.settings.AuthLoginUrl
     }
     return res.json()
   }).then(res => {

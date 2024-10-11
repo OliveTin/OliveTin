@@ -266,8 +266,8 @@ func (api *oliveTinAPI) GetDashboardComponents(ctx ctx.Context, req *pb.GetDashb
 
 	res.AuthenticatedUser = user.Username
 
-	if res.AuthenticatedUser == "" && cfg.UrlOnUnauthenticated != "" {
-		return nil, errors.New("unauthenticated")
+	if res.AuthenticatedUser == "guest" && !cfg.AuthAllowGuest {
+		return nil, status.Errorf(codes.PermissionDenied, "Unauthenticated")
 	}
 
 	return res, nil
