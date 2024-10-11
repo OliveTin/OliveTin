@@ -454,10 +454,10 @@ func (ost *OutputStreamer) String() string {
 	return ost.output.String()
 }
 
-func buildEnv(req *ExecutionRequest) []string {
+func buildEnv(args map[string]string) []string {
 	ret := append(os.Environ(), "OLIVETIN=1")
 
-	for k, v := range req.Arguments {
+	for k, v := range args {
 		varName := fmt.Sprintf("%v", strings.TrimSpace(strings.ToUpper(k)))
 
 		// Skip arguments that might not have a name (eg, confirmation), as this causes weird bugs on Windows.
@@ -480,7 +480,7 @@ func stepExec(req *ExecutionRequest) bool {
 	cmd := wrapCommandInShell(ctx, req.finalParsedCommand)
 	cmd.Stdout = streamer
 	cmd.Stderr = streamer
-	cmd.Env = buildEnv(req)
+	cmd.Env = buildEnv(req.Arguments)
 
 	req.logEntry.ExecutionStarted = true
 
@@ -524,8 +524,10 @@ func stepExecAfter(req *ExecutionRequest) bool {
 	var stderr bytes.Buffer
 
 	args := map[string]string{
-		"output":   req.logEntry.Output,
-		"exitCode": fmt.Sprintf("%v", req.logEntry.ExitCode),
+		"output":                 req.logEntry.Output,
+		"exitCode":               fmt.Sprintf("%v", req.logEntry.ExitCode),
+		"ot_executionTrackingId": req.TrackingID,
+		"ot_username":            req.AuthenticatedUser.Username,
 	}
 
 	finalParsedCommand, _, err := parseCommandForReplacements(req.Action.ShellAfterCompleted, args)
@@ -540,6 +542,8 @@ func stepExecAfter(req *ExecutionRequest) bool {
 	cmd := wrapCommandInShell(ctx, finalParsedCommand)
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
+
+	cmd.Env = buildEnv(args)
 
 	runerr := cmd.Start()
 
