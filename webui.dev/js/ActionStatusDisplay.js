@@ -15,10 +15,11 @@ export class ActionStatusDisplay {
 
   update (logEntry) {
     this.statusElement.classList.remove(...this.statusElement.classList)
+    this.statusElement.classList.add('action-status')
 
     if (logEntry.executionFinished) {
       this.statusElement.innerText = 'Completed'
-      this.exitCodeElement.innerText = ', Exit code: ' + logEntry.exitCode
+      this.exitCodeElement.innerText = ' Exit code: ' + logEntry.exitCode
 
       if (logEntry.exitCode === 0) {
         this.statusElement.classList.add('action-success')

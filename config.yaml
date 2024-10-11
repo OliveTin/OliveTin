@@ -54,7 +54,7 @@ actions:
   # runs for too long.
   - title: Run backup script
     shell: /opt/backupScript.sh
-    shellAfterCompleted: "apprise -t 'Notification: Backup script completed' -b 'The backup script completed with code {{ exitCode}}. The log is: \n {{ stdout }} '"
+    shellAfterCompleted: "apprise -t 'Notification: Backup script completed' -b 'The backup script completed with code {{ exitCode}}. The log is: \n {{ output }} '"
     maxConcurrent: 1
     timeout: 10
     icon: backup
@@ -172,7 +172,7 @@ actions:
     timeout: 120
 
   # The following actions are "dummy" actions, used in a Dashboard. As long as
-  # you have these referenced in a dashboard, they will not who up in the
+  # you have these referenced in a dashboard, they will not show up in the
   # `actions` view.
   - title: Ping hypervisor1
     shell: echo "hypervisor1 online"

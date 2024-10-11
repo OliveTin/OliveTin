@@ -315,11 +315,29 @@ func stepRateCheck(req *ExecutionRequest) bool {
 }
 
 func stepACLCheck(req *ExecutionRequest) bool {
-	return acl.IsAllowedExec(req.Cfg, req.AuthenticatedUser, req.Action)
+	canExec := acl.IsAllowedExec(req.Cfg, req.AuthenticatedUser, req.Action)
+
+	if !canExec {
+		req.logEntry.Output = "ACL check failed. Blocked from executing."
+		req.logEntry.Blocked = true
+
+		log.WithFields(log.Fields{
+			"actionTitle": req.logEntry.ActionTitle,
+		}).Warnf("ACL check failed. Blocked from executing.")
+	}
+
+	return canExec
 }
 
 func stepParseArgs(req *ExecutionRequest) bool {
 	var err error
+
+	if req.Arguments == nil {
+		req.Arguments = make(map[string]string)
+	}
+
+	req.Arguments["ot_executionTrackingId"] = req.TrackingID
+	req.Arguments["ot_username"] = req.AuthenticatedUser.Username
 
 	req.finalParsedCommand, err = parseActionArguments(req.Action.Shell, req.Arguments, req.Action, req.logEntry.ActionTitle, req.EntityPrefix)
 
@@ -359,6 +377,7 @@ func stepRequestAction(req *ExecutionRequest) bool {
 	req.logEntry.ActionTitle = sv.ReplaceEntityVars(req.EntityPrefix, req.Action.Title)
 	req.logEntry.ActionIcon = req.Action.Icon
 	req.logEntry.ActionId = req.Action.ID
+	req.logEntry.Tags = req.Tags
 
 	req.executor.logmutex.Lock()
 
@@ -479,9 +498,9 @@ func stepExec(req *ExecutionRequest) bool {
 		// The context timeout should kill the process, but let's make sure.
 		req.executor.Kill(req.logEntry)
 		req.logEntry.TimedOut = true
+		req.logEntry.Output += "OliveTin::timeout - this action timed out after " + fmt.Sprintf("%v", req.Action.Timeout) + " seconds. If you need more time for this action, set a longer timeout. See https://docs.olivetin.app/timeout.html for more help."
 	}
 
-	req.logEntry.Tags = req.Tags
 	req.logEntry.DatetimeFinished = time.Now()
 
 	return true
@@ -513,17 +532,24 @@ func stepExecAfter(req *ExecutionRequest) bool {
 
 	waiterr := cmd.Wait()
 
-	req.logEntry.Output += "---\n" + stdout.String()
-	req.logEntry.Output += "---\n" + stderr.String()
+	req.logEntry.Output += "\n" + stdout.String()
+	req.logEntry.Output += "OliveTin::shellAfterCompleted stdout\n" + stdout.String()
+	req.logEntry.Output += stdout.String()
 
+	req.logEntry.Output += "OliveTin::shellAfterCompleted stderr\n" + stdout.String()
+	req.logEntry.Output += stderr.String()
+
+	req.logEntry.Output += "OliveTin::shellAfterCompleted errors and summary\n" + stdout.String()
 	appendErrorToStderr(runerr, req.logEntry)
 	appendErrorToStderr(waiterr, req.logEntry)
 
 	if ctx.Err() == context.DeadlineExceeded {
-		req.logEntry.Output += "Your shellAfterCommand command timed out."
+		req.logEntry.Output += "Your shellAfterCompleted command timed out."
 	}
 
-	req.logEntry.Output += fmt.Sprintf("Your shellAfterCommand exited with code %v", cmd.ProcessState.ExitCode())
+	req.logEntry.Output += fmt.Sprintf("Your shellAfterCompleted exited with code %v\n", cmd.ProcessState.ExitCode())
+
+	req.logEntry.Output += "OliveTin::shellAfterCompleted output complete\n" + stdout.String()
 
 	return true
 }

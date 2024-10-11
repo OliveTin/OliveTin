@@ -34,12 +34,10 @@ func scheduleAction(cfg *config.Config, scheduler *cron.Cron, cronline string, e
 
 	_, err := scheduler.AddFunc(cronline, func() {
 		req := &executor.ExecutionRequest{
-			ActionTitle: action.Title,
-			Cfg:         cfg,
-			Tags:        []string{"cron"},
-			AuthenticatedUser: &acl.AuthenticatedUser{
-				Username: "cron",
-			},
+			ActionTitle:       action.Title,
+			Cfg:               cfg,
+			Tags:              []string{"cron"},
+			AuthenticatedUser: acl.UserFromSystem(cfg, "cron"),
 		}
 
 		ex.ExecRequest(req)

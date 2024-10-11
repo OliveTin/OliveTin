@@ -8,9 +8,7 @@ import (
 )
 
 func Execute(cfg *config.Config, ex *executor.Executor) {
-	user := &acl.AuthenticatedUser{
-		Username: "startup-user",
-	}
+	user := acl.UserFromSystem(cfg, "startup-user")
 
 	for _, action := range cfg.Actions {
 		if action.ExecOnStartup {

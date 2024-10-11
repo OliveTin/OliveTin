@@ -59,10 +59,10 @@ func parseRequestMetadata(ctx context.Context, req *http.Request) metadata.MD {
 		username, usergroup = parseHttpHeaderForAuth(req)
 	}
 
-	md := metadata.Pairs(
-		"username", username,
-		"usergroup", usergroup,
-	)
+	md := metadata.New(map[string]string{
+		"username":  username,
+		"usergroup": usergroup,
+	})
 
 	log.Tracef("api request metadata: %+v", md)
 

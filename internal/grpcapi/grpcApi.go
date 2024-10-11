@@ -8,6 +8,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/genproto/googleapis/api/httpbody"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"errors"
 	"net"
@@ -69,6 +71,10 @@ func (api *oliveTinAPI) StartAction(ctx ctx.Context, req *pb.StartActionRequest)
 	api.executor.MapActionIdToBindingLock.RLock()
 	pair := api.executor.MapActionIdToBinding[req.ActionId]
 	api.executor.MapActionIdToBindingLock.RUnlock()
+
+	if pair == nil || pair.Action == nil {
+		return nil, status.Errorf(codes.NotFound, "Action not found.")
+	}
 
 	execReq := executor.ExecutionRequest{
 		Action:            pair.Action,
@@ -150,7 +156,7 @@ func (api *oliveTinAPI) StartActionByGetAndWait(ctx ctx.Context, req *pb.StartAc
 			LogEntry: internalLogEntryToPb(internalLogEntry),
 		}, nil
 	} else {
-		return nil, errors.New("Execution not found!")
+		return nil, status.Errorf(codes.NotFound, "Execution not found.")
 	}
 }
 
@@ -208,7 +214,11 @@ func (api *oliveTinAPI) ExecutionStatus(ctx ctx.Context, req *pb.ExecutionStatus
 		ile = getMostRecentExecutionStatusById(api, req.ActionId)
 	}
 
-	res.LogEntry = internalLogEntryToPb(ile)
+	if ile == nil {
+		return nil, status.Errorf(codes.NotFound, "Execution not found.")
+	} else {
+		res.LogEntry = internalLogEntryToPb(ile)
+	}
 
 	return res, nil
 }

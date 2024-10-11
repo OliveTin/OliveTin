@@ -44,13 +44,11 @@ func scheduleExec(action *config.Action, cfg *config.Config, ex *executor.Execut
 	fmt.Printf("%+v", args)
 
 	req := &executor.ExecutionRequest{
-		ActionTitle: action.Title,
-		Cfg:         cfg,
-		Tags:        []string{"fileindir"},
-		Arguments:   args,
-		AuthenticatedUser: &acl.AuthenticatedUser{
-			Username: "fileindir",
-		},
+		ActionTitle:       action.Title,
+		Cfg:               cfg,
+		Tags:              []string{"fileindir"},
+		Arguments:         args,
+		AuthenticatedUser: acl.UserFromSystem(cfg, "fileindir"),
 	}
 
 	ex.ExecRequest(req)

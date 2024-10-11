@@ -124,7 +124,19 @@ function convertPathToBreadcrumb (path) {
   return result
 }
 
+function showExecutionResult (pathName) {
+  const executionTrackingId = pathName.split('/')[2]
+  window.executionDialog.fetchExecutionResult(executionTrackingId)
+  window.executionDialog.show()
+}
+
 function showSection (pathName) {
+  if (pathName.startsWith('/logs/')) {
+    showExecutionResult(pathName)
+    pushNewNavigationPath(pathName)
+    return
+  }
+
   const path = window.registeredPaths.get(pathName)
 
   if (path === undefined) {
@@ -162,6 +174,8 @@ function pushNewNavigationPath (pathName) {
 function setSectionNavigationVisible (visible) {
   const nav = document.querySelector('nav')
   const btn = document.getElementById('sidebar-toggler-button')
+
+  nav.removeAttribute('hidden')
 
   if (document.body.classList.contains('has-sidebar')) {
     if (visible) {
@@ -236,7 +250,7 @@ export function refreshDiagnostics () {
 }
 
 function getSystemTitle (title) {
-  return title.replace(' ', '')
+  return title.replaceAll(' ', '')
 }
 
 function marshalSingleDashboard (dashboard, nav) {
@@ -312,6 +326,10 @@ function marshalLink (item, fieldset) {
     btn = document.createElement('button')
     btn.innerText = 'Action not found: ' + item.title
     btn.classList.add('error')
+  }
+
+  if (item.cssClass !== '') {
+    btn.classList.add(item.cssClass)
   }
 
   fieldset.appendChild(btn)
@@ -555,6 +573,7 @@ export function marshalLogsJsonToHtml (json) {
       window.executionDialog.renderExecutionResult({
         logEntry: window.logEntries[logEntry.executionTrackingId]
       })
+      pushNewNavigationPath('/logs/' + logEntry.executionTrackingId)
     }
 
     for (const tag of logEntry.tags) {
