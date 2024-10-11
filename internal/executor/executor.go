@@ -454,10 +454,10 @@ func (ost *OutputStreamer) String() string {
 	return ost.output.String()
 }
 
-func buildEnv(req *ExecutionRequest) []string {
+func buildEnv(args map[string]string) []string {
 	ret := append(os.Environ(), "OLIVETIN=1")
 
-	for k, v := range req.Arguments {
+	for k, v := range args {
 		varName := fmt.Sprintf("%v", strings.TrimSpace(strings.ToUpper(k)))
 
 		// Skip arguments that might not have a name (eg, confirmation), as this causes weird bugs on Windows.
@@ -480,7 +480,7 @@ func stepExec(req *ExecutionRequest) bool {
 	cmd := wrapCommandInShell(ctx, req.finalParsedCommand)
 	cmd.Stdout = streamer
 	cmd.Stderr = streamer
-	cmd.Env = buildEnv(req)
+	cmd.Env = buildEnv(req.Arguments)
 
 	req.logEntry.ExecutionStarted = true
 
@@ -543,10 +543,7 @@ func stepExecAfter(req *ExecutionRequest) bool {
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 
-	fakeRequest := &ExecutionRequest{
-		Arguments: args,
-	}
-	cmd.Env = buildEnv(fakeRequest)
+	cmd.Env = buildEnv(args)
 
 	runerr := cmd.Start()
 
