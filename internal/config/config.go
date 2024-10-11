@@ -179,6 +179,7 @@ func DefaultConfigWithBasePort(basePort int) *Config {
 	config.DefaultPermissions.Logs = true
 	config.AuthJwtClaimUsername = "name"
 	config.AuthJwtClaimUserGroup = "group"
+	config.AuthAllowGuest = true
 	config.WebUIDir = "./webui"
 	config.CronSupportForSeconds = false
 	config.SectionNavigationStyle = "sidebar"
