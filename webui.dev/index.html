@@ -48,7 +48,7 @@
 		</header>
 
 		<main title = "main content">
-			<section id = "contentLogs" title = "Logs" hidden>
+			<section id = "contentLogs" title = "Logs" class = "box-shadow" hidden>
 				<div class = "toolbar">
 					<input placeholder = "Search for action name" id = "logSearchBox" />
 					<button id = "searchLogsClear" title = "Clear search filter" disabled>X</button>
@@ -66,15 +66,15 @@
 				</table>
 			</section>
 
-			<section id = "contentDiagnostics" title = "Diagnostics" hidden>
+			<section id = "contentDiagnostics" title = "Diagnostics" class = "box-shadow" hidden>
 				<div id = "diagnostics" class = "ta-left">
 					<p><strong>Note:</strong> Diagnostics are only generated on OliveTin startup - they are not updated in real-time or when you refresh this page. They are intended as a "quick reference" to help you.</p>
 					<p>If you are having problems with OliveTin and want to raise a support request, please don't take a screenshot or copy text from this page, but instead it is highly recommended to include a <a href = "https://docs.olivetin.app/sosreport.html">sosreport</a> which is more detailed, and makes it easier to help you.</p>
 					<table>
 						<tbody>
-							<th colspan = "0">SSH</th>
+							<th colspan = "99">SSH</th>
 							<tr>
-								<td>Found Key</td>
+								<td width = "10%">Found Key</td>
 								<td id = "diagnostics-sshfoundkey">?</td>
 							</tr>
 

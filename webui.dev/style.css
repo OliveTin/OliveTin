@@ -175,12 +175,11 @@ table {
   background-color: white;
   border-collapse: collapse;
   width: 100%;
-  box-shadow: 0 0 5px 0 #444;
 }
 
 th,
 td {
-  border: 1px solid #efefef;
+  border-top: 1px solid #efefef;
   text-align: left;
   padding: 0.6em;
 }
@@ -488,12 +487,20 @@ span.annotation-value {
   color: black;
 }
 
+.box-shadow {
+  box-shadow: 0 0 5px 0 #444;
+}
+
+.box-shadow p {
+  padding: .6em;
+  background-color: #fff;
+  margin: 0;
+}
+
 div.toolbar {
   padding: .4em;
   text-align: left;
-  background-color: #efefef;
-  border: 1px solid #999;
-  border-bottom: 0;
+  background-color: #fff;
   display: flex;
   flex-direction: row;
 }
@@ -575,6 +582,14 @@ div.display {
     color: white;
   }
 
+  .box-shadow {
+    box-shadow: 0 0 6px 0 #ccc;
+  }
+
+  .box-shadow p {
+    background-color: #222;
+  }
+
   dialog {
     background-color: #222;
     color: white;
@@ -628,7 +643,7 @@ div.display {
   table,
   td,
   th {
-    border: 1px solid gray;
+    border-top: 1px solid gray;
   }
 
   td,
