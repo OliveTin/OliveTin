@@ -126,9 +126,25 @@ function processWebuiSettingsJson (settings) {
     if (titleElem) titleElem.innerText = window.pageTitle
   }
 
+  processAdditionaLinks(settings.AdditionalLinks)
+
   window.settings = settings
 
   refreshDiagnostics()
+}
+
+function processAdditionaLinks (links) {
+  for (const link of links) {
+    const linkA = document.createElement('a')
+    linkA.href = link.Url
+    linkA.innerText = link.Title
+    linkA.target = '_blank'
+
+    const linkLi = document.createElement('li')
+    linkLi.appendChild(linkA)
+
+    document.getElementById('supplemental-links').prepend(linkLi)
+  }
 }
 
 function main () {

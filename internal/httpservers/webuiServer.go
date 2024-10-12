@@ -33,6 +33,7 @@ type webUISettings struct {
 	SshFoundConfig         string
 	EnableCustomJs         bool
 	AuthLoginUrl           string
+	AdditionalLinks        []*config.NavigationLink
 }
 
 func findWebuiDir() string {
@@ -119,6 +120,7 @@ func generateWebUISettings(w http.ResponseWriter, r *http.Request) {
 		SshFoundConfig:         installationinfo.Runtime.SshFoundConfig,
 		EnableCustomJs:         cfg.EnableCustomJs,
 		AuthLoginUrl:           cfg.AuthLoginUrl,
+		AdditionalLinks:        cfg.AdditionalNavigationLinks,
 	})
 
 	w.Header().Add("Content-Type", "application/json")
