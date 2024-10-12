@@ -5,9 +5,7 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
-	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 	"net/http"
 
@@ -85,21 +83,10 @@ func startRestAPIServer(globalConfig *config.Config) error {
 	return http.ListenAndServe(cfg.ListenAddressRestActions, cors.AllowCors(mux))
 }
 
-func errorHandler(ctx context.Context, mux *runtime.ServeMux, marshaler runtime.Marshaler, w http.ResponseWriter, r *http.Request, err error) {
-	log.Errorf("Error handling request: %v", err)
-	md, ok := runtime.ServerMetadataFromContext(ctx)
-	if ok && md.HeaderMD.Get("username") == nil {
-		err = status.Error(codes.Unauthenticated, "unauthenticated request")
-	}
-
-	runtime.DefaultHTTPErrorHandler(ctx, mux, marshaler, w, r, err)
-}
-
 func newMux() *runtime.ServeMux {
 	// The MarshalOptions set some important compatibility settings for the webui. See below.
 	mux := runtime.NewServeMux(
 		runtime.WithMetadata(parseRequestMetadata),
-		runtime.WithErrorHandler(errorHandler),
 		runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.HTTPBodyMarshaler{
 			Marshaler: &runtime.JSONPb{
 				MarshalOptions: protojson.MarshalOptions{
