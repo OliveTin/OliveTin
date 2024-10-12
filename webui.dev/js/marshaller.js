@@ -493,6 +493,17 @@ function showSectionView (selected) {
     }
   }
 
+  const current = window.registeredPaths.get(window.currentPath)
+
+  for (const navLink of document.querySelector('nav').querySelectorAll('a')) {
+    console.log(navLink.title, current.section)
+    if (navLink.title === current.section) {
+      navLink.classList.add('selected')
+    } else {
+      navLink.classList.remove('selected')
+    }
+  }
+
   rebuildH1BreadcrumbNavigation(selected)
 
   pushNewNavigationPath(window.currentPath)
