@@ -115,6 +115,8 @@ type Config struct {
 	AuthJwtPubKeyPath               string // will read pub key from file on disk
 	AuthHttpHeaderUsername          string
 	AuthHttpHeaderUserGroup         string
+	AuthLoginUrl                    string
+	AuthAllowGuest                  bool
 	DefaultPermissions              PermissionsList
 	AccessControlLists              []*AccessControlList
 	WebUIDir                        string
@@ -130,10 +132,14 @@ type Config struct {
 	DefaultIconForActions           string
 	DefaultIconForDirectories       string
 	DefaultIconForBack              string
-	AuthLoginUrl                    string
-	AuthAllowGuest                  bool
+	AdditionalNavigationLinks       []*NavigationLink
 
 	usedConfigDir string
+}
+
+type NavigationLink struct {
+	Title string
+	Url   string
 }
 
 type SaveLogsConfig struct {
