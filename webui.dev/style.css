@@ -65,6 +65,7 @@ nav ul li a {
   padding: 0.5em 1em;
   user-select: none;
   text-decoration: none;
+  font-size: small;
 }
 
 a:focus {
@@ -77,6 +78,14 @@ nav ul li a:hover {
   background-color: #efefef;
   color: black;
   cursor: pointer;
+  border: 0;
+  outline: 0;
+}
+
+nav ul li a.selected {
+  background-color: #c4cdd4;
+  color: black;
+  outline: 0;
 }
 
 #sidebar-toggler-button {
@@ -489,6 +498,8 @@ span.annotation-value {
 
 .box-shadow {
   box-shadow: 0 0 5px 0 #444;
+  background-color: #fff;
+  text-align: left;
 }
 
 .box-shadow p {
