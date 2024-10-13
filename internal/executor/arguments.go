@@ -6,6 +6,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"errors"
+	"net/mail"
 	"net/url"
 	"regexp"
 	"strings"
@@ -137,10 +138,13 @@ func typecheckChoiceEntity(value string, arg *config.ActionArgument) error {
 // TypeSafetyCheck checks argument values match a specific type. The types are
 // defined in typecheckRegex, and, you guessed it, uses regex to check for allowed
 // characters.
+//gocyclo:ignore
 func TypeSafetyCheck(name string, value string, argumentType string) error {
 	switch argumentType {
 	case "password":
 		return nil
+	case "email":
+		return typeSafetyCheckEmail(name, value)
 	case "url":
 		return typeSafetyCheckUrl(name, value)
 	case "datetime":
@@ -148,6 +152,18 @@ func TypeSafetyCheck(name string, value string, argumentType string) error {
 	}
 
 	return typeSafetyCheckRegex(name, value, argumentType)
+}
+
+func typeSafetyCheckEmail(name string, value string) error {
+	_, err := mail.ParseAddress(value)
+
+	log.Errorf("Email check: %v, %v", err, value)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func typeSafetyCheckDatetime(name string, value string) error {
