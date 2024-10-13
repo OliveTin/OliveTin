@@ -496,7 +496,6 @@ function showSectionView (selected) {
   const current = window.registeredPaths.get(window.currentPath)
 
   for (const navLink of document.querySelector('nav').querySelectorAll('a')) {
-    console.log(navLink.title, current.section)
     if (navLink.title === current.section) {
       navLink.classList.add('selected')
     } else {
@@ -634,7 +633,6 @@ export function marshalLogsJsonToHtml (json) {
       row.querySelector('.tags').append(createTag(tag))
     }
 
-    console.log(logEntry)
     row.querySelector('.tags').append(createAnnotation('user', logEntry.user))
 
     document.querySelector('#logTableBody').prepend(row)
