@@ -134,6 +134,10 @@ function processWebuiSettingsJson (settings) {
 }
 
 function processAdditionaLinks (links) {
+  if (links === undefined) {
+    return
+  }
+
   for (const link of links) {
     const linkA = document.createElement('a')
     linkA.href = link.Url
