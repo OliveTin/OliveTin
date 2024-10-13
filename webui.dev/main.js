@@ -134,7 +134,7 @@ function processWebuiSettingsJson (settings) {
 }
 
 function processAdditionaLinks (links) {
-  if (links === undefined) {
+  if (links === null) {
     return
   }
 
