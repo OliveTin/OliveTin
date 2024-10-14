@@ -31,10 +31,33 @@ func assignIfEmpty(target *string, value string) {
 	}
 }
 
+func oauth2Init(cfg *config.Config) {
+	for providerName, providerConfig := range cfg.AuthOAuth2Providers {
+		completeProviderConfig(providerName, providerConfig)
+
+		newConfig := &oauth2.Config{
+			ClientID:     providerConfig.ClientID,
+			ClientSecret: providerConfig.ClientSecret,
+			Scopes:       providerConfig.Scopes,
+			Endpoint: oauth2.Endpoint{
+				AuthURL:  providerConfig.AuthUrl,
+				TokenURL: providerConfig.TokenUrl,
+			},
+			RedirectURL: cfg.AuthOAuth2RedirectURL,
+		}
+
+		registeredProviders[providerName] = newConfig
+
+		log.Debugf("Dumping newly registered provider: %v = %+v", providerName, providerConfig)
+	}
+}
+
 func completeProviderConfig(providerName string, providerConfig *config.OAuth2Provider) {
 	dbConfig, ok := oauth2ProviderDatabase[providerName]
 
 	if ok {
+		assignIfEmpty(&providerConfig.Name, dbConfig.Name)
+		assignIfEmpty(&providerConfig.Title, dbConfig.Title)
 		assignIfEmpty(&providerConfig.WhoamiUrl, dbConfig.WhoamiUrl)
 		assignIfEmpty(&providerConfig.TokenUrl, dbConfig.TokenUrl)
 		assignIfEmpty(&providerConfig.AuthUrl, dbConfig.AuthUrl)
@@ -53,28 +76,7 @@ func getOAuth2Config(cfg *config.Config, providerName string) (*oauth2.Config, e
 	config, ok := registeredProviders[providerName]
 
 	if !ok {
-		providerConfig, ok := cfg.AuthOAuth2Providers[providerName]
-
-		if !ok {
-			return nil, fmt.Errorf("Provider not found in config: %v", providerName)
-		}
-
-		completeProviderConfig(providerName, providerConfig)
-
-		config = &oauth2.Config{
-			ClientID:     providerConfig.ClientID,
-			ClientSecret: providerConfig.ClientSecret,
-			Scopes:       providerConfig.Scopes,
-			Endpoint: oauth2.Endpoint{
-				AuthURL:  providerConfig.AuthUrl,
-				TokenURL: providerConfig.TokenUrl,
-			},
-			RedirectURL: cfg.AuthOAuth2RedirectURL,
-		}
-
-		registeredProviders[providerName] = config
-
-		log.Debugf("Dumping newly registered provider: %v = %+v", providerName, providerConfig)
+		return nil, fmt.Errorf("Provider not found in config: %v", providerName)
 	}
 
 	return config, nil
