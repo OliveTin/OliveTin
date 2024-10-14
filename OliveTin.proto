@@ -209,6 +209,15 @@ message KillActionResponse {
 	bool found = 4;
 }
 
+message LocalUserLoginRequest {
+    string username = 1;
+    string password = 2;
+}
+
+message LocalUserLoginResponse {
+    string authenticated_user = 1;
+}
+
 service OliveTinApiService {
 	rpc GetDashboardComponents(GetDashboardComponentsRequest) returns (GetDashboardComponentsResponse) {
 		option (google.api.http) = {
@@ -298,4 +307,11 @@ service OliveTinApiService {
 			get: "/api/readyz"
 		};
 	}
+
+    rpc Authenticate(LocalUserLoginRequest) returns (LocalUserLoginResponse) {
+        option (google.api.http) = {
+            post: "/api/authenticate"
+            body: "*"
+        };
+    }
 }
