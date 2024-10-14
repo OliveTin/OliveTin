@@ -552,6 +552,34 @@ div.display {
   padding: 1em;
 }
 
+.flex-col {
+  display: flex;
+  flex-direction: column;
+}
+
+#contentLogin form {
+  width: 40%;
+  place-self: center;
+}
+
+#contentLogin hr {
+  border: 0;
+  border-top: 1px dashed #ccc;
+}
+
+#contentLogin button {
+  display: block;
+  width: 100%;
+  grid-column: 1 / span 3;
+  margin-bottom: 1em;
+  font-weight: bold;
+  background-color: #ced3d7;
+}
+
+#contentLogin button:last-child {
+  margin-bottom: 0;
+}
+
 @media screen and (width <= 600px) {
   fieldset {
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));

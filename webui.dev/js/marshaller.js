@@ -264,6 +264,7 @@ export function setupSectionNavigation (style) {
   registerSection('/', 'Actions', null, document.getElementById('showActions'))
   registerSection('/diagnostics', 'Diagnostics', null, document.getElementById('showDiagnostics'))
   registerSection('/logs', 'Logs', null, document.getElementById('showLogs'))
+  registerSection('/login', 'Login', null, null)
 }
 
 function registerSection (path, section, view, linkElement) {
