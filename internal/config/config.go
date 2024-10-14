@@ -117,6 +117,7 @@ type Config struct {
 	AuthHttpHeaderUserGroup         string
 	AuthLoginUrl                    string
 	AuthAllowGuest                  bool
+	AuthOAuth2Providers             map[string]*OAuth2Provider
 	DefaultPermissions              PermissionsList
 	AccessControlLists              []*AccessControlList
 	WebUIDir                        string
@@ -135,6 +136,18 @@ type Config struct {
 	AdditionalNavigationLinks       []*NavigationLink
 
 	usedConfigDir string
+}
+
+type OAuth2Provider struct {
+	Name          string
+	ClientID      string
+	ClientSecret  string
+	Icon          string
+	Scopes        []string
+	AuthUrl       string
+	TokenUrl      string
+	WhoamiUrl     string
+	UsernameField string
 }
 
 type NavigationLink struct {
