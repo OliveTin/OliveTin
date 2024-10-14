@@ -117,6 +117,7 @@ type Config struct {
 	AuthHttpHeaderUserGroup         string
 	AuthLoginUrl                    string
 	AuthAllowGuest                  bool
+	AuthOAuth2RedirectURL           string
 	AuthOAuth2Providers             map[string]*OAuth2Provider
 	DefaultPermissions              PermissionsList
 	AccessControlLists              []*AccessControlList
