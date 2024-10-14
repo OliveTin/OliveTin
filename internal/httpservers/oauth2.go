@@ -69,7 +69,7 @@ func getOAuth2Config(cfg *config.Config, providerName string) (*oauth2.Config, e
 				AuthURL:  providerConfig.AuthUrl,
 				TokenURL: providerConfig.TokenUrl,
 			},
-			RedirectURL: "http://localhost:1337/oauth/callback",
+			RedirectURL: cfg.AuthOAuth2RedirectURL,
 		}
 
 		registeredProviders[providerName] = config
