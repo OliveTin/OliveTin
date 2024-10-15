@@ -557,17 +557,17 @@ div.display {
   flex-direction: column;
 }
 
-#contentLogin form {
+#content-login form {
   width: 40%;
   place-self: center;
 }
 
-#contentLogin hr {
+#content-login hr {
   border: 0;
   border-top: 1px dashed #ccc;
 }
 
-#contentLogin button {
+#content-login button {
   display: block;
   width: 100%;
   grid-column: 1 / span 3;
@@ -576,7 +576,7 @@ div.display {
   background-color: #ced3d7;
 }
 
-#contentLogin button:last-child {
+#content-login button:last-child {
   margin-bottom: 0;
 }
 
