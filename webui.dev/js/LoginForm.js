@@ -37,7 +37,6 @@ export class LoginForm extends window.HTMLElement {
       this.querySelector('.login-disabled').hidden = true
     }
   }
-
 }
 
 window.customElements.define('login-form', LoginForm)

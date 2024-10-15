@@ -10,7 +10,6 @@ import {
 } from './js/marshaller.js'
 import { checkWebsocketConnection } from './js/websocket.js'
 
-import { createApp } from 'vue'
 import { LoginForm } from './js/LoginForm.js'
 
 function searchLogs (e) {
