@@ -77,6 +77,8 @@ func StartSingleHTTPFrontend(cfg *config.Config) {
 		})
 	}
 
+	oauth2Init(cfg)
+
 	srv := &http.Server{
 		Addr:    cfg.ListenAddressSingleHTTPFrontend,
 		Handler: mux,

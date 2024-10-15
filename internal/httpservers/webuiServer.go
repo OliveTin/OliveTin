@@ -33,6 +33,8 @@ type webUISettings struct {
 	SshFoundConfig         string
 	EnableCustomJs         bool
 	AuthLoginUrl           string
+	AuthLocalLogin         bool
+	AuthOAuth2Providers    []publicOAuth2Provider
 	AdditionalLinks        []*config.NavigationLink
 }
 
@@ -105,6 +107,26 @@ func generateThemeCss(w http.ResponseWriter, r *http.Request) {
 	w.Write(customThemeCss)
 }
 
+type publicOAuth2Provider struct {
+	Name  string
+	Title string
+	Icon  string
+}
+
+func buildPublicOAuth2ProvidersList(cfg *config.Config) []publicOAuth2Provider {
+	var publicProviders []publicOAuth2Provider
+
+	for _, provider := range cfg.AuthOAuth2Providers {
+		publicProviders = append(publicProviders, publicOAuth2Provider{
+			Name:  provider.Name,
+			Title: provider.Title,
+			Icon:  provider.Icon,
+		})
+	}
+
+	return publicProviders
+}
+
 func generateWebUISettings(w http.ResponseWriter, r *http.Request) {
 	jsonRet, _ := json.Marshal(webUISettings{
 		Rest:                   cfg.ExternalRestAddress + "/api/",
@@ -120,6 +142,8 @@ func generateWebUISettings(w http.ResponseWriter, r *http.Request) {
 		SshFoundConfig:         installationinfo.Runtime.SshFoundConfig,
 		EnableCustomJs:         cfg.EnableCustomJs,
 		AuthLoginUrl:           cfg.AuthLoginUrl,
+		AuthLocalLogin:         true,
+		AuthOAuth2Providers:    buildPublicOAuth2ProvidersList(cfg),
 		AdditionalLinks:        cfg.AdditionalNavigationLinks,
 	})
 

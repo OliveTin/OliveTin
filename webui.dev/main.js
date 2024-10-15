@@ -10,6 +10,8 @@ import {
 } from './js/marshaller.js'
 import { checkWebsocketConnection } from './js/websocket.js'
 
+import { LoginForm } from './js/LoginForm.js'
+
 function searchLogs (e) {
   document.getElementById('searchLogsClear').disabled = false
 
@@ -126,28 +128,42 @@ function processWebuiSettingsJson (settings) {
     if (titleElem) titleElem.innerText = window.pageTitle
   }
 
-  processAdditionaLinks(settings.AdditionalLinks)
+  processAdditionalLinks(settings.AdditionalLinks)
+
+  const loginForm = new LoginForm()
+  loginForm.setup()
+  loginForm.processOAuth2Providers(settings.AuthOAuth2Providers)
+  loginForm.processLocalLogin(settings.AuthLocalLogin)
+
+  document.getElementsByTagName('main')[0].appendChild(loginForm)
 
   window.settings = settings
 
   refreshDiagnostics()
 }
 
-function processAdditionaLinks (links) {
+function processAdditionalLinks (links) {
   if (links === null) {
     return
   }
 
-  for (const link of links) {
-    const linkA = document.createElement('a')
-    linkA.href = link.Url
-    linkA.innerText = link.Title
-    linkA.target = '_blank'
+  if (links.length > 0) {
+    for (const link of links) {
+      const linkA = document.createElement('a')
+      linkA.href = link.Url
+      linkA.innerText = link.Title
 
-    const linkLi = document.createElement('li')
-    linkLi.appendChild(linkA)
+      if (link.Target === '') {
+        linkA.target = '_blank'
+      } else {
+        linkA.target = link.Target
+      }
 
-    document.getElementById('supplemental-links').prepend(linkLi)
+      const linkLi = document.createElement('li')
+      linkLi.appendChild(linkA)
+
+      document.getElementById('supplemental-links').prepend(linkLi)
+    }
   }
 }
 

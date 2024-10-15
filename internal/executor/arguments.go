@@ -138,6 +138,7 @@ func typecheckChoiceEntity(value string, arg *config.ActionArgument) error {
 // TypeSafetyCheck checks argument values match a specific type. The types are
 // defined in typecheckRegex, and, you guessed it, uses regex to check for allowed
 // characters.
+//
 //gocyclo:ignore
 func TypeSafetyCheck(name string, value string, argumentType string) error {
 	switch argumentType {
