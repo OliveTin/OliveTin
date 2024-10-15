@@ -58,6 +58,9 @@ function fetchGetDashboardComponents () {
   window.fetch(window.restBaseUrl + 'GetDashboardComponents', {
     cors: 'cors'
   }).then(res => {
+    if (!res.ok && res.status === 403) {
+      window.location.href = window.settings.AuthLoginUrl
+    }
     return res.json()
   }).then(res => {
     if (!window.restAvailable) {
@@ -123,9 +126,29 @@ function processWebuiSettingsJson (settings) {
     if (titleElem) titleElem.innerText = window.pageTitle
   }
 
+  processAdditionaLinks(settings.AdditionalLinks)
+
   window.settings = settings
 
   refreshDiagnostics()
+}
+
+function processAdditionaLinks (links) {
+  if (links === null) {
+    return
+  }
+
+  for (const link of links) {
+    const linkA = document.createElement('a')
+    linkA.href = link.Url
+    linkA.innerText = link.Title
+    linkA.target = '_blank'
+
+    const linkLi = document.createElement('li')
+    linkLi.appendChild(linkA)
+
+    document.getElementById('supplemental-links').prepend(linkLi)
+  }
 }
 
 function main () {

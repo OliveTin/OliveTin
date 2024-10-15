@@ -2,6 +2,7 @@ package acl
 
 import (
 	"context"
+
 	config "github.com/OliveTin/OliveTin/internal/config"
 	log "github.com/sirupsen/logrus"
 
@@ -135,29 +136,36 @@ func getMetadataKeyOrEmpty(md metadata.MD, key string) string {
 
 // UserFromContext tries to find a user from a grpc context
 func UserFromContext(ctx context.Context, cfg *config.Config) *AuthenticatedUser {
-	ret := &AuthenticatedUser{}
+	var ret *AuthenticatedUser
 
 	md, ok := metadata.FromIncomingContext(ctx)
 
 	if ok {
+		ret = &AuthenticatedUser{}
 		ret.Username = getMetadataKeyOrEmpty(md, "username")
 		ret.Usergroup = getMetadataKeyOrEmpty(md, "usergroup")
+
+		buildUserAcls(cfg, ret)
 	}
 
-	if ret.Username == "" {
-		ret.Username = "guest"
+	if !ok || ret.Username == "" {
+		ret = UserGuest(cfg)
 	}
-
-	if ret.Usergroup == "" {
-		ret.Usergroup = "guest"
-	}
-
-	buildUserAcls(cfg, ret)
 
 	log.WithFields(log.Fields{
 		"username":  ret.Username,
 		"usergroup": ret.Usergroup,
 	}).Debugf("UserFromContext")
+
+	return ret
+}
+
+func UserGuest(cfg *config.Config) *AuthenticatedUser {
+	ret := &AuthenticatedUser{}
+	ret.Username = "guest"
+	ret.Usergroup = "guest"
+
+	buildUserAcls(cfg, ret)
 
 	return ret
 }

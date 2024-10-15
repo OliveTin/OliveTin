@@ -57,8 +57,12 @@ func parseRequestMetadata(ctx context.Context, req *http.Request) metadata.MD {
 		username, usergroup = parseHttpHeaderForAuth(req)
 	}
 
-	md := metadata.New(map[string]string {
-		"username": username,
+	if len(cfg.AuthOAuth2Providers) > 0 {
+		username, usergroup = parseOAuth2Cookie(req)
+	}
+
+	md := metadata.New(map[string]string{
+		"username":  username,
 		"usergroup": usergroup,
 	})
 

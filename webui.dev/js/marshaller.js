@@ -2,6 +2,49 @@ import './ActionButton.js' // To define action-button
 import { ExecutionDialog } from './ExecutionDialog.js'
 import { ActionStatusDisplay } from './ActionStatusDisplay.js'
 
+function createElement (tag, attributes) {
+  const el = document.createElement(tag)
+
+  if (attributes !== null) {
+    if (attributes.classNames !== undefined) {
+      el.classList.add(...attributes.classNames)
+    }
+
+    if (attributes.innerText !== undefined) {
+      el.innerText = attributes.innerText
+    }
+  }
+
+  return el
+}
+
+function createTag (val) {
+  const domTag = createElement('span', {
+    innerText: val,
+    classNames: ['tag']
+  })
+
+  return domTag
+}
+
+function createAnnotation (key, val) {
+  const domAnnotation = createElement('span', {
+    classNames: ['annotation']
+  })
+
+  domAnnotation.appendChild(createElement('span', {
+    innerText: key,
+    classNames: ['annotation-key']
+  }))
+
+  domAnnotation.appendChild(createElement('span', {
+    innerText: val,
+    classNames: ['annotation-value']
+  }))
+
+  return domAnnotation
+}
+
 /**
  * This is a weird function that just sets some globals.
  */
@@ -124,7 +167,19 @@ function convertPathToBreadcrumb (path) {
   return result
 }
 
+function showExecutionResult (pathName) {
+  const executionTrackingId = pathName.split('/')[2]
+  window.executionDialog.fetchExecutionResult(executionTrackingId)
+  window.executionDialog.show()
+}
+
 function showSection (pathName) {
+  if (pathName.startsWith('/logs/')) {
+    showExecutionResult(pathName)
+    pushNewNavigationPath(pathName)
+    return
+  }
+
   const path = window.registeredPaths.get(pathName)
 
   if (path === undefined) {
@@ -209,6 +264,7 @@ export function setupSectionNavigation (style) {
   registerSection('/', 'Actions', null, document.getElementById('showActions'))
   registerSection('/diagnostics', 'Diagnostics', null, document.getElementById('showDiagnostics'))
   registerSection('/logs', 'Logs', null, document.getElementById('showLogs'))
+  registerSection('/login', 'Login', null, null)
 }
 
 function registerSection (path, section, view, linkElement) {
@@ -238,7 +294,7 @@ export function refreshDiagnostics () {
 }
 
 function getSystemTitle (title) {
-  return title.replace(' ', '')
+  return title.replaceAll(' ', '')
 }
 
 function marshalSingleDashboard (dashboard, nav) {
@@ -314,6 +370,10 @@ function marshalLink (item, fieldset) {
     btn = document.createElement('button')
     btn.innerText = 'Action not found: ' + item.title
     btn.classList.add('error')
+  }
+
+  if (item.cssClass !== '') {
+    btn.classList.add(item.cssClass)
   }
 
   fieldset.appendChild(btn)
@@ -431,6 +491,16 @@ function showSectionView (selected) {
       } else {
         fieldset.style.display = 'none'
       }
+    }
+  }
+
+  const current = window.registeredPaths.get(window.currentPath)
+
+  for (const navLink of document.querySelector('nav').querySelectorAll('a')) {
+    if (navLink.title === current.section) {
+      navLink.classList.add('selected')
+    } else {
+      navLink.classList.remove('selected')
     }
   }
 
@@ -557,15 +627,14 @@ export function marshalLogsJsonToHtml (json) {
       window.executionDialog.renderExecutionResult({
         logEntry: window.logEntries[logEntry.executionTrackingId]
       })
+      pushNewNavigationPath('/logs/' + logEntry.executionTrackingId)
     }
 
     for (const tag of logEntry.tags) {
-      const domTag = document.createElement('span')
-      domTag.classList.add('tag')
-      domTag.innerText = tag
-
-      row.querySelector('.tags').append(domTag)
+      row.querySelector('.tags').append(createTag(tag))
     }
+
+    row.querySelector('.tags').append(createAnnotation('user', logEntry.user))
 
     document.querySelector('#logTableBody').prepend(row)
   }

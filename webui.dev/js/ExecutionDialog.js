@@ -140,6 +140,8 @@ export class ExecutionDialog {
     }).then((res) => {
       if (res.ok) {
         return res.json()
+      } else if (res.status === 404) {
+        throw new Error('Execution not found: ' + executionTrackingId)
       } else {
         throw new Error(res.statusText)
       }
@@ -147,6 +149,7 @@ export class ExecutionDialog {
     ).then((json) => {
       this.renderExecutionResult(json)
     }).catch(err => {
+      console.log(err)
       this.renderError(err)
     })
   }
@@ -205,6 +208,6 @@ export class ExecutionDialog {
   }
 
   renderError (err) {
-    this.dlg.querySelector('pre').innerText = JSON.stringify(err)
+    window.showBigError('execution-dlg-err', 'in the execution dialog', 'Failed to fetch execution result. ' + err, false)
   }
 }
