@@ -560,11 +560,6 @@ div.display {
   flex-direction: column;
 }
 
-#content-login form {
-  width: 40%;
-  place-self: center;
-}
-
 #content-login hr {
   border: 0;
   border-top: 1px dashed #ccc;
