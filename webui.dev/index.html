@@ -48,7 +48,7 @@
 		</header>
 
 		<main title = "main content">
-			<section id = "contentLogs" title = "Logs" hidden>
+			<section id = "contentLogs" title = "Logs" class = "box-shadow" hidden>
 				<div class = "toolbar">
 					<input placeholder = "Search for action name" id = "logSearchBox" />
 					<button id = "searchLogsClear" title = "Clear search filter" disabled>X</button>
@@ -58,7 +58,7 @@
 						<tr title = "untitled">
 							<th>Timestamp</th>
 							<th>Action</th>
-							<th>Tags</th>
+							<th>Metadata</th>
 							<th>Status</th>
 						</tr>
 					</thead>
@@ -66,15 +66,15 @@
 				</table>
 			</section>
 
-			<section id = "contentDiagnostics" title = "Diagnostics" hidden>
+			<section id = "contentDiagnostics" title = "Diagnostics" class = "box-shadow" hidden>
 				<div id = "diagnostics" class = "ta-left">
 					<p><strong>Note:</strong> Diagnostics are only generated on OliveTin startup - they are not updated in real-time or when you refresh this page. They are intended as a "quick reference" to help you.</p>
 					<p>If you are having problems with OliveTin and want to raise a support request, please don't take a screenshot or copy text from this page, but instead it is highly recommended to include a <a href = "https://docs.olivetin.app/sosreport.html">sosreport</a> which is more detailed, and makes it easier to help you.</p>
 					<table>
 						<tbody>
-							<th colspan = "0">SSH</th>
+							<th colspan = "99">SSH</th>
 							<tr>
-								<td>Found Key</td>
+								<td width = "10%">Found Key</td>
 								<td id = "diagnostics-sshfoundkey">?</td>
 							</tr>
 
@@ -90,6 +90,35 @@
 				<fieldset id = "root-group" title = "Actions">
 					<legend hidden>Actions</legend>
 				</fieldset>
+			</section>
+
+			<section id = "contentLogin" title = "Login" hidden>
+				<div class = "flex-col">
+				<form class = "box-shadow padded-content">
+					<h2>OAuth Login</h2>
+					<div>
+						<button>GitHub</button>
+						<button>Google</button>
+					</div>
+					<hr />
+					<h2>Local Login</h2>
+					<div class = "arguments">
+						<label for = "username">
+							<span>Username:</span>
+						</label>
+						<input type = "text" name = "username" />
+						<span></span>
+
+						<label for = "password">
+							<span>Password:</span>
+						</label>
+						<input type = "password" name = "password" />
+						<span></span>
+
+						<button type = "submit">Login</button>
+					</div>
+				</form>
+				</div>
 			</section>
 
 			<noscript>

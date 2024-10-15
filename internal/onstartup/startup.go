@@ -8,7 +8,7 @@ import (
 )
 
 func Execute(cfg *config.Config, ex *executor.Executor) {
-	user := acl.UserFromSystem(cfg, "startup-user")
+	user := acl.UserFromSystem(cfg, "startup")
 
 	for _, action := range cfg.Actions {
 		if action.ExecOnStartup {
@@ -20,7 +20,7 @@ func Execute(cfg *config.Config, ex *executor.Executor) {
 				ActionTitle:       action.Title,
 				Arguments:         nil,
 				Cfg:               cfg,
-				Tags:              []string{"startup"},
+				Tags:              []string{},
 				AuthenticatedUser: user,
 			}
 

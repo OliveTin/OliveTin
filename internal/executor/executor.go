@@ -84,6 +84,7 @@ type InternalLogEntry struct {
 	ExecutionFinished   bool
 	ExecutionTrackingID string
 	Process             *os.Process
+	Username            string
 
 	/*
 		The following 3 properties are obviously on Action normally, but it's useful
@@ -182,6 +183,10 @@ func (e *Executor) SetLog(trackingID string, entry *InternalLogEntry) {
 
 // ExecRequest processes an ExecutionRequest
 func (e *Executor) ExecRequest(req *ExecutionRequest) (*sync.WaitGroup, string) {
+	if req.AuthenticatedUser == nil {
+		req.AuthenticatedUser = acl.UserGuest(req.Cfg)
+	}
+
 	req.executor = e
 	req.logEntry = &InternalLogEntry{
 		DatetimeStarted:     time.Now(),
@@ -193,6 +198,7 @@ func (e *Executor) ExecRequest(req *ExecutionRequest) (*sync.WaitGroup, string) 
 		ActionId:            "",
 		ActionTitle:         "notfound",
 		ActionIcon:          "&#x1f4a9;",
+		Username:            req.AuthenticatedUser.Username,
 	}
 
 	_, isDuplicate := e.GetLog(req.TrackingID)
@@ -448,10 +454,10 @@ func (ost *OutputStreamer) String() string {
 	return ost.output.String()
 }
 
-func buildEnv(req *ExecutionRequest) []string {
+func buildEnv(args map[string]string) []string {
 	ret := append(os.Environ(), "OLIVETIN=1")
 
-	for k, v := range req.Arguments {
+	for k, v := range args {
 		varName := fmt.Sprintf("%v", strings.TrimSpace(strings.ToUpper(k)))
 
 		// Skip arguments that might not have a name (eg, confirmation), as this causes weird bugs on Windows.
@@ -474,7 +480,7 @@ func stepExec(req *ExecutionRequest) bool {
 	cmd := wrapCommandInShell(ctx, req.finalParsedCommand)
 	cmd.Stdout = streamer
 	cmd.Stderr = streamer
-	cmd.Env = buildEnv(req)
+	cmd.Env = buildEnv(req.Arguments)
 
 	req.logEntry.ExecutionStarted = true
 
@@ -518,28 +524,39 @@ func stepExecAfter(req *ExecutionRequest) bool {
 	var stderr bytes.Buffer
 
 	args := map[string]string{
-		"output":   req.logEntry.Output,
-		"exitCode": fmt.Sprintf("%v", req.logEntry.ExitCode),
+		"output":                 req.logEntry.Output,
+		"exitCode":               fmt.Sprintf("%v", req.logEntry.ExitCode),
+		"ot_executionTrackingId": req.TrackingID,
+		"ot_username":            req.AuthenticatedUser.Username,
 	}
 
-	finalParsedCommand, _ := parseActionArguments(req.Action.ShellAfterCompleted, args, req.Action, req.logEntry.ActionTitle, req.EntityPrefix)
+	finalParsedCommand, _, err := parseCommandForReplacements(req.Action.ShellAfterCompleted, args)
+
+	if err != nil {
+		msg := "Could not prepare shellAfterCompleted command: " + err.Error() + "\n"
+		req.logEntry.Output += msg
+		log.Warnf(msg)
+		return true
+	}
 
 	cmd := wrapCommandInShell(ctx, finalParsedCommand)
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 
+	cmd.Env = buildEnv(args)
+
 	runerr := cmd.Start()
 
 	waiterr := cmd.Wait()
 
-	req.logEntry.Output += "\n" + stdout.String()
-	req.logEntry.Output += "OliveTin::shellAfterCompleted stdout\n" + stdout.String()
+	req.logEntry.Output += "\n"
+	req.logEntry.Output += "OliveTin::shellAfterCompleted stdout\n"
 	req.logEntry.Output += stdout.String()
 
-	req.logEntry.Output += "OliveTin::shellAfterCompleted stderr\n" + stdout.String()
+	req.logEntry.Output += "OliveTin::shellAfterCompleted stderr\n"
 	req.logEntry.Output += stderr.String()
 
-	req.logEntry.Output += "OliveTin::shellAfterCompleted errors and summary\n" + stdout.String()
+	req.logEntry.Output += "OliveTin::shellAfterCompleted errors and summary\n"
 	appendErrorToStderr(runerr, req.logEntry)
 	appendErrorToStderr(waiterr, req.logEntry)
 
@@ -549,7 +566,7 @@ func stepExecAfter(req *ExecutionRequest) bool {
 
 	req.logEntry.Output += fmt.Sprintf("Your shellAfterCompleted exited with code %v\n", cmd.ProcessState.ExitCode())
 
-	req.logEntry.Output += "OliveTin::shellAfterCompleted output complete\n" + stdout.String()
+	req.logEntry.Output += "OliveTin::shellAfterCompleted output complete\n"
 
 	return true
 }

@@ -6,6 +6,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"errors"
+	"net/mail"
 	"net/url"
 	"regexp"
 	"strings"
@@ -23,35 +24,51 @@ var (
 	}
 )
 
+func parseCommandForReplacements(rawShellCommand string, values map[string]string) (string, map[string]string, error) {
+	r := regexp.MustCompile("{{ *?([a-zA-Z0-9_]+?) *?}}")
+	foundArgumentNames := r.FindAllStringSubmatch(rawShellCommand, -1)
+
+	usedArguments := make(map[string]string)
+
+	for _, match := range foundArgumentNames {
+		argName := match[1]
+		argValue, argProvided := values[argName]
+
+		if !argProvided {
+			return "", nil, errors.New("Required arg not provided: " + argName)
+		}
+
+		usedArguments[argName] = argValue
+
+		rawShellCommand = strings.ReplaceAll(rawShellCommand, match[0], argValue)
+	}
+
+	return rawShellCommand, usedArguments, nil
+}
+
 func parseActionArguments(rawShellCommand string, values map[string]string, action *config.Action, actionTitle string, entityPrefix string) (string, error) {
 	log.WithFields(log.Fields{
 		"actionTitle": actionTitle,
 		"cmd":         rawShellCommand,
 	}).Infof("Action parse args - Before")
 
-	r := regexp.MustCompile("{{ *?([a-zA-Z0-9_]+?) *?}}")
-	matches := r.FindAllStringSubmatch(rawShellCommand, -1)
+	rawShellCommand, usedArgs, err := parseCommandForReplacements(rawShellCommand, values)
 
-	for _, match := range matches {
-		argValue, argProvided := values[match[1]]
+	if err != nil {
+		return "", err
+	}
 
-		if !argProvided {
-			log.Infof("%v", values)
-			return "", errors.New("Required arg not provided: " + match[1])
-		}
-
-		err := typecheckActionArgument(match[1], argValue, action)
+	for argName, argValue := range usedArgs {
+		err := typecheckActionArgument(argName, argValue, action)
 
 		if err != nil {
 			return "", err
 		}
 
 		log.WithFields(log.Fields{
-			"name":  match[1],
+			"name":  argName,
 			"value": argValue,
 		}).Debugf("Arg assigned")
-
-		rawShellCommand = strings.ReplaceAll(rawShellCommand, match[0], argValue)
 	}
 
 	rawShellCommand = sv.ReplaceEntityVars(entityPrefix, rawShellCommand)
@@ -121,10 +138,13 @@ func typecheckChoiceEntity(value string, arg *config.ActionArgument) error {
 // TypeSafetyCheck checks argument values match a specific type. The types are
 // defined in typecheckRegex, and, you guessed it, uses regex to check for allowed
 // characters.
+//gocyclo:ignore
 func TypeSafetyCheck(name string, value string, argumentType string) error {
 	switch argumentType {
 	case "password":
 		return nil
+	case "email":
+		return typeSafetyCheckEmail(name, value)
 	case "url":
 		return typeSafetyCheckUrl(name, value)
 	case "datetime":
@@ -132,6 +152,18 @@ func TypeSafetyCheck(name string, value string, argumentType string) error {
 	}
 
 	return typeSafetyCheckRegex(name, value, argumentType)
+}
+
+func typeSafetyCheckEmail(name string, value string) error {
+	_, err := mail.ParseAddress(value)
+
+	log.Errorf("Email check: %v, %v", err, value)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func typeSafetyCheckDatetime(name string, value string) error {

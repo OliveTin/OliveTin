@@ -65,6 +65,7 @@ nav ul li a {
   padding: 0.5em 1em;
   user-select: none;
   text-decoration: none;
+  font-size: small;
 }
 
 a:focus {
@@ -77,6 +78,14 @@ nav ul li a:hover {
   background-color: #efefef;
   color: black;
   cursor: pointer;
+  border: 0;
+  outline: 0;
+}
+
+nav ul li a.selected {
+  background-color: #c4cdd4;
+  color: black;
+  outline: 0;
 }
 
 #sidebar-toggler-button {
@@ -175,12 +184,11 @@ table {
   background-color: white;
   border-collapse: collapse;
   width: 100%;
-  box-shadow: 0 0 5px 0 #444;
 }
 
 th,
 td {
-  border: 1px solid #efefef;
+  border-top: 1px solid #efefef;
   text-align: left;
   padding: 0.6em;
 }
@@ -457,21 +465,53 @@ input.invalid {
 }
 
 span.tag {
-  background-color: lightgray;
   border-radius: 0.4em;
-  padding: 0.4em;
   margin-top: .2em;
   margin-right: .2em;
   display: inline-block;
+  background-color: lightgray;
+  padding: .4em;
   color: black;
+}
+
+span.annotation {
+  display: inline-block;
+  margin-top: .2em;
+  margin-right: .2em;
+}
+
+span.annotation-key {
+  padding: 0.4em;
+  border-radius: 0.4em 0 0 .4em;
+  display: inline-block;
+  background-color: lightgray;
+  color: #666;
+}
+
+span.annotation-value {
+  padding: 0.4em;
+  border-radius: 0 .4em .4em 0;
+  display: inline-block;
+  background-color: lightgray;
+  color: black;
+}
+
+.box-shadow {
+  box-shadow: 0 0 5px 0 #444;
+  background-color: #fff;
+  text-align: left;
+}
+
+.box-shadow p {
+  padding: .6em;
+  background-color: #fff;
+  margin: 0;
 }
 
 div.toolbar {
   padding: .4em;
   text-align: left;
-  background-color: #efefef;
-  border: 1px solid #999;
-  border-bottom: 0;
+  background-color: #fff;
   display: flex;
   flex-direction: row;
 }
@@ -510,6 +550,34 @@ div.display {
 
 .xterm {
   padding: 1em;
+}
+
+.flex-col {
+  display: flex;
+  flex-direction: column;
+}
+
+#contentLogin form {
+  width: 40%;
+  place-self: center;
+}
+
+#contentLogin hr {
+  border: 0;
+  border-top: 1px dashed #ccc;
+}
+
+#contentLogin button {
+  display: block;
+  width: 100%;
+  grid-column: 1 / span 3;
+  margin-bottom: 1em;
+  font-weight: bold;
+  background-color: #ced3d7;
+}
+
+#contentLogin button:last-child {
+  margin-bottom: 0;
 }
 
 @media screen and (width <= 600px) {
@@ -551,6 +619,14 @@ div.display {
   body, header {
     background-color: #333;
     color: white;
+  }
+
+  .box-shadow {
+    box-shadow: 0 0 6px 0 #ccc;
+  }
+
+  .box-shadow p {
+    background-color: #222;
   }
 
   dialog {
@@ -606,7 +682,7 @@ div.display {
   table,
   td,
   th {
-    border: 1px solid gray;
+    border-top: 1px solid gray;
   }
 
   td,

@@ -2,6 +2,7 @@ package grpcapi
 
 import (
 	ctx "context"
+
 	pb "github.com/OliveTin/OliveTin/gen/grpc"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
@@ -75,12 +76,14 @@ func (api *oliveTinAPI) StartAction(ctx ctx.Context, req *pb.StartActionRequest)
 		return nil, status.Errorf(codes.NotFound, "Action not found.")
 	}
 
+	authenticatedUser := acl.UserFromContext(ctx, cfg)
+
 	execReq := executor.ExecutionRequest{
 		Action:            pair.Action,
 		EntityPrefix:      pair.EntityPrefix,
 		TrackingID:        req.UniqueTrackingId,
 		Arguments:         args,
-		AuthenticatedUser: acl.UserFromContext(ctx, cfg),
+		AuthenticatedUser: authenticatedUser,
 		Cfg:               cfg,
 	}
 
@@ -187,6 +190,7 @@ func internalLogEntryToPb(logEntry *executor.InternalLogEntry) *pb.LogEntry {
 		ExecutionTrackingId: logEntry.ExecutionTrackingID,
 		ExecutionStarted:    logEntry.ExecutionStarted,
 		ExecutionFinished:   logEntry.ExecutionFinished,
+		User:                logEntry.Username,
 	}
 }
 
@@ -277,6 +281,10 @@ func (api *oliveTinAPI) GetDashboardComponents(ctx ctx.Context, req *pb.GetDashb
 	dashboardCfgToPb(res, cfg.Dashboards, cfg)
 
 	res.AuthenticatedUser = user.Username
+
+	if res.AuthenticatedUser == "guest" && !cfg.AuthAllowGuest {
+		return nil, status.Errorf(codes.PermissionDenied, "Unauthenticated")
+	}
 
 	return res, nil
 }

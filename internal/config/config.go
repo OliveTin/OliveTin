@@ -116,6 +116,10 @@ type Config struct {
 	AuthHttpHeaderUsername          string
 	AuthHttpHeaderUserGroup         string
 	AuthUsernamePassword            AuthUsernamePasswordConfig
+	AuthLoginUrl                    string
+	AuthAllowGuest                  bool
+	AuthOAuth2RedirectURL           string
+	AuthOAuth2Providers             map[string]*OAuth2Provider
 	DefaultPermissions              PermissionsList
 	AccessControlLists              []*AccessControlList
 	WebUIDir                        string
@@ -131,6 +135,7 @@ type Config struct {
 	DefaultIconForActions           string
 	DefaultIconForDirectories       string
 	DefaultIconForBack              string
+	AdditionalNavigationLinks       []*NavigationLink
 
 	usedConfigDir string
 }
@@ -144,6 +149,23 @@ type LocalUser struct {
 	Username string
 	Password string
 	Groups   []string
+}
+
+type OAuth2Provider struct {
+	Name          string
+	ClientID      string
+	ClientSecret  string
+	Icon          string
+	Scopes        []string
+	AuthUrl       string
+	TokenUrl      string
+	WhoamiUrl     string
+	UsernameField string
+}
+
+type NavigationLink struct {
+	Title string
+	Url   string
 }
 
 type SaveLogsConfig struct {
@@ -189,6 +211,7 @@ func DefaultConfigWithBasePort(basePort int) *Config {
 	config.DefaultPermissions.Logs = true
 	config.AuthJwtClaimUsername = "name"
 	config.AuthJwtClaimUserGroup = "group"
+	config.AuthAllowGuest = true
 	config.WebUIDir = "./webui"
 	config.CronSupportForSeconds = false
 	config.SectionNavigationStyle = "sidebar"
