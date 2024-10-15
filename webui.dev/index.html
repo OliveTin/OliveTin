@@ -129,16 +129,16 @@
 		<footer title = "footer">
 			<p><img title = "application icon" src = "OliveTinLogo.png" alt = "OliveTin logo" height = "1em" class = "logo" /> OliveTin</p>
 			<p>
-				<a href = "https://docs.olivetin.app" target = "_new">Documentation</a> |
-				<a href = "https://github.com/OliveTin/OliveTin/issues/new/choose" target = "_new">Raise an issue on GitHub</a> |
-				<span>Version: <span id = "currentVersion">?</span></span> |
-				<span>Server connection:
-					<span id = "serverConnectionRest">REST</span>,
-					<span id = "serverConnectionWebSocket">WebSocket</span>
-				</span>
+			<a href = "https://docs.olivetin.app" target = "_new">Documentation</a> |
+			<a href = "https://github.com/OliveTin/OliveTin/issues/new/choose" target = "_new">Raise an issue on GitHub</a> |
+			<span>Version: <span id = "currentVersion">?</span></span> |
+			<span>Server connection:
+				<span id = "serverConnectionRest">REST</span>,
+				<span id = "serverConnectionWebSocket">WebSocket</span>
+			</span>
 			</p>
 			<p>
-				<a id = "available-version" href = "http://olivetin.app" target = "_blank" hidden>?</a>
+			<a id = "available-version" href = "http://olivetin.app" target = "_blank" hidden>?</a>
 			</p>
 		</footer>
 
@@ -159,11 +159,11 @@
 				</button>
 			</div>
 			<div id = "execution-dialog-basics" class = "padded-content-sides">
-					<strong>Duration: </strong><span id = "execution-dialog-duration">unknown</span>
+				<strong>Duration: </strong><span id = "execution-dialog-duration">unknown</span>
 			</div>
 			<div id = "execution-dialog-details" class = "padded-content-sides">
 				<p>
-					<strong>Status: </strong><span id = "execution-dialog-status">unknown</span>
+				<strong>Status: </strong><span id = "execution-dialog-status">unknown</span>
 				</p>
 			</div>
 
@@ -177,6 +177,41 @@
 				</form>
 			</div>
 		</dialog>
+
+		<template id = "tplLoginForm">
+			<section id = "content-login" title = "Login" hidden>
+				<div class = "flex-col">
+					<form class = "box-shadow padded-content border-radius">
+						<p class = "login-disabled">Login with OAuth or Local users is not enabled on this server.</p>
+
+						<div class = "login-oauth2" hidden>
+							<h2>OAuth Login</h2>
+						</div>
+
+						<br />
+
+						<div class = "login-local" hidden>
+							<h2>Local Login</h2>
+							<div class = "arguments">
+								<label for = "username">
+									<span>Username:</span>
+								</label>
+								<input type = "text" name = "username" />
+								<span></span>
+
+								<label for = "password">
+									<span>Password:</span>
+								</label>
+								<input type = "password" name = "password" />
+								<span></span>
+
+								<button type = "submit">Login</button>
+							</div>
+						</div>
+					</form>
+				</div>
+			</section>
+		</template>
 
 		<template id = "tplArgumentForm">
 			<dialog title = "Arguments" id = "argument-popup">
@@ -225,24 +260,24 @@
 
 			/**
 			This is the bootstrap code, which relies on very simple, old javascript
-		  	to at least display a helpful error message if we can't use OliveTin.
-			*/
+			to at least display a helpful error message if we can't use OliveTin.
+			 */
 			window.showBigError = function (type, friendlyType, message, isFatal) {
-			  bigErrorDialog.innerHTML = '<h1>Error ' + friendlyType + '</h1><p>' + message + "</p><p><a href = 'http://docs.olivetin.app/err-" + type + ".html' target = 'blank'/>" + type + " error in OliveTin Documentation</a></p>"
+				bigErrorDialog.innerHTML = '<h1>Error ' + friendlyType + '</h1><p>' + message + "</p><p><a href = 'http://docs.olivetin.app/err-" + type + ".html' target = 'blank'/>" + type + " error in OliveTin Documentation</a></p>"
 
-			  if (isFatal) {
-				  bigErrorDialog.innerHTML += '<p>You will need to refresh your browser to clear this message.</p>'
-			  } else {
-				  bigErrorDialog.innerHTML += '<p>This error message will go away automatically if the problem is solved.</p>'
-			  }
+				if (isFatal) {
+					bigErrorDialog.innerHTML += '<p>You will need to refresh your browser to clear this message.</p>'
+				} else {
+					bigErrorDialog.innerHTML += '<p>This error message will go away automatically if the problem is solved.</p>'
+				}
 
-			  bigErrorDialog.showModal()
+				bigErrorDialog.showModal()
 
-			  console.error('Error ' + type + ': ', message)
+				console.error('Error ' + type + ': ', message)
 			}
 
 			window.clearBigErrors = function () {
-			  bigErrorDialog.close()
+				bigErrorDialog.close()
 			}
 		</script>
 

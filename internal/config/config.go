@@ -153,6 +153,7 @@ type LocalUser struct {
 
 type OAuth2Provider struct {
 	Name          string
+	Title         string
 	ClientID      string
 	ClientSecret  string
 	Icon          string
@@ -164,8 +165,9 @@ type OAuth2Provider struct {
 }
 
 type NavigationLink struct {
-	Title string
-	Url   string
+	Title  string
+	Url    string
+	Target string
 }
 
 type SaveLogsConfig struct {

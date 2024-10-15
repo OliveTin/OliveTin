@@ -177,7 +177,7 @@ nav.topbar ul li a {
 nav.sidebar ul li {
   list-style: none;
   text-align: left;
-  border-bottom: 1px inset black;
+  border-bottom: 1px solid #ccc;
 }
 
 table {
@@ -502,9 +502,12 @@ span.annotation-value {
   text-align: left;
 }
 
+.border-radius {
+  border-radius: .7em;
+}
+
 .box-shadow p {
   padding: .6em;
-  background-color: #fff;
   margin: 0;
 }
 
@@ -580,6 +583,21 @@ div.display {
   margin-bottom: 0;
 }
 
+#content-login ul {
+  list-style: none;
+  padding: 0;
+}
+
+#content-login form {
+  width: auto;
+  place-self: center;
+}
+
+.oauth2-icon {
+  font-size: 1.8em;
+  vertical-align: middle;
+}
+
 @media screen and (width <= 600px) {
   fieldset {
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -622,10 +640,7 @@ div.display {
   }
 
   .box-shadow {
-    box-shadow: 0 0 6px 0 #ccc;
-  }
-
-  .box-shadow p {
+    box-shadow: 0 0 6px 0 #625c5c;
     background-color: #222;
   }
 
@@ -670,8 +685,17 @@ div.display {
     color: white;
   }
 
+  nav.sidebar ul li {
+    border-bottom: 1px solid #3e3e3e;
+  }
+
   nav ul li a:hover {
-    background-color: #666;
+    background-color: #1b5988;
+    color: white;
+  }
+
+  nav ul li a.selected {
+    background-color: #0c3351;
     color: white;
   }
 
@@ -692,7 +716,7 @@ div.display {
   }
 
   tr:hover td {
-    background-color: #666;
+    background-color: #1b5988;
   }
 
   div.toolbar {
@@ -701,5 +725,11 @@ div.display {
 
   div.display {
     box-shadow: 0 0 6px 0 #444;
+  }
+
+  #content-login button {
+    background-color: #000;
+    border: 1px solid #666;
+    color: white;
   }
 }
