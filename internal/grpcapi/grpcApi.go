@@ -213,12 +213,13 @@ func (api *oliveTinAPI) ExecutionStatus(ctx ctx.Context, req *pb.ExecutionStatus
 
 	if req.ExecutionTrackingId != "" {
 		ile = getExecutionStatusByTrackingID(api, req.ExecutionTrackingId)
+
 	} else {
 		ile = getMostRecentExecutionStatusById(api, req.ActionId)
 	}
 
 	if ile == nil {
-		return nil, status.Errorf(codes.NotFound, "Execution not found.")
+		return nil, status.Error(codes.NotFound, "Execution not found")
 	} else {
 		res.LogEntry = internalLogEntryToPb(ile)
 	}
