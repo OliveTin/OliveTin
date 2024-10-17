@@ -94,6 +94,19 @@ func (api *oliveTinAPI) StartAction(ctx ctx.Context, req *pb.StartActionRequest)
 	}, nil
 }
 
+func (api *oliveTinAPI) Authenticate(ctx ctx.Context, req *pb.LocalUserLoginRequest) (*pb.LocalUserLoginResponse, error) {
+/*
+	user := acl.Authenticate(cfg, req.Username, req.Password)
+
+	if user == nil {
+		return nil, status.Errorf(codes.Unauthenticated, "Invalid username or password.")
+	}
+*/
+
+	return &pb.LocalUserLoginResponse{
+	}, nil
+}
+
 func (api *oliveTinAPI) StartActionAndWait(ctx ctx.Context, req *pb.StartActionAndWaitRequest) (*pb.StartActionAndWaitResponse, error) {
 	args := make(map[string]string)
 

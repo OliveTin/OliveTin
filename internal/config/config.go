@@ -115,6 +115,7 @@ type Config struct {
 	AuthJwtPubKeyPath               string // will read pub key from file on disk
 	AuthHttpHeaderUsername          string
 	AuthHttpHeaderUserGroup         string
+	AuthUsernamePassword            AuthUsernamePasswordConfig
 	AuthLoginUrl                    string
 	AuthAllowGuest                  bool
 	AuthOAuth2RedirectURL           string
@@ -137,6 +138,17 @@ type Config struct {
 	AdditionalNavigationLinks       []*NavigationLink
 
 	usedConfigDir string
+}
+
+type AuthUsernamePasswordConfig struct {
+	Enabled bool
+	Users   []*LocalUser
+}
+
+type LocalUser struct {
+	Username string
+	Password string
+	Groups   []string
 }
 
 type OAuth2Provider struct {
