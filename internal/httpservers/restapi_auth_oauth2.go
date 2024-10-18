@@ -175,7 +175,7 @@ func handleOAuthCallback(w http.ResponseWriter, r *http.Request) {
 	code := r.FormValue("code")
 
 	log.WithFields(log.Fields{
-		"state": state,
+		"state":      state,
 		"token-code": code,
 	}).Debug("OAuth2 Token Code")
 
@@ -203,7 +203,7 @@ func handleOAuthCallback(w http.ResponseWriter, r *http.Request) {
 
 	loginMessage := fmt.Sprintf("OAuth2 login complete for %v", registeredStates[state].Username)
 
-	log.WithFields(log.Fields {
+	log.WithFields(log.Fields{
 		"state": state,
 	}).Infof(loginMessage)
 

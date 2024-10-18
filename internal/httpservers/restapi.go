@@ -76,8 +76,8 @@ func parseRequestMetadata(ctx context.Context, req *http.Request) metadata.MD {
 	md := metadata.New(map[string]string{
 		"username":  username,
 		"usergroup": usergroup,
-		"provider": provider,
-		"sid": sid,
+		"provider":  provider,
+		"sid":       sid,
 	})
 
 	log.Tracef("api request metadata: %+v", md)

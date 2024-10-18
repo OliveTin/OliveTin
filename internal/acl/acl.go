@@ -28,7 +28,7 @@ type AuthenticatedUser struct {
 	Usergroup string
 
 	Provider string
-	SID	  string
+	SID      string
 
 	acls []string
 }
@@ -182,7 +182,7 @@ func UserFromSystem(cfg *config.Config, username string) *AuthenticatedUser {
 	ret := &AuthenticatedUser{
 		Username:  username,
 		Usergroup: "system",
-		Provider: "system",
+		Provider:  "system",
 	}
 
 	buildUserAcls(cfg, ret)
