@@ -50,26 +50,34 @@ func parseHttpHeaderForAuth(req *http.Request) (string, string) {
 func parseRequestMetadata(ctx context.Context, req *http.Request) metadata.MD {
 	username := ""
 	usergroup := ""
+	provider := "unknown"
+	sid := ""
 
 	if cfg.AuthJwtCookieName != "" {
 		username, usergroup = parseJwtCookie(req)
+		provider = "jwt-cookie"
 	}
 
 	if cfg.AuthHttpHeaderUsername != "" {
 		username, usergroup = parseHttpHeaderForAuth(req)
+		provider = "http-header"
 	}
 
 	if len(cfg.AuthOAuth2Providers) > 0 {
-		username, usergroup = parseOAuth2Cookie(req)
+		username, usergroup, sid = parseOAuth2Cookie(req)
+		provider = "oauth2"
 	}
 
-	if cfg.AuthLocalUsers.Enabled {
-		username, usergroup = parseLocalUserCookie(req)
+	if cfg.AuthLocalUsers.Enabled && username == "" {
+		username, usergroup, sid = parseLocalUserCookie(req)
+		provider = "local"
 	}
 
 	md := metadata.New(map[string]string{
 		"username":  username,
 		"usergroup": usergroup,
+		"provider": provider,
+		"sid": sid,
 	})
 
 	log.Tracef("api request metadata: %+v", md)
@@ -78,9 +86,55 @@ func parseRequestMetadata(ctx context.Context, req *http.Request) metadata.MD {
 }
 
 func forwardResponseHandler(ctx context.Context, w http.ResponseWriter, msg protoreflect.ProtoMessage) error {
-	forwardResponseHandlerLoginLocalUser(ctx, w, msg)
+	md, ok := runtime.ServerMetadataFromContext(ctx)
+
+	if !ok {
+		log.Warn("Could not get ServerMetadata from context")
+		return nil
+	}
+
+	forwardResponseHandlerLoginLocalUser(md.HeaderMD, w)
+	forwardResponseHandlerLogout(md.HeaderMD, w)
 
 	return nil
+}
+
+func forwardResponseHandlerLogout(md metadata.MD, w http.ResponseWriter) {
+	if getMetadataKeyOrEmpty(md, "logout-provider") != "" {
+		sid := getMetadataKeyOrEmpty(md, "logout-sid")
+
+		delete(registeredStates, sid)
+		http.SetCookie(
+			w,
+			&http.Cookie{
+				Name:  "olivetin-sid-oauth",
+				Value: "",
+			},
+		)
+
+		delete(localUserSessions, sid)
+		http.SetCookie(
+			w,
+			&http.Cookie{
+				Name:  "olivetin-sid-local",
+				Value: "",
+			},
+		)
+
+		w.Header().Set("Content-Type", "text/html")
+		// We cannot send a HTTP redirect here, because we don't have access to req.
+		w.Write([]byte("<script>window.location.href = '/';</script>"))
+	}
+}
+
+func getMetadataKeyOrEmpty(md metadata.MD, key string) string {
+	mdValues := md.Get(key)
+
+	if len(mdValues) > 0 {
+		return mdValues[0]
+	}
+
+	return ""
 }
 
 func SetGlobalRestConfig(config *config.Config) {

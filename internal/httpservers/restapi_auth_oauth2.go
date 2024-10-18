@@ -118,6 +118,7 @@ func handleOAuthLogin(w http.ResponseWriter, r *http.Request) {
 
 	registeredStates[state] = &oauth2State{
 		provider: provider,
+		Username: "",
 	}
 
 	if err != nil {
@@ -126,45 +127,46 @@ func handleOAuthLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	setOauthCallbackCookie(w, r, "oauth2state", state)
+	setOauthCallbackCookie(w, r, "olivetin-sid-oauth", state)
 
 	log.Infof("OAuth2 state: %v mapped to provider %v (found: %v), now redirecting", state, providerName, provider != nil)
 
 	http.Redirect(w, r, provider.AuthCodeURL(state), http.StatusFound)
 }
 
-func checkOAuthCallbackCookie(w http.ResponseWriter, r *http.Request) (*oauth2State, bool) {
-	state, err := r.Cookie("oauth2state")
+func checkOAuthCallbackCookie(w http.ResponseWriter, r *http.Request) (*oauth2State, string, bool) {
+	cookie, err := r.Cookie("olivetin-sid-oauth")
+	state := cookie.Value
 
 	if err != nil {
 		log.Errorf("Failed to get state cookie: %v", err)
 
 		http.Error(w, "State not found", http.StatusBadRequest)
-		return nil, false
+		return nil, state, false
 	}
 
-	if r.URL.Query().Get("state") != state.Value {
-		log.Errorf("State mismatch: %v != %v", r.URL.Query().Get("state"), state.Value)
+	if r.URL.Query().Get("state") != state {
+		log.Errorf("State mismatch: %v != %v", r.URL.Query().Get("state"), state)
 
 		http.Error(w, "State mismatch", http.StatusBadRequest)
-		return nil, false
+		return nil, state, false
 	}
 
-	registeredState, ok := registeredStates[state.Value]
+	registeredState, ok := registeredStates[state]
 
 	if !ok {
-		log.Errorf("State not found in server: %v", state.Value)
+		log.Errorf("State not found in server: %v", state)
 
 		http.Error(w, "State not found in server", http.StatusBadRequest)
 	}
 
-	return registeredState, true
+	return registeredState, state, true
 }
 
 func handleOAuthCallback(w http.ResponseWriter, r *http.Request) {
 	log.Infof("OAuth2 Callback received")
 
-	registeredState, ok := checkOAuthCallbackCookie(w, r)
+	registeredState, state, ok := checkOAuthCallbackCookie(w, r)
 
 	if !ok {
 		return
@@ -172,7 +174,10 @@ func handleOAuthCallback(w http.ResponseWriter, r *http.Request) {
 
 	code := r.FormValue("code")
 
-	log.Debugf("OAuth2 Token Code: %v", code)
+	log.WithFields(log.Fields{
+		"state": state,
+		"token-code": code,
+	}).Debug("OAuth2 Token Code")
 
 	httpClient := &http.Client{Timeout: 2 * time.Second}
 	ctx := context.Background()
@@ -188,12 +193,21 @@ func handleOAuthCallback(w http.ResponseWriter, r *http.Request) {
 
 	client := registeredState.provider.Client(ctx, tok)
 
-	registeredState.Username = getUsername(client)
+	username := getUsername(client)
 
-	loginMessage := fmt.Sprintf("Logged in as %v", registeredState.Username)
+	registeredStates[state].Username = username
 
-	log.Infof(loginMessage)
+	for k, v := range registeredStates {
+		log.Debugf("states: %+v %+v", k, v)
+	}
 
+	loginMessage := fmt.Sprintf("OAuth2 login complete for %v", registeredStates[state].Username)
+
+	log.WithFields(log.Fields {
+		"state": state,
+	}).Infof(loginMessage)
+
+	http.Redirect(w, r, "/", http.StatusFound)
 	w.Write([]byte(loginMessage))
 }
 
@@ -232,20 +246,22 @@ func getUsername(client *http.Client) string {
 	return username.(string)
 }
 
-func parseOAuth2Cookie(r *http.Request) (string, string) {
-	cookie, err := r.Cookie("oauth2state")
+func parseOAuth2Cookie(r *http.Request) (string, string, string) {
+	cookie, err := r.Cookie("olivetin-sid-oauth")
 
 	if err != nil {
 		log.Warnf("Failed to read OAuth2 cookie: %v", err)
-		return "", ""
+		return "", "", ""
 	}
 
 	serverState, found := registeredStates[cookie.Value]
 
 	if !found {
 		log.Warnf("Failed to find OAuth2 state: %v", cookie.Value)
-		return "", ""
+		return "", "", cookie.Value
 	}
 
-	return serverState.Username, serverState.Usergroup
+	log.Debugf("Found OAuth2 state: %+v", serverState)
+
+	return serverState.Username, serverState.Usergroup, cookie.Value
 }

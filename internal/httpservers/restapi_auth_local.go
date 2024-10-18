@@ -1,25 +1,22 @@
 package httpservers
 
 import (
-	"context"
+	"google.golang.org/grpc/metadata"
 	"net/http"
 
 	"github.com/google/uuid"
-	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	log "github.com/sirupsen/logrus"
-
-	acl "github.com/OliveTin/OliveTin/internal/acl"
-	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
 var (
 	localUserSessions = make(map[string]string) // sid -> username, used for local user sessions
 )
 
-func parseLocalUserCookie(req *http.Request) (string, string) {
-	cookie, err := req.Cookie("olivetin_local_user_sid")
+func parseLocalUserCookie(req *http.Request) (string, string, string) {
+	cookie, err := req.Cookie("olivetin-sid-local")
+
 	if err != nil {
-		return "", ""
+		return "", "", ""
 	}
 
 	cookieValue := cookie.Value
@@ -28,30 +25,23 @@ func parseLocalUserCookie(req *http.Request) (string, string) {
 
 	if !ok {
 		log.Warnf("Could not find local user session: %v", cookieValue)
-		return "", ""
+		return "", "", ""
 	}
 
-	return username, ""
+	return username, "", cookie.Value
 }
 
-func forwardResponseHandlerLoginLocalUser(ctx context.Context, w http.ResponseWriter, msg protoreflect.ProtoMessage) error {
-	md, ok := runtime.ServerMetadataFromContext(ctx)
-
-	if !ok {
-		log.Warn("Could not get ServerMetadata from context")
-		return nil
-	}
-
-	setUser := acl.SetUserFromMetadata(md.HeaderMD)
-
-	sid := uuid.NewString()
-	localUserSessions[sid] = setUser
+func forwardResponseHandlerLoginLocalUser(md metadata.MD, w http.ResponseWriter) error {
+	setUser := getMetadataKeyOrEmpty(md, "set-user")
 
 	if setUser != "" {
+		sid := uuid.NewString()
+		localUserSessions[sid] = setUser
+
 		http.SetCookie(
 			w,
 			&http.Cookie{
-				Name:  "olivetin_local_user_sid",
+				Name:  "olivetin-sid-local",
 				Value: sid,
 			},
 		)

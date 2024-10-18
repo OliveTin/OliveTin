@@ -98,9 +98,13 @@ nav ul li a.selected {
   padding: 0;
 }
 
-#username {
-  margin-right: 1em;
+.userinfo {
+  padding-right: 1em;
   font-size: small;
+}
+
+.userinfo svg, .userinfo span {
+  vertical-align: middle;
 }
 
 nav {
@@ -150,6 +154,7 @@ h1 {
   font-size: small;
   padding-left: .5em;
   flex-grow: 1;
+  margin: 0;
 }
 
 dialog h1 {

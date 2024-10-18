@@ -178,6 +178,7 @@ type SaveLogsConfig struct {
 type LogDebugOptions struct {
 	SingleFrontendRequests       bool
 	SingleFrontendRequestHeaders bool
+	AclCheckStarted              bool
 	AclMatched                   bool
 	AclNotMatched                bool
 	AclNoneMatched               bool
