@@ -215,7 +215,14 @@ message LocalUserLoginRequest {
 }
 
 message LocalUserLoginResponse {
-    string authenticated_user = 1;
+    bool success = 1;
+}
+
+message PasswordHashRequest {
+    string password = 1;
+}
+
+message PasswordHashResponse {
 }
 
 service OliveTinApiService {
@@ -308,9 +315,16 @@ service OliveTinApiService {
 		};
 	}
 
-    rpc Authenticate(LocalUserLoginRequest) returns (LocalUserLoginResponse) {
+    rpc LocalUserLogin(LocalUserLoginRequest) returns (LocalUserLoginResponse) {
         option (google.api.http) = {
-            post: "/api/authenticate"
+            post: "/api/LocalUserLogin"
+            body: "*"
+        };
+    }
+
+    rpc PasswordHash(PasswordHashRequest) returns (google.api.HttpBody) {
+        option (google.api.http) = {
+            post: "/api/PasswordHash"
             body: "*"
         };
     }

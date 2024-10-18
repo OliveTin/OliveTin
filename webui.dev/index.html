@@ -92,35 +92,6 @@
 				</fieldset>
 			</section>
 
-			<section id = "content-login" title = "Login" hidden>
-				<div class = "flex-col">
-				<form class = "box-shadow padded-content">
-					<h2>OAuth Login</h2>
-					<div>
-						<button>GitHub</button>
-						<button>Google</button>
-					</div>
-					<hr />
-					<h2>Local Login</h2>
-					<div class = "arguments">
-						<label for = "username">
-							<span>Username:</span>
-						</label>
-						<input type = "text" name = "username" />
-						<span></span>
-
-						<label for = "password">
-							<span>Password:</span>
-						</label>
-						<input type = "password" name = "password" />
-						<span></span>
-
-						<button type = "submit">Login</button>
-					</div>
-				</form>
-				</div>
-			</section>
-
 			<noscript>
 				<div class = "error">Sorry, JavaScript is required to use OliveTin.</div>
 			</noscript>
@@ -181,7 +152,7 @@
 		<template id = "tplLoginForm">
 			<section id = "content-login" title = "Login" hidden>
 				<div class = "flex-col">
-					<form class = "box-shadow padded-content border-radius">
+					<form class = "box-shadow padded-content border-radius" id = "local-user-login">
 						<p class = "login-disabled">Login with OAuth or Local users is not enabled on this server.</p>
 
 						<div class = "login-oauth2" hidden>
@@ -192,17 +163,18 @@
 
 						<div class = "login-local" hidden>
 							<h2>Local Login</h2>
+							<div class = "error"></div>
 							<div class = "arguments">
 								<label for = "username">
 									<span>Username:</span>
 								</label>
-								<input type = "text" name = "username" />
+								<input type = "text" name = "username" class = "username" />
 								<span></span>
 
 								<label for = "password">
 									<span>Password:</span>
 								</label>
-								<input type = "password" name = "password" />
+								<input type = "password" name = "password" class = "password" />
 								<span></span>
 
 								<button type = "submit">Login</button>

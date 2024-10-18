@@ -134,6 +134,10 @@ func getMetadataKeyOrEmpty(md metadata.MD, key string) string {
 	return ""
 }
 
+func SetUserFromMetadata(md metadata.MD) string {
+	return getMetadataKeyOrEmpty(md, "set-user")
+}
+
 // UserFromContext tries to find a user from a grpc context
 func UserFromContext(ctx context.Context, cfg *config.Config) *AuthenticatedUser {
 	var ret *AuthenticatedUser

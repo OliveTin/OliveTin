@@ -9,6 +9,7 @@ import (
 	"google.golang.org/genproto/googleapis/api/httpbody"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
 	"errors"
@@ -94,16 +95,31 @@ func (api *oliveTinAPI) StartAction(ctx ctx.Context, req *pb.StartActionRequest)
 	}, nil
 }
 
-func (api *oliveTinAPI) Authenticate(ctx ctx.Context, req *pb.LocalUserLoginRequest) (*pb.LocalUserLoginResponse, error) {
-/*
-	user := acl.Authenticate(cfg, req.Username, req.Password)
+func (api *oliveTinAPI) PasswordHash(ctx ctx.Context, req *pb.PasswordHashRequest) (*httpbody.HttpBody, error) {
+	hash, err := createHash(req.Password)
 
-	if user == nil {
-		return nil, status.Errorf(codes.Unauthenticated, "Invalid username or password.")
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "Error creating hash.")
 	}
-*/
+
+	ret := &httpbody.HttpBody{
+		ContentType: "text/plain",
+		Data:        []byte("Your password hash is: " + hash),
+	}
+
+	return ret, nil
+}
+
+func (api *oliveTinAPI) LocalUserLogin(ctx ctx.Context, req *pb.LocalUserLoginRequest) (*pb.LocalUserLoginResponse, error) {
+	match := checkUserPassword(cfg, req.Username, req.Password)
+
+	if match {
+		header := metadata.Pairs("set-user", req.Username)
+		grpc.SendHeader(ctx, header)
+	}
 
 	return &pb.LocalUserLoginResponse{
+		Success: match,
 	}, nil
 }
 

@@ -7,6 +7,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/reflect/protoreflect"
 	"net/http"
 
 	gw "github.com/OliveTin/OliveTin/gen/grpc"
@@ -45,6 +46,7 @@ func parseHttpHeaderForAuth(req *http.Request) (string, string) {
 	return username[0], ""
 }
 
+//gocyclo:ignore
 func parseRequestMetadata(ctx context.Context, req *http.Request) metadata.MD {
 	username := ""
 	usergroup := ""
@@ -61,6 +63,10 @@ func parseRequestMetadata(ctx context.Context, req *http.Request) metadata.MD {
 		username, usergroup = parseOAuth2Cookie(req)
 	}
 
+	if cfg.AuthLocalUsers.Enabled {
+		username, usergroup = parseLocalUserCookie(req)
+	}
+
 	md := metadata.New(map[string]string{
 		"username":  username,
 		"usergroup": usergroup,
@@ -69,6 +75,12 @@ func parseRequestMetadata(ctx context.Context, req *http.Request) metadata.MD {
 	log.Tracef("api request metadata: %+v", md)
 
 	return md
+}
+
+func forwardResponseHandler(ctx context.Context, w http.ResponseWriter, msg protoreflect.ProtoMessage) error {
+	forwardResponseHandlerLoginLocalUser(ctx, w, msg)
+
+	return nil
 }
 
 func SetGlobalRestConfig(config *config.Config) {
@@ -91,6 +103,7 @@ func newMux() *runtime.ServeMux {
 	// The MarshalOptions set some important compatibility settings for the webui. See below.
 	mux := runtime.NewServeMux(
 		runtime.WithMetadata(parseRequestMetadata),
+		runtime.WithForwardResponseOption(forwardResponseHandler),
 		runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.HTTPBodyMarshaler{
 			Marshaler: &runtime.JSONPb{
 				MarshalOptions: protojson.MarshalOptions{

@@ -4,6 +4,47 @@ export class LoginForm extends window.HTMLElement {
     this.content = tpl.content.cloneNode(true)
 
     this.appendChild(this.content)
+
+    this.querySelector('#local-user-login').addEventListener('submit', (e) => {
+      e.preventDefault()
+      this.localLoginRequest()
+    })
+  }
+
+  localLoginRequest () {
+    const username = this.querySelector('input.username').value
+    const password = this.querySelector('input.password').value
+
+    document.querySelector('.error').innerHTML = ''
+
+    window.fetch('/api/LocalUserLogin', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        username: username,
+        password: password
+      })
+    }).then((response) => {
+      if (response.ok) {
+        const res = response.json()
+
+        if (res !== undefined) {
+          return res
+        } else {
+          throw new Error('Failed to login - no res')
+        }
+      } else {
+        throw new Error('Failed to login')
+      }
+    }).then((res) => {
+      if (res.success) {
+        window.location.reload()
+      } else {
+        document.querySelector('.error').innerHTML = 'Login failed.'
+      }
+    })
   }
 
   processOAuth2Providers (providers) {
