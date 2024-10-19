@@ -70,6 +70,21 @@ export function marshalDashboardComponentsJsonToHtml (json) {
 
   document.getElementById('username').innerText = json.authenticatedUser
 
+  if (window.settings.AuthLocalLogin || window.settings.AuthLocalRegister != null) {
+    if (json.authenticatedUser === 'guest') {
+      document.getElementById('link-login').hidden = false
+      document.getElementById('link-logout').hidden = true
+    } else {
+      document.getElementById('link-login').hidden = true
+
+      if (json.authenticatedUserProvider === 'local' || json.authenticatedUserProvider === 'oauth2') {
+        document.getElementById('link-logout').hidden = false
+      }
+    }
+
+    document.getElementById('username').setAttribute('title', json.authenticatedUserProvider)
+  }
+
   document.body.setAttribute('initial-marshal-complete', 'true')
 }
 

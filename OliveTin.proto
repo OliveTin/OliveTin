@@ -46,6 +46,7 @@ message GetDashboardComponentsResponse {
 	repeated DashboardComponent dashboards = 4;
 
 	string authenticated_user = 5;
+    string authenticated_user_provider = 6;
 }
 
 message GetDashboardComponentsRequest {}
@@ -225,6 +226,8 @@ message PasswordHashRequest {
 message PasswordHashResponse {
 }
 
+message LogoutRequest {}
+
 service OliveTinApiService {
 	rpc GetDashboardComponents(GetDashboardComponentsRequest) returns (GetDashboardComponentsResponse) {
 		option (google.api.http) = {
@@ -326,6 +329,12 @@ service OliveTinApiService {
         option (google.api.http) = {
             post: "/api/PasswordHash"
             body: "*"
+        };
+    }
+
+    rpc Logout(LogoutRequest) returns (google.api.HttpBody) {
+        option (google.api.http) = {
+            get: "/api/Logout"
         };
     }
 }

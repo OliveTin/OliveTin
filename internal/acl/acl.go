@@ -27,6 +27,9 @@ type AuthenticatedUser struct {
 	Username  string
 	Usergroup string
 
+	Provider string
+	SID      string
+
 	acls []string
 }
 
@@ -80,13 +83,15 @@ func permissionsConfigToBits(permissions config.PermissionsList) PermissionBits 
 func aclCheck(requiredPermission PermissionBits, defaultValue bool, cfg *config.Config, aclFunction string, user *AuthenticatedUser, action *config.Action) bool {
 	relevantAcls := getRelevantAcls(cfg, action.Acls, user)
 
-	log.WithFields(log.Fields{
-		"actionTitle":        action.Title,
-		"username":           user.Username,
-		"usergroup":          user.Usergroup,
-		"relevantAcls":       len(relevantAcls),
-		"requiredPermission": requiredPermission,
-	}).Debugf("ACL check - %v", aclFunction)
+	if cfg.LogDebugOptions.AclCheckStarted {
+		log.WithFields(log.Fields{
+			"actionTitle":        action.Title,
+			"username":           user.Username,
+			"usergroup":          user.Usergroup,
+			"relevantAcls":       len(relevantAcls),
+			"requiredPermission": requiredPermission,
+		}).Debugf("ACL check - %v", aclFunction)
+	}
 
 	for _, acl := range relevantAcls {
 		permissionBits := permissionsConfigToBits(acl.Permissions)
@@ -134,10 +139,6 @@ func getMetadataKeyOrEmpty(md metadata.MD, key string) string {
 	return ""
 }
 
-func SetUserFromMetadata(md metadata.MD) string {
-	return getMetadataKeyOrEmpty(md, "set-user")
-}
-
 // UserFromContext tries to find a user from a grpc context
 func UserFromContext(ctx context.Context, cfg *config.Config) *AuthenticatedUser {
 	var ret *AuthenticatedUser
@@ -148,6 +149,7 @@ func UserFromContext(ctx context.Context, cfg *config.Config) *AuthenticatedUser
 		ret = &AuthenticatedUser{}
 		ret.Username = getMetadataKeyOrEmpty(md, "username")
 		ret.Usergroup = getMetadataKeyOrEmpty(md, "usergroup")
+		ret.Provider = getMetadataKeyOrEmpty(md, "provider")
 
 		buildUserAcls(cfg, ret)
 	}
@@ -159,6 +161,7 @@ func UserFromContext(ctx context.Context, cfg *config.Config) *AuthenticatedUser
 	log.WithFields(log.Fields{
 		"username":  ret.Username,
 		"usergroup": ret.Usergroup,
+		"provider":  ret.Provider,
 	}).Debugf("UserFromContext")
 
 	return ret
@@ -168,6 +171,7 @@ func UserGuest(cfg *config.Config) *AuthenticatedUser {
 	ret := &AuthenticatedUser{}
 	ret.Username = "guest"
 	ret.Usergroup = "guest"
+	ret.Provider = "system"
 
 	buildUserAcls(cfg, ret)
 
@@ -178,6 +182,7 @@ func UserFromSystem(cfg *config.Config, username string) *AuthenticatedUser {
 	ret := &AuthenticatedUser{
 		Username:  username,
 		Usergroup: "system",
+		Provider:  "system",
 	}
 
 	buildUserAcls(cfg, ret)

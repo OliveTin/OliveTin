@@ -284,6 +284,15 @@ func (api *oliveTinAPI) WatchExecution(req *pb.WatchExecutionRequest, srv pb.Oli
 }
 */
 
+func (api *oliveTinAPI) Logout(ctx ctx.Context, req *pb.LogoutRequest) (*httpbody.HttpBody, error) {
+	user := acl.UserFromContext(ctx, cfg)
+
+	grpc.SendHeader(ctx, metadata.Pairs("logout-provider", user.Provider))
+	grpc.SendHeader(ctx, metadata.Pairs("logout-sid", user.SID))
+
+	return nil, nil
+}
+
 func (api *oliveTinAPI) GetDashboardComponents(ctx ctx.Context, req *pb.GetDashboardComponentsRequest) (*pb.GetDashboardComponentsResponse, error) {
 	user := acl.UserFromContext(ctx, cfg)
 
@@ -298,6 +307,7 @@ func (api *oliveTinAPI) GetDashboardComponents(ctx ctx.Context, req *pb.GetDashb
 	dashboardCfgToPb(res, cfg.Dashboards, cfg)
 
 	res.AuthenticatedUser = user.Username
+	res.AuthenticatedUserProvider = user.Provider
 
 	if res.AuthenticatedUser == "guest" && !cfg.AuthAllowGuest {
 		return nil, status.Errorf(codes.PermissionDenied, "Unauthenticated")

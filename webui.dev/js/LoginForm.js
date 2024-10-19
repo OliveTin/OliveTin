@@ -40,7 +40,7 @@ export class LoginForm extends window.HTMLElement {
       }
     }).then((res) => {
       if (res.success) {
-        window.location.reload()
+        window.location.href = '/'
       } else {
         document.querySelector('.error').innerHTML = 'Login failed.'
       }
@@ -59,7 +59,14 @@ export class LoginForm extends window.HTMLElement {
       for (const provider of providers) {
         const providerForm = document.createElement('form')
         providerForm.method = 'GET'
-        providerForm.action = '/oauth2?provider=' + provider.Name
+        providerForm.action = '/oauth/login'
+
+        const hiddenField = document.createElement('input')
+        hiddenField.type = 'hidden'
+        hiddenField.name = 'provider'
+        hiddenField.value = provider.Name
+
+        providerForm.appendChild(hiddenField)
 
         const providerButton = document.createElement('button')
         providerButton.type = 'submit'
