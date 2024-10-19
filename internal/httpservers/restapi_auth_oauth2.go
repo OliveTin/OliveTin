@@ -254,6 +254,10 @@ func parseOAuth2Cookie(r *http.Request) (string, string, string) {
 		return "", "", ""
 	}
 
+	if cookie.Value == "" {
+		return "", "", ""
+	}
+
 	serverState, found := registeredStates[cookie.Value]
 
 	if !found {

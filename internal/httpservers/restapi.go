@@ -58,12 +58,12 @@ func parseRequestMetadata(ctx context.Context, req *http.Request) metadata.MD {
 		provider = "jwt-cookie"
 	}
 
-	if cfg.AuthHttpHeaderUsername != "" {
+	if cfg.AuthHttpHeaderUsername != "" && username == "" {
 		username, usergroup = parseHttpHeaderForAuth(req)
 		provider = "http-header"
 	}
 
-	if len(cfg.AuthOAuth2Providers) > 0 {
+	if len(cfg.AuthOAuth2Providers) > 0 && username == "" {
 		username, usergroup, sid = parseOAuth2Cookie(req)
 		provider = "oauth2"
 	}
