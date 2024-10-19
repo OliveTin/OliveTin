@@ -142,7 +142,7 @@ func generateWebUISettings(w http.ResponseWriter, r *http.Request) {
 		SshFoundConfig:         installationinfo.Runtime.SshFoundConfig,
 		EnableCustomJs:         cfg.EnableCustomJs,
 		AuthLoginUrl:           cfg.AuthLoginUrl,
-		AuthLocalLogin:         true,
+		AuthLocalLogin:         cfg.AuthLocalUsers.Enabled,
 		AuthOAuth2Providers:    buildPublicOAuth2ProvidersList(cfg),
 		AdditionalLinks:        cfg.AdditionalNavigationLinks,
 	})
