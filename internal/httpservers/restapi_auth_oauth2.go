@@ -96,7 +96,7 @@ func setOauthCallbackCookie(w http.ResponseWriter, r *http.Request, name, value 
 	cookie := &http.Cookie{
 		Name:     name,
 		Value:    value,
-		MaxAge:   int(time.Hour.Seconds()),
+		MaxAge:   31556952, // 1 year
 		Secure:   r.TLS != nil,
 		HttpOnly: true,
 		Path:     "/",
