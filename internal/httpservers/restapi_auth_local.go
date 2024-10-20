@@ -41,8 +41,11 @@ func forwardResponseHandlerLoginLocalUser(md metadata.MD, w http.ResponseWriter)
 		http.SetCookie(
 			w,
 			&http.Cookie{
-				Name:  "olivetin-sid-local",
-				Value: sid,
+				Name:     "olivetin-sid-local",
+				Value:    sid,
+				MaxAge:   31556952, // 1 year
+				HttpOnly: true,
+				Path:     "/",
 			},
 		)
 	}
