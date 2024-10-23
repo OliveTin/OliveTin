@@ -16,6 +16,7 @@ builds:
       - amd64
       - arm64
       - arm
+      - riscv64
 
     goarm:
       - 5 # For old RPIs
