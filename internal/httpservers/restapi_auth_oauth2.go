@@ -20,7 +20,8 @@ var (
 )
 
 type oauth2State struct {
-	provider  *oauth2.Config
+	providerConfig  *oauth2.Config
+	providerName string
 	Username  string
 	Usergroup string
 }
@@ -116,15 +117,16 @@ func handleOAuthLogin(w http.ResponseWriter, r *http.Request) {
 	providerName := r.URL.Query().Get("provider")
 	provider, err := getOAuth2Config(cfg, providerName)
 
-	registeredStates[state] = &oauth2State{
-		provider: provider,
-		Username: "",
-	}
-
 	if err != nil {
 		log.Errorf("Failed to get provider config: %v %v", providerName, err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
+	}
+
+	registeredStates[state] = &oauth2State{
+		providerConfig: provider,
+		providerName: providerName,
+		Username: "",
 	}
 
 	setOauthCallbackCookie(w, r, "olivetin-sid-oauth", state)
@@ -183,7 +185,7 @@ func handleOAuthCallback(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, oauth2.HTTPClient, httpClient)
 
-	tok, err := registeredState.provider.Exchange(ctx, code)
+	tok, err := registeredState.providerConfig.Exchange(ctx, code)
 
 	if err != nil {
 		log.Errorf("Failed to exchange code: %v", err)
@@ -191,9 +193,9 @@ func handleOAuthCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	client := registeredState.provider.Client(ctx, tok)
+	client := registeredState.providerConfig.Client(ctx, tok)
 
-	username := getUsername(client)
+	username := getUsername(client, cfg.AuthOAuth2Providers[registeredState.providerName])
 
 	registeredStates[state].Username = username
 
@@ -211,9 +213,7 @@ func handleOAuthCallback(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(loginMessage))
 }
 
-func getUsername(client *http.Client) string {
-	provider := cfg.AuthOAuth2Providers["github"]
-
+func getUsername(client *http.Client, provider *config.OAuth2Provider) string {
 	res, err := client.Get(provider.WhoamiUrl)
 
 	if res.StatusCode != http.StatusOK {
