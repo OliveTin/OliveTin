@@ -35,6 +35,8 @@ class OliveTinTestRunnerStartLocalProcess extends OliveTinTestRunner {
   async start (cfg) {
     let stdout = ""
     let stderr = ""
+    
+    console.log("      OliveTin starting local process...")
 
     this.ot = spawn('./../OliveTin', ['-configdir', 'configs/' + cfg + '/'])
 
@@ -74,6 +76,8 @@ class OliveTinTestRunnerStartLocalProcess extends OliveTinTestRunner {
     if (this.ot.exitCode == null) {
       this.BASE_URL = 'http://localhost:1337/'
 
+      console.log("      OliveTin waiting for local process to start...")
+
       await waitOn({
         resources: [this.BASE_URL]
       })
@@ -95,7 +99,12 @@ class OliveTinTestRunnerStartLocalProcess extends OliveTinTestRunner {
       console.log("      OliveTin local process killed")
     }
 
-    await new Promise((res) => setTimeout(res, 100))
+    if (process.env.CI === 'true') {
+      // GitHub runners seem to need a bit more time to clean up
+      await new Promise((res) => setTimeout(res, 3000))
+    } else {
+      await new Promise((res) => setTimeout(res, 100))
+    }
   }
 }
 
