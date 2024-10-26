@@ -70,7 +70,7 @@ export function marshalDashboardComponentsJsonToHtml (json) {
 
   document.getElementById('username').innerText = json.authenticatedUser
 
-  if (window.settings.AuthLocalLogin || window.settings.AuthLocalRegister != null) {
+  if (window.settings.AuthLocalLogin || window.settings.AuthOAuth2Providers.length > 0) {
     if (json.authenticatedUser === 'guest') {
       document.getElementById('link-login').hidden = false
       document.getElementById('link-logout').hidden = true
