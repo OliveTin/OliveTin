@@ -7,9 +7,19 @@ export async function getActionButtons (webdriver) {
   return await webdriver.findElement(By.id('contentActions')).findElements(By.tagName('button'))
 }
 
-export function takeScreenshot (webdriver) {
+export function takeScreenshotOnFailure (test, webdriver) {
+    if (test.state === 'failed') {
+      const title = test.fullTitle();
+
+      console.log(`Test failed, taking screenshot: ${title}`);
+      takeScreenshot(webdriver, title);
+    }
+}
+
+export function takeScreenshot (webdriver, title) {
   return webdriver.takeScreenshot().then((img) => {
-    fs.writeFileSync('out.png', img, 'base64')
+    fs.mkdirSync('screenshots', { recursive: true });
+    fs.writeFileSync('screenshots/' + title + '.png', img, 'base64')
   })
 }
 

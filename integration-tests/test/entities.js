@@ -1,7 +1,11 @@
 import { describe, it, before, after } from 'mocha'
 import { expect } from 'chai'
 import { By, until } from 'selenium-webdriver'
-import { getRootAndWait, takeScreenshot } from '../lib/elements.js'
+import { 
+  getRootAndWait, 
+  takeScreenshot,
+  takeScreenshotOnFailure,
+} from '../lib/elements.js'
 
 describe('config: entities', function () {
   before(async function () {
@@ -11,6 +15,10 @@ describe('config: entities', function () {
   after(async () => {
     await runner.stop()
   })
+
+  afterEach(function () {
+    takeScreenshotOnFailure(this.currentTest, webdriver);
+  });
 
   it('Entity buttons are rendered', async function() {
     await getRootAndWait()

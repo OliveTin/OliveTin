@@ -1,7 +1,12 @@
 import { describe, it, before, after } from 'mocha'
 import { expect } from 'chai'
 import { By, until } from 'selenium-webdriver'
-import { getActionButtons, getRootAndWait } from '../lib/elements.js'
+import { 
+  getRootAndWait, 
+  getActionButtons,
+  takeScreenshotOnFailure,
+} from '../lib/elements.js'
+
 
 describe('config: multipleDropdowns', function () {
   before(async function () {
@@ -11,6 +16,10 @@ describe('config: multipleDropdowns', function () {
   after(async () => {
     await runner.stop()
   })
+
+  afterEach(function () {
+    takeScreenshotOnFailure(this.currentTest, webdriver);
+  });
 
   it('Multiple dropdowns are possible', async function() {
     await getRootAndWait()

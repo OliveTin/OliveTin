@@ -2,7 +2,11 @@ import { describe, it, before, after } from 'mocha'
 import { expect } from 'chai'
 import { By, until, Condition } from 'selenium-webdriver'
 //import * as waitOn from 'wait-on'
-import { getRootAndWait, getActionButtons } from '../lib/elements.js'
+import { 
+  getRootAndWait, 
+  getActionButtons,
+  takeScreenshotOnFailure,
+} from '../lib/elements.js'
 
 describe('config: general', function () {
   before(async function () {
@@ -12,6 +16,10 @@ describe('config: general', function () {
   after(async () => {
     await runner.stop()
   })
+
+  afterEach(function () {
+    takeScreenshotOnFailure(this.currentTest, webdriver);
+  });
 
   it('Page title', async function () {
     await webdriver.get(runner.baseUrl())
