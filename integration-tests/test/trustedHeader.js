@@ -1,4 +1,8 @@
 import { expect } from 'chai'
+import { 
+  getRootAndWait,
+  takeScreenshotOnFailure,
+} from '../lib/elements.js'
 
 describe('config: trustedHeader', function () {
   before(async function () {
@@ -9,7 +13,13 @@ describe('config: trustedHeader', function () {
     await runner.stop()
   })
 
+  afterEach(function () {
+    takeScreenshotOnFailure(this.currentTest, webdriver);
+  });
+
   it('req with X-User', async () => {
+    await getRootAndWait()
+
     const req = await fetch(runner.baseUrl() + '/api/WhoAmI', {
       headers: {
         "X-User": "fred",

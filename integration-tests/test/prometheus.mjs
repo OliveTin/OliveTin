@@ -2,6 +2,9 @@ import { describe, it, before, after } from 'mocha'
 import { expect } from 'chai'
 
 import { By } from 'selenium-webdriver'
+import { 
+  takeScreenshotOnFailure,
+} from '../lib/elements.js'
 
 let metrics = [
   {'name': 'olivetin_actions_requested_count', 'type': 'counter', 'desc': 'The actions requested count'},
@@ -18,6 +21,10 @@ describe('config: prometheus', function () {
   after(async () => {
     await runner.stop()
   })
+
+  afterEach(function () {
+    takeScreenshotOnFailure(this.currentTest, webdriver);
+  });
 
   it('Metrics are available with correct types', async () => {
     webdriver.get(runner.metricsUrl())
