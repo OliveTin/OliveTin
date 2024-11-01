@@ -214,6 +214,7 @@ export class ExecutionDialog {
 
     this.domIcon.innerHTML = res.logEntry.actionIcon
     this.domTitle.innerText = res.logEntry.actionTitle
+    this.domTitle.title = 'Action ID: ' + res.logEntry.actionId + '\nExecution ID: ' + res.logEntry.executionTrackingId
 
     this.updateDuration(res.logEntry)
 
