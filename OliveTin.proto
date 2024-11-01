@@ -199,6 +199,10 @@ message EventExecutionFinished {
 	LogEntry log_entry = 1;
 }
 
+message EventExecutionStarted {
+  LogEntry log_entry = 1;
+}
+
 message KillActionRequest {
 	string execution_tracking_id = 1;
 }

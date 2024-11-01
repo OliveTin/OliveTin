@@ -54,12 +54,13 @@ export function initMarshaller () {
 
   window.executionDialog = new ExecutionDialog()
 
-  window.logEntries = {}
+  window.logEntries = new Map()
   window.registeredPaths = new Map()
   window.breadcrumbNavigation = []
 
   window.currentPath = ''
 
+  window.addEventListener('EventExecutionStarted', onExecutionStarted)
   window.addEventListener('EventExecutionFinished', onExecutionFinished)
   window.addEventListener('EventOutputChunk', onOutputChunk)
 }
@@ -125,6 +126,14 @@ function onOutputChunk (evt) {
   }
 }
 
+function onExecutionStarted (evt) {
+  const logEntry = evt.payload.logEntry
+
+  marshalLogsJsonToHtml({
+    logs: [logEntry]
+  })
+}
+
 function onExecutionFinished (evt) {
   const logEntry = evt.payload.logEntry
 
@@ -136,7 +145,9 @@ function onExecutionFinished (evt) {
 
   switch (actionButton.popupOnStart) {
     case 'execution-button':
-      document.querySelector('execution-button#execution-' + logEntry.executionTrackingId).onExecutionFinished(logEntry)
+      if (document.querySelector('execution-button#execution-' + logEntry.executionTrackingId) !== null) { // If the button was created in our instance
+        document.querySelector('execution-button#execution-' + logEntry.executionTrackingId).onExecutionFinished(logEntry)
+      }
       break
     case 'execution-dialog-stdout-only':
     case 'execution-dialog':
@@ -617,41 +628,46 @@ function marshalDirectory (item, section) {
 
 export function marshalLogsJsonToHtml (json) {
   for (const logEntry of json.logs) {
-    const existing = window.logEntries[logEntry.executionTrackingId]
+    let row
 
-    if (existing !== undefined) {
-      continue
+    if (window.logEntries.has(logEntry.executionTrackingId)) {
+      row = window.logEntries.get(logEntry.executionTrackingId).dom
+    } else {
+      const tpl = document.getElementById('tplLogRow')
+      row = tpl.content.querySelector('tr').cloneNode(true)
+
+      row.querySelector('.content').onclick = () => {
+        window.executionDialog.reset()
+        window.executionDialog.show()
+        window.executionDialog.renderExecutionResult({
+          logEntry: window.logEntries.get(logEntry.executionTrackingId)
+        })
+        pushNewNavigationPath('/logs/' + logEntry.executionTrackingId)
+      }
+
+      row.exitCodeDisplay = new ActionStatusDisplay(row.querySelector('.exit-code'))
+
+      logEntry.dom = row
+
+      window.logEntries.set(logEntry.executionTrackingId, logEntry)
+
+      document.querySelector('#logTableBody').prepend(row)
     }
-
-    window.logEntries[logEntry.executionTrackingId] = logEntry
-
-    const tpl = document.getElementById('tplLogRow')
-    const row = tpl.content.querySelector('tr').cloneNode(true)
 
     row.querySelector('.timestamp').innerText = logEntry.datetimeStarted
     row.querySelector('.content').innerText = logEntry.actionTitle
     row.querySelector('.icon').innerHTML = logEntry.actionIcon
     row.setAttribute('title', logEntry.actionTitle)
 
-    const exitCodeDisplay = new ActionStatusDisplay(row.querySelector('.exit-code'))
-    exitCodeDisplay.update(logEntry)
+    row.exitCodeDisplay.update(logEntry)
 
-    row.querySelector('.content').onclick = () => {
-      window.executionDialog.reset()
-      window.executionDialog.show()
-      window.executionDialog.renderExecutionResult({
-        logEntry: window.logEntries[logEntry.executionTrackingId]
-      })
-      pushNewNavigationPath('/logs/' + logEntry.executionTrackingId)
-    }
+    row.querySelector('.tags').innerHTML = ''
 
     for (const tag of logEntry.tags) {
       row.querySelector('.tags').append(createTag(tag))
     }
 
     row.querySelector('.tags').append(createAnnotation('user', logEntry.user))
-
-    document.querySelector('#logTableBody').prepend(row)
   }
 }
 
