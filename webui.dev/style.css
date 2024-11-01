@@ -561,6 +561,36 @@ div.display {
   flex-direction: column;
 }
 
+label.input-with-icons {
+  border: 1px solid #ccc;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+label.input-with-icons input {
+  border: 0;
+  padding: .6em;
+  flex-grow: 1;
+}
+
+label.input-with-icons svg {
+  font-size: 1.5em;
+}
+
+label.input-with-icons button {
+  border: 0;
+  background-color: transparent;
+  padding-top: 0;
+  padding-bottom: 0;
+  box-shadow: none;
+  transition: color .3s ease;
+}
+
+label.input-with-icons button:disabled {
+  display: none;
+}
+
 #content-login hr {
   border: 0;
   border-top: 1px dashed #ccc;
@@ -592,36 +622,6 @@ div.display {
 .oauth2-icon {
   font-size: 1.8em;
   vertical-align: middle;
-}
-
-label.input-with-icons {
-  border: 1px solid #ccc;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-}
-
-label.input-with-icons input {
-  border: 0;
-  padding: .6em;
-  flex-grow: 1;
-}
-
-label.input-with-icons svg {
-  font-size: 1.5em;
-}
-
-label.input-with-icons button {
-  border: 0;
-  background-color: transparent;
-  padding-top: 0;
-  padding-bottom: 0;
-  box-shadow: none;
-  transition: color .3s ease;
-}
-
-label.input-with-icons button:disabled {
-  display: none;
 }
 
 @media screen and (width <= 600px) {
