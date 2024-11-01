@@ -125,7 +125,7 @@ func DefaultExecutor(cfg *config.Config) *Executor {
 }
 
 type listener interface {
-	OnExecutionStarted(actionTitle string)
+	OnExecutionStarted(logEntry *InternalLogEntry)
 	OnExecutionFinished(logEntry *InternalLogEntry)
 	OnOutputChunk(o []byte, executionTrackingId string)
 	OnActionMapRebuilt()
@@ -233,7 +233,7 @@ func (e *Executor) execChain(req *ExecutionRequest) {
 
 	// This isn't a step, because we want to notify all listeners, irrespective
 	// of how many steps were actually executed.
-	notifyListeners(req)
+	notifyListenersFinished(req)
 }
 
 func getConcurrentCount(req *ExecutionRequest) int {
@@ -400,6 +400,8 @@ func stepRequestAction(req *ExecutionRequest) bool {
 		"tags":        req.Tags,
 	}).Infof("Action requested")
 
+	notifyListenersStarted(req)
+
 	return true
 }
 
@@ -425,9 +427,15 @@ func stepLogFinish(req *ExecutionRequest) bool {
 	return true
 }
 
-func notifyListeners(req *ExecutionRequest) {
+func notifyListenersFinished(req *ExecutionRequest) {
 	for _, listener := range req.executor.listeners {
 		listener.OnExecutionFinished(req.logEntry)
+	}
+}
+
+func notifyListenersStarted(req *ExecutionRequest) {
+	for _, listener := range req.executor.listeners {
+		listener.OnExecutionStarted(req.logEntry)
 	}
 }
 
