@@ -61,7 +61,7 @@ jobs:
         with:
           distribution: goreleaser
           version: latest
-          args: release --clean --parallelism 1
+          args: release --clean --timeout 60m
         env:
           GITHUB_TOKEN: ${{ secrets.CONTAINER_TOKEN }}
 
