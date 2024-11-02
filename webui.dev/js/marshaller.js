@@ -137,6 +137,8 @@ function onExecutionStarted (evt) {
 function onExecutionFinished (evt) {
   const logEntry = evt.payload.logEntry
 
+  window.logEntries.set(logEntry.executionTrackingId, logEntry)
+
   const actionButton = window.actionButtons[logEntry.actionTitle]
 
   if (actionButton === undefined) {
@@ -628,13 +630,12 @@ function marshalDirectory (item, section) {
 
 export function marshalLogsJsonToHtml (json) {
   for (const logEntry of json.logs) {
-    let row
+    let row = document.getElementById('log-' + logEntry.executionTrackingId)
 
-    if (window.logEntries.has(logEntry.executionTrackingId)) {
-      row = window.logEntries.get(logEntry.executionTrackingId).dom
-    } else {
+    if (row == null) {
       const tpl = document.getElementById('tplLogRow')
       row = tpl.content.querySelector('tr').cloneNode(true)
+      row.id = 'log-' + logEntry.executionTrackingId
 
       row.querySelector('.content').onclick = () => {
         window.executionDialog.reset()
