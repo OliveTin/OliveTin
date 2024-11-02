@@ -376,14 +376,18 @@ function marshalDashboardStructureToHtml (json) {
     }
   }
 
+  const shouldHideActions = rootGroup.querySelectorAll('action-button').length === 0 && json.dashboards.length > 0
+
+  if (shouldHideActions) {
+    nav.querySelector('li[title="Actions"]').style.display = 'none'
+  }
+
   if (window.currentPath !== '') {
     showSection(window.currentPath)
   } else if (window.location.pathname !== '/' && document.body.getAttribute('initial-marshal-complete') === null) {
     showSection(window.location.pathname)
   } else {
-    if (rootGroup.querySelectorAll('action-button').length === 0 && json.dashboards.length > 0) {
-      nav.querySelector('li[title="Actions"]').style.display = 'none'
-
+    if (shouldHideActions) {
       showSection('/' + getSystemTitle(json.dashboards[0].title))
     } else {
       showSection('/')
