@@ -6,11 +6,12 @@ toolchain go1.21.9
 
 require (
 	github.com/MicahParks/keyfunc/v3 v3.3.2
+	github.com/alexedwards/argon2id v1.0.0
 	github.com/bufbuild/buf v1.30.1
 	github.com/fsnotify/fsnotify v1.6.0
 	github.com/fzipp/gocyclo v0.6.0
 	github.com/go-critic/go-critic v0.11.1
-	github.com/golang-jwt/jwt/v4 v4.5.0
+	github.com/golang-jwt/jwt/v4 v4.5.1
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/websocket v1.4.1
@@ -36,7 +37,6 @@ require (
 	github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161 // indirect
 	github.com/MicahParks/jwkset v0.5.17 // indirect
 	github.com/Microsoft/go-winio v0.6.1 // indirect
-	github.com/alexedwards/argon2id v1.0.0 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bufbuild/protocompile v0.9.0 // indirect
