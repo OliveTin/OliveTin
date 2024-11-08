@@ -33,6 +33,10 @@ type AuthenticatedUser struct {
 	acls []string
 }
 
+func (u *AuthenticatedUser) IsGuest() bool {
+	return u.Username == "guest" && u.Provider == "system"
+}
+
 func logAclNotMatched(cfg *config.Config, aclFunction string, user *AuthenticatedUser, action *config.Action, acl *config.AccessControlList) {
 	if cfg.LogDebugOptions.AclNotMatched {
 		log.WithFields(log.Fields{
@@ -162,6 +166,7 @@ func UserFromContext(ctx context.Context, cfg *config.Config) *AuthenticatedUser
 		"username":  ret.Username,
 		"usergroup": ret.Usergroup,
 		"provider":  ret.Provider,
+		"acls":      ret.acls,
 	}).Debugf("UserFromContext")
 
 	return ret

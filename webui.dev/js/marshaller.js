@@ -66,8 +66,15 @@ export function initMarshaller () {
 }
 
 export function marshalDashboardComponentsJsonToHtml (json) {
-  marshalActionsJsonToHtml(json)
-  marshalDashboardStructureToHtml(json)
+  if (json == null) { // eg: HTTP 403
+    json = {
+      authenticatedUser: 'guest',
+      authenticatedUserProvider: 'guest'
+    }
+  } else {
+    marshalActionsJsonToHtml(json)
+    marshalDashboardStructureToHtml(json)
+  }
 
   document.getElementById('username').innerText = json.authenticatedUser
 
@@ -84,6 +91,14 @@ export function marshalDashboardComponentsJsonToHtml (json) {
     }
 
     document.getElementById('username').setAttribute('title', json.authenticatedUserProvider)
+  }
+
+  if (json.authenticatedUser === 'guest') {
+    if (window.settings.AuthLoginUrl !== '') {
+      window.location = window.settings.AuthLoginUrl
+    } else {
+      showSection('/login')
+    }
   }
 
   document.body.setAttribute('initial-marshal-complete', 'true')

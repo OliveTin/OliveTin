@@ -296,6 +296,10 @@ func (api *oliveTinAPI) Logout(ctx ctx.Context, req *pb.LogoutRequest) (*httpbod
 func (api *oliveTinAPI) GetDashboardComponents(ctx ctx.Context, req *pb.GetDashboardComponentsRequest) (*pb.GetDashboardComponentsResponse, error) {
 	user := acl.UserFromContext(ctx, cfg)
 
+	if user.IsGuest() && !cfg.AuthAllowGuest {
+		return nil, status.Errorf(codes.PermissionDenied, "Guests are not allowed to access the dashboard.")
+	}
+
 	res := buildDashboardResponse(api.executor, cfg, user)
 
 	if len(res.Actions) == 0 {
@@ -305,13 +309,6 @@ func (api *oliveTinAPI) GetDashboardComponents(ctx ctx.Context, req *pb.GetDashb
 	log.Tracef("GetDashboardComponents: %v", res)
 
 	dashboardCfgToPb(res, cfg.Dashboards, cfg)
-
-	res.AuthenticatedUser = user.Username
-	res.AuthenticatedUserProvider = user.Provider
-
-	if res.AuthenticatedUser == "guest" && !cfg.AuthAllowGuest {
-		return nil, status.Errorf(codes.PermissionDenied, "Unauthenticated")
-	}
 
 	return res, nil
 }
