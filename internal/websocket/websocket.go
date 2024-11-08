@@ -38,7 +38,7 @@ type WebsocketExecutionListener struct{}
 func (WebsocketExecutionListener) OnExecutionStarted(ile *executor.InternalLogEntry) {
 	broadcast(&pb.EventExecutionStarted{
 		LogEntry: internalLogEntryToPb(ile),
-	});
+	})
 }
 
 func OnEntityChanged() {
@@ -179,4 +179,3 @@ func internalLogEntryToPb(logEntry *executor.InternalLogEntry) *pb.LogEntry {
 		User:                logEntry.Username,
 	}
 }
-

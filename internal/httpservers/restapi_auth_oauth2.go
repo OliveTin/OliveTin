@@ -20,10 +20,10 @@ var (
 )
 
 type oauth2State struct {
-	providerConfig  *oauth2.Config
-	providerName string
-	Username  string
-	Usergroup string
+	providerConfig *oauth2.Config
+	providerName   string
+	Username       string
+	Usergroup      string
 }
 
 func assignIfEmpty(target *string, value string) {
@@ -125,8 +125,8 @@ func handleOAuthLogin(w http.ResponseWriter, r *http.Request) {
 
 	registeredStates[state] = &oauth2State{
 		providerConfig: provider,
-		providerName: providerName,
-		Username: "",
+		providerName:   providerName,
+		Username:       "",
 	}
 
 	setOauthCallbackCookie(w, r, "olivetin-sid-oauth", state)
