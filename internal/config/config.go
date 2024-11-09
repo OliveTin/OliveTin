@@ -117,7 +117,7 @@ type Config struct {
 	AuthHttpHeaderUserGroup         string
 	AuthLocalUsers                  AuthLocalUsersConfig
 	AuthLoginUrl                    string
-	AuthAllowGuest                  bool
+	AuthRequireGuestsToLogin        bool
 	AuthOAuth2RedirectURL           string
 	AuthOAuth2Providers             map[string]*OAuth2Provider
 	DefaultPermissions              PermissionsList
@@ -214,7 +214,7 @@ func DefaultConfigWithBasePort(basePort int) *Config {
 	config.DefaultPermissions.Logs = true
 	config.AuthJwtClaimUsername = "name"
 	config.AuthJwtClaimUserGroup = "group"
-	config.AuthAllowGuest = true
+	config.AuthRequireGuestsToLogin = false
 	config.WebUIDir = "./webui"
 	config.CronSupportForSeconds = false
 	config.SectionNavigationStyle = "sidebar"

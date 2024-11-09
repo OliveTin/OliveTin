@@ -10,7 +10,10 @@ import (
 )
 
 func buildDashboardResponse(ex *executor.Executor, cfg *config.Config, user *acl.AuthenticatedUser) *pb.GetDashboardComponentsResponse {
-	res := &pb.GetDashboardComponentsResponse{}
+	res := &pb.GetDashboardComponentsResponse{
+		AuthenticatedUser:         user.Username,
+		AuthenticatedUserProvider: user.Provider,
+	}
 
 	ex.MapActionIdToBindingLock.RLock()
 
