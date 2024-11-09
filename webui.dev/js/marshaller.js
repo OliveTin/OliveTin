@@ -65,40 +65,38 @@ export function initMarshaller () {
   window.addEventListener('EventOutputChunk', onOutputChunk)
 }
 
-export function marshalDashboardComponentsJsonToHtml (json) {
-  if (json == null) { // eg: HTTP 403
-    json = {
-      authenticatedUser: 'guest',
-      authenticatedUserProvider: 'guest'
-    }
-  } else {
-    marshalActionsJsonToHtml(json)
-    marshalDashboardStructureToHtml(json)
-  }
-
-  document.getElementById('username').innerText = json.authenticatedUser
+function setUsername (username, provider) {
+  document.getElementById('username').innerText = username
+  document.getElementById('username').setAttribute('title', provider)
 
   if (window.settings.AuthLocalLogin || window.settings.AuthOAuth2Providers !== null) {
-    if (json.authenticatedUser === 'guest') {
+    if (username === 'guest') {
       document.getElementById('link-login').hidden = false
       document.getElementById('link-logout').hidden = true
     } else {
       document.getElementById('link-login').hidden = true
 
-      if (json.authenticatedUserProvider === 'local' || json.authenticatedUserProvider === 'oauth2') {
+      if (provider === 'local' || provider === 'oauth2') {
         document.getElementById('link-logout').hidden = false
       }
     }
-
-    document.getElementById('username').setAttribute('title', json.authenticatedUserProvider)
   }
+}
 
-  if (json.authenticatedUser === 'guest') {
+export function marshalDashboardComponentsJsonToHtml (json) {
+  if (json == null) { // eg: HTTP 403
+    setUsername('guest', 'system')
+
     if (window.settings.AuthLoginUrl !== '') {
       window.location = window.settings.AuthLoginUrl
     } else {
       showSection('/login')
     }
+  } else {
+    setUsername(json.authenticatedUser, json.authenticatedUserProvider)
+
+    marshalActionsJsonToHtml(json)
+    marshalDashboardStructureToHtml(json)
   }
 
   document.body.setAttribute('initial-marshal-complete', 'true')
