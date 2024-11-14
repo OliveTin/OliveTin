@@ -30,7 +30,7 @@ type AuthenticatedUser struct {
 	Provider string
 	SID      string
 
-	acls []string
+	Acls []string
 }
 
 func (u *AuthenticatedUser) IsGuest() bool {
@@ -166,7 +166,7 @@ func UserFromContext(ctx context.Context, cfg *config.Config) *AuthenticatedUser
 		"username":  ret.Username,
 		"usergroup": ret.Usergroup,
 		"provider":  ret.Provider,
-		"acls":      ret.acls,
+		"acls":      ret.Acls,
 	}).Debugf("UserFromContext")
 
 	return ret
@@ -198,12 +198,12 @@ func UserFromSystem(cfg *config.Config, username string) *AuthenticatedUser {
 func buildUserAcls(cfg *config.Config, user *AuthenticatedUser) {
 	for _, acl := range cfg.AccessControlLists {
 		if slices.Contains(acl.MatchUsernames, user.Username) {
-			user.acls = append(user.acls, acl.Name)
+			user.Acls = append(user.Acls, acl.Name)
 			continue
 		}
 
 		if slices.Contains(acl.MatchUsergroups, user.Usergroup) {
-			user.acls = append(user.acls, acl.Name)
+			user.Acls = append(user.Acls, acl.Name)
 			continue
 
 		}
@@ -211,7 +211,7 @@ func buildUserAcls(cfg *config.Config, user *AuthenticatedUser) {
 }
 
 func isACLRelevantToAction(cfg *config.Config, actionAcls []string, acl *config.AccessControlList, user *AuthenticatedUser) bool {
-	if !slices.Contains(user.acls, acl.Name) {
+	if !slices.Contains(user.Acls, acl.Name) {
 		// If the user does not have this ACL, then it is not relevant
 
 		return false

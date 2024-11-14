@@ -261,7 +261,11 @@ func parseOAuth2Cookie(r *http.Request) (string, string, string) {
 	serverState, found := registeredStates[cookie.Value]
 
 	if !found {
-		log.Warnf("Failed to find OAuth2 state: %v", cookie.Value)
+		log.WithFields(log.Fields{
+			"sid":      cookie.Value,
+			"provider": "oauth2",
+		}).Warnf("Stale session")
+
 		return "", "", cookie.Value
 	}
 

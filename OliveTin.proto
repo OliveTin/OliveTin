@@ -155,6 +155,12 @@ message WhoAmIRequest {}
 
 message WhoAmIResponse {
 	string authenticated_user = 1;
+    string usergroup = 2;
+    string provider = 3;
+
+    repeated string acls = 4;
+
+    string sid = 5;
 }
 
 message SosReportRequest {}

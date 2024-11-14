@@ -116,6 +116,14 @@ func (api *oliveTinAPI) LocalUserLogin(ctx ctx.Context, req *pb.LocalUserLoginRe
 	if match {
 		header := metadata.Pairs("set-user", req.Username)
 		grpc.SendHeader(ctx, header)
+
+		log.WithFields(log.Fields{
+			"username": req.Username,
+		}).Info("LocalUserLogin: User logged in successfully.")
+	} else {
+		log.WithFields(log.Fields{
+			"username": req.Username,
+		}).Warn("LocalUserLogin: User login failed.")
 	}
 
 	return &pb.LocalUserLoginResponse{
@@ -303,7 +311,13 @@ func (api *oliveTinAPI) GetDashboardComponents(ctx ctx.Context, req *pb.GetDashb
 	res := buildDashboardResponse(api.executor, cfg, user)
 
 	if len(res.Actions) == 0 {
-		log.Warn("Zero actions found - check that you have some actions defined, with a view permission")
+		log.WithFields(log.Fields{
+			"username":         user.Username,
+			"usergroup":        user.Usergroup,
+			"provider":         user.Provider,
+			"acls":             user.Acls,
+			"availableActions": len(cfg.Actions),
+		}).Warn("Zero actions found for user")
 	}
 
 	log.Tracef("GetDashboardComponents: %v", res)
@@ -364,6 +378,10 @@ func (api *oliveTinAPI) WhoAmI(ctx ctx.Context, req *pb.WhoAmIRequest) (*pb.WhoA
 
 	res := &pb.WhoAmIResponse{
 		AuthenticatedUser: user.Username,
+		Usergroup:         user.Usergroup,
+		Provider:          user.Provider,
+		Sid:               user.SID,
+		Acls:              user.Acls,
 	}
 
 	log.Warnf("usergroup: %v", user.Usergroup)
