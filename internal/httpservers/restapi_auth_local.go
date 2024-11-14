@@ -24,7 +24,10 @@ func parseLocalUserCookie(req *http.Request) (string, string, string) {
 	username, ok := localUserSessions[cookieValue]
 
 	if !ok {
-		log.Warnf("Could not find local user session: %v", cookieValue)
+		log.WithFields(log.Fields{
+			"sid":      cookieValue,
+			"provider": "local",
+		}).Warnf("Stale session")
 		return "", "", ""
 	}
 
