@@ -65,6 +65,7 @@ actions:
   #
   # Docs: https://docs.olivetin.app/action-ping.html
   - title: Ping host
+    id: ping_host
     shell: ping {{ host }} -c {{ count }}
     icon: ping
     timeout: 100
@@ -147,7 +148,7 @@ actions:
     id: restart_httpd
     icon: restart
     timeout: 1
-    shell: ssh -F /config/ssh/easy.cg root@server1 'service httpd restart'
+    shell: ssh -F /config/ssh/easy.cfg root@server1 'service httpd restart'
 
   # Lots of people use OliveTin to build web interfaces for their electronics
   # projects. It's best to install OliveTin as a native package (eg, .deb), and
