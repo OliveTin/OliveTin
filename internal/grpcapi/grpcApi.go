@@ -114,8 +114,7 @@ func (api *oliveTinAPI) LocalUserLogin(ctx ctx.Context, req *pb.LocalUserLoginRe
 	match := checkUserPassword(cfg, req.Username, req.Password)
 
 	if match {
-		header := metadata.Pairs("set-user", req.Username)
-		grpc.SendHeader(ctx, header)
+		grpc.SendHeader(ctx, metadata.Pairs("set-username", req.Username))
 
 		log.WithFields(log.Fields{
 			"username": req.Username,

@@ -5,11 +5,12 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
+	"github.com/OliveTin/OliveTin/internal/config"
 	log "github.com/sirupsen/logrus"
 )
 
 var (
-	localUserSessions = make(map[string]string) // sid -> username, used for local user sessions
+	localUserSessions = make(map[string]*config.LocalUser)
 )
 
 func parseLocalUserCookie(req *http.Request) (string, string, string) {
@@ -21,7 +22,7 @@ func parseLocalUserCookie(req *http.Request) (string, string, string) {
 
 	cookieValue := cookie.Value
 
-	username, ok := localUserSessions[cookieValue]
+	user, ok := localUserSessions[cookieValue]
 
 	if !ok {
 		log.WithFields(log.Fields{
@@ -31,15 +32,31 @@ func parseLocalUserCookie(req *http.Request) (string, string, string) {
 		return "", "", ""
 	}
 
-	return username, "", cookie.Value
+	return user.Username, user.Usergroup, cookie.Value
+}
+
+func findUserByUsername(searchUsername string) *config.LocalUser {
+	for _, user := range cfg.AuthLocalUsers.Users {
+		if user.Username == searchUsername {
+			return user
+		}
+	}
+
+	return nil
 }
 
 func forwardResponseHandlerLoginLocalUser(md metadata.MD, w http.ResponseWriter) error {
-	setUser := getMetadataKeyOrEmpty(md, "set-user")
+	setUsername := getMetadataKeyOrEmpty(md, "set-username")
 
-	if setUser != "" {
+	if setUsername != "" {
+		user := findUserByUsername(setUsername)
+
+		if user == nil {
+			return nil
+		}
+
 		sid := uuid.NewString()
-		localUserSessions[sid] = setUser
+		localUserSessions[sid] = user
 
 		http.SetCookie(
 			w,
