@@ -152,16 +152,20 @@ type LocalUser struct {
 }
 
 type OAuth2Provider struct {
-	Name          string
-	Title         string
-	ClientID      string
-	ClientSecret  string
-	Icon          string
-	Scopes        []string
-	AuthUrl       string
-	TokenUrl      string
-	WhoamiUrl     string
-	UsernameField string
+	Name               string
+	Title              string
+	ClientID           string
+	ClientSecret       string
+	Icon               string
+	Scopes             []string
+	AuthUrl            string
+	TokenUrl           string
+	WhoamiUrl          string
+	UsernameField      string
+	UserGroupField     string
+	InsecureSkipVerify bool
+	CallbackTimeout    int
+	CertBundlePath     string
 }
 
 type NavigationLink struct {
