@@ -134,6 +134,10 @@ func (api *oliveTinAPI) LocalUserLogin(ctx ctx.Context, req *pb.LocalUserLoginRe
 func (api *oliveTinAPI) StartActionAndWait(ctx ctx.Context, req *pb.StartActionAndWaitRequest) (*pb.StartActionAndWaitResponse, error) {
 	args := make(map[string]string)
 
+	for _, arg := range req.Arguments {
+		args[arg.Name] = arg.Value
+	}
+
 	execReq := executor.ExecutionRequest{
 		Action:            api.executor.FindActionBindingByID(req.ActionId),
 		TrackingID:        uuid.NewString(),

@@ -78,6 +78,8 @@ message StartActionResponse {
 
 message StartActionAndWaitRequest {
 	string action_id = 1;
+
+	repeated StartActionArgument arguments = 2;
 }
 
 message StartActionAndWaitResponse {
