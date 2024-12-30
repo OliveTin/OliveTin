@@ -32,7 +32,7 @@ jobs:
 
             const issueLabels = context.payload.issue.labels.map(label => label.name);
 
-            if (issueLabels.includes("waiting-on-developer") {
+            if (issueLabels.includes("waiting-on-developer")) {
               if (commenterIsDeveloper) {
                 await github.rest.issues.removeLabel({
                   owner,
@@ -52,7 +52,7 @@ jobs:
               }
             }
 
-            if (issueLabels.includes("waiting-on-requestor") {
+            if (issueLabels.includes("waiting-on-requestor")) {
               if (commenterIsUser) {
                 await github.rest.issues.removeLabel({
                   owner,
