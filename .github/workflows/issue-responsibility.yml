@@ -1,0 +1,78 @@
+---
+name: Issue Responsibility
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  update-responsibility-labels:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Update responsibility labels
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const core = require("@actions/core");
+            const github = require("@actions/github");
+
+            const { context } = github;
+
+            const commentAuthor = context.payload.comment.user.login;
+            const issueNumber = context.payload.issue.number;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            const skipAction = context.payload.comment.body.includes("/skip-responsibility");
+
+            if (skipAction) {
+              core.info("Skipping responsibility label update");
+              return;
+            }
+
+            const developers = ["jamesread"]
+            const commenterIsDeveloper = developers.includes(commentAuthor);
+            const commentorIsUser = !commenterIsDeveloper;
+
+            const issueLabels = context.payload.issue.labels.map(label => label.name);
+
+            if (issueLabels.includes("waiting-on-developer") {
+              if (commenterIsDeveloper) {
+                await github.rest.issues.removeLabel({
+                  owner,
+                  repo,
+                  issue_number: issueNumber,
+                  name: "waiting-on-developer",
+                });
+
+                await github.rest.issues.addLabels({
+                  owner,
+                  repo,
+                  issue_number: issueNumber,
+                  labels: ["waiting-on-requestor"],
+                });
+
+                core.info(`Switched responsibility to user for issue #${issueNumber}`);
+              }
+            }
+
+            if (issueLabels.includes("waiting-on-requestor") {
+              if (commenterIsUser) {
+                await github.rest.issues.removeLabel({
+                  owner,
+                  repo,
+                  issue_number: issueNumber,
+                  name: "waiting-on-requestor",
+                });
+
+                await github.rest.issues.addLabels({
+                  owner,
+                  repo,
+                  issue_number: issueNumber,
+                  labels: ["waiting-on-developer"],
+                });
+
+                core.info(`Switched responsibility to developer for issue #${issueNumber}`);
+              }
+            }
