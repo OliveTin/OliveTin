@@ -28,7 +28,7 @@ jobs:
 
             const developers = ["jamesread"]
             const commenterIsDeveloper = developers.includes(commentAuthor);
-            const commentorIsUser = !commenterIsDeveloper;
+            const commenterIsUser = !commenterIsDeveloper;
 
             const issueLabels = context.payload.issue.labels.map(label => label.name);
 

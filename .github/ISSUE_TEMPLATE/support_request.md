@@ -4,6 +4,7 @@ about: Need some help? Got an error message?
 title: ""
 labels:
   - "type: support"
+  - "waiting-on-developer"
 assignees: ''
 
 ---

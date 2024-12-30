@@ -4,6 +4,7 @@ about: Suggest an idea for this project
 title: ''
 labels:
   - "type: feature-request"
+  - "waiting-on-developer"
 assignees: ''
 
 ---
