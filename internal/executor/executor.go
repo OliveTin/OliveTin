@@ -154,19 +154,23 @@ func (e *Executor) GetLogTrackingIds(startOffset int64, count int64) ([]*Interna
 		startIndex = totalLogCount - startOffset
 	}
 
-	count = min(totalLogCount, e.Cfg.LogHistoryPageSize)
+	count = min(totalLogCount, count)
 
 	endIndex := startIndex - count
 
-	log.Infof("GetLogTrackingIds, totalCount: %v, start: %+v, end: %+v, count: %v", totalLogCount, startIndex, endIndex, count)
+	log.WithFields(log.Fields{
+		"startOffset": startOffset,
+		"count":       count,
+		"total":       totalLogCount,
+		"startIndex":  startIndex,
+		"endIndex":    endIndex,
+	}).Tracef("GetLogTrackingIds")
 
 	trackingIds := make([]*InternalLogEntry, count)
 
 	logIndex := count - 1
 
 	for i := startIndex; i > endIndex; i-- {
-		log.Infof("LogIndex: %v, i: %v", logIndex, i)
-
 		trackingIds[logIndex] = e.logs[e.logsTrackingIdsByDate[i]]
 
 		logIndex--
@@ -175,8 +179,6 @@ func (e *Executor) GetLogTrackingIds(startOffset int64, count int64) ([]*Interna
 	e.logmutex.RUnlock()
 
 	remainingLogs := endIndex
-
-	log.Infof("GetLogTrackingIds, count: %v, remaining: %v, logIndex: %v", count, remainingLogs, logIndex)
 
 	return trackingIds, remainingLogs
 }

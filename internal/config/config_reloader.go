@@ -44,6 +44,13 @@ func Reload(cfg *Config) {
 		cfg.DefaultPermissions.Logs = false
 	}
 
+	if cfg.LogHistoryPageSize < 10 {
+		log.Warnf("LogsHistoryLimit is too low, setting it to 10")
+		cfg.LogHistoryPageSize = 10
+	} else if cfg.LogHistoryPageSize > 100 {
+		log.Warnf("LogsHistoryLimit is high, you can do this, but expect browser lag.")
+	}
+
 	metricConfigReloadedCount.Inc()
 	metricConfigActionCount.Set(float64(len(cfg.Actions)))
 

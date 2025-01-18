@@ -335,9 +335,7 @@ func (api *oliveTinAPI) GetLogs(ctx ctx.Context, req *pb.GetLogsRequest) (*pb.Ge
 
 	ret := &pb.GetLogsResponse{}
 
-	// TODO Limit to 10 entries or something to prevent browser lag.
-
-	logEntries, countRemaining := api.executor.GetLogTrackingIds(req.StartOffset, 10)
+	logEntries, countRemaining := api.executor.GetLogTrackingIds(req.StartOffset, cfg.LogHistoryPageSize)
 
 	for _, logEntry := range logEntries {
 		action := cfg.FindAction(logEntry.ActionTitle)
