@@ -145,11 +145,12 @@ func (e *Executor) GetLogTrackingIds(startOffset int64, count int64) ([]*Interna
 
 	var startIndex int64
 
-	if startOffset == 0 {
+	switch {
+	case startOffset == 0:
 		startIndex = totalLogCount - 1
-	} else if startOffset < totalLogCount {
-		startIndex = 0;
-	} else {
+	case startOffset < totalLogCount:
+		startIndex = 0
+	default:
 		startIndex = totalLogCount - startOffset
 	}
 
