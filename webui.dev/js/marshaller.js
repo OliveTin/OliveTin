@@ -646,7 +646,7 @@ function marshalDirectory (item, section) {
 }
 
 export function marshalLogsJsonToHtml (json) {
-  // This function is called internally with a "fake" server response, that does 
+  // This function is called internally with a "fake" server response, that does
   // not have pageSize set. So we need to check if it's set before trying to use it.
   if (json.pageSize !== undefined) {
     document.getElementById('logs-server-page-size').innerText = json.pageSize
