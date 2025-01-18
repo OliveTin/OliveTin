@@ -38,6 +38,7 @@ type ActionBinding struct {
 // is ExecRequest
 type Executor struct {
 	logs           map[string]*InternalLogEntry
+	logsTrackingIdsByDate []string
 	LogsByActionId map[string][]*InternalLogEntry
 
 	logmutex sync.RWMutex
@@ -85,6 +86,7 @@ type InternalLogEntry struct {
 	ExecutionTrackingID string
 	Process             *os.Process
 	Username            string
+	Index               int64
 
 	/*
 		The following 3 properties are obviously on Action normally, but it's useful
@@ -104,6 +106,7 @@ func DefaultExecutor(cfg *config.Config) *Executor {
 	e := Executor{}
 	e.Cfg = cfg
 	e.logs = make(map[string]*InternalLogEntry)
+	e.logsTrackingIdsByDate = make([]string, 0)
 	e.LogsByActionId = make(map[string][]*InternalLogEntry)
 	e.MapActionIdToBinding = make(map[string]*ActionBinding)
 
@@ -135,18 +138,46 @@ func (e *Executor) AddListener(m listener) {
 	e.listeners = append(e.listeners, m)
 }
 
-func (e *Executor) GetLogsCopy() map[string]*InternalLogEntry {
+func (e *Executor) GetLogTrackingIds(startOffset int64, count int64) ([]*InternalLogEntry, int64) {
 	e.logmutex.RLock()
 
-	copy := make(map[string]*InternalLogEntry)
+	totalLogCount := int64(len(e.logsTrackingIdsByDate))
 
-	for k, v := range e.logs {
-		copy[k] = v
+	var startIndex int64
+
+	if startOffset == 0 {
+		startIndex = totalLogCount - 1
+	} else if startOffset < totalLogCount {
+		startIndex = 0;
+	} else {
+		startIndex = totalLogCount - startOffset
+	}
+
+	count = min(totalLogCount, e.Cfg.LogHistoryPageSize)
+
+	endIndex := startIndex - count
+
+	log.Infof("GetLogTrackingIds, totalCount: %v, start: %+v, end: %+v, count: %v", totalLogCount, startIndex, endIndex, count)
+
+	trackingIds := make([]*InternalLogEntry, count)
+
+	logIndex := count - 1
+
+	for i := startIndex; i > endIndex; i-- {
+		log.Infof("LogIndex: %v, i: %v", logIndex, i)
+
+		trackingIds[logIndex] = e.logs[e.logsTrackingIdsByDate[i]]
+
+		logIndex--
 	}
 
 	e.logmutex.RUnlock()
 
-	return copy
+	remainingLogs := endIndex
+
+	log.Infof("GetLogTrackingIds, count: %v, remaining: %v, logIndex: %v", count, remainingLogs, logIndex)
+
+	return trackingIds, remainingLogs
 }
 
 func (e *Executor) GetLog(trackingID string) (*InternalLogEntry, bool) {
@@ -176,7 +207,10 @@ func (e *Executor) GetLogsByActionId(actionId string) []*InternalLogEntry {
 func (e *Executor) SetLog(trackingID string, entry *InternalLogEntry) {
 	e.logmutex.Lock()
 
+	entry.Index = int64(len(e.logsTrackingIdsByDate))
+
 	e.logs[trackingID] = entry
+	e.logsTrackingIdsByDate = append(e.logsTrackingIdsByDate, trackingID)
 
 	e.logmutex.Unlock()
 }
