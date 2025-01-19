@@ -138,15 +138,11 @@ func (e *Executor) AddListener(m listener) {
 	e.listeners = append(e.listeners, m)
 }
 
-func (e *Executor) GetLogTrackingIds(startOffset int64, count int64) ([]*InternalLogEntry, int64) {
-	e.logmutex.RLock()
-
-	totalLogCount := int64(len(e.logsTrackingIdsByDate))
-
+func getPagingStartIndex(startOffset int64, totalLogCount int64, count int64) int64 {
 	var startIndex int64
 
 	switch {
-	case startOffset == 0:
+	case startOffset <= 0:
 		startIndex = totalLogCount - 1
 	case startOffset < totalLogCount:
 		startIndex = 0
@@ -154,9 +150,19 @@ func (e *Executor) GetLogTrackingIds(startOffset int64, count int64) ([]*Interna
 		startIndex = totalLogCount - startOffset
 	}
 
+	return startIndex
+}
+
+func (e *Executor) GetLogTrackingIds(startOffset int64, count int64) ([]*InternalLogEntry, int64) {
+	e.logmutex.RLock()
+
+	totalLogCount := int64(len(e.logsTrackingIdsByDate))
+
+	startIndex := getPagingStartIndex(startOffset, totalLogCount, count)
+
 	count = min(totalLogCount, count)
 
-	endIndex := startIndex - count
+	endIndex := min(0, startIndex-count)
 
 	log.WithFields(log.Fields{
 		"startOffset": startOffset,
@@ -168,12 +174,14 @@ func (e *Executor) GetLogTrackingIds(startOffset int64, count int64) ([]*Interna
 
 	trackingIds := make([]*InternalLogEntry, count)
 
-	logIndex := count - 1
+	if totalLogCount > 0 {
+		logIndex := count - 1
 
-	for i := startIndex; i > endIndex; i-- {
-		trackingIds[logIndex] = e.logs[e.logsTrackingIdsByDate[i]]
+		for i := startIndex; i > endIndex; i-- {
+			trackingIds[logIndex] = e.logs[e.logsTrackingIdsByDate[i]]
 
-		logIndex--
+			logIndex--
+		}
 	}
 
 	e.logmutex.RUnlock()
