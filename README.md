@@ -4,7 +4,7 @@
 
 OliveTin gives **safe** and **simple** access to predefined shell commands from a web interface.
 
-[![Static Badge](https://img.shields.io/badge/maturity-stable-brightgreen)](#none)
+[![Maturity Badge](https://img.shields.io/badge/maturity-Production-brightgreen)](#none)
 [![Discord](https://img.shields.io/discord/846737624960860180?label=Discord%20Server)](https://discord.gg/jhYWWpNJ3v)
 [![Awesome](https://cdn.rawgit.com/sindresorhus/awesome/d7305f38d29fed78fa85652e3a63e154dd8e8829/media/badge.svg)](https://github.com/awesome-selfhosted/awesome-selfhosted#automation)
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/5050/badge)](https://bestpractices.coreinfrastructure.org/projects/5050)
