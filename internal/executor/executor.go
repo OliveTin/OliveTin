@@ -588,6 +588,12 @@ func stepTrigger(req *ExecutionRequest) bool {
 		log.Warnf("Trigger action is triggering another trigger action. This is allowed, but be careful not to create trigger loops.")
 	}
 
+	triggerLoop(req)
+
+	return true
+}
+
+func triggerLoop(req *ExecutionRequest) {
 	for _, triggerReq := range req.Action.Triggers {
 		trigger := &ExecutionRequest{
 			ActionTitle:       triggerReq,
@@ -599,8 +605,6 @@ func stepTrigger(req *ExecutionRequest) bool {
 
 		req.executor.ExecRequest(trigger)
 	}
-
-	return true
 }
 
 func stepSaveLog(req *ExecutionRequest) bool {
