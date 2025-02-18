@@ -580,9 +580,9 @@ func stepExecAfter(req *ExecutionRequest) bool {
 }
 
 func stepTrigger(req *ExecutionRequest) bool {
-	if req.Action.Trigger != "" {
+	for _, trigger := range req.Action.Triggers {
 		trigger := &ExecutionRequest{
-			ActionTitle:       req.Action.Trigger,
+			ActionTitle:       trigger,
 			TrackingID:        uuid.NewString(),
 			Tags:              []string{"trigger"},
 			AuthenticatedUser: req.AuthenticatedUser,
