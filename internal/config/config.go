@@ -147,9 +147,9 @@ type AuthLocalUsersConfig struct {
 }
 
 type LocalUser struct {
-	Username string
+	Username  string
 	Usergroup string
-	Password string
+	Password  string
 }
 
 type OAuth2Provider struct {

@@ -13,8 +13,8 @@ import (
 	"golang.org/x/oauth2"
 	"io"
 	"net/http"
-	"time"
 	"os"
+	"time"
 )
 
 var (
@@ -169,8 +169,8 @@ func checkOAuthCallbackCookie(w http.ResponseWriter, r *http.Request) (*oauth2St
 }
 
 type HttpClientSettings struct {
-	Transport 	 *http.Transport
-	Timeout         time.Duration
+	Transport *http.Transport
+	Timeout   time.Duration
 }
 
 func getOAuth2HttpClient(providerConfig *config.OAuth2Provider) *HttpClientSettings {
@@ -178,7 +178,7 @@ func getOAuth2HttpClient(providerConfig *config.OAuth2Provider) *HttpClientSetti
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: providerConfig.InsecureSkipVerify},
 		},
-		Timeout:         time.Duration(min(3, providerConfig.CallbackTimeout)) * time.Second,
+		Timeout: time.Duration(min(3, providerConfig.CallbackTimeout)) * time.Second,
 	}
 
 	if providerConfig.CertBundlePath != "" {
@@ -228,7 +228,7 @@ func handleOAuthCallback(w http.ResponseWriter, r *http.Request) {
 
 	exchangeClient := &http.Client{
 		Transport: clientSettings.Transport,
-		Timeout: clientSettings.Timeout,
+		Timeout:   clientSettings.Timeout,
 	}
 
 	ctx := context.Background()
@@ -245,7 +245,7 @@ func handleOAuthCallback(w http.ResponseWriter, r *http.Request) {
 	userInfoClient := &http.Client{
 		Transport: &oauth2.Transport{
 			Source: registeredState.providerConfig.TokenSource(ctx, tok),
-			Base: clientSettings.Transport,
+			Base:   clientSettings.Transport,
 		},
 		Timeout: clientSettings.Timeout,
 	}
@@ -270,7 +270,7 @@ func handleOAuthCallback(w http.ResponseWriter, r *http.Request) {
 }
 
 type UserInfo struct {
-	Username string
+	Username  string
 	Usergroup string
 }
 
