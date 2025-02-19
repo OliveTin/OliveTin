@@ -134,6 +134,8 @@ class ArgumentForm extends window.HTMLElement {
           break
         case 'raw_string_multiline':
           domEl = document.createElement('textarea')
+          domEl.setAttribute('rows', '5')
+          domEl.style.resize = 'vertical'
           break
         case 'datetime':
           domEl = document.createElement('input')
