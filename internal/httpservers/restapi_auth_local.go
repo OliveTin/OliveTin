@@ -4,8 +4,8 @@ import (
 	"google.golang.org/grpc/metadata"
 	"net/http"
 
-	"github.com/google/uuid"
 	"github.com/OliveTin/OliveTin/internal/config"
+	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 )
 
