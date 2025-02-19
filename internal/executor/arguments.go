@@ -144,6 +144,8 @@ func TypeSafetyCheck(name string, value string, argumentType string) error {
 	switch argumentType {
 	case "password":
 		return nil
+	case "raw_string_multiline":
+		return nil
 	case "email":
 		return typeSafetyCheckEmail(name, value)
 	case "url":
