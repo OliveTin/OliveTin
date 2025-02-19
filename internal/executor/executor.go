@@ -580,9 +580,23 @@ func stepExecAfter(req *ExecutionRequest) bool {
 }
 
 func stepTrigger(req *ExecutionRequest) bool {
-	if req.Action.Trigger != "" {
+	if req.Action.Triggers == nil {
+		return true
+	}
+
+	if len(req.Tags) > 0 && req.Tags[0] == "trigger" {
+		log.Warnf("Trigger action is triggering another trigger action. This is allowed, but be careful not to create trigger loops.")
+	}
+
+	triggerLoop(req)
+
+	return true
+}
+
+func triggerLoop(req *ExecutionRequest) {
+	for _, triggerReq := range req.Action.Triggers {
 		trigger := &ExecutionRequest{
-			ActionTitle:       req.Action.Trigger,
+			ActionTitle:       triggerReq,
 			TrackingID:        uuid.NewString(),
 			Tags:              []string{"trigger"},
 			AuthenticatedUser: req.AuthenticatedUser,
@@ -591,8 +605,6 @@ func stepTrigger(req *ExecutionRequest) bool {
 
 		req.executor.ExecRequest(trigger)
 	}
-
-	return true
 }
 
 func stepSaveLog(req *ExecutionRequest) bool {

@@ -21,7 +21,7 @@ type Action struct {
 	ExecOnFileCreatedInDir []string
 	ExecOnFileChangedInDir []string
 	ExecOnCalendarFile     string
-	Trigger                string
+	Triggers               []string
 	MaxConcurrent          int
 	MaxRate                []RateSpec
 	Arguments              []ActionArgument
