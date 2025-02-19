@@ -16,6 +16,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -37,9 +38,9 @@ type ActionBinding struct {
 // Executor represents a helper class for executing commands. It's main method
 // is ExecRequest
 type Executor struct {
-	logs           map[string]*InternalLogEntry
+	logs                  map[string]*InternalLogEntry
 	logsTrackingIdsByDate []string
-	LogsByActionId map[string][]*InternalLogEntry
+	LogsByActionId        map[string][]*InternalLogEntry
 
 	logmutex sync.RWMutex
 
@@ -140,59 +141,60 @@ func (e *Executor) AddListener(m listener) {
 
 // getPagingStartIndex calculates the starting index for log pagination.
 // Parameters:
-//   startOffset: The offset from the most recent log (0 means start from the most recent)
-//   totalLogCount: Total number of logs available
-//   count: Number of logs to retrieve
+//
+//	startOffset: The offset from the most recent log (0 means start from the most recent)
+//	totalLogCount: Total number of logs available
+//	count: Number of logs to retrieve
+//
 // Returns: The calculated starting index for pagination
 func getPagingStartIndex(startOffset int64, totalLogCount int64, count int64) int64 {
 	var startIndex int64
 
-	switch {
-	case startOffset <= 0:
-		startIndex = totalLogCount - 1
-	case startOffset < totalLogCount:
-		startIndex = totalLogCount - startOffset - 1
-	default:
-		startIndex = totalLogCount - startOffset
+	if startOffset <= 0 {
+		startIndex = totalLogCount
+	} else {
+		startIndex = (totalLogCount - startOffset)
+
+		if startIndex < 0 {
+			startIndex = 1
+		}
 	}
 
-	return startIndex
+	return startIndex - 1
 }
 
-func (e *Executor) GetLogTrackingIds(startOffset int64, count int64) ([]*InternalLogEntry, int64) {
+func (e *Executor) GetLogTrackingIds(startOffset int64, pageCount int64) ([]*InternalLogEntry, int64) {
 	e.logmutex.RLock()
 
 	totalLogCount := int64(len(e.logsTrackingIdsByDate))
 
-	startIndex := getPagingStartIndex(startOffset, totalLogCount, count)
+	startIndex := getPagingStartIndex(startOffset, totalLogCount, pageCount)
 
-	count = min(totalLogCount, count)
+	pageCount = min(totalLogCount, pageCount)
 
-	endIndex := min(0, startIndex-count)
+	endIndex := max(0, startIndex-pageCount)
 
 	log.WithFields(log.Fields{
 		"startOffset": startOffset,
-		"count":       count,
+		"pageCount":   pageCount,
 		"total":       totalLogCount,
 		"startIndex":  startIndex,
 		"endIndex":    endIndex,
-	}).Tracef("GetLogTrackingIds")
+	}).Infof("GetLogTrackingIds")
 
-	trackingIds := make([]*InternalLogEntry, count)
+	trackingIds := make([]*InternalLogEntry, 0)
 
 	if totalLogCount > 0 {
-		logIndex := count - 1
-
-		for i := startIndex; i > endIndex; i-- {
-			trackingIds[logIndex] = e.logs[e.logsTrackingIdsByDate[i]]
-
-			logIndex--
+		for i := startIndex; i >= endIndex; i-- {
+			trackingIds = append(trackingIds, e.logs[e.logsTrackingIdsByDate[i]])
 		}
 	}
 
 	e.logmutex.RUnlock()
 
 	remainingLogs := endIndex
+
+	slices.Reverse(trackingIds)
 
 	return trackingIds, remainingLogs
 }

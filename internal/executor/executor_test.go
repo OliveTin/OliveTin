@@ -6,6 +6,7 @@ import (
 
 	acl "github.com/OliveTin/OliveTin/internal/acl"
 	config "github.com/OliveTin/OliveTin/internal/config"
+	log "github.com/sirupsen/logrus"
 )
 
 func testingExecutor() (*Executor, *config.Config) {
@@ -108,4 +109,73 @@ func TestArgumentNameSnakeCase(t *testing.T) {
 
 	assert.Equal(t, "echo 'Tickling Fred'", out)
 	assert.Nil(t, err)
+}
+
+func TestGetLogsEmpty(t *testing.T) {
+	e, cfg := testingExecutor()
+
+	assert.Equal(t, int64(10), cfg.LogHistoryPageSize, "Logs page size should be 10")
+
+	logs, remaining := e.GetLogTrackingIds(0, 10)
+
+	assert.NotNil(t, logs, "Logs should not be nil")
+	assert.Equal(t, 0, len(logs), "No logs yet")
+	assert.Equal(t, int64(0), remaining, "There should be no remaining logs")
+}
+
+func TestGetLogsLessThanPageSize(t *testing.T) {
+	e, cfg := testingExecutor()
+
+	cfg.Actions = append(cfg.Actions, &config.Action{
+		Title: "blat",
+		Shell: "date",
+	})
+
+	assert.Equal(t, int64(10), cfg.LogHistoryPageSize, "Logs page size should be 10")
+
+	logEntries, remaining := e.GetLogTrackingIds(0, 10)
+
+	assert.Equal(t, 0, len(logEntries), "There should be 0 logs")
+	assert.Zero(t, remaining, "There should be no remaining logs")
+
+	execNewReqAndWait(e, "blat", cfg)
+	execNewReqAndWait(e, "blat", cfg)
+	execNewReqAndWait(e, "blat", cfg)
+	execNewReqAndWait(e, "blat", cfg)
+	execNewReqAndWait(e, "blat", cfg)
+	execNewReqAndWait(e, "blat", cfg)
+	execNewReqAndWait(e, "blat", cfg)
+
+	logEntries, remaining = e.GetLogTrackingIds(0, 10)
+
+	log.Infof("logEntries: %v", logEntries)
+
+	assert.Equal(t, 7, len(logEntries), "There should be 7 logs")
+	assert.Zero(t, remaining, "There should be no remaining logs")
+
+	execNewReqAndWait(e, "blat", cfg)
+	execNewReqAndWait(e, "blat", cfg)
+	execNewReqAndWait(e, "blat", cfg)
+	execNewReqAndWait(e, "blat", cfg)
+	execNewReqAndWait(e, "blat", cfg)
+
+	logEntries, remaining = e.GetLogTrackingIds(0, 10)
+
+	assert.Equal(t, 11, len(logEntries), "There should be 11 logs")
+	assert.Equal(t, int64(1), remaining, "There should be 1 remaining logs")
+}
+
+func execNewReqAndWait(e *Executor, title string, cfg *config.Config) {
+	req := &ExecutionRequest{
+		ActionTitle: title,
+		Cfg:         cfg,
+	}
+
+	wg, _ := e.ExecRequest(req)
+	wg.Wait()
+}
+
+func TestGetPagingIndexes(t *testing.T) {
+	assert.Zero(t, getPagingStartIndex(5, 0, 5), "Testing start index from empty list")
+	assert.Equal(t, int64(4), getPagingStartIndex(5, 10, 5), "Testing start index from mid point")
 }
