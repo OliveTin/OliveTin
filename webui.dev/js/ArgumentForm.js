@@ -132,6 +132,9 @@ class ArgumentForm extends window.HTMLElement {
             domEl.disabled = true
           }
           break
+        case 'raw_string_multiline':
+          domEl = document.createElement('textarea')
+          break
         case 'datetime':
           domEl = document.createElement('input')
           domEl.setAttribute('type', 'datetime-local')
