@@ -6,7 +6,6 @@ import (
 
 	acl "github.com/OliveTin/OliveTin/internal/acl"
 	config "github.com/OliveTin/OliveTin/internal/config"
-	log "github.com/sirupsen/logrus"
 )
 
 func testingExecutor() (*Executor, *config.Config) {
@@ -148,8 +147,6 @@ func TestGetLogsLessThanPageSize(t *testing.T) {
 
 	logEntries, remaining = e.GetLogTrackingIds(0, 10)
 
-	log.Infof("logEntries: %v", logEntries)
-
 	assert.Equal(t, 7, len(logEntries), "There should be 7 logs")
 	assert.Zero(t, remaining, "There should be no remaining logs")
 
@@ -161,8 +158,8 @@ func TestGetLogsLessThanPageSize(t *testing.T) {
 
 	logEntries, remaining = e.GetLogTrackingIds(0, 10)
 
-	assert.Equal(t, 11, len(logEntries), "There should be 11 logs")
-	assert.Equal(t, int64(1), remaining, "There should be 1 remaining logs")
+	assert.Equal(t, 10, len(logEntries), "There should be 10 logs")
+	assert.Equal(t, int64(2), remaining, "There should be 1 remaining logs")
 }
 
 func execNewReqAndWait(e *Executor, title string, cfg *config.Config) {
@@ -178,4 +175,7 @@ func execNewReqAndWait(e *Executor, title string, cfg *config.Config) {
 func TestGetPagingIndexes(t *testing.T) {
 	assert.Zero(t, getPagingStartIndex(5, 0, 5), "Testing start index from empty list")
 	assert.Equal(t, int64(4), getPagingStartIndex(5, 10, 5), "Testing start index from mid point")
+	assert.Equal(t, int64(9), getPagingStartIndex(-1, 10, 5), "Testing start index with negative offset")
+	assert.Equal(t, int64(0), getPagingStartIndex(15, 10, 5), "Testing start index with large offset")
+	assert.Equal(t, int64(9), getPagingStartIndex(0, 10, 0), "Testing start index with zero count")
 }

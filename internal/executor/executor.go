@@ -16,7 +16,6 @@ import (
 	"fmt"
 	"os"
 	"path"
-	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -172,7 +171,7 @@ func (e *Executor) GetLogTrackingIds(startOffset int64, pageCount int64) ([]*Int
 
 	pageCount = min(totalLogCount, pageCount)
 
-	endIndex := max(0, startIndex-pageCount)
+	endIndex := max(0, (startIndex-pageCount)+1)
 
 	log.WithFields(log.Fields{
 		"startOffset": startOffset,
@@ -182,10 +181,10 @@ func (e *Executor) GetLogTrackingIds(startOffset int64, pageCount int64) ([]*Int
 		"endIndex":    endIndex,
 	}).Infof("GetLogTrackingIds")
 
-	trackingIds := make([]*InternalLogEntry, 0)
+	trackingIds := make([]*InternalLogEntry, 0, pageCount)
 
 	if totalLogCount > 0 {
-		for i := startIndex; i >= endIndex; i-- {
+		for i := endIndex; i <= startIndex; i++ {
 			trackingIds = append(trackingIds, e.logs[e.logsTrackingIdsByDate[i]])
 		}
 	}
@@ -193,8 +192,6 @@ func (e *Executor) GetLogTrackingIds(startOffset int64, pageCount int64) ([]*Int
 	e.logmutex.RUnlock()
 
 	remainingLogs := endIndex
-
-	slices.Reverse(trackingIds)
 
 	return trackingIds, remainingLogs
 }
