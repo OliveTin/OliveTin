@@ -138,6 +138,12 @@ func (e *Executor) AddListener(m listener) {
 	e.listeners = append(e.listeners, m)
 }
 
+// getPagingStartIndex calculates the starting index for log pagination.
+// Parameters:
+//   startOffset: The offset from the most recent log (0 means start from the most recent)
+//   totalLogCount: Total number of logs available
+//   count: Number of logs to retrieve
+// Returns: The calculated starting index for pagination
 func getPagingStartIndex(startOffset int64, totalLogCount int64, count int64) int64 {
 	var startIndex int64
 
@@ -145,7 +151,7 @@ func getPagingStartIndex(startOffset int64, totalLogCount int64, count int64) in
 	case startOffset <= 0:
 		startIndex = totalLogCount - 1
 	case startOffset < totalLogCount:
-		startIndex = 0
+		startIndex = totalLogCount - startOffset - 1
 	default:
 		startIndex = totalLogCount - startOffset
 	}
