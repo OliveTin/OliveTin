@@ -7,8 +7,11 @@ import (
 	"gopkg.in/yaml.v3"
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
 )
+
+var sessionStorageMutex sync.Mutex
 
 type UserSession struct {
 	Username string
@@ -43,11 +46,26 @@ func registerSessionProvider(provider string) {
 }
 
 func deleteLocalUserSession(provider string, sid string) {
-	log.Warnf("Deleting user session sid %v on %v provider", sid, provider)
-
-	delete(sessionStorage.Providers[provider].Sessions, sid)
+	deleteLocalUserSessionNoSave(provider, sid)
 
 	saveUserSessions()
+}
+
+func deleteLocalUserSessionNoSave(provider string, sid string) {
+	log.WithFields(log.Fields{
+		"sid":      sid,
+		"provider": provider,
+	}).Debug("Deleting user session")
+
+	sessionStorageMutex.Lock()
+
+	if _, ok := sessionStorage.Providers[provider]; !ok {
+		sessionStorageMutex.Unlock()
+		return
+	}
+
+	delete(sessionStorage.Providers[provider].Sessions, sid)
+	sessionStorageMutex.Unlock()
 }
 
 func registerUserSession(provider string, sid string, username string) {
@@ -60,6 +78,9 @@ func registerUserSession(provider string, sid string, username string) {
 }
 
 func saveUserSessions() {
+	sessionStorageMutex.Lock()
+	defer sessionStorageMutex.Unlock()
+
 	filename := filepath.Join(cfg.GetDir(), "sessions.db.yaml")
 
 	out, err := yaml.Marshal(sessionStorage)
@@ -108,10 +129,12 @@ func deleteExpiredSessions() {
 	for provider, sessions := range sessionStorage.Providers {
 		for sid, session := range sessions.Sessions {
 			if session.Expiry < time.Now().Unix() {
-				deleteLocalUserSession(provider, sid)
+				deleteLocalUserSessionNoSave(provider, sid)
 			}
 		}
 	}
+
+	saveUserSessions()
 }
 
 func getUserFromSession(providerName string, sid string) *config.LocalUser {
@@ -129,7 +152,7 @@ func getUserFromSession(providerName string, sid string) *config.LocalUser {
 	if !ok {
 		log.WithFields(log.Fields{
 			"sid":      sid,
-			"provider": "local",
+			"provider": providerName,
 		}).Warnf("Stale session")
 		return nil
 	}
@@ -139,7 +162,7 @@ func getUserFromSession(providerName string, sid string) *config.LocalUser {
 	if user == nil {
 		log.WithFields(log.Fields{
 			"sid":      sid,
-			"provider": "local",
+			"provider": providerName,
 		}).Warnf("User not found")
 		return nil
 	}
