@@ -24,7 +24,7 @@ var (
 )
 
 func registerSessionProviders() {
-	sessionStorage = &SessionStorage {
+	sessionStorage = &SessionStorage{
 		Providers: make(map[string]*SessionProvider),
 	}
 

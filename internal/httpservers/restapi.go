@@ -107,11 +107,11 @@ func forwardResponseHandlerLogout(md metadata.MD, w http.ResponseWriter) {
 		http.SetCookie(
 			w,
 			&http.Cookie{
-				Name:  "olivetin-sid-oauth",
-				MaxAge: 31556952, // 1 year
-				Value: "",
+				Name:     "olivetin-sid-oauth",
+				MaxAge:   31556952, // 1 year
+				Value:    "",
 				HttpOnly: true,
-				Path: "/",
+				Path:     "/",
 			},
 		)
 
