@@ -2,13 +2,17 @@ package httpservers
 
 import (
 	"github.com/OliveTin/OliveTin/internal/config"
+	"github.com/OliveTin/OliveTin/internal/filehelper"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 	"os"
+	"path/filepath"
+	"time"
 )
 
 type UserSession struct {
 	Username string
+	Expiry   int64
 }
 
 type SessionProvider struct {
@@ -39,6 +43,8 @@ func registerSessionProvider(provider string) {
 }
 
 func deleteLocalUserSession(provider string, sid string) {
+	log.Warnf("Deleting user session sid %v on %v provider", sid, provider)
+
 	delete(sessionStorage.Providers[provider].Sessions, sid)
 
 	saveUserSessions()
@@ -47,41 +53,31 @@ func deleteLocalUserSession(provider string, sid string) {
 func registerUserSession(provider string, sid string, username string) {
 	sessionStorage.Providers[provider].Sessions[sid] = &UserSession{
 		Username: username,
+		Expiry:   time.Now().Unix() + 31556952, // 1 year
 	}
 
 	saveUserSessions()
 }
 
 func saveUserSessions() {
-	configDir := cfg.GetDir()
-	filename := configDir + "/sessions.db.yaml"
+	filename := filepath.Join(cfg.GetDir(), "sessions.db.yaml")
 
-	if _, err := os.Stat(filename); os.IsNotExist(err) {
-		_, err := os.Create(filename)
-		if err != nil {
-			log.WithFields(log.Fields{
-				"error": err,
-			}).Errorf("Failed to create %v", filename)
-			return
-		}
-	}
-
-	out, _ := yaml.Marshal(sessionStorage)
-	err := os.WriteFile(filename, out, 0644)
+	out, err := yaml.Marshal(sessionStorage)
 
 	if err != nil {
 		log.WithFields(log.Fields{
 			"error": err,
-		}).Errorf("Failed to write session to %v", filename)
+		}).Errorf("Failed to marshal session data to %v", filename)
 		return
 	}
+
+	filehelper.WriteFile(filename, out)
 }
 
 func loadUserSessions() {
 	registerSessionProviders()
 
-	configDir := cfg.GetDir()
-	filename := filepath.Join(configDir, "sessions.db.yaml")
+	filename := filepath.Join(cfg.GetDir(), "sessions.db.yaml")
 
 	if _, err := os.Stat(filename); os.IsNotExist(err) {
 		return
@@ -103,6 +99,18 @@ func loadUserSessions() {
 			"error": err,
 		}).Error("Failed to unmarshal sessions.local.db")
 		return
+	}
+
+	deleteExpiredSessions()
+}
+
+func deleteExpiredSessions() {
+	for provider, sessions := range sessionStorage.Providers {
+		for sid, session := range sessions.Sessions {
+			if session.Expiry < time.Now().Unix() {
+				deleteLocalUserSession(provider, sid)
+			}
+		}
 	}
 }
 
