@@ -46,18 +46,20 @@ func registerSessionProvider(provider string) {
 }
 
 func deleteLocalUserSession(provider string, sid string) {
-	deleteLocalUserSessionNoSave(provider, sid)
+	sessionStorageMutex.Lock()
+
+	deleteLocalUserSessionBatch(provider, sid)
+
+	sessionStorageMutex.Unlock()
 
 	saveUserSessions()
 }
 
-func deleteLocalUserSessionNoSave(provider string, sid string) {
+func deleteLocalUserSessionBatch(provider string, sid string) {
 	log.WithFields(log.Fields{
 		"sid":      sid,
 		"provider": provider,
 	}).Debug("Deleting user session")
-
-	sessionStorageMutex.Lock()
 
 	if _, ok := sessionStorage.Providers[provider]; !ok {
 		sessionStorageMutex.Unlock()
@@ -65,14 +67,15 @@ func deleteLocalUserSessionNoSave(provider string, sid string) {
 	}
 
 	delete(sessionStorage.Providers[provider].Sessions, sid)
-	sessionStorageMutex.Unlock()
 }
 
 func registerUserSession(provider string, sid string, username string) {
+	sessionStorageMutex.Lock()
 	sessionStorage.Providers[provider].Sessions[sid] = &UserSession{
 		Username: username,
 		Expiry:   time.Now().Unix() + 31556952, // 1 year
 	}
+	sessionStorageMutex.Unlock()
 
 	saveUserSessions()
 }
@@ -126,13 +129,17 @@ func loadUserSessions() {
 }
 
 func deleteExpiredSessions() {
+	sessionStorageMutex.Lock()
+
 	for provider, sessions := range sessionStorage.Providers {
 		for sid, session := range sessions.Sessions {
 			if session.Expiry < time.Now().Unix() {
-				deleteLocalUserSessionNoSave(provider, sid)
+				deleteLocalUserSessionBatch(provider, sid)
 			}
 		}
 	}
+
+	sessionStorageMutex.Unlock()
 
 	saveUserSessions()
 }
