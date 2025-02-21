@@ -108,11 +108,15 @@ func forwardResponseHandlerLogout(md metadata.MD, w http.ResponseWriter) {
 			w,
 			&http.Cookie{
 				Name:  "olivetin-sid-oauth",
+				MaxAge: 31556952, // 1 year
 				Value: "",
+				HttpOnly: true,
+				Path: "/",
 			},
 		)
 
-		delete(localUserSessions, sid)
+		deleteLocalUserSession("local", sid)
+
 		http.SetCookie(
 			w,
 			&http.Cookie{
@@ -146,6 +150,8 @@ func SetGlobalRestConfig(config *config.Config) {
 
 func startRestAPIServer(globalConfig *config.Config) error {
 	cfg = globalConfig
+
+	loadUserSessions()
 
 	log.WithFields(log.Fields{
 		"address": cfg.ListenAddressRestActions,

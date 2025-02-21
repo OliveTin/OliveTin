@@ -4,13 +4,7 @@ import (
 	"google.golang.org/grpc/metadata"
 	"net/http"
 
-	"github.com/OliveTin/OliveTin/internal/config"
 	"github.com/google/uuid"
-	log "github.com/sirupsen/logrus"
-)
-
-var (
-	localUserSessions = make(map[string]*config.LocalUser)
 )
 
 func parseLocalUserCookie(req *http.Request) (string, string, string) {
@@ -22,41 +16,27 @@ func parseLocalUserCookie(req *http.Request) (string, string, string) {
 
 	cookieValue := cookie.Value
 
-	user, ok := localUserSessions[cookieValue]
+	user := getUserFromSession("local", cookieValue)
 
-	if !ok {
-		log.WithFields(log.Fields{
-			"sid":      cookieValue,
-			"provider": "local",
-		}).Warnf("Stale session")
+	if user == nil {
 		return "", "", ""
 	}
 
 	return user.Username, user.Usergroup, cookie.Value
 }
 
-func findUserByUsername(searchUsername string) *config.LocalUser {
-	for _, user := range cfg.AuthLocalUsers.Users {
-		if user.Username == searchUsername {
-			return user
-		}
-	}
-
-	return nil
-}
-
 func forwardResponseHandlerLoginLocalUser(md metadata.MD, w http.ResponseWriter) error {
 	setUsername := getMetadataKeyOrEmpty(md, "set-username")
 
 	if setUsername != "" {
-		user := findUserByUsername(setUsername)
+		user := cfg.FindUserByUsername(setUsername)
 
 		if user == nil {
 			return nil
 		}
 
 		sid := uuid.NewString()
-		localUserSessions[sid] = user
+		registerUserSession("local", sid, user.Username)
 
 		http.SetCookie(
 			w,
