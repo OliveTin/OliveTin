@@ -81,7 +81,7 @@ func loadUserSessions() {
 	registerSessionProviders()
 
 	configDir := cfg.GetDir()
-	filename := configDir + "/sessions.db.yaml"
+	filename := filepath.Join(configDir, "sessions.db.yaml")
 
 	if _, err := os.Stat(filename); os.IsNotExist(err) {
 		return
