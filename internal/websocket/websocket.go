@@ -82,7 +82,7 @@ func (WebsocketExecutionListener) OnExecutionFinished(logEntry *executor.Interna
 		LogEntry: internalLogEntryToPb(logEntry),
 	}
 
-	log.Infof("Execution finished: %v+v", evt.LogEntry)
+	log.Infof("WS Execution finished: %v", evt.LogEntry)
 
 	broadcast(evt)
 }
