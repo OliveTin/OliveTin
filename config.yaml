@@ -108,6 +108,10 @@ actions:
     icon: ashtonished
     shell: rm -rf /opt/oldBackups/
     arguments:
+      - type: html
+        title: Description
+        default:
+          The documentation for this action can be found at <a href = "example.com">example.com</a>.
       - type: confirmation
         title: Are you sure?!
 
@@ -197,13 +201,13 @@ actions:
     icon: box
     shell: docker start {{ container.Names }}
     entity: container
-    trigger: Update container entity file
+    triggers: ["Update container entity file"]
 
   - title: Stop {{ container.Names }}
     icon: box
     shell: docker stop {{ container.Names }}
     entity: container
-    trigger: Update container entity file
+    triggers: ["Update container entity file"]
 
   # Lastly, you can hide actions from the web UI, this is useful for creating
   # background helpers that execute only on startup or a cron, for updating
