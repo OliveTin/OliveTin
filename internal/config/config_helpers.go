@@ -43,6 +43,16 @@ func (cfg *Config) FindAcl(aclTitle string) *AccessControlList {
 	return nil
 }
 
+func (cfg *Config) FindUserByUsername(searchUsername string) *LocalUser {
+	for _, user := range cfg.AuthLocalUsers.Users {
+		if user.Username == searchUsername {
+			return user
+		}
+	}
+
+	return nil
+}
+
 func (cfg *Config) SetDir(dir string) {
 	cfg.usedConfigDir = dir
 }

@@ -179,7 +179,7 @@ func (e *Executor) GetLogTrackingIds(startOffset int64, pageCount int64) ([]*Int
 		"total":       totalLogCount,
 		"startIndex":  startIndex,
 		"endIndex":    endIndex,
-	}).Infof("GetLogTrackingIds")
+	}).Tracef("GetLogTrackingIds")
 
 	trackingIds := make([]*InternalLogEntry, 0, pageCount)
 
