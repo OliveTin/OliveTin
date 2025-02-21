@@ -122,6 +122,11 @@ class ArgumentForm extends window.HTMLElement {
       }
     } else {
       switch (arg.type) {
+        case 'html':
+          domEl = document.createElement('div')
+          domEl.innerHTML = arg.defaultValue
+
+          return domEl
         case 'confirmation':
           this.domBtnStart.disabled = true
 
