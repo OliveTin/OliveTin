@@ -62,7 +62,6 @@ func deleteLocalUserSessionBatch(provider string, sid string) {
 	}).Debug("Deleting user session")
 
 	if _, ok := sessionStorage.Providers[provider]; !ok {
-		sessionStorageMutex.Unlock()
 		return
 	}
 
