@@ -12,8 +12,9 @@ RUN mkdir -p /config /config/entities/ /var/www/olivetin \
 		apprise \
 		jq \
 		git \
-		docker \
 	&& microdnf clean all
+
+COPY --from=docker:cli /usr/local/bin/docker /usr/local/bin/docker
 
 RUN useradd --system --create-home olivetin -u 1000
 
