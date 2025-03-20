@@ -40,9 +40,6 @@ daemon-unittests:
 it:
 	cd integration-tests && make
 
-githooks:
-	git config --local core.hooksPath .githooks
-
 go-tools:
 	go install "github.com/bufbuild/buf/cmd/buf"
 	go install "github.com/fzipp/gocyclo/cmd/gocyclo"

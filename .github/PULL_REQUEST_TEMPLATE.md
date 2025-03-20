@@ -14,7 +14,7 @@ Helpful information to understand the project can be found here: [CONTRIBUTING](
 Please put a X in the boxes as evidence of reading through the checklist.
 
 - [ ] I have forked the project, and raised this PR on a feature branch.
-- [ ] `make githooks` has been run, and my git commit message was accepted by the git hook.
+- [ ] I ran the `pre-commit` hooks, and my commit message was validated.
 - [ ] `make daemon-compile` runs without any issues.
 - [ ] `make daemon-codestyle` runs without any issues.
 - [ ] `make daemon-unittests` runs without any issues.
