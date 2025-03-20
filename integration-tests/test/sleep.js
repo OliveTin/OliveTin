@@ -4,6 +4,7 @@ import { expect } from 'chai'
 import { By, Condition } from 'selenium-webdriver'
 import {
   takeScreenshot,
+  takeScreenshotOnFailure,
   findExecutionDialog,
   requireExecutionDialogStatus,
   getRootAndWait,
@@ -18,6 +19,10 @@ describe('config: sleep', function () {
   after(async () => {
     await runner.stop()
   })
+
+  afterEach(function () {
+    takeScreenshotOnFailure(this.currentTest, webdriver);
+  });
 
   it('Sleep action kill', async function() {
     await getRootAndWait()
@@ -39,10 +44,6 @@ describe('config: sleep', function () {
 
     await killButton.click()
 
-    console.log("env CI:", process.env.CI)
-
-    if (process.env.CI !== 'true') {
-      await requireExecutionDialogStatus(webdriver, "Non-Zero Exit")
-    }
+    await requireExecutionDialogStatus(webdriver, "Completed")
   })
 })

@@ -33,6 +33,10 @@ class ActionButton extends ExecutionFeedbackButton {
     this.setAttribute('role', 'none')
     this.setAttribute('id', 'actionButton-' + this.actionId)
 
+    if (!json.canExec) {
+      this.btn.disabled = true
+    }
+
     this.btn.setAttribute('id', 'actionButtonInner-' + this.actionId)
     this.btn.title = json.title
     this.btn.onclick = () => {

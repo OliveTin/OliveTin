@@ -58,12 +58,12 @@ func parseRequestMetadata(ctx context.Context, req *http.Request) metadata.MD {
 		provider = "jwt-cookie"
 	}
 
-	if cfg.AuthHttpHeaderUsername != "" {
+	if cfg.AuthHttpHeaderUsername != "" && username == "" {
 		username, usergroup = parseHttpHeaderForAuth(req)
 		provider = "http-header"
 	}
 
-	if len(cfg.AuthOAuth2Providers) > 0 {
+	if len(cfg.AuthOAuth2Providers) > 0 && username == "" {
 		username, usergroup, sid = parseOAuth2Cookie(req)
 		provider = "oauth2"
 	}
@@ -107,17 +107,24 @@ func forwardResponseHandlerLogout(md metadata.MD, w http.ResponseWriter) {
 		http.SetCookie(
 			w,
 			&http.Cookie{
-				Name:  "olivetin-sid-oauth",
-				Value: "",
+				Name:     "olivetin-sid-oauth",
+				MaxAge:   31556952, // 1 year
+				Value:    "",
+				HttpOnly: true,
+				Path:     "/",
 			},
 		)
 
-		delete(localUserSessions, sid)
+		deleteLocalUserSession("local", sid)
+
 		http.SetCookie(
 			w,
 			&http.Cookie{
-				Name:  "olivetin-sid-local",
-				Value: "",
+				Name:     "olivetin-sid-local",
+				MaxAge:   31556952, // 1 year
+				Value:    "",
+				HttpOnly: true,
+				Path:     "/",
 			},
 		)
 
@@ -143,6 +150,8 @@ func SetGlobalRestConfig(config *config.Config) {
 
 func startRestAPIServer(globalConfig *config.Config) error {
 	cfg = globalConfig
+
+	loadUserSessions()
 
 	log.WithFields(log.Fields{
 		"address": cfg.ListenAddressRestActions,

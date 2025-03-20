@@ -16,6 +16,7 @@ export class ExecutionDialog {
       this.toggleSize()
     }
 
+    this.domBtnRerun = document.getElementById('execution-dialog-rerun-action')
     this.domBtnKill = document.getElementById('execution-dialog-kill-action')
 
     this.domDuration = document.getElementById('execution-dialog-duration')
@@ -57,6 +58,8 @@ export class ExecutionDialog {
 
     //    window.terminal.close()
 
+    this.domBtnRerun.disabled = true
+    this.domBtnRerun.onclick = () => {}
     this.domBtnKill.disabled = true
     this.domBtnKill.onclick = () => {}
 
@@ -91,6 +94,16 @@ export class ExecutionDialog {
     }
 
     this.dlg.showModal()
+  }
+
+  rerunAction (actionId) {
+    const actionButton = document.getElementById('actionButton-' + actionId)
+
+    if (actionButton !== undefined) {
+      actionButton.btn.click()
+    }
+
+    this.dlg.close()
   }
 
   killAction () {
@@ -186,11 +199,14 @@ export class ExecutionDialog {
 
     this.domOutput.hidden = false
 
-    if (!this.hideDetailsOnResult) {
-      this.domExecutionDetails.hidden = false
+    if (this.hideDetailsOnResult) {
+      this.domExecutionDetails.hidden = true
     }
 
     this.executionTrackingId = res.logEntry.executionTrackingId
+
+    this.domBtnRerun.disabled = !res.logEntry.executionFinished
+    this.domBtnRerun.onclick = () => { this.rerunAction(res.logEntry.actionId) }
 
     this.domBtnKill.disabled = res.logEntry.executionFinished
 
@@ -198,6 +214,7 @@ export class ExecutionDialog {
 
     this.domIcon.innerHTML = res.logEntry.actionIcon
     this.domTitle.innerText = res.logEntry.actionTitle
+    this.domTitle.title = 'Action ID: ' + res.logEntry.actionId + '\nExecution ID: ' + res.logEntry.executionTrackingId
 
     this.updateDuration(res.logEntry)
 

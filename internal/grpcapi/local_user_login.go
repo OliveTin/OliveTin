@@ -44,9 +44,19 @@ func checkUserPassword(cfg *config.Config, username, password string) bool {
 
 			if match {
 				return true
+			} else {
+				log.WithFields(log.Fields{
+					"username": username,
+				}).Warn("Password does not match for user")
+
+				return false
 			}
 		}
 	}
+
+	log.WithFields(log.Fields{
+		"username": username,
+	}).Warn("Failed to check password for user, as username was not found")
 
 	return false
 }

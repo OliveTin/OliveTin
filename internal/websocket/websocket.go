@@ -38,7 +38,7 @@ type WebsocketExecutionListener struct{}
 func (WebsocketExecutionListener) OnExecutionStarted(ile *executor.InternalLogEntry) {
 	broadcast(&pb.EventExecutionStarted{
 		LogEntry: internalLogEntryToPb(ile),
-	});
+	})
 }
 
 func OnEntityChanged() {
@@ -98,25 +98,10 @@ func internalLogEntryToPb(logEntry *executor.InternalLogEntry) *pb.LogEntry {
 
 func (WebsocketExecutionListener) OnExecutionFinished(logEntry *executor.InternalLogEntry) {
 	evt := &pb.EventExecutionFinished{
-		LogEntry: &pb.LogEntry{
-			ActionTitle:         logEntry.ActionTitle,
-			ActionIcon:          logEntry.ActionIcon,
-			ActionId:            logEntry.ActionId,
-			DatetimeStarted:     logEntry.DatetimeStarted.Format("2006-01-02 15:04:05"),
-			DatetimeFinished:    logEntry.DatetimeFinished.Format("2006-01-02 15:04:05"),
-			Output:              logEntry.Output,
-			TimedOut:            logEntry.TimedOut,
-			Blocked:             logEntry.Blocked,
-			ExitCode:            logEntry.ExitCode,
-			Tags:                logEntry.Tags,
-			ExecutionTrackingId: logEntry.ExecutionTrackingID,
-			ExecutionStarted:    logEntry.ExecutionStarted,
-			ExecutionFinished:   logEntry.ExecutionFinished,
-			User:                logEntry.Username,
-		},
+		LogEntry: internalLogEntryToPb(logEntry),
 	}
 
-	log.Infof("Execution finished: %v+v", evt.LogEntry)
+	log.Infof("WS Execution finished: %v", evt.LogEntry)
 
 	broadcast(evt)
 }

@@ -54,6 +54,7 @@ function websocketOnMessage (msg) {
     case 'EventOutputChunk':
     case 'EventConfigChanged':
     case 'EventExecutionFinished':
+    case 'EventExecutionStarted':
     case 'EventEntityChanged':
       window.dispatchEvent(e)
       break

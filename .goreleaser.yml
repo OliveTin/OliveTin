@@ -3,6 +3,7 @@ version: 2
 before:
   hooks:
     - go mod download
+    - go generate ./...
 
 builds:
   - env:
@@ -11,11 +12,13 @@ builds:
       - linux
       - windows
       - darwin
+      - freebsd
 
     goarch:
       - amd64
       - arm64
       - arm
+      - riscv64
 
     goarm:
       - 5 # For old RPIs
@@ -40,7 +43,7 @@ builds:
 checksum:
   name_template: 'checksums.txt'
 snapshot:
-  name_template: "{{ .Branch }}-{{ .ShortCommit }}"
+  version_template: "{{ .Branch }}-{{ .ShortCommit }}"
 changelog:
   sort: asc
   groups:
@@ -63,9 +66,7 @@ changelog:
       - '^refactor:'
 
 archives:
-  -
-    format: tar.gz
-
+  - formats: tar.gz
     files:
       - config.yaml
       - LICENSE
@@ -74,14 +75,11 @@ archives:
       - webui
       - OliveTin.service
       - ./var/
-
     name_template: "{{ .ProjectName }}-{{ .Os }}-{{ .Arch }}{{ .Arm }}"
-
     wrap_in_directory: true
-
     format_overrides:
       - goos: windows
-        format: zip
+        formats: zip
 
 dockers:
   - image_templates:

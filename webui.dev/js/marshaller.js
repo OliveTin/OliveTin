@@ -54,35 +54,49 @@ export function initMarshaller () {
 
   window.executionDialog = new ExecutionDialog()
 
-  window.logEntries = {}
+  window.logEntries = new Map()
   window.registeredPaths = new Map()
   window.breadcrumbNavigation = []
 
   window.currentPath = ''
 
+  window.addEventListener('EventExecutionStarted', onExecutionStarted)
   window.addEventListener('EventExecutionFinished', onExecutionFinished)
   window.addEventListener('EventOutputChunk', onOutputChunk)
 }
 
-export function marshalDashboardComponentsJsonToHtml (json) {
-  marshalActionsJsonToHtml(json)
-  marshalDashboardStructureToHtml(json)
+function setUsername (username, provider) {
+  document.getElementById('username').innerText = username
+  document.getElementById('username').setAttribute('title', provider)
 
-  document.getElementById('username').innerText = json.authenticatedUser
-
-  if (window.settings.AuthLocalLogin || window.settings.AuthLocalRegister != null) {
-    if (json.authenticatedUser === 'guest') {
+  if (window.settings.AuthLocalLogin || window.settings.AuthOAuth2Providers !== null) {
+    if (username === 'guest') {
       document.getElementById('link-login').hidden = false
       document.getElementById('link-logout').hidden = true
     } else {
       document.getElementById('link-login').hidden = true
 
-      if (json.authenticatedUserProvider === 'local' || json.authenticatedUserProvider === 'oauth2') {
+      if (provider === 'local' || provider === 'oauth2') {
         document.getElementById('link-logout').hidden = false
       }
     }
+  }
+}
 
-    document.getElementById('username').setAttribute('title', json.authenticatedUserProvider)
+export function marshalDashboardComponentsJsonToHtml (json) {
+  if (json == null) { // eg: HTTP 403
+    setUsername('guest', 'system')
+
+    if (window.settings.AuthLoginUrl !== '') {
+      window.location = window.settings.AuthLoginUrl
+    } else {
+      showSection('/login')
+    }
+  } else {
+    setUsername(json.authenticatedUser, json.authenticatedUserProvider)
+
+    marshalActionsJsonToHtml(json)
+    marshalDashboardStructureToHtml(json)
   }
 
   document.body.setAttribute('initial-marshal-complete', 'true')
@@ -125,8 +139,18 @@ function onOutputChunk (evt) {
   }
 }
 
+function onExecutionStarted (evt) {
+  const logEntry = evt.payload.logEntry
+
+  marshalLogsJsonToHtml({
+    logs: [logEntry]
+  })
+}
+
 function onExecutionFinished (evt) {
   const logEntry = evt.payload.logEntry
+
+  window.logEntries.set(logEntry.executionTrackingId, logEntry)
 
   const actionButton = window.actionButtons[logEntry.actionTitle]
 
@@ -136,7 +160,9 @@ function onExecutionFinished (evt) {
 
   switch (actionButton.popupOnStart) {
     case 'execution-button':
-      document.querySelector('execution-button#execution-' + logEntry.executionTrackingId).onExecutionFinished(logEntry)
+      if (document.querySelector('execution-button#execution-' + logEntry.executionTrackingId) !== null) { // If the button was created in our instance
+        document.querySelector('execution-button#execution-' + logEntry.executionTrackingId).onExecutionFinished(logEntry)
+      }
       break
     case 'execution-dialog-stdout-only':
     case 'execution-dialog':
@@ -363,14 +389,18 @@ function marshalDashboardStructureToHtml (json) {
     }
   }
 
+  const shouldHideActions = rootGroup.querySelectorAll('action-button').length === 0 && json.dashboards.length > 0
+
+  if (shouldHideActions) {
+    nav.querySelector('li[title="Actions"]').style.display = 'none'
+  }
+
   if (window.currentPath !== '') {
     showSection(window.currentPath)
   } else if (window.location.pathname !== '/' && document.body.getAttribute('initial-marshal-complete') === null) {
     showSection(window.location.pathname)
   } else {
-    if (rootGroup.querySelectorAll('action-button').length === 0 && json.dashboards.length > 0) {
-      nav.querySelector('li[title="Actions"]').style.display = 'none'
-
+    if (shouldHideActions) {
       showSection('/' + getSystemTitle(json.dashboards[0].title))
     } else {
       showSection('/')
@@ -616,42 +646,59 @@ function marshalDirectory (item, section) {
 }
 
 export function marshalLogsJsonToHtml (json) {
+  // This function is called internally with a "fake" server response, that does
+  // not have pageSize set. So we need to check if it's set before trying to use it.
+  if (json.pageSize !== undefined) {
+    document.getElementById('logs-server-page-size').innerText = json.pageSize
+  }
+
+  if (json.logs != null && json.logs.length > 0) {
+    document.getElementById('logsTable').hidden = false
+    document.getElementById('logsTableEmpty').hidden = true
+  } else {
+    return
+  }
+
   for (const logEntry of json.logs) {
-    const existing = window.logEntries[logEntry.executionTrackingId]
+    let row = document.getElementById('log-' + logEntry.executionTrackingId)
 
-    if (existing !== undefined) {
-      continue
+    if (row == null) {
+      const tpl = document.getElementById('tplLogRow')
+      row = tpl.content.querySelector('tr').cloneNode(true)
+      row.id = 'log-' + logEntry.executionTrackingId
+
+      row.querySelector('.content').onclick = () => {
+        window.executionDialog.reset()
+        window.executionDialog.show()
+        window.executionDialog.renderExecutionResult({
+          logEntry: window.logEntries.get(logEntry.executionTrackingId)
+        })
+        pushNewNavigationPath('/logs/' + logEntry.executionTrackingId)
+      }
+
+      row.exitCodeDisplay = new ActionStatusDisplay(row.querySelector('.exit-code'))
+
+      logEntry.dom = row
+
+      window.logEntries.set(logEntry.executionTrackingId, logEntry)
+
+      document.querySelector('#logTableBody').prepend(row)
     }
-
-    window.logEntries[logEntry.executionTrackingId] = logEntry
-
-    const tpl = document.getElementById('tplLogRow')
-    const row = tpl.content.querySelector('tr').cloneNode(true)
 
     row.querySelector('.timestamp').innerText = logEntry.datetimeStarted
     row.querySelector('.content').innerText = logEntry.actionTitle
     row.querySelector('.icon').innerHTML = logEntry.actionIcon
     row.setAttribute('title', logEntry.actionTitle)
 
-    const exitCodeDisplay = new ActionStatusDisplay(row.querySelector('.exit-code'))
-    exitCodeDisplay.update(logEntry)
+    row.exitCodeDisplay.update(logEntry)
 
-    row.querySelector('.content').onclick = () => {
-      window.executionDialog.reset()
-      window.executionDialog.show()
-      window.executionDialog.renderExecutionResult({
-        logEntry: window.logEntries[logEntry.executionTrackingId]
-      })
-      pushNewNavigationPath('/logs/' + logEntry.executionTrackingId)
-    }
+    row.querySelector('.tags').innerHTML = ''
 
     for (const tag of logEntry.tags) {
       row.querySelector('.tags').append(createTag(tag))
     }
 
     row.querySelector('.tags').append(createAnnotation('user', logEntry.user))
-
-    document.querySelector('#logTableBody').prepend(row)
   }
 }
 

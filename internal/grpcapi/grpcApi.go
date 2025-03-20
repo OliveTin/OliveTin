@@ -15,7 +15,6 @@ import (
 	"errors"
 	"fmt"
 	"net"
-	"sort"
 
 	acl "github.com/OliveTin/OliveTin/internal/acl"
 	config "github.com/OliveTin/OliveTin/internal/config"
@@ -114,8 +113,15 @@ func (api *oliveTinAPI) LocalUserLogin(ctx ctx.Context, req *pb.LocalUserLoginRe
 	match := checkUserPassword(cfg, req.Username, req.Password)
 
 	if match {
-		header := metadata.Pairs("set-user", req.Username)
-		grpc.SendHeader(ctx, header)
+		grpc.SendHeader(ctx, metadata.Pairs("set-username", req.Username))
+
+		log.WithFields(log.Fields{
+			"username": req.Username,
+		}).Info("LocalUserLogin: User logged in successfully.")
+	} else {
+		log.WithFields(log.Fields{
+			"username": req.Username,
+		}).Warn("LocalUserLogin: User login failed.")
 	}
 
 	return &pb.LocalUserLoginResponse{
@@ -125,6 +131,10 @@ func (api *oliveTinAPI) LocalUserLogin(ctx ctx.Context, req *pb.LocalUserLoginRe
 
 func (api *oliveTinAPI) StartActionAndWait(ctx ctx.Context, req *pb.StartActionAndWaitRequest) (*pb.StartActionAndWaitResponse, error) {
 	args := make(map[string]string)
+
+	for _, arg := range req.Arguments {
+		args[arg.Name] = arg.Value
+	}
 
 	execReq := executor.ExecutionRequest{
 		Action:            api.executor.FindActionBindingByID(req.ActionId),
@@ -198,6 +208,7 @@ func internalLogEntryToPb(logEntry *executor.InternalLogEntry) *pb.LogEntry {
 		ActionId:            logEntry.ActionId,
 		DatetimeStarted:     logEntry.DatetimeStarted.Format("2006-01-02 15:04:05"),
 		DatetimeFinished:    logEntry.DatetimeFinished.Format("2006-01-02 15:04:05"),
+		DatetimeIndex:       logEntry.Index,
 		Output:              logEntry.Output,
 		TimedOut:            logEntry.TimedOut,
 		Blocked:             logEntry.Blocked,
@@ -296,22 +307,25 @@ func (api *oliveTinAPI) Logout(ctx ctx.Context, req *pb.LogoutRequest) (*httpbod
 func (api *oliveTinAPI) GetDashboardComponents(ctx ctx.Context, req *pb.GetDashboardComponentsRequest) (*pb.GetDashboardComponentsResponse, error) {
 	user := acl.UserFromContext(ctx, cfg)
 
+	if user.IsGuest() && cfg.AuthRequireGuestsToLogin {
+		return nil, status.Errorf(codes.PermissionDenied, "Guests are not allowed to access the dashboard.")
+	}
+
 	res := buildDashboardResponse(api.executor, cfg, user)
 
 	if len(res.Actions) == 0 {
-		log.Warn("Zero actions found - check that you have some actions defined, with a view permission")
+		log.WithFields(log.Fields{
+			"username":         user.Username,
+			"usergroup":        user.Usergroup,
+			"provider":         user.Provider,
+			"acls":             user.Acls,
+			"availableActions": len(cfg.Actions),
+		}).Warn("Zero actions found for user")
 	}
 
 	log.Tracef("GetDashboardComponents: %v", res)
 
 	dashboardCfgToPb(res, cfg.Dashboards, cfg)
-
-	res.AuthenticatedUser = user.Username
-	res.AuthenticatedUserProvider = user.Provider
-
-	if res.AuthenticatedUser == "guest" && !cfg.AuthAllowGuest {
-		return nil, status.Errorf(codes.PermissionDenied, "Unauthenticated")
-	}
 
 	return res, nil
 }
@@ -321,24 +335,20 @@ func (api *oliveTinAPI) GetLogs(ctx ctx.Context, req *pb.GetLogsRequest) (*pb.Ge
 
 	ret := &pb.GetLogsResponse{}
 
-	// TODO Limit to 10 entries or something to prevent browser lag.
+	logEntries, countRemaining := api.executor.GetLogTrackingIds(req.StartOffset, cfg.LogHistoryPageSize)
 
-	for trackingId, logEntry := range api.executor.GetLogsCopy() {
+	for _, logEntry := range logEntries {
 		action := cfg.FindAction(logEntry.ActionTitle)
 
 		if action == nil || acl.IsAllowedLogs(cfg, user, action) {
 			pbLogEntry := internalLogEntryToPb(logEntry)
-			pbLogEntry.ExecutionTrackingId = trackingId
 
 			ret.Logs = append(ret.Logs, pbLogEntry)
 		}
 	}
 
-	sorter := func(i, j int) bool {
-		return ret.Logs[i].DatetimeStarted < ret.Logs[j].DatetimeStarted
-	}
-
-	sort.Slice(ret.Logs, sorter)
+	ret.CountRemaining = countRemaining
+	ret.PageSize = cfg.LogHistoryPageSize
 
 	return ret, nil
 }
@@ -367,6 +377,10 @@ func (api *oliveTinAPI) WhoAmI(ctx ctx.Context, req *pb.WhoAmIRequest) (*pb.WhoA
 
 	res := &pb.WhoAmIResponse{
 		AuthenticatedUser: user.Username,
+		Usergroup:         user.Usergroup,
+		Provider:          user.Provider,
+		Sid:               user.SID,
+		Acls:              user.Acls,
 	}
 
 	log.Warnf("usergroup: %v", user.Usergroup)

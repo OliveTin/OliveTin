@@ -5,11 +5,6 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
-	log "github.com/sirupsen/logrus"
-)
-
-var (
-	localUserSessions = make(map[string]string) // sid -> username, used for local user sessions
 )
 
 func parseLocalUserCookie(req *http.Request) (string, string, string) {
@@ -21,28 +16,36 @@ func parseLocalUserCookie(req *http.Request) (string, string, string) {
 
 	cookieValue := cookie.Value
 
-	username, ok := localUserSessions[cookieValue]
+	user := getUserFromSession("local", cookieValue)
 
-	if !ok {
-		log.Warnf("Could not find local user session: %v", cookieValue)
+	if user == nil {
 		return "", "", ""
 	}
 
-	return username, "", cookie.Value
+	return user.Username, user.Usergroup, cookie.Value
 }
 
 func forwardResponseHandlerLoginLocalUser(md metadata.MD, w http.ResponseWriter) error {
-	setUser := getMetadataKeyOrEmpty(md, "set-user")
+	setUsername := getMetadataKeyOrEmpty(md, "set-username")
 
-	if setUser != "" {
+	if setUsername != "" {
+		user := cfg.FindUserByUsername(setUsername)
+
+		if user == nil {
+			return nil
+		}
+
 		sid := uuid.NewString()
-		localUserSessions[sid] = setUser
+		registerUserSession("local", sid, user.Username)
 
 		http.SetCookie(
 			w,
 			&http.Cookie{
-				Name:  "olivetin-sid-local",
-				Value: sid,
+				Name:     "olivetin-sid-local",
+				Value:    sid,
+				MaxAge:   31556952, // 1 year
+				HttpOnly: true,
+				Path:     "/",
 			},
 		)
 	}

@@ -61,8 +61,9 @@ function fetchGetDashboardComponents () {
     cors: 'cors'
   }).then(res => {
     if (!res.ok && res.status === 403) {
-      window.location.href = window.settings.AuthLoginUrl
+      return null
     }
+
     return res.json()
   }).then(res => {
     if (!window.restAvailable) {

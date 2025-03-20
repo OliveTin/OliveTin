@@ -21,7 +21,7 @@ type Action struct {
 	ExecOnFileCreatedInDir []string
 	ExecOnFileChangedInDir []string
 	ExecOnCalendarFile     string
-	Trigger                string
+	Triggers               []string
 	MaxConcurrent          int
 	MaxRate                []RateSpec
 	Arguments              []ActionArgument
@@ -97,6 +97,7 @@ type Config struct {
 	ExternalRestAddress             string
 	LogLevel                        string
 	LogDebugOptions                 LogDebugOptions
+	LogHistoryPageSize              int64
 	Actions                         []*Action             `mapstructure:"actions"`
 	Entities                        []*EntityFile         `mapstructure:"entities"`
 	Dashboards                      []*DashboardComponent `mapstructure:"dashboards"`
@@ -118,7 +119,7 @@ type Config struct {
 	AuthHttpHeaderUserGroup         string
 	AuthLocalUsers                  AuthLocalUsersConfig
 	AuthLoginUrl                    string
-	AuthAllowGuest                  bool
+	AuthRequireGuestsToLogin        bool
 	AuthOAuth2RedirectURL           string
 	AuthOAuth2Providers             map[string]*OAuth2Provider
 	DefaultPermissions              PermissionsList
@@ -147,22 +148,26 @@ type AuthLocalUsersConfig struct {
 }
 
 type LocalUser struct {
-	Username string
-	Password string
-	Groups   []string
+	Username  string
+	Usergroup string
+	Password  string
 }
 
 type OAuth2Provider struct {
-	Name          string
-	Title         string
-	ClientID      string
-	ClientSecret  string
-	Icon          string
-	Scopes        []string
-	AuthUrl       string
-	TokenUrl      string
-	WhoamiUrl     string
-	UsernameField string
+	Name               string
+	Title              string
+	ClientID           string
+	ClientSecret       string
+	Icon               string
+	Scopes             []string
+	AuthUrl            string
+	TokenUrl           string
+	WhoamiUrl          string
+	UsernameField      string
+	UserGroupField     string
+	InsecureSkipVerify bool
+	CallbackTimeout    int
+	CertBundlePath     string
 }
 
 type NavigationLink struct {
@@ -209,13 +214,14 @@ func DefaultConfigWithBasePort(basePort int) *Config {
 	config.EnableCustomJs = false
 	config.ExternalRestAddress = "."
 	config.LogLevel = "INFO"
+	config.LogHistoryPageSize = 10
 	config.CheckForUpdates = false
 	config.DefaultPermissions.Exec = true
 	config.DefaultPermissions.View = true
 	config.DefaultPermissions.Logs = true
 	config.AuthJwtClaimUsername = "name"
 	config.AuthJwtClaimUserGroup = "group"
-	config.AuthAllowGuest = true
+	config.AuthRequireGuestsToLogin = false
 	config.WebUIDir = "./webui"
 	config.CronSupportForSeconds = false
 	config.SectionNavigationStyle = "sidebar"

@@ -3,6 +3,8 @@ package httpservers
 import (
 	"context"
 	"crypto/rand"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -11,6 +13,7 @@ import (
 	"golang.org/x/oauth2"
 	"io"
 	"net/http"
+	"os"
 	"time"
 )
 
@@ -20,9 +23,10 @@ var (
 )
 
 type oauth2State struct {
-	provider  *oauth2.Config
-	Username  string
-	Usergroup string
+	providerConfig *oauth2.Config
+	providerName   string
+	Username       string
+	Usergroup      string
 }
 
 func assignIfEmpty(target *string, value string) {
@@ -92,11 +96,11 @@ func randString(nByte int) (string, error) {
 	return base64.URLEncoding.EncodeToString(b), nil
 }
 
-func setOauthCallbackCookie(w http.ResponseWriter, r *http.Request, name, value string) {
+func setOAuthCallbackCookie(w http.ResponseWriter, r *http.Request, name, value string) {
 	cookie := &http.Cookie{
 		Name:     name,
 		Value:    value,
-		MaxAge:   int(time.Hour.Seconds()),
+		MaxAge:   31556952, // 1 year
 		Secure:   r.TLS != nil,
 		HttpOnly: true,
 		Path:     "/",
@@ -116,18 +120,19 @@ func handleOAuthLogin(w http.ResponseWriter, r *http.Request) {
 	providerName := r.URL.Query().Get("provider")
 	provider, err := getOAuth2Config(cfg, providerName)
 
-	registeredStates[state] = &oauth2State{
-		provider: provider,
-		Username: "",
-	}
-
 	if err != nil {
 		log.Errorf("Failed to get provider config: %v %v", providerName, err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	setOauthCallbackCookie(w, r, "olivetin-sid-oauth", state)
+	registeredStates[state] = &oauth2State{
+		providerConfig: provider,
+		providerName:   providerName,
+		Username:       "",
+	}
+
+	setOAuthCallbackCookie(w, r, "olivetin-sid-oauth", state)
 
 	log.Infof("OAuth2 state: %v mapped to provider %v (found: %v), now redirecting", state, providerName, provider != nil)
 
@@ -163,6 +168,44 @@ func checkOAuthCallbackCookie(w http.ResponseWriter, r *http.Request) (*oauth2St
 	return registeredState, state, true
 }
 
+type HttpClientSettings struct {
+	Transport *http.Transport
+	Timeout   time.Duration
+}
+
+func getOAuth2HttpClient(providerConfig *config.OAuth2Provider) *HttpClientSettings {
+	config := &HttpClientSettings{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: providerConfig.InsecureSkipVerify},
+		},
+		Timeout: time.Duration(min(3, providerConfig.CallbackTimeout)) * time.Second,
+	}
+
+	if providerConfig.CertBundlePath != "" {
+		config.Transport.TLSClientConfig.RootCAs = getOAuthCertBundle(providerConfig)
+	}
+
+	return config
+}
+
+func getOAuthCertBundle(providerConfig *config.OAuth2Provider) *x509.CertPool {
+	caCert, err := os.ReadFile(providerConfig.CertBundlePath)
+
+	if err != nil {
+		log.Errorf("OAuth2 Cert Bundle - failed to read file: %v", err)
+
+		return nil
+	}
+
+	caCertPool := x509.NewCertPool()
+
+	if ok := caCertPool.AppendCertsFromPEM(caCert); !ok {
+		log.Errorf("OAuth2 Cert Bundle - failed to append certificates: %v", err)
+	}
+
+	return caCertPool
+}
+
 func handleOAuthCallback(w http.ResponseWriter, r *http.Request) {
 	log.Infof("OAuth2 Callback received")
 
@@ -179,11 +222,19 @@ func handleOAuthCallback(w http.ResponseWriter, r *http.Request) {
 		"token-code": code,
 	}).Debug("OAuth2 Token Code")
 
-	httpClient := &http.Client{Timeout: 2 * time.Second}
-	ctx := context.Background()
-	ctx = context.WithValue(ctx, oauth2.HTTPClient, httpClient)
+	providerConfig := cfg.AuthOAuth2Providers[registeredState.providerName]
 
-	tok, err := registeredState.provider.Exchange(ctx, code)
+	clientSettings := getOAuth2HttpClient(providerConfig)
+
+	exchangeClient := &http.Client{
+		Transport: clientSettings.Transport,
+		Timeout:   clientSettings.Timeout,
+	}
+
+	ctx := context.Background()
+	ctx = context.WithValue(ctx, oauth2.HTTPClient, exchangeClient)
+
+	tok, err := registeredState.providerConfig.Exchange(ctx, code)
 
 	if err != nil {
 		log.Errorf("Failed to exchange code: %v", err)
@@ -191,11 +242,18 @@ func handleOAuthCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	client := registeredState.provider.Client(ctx, tok)
+	userInfoClient := &http.Client{
+		Transport: &oauth2.Transport{
+			Source: registeredState.providerConfig.TokenSource(ctx, tok),
+			Base:   clientSettings.Transport,
+		},
+		Timeout: clientSettings.Timeout,
+	}
 
-	username := getUsername(client)
+	userinfo := getUserInfo(userInfoClient, cfg.AuthOAuth2Providers[registeredState.providerName])
 
-	registeredStates[state].Username = username
+	registeredStates[state].Username = userinfo.Username
+	registeredStates[state].Usergroup = userinfo.Usergroup
 
 	for k, v := range registeredStates {
 		log.Debugf("states: %+v %+v", k, v)
@@ -211,14 +269,19 @@ func handleOAuthCallback(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(loginMessage))
 }
 
-func getUsername(client *http.Client) string {
-	provider := cfg.AuthOAuth2Providers["github"]
+type UserInfo struct {
+	Username  string
+	Usergroup string
+}
+
+func getUserInfo(client *http.Client, provider *config.OAuth2Provider) *UserInfo {
+	ret := &UserInfo{}
 
 	res, err := client.Get(provider.WhoamiUrl)
 
 	if res.StatusCode != http.StatusOK {
 		log.Errorf("Failed to get user data: %v", res.StatusCode)
-		return ""
+		return ret
 	}
 
 	defer res.Body.Close()
@@ -232,18 +295,29 @@ func getUsername(client *http.Client) string {
 	if err != nil {
 		log.Errorf("Failed to unmarshal user data: %v", err)
 
+		return ret
+	}
+
+	ret.Username = getDataField(userData, provider.UsernameField)
+	ret.Usergroup = getDataField(userData, provider.UserGroupField)
+
+	return ret
+}
+
+func getDataField(data map[string]interface{}, field string) string {
+	if field == "" {
 		return ""
 	}
 
-	username, ok := userData[provider.UsernameField]
+	val, ok := data[field]
 
 	if !ok {
-		log.Errorf("Failed to get username from user data: %v", userData)
+		log.Errorf("Failed to get field from user data: %v / %v", data, field)
 
 		return ""
 	}
 
-	return username.(string)
+	return val.(string)
 }
 
 func parseOAuth2Cookie(r *http.Request) (string, string, string) {
@@ -254,10 +328,18 @@ func parseOAuth2Cookie(r *http.Request) (string, string, string) {
 		return "", "", ""
 	}
 
+	if cookie.Value == "" {
+		return "", "", ""
+	}
+
 	serverState, found := registeredStates[cookie.Value]
 
 	if !found {
-		log.Warnf("Failed to find OAuth2 state: %v", cookie.Value)
+		log.WithFields(log.Fields{
+			"sid":      cookie.Value,
+			"provider": "oauth2",
+		}).Warnf("Stale session")
+
 		return "", "", cookie.Value
 	}
 

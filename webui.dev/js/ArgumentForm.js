@@ -122,6 +122,11 @@ class ArgumentForm extends window.HTMLElement {
       }
     } else {
       switch (arg.type) {
+        case 'html':
+          domEl = document.createElement('div')
+          domEl.innerHTML = arg.defaultValue
+
+          return domEl
         case 'confirmation':
           this.domBtnStart.disabled = true
 
@@ -131,6 +136,11 @@ class ArgumentForm extends window.HTMLElement {
             this.domBtnStart.disabled = false
             domEl.disabled = true
           }
+          break
+        case 'raw_string_multiline':
+          domEl = document.createElement('textarea')
+          domEl.setAttribute('rows', '5')
+          domEl.style.resize = 'vertical'
           break
         case 'datetime':
           domEl = document.createElement('input')

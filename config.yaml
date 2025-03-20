@@ -65,6 +65,7 @@ actions:
   #
   # Docs: https://docs.olivetin.app/action-ping.html
   - title: Ping host
+    id: ping_host
     shell: ping {{ host }} -c {{ count }}
     icon: ping
     timeout: 100
@@ -107,6 +108,10 @@ actions:
     icon: ashtonished
     shell: rm -rf /opt/oldBackups/
     arguments:
+      - type: html
+        title: Description
+        default:
+          The documentation for this action can be found at <a href = "example.com">example.com</a>.
       - type: confirmation
         title: Are you sure?!
 
@@ -147,7 +152,7 @@ actions:
     id: restart_httpd
     icon: restart
     timeout: 1
-    shell: ssh -F /config/ssh/easy.cg root@server1 'service httpd restart'
+    shell: ssh -F /config/ssh/easy.cfg root@server1 'service httpd restart'
 
   # Lots of people use OliveTin to build web interfaces for their electronics
   # projects. It's best to install OliveTin as a native package (eg, .deb), and
@@ -196,13 +201,13 @@ actions:
     icon: box
     shell: docker start {{ container.Names }}
     entity: container
-    trigger: Update container entity file
+    triggers: ["Update container entity file"]
 
   - title: Stop {{ container.Names }}
     icon: box
     shell: docker stop {{ container.Names }}
     entity: container
-    trigger: Update container entity file
+    triggers: ["Update container entity file"]
 
   # Lastly, you can hide actions from the web UI, this is useful for creating
   # background helpers that execute only on startup or a cron, for updating

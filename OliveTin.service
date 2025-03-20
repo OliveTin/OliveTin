@@ -1,6 +1,11 @@
 [Unit]
 Description=OliveTin
 
+Requires=network-online.target
+After=network-online.target
+Requires=local-fs.target
+After=local-fs.target
+
 [Service]
 ExecStart=/usr/local/bin/OliveTin
 Restart=always
