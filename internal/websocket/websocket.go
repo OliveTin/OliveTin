@@ -35,13 +35,10 @@ var ExecutionListener WebsocketExecutionListener
 
 type WebsocketExecutionListener struct{}
 
-func (WebsocketExecutionListener) OnExecutionStarted(title string) {
-	/*
-		broadcast(ExecutionStarted{
-			Type: "ExecutionStarted",
-			Action: title,
-		});
-	*/
+func (WebsocketExecutionListener) OnExecutionStarted(ile *executor.InternalLogEntry) {
+	broadcast(&pb.EventExecutionStarted{
+		LogEntry: internalLogEntryToPb(ile),
+	});
 }
 
 func OnEntityChanged() {
@@ -78,6 +75,25 @@ func (WebsocketExecutionListener) OnOutputChunk(chunk []byte, executionTrackingI
 	}
 
 	broadcast(oc)
+}
+
+func internalLogEntryToPb(logEntry *executor.InternalLogEntry) *pb.LogEntry {
+	return &pb.LogEntry{
+		ActionTitle:         logEntry.ActionTitle,
+		ActionIcon:          logEntry.ActionIcon,
+		ActionId:            logEntry.ActionId,
+		DatetimeStarted:     logEntry.DatetimeStarted.Format("2006-01-02 15:04:05"),
+		DatetimeFinished:    logEntry.DatetimeFinished.Format("2006-01-02 15:04:05"),
+		Output:              logEntry.Output,
+		TimedOut:            logEntry.TimedOut,
+		Blocked:             logEntry.Blocked,
+		ExitCode:            logEntry.ExitCode,
+		Tags:                logEntry.Tags,
+		ExecutionTrackingId: logEntry.ExecutionTrackingID,
+		ExecutionStarted:    logEntry.ExecutionStarted,
+		ExecutionFinished:   logEntry.ExecutionFinished,
+		User:                logEntry.Username,
+	}
 }
 
 func (WebsocketExecutionListener) OnExecutionFinished(logEntry *executor.InternalLogEntry) {

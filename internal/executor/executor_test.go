@@ -15,7 +15,7 @@ func testingExecutor() (*Executor, *config.Config) {
 
 	a1 := &config.Action{
 		Title: "Do some tickles",
-		Shell: "echo 'Tickling {{ person }}'",
+		Shell: "echo 'Tickling {{ .Arguments.person }}'",
 		Arguments: []config.ActionArgument{
 			{
 				Name: "person",
@@ -69,7 +69,7 @@ func TestExecNonExistant(t *testing.T) {
 func TestArgumentNameCamelCase(t *testing.T) {
 	a1 := &config.Action{
 		Title: "Do some tickles",
-		Shell: "echo 'Tickling {{ personName }}'",
+		Shell: "echo 'Tickling {{ .Arguments.personName }}'",
 		Arguments: []config.ActionArgument{
 			{
 				Name: "personName",
@@ -91,7 +91,7 @@ func TestArgumentNameCamelCase(t *testing.T) {
 func TestArgumentNameSnakeCase(t *testing.T) {
 	a1 := &config.Action{
 		Title: "Do some tickles",
-		Shell: "echo 'Tickling {{ person_name }}'",
+		Shell: "echo 'Tickling {{ .Arguments.person_name }}'",
 		Arguments: []config.ActionArgument{
 			{
 				Name: "person_name",

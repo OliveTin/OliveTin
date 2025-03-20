@@ -5,7 +5,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/OliveTin/OliveTin/internal/entityfiles"
+	"github.com/OliveTin/OliveTin/internal/entities"
 	"github.com/OliveTin/OliveTin/internal/executor"
 	grpcapi "github.com/OliveTin/OliveTin/internal/grpcapi"
 	"github.com/OliveTin/OliveTin/internal/httpservers"
@@ -172,9 +172,9 @@ func main() {
 	go onfileindir.WatchFilesInDirectory(cfg, executor)
 	go oncalendarfile.Schedule(cfg, executor)
 
-	entityfiles.AddListener(websocket.OnEntityChanged)
-	entityfiles.AddListener(executor.RebuildActionMap)
-	go entityfiles.SetupEntityFileWatchers(cfg)
+	entities.AddListener(websocket.OnEntityChanged)
+	entities.AddListener(executor.RebuildActionMap)
+	go entities.SetupEntityFileWatchers(cfg)
 
 	go updatecheck.StartUpdateChecker(cfg)
 

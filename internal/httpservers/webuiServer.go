@@ -11,7 +11,6 @@ import (
 
 	config "github.com/OliveTin/OliveTin/internal/config"
 	installationinfo "github.com/OliveTin/OliveTin/internal/installationinfo"
-	sv "github.com/OliveTin/OliveTin/internal/stringvariables"
 )
 
 var (
@@ -59,7 +58,7 @@ func findWebuiDir() string {
 				"dir": absdir,
 			}).Infof("Found the webui directory")
 
-			sv.Set("internal.webuidir", absdir+" ("+dir+")")
+			installationinfo.Runtime.WebuiDirectory = absdir + " (" + dir + ")"
 
 			return dir
 		}
@@ -83,9 +82,9 @@ func setupCustomWebuiDir() {
 
 	if err != nil {
 		log.Warnf("Could not create themes directory: %v", err)
-		sv.Set("internal.themesdir", err.Error())
+		installationinfo.Runtime.WebuiDirectory = err.Error()
 	} else {
-		sv.Set("internal.themesdir", dir)
+		installationinfo.Runtime.WebuiDirectory = dir
 	}
 }
 

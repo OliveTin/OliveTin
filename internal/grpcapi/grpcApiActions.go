@@ -4,8 +4,8 @@ import (
 	pb "github.com/OliveTin/OliveTin/gen/grpc"
 	acl "github.com/OliveTin/OliveTin/internal/acl"
 	config "github.com/OliveTin/OliveTin/internal/config"
+	"github.com/OliveTin/OliveTin/internal/entities"
 	executor "github.com/OliveTin/OliveTin/internal/executor"
-	sv "github.com/OliveTin/OliveTin/internal/stringvariables"
 	"sort"
 )
 
@@ -35,14 +35,22 @@ func buildDashboardResponse(ex *executor.Executor, cfg *config.Config, user *acl
 	return res
 }
 
+func isAllowedExec(cfg *config.Config, user *acl.AuthenticatedUser, action *config.Action, actionBinding *executor.ActionBinding) bool {
+	hasPermission := acl.IsAllowedExec(cfg, user, action)
+
+	isEnabled := entities.ParseTemplateBoolWith(action.Enabled, actionBinding.Entity)
+
+	return hasPermission && isEnabled
+}
+
 func buildAction(actionId string, actionBinding *executor.ActionBinding, user *acl.AuthenticatedUser) *pb.Action {
 	action := actionBinding.Action
 
 	btn := pb.Action{
 		Id:           actionId,
-		Title:        sv.ReplaceEntityVars(actionBinding.EntityPrefix, action.Title),
+		Title:        entities.ParseTemplateWith(action.Title, actionBinding.Entity),
 		Icon:         action.Icon,
-		CanExec:      acl.IsAllowedExec(cfg, user, action),
+		CanExec:      isAllowedExec(cfg, user, action, actionBinding),
 		PopupOnStart: action.PopupOnStart,
 		Order:        int32(actionBinding.ConfigOrder),
 	}
@@ -75,14 +83,12 @@ func buildChoices(arg config.ActionArgument) []*pb.ActionArgumentChoice {
 func buildChoicesEntity(firstChoice config.ActionArgumentChoice, entityTitle string) []*pb.ActionArgumentChoice {
 	ret := []*pb.ActionArgumentChoice{}
 
-	entityCount := sv.GetEntityCount(entityTitle)
+	entList := entities.GetEntities(entityTitle)
 
-	for i := 0; i < entityCount; i++ {
-		prefix := sv.GetEntityPrefix(entityTitle, i)
-
+	for _, ent := range entList {
 		ret = append(ret, &pb.ActionArgumentChoice{
-			Value: sv.ReplaceEntityVars(prefix, firstChoice.Value),
-			Title: sv.ReplaceEntityVars(prefix, firstChoice.Title),
+			Value: entities.ParseTemplateWith(firstChoice.Value, ent),
+			Title: entities.ParseTemplateWithArgs(firstChoice.Title, ent, nil),
 		})
 	}
 

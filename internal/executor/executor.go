@@ -3,7 +3,7 @@ package executor
 import (
 	acl "github.com/OliveTin/OliveTin/internal/acl"
 	config "github.com/OliveTin/OliveTin/internal/config"
-	sv "github.com/OliveTin/OliveTin/internal/stringvariables"
+	"github.com/OliveTin/OliveTin/internal/entities"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 
@@ -29,9 +29,9 @@ var (
 )
 
 type ActionBinding struct {
-	Action       *config.Action
-	EntityPrefix string
-	ConfigOrder  int
+	Action      *config.Action
+	Entity      interface{}
+	ConfigOrder int
 }
 
 // Executor represents a helper class for executing commands. It's main method
@@ -62,7 +62,7 @@ type ExecutionRequest struct {
 	Tags              []string
 	Cfg               *config.Config
 	AuthenticatedUser *acl.AuthenticatedUser
-	EntityPrefix      string
+	Entity            interface{}
 
 	logEntry           *InternalLogEntry
 	finalParsedCommand string
@@ -125,7 +125,7 @@ func DefaultExecutor(cfg *config.Config) *Executor {
 }
 
 type listener interface {
-	OnExecutionStarted(actionTitle string)
+	OnExecutionStarted(logEntry *InternalLogEntry)
 	OnExecutionFinished(logEntry *InternalLogEntry)
 	OnOutputChunk(o []byte, executionTrackingId string)
 	OnActionMapRebuilt()
@@ -223,6 +223,11 @@ func (e *Executor) ExecRequest(req *ExecutionRequest) (*sync.WaitGroup, string) 
 }
 
 func (e *Executor) execChain(req *ExecutionRequest) {
+	// Notify isn't a step, because we want to notify all listeners, irrespective
+	// of how many steps were actually executed.
+
+	notifyListenersStarted(req)
+
 	for _, step := range e.chainOfCommand {
 		if !step(req) {
 			break
@@ -231,9 +236,7 @@ func (e *Executor) execChain(req *ExecutionRequest) {
 
 	req.logEntry.ExecutionFinished = true
 
-	// This isn't a step, because we want to notify all listeners, irrespective
-	// of how many steps were actually executed.
-	notifyListeners(req)
+	notifyListenersFinished(req)
 }
 
 func getConcurrentCount(req *ExecutionRequest) int {
@@ -345,7 +348,7 @@ func stepParseArgs(req *ExecutionRequest) bool {
 	req.Arguments["ot_executionTrackingId"] = req.TrackingID
 	req.Arguments["ot_username"] = req.AuthenticatedUser.Username
 
-	req.finalParsedCommand, err = parseActionArguments(req.Action.Shell, req.Arguments, req.Action, req.logEntry.ActionTitle, req.EntityPrefix)
+	req.finalParsedCommand, err = parseActionArguments(req.Action.Shell, req.Arguments, req.Action, req.logEntry.ActionTitle, req.Entity)
 
 	if err != nil {
 		req.logEntry.Output = err.Error()
@@ -380,7 +383,7 @@ func stepRequestAction(req *ExecutionRequest) bool {
 
 	metricActionsRequested.Inc()
 
-	req.logEntry.ActionTitle = sv.ReplaceEntityVars(req.EntityPrefix, req.Action.Title)
+	req.logEntry.ActionTitle = entities.ParseTemplateWithArgs(req.Action.Title, req.Entity, req.Arguments)
 	req.logEntry.ActionIcon = req.Action.Icon
 	req.logEntry.ActionId = req.Action.ID
 	req.logEntry.Tags = req.Tags
@@ -425,9 +428,15 @@ func stepLogFinish(req *ExecutionRequest) bool {
 	return true
 }
 
-func notifyListeners(req *ExecutionRequest) {
+func notifyListenersFinished(req *ExecutionRequest) {
 	for _, listener := range req.executor.listeners {
 		listener.OnExecutionFinished(req.logEntry)
+	}
+}
+
+func notifyListenersStarted(req *ExecutionRequest) {
+	for _, listener := range req.executor.listeners {
+		listener.OnExecutionStarted(req.logEntry)
 	}
 }
 
@@ -530,7 +539,7 @@ func stepExecAfter(req *ExecutionRequest) bool {
 		"ot_username":            req.AuthenticatedUser.Username,
 	}
 
-	finalParsedCommand, _, err := parseCommandForReplacements(req.Action.ShellAfterCompleted, args)
+	finalParsedCommand, _, err := parseCommandForReplacements(req.Action.ShellAfterCompleted, args, req.Entity)
 
 	if err != nil {
 		msg := "Could not prepare shellAfterCompleted command: " + err.Error() + "\n"

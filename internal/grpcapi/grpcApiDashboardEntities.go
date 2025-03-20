@@ -3,44 +3,42 @@ package grpcapi
 import (
 	pb "github.com/OliveTin/OliveTin/gen/grpc"
 	config "github.com/OliveTin/OliveTin/internal/config"
-	sv "github.com/OliveTin/OliveTin/internal/stringvariables"
+	"github.com/OliveTin/OliveTin/internal/entities"
 )
 
 func buildEntityFieldsets(entityTitle string, tpl *config.DashboardComponent) []*pb.DashboardComponent {
 	ret := make([]*pb.DashboardComponent, 0)
 
-	entityCount := sv.GetEntityCount(entityTitle)
+	entities := entities.GetEntities(entityTitle)
 
-	for i := 0; i < entityCount; i++ {
-		ret = append(ret, buildEntityFieldset(tpl, entityTitle, i))
+	for _, ent := range entities {
+		ret = append(ret, buildEntityFieldset(tpl, ent))
 	}
 
 	return ret
 }
 
-func buildEntityFieldset(tpl *config.DashboardComponent, entityTitle string, entityIndex int) *pb.DashboardComponent {
-	prefix := sv.GetEntityPrefix(entityTitle, entityIndex)
-
+func buildEntityFieldset(tpl *config.DashboardComponent, ent interface{}) *pb.DashboardComponent {
 	return &pb.DashboardComponent{
-		Title:    sv.ReplaceEntityVars(prefix, tpl.Title),
+		Title:    entities.ParseTemplateWith(tpl.Title, ent),
 		Type:     "fieldset",
-		Contents: buildEntityFieldsetContents(tpl.Contents, prefix),
-		CssClass: sv.ReplaceEntityVars(prefix, tpl.CssClass),
+		Contents: buildEntityFieldsetContents(tpl.Contents, ent),
+		CssClass: "foobar",
 	}
 }
 
-func buildEntityFieldsetContents(contents []config.DashboardComponent, prefix string) []*pb.DashboardComponent {
+func buildEntityFieldsetContents(contents []config.DashboardComponent, ent interface{}) []*pb.DashboardComponent {
 	ret := make([]*pb.DashboardComponent, 0)
 
 	for _, subitem := range contents {
 		clone := &pb.DashboardComponent{}
-		clone.CssClass = sv.ReplaceEntityVars(prefix, subitem.CssClass)
+		clone.CssClass = "blat"
 
 		if subitem.Type == "" || subitem.Type == "link" {
 			clone.Type = "link"
-			clone.Title = sv.ReplaceEntityVars(prefix, subitem.Title)
+			clone.Title = entities.ParseTemplateWith(subitem.Title, ent)
 		} else {
-			clone.Title = sv.ReplaceEntityVars(prefix, subitem.Title)
+			clone.Title = entities.ParseTemplateWith(subitem.Title, ent)
 			clone.Type = subitem.Type
 		}
 

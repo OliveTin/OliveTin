@@ -3,12 +3,16 @@ package installationinfo
 import (
 	"fmt"
 	config "github.com/OliveTin/OliveTin/internal/config"
-	sv "github.com/OliveTin/OliveTin/internal/stringvariables"
 	"gopkg.in/yaml.v3"
 	"time"
 )
 
-var Config *config.Config
+var (
+	Config *config.Config
+
+	WebuiDirectory  string
+	ThemesDirectory string
+)
 
 type sosReportConfig struct {
 	CountOfActions                  int
@@ -21,8 +25,6 @@ type sosReportConfig struct {
 	Timezone                        string
 	TimeNow                         string
 	ConfigDirectory                 string
-	WebuiDirectory                  string
-	ThemesDirectory                 string
 }
 
 func configToSosreport(cfg *config.Config) *sosReportConfig {
@@ -37,8 +39,6 @@ func configToSosreport(cfg *config.Config) *sosReportConfig {
 		Timezone:                        time.Now().Location().String(),
 		TimeNow:                         time.Now().String(),
 		ConfigDirectory:                 cfg.GetDir(),
-		WebuiDirectory:                  sv.Get("internal.webuidir"),
-		ThemesDirectory:                 sv.Get("internal.themesdir"),
 	}
 }
 

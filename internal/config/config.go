@@ -27,6 +27,7 @@ type Action struct {
 	Arguments              []ActionArgument
 	PopupOnStart           string
 	SaveLogs               SaveLogsConfig
+	Enabled                string
 }
 
 // ActionArgument objects appear on Actions.

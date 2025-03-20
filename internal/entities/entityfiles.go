@@ -1,4 +1,4 @@
-package entityfiles
+package entities
 
 import (
 	"bytes"
@@ -6,7 +6,6 @@ import (
 	"fmt"
 	config "github.com/OliveTin/OliveTin/internal/config"
 	"github.com/OliveTin/OliveTin/internal/filehelper"
-	sv "github.com/OliveTin/OliveTin/internal/stringvariables"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 	"os"
@@ -120,43 +119,13 @@ func loadEntityFileYaml(filename string, entityname string) {
 func updateSvFromFile(entityname string, data []map[string]interface{}) {
 	log.Debugf("updateSvFromFile: %+v", data)
 
-	count := len(data)
-
-	sv.RemoveKeysThatStartWith("entities." + entityname)
-
-	sv.SetEntityCount(entityname, count)
+	ClearEntities(entityname)
 
 	for i, mapp := range data {
-		prefix := "entities." + entityname + "." + fmt.Sprintf("%v", i)
-
-		serializeValueToSv(prefix, mapp)
+		AddEntity(entityname, fmt.Sprintf("%d", i), mapp)
 	}
 
 	for _, l := range listeners {
 		l()
-	}
-}
-
-func serializeValueToSv(prefix string, value interface{}) {
-	if m, ok := value.(map[string]interface{}); ok { // if value is a map we need to flatten it
-		serializeMapToSv(prefix, m)
-	} else if s, ok := value.([]interface{}); ok { // if value is a slice we need to flatten it
-		serializeSliceToSv(prefix, s)
-	} else {
-		sv.Set(prefix, fmt.Sprintf("%v", value))
-	}
-}
-
-func serializeMapToSv(prefix string, m map[string]interface{}) {
-	for k, v := range m {
-		serializeValueToSv(prefix+"."+k, v)
-	}
-}
-
-func serializeSliceToSv(prefix string, s []interface{}) {
-	sv.Set(prefix+".count", fmt.Sprintf("%v", len(s)))
-
-	for i, v := range s {
-		serializeValueToSv(prefix+"."+fmt.Sprintf("%v", i), v)
 	}
 }

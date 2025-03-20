@@ -13,6 +13,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"errors"
+	"fmt"
 	"net"
 	"sort"
 
@@ -20,7 +21,6 @@ import (
 	config "github.com/OliveTin/OliveTin/internal/config"
 	executor "github.com/OliveTin/OliveTin/internal/executor"
 	installationinfo "github.com/OliveTin/OliveTin/internal/installationinfo"
-	sv "github.com/OliveTin/OliveTin/internal/stringvariables"
 )
 
 var (
@@ -81,7 +81,7 @@ func (api *oliveTinAPI) StartAction(ctx ctx.Context, req *pb.StartActionRequest)
 
 	execReq := executor.ExecutionRequest{
 		Action:            pair.Action,
-		EntityPrefix:      pair.EntityPrefix,
+		Entity:            pair.Entity,
 		TrackingID:        req.UniqueTrackingId,
 		Arguments:         args,
 		AuthenticatedUser: authenticatedUser,
@@ -400,7 +400,7 @@ func (api *oliveTinAPI) DumpVars(ctx ctx.Context, req *pb.DumpVarsRequest) (*pb.
 	}
 
 	res.Alert = "Dumping variables has been enabled in the configuration. Please set InsecureAllowDumpVars = false again after you don't need it anymore"
-	res.Contents = sv.GetAll()
+	//	res.Contents = sv.GetAll()
 
 	return res, nil
 }
@@ -420,7 +420,7 @@ func (api *oliveTinAPI) DumpPublicIdActionMap(ctx ctx.Context, req *pb.DumpPubli
 	for k, v := range api.executor.MapActionIdToBinding {
 		res.Contents[k] = &pb.ActionEntityPair{
 			ActionTitle:  v.Action.Title,
-			EntityPrefix: v.EntityPrefix,
+			EntityPrefix: fmt.Sprintf("%v", v.Entity),
 		}
 	}
 
