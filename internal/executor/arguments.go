@@ -2,7 +2,7 @@ package executor
 
 import (
 	config "github.com/OliveTin/OliveTin/internal/config"
-	sv "github.com/OliveTin/OliveTin/internal/stringvariables"
+	"github.com/OliveTin/OliveTin/internal/entities"
 	log "github.com/sirupsen/logrus"
 
 	"errors"
@@ -24,8 +24,8 @@ var (
 	}
 )
 
-func parseCommandForReplacements(rawShellCommand string, values map[string]string) (string, map[string]string, error) {
-	r := regexp.MustCompile("{{ *?([a-zA-Z0-9_]+?) *?}}")
+func parseCommandForReplacements(rawShellCommand string, values map[string]string, entity interface{}) (string, map[string]string, error) {
+	r := regexp.MustCompile("{{ *?\\.Arguments\\.([a-zA-Z0-9_]+?) *?}}")
 	foundArgumentNames := r.FindAllStringSubmatch(rawShellCommand, -1)
 
 	usedArguments := make(map[string]string)
@@ -39,20 +39,20 @@ func parseCommandForReplacements(rawShellCommand string, values map[string]strin
 		}
 
 		usedArguments[argName] = argValue
-
-		rawShellCommand = strings.ReplaceAll(rawShellCommand, match[0], argValue)
 	}
+
+	rawShellCommand = entities.ParseTemplateWithArgs(rawShellCommand, entity, values)
 
 	return rawShellCommand, usedArguments, nil
 }
 
-func parseActionArguments(rawShellCommand string, values map[string]string, action *config.Action, actionTitle string, entityPrefix string) (string, error) {
+func parseActionArguments(rawShellCommand string, values map[string]string, action *config.Action, actionTitle string, entity interface{}) (string, error) {
 	log.WithFields(log.Fields{
 		"actionTitle": actionTitle,
 		"cmd":         rawShellCommand,
 	}).Infof("Action parse args - Before")
 
-	rawShellCommand, usedArgs, err := parseCommandForReplacements(rawShellCommand, values)
+	rawShellCommand, usedArgs, err := parseCommandForReplacements(rawShellCommand, values, entity)
 
 	if err != nil {
 		return "", err
@@ -71,7 +71,7 @@ func parseActionArguments(rawShellCommand string, values map[string]string, acti
 		}).Debugf("Arg assigned")
 	}
 
-	rawShellCommand = sv.ReplaceEntityVars(entityPrefix, rawShellCommand)
+	rawShellCommand = entities.ParseTemplateWith(rawShellCommand, entity)
 
 	log.WithFields(log.Fields{
 		"actionTitle": actionTitle,
@@ -124,8 +124,8 @@ func typecheckChoice(value string, arg *config.ActionArgument) error {
 func typecheckChoiceEntity(value string, arg *config.ActionArgument) error {
 	templateChoice := arg.Choices[0].Value
 
-	for _, ent := range sv.GetEntities(arg.Entity) {
-		choice := sv.ReplaceEntityVars(ent, templateChoice)
+	for _, ent := range entities.GetEntities(arg.Entity) {
+		choice := entities.ParseTemplateWith(templateChoice, ent)
 
 		if value == choice {
 			return nil

@@ -4,9 +4,9 @@ import (
 	"crypto/sha256"
 	"fmt"
 	config "github.com/OliveTin/OliveTin/internal/config"
-	sv "github.com/OliveTin/OliveTin/internal/stringvariables"
+	"github.com/OliveTin/OliveTin/internal/entities"
+	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
-	"strconv"
 )
 
 func (e *Executor) FindActionBindingByID(id string) *config.Action {
@@ -46,29 +46,25 @@ func registerAction(e *Executor, configOrder int, action *config.Action) {
 	actionId := hashActionToID(action, "")
 
 	e.MapActionIdToBinding[actionId] = &ActionBinding{
-		Action:       action,
-		EntityPrefix: "noent",
-		ConfigOrder:  configOrder,
+		Action:      action,
+		Entity:      nil,
+		ConfigOrder: configOrder,
 	}
 }
 
 func registerActionsFromEntities(e *Executor, configOrder int, entityTitle string, tpl *config.Action) {
-	entityCount, _ := strconv.Atoi(sv.Get("entities." + entityTitle + ".count"))
-
-	for i := 0; i < entityCount; i++ {
-		registerActionFromEntity(e, configOrder, tpl, entityTitle, i)
+	for _, ent := range entities.GetEntities(entityTitle) {
+		registerActionFromEntity(e, configOrder, tpl, ent)
 	}
 }
 
-func registerActionFromEntity(e *Executor, configOrder int, tpl *config.Action, entityTitle string, entityIndex int) {
-	prefix := sv.GetEntityPrefix(entityTitle, entityIndex)
-
-	virtualActionId := hashActionToID(tpl, prefix)
+func registerActionFromEntity(e *Executor, configOrder int, tpl *config.Action, entity interface{}) {
+	virtualActionId := hashActionToID(tpl, "ent")
 
 	e.MapActionIdToBinding[virtualActionId] = &ActionBinding{
-		Action:       tpl,
-		EntityPrefix: prefix,
-		ConfigOrder:  configOrder,
+		Action:      tpl,
+		Entity:      entity,
+		ConfigOrder: configOrder,
 	}
 }
 
@@ -82,7 +78,7 @@ func hashActionToID(action *config.Action, entityPrefix string) string {
 	if entityPrefix == "" {
 		h.Write([]byte(action.Title))
 	} else {
-		h.Write([]byte(action.ID + "." + entityPrefix))
+		h.Write([]byte(uuid.NewString()))
 	}
 
 	return fmt.Sprintf("%x", h.Sum(nil))

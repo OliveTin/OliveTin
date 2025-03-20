@@ -20,7 +20,7 @@ func TestSanitizeUnimplemented(t *testing.T) {
 func TestArgumentValueNullable(t *testing.T) {
 	a1 := config.Action{
 		Title: "Release the hounds",
-		Shell: "echo 'Releasing {{ count }} hounds'",
+		Shell: "echo 'Releasing {{ .Arguments.count }} hounds'",
 		Arguments: []config.ActionArgument{
 			{
 				Name: "count",
@@ -48,7 +48,7 @@ func TestArgumentValueNullable(t *testing.T) {
 func TestArgumentNameNumbers(t *testing.T) {
 	a1 := config.Action{
 		Title: "Do some tickles",
-		Shell: "echo 'Tickling {{ person1name }}'",
+		Shell: "echo 'Tickling {{ .Arguments.person1name }}'",
 		Arguments: []config.ActionArgument{
 			{
 				Name: "person1name",
@@ -70,7 +70,7 @@ func TestArgumentNameNumbers(t *testing.T) {
 func TestArgumentNotProvided(t *testing.T) {
 	a1 := config.Action{
 		Title: "Do some tickles",
-		Shell: "echo 'Tickling {{ personName }}'",
+		Shell: "echo 'Tickling {{ .Arguments.personName }}'",
 		Arguments: []config.ActionArgument{
 			{
 				Name: "person",

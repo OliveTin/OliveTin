@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-type runtimeInfo struct {
+type RuntimeInfo struct {
 	OS                   string
 	OSReleasePrettyName  string
 	Arch                 string
@@ -21,9 +21,11 @@ type runtimeInfo struct {
 	SshFoundKey          string
 	SshFoundConfig       string
 	AvailableVersion     string
+	WebuiDirectory       string
+	ThemesDirectory      string
 }
 
-var Runtime = &runtimeInfo{
+var Runtime = &RuntimeInfo{
 	OS:                  runtime.GOOS,
 	Arch:                runtime.GOARCH,
 	InContainer:         isInContainer(),
