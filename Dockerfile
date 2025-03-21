@@ -1,7 +1,13 @@
+FROM --platform=linux/amd64 registry.fedoraproject.org/fedora-minimal:40-x86_64 AS olivetin-tmputils
+
+RUN microdnf -y install dnf-plugins-core && \
+	dnf-3 config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo && \
+	microdnf install -y docker-ce-cli docker-compose-plugin && microdnf clean all
+
 FROM --platform=linux/amd64 registry.fedoraproject.org/fedora-minimal:40-x86_64
 
 LABEL org.opencontainers.image.source https://github.com/OliveTin/OliveTin
-LABEL org.opencontainers.image.title=OliveTin
+LABEL org.opencontainers.image.title OliveTin
 
 RUN mkdir -p /config /config/entities/ /var/www/olivetin \
     && \
@@ -12,8 +18,15 @@ RUN mkdir -p /config /config/entities/ /var/www/olivetin \
 		apprise \
 		jq \
 		git \
-		docker \
 	&& microdnf clean all
+
+COPY --from=olivetin-tmputils \
+	/usr/bin/docker \
+	/usr/bin/docker
+
+COPY --from=olivetin-tmputils \
+	/usr/libexec/docker/cli-plugins/docker-compose \
+	/usr/libexec/docker/cli-plugins/docker-compose
 
 RUN useradd --system --create-home olivetin -u 1000
 
