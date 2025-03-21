@@ -10,7 +10,7 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"net/http"
 
-	gw "github.com/OliveTin/OliveTin/gen/grpc"
+	apiv1 "github.com/OliveTin/OliveTin/gen/grpc/olivetin/api/v1"
 
 	config "github.com/OliveTin/OliveTin/internal/config"
 	cors "github.com/OliveTin/OliveTin/internal/cors"
@@ -181,7 +181,7 @@ func newMux() *runtime.ServeMux {
 
 	opts := []grpc.DialOption{grpc.WithInsecure()}
 
-	err := gw.RegisterOliveTinApiServiceHandlerFromEndpoint(ctx, mux, cfg.ListenAddressGrpcActions, opts)
+	err := apiv1.RegisterOliveTinApiServiceHandlerFromEndpoint(ctx, mux, cfg.ListenAddressGrpcActions, opts)
 
 	if err != nil {
 		log.Panicf("Could not register REST API Handler %v", err)

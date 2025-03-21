@@ -1,14 +1,14 @@
 package grpcapi
 
 import (
-	pb "github.com/OliveTin/OliveTin/gen/grpc"
+	apiv1 "github.com/OliveTin/OliveTin/gen/grpc/olivetin/api/v1"
 	config "github.com/OliveTin/OliveTin/internal/config"
 	"golang.org/x/exp/slices"
 )
 
-func dashboardCfgToPb(res *pb.GetDashboardComponentsResponse, dashboards []*config.DashboardComponent, cfg *config.Config) {
+func dashboardCfgToPb(res *apiv1.GetDashboardComponentsResponse, dashboards []*config.DashboardComponent, cfg *config.Config) {
 	for _, dashboard := range dashboards {
-		res.Dashboards = append(res.Dashboards, &pb.DashboardComponent{
+		res.Dashboards = append(res.Dashboards, &apiv1.DashboardComponent{
 			Type:     "dashboard",
 			Title:    dashboard.Title,
 			Contents: getDashboardComponentContents(dashboard, cfg),
@@ -16,8 +16,8 @@ func dashboardCfgToPb(res *pb.GetDashboardComponentsResponse, dashboards []*conf
 	}
 }
 
-func getDashboardComponentContents(dashboard *config.DashboardComponent, cfg *config.Config) []*pb.DashboardComponent {
-	ret := make([]*pb.DashboardComponent, 0)
+func getDashboardComponentContents(dashboard *config.DashboardComponent, cfg *config.Config) []*apiv1.DashboardComponent {
+	ret := make([]*apiv1.DashboardComponent, 0)
 
 	for _, subitem := range dashboard.Contents {
 		if subitem.Type == "fieldset" && subitem.Entity != "" {
@@ -25,7 +25,7 @@ func getDashboardComponentContents(dashboard *config.DashboardComponent, cfg *co
 			continue
 		}
 
-		newitem := &pb.DashboardComponent{
+		newitem := &apiv1.DashboardComponent{
 			Title:    subitem.Title,
 			Type:     getDashboardComponentType(&subitem),
 			Contents: getDashboardComponentContents(&subitem, cfg),

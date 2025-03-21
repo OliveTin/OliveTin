@@ -2,8 +2,8 @@ import { describe, it, before, after } from 'mocha'
 import { expect } from 'chai'
 import { By, until, Condition } from 'selenium-webdriver'
 //import * as waitOn from 'wait-on'
-import { 
-  getRootAndWait, 
+import {
+  getRootAndWait,
   getActionButtons,
   takeScreenshotOnFailure,
 } from '../lib/elements.js'
@@ -96,6 +96,7 @@ describe('config: general', function () {
     expect(await title.getAttribute('innerText')).to.be.equal('?')
 
     const dialogErr = await webdriver.findElement(By.id('big-error'))
+	console.log("big error is: " + dialogErr.innerHTML)
     expect(dialogErr).to.not.be.null
     expect(await dialogErr.isDisplayed()).to.be.false
   })

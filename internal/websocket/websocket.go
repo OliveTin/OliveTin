@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"sync"
 
-	pb "github.com/OliveTin/OliveTin/gen/grpc"
+	apiv1 "github.com/OliveTin/OliveTin/gen/grpc/olivetin/api/v1"
 	"github.com/OliveTin/OliveTin/internal/executor"
 	ws "github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"
@@ -36,17 +36,17 @@ var ExecutionListener WebsocketExecutionListener
 type WebsocketExecutionListener struct{}
 
 func (WebsocketExecutionListener) OnExecutionStarted(ile *executor.InternalLogEntry) {
-	broadcast(&pb.EventExecutionStarted{
+	broadcast(&apiv1.EventExecutionStarted{
 		LogEntry: internalLogEntryToPb(ile),
 	})
 }
 
 func OnEntityChanged() {
-	broadcast(&pb.EventEntityChanged{})
+	broadcast(&apiv1.EventEntityChanged{})
 }
 
 func (WebsocketExecutionListener) OnActionMapRebuilt() {
-	broadcast(&pb.EventConfigChanged{})
+	broadcast(&apiv1.EventConfigChanged{})
 }
 
 /*
@@ -69,7 +69,7 @@ func checkOriginPermissive(r *http.Request) bool {
 func (WebsocketExecutionListener) OnOutputChunk(chunk []byte, executionTrackingId string) {
 	log.Tracef("outputchunk: %s", string(chunk))
 
-	oc := &pb.EventOutputChunk{
+	oc := &apiv1.EventOutputChunk{
 		Output:              string(chunk),
 		ExecutionTrackingId: executionTrackingId,
 	}
@@ -78,7 +78,7 @@ func (WebsocketExecutionListener) OnOutputChunk(chunk []byte, executionTrackingI
 }
 
 func (WebsocketExecutionListener) OnExecutionFinished(logEntry *executor.InternalLogEntry) {
-	evt := &pb.EventExecutionFinished{
+	evt := &apiv1.EventExecutionFinished{
 		LogEntry: internalLogEntryToPb(logEntry),
 	}
 
@@ -161,8 +161,8 @@ func HandleWebsocket(w http.ResponseWriter, r *http.Request) bool {
 	return true
 }
 
-func internalLogEntryToPb(logEntry *executor.InternalLogEntry) *pb.LogEntry {
-	return &pb.LogEntry{
+func internalLogEntryToPb(logEntry *executor.InternalLogEntry) *apiv1.LogEntry {
+	return &apiv1.LogEntry{
 		ActionTitle:         logEntry.ActionTitle,
 		ActionIcon:          logEntry.ActionIcon,
 		ActionId:            logEntry.ActionId,
