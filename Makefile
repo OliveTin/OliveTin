@@ -50,7 +50,7 @@ go-tools:
 	go install "google.golang.org/protobuf/cmd/protoc-gen-go"
 
 grpc: go-tools
-	buf generate
+	$(MAKE) -wC proto
 
 dist: protoc
 

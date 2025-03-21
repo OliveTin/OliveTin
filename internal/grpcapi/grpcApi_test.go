@@ -12,7 +12,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	pb "github.com/OliveTin/OliveTin/gen/grpc"
+	apiv1 "github.com/OliveTin/OliveTin/gen/grpc/olivetin/api/v1"
 	config "github.com/OliveTin/OliveTin/internal/config"
 	"github.com/OliveTin/OliveTin/internal/executor"
 )
@@ -26,7 +26,7 @@ func initServer(cfg *config.Config) *executor.Executor {
 
 	lis = bufconn.Listen(bufSize)
 	s := grpc.NewServer()
-	pb.RegisterOliveTinApiServiceServer(s, newServer(ex))
+	apiv1.RegisterOliveTinApiServiceServer(s, newServer(ex))
 
 	go func() {
 		if err := s.Serve(lis); err != nil {
@@ -41,7 +41,7 @@ func bufDialer(context.Context, string) (net.Conn, error) {
 	return lis.Dial()
 }
 
-func getNewTestServerAndClient(t *testing.T, injectedConfig *config.Config) (*grpc.ClientConn, pb.OliveTinApiServiceClient) {
+func getNewTestServerAndClient(t *testing.T, injectedConfig *config.Config) (*grpc.ClientConn, apiv1.OliveTinApiServiceClient) {
 	cfg = injectedConfig
 
 	ctx := context.Background()
@@ -52,7 +52,7 @@ func getNewTestServerAndClient(t *testing.T, injectedConfig *config.Config) (*gr
 		t.Fatalf("Failed to dial bufnet: %v", err)
 	}
 
-	client := pb.NewOliveTinApiServiceClient(conn)
+	client := apiv1.NewOliveTinApiServiceClient(conn)
 
 	return conn, client
 }
@@ -72,7 +72,7 @@ func TestGetActionsAndStart(t *testing.T) {
 
 	conn, client := getNewTestServerAndClient(t, cfg)
 
-	respGb, err := client.GetDashboardComponents(context.Background(), &pb.GetDashboardComponentsRequest{})
+	respGb, err := client.GetDashboardComponents(context.Background(), &apiv1.GetDashboardComponentsRequest{})
 
 	if err != nil {
 		t.Errorf("GetDashboardComponentsRequest: %v", err)
@@ -84,7 +84,7 @@ func TestGetActionsAndStart(t *testing.T) {
 
 	log.Printf("Response: %+v", respGb)
 
-	respSa, err := client.StartAction(context.Background(), &pb.StartActionRequest{ActionId: "blat"})
+	respSa, err := client.StartAction(context.Background(), &apiv1.StartActionRequest{ActionId: "blat"})
 
 	assert.Nil(t, err, "Empty err after start action")
 	assert.NotNil(t, respSa, "Empty err after start action")

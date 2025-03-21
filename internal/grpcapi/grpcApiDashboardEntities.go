@@ -1,13 +1,13 @@
 package grpcapi
 
 import (
-	pb "github.com/OliveTin/OliveTin/gen/grpc"
+	apiv1 "github.com/OliveTin/OliveTin/gen/grpc/olivetin/api/v1"
 	config "github.com/OliveTin/OliveTin/internal/config"
 	sv "github.com/OliveTin/OliveTin/internal/stringvariables"
 )
 
-func buildEntityFieldsets(entityTitle string, tpl *config.DashboardComponent) []*pb.DashboardComponent {
-	ret := make([]*pb.DashboardComponent, 0)
+func buildEntityFieldsets(entityTitle string, tpl *config.DashboardComponent) []*apiv1.DashboardComponent {
+	ret := make([]*apiv1.DashboardComponent, 0)
 
 	entityCount := sv.GetEntityCount(entityTitle)
 
@@ -18,10 +18,10 @@ func buildEntityFieldsets(entityTitle string, tpl *config.DashboardComponent) []
 	return ret
 }
 
-func buildEntityFieldset(tpl *config.DashboardComponent, entityTitle string, entityIndex int) *pb.DashboardComponent {
+func buildEntityFieldset(tpl *config.DashboardComponent, entityTitle string, entityIndex int) *apiv1.DashboardComponent {
 	prefix := sv.GetEntityPrefix(entityTitle, entityIndex)
 
-	return &pb.DashboardComponent{
+	return &apiv1.DashboardComponent{
 		Title:    sv.ReplaceEntityVars(prefix, tpl.Title),
 		Type:     "fieldset",
 		Contents: buildEntityFieldsetContents(tpl.Contents, prefix),
@@ -29,11 +29,11 @@ func buildEntityFieldset(tpl *config.DashboardComponent, entityTitle string, ent
 	}
 }
 
-func buildEntityFieldsetContents(contents []config.DashboardComponent, prefix string) []*pb.DashboardComponent {
-	ret := make([]*pb.DashboardComponent, 0)
+func buildEntityFieldsetContents(contents []config.DashboardComponent, prefix string) []*apiv1.DashboardComponent {
+	ret := make([]*apiv1.DashboardComponent, 0)
 
 	for _, subitem := range contents {
-		clone := &pb.DashboardComponent{}
+		clone := &apiv1.DashboardComponent{}
 		clone.CssClass = sv.ReplaceEntityVars(prefix, subitem.CssClass)
 
 		if subitem.Type == "" || subitem.Type == "link" {
