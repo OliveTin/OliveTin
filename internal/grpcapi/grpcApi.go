@@ -3,7 +3,7 @@ package grpcapi
 import (
 	ctx "context"
 
-	pb "github.com/OliveTin/OliveTin/gen/grpc"
+	apiv1 "github.com/OliveTin/OliveTin/gen/grpc/olivetin/api/v1"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/genproto/googleapis/api/httpbody"
@@ -28,13 +28,13 @@ var (
 
 type oliveTinAPI struct {
 	// Uncomment this if you want to allow undefined methods during dev.
-	//	pb.UnimplementedOliveTinApiServiceServer
+	//	apiv1.UnimplementedOliveTinApiServiceServer
 
 	executor *executor.Executor
 }
 
-func (api *oliveTinAPI) KillAction(ctx ctx.Context, req *pb.KillActionRequest) (*pb.KillActionResponse, error) {
-	ret := &pb.KillActionResponse{
+func (api *oliveTinAPI) KillAction(ctx ctx.Context, req *apiv1.KillActionRequest) (*apiv1.KillActionResponse, error) {
+	ret := &apiv1.KillActionResponse{
 		ExecutionTrackingId: req.ExecutionTrackingId,
 	}
 
@@ -61,7 +61,7 @@ func (api *oliveTinAPI) KillAction(ctx ctx.Context, req *pb.KillActionRequest) (
 	return ret, nil
 }
 
-func (api *oliveTinAPI) StartAction(ctx ctx.Context, req *pb.StartActionRequest) (*pb.StartActionResponse, error) {
+func (api *oliveTinAPI) StartAction(ctx ctx.Context, req *apiv1.StartActionRequest) (*apiv1.StartActionResponse, error) {
 	args := make(map[string]string)
 
 	for _, arg := range req.Arguments {
@@ -89,12 +89,12 @@ func (api *oliveTinAPI) StartAction(ctx ctx.Context, req *pb.StartActionRequest)
 
 	api.executor.ExecRequest(&execReq)
 
-	return &pb.StartActionResponse{
+	return &apiv1.StartActionResponse{
 		ExecutionTrackingId: execReq.TrackingID,
 	}, nil
 }
 
-func (api *oliveTinAPI) PasswordHash(ctx ctx.Context, req *pb.PasswordHashRequest) (*httpbody.HttpBody, error) {
+func (api *oliveTinAPI) PasswordHash(ctx ctx.Context, req *apiv1.PasswordHashRequest) (*httpbody.HttpBody, error) {
 	hash, err := createHash(req.Password)
 
 	if err != nil {
@@ -109,7 +109,7 @@ func (api *oliveTinAPI) PasswordHash(ctx ctx.Context, req *pb.PasswordHashReques
 	return ret, nil
 }
 
-func (api *oliveTinAPI) LocalUserLogin(ctx ctx.Context, req *pb.LocalUserLoginRequest) (*pb.LocalUserLoginResponse, error) {
+func (api *oliveTinAPI) LocalUserLogin(ctx ctx.Context, req *apiv1.LocalUserLoginRequest) (*apiv1.LocalUserLoginResponse, error) {
 	match := checkUserPassword(cfg, req.Username, req.Password)
 
 	if match {
@@ -124,12 +124,12 @@ func (api *oliveTinAPI) LocalUserLogin(ctx ctx.Context, req *pb.LocalUserLoginRe
 		}).Warn("LocalUserLogin: User login failed.")
 	}
 
-	return &pb.LocalUserLoginResponse{
+	return &apiv1.LocalUserLoginResponse{
 		Success: match,
 	}, nil
 }
 
-func (api *oliveTinAPI) StartActionAndWait(ctx ctx.Context, req *pb.StartActionAndWaitRequest) (*pb.StartActionAndWaitResponse, error) {
+func (api *oliveTinAPI) StartActionAndWait(ctx ctx.Context, req *apiv1.StartActionAndWaitRequest) (*apiv1.StartActionAndWaitResponse, error) {
 	args := make(map[string]string)
 
 	for _, arg := range req.Arguments {
@@ -150,7 +150,7 @@ func (api *oliveTinAPI) StartActionAndWait(ctx ctx.Context, req *pb.StartActionA
 	internalLogEntry, ok := api.executor.GetLog(execReq.TrackingID)
 
 	if ok {
-		return &pb.StartActionAndWaitResponse{
+		return &apiv1.StartActionAndWaitResponse{
 			LogEntry: internalLogEntryToPb(internalLogEntry),
 		}, nil
 	} else {
@@ -158,7 +158,7 @@ func (api *oliveTinAPI) StartActionAndWait(ctx ctx.Context, req *pb.StartActionA
 	}
 }
 
-func (api *oliveTinAPI) StartActionByGet(ctx ctx.Context, req *pb.StartActionByGetRequest) (*pb.StartActionByGetResponse, error) {
+func (api *oliveTinAPI) StartActionByGet(ctx ctx.Context, req *apiv1.StartActionByGetRequest) (*apiv1.StartActionByGetResponse, error) {
 	args := make(map[string]string)
 
 	execReq := executor.ExecutionRequest{
@@ -171,12 +171,12 @@ func (api *oliveTinAPI) StartActionByGet(ctx ctx.Context, req *pb.StartActionByG
 
 	_, uniqueTrackingId := api.executor.ExecRequest(&execReq)
 
-	return &pb.StartActionByGetResponse{
+	return &apiv1.StartActionByGetResponse{
 		ExecutionTrackingId: uniqueTrackingId,
 	}, nil
 }
 
-func (api *oliveTinAPI) StartActionByGetAndWait(ctx ctx.Context, req *pb.StartActionByGetAndWaitRequest) (*pb.StartActionByGetAndWaitResponse, error) {
+func (api *oliveTinAPI) StartActionByGetAndWait(ctx ctx.Context, req *apiv1.StartActionByGetAndWaitRequest) (*apiv1.StartActionByGetAndWaitResponse, error) {
 	args := make(map[string]string)
 
 	execReq := executor.ExecutionRequest{
@@ -193,7 +193,7 @@ func (api *oliveTinAPI) StartActionByGetAndWait(ctx ctx.Context, req *pb.StartAc
 	internalLogEntry, ok := api.executor.GetLog(execReq.TrackingID)
 
 	if ok {
-		return &pb.StartActionByGetAndWaitResponse{
+		return &apiv1.StartActionByGetAndWaitResponse{
 			LogEntry: internalLogEntryToPb(internalLogEntry),
 		}, nil
 	} else {
@@ -201,8 +201,8 @@ func (api *oliveTinAPI) StartActionByGetAndWait(ctx ctx.Context, req *pb.StartAc
 	}
 }
 
-func internalLogEntryToPb(logEntry *executor.InternalLogEntry) *pb.LogEntry {
-	return &pb.LogEntry{
+func internalLogEntryToPb(logEntry *executor.InternalLogEntry) *apiv1.LogEntry {
+	return &apiv1.LogEntry{
 		ActionTitle:         logEntry.ActionTitle,
 		ActionIcon:          logEntry.ActionIcon,
 		ActionId:            logEntry.ActionId,
@@ -246,8 +246,8 @@ func getMostRecentExecutionStatusById(api *oliveTinAPI, actionId string) *execut
 	return ile
 }
 
-func (api *oliveTinAPI) ExecutionStatus(ctx ctx.Context, req *pb.ExecutionStatusRequest) (*pb.ExecutionStatusResponse, error) {
-	res := &pb.ExecutionStatusResponse{}
+func (api *oliveTinAPI) ExecutionStatus(ctx ctx.Context, req *apiv1.ExecutionStatusRequest) (*apiv1.ExecutionStatusResponse, error) {
+	res := &apiv1.ExecutionStatusResponse{}
 
 	var ile *executor.InternalLogEntry
 
@@ -268,7 +268,7 @@ func (api *oliveTinAPI) ExecutionStatus(ctx ctx.Context, req *pb.ExecutionStatus
 }
 
 /**
-func (api *oliveTinAPI) WatchExecution(req *pb.WatchExecutionRequest, srv pb.OliveTinApi_WatchExecutionServer) error {
+func (api *oliveTinAPI) WatchExecution(req *apiv1.WatchExecutionRequest, srv apiv1.OliveTinApi_WatchExecutionServer) error {
 	log.Infof("Watch")
 
 	if logEntry, ok := api.executor.Logs[req.ExecutionUuid]; !ok {
@@ -284,7 +284,7 @@ func (api *oliveTinAPI) WatchExecution(req *pb.WatchExecutionRequest, srv pb.Oli
 
 				log.Infof("%v %v", red, err)
 
-				srv.Send(&pb.WatchExecutionUpdate{
+				srv.Send(&apiv1.WatchExecutionUpdate{
 					Update: string(tmp),
 				})
 			}
@@ -295,7 +295,7 @@ func (api *oliveTinAPI) WatchExecution(req *pb.WatchExecutionRequest, srv pb.Oli
 }
 */
 
-func (api *oliveTinAPI) Logout(ctx ctx.Context, req *pb.LogoutRequest) (*httpbody.HttpBody, error) {
+func (api *oliveTinAPI) Logout(ctx ctx.Context, req *apiv1.LogoutRequest) (*httpbody.HttpBody, error) {
 	user := acl.UserFromContext(ctx, cfg)
 
 	grpc.SendHeader(ctx, metadata.Pairs("logout-provider", user.Provider))
@@ -304,7 +304,7 @@ func (api *oliveTinAPI) Logout(ctx ctx.Context, req *pb.LogoutRequest) (*httpbod
 	return nil, nil
 }
 
-func (api *oliveTinAPI) GetDashboardComponents(ctx ctx.Context, req *pb.GetDashboardComponentsRequest) (*pb.GetDashboardComponentsResponse, error) {
+func (api *oliveTinAPI) GetDashboardComponents(ctx ctx.Context, req *apiv1.GetDashboardComponentsRequest) (*apiv1.GetDashboardComponentsResponse, error) {
 	user := acl.UserFromContext(ctx, cfg)
 
 	if user.IsGuest() && cfg.AuthRequireGuestsToLogin {
@@ -330,10 +330,10 @@ func (api *oliveTinAPI) GetDashboardComponents(ctx ctx.Context, req *pb.GetDashb
 	return res, nil
 }
 
-func (api *oliveTinAPI) GetLogs(ctx ctx.Context, req *pb.GetLogsRequest) (*pb.GetLogsResponse, error) {
+func (api *oliveTinAPI) GetLogs(ctx ctx.Context, req *apiv1.GetLogsRequest) (*apiv1.GetLogsResponse, error) {
 	user := acl.UserFromContext(ctx, cfg)
 
-	ret := &pb.GetLogsResponse{}
+	ret := &apiv1.GetLogsResponse{}
 
 	logEntries, countRemaining := api.executor.GetLogTrackingIds(req.StartOffset, cfg.LogHistoryPageSize)
 
@@ -358,7 +358,7 @@ This function is ONLY a helper for the UI - the arguments are validated properly
 on the StartAction -> Executor chain. This is here basically to provide helpful
 error messages more quickly before starting the action.
 */
-func (api *oliveTinAPI) ValidateArgumentType(ctx ctx.Context, req *pb.ValidateArgumentTypeRequest) (*pb.ValidateArgumentTypeResponse, error) {
+func (api *oliveTinAPI) ValidateArgumentType(ctx ctx.Context, req *apiv1.ValidateArgumentTypeRequest) (*apiv1.ValidateArgumentTypeResponse, error) {
 	err := executor.TypeSafetyCheck("", req.Value, req.Type)
 	desc := ""
 
@@ -366,16 +366,16 @@ func (api *oliveTinAPI) ValidateArgumentType(ctx ctx.Context, req *pb.ValidateAr
 		desc = err.Error()
 	}
 
-	return &pb.ValidateArgumentTypeResponse{
+	return &apiv1.ValidateArgumentTypeResponse{
 		Valid:       err == nil,
 		Description: desc,
 	}, nil
 }
 
-func (api *oliveTinAPI) WhoAmI(ctx ctx.Context, req *pb.WhoAmIRequest) (*pb.WhoAmIResponse, error) {
+func (api *oliveTinAPI) WhoAmI(ctx ctx.Context, req *apiv1.WhoAmIRequest) (*apiv1.WhoAmIResponse, error) {
 	user := acl.UserFromContext(ctx, cfg)
 
-	res := &pb.WhoAmIResponse{
+	res := &apiv1.WhoAmIResponse{
 		AuthenticatedUser: user.Username,
 		Usergroup:         user.Usergroup,
 		Provider:          user.Provider,
@@ -388,7 +388,7 @@ func (api *oliveTinAPI) WhoAmI(ctx ctx.Context, req *pb.WhoAmIRequest) (*pb.WhoA
 	return res, nil
 }
 
-func (api *oliveTinAPI) SosReport(ctx ctx.Context, req *pb.SosReportRequest) (*httpbody.HttpBody, error) {
+func (api *oliveTinAPI) SosReport(ctx ctx.Context, req *apiv1.SosReportRequest) (*httpbody.HttpBody, error) {
 	sos := installationinfo.GetSosReport()
 
 	if !cfg.InsecureAllowDumpSos {
@@ -404,8 +404,8 @@ func (api *oliveTinAPI) SosReport(ctx ctx.Context, req *pb.SosReportRequest) (*h
 	return ret, nil
 }
 
-func (api *oliveTinAPI) DumpVars(ctx ctx.Context, req *pb.DumpVarsRequest) (*pb.DumpVarsResponse, error) {
-	res := &pb.DumpVarsResponse{}
+func (api *oliveTinAPI) DumpVars(ctx ctx.Context, req *apiv1.DumpVarsRequest) (*apiv1.DumpVarsResponse, error) {
+	res := &apiv1.DumpVarsResponse{}
 
 	if !cfg.InsecureAllowDumpVars {
 		res.Alert = "Dumping variables is not allowed by default because it is insecure."
@@ -419,9 +419,9 @@ func (api *oliveTinAPI) DumpVars(ctx ctx.Context, req *pb.DumpVarsRequest) (*pb.
 	return res, nil
 }
 
-func (api *oliveTinAPI) DumpPublicIdActionMap(ctx ctx.Context, req *pb.DumpPublicIdActionMapRequest) (*pb.DumpPublicIdActionMapResponse, error) {
-	res := &pb.DumpPublicIdActionMapResponse{}
-	res.Contents = make(map[string]*pb.ActionEntityPair)
+func (api *oliveTinAPI) DumpPublicIdActionMap(ctx ctx.Context, req *apiv1.DumpPublicIdActionMapRequest) (*apiv1.DumpPublicIdActionMapResponse, error) {
+	res := &apiv1.DumpPublicIdActionMapResponse{}
+	res.Contents = make(map[string]*apiv1.ActionEntityPair)
 
 	if !cfg.InsecureAllowDumpActionMap {
 		res.Alert = "Dumping Public IDs is disallowed."
@@ -432,7 +432,7 @@ func (api *oliveTinAPI) DumpPublicIdActionMap(ctx ctx.Context, req *pb.DumpPubli
 	api.executor.MapActionIdToBindingLock.RLock()
 
 	for k, v := range api.executor.MapActionIdToBinding {
-		res.Contents[k] = &pb.ActionEntityPair{
+		res.Contents[k] = &apiv1.ActionEntityPair{
 			ActionTitle:  v.Action.Title,
 			EntityPrefix: v.EntityPrefix,
 		}
@@ -445,8 +445,8 @@ func (api *oliveTinAPI) DumpPublicIdActionMap(ctx ctx.Context, req *pb.DumpPubli
 	return res, nil
 }
 
-func (api *oliveTinAPI) GetReadyz(ctx ctx.Context, req *pb.GetReadyzRequest) (*pb.GetReadyzResponse, error) {
-	res := &pb.GetReadyzResponse{
+func (api *oliveTinAPI) GetReadyz(ctx ctx.Context, req *apiv1.GetReadyzRequest) (*apiv1.GetReadyzResponse, error) {
+	res := &apiv1.GetReadyzResponse{
 		Status: "OK",
 	}
 
@@ -468,7 +468,7 @@ func Start(globalConfig *config.Config, ex *executor.Executor) {
 	}
 
 	grpcServer := grpc.NewServer()
-	pb.RegisterOliveTinApiServiceServer(grpcServer, newServer(ex))
+	apiv1.RegisterOliveTinApiServiceServer(grpcServer, newServer(ex))
 
 	err = grpcServer.Serve(lis)
 

@@ -1,7 +1,7 @@
 package grpcapi
 
 import (
-	pb "github.com/OliveTin/OliveTin/gen/grpc"
+	apiv1 "github.com/OliveTin/OliveTin/gen/grpc/olivetin/api/v1"
 	acl "github.com/OliveTin/OliveTin/internal/acl"
 	config "github.com/OliveTin/OliveTin/internal/config"
 	executor "github.com/OliveTin/OliveTin/internal/executor"
@@ -9,8 +9,8 @@ import (
 	"sort"
 )
 
-func buildDashboardResponse(ex *executor.Executor, cfg *config.Config, user *acl.AuthenticatedUser) *pb.GetDashboardComponentsResponse {
-	res := &pb.GetDashboardComponentsResponse{
+func buildDashboardResponse(ex *executor.Executor, cfg *config.Config, user *acl.AuthenticatedUser) *apiv1.GetDashboardComponentsResponse {
+	res := &apiv1.GetDashboardComponentsResponse{
 		AuthenticatedUser:         user.Username,
 		AuthenticatedUserProvider: user.Provider,
 	}
@@ -38,10 +38,10 @@ func buildDashboardResponse(ex *executor.Executor, cfg *config.Config, user *acl
 	return res
 }
 
-func buildAction(actionId string, actionBinding *executor.ActionBinding, user *acl.AuthenticatedUser) *pb.Action {
+func buildAction(actionId string, actionBinding *executor.ActionBinding, user *acl.AuthenticatedUser) *apiv1.Action {
 	action := actionBinding.Action
 
-	btn := pb.Action{
+	btn := apiv1.Action{
 		Id:           actionId,
 		Title:        sv.ReplaceEntityVars(actionBinding.EntityPrefix, action.Title),
 		Icon:         action.Icon,
@@ -51,7 +51,7 @@ func buildAction(actionId string, actionBinding *executor.ActionBinding, user *a
 	}
 
 	for _, cfgArg := range action.Arguments {
-		pbArg := pb.ActionArgument{
+		pbArg := apiv1.ActionArgument{
 			Name:         cfgArg.Name,
 			Title:        cfgArg.Title,
 			Type:         cfgArg.Type,
@@ -67,7 +67,7 @@ func buildAction(actionId string, actionBinding *executor.ActionBinding, user *a
 	return &btn
 }
 
-func buildChoices(arg config.ActionArgument) []*pb.ActionArgumentChoice {
+func buildChoices(arg config.ActionArgument) []*apiv1.ActionArgumentChoice {
 	if arg.Entity != "" && len(arg.Choices) == 1 {
 		return buildChoicesEntity(arg.Choices[0], arg.Entity)
 	} else {
@@ -75,15 +75,15 @@ func buildChoices(arg config.ActionArgument) []*pb.ActionArgumentChoice {
 	}
 }
 
-func buildChoicesEntity(firstChoice config.ActionArgumentChoice, entityTitle string) []*pb.ActionArgumentChoice {
-	ret := []*pb.ActionArgumentChoice{}
+func buildChoicesEntity(firstChoice config.ActionArgumentChoice, entityTitle string) []*apiv1.ActionArgumentChoice {
+	ret := []*apiv1.ActionArgumentChoice{}
 
 	entityCount := sv.GetEntityCount(entityTitle)
 
 	for i := 0; i < entityCount; i++ {
 		prefix := sv.GetEntityPrefix(entityTitle, i)
 
-		ret = append(ret, &pb.ActionArgumentChoice{
+		ret = append(ret, &apiv1.ActionArgumentChoice{
 			Value: sv.ReplaceEntityVars(prefix, firstChoice.Value),
 			Title: sv.ReplaceEntityVars(prefix, firstChoice.Title),
 		})
@@ -92,11 +92,11 @@ func buildChoicesEntity(firstChoice config.ActionArgumentChoice, entityTitle str
 	return ret
 }
 
-func buildChoicesSimple(choices []config.ActionArgumentChoice) []*pb.ActionArgumentChoice {
-	ret := []*pb.ActionArgumentChoice{}
+func buildChoicesSimple(choices []config.ActionArgumentChoice) []*apiv1.ActionArgumentChoice {
+	ret := []*apiv1.ActionArgumentChoice{}
 
 	for _, cfgChoice := range choices {
-		pbChoice := pb.ActionArgumentChoice{
+		pbChoice := apiv1.ActionArgumentChoice{
 			Value: cfgChoice.Value,
 			Title: cfgChoice.Title,
 		}
