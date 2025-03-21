@@ -46,6 +46,7 @@ function websocketOnOpen (evt) {
 function websocketOnMessage (msg) {
   // FIXME check msg status is OK
   const j = JSON.parse(msg.data)
+  j.type = j.type.replace('olivetin.api.v1.', '')
 
   const e = new Event(j.type)
   e.payload = j.payload
