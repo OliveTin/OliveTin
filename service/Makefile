@@ -2,8 +2,6 @@ define delete-files
 	python -c "import shutil;shutil.rmtree('$(1)', ignore_errors=True)"
 endef
 
-compile: compile-currentenv
-
 compile-currentenv:
 	go build
 
