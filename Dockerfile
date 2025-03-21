@@ -1,8 +1,8 @@
 FROM --platform=linux/amd64 registry.fedoraproject.org/fedora-minimal:40-x86_64 AS olivetin-tmputils
 
-RUN sudo microdnf -y install dnf-plugins-core
-RUN sudo dnf-3 config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo
-RUN sudo microdnf install docker-ce-cli docker-compose-plugin
+RUN microdnf -y install dnf-plugins-core && \
+	dnf-3 config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo && \
+	microdnf install -y docker-ce-cli docker-compose-plugin && microdnf clean all
 
 FROM --platform=linux/amd64 registry.fedoraproject.org/fedora-minimal:40-x86_64
 
