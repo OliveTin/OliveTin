@@ -19,6 +19,9 @@ jobs:
           go-version-file: 'go.mod'
           cache: true
 
+      - name: grpc
+        run: make -w grpc
+
       - uses: bufbuild/buf-action@v1
         with:
           token: ${{ secrets.BUF_TOKEN }}
