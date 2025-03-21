@@ -2,52 +2,19 @@ define delete-files
 	python -c "import shutil;shutil.rmtree('$(1)', ignore_errors=True)"
 endef
 
-compile: daemon-compile-currentenv
+service:
+	$(MAKE) -wC service
 
-daemon-compile-currentenv:
-	go build github.com/OliveTin/OliveTin/cmd/OliveTin
-
-daemon-compile-armhf:
-	go env -w GOARCH=arm GOARM=6
-	go build -o OliveTin.armhf github.com/OliveTin/OliveTin/cmd/OliveTin
-	go env -u GOARCH GOARM
-
-daemon-compile-x64-lin:
-	go env -w GOOS=linux
-	go build -o OliveTin github.com/OliveTin/OliveTin/cmd/OliveTin
-	go env -u GOOS
-
-daemon-compile-x64-win:
-	go env -w GOOS=windows GOARCH=amd64
-	go build -o OliveTin.exe github.com/OliveTin/OliveTin/cmd/OliveTin
-	go env -u GOOS GOARCH
-
-daemon-compile: daemon-compile-armhf daemon-compile-x64-lin daemon-compile-x64-win
-
-daemon-codestyle:
-	go fmt ./...
-	go vet ./...
-	gocyclo -over 4 cmd internal
-	gocritic check ./...
-
-daemon-unittests:
-	$(call delete-files,reports)
-	mkdir reports
-	go test ./... -coverprofile reports/unittests.out
-	go tool cover -html=reports/unittests.out -o reports/unittests.html
-
+service-unittests:
+	$(MAKE) -wC service unittests
 
 it:
-	cd integration-tests && make
+	$(MAKE) -wC integration-tests
 
 go-tools:
-	go install "github.com/bufbuild/buf/cmd/buf"
-	go install "github.com/fzipp/gocyclo/cmd/gocyclo"
-	go install "github.com/go-critic/go-critic/cmd/gocritic"
-	go install "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway"
-	go install "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2"
-	go install "google.golang.org/grpc/cmd/protoc-gen-go-grpc"
-	go install "google.golang.org/protobuf/cmd/protoc-gen-go"
+	$(MAKE) -wC service go-tools
+
+proto: grpc
 
 grpc: go-tools
 	$(MAKE) -wC proto
@@ -98,4 +65,4 @@ clean:
 	$(call delete-files,reports)
 	$(call delete-files,gen)
 
-.PHONY: grpc
+.PHONY: grpc proto service

@@ -5,7 +5,7 @@ tmp_dir = "tmp"
 [build]
   args_bin = []
   bin = "./OliveTin"
-  cmd = "go build -o OliveTin github.com/OliveTin/OliveTin/cmd/OliveTin"
+  cmd = "go build -o OliveTin"
   delay = 1
   exclude_dir = ["assets", "tmp", "vendor", "testdata", "webui.dev", "webui"]
   exclude_file = []

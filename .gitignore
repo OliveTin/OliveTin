@@ -1,10 +1,10 @@
 **/*.swp
 **/*.swo
-gen/
-/OliveTin
-/OliveTin.armhf
-/OliveTin.exe
-reports
+service/gen/
+service/OliveTin
+service/OliveTin.armhf
+service/OliveTin.exe
+service/reports
 releases/
 dist/
 installation-id.txt

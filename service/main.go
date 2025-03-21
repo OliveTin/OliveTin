@@ -108,6 +108,7 @@ func initViperConfig(configDir string) {
 	viper.SetConfigName("config.yaml")
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath(configDir)
+	viper.AddConfigPath("../")
 	viper.AddConfigPath("/config") // For containers.
 	viper.AddConfigPath("/etc/OliveTin/")
 

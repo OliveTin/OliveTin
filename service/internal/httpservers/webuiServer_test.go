@@ -14,5 +14,5 @@ func TestGetWebuiDir(t *testing.T) {
 
 	dir := findWebuiDir()
 
-	assert.Equal(t, "./webui", dir, "Finding the webui dir")
+	assert.Equal(t, "../webui/", dir, "Finding the webui dir")
 }
