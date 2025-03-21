@@ -20,7 +20,7 @@ export function takeScreenshot (webdriver, title) {
   return webdriver.takeScreenshot().then((img) => {
     fs.mkdirSync('screenshots', { recursive: true });
 
-	title = title.replaceAll(/[\(\)\|\*\<\>]/g, "_")
+	title = title.replaceAll(/[\(\)\|\*\<\>\:]/g, "_")
 
     fs.writeFileSync('screenshots/' + title + '.png', img, 'base64')
   })
