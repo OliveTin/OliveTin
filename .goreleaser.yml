@@ -2,8 +2,7 @@ project_name: OliveTin
 version: 2
 before:
   hooks:
-    - cd service && go mod download
-    - cd service && go generate ./...
+    - make service-prep
 
 builds:
   - env:

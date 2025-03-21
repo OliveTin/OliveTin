@@ -5,6 +5,10 @@ endef
 compile-currentenv:
 	go build
 
+prep:
+	go mod download
+	go generate ./...
+
 compile-armhf:
 	go env -w GOARCH=arm GOARM=6
 	go build -o OliveTin.armhf

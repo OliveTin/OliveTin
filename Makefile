@@ -5,6 +5,9 @@ endef
 service:
 	$(MAKE) -wC service
 
+service-prep:
+	$(MAKE) -wC service prep
+
 service-unittests:
 	$(MAKE) -wC service unittests
 
