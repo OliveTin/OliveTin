@@ -19,8 +19,8 @@ jobs:
           go-version-file: 'go.mod'
           cache: true
 
-      - name: grpc
-        run: make -w grpc
+      - name: go get
+        run: go get
 
       - uses: bufbuild/buf-action@v1
         with:
