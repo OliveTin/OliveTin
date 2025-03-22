@@ -28,7 +28,7 @@ jobs:
       - name: make service
         run: make -w service
 
-      - uses: bufbuild/buf-action@v1
+      - uses: bufbuild/buf-action@v1.1.0
         with:
           token: ${{ secrets.BUF_TOKEN }}
           # Change setup_only to true if you only want to set up the Action and not execute other commands.
