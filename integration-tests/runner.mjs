@@ -35,10 +35,10 @@ class OliveTinTestRunnerStartLocalProcess extends OliveTinTestRunner {
   async start (cfg) {
     let stdout = ""
     let stderr = ""
-    
+
     console.log("      OliveTin starting local process...")
 
-    this.ot = spawn('./../OliveTin', ['-configdir', 'configs/' + cfg + '/'])
+    this.ot = spawn('./../service/OliveTin', ['-configdir', 'configs/' + cfg + '/'])
 
     let logStdout = false
 

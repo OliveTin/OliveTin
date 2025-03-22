@@ -1,6 +1,9 @@
 name: Buf CI
 on:
   push:
+    paths:
+      - 'proto/**'
+
   pull_request:
     types: [opened, synchronize, reopened, labeled, unlabeled]
   delete:
@@ -16,13 +19,16 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version-file: 'go.mod'
+          go-version-file: 'service/go.mod'
           cache: true
 
       - name: grpc
         run: make -w grpc
 
-      - uses: bufbuild/buf-action@v1
+      - name: make service
+        run: make -w service
+
+      - uses: bufbuild/buf-action@v1.1.0
         with:
           token: ${{ secrets.BUF_TOKEN }}
           # Change setup_only to true if you only want to set up the Action and not execute other commands.

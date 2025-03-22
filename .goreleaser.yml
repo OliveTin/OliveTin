@@ -2,12 +2,14 @@ project_name: OliveTin
 version: 2
 before:
   hooks:
-    - go mod download
-    - go generate ./...
+    - make service-prep
 
 builds:
   - env:
       - CGO_ENABLED=0
+    binary: OliveTin
+    main: main.go
+    dir: service
     goos:
       - linux
       - windows
@@ -24,8 +26,6 @@ builds:
       - 5 # For old RPIs
       - 6
       - 7
-
-    main: cmd/OliveTin/main.go
 
     ignore:
       - goos: darwin

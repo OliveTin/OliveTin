@@ -31,7 +31,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version-file: 'go.mod'
+          go-version-file: 'service/go.mod'
           cache: true
 
       - name: Print go version
@@ -40,14 +40,14 @@ jobs:
       - name: grpc
         run: make -w grpc
 
-      - name: make daemon
-        run: make -w daemon-compile-x64-lin
+      - name: make service
+        run: make -w service
 
       - name: make webui
         run: make -w webui-dist
 
       - name: unit tests
-        run: make -w daemon-unittests
+        run: make -w service-unittests
 
       - name: integration tests
         run: cd integration-tests && make -w
