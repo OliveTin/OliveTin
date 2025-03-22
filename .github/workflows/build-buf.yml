@@ -1,6 +1,9 @@
 name: Buf CI
 on:
   push:
+    paths:
+      - 'proto/**'
+
   pull_request:
     types: [opened, synchronize, reopened, labeled, unlabeled]
   delete:
@@ -21,6 +24,9 @@ jobs:
 
       - name: grpc
         run: make -w grpc
+
+      - name: make service
+        run: make -w service
 
       - uses: bufbuild/buf-action@v1
         with:
