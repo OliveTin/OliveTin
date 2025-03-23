@@ -151,7 +151,7 @@ nfpms:
     file_name_template: '{{ .PackageName }}_{{ .Os }}_{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}{{ with .Mips }}_{{ . }}{{ end }}{{ if not (eq .Amd64 "v1") }}{{ .Amd64 }}{{ end }}'
 
     contents:
-      - src: /var/systemd/OliveTin.service
+      - src: var/systemd/OliveTin.service
         dst: /etc/systemd/system/OliveTin.service
 
       - src: webui/*
