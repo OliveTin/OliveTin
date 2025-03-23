@@ -15,6 +15,8 @@ OliveTin gives **safe** and **simple** access to predefined shell commands from 
 <img alt = "screenshot" src = "https://github.com/OliveTin/OliveTin/blob/main/var/marketing/screenshotDesktop.png" />
 <a href = "#screenshots">More screenshots below</a>
 
+All documentation can be found at [docs.olivetin.app](https://docs.olivetin.app). This includes installation and usage guide, etc.
+
 ## Use cases
 
 **Safely** give access to commands, for less technical people;
@@ -68,56 +70,6 @@ Mobile screen size (responsive layout);
 
 ## Documentation
 
-All documentation can be found at http://docs.olivetin.app . This includes installation and usage guide, etc.
+All documentation can be found at [docs.olivetin.app](https://docs.olivetin.app). This includes installation and usage guide, etc.
 
-### Quickstart reference for `config.yaml`
-
-This is a quick example of `config.yaml` - but again, lots of documentation for how to write your `config.yaml` can be found at [the documentation site.](https://docs.olivetin.app)
-
-* (Recommended) [Linux package install (.rpm/.deb)](https://docs.olivetin.app/install-linuxpackage.html) install instructions
-* [Container (podman/docker)](https://docs.olivetin.app/install-container.html) install instructions
-* [Docker compose](https://docs.olivetin.app/install-compose.html) install instructions
-* [Helm on Kubernetes](https://docs.olivetin.app/install-helm.html) install instructions
-* [Kubernetes (manual)](https://docs.olivetin.app/install-k8s.html) install instructions
-* [.tar.gz (manual)](https://docs.olivetin.app/install-targz.html) install instructions
-
-Put this `config.yaml` in `/etc/OliveTin/` if you're running a standard service, or mount it at `/config` if running in a container.
-
-```yaml
-# Listen on all addresses available, port 1337
-listenAddressSingleHTTPFrontend: 0.0.0.0:1337
-
-# Choose from INFO (default), WARN and DEBUG
-logLevel: "INFO"
-
-# Actions (buttons) to show up on the WebUI:
-actions:
-  # Docs: https://docs.olivetin.app/action-container-control.html
-- title: Restart Plex
-  icon: restart
-  shell: docker restart plex
-
-  # This will send 1 ping
-  # Docs: https://docs.olivetin.app/action-ping.html
-- title: Ping host
-  shell: ping {{ host }} -c {{ count }}
-  icon: ping
-  arguments:
-    - name: host
-      title: host
-      type: ascii_identifier
-      default: example.com
-
-    - name: count
-      title: Count
-      type: int
-      default: 1
-
-  # Restart http on host "webserver1"
-  # Docs: https://docs.olivetin.app/action-ssh.html
-- title: restart httpd
-  icon: restart
-  shell: ssh root@webserver1 'service httpd restart'
-```
-
-A full example config can be found at in this repository - [config.yaml](https://github.com/OliveTin/OliveTin/blob/main/config.yaml).
+You can find instructions in the docs on how to install as a **Linux package**, **Linux Container**, on **FreeBSD**, *Windows**, **MacOS** and other platforms, too!

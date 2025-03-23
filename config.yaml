@@ -8,19 +8,19 @@ listenAddressSingleHTTPFrontend: 0.0.0.0:1337
 # Choose from INFO (default), WARN and DEBUG
 logLevel: "INFO"
 
-# Checking for updates https://docs.olivetin.app/update-checks.html
+# Checking for updates https://docs.olivetin.app/reference/updateChecks.html
 checkForUpdates: false
 
 # Actions are commands that are executed by OliveTin, and normally show up as
 # buttons on the WebUI.
 #
-# Docs: https://docs.olivetin.app/create-your-first-action.html
+# Docs: https://docs.olivetin.app/action_execution/create_your_first.html
 actions:
   # This is the most simple action, it just runs the command and flashes the
   # button to indicate status.
   #
   # If you are running OliveTin in a container remember to pass through the
-  # docker socket! https://docs.olivetin.app/action-container-control.html
+  # docker socket! https://docs.olivetin.app/solutions/container-control-panel/index.html
   - title: Ping the Internet
     shell: ping -c 3 1.1.1.1
     icon: ping
@@ -42,11 +42,16 @@ actions:
 
   # This uses `popupOnStart: execution-button` to display a mini button that
   # links to the logs.
+  #
+  # You can also rate-limit actions too.
   - title: date
     shell: date
     timeout: 6
     icon: clock
     popupOnStart: execution-button
+    maxRate:
+      - limit: 3
+        duration: 5m
 
   # You are not limited to operating system commands, and of course you can run
   # your own scripts. Here `maxConcurrent` stops the script running multiple
@@ -63,7 +68,7 @@ actions:
   # When you want to prompt users for input, that is when you should use
   # `arguments` - this presents a popup dialog and asks for argument values.
   #
-  # Docs: https://docs.olivetin.app/action-ping.html
+  # Docs: https://docs.olivetin.app/action_examples/ping.html
   - title: Ping host
     id: ping_host
     shell: ping {{ host }} -c {{ count }}
@@ -88,7 +93,7 @@ actions:
   # However, if you are running in a container you will need to do some setup,
   # see the docs below.
   #
-  # Docs: https://docs.olivetin.app/action-container-control.html
+  # Docs: https://docs.olivetin.app/solutions/container-control-panel/index.html
   - title: Restart Docker Container
     icon: restart
     shell: docker restart {{ container }}
@@ -103,7 +108,7 @@ actions:
   # There is a special `confirmation` argument to help against accidental clicks
   # on "dangerous" actions.
   #
-  # Docs: https://docs.olivetin.app/confirmation.html
+  # Docs: https://docs.olivetin.app/args/input_confirmation.html
   - title: Delete old backups
     icon: ashtonished
     shell: rm -rf /opt/oldBackups/
@@ -118,7 +123,7 @@ actions:
   # This is an action that runs a script included with OliveTin, that will
   # download themes. You will still need to set theme "themeName" in your config.
   #
-  # Docs: https://docs.olivetin.app/themes.html
+  # Docs: https://docs.olivetin.app/reference/reference_themes_for_users.html
   - title: Get OliveTin Theme
     shell: olivetin-get-theme {{ themeGitRepo }} {{ themeFolderName }}
     icon: theme
@@ -136,8 +141,8 @@ actions:
   # it, just use SSH! OliveTin includes a helper to make this easier, which is
   # entirely optional. You can also setup SSH manually.
   #
-  # Docs: https://docs.olivetin.app/action-ssh-easy.html
-  # Docs: https://docs.olivetin.app/action-ssh.html
+  # Docs: https://docs.olivetin.app/action_examples/ssh-easy.html
+  # Docs: https://docs.olivetin.app/action_examples/ssh-manual.html
   - title: "Setup easy SSH"
     icon: ssh
     shell: olivetin-setup-easy-ssh
@@ -146,8 +151,8 @@ actions:
   # Here's how to use SSH with the "easy" config, to restart a service on
   # another server.
   #
-  # Docs: https://docs.olivetin.app/action-ssh-easy.html
-  # Docs: https://docs.olivetin.app/action-service.html
+  # Docs: https://docs.olivetin.app/action_examples/ssh-easy.html
+  # Docs: https://docs.olivetin.app/action_examples/systemd_service.html
   - title: Restart httpd on server1
     id: restart_httpd
     icon: restart
@@ -165,12 +170,12 @@ actions:
   # can also just specify any HTML, this includes any unicode character,
   # or a <img = "..." /> link to a custom icon.
   #
-  # Docs: https://docs.olivetin.app/icons.html
+  # Docs: https://docs.olivetin.app/action_customization/icons.html
   #
   # Lots of people use OliveTin to easily execute ansible-playbooks. You
   # probably want a much longer timeout as well (so that ansible completes).
   #
-  # Docs: https://docs.olivetin.app/ansible-playbook.html
+  # Docs: https://docs.olivetin.app/action_examples/ansible.html
   - title: "Run Automation Playbook"
     icon: '&#129302;'
     shell: ansible-playbook -i /etc/hosts /root/myRepo/myPlaybook.yaml
@@ -237,13 +242,13 @@ actions:
 # in your configuration as variables. For example; `container.status`,
 # or `vm.hostname`.
 #
-# Docs: http://docs.olivetin.app/entities.html
+# Docs: https://docs.olivetin.app/entities/intro.html
 entities:
   # YAML files are the default expected format, so you can use .yml or .yaml,
   # or even .txt, as long as the file contains valid a valid yaml LIST, then it
   # will load properly.
   #
-  # Docs: https://docs.olivetin.app/entities.html
+  # Docs: https://docs.olivetin.app/entities/intro.html
   - file: entities/servers.yaml
     name: server
 
@@ -255,6 +260,8 @@ entities:
 #
 # The only way to properly use entities, are to use them with a `fieldset` on
 # a dashboard.
+#
+# Docs: https://docs.olivetin.app/dashboards/intro.html
 dashboards:
   # Top level items are dashboards.
   - title: My Servers

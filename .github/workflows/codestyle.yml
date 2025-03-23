@@ -30,8 +30,8 @@ jobs:
       - name: deps
         run: make -w grpc
 
-      - name: daemon
-        run: make -w daemon-codestyle
+      - name: service
+        run: make -wC service codestyle
 
       - name: webui
-        run: make -w webui-codestyle
+        run: make -wC webui.dev codestyle

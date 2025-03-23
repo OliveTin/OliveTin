@@ -48,9 +48,7 @@ devrun: compile
 devcontainer: compile podman-image podman-container
 
 webui-codestyle:
-	cd webui.dev && npm install
-	cd webui.dev && npx eslint main.js js/*
-	cd webui.dev && npx stylelint style.css
+	make -wC webui.dev codestyle
 
 webui-dist:
 	$(call delete-files,webui)

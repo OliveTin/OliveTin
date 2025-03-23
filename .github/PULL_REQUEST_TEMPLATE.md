@@ -15,8 +15,9 @@ Please put a X in the boxes as evidence of reading through the checklist.
 
 - [ ] I have forked the project, and raised this PR on a feature branch.
 - [ ] I ran the `pre-commit` hooks, and my commit message was validated.
-- [ ] `make daemon-compile` runs without any issues.
-- [ ] `make daemon-codestyle` runs without any issues.
-- [ ] `make daemon-unittests` runs without any issues.
-- [ ] `make webui-codestyle` runs without any issues.
+- [ ] `make -wC service compile` runs without any issues.
+- [ ] `make -wC service codestyle` runs without any issues.
+- [ ] `make -wC service unittests` runs without any issues.
+- [ ] `make -wC webui codestyle` runs without any issues.
+- [ ] `make -w it` runs without any issues.
 - [ ] I understand and accept the [AGPL-3.0 license](LICENSE) and [code of conduct](CODE_OF_CONDUCT.md), and my contributions fall under these.
