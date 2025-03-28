@@ -158,16 +158,20 @@ function onExecutionFinished (evt) {
     return
   }
 
+  let feedbackButton = actionButton;
+
   switch (actionButton.popupOnStart) {
     case 'execution-button':
-      if (document.querySelector('execution-button#execution-' + logEntry.executionTrackingId) !== null) { // If the button was created in our instance
-        document.querySelector('execution-button#execution-' + logEntry.executionTrackingId).onExecutionFinished(logEntry)
-      }
+	  let executionButton = document.querySelector('execution-button#execution-' + logEntry.executionTrackingId)
+
+	  if (executionButton != null) {
+	    feedbackButton = executionButton
+	  }
+
       break
+	case 'execution-dialog-output-html':
     case 'execution-dialog-stdout-only':
     case 'execution-dialog':
-      actionButton.onExecutionFinished(logEntry)
-
       // We don't need to fetch the logEntry for the dialog because we already
       // have it, so we open the dialog and it will get updated below.
 
@@ -175,10 +179,9 @@ function onExecutionFinished (evt) {
       window.executionDialog.executionTrackingId = logEntry.uuid
 
       break
-    default:
-      actionButton.onExecutionFinished(logEntry)
-      break
   }
+
+  feedbackButton.onExecutionFinished(logEntry)
 
   marshalLogsJsonToHtml({
     logs: [logEntry]
@@ -187,7 +190,8 @@ function onExecutionFinished (evt) {
   // If the current execution dialog is open, update that too
   if (window.executionDialog.dlg.open && window.executionDialog.executionUuid === logEntry.uuid) {
     window.executionDialog.renderExecutionResult({
-      logEntry: logEntry
+      logEntry: logEntry,
+	  type: actionButton.popupOnStart,
     })
   }
 }

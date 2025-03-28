@@ -11,6 +11,7 @@ export class ExecutionDialog {
     this.domIcon = document.getElementById('execution-dialog-icon')
     this.domTitle = document.getElementById('execution-dialog-title')
     this.domOutput = document.getElementById('execution-dialog-xterm')
+    this.domOutputHtml = document.getElementById('execution-dialog-output-html')
     this.domOutputToggleBig = document.getElementById('execution-dialog-toggle-size')
     this.domOutputToggleBig.onclick = () => {
       this.toggleSize()
@@ -197,7 +198,17 @@ export class ExecutionDialog {
 
     clearInterval(window.executionDialogTicker)
 
-    this.domOutput.hidden = false
+	if ("type" in res && res.type == "execution-dialog-output-html") {
+		this.domOutputHtml.hidden = false
+		this.domOutput.hidden = true
+		this.domOutputHtml.innerHTML = res.logEntry.output
+		this.domOutputHtml.hidden = false
+		this.hideDetailsonResult = true
+	} else {
+	    this.domOutput.hidden = false
+		this.domOutputHtml.innerHTML = ''
+		this.domOutputHtml.hidden = true
+	}
 
     if (this.hideDetailsOnResult) {
       this.domExecutionDetails.hidden = true
@@ -217,6 +228,7 @@ export class ExecutionDialog {
     this.domTitle.title = 'Action ID: ' + res.logEntry.actionId + '\nExecution ID: ' + res.logEntry.executionTrackingId
 
     this.updateDuration(res.logEntry)
+
 
     window.terminal.reset()
     window.terminal.write(res.logEntry.output, () => {
