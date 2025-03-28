@@ -77,9 +77,12 @@ func getActionID(action *Action) string {
 	return action.ID
 }
 
+//gocyclo:ignore
 func sanitizePopupOnStart(raw string, cfg *Config) string {
 	switch raw {
 	case "execution-dialog":
+		return raw
+	case "execution-dialog-output-html":
 		return raw
 	case "execution-dialog-stdout-only":
 		return raw
