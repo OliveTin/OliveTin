@@ -107,6 +107,7 @@ type Config struct {
 	ShowNewVersions                 bool
 	EnableCustomJs                  bool
 	AuthJwtCookieName               string
+	AuthJwtHeader                   string
 	AuthJwtAud                      string
 	AuthJwtDomain                   string
 	AuthJwtCertsURL                 string

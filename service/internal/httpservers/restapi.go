@@ -9,6 +9,7 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"net/http"
+	"strings"
 
 	apiv1 "github.com/OliveTin/OliveTin/gen/grpc/olivetin/api/v1"
 
@@ -52,6 +53,12 @@ func parseRequestMetadata(ctx context.Context, req *http.Request) metadata.MD {
 	usergroup := ""
 	provider := "unknown"
 	sid := ""
+
+	if cfg.AuthJwtHeader != "" {
+		// JWTs in the Authorization header are usually prefixed with "Bearer " which is not part of the JWT token.
+		username, usergroup = parseJwt(strings.TrimPrefix(req.Header.Get(cfg.AuthJwtHeader), "Bearer "))
+		provider = "jwt-header"
+	}
 
 	if cfg.AuthJwtCookieName != "" {
 		username, usergroup = parseJwtCookie(req)
