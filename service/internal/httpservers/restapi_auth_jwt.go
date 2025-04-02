@@ -137,7 +137,11 @@ func parseJwtCookie(request *http.Request) (string, string) {
 		return "", ""
 	}
 
-	claims, err := getClaimsFromJwtToken(cookie.Value)
+	return parseJwt(cookie.Value)
+}
+
+func parseJwt(token string) (string, string) {
+	claims, err := getClaimsFromJwtToken(token)
 
 	if err != nil {
 		log.Warnf("jwt claim error: %+v", err)
