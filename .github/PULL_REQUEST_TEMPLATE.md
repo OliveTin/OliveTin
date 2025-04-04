@@ -13,6 +13,9 @@ Helpful information to understand the project can be found here: [CONTRIBUTING](
 # Checklist
 Please put a X in the boxes as evidence of reading through the checklist.
 
+- [ ] I have read the [CONTRIBUTORS](CONTRIBUTORS.adoc) guide
+  - [ ] I considered the "3 line" suggestion.
+  - [ ] I followed the "1 logical change" rule.
 - [ ] I have forked the project, and raised this PR on a feature branch.
 - [ ] I ran the `pre-commit` hooks, and my commit message was validated.
 - [ ] `make -wC service compile` runs without any issues.
