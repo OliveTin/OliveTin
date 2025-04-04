@@ -23,12 +23,6 @@ jobs:
           cache: true
           cache-dependency-path: 'service/go.mod'
 
-      - name: grpc
-        run: make -w grpc
-
-      - name: make service
-        run: make -w service
-
       - uses: bufbuild/buf-action@v1.1.0
         with:
           token: ${{ secrets.BUF_TOKEN }}
