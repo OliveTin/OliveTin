@@ -25,7 +25,7 @@ jobs:
           cache-dependency-path: 'service/go.mod'
 
       - uses: bufbuild/buf-action@v1.1.0
-        working-directory: proto
+        working-directory: ./proto
         with:
           token: ${{ secrets.BUF_TOKEN }}
           # Change setup_only to true if you only want to set up the Action and not execute other commands.
