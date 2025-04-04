@@ -121,11 +121,8 @@ func initViperConfig(configDir string) {
 
 	viper.WatchConfig()
 	viper.OnConfigChange(func(e fsnotify.Event) {
-		if e.Op == fsnotify.Write {
-			log.Info("Config file changed:", e.String())
-
-			config.Reload(cfg)
-		}
+		log.Infof("Config file changed: %s", viper.ConfigFileUsed())
+		config.Reload(cfg)
 	})
 
 	config.Reload(cfg)
