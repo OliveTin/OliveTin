@@ -1,19 +1,19 @@
-version: v1
+version: v2
 plugins:
-  - name: go
+  - local: protoc-gen-go
     out: ../service/gen/grpc/
     opt: paths=source_relative
 
-  - name: go-grpc
+  - local: protoc-gen-go-grpc
     out: ../service/gen/grpc/
     opt: paths=source_relative,require_unimplemented_servers=false
 
-  - name: grpc-gateway
+  - local: protoc-gen-grpc-gateway
     out: ../service/gen/grpc/
     opt: paths=source_relative
 
 #  - name: swagger
 #    out: reports/swagger
 
-#  - name: openapiv2
+#  - local: protoc-gen-openapiv2
 #    out: reports/openapiv2

@@ -1,5 +1,6 @@
 name: Buf CI
 on:
+  workflow_dispatch:
   push:
     paths:
       - 'proto/**'
@@ -22,12 +23,6 @@ jobs:
           go-version-file: 'service/go.mod'
           cache: true
           cache-dependency-path: 'service/go.mod'
-
-      - name: grpc
-        run: make -w grpc
-
-      - name: make service
-        run: make -w service
 
       - uses: bufbuild/buf-action@v1.1.0
         with:
