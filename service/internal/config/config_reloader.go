@@ -1,14 +1,15 @@
 package config
 
 import (
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
-
 	"os"
 	"path/filepath"
+	"reflect"
+	"regexp"
 
+	"github.com/mitchellh/mapstructure"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	log "github.com/sirupsen/logrus"
-
 	"github.com/spf13/viper"
 )
 
@@ -31,7 +32,7 @@ func AddListener(l func()) {
 }
 
 func Reload(cfg *Config) {
-	if err := viper.UnmarshalExact(&cfg); err != nil {
+	if err := viper.UnmarshalExact(&cfg, configureDecoder); err != nil {
 		log.Errorf("Config unmarshal error %+v", err)
 		os.Exit(1)
 	}
@@ -45,4 +46,28 @@ func Reload(cfg *Config) {
 	for _, l := range listeners {
 		l()
 	}
+}
+
+func configureDecoder(config *mapstructure.DecoderConfig) {
+	config.DecodeHook = mapstructure.ComposeDecodeHookFunc(envDecodeHookFunc, config.DecodeHook)
+
+}
+
+var envRegex = regexp.MustCompile(`\${{ *?(\S+) *?}}`)
+
+func envDecodeHookFunc(from reflect.Value, to reflect.Value) (any, error) {
+	if from.Kind() != reflect.String {
+		return from.Interface(), nil
+	}
+	input := from.Interface().(string)
+	output := envRegex.ReplaceAllStringFunc(input, func(match string) string {
+		submatches := envRegex.FindStringSubmatch(match)
+		key := submatches[1]
+		val, set := os.LookupEnv(key)
+		if !set {
+			log.Warnf("Config file references unset environment variable: \"%s\"", key)
+		}
+		return val
+	})
+	return output, nil
 }
