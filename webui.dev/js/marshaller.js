@@ -2,6 +2,33 @@ import './ActionButton.js' // To define action-button
 import { ExecutionDialog } from './ExecutionDialog.js'
 import { ActionStatusDisplay } from './ActionStatusDisplay.js'
 
+function getQueryParams () {
+  return new URLSearchParams(window.location.search.substring(1))
+}
+
+function checkAndTriggerActionFromQueryParam () {
+  const params = getQueryParams()
+
+  const action = params.get('action')
+  if (action && window.actionButtons) {
+    // Look for an action button with matching title
+    const actionButton = window.actionButtons[action]
+
+    if (actionButton) {
+      // Only trigger actions that have arguments
+      const jsonButton = window.actionButtonsJson[action]
+      if (jsonButton && jsonButton.arguments && jsonButton.arguments.length > 0) {
+        // Trigger the action button click
+        setTimeout(() => {
+          actionButton.btn.click()
+        }, 500) // Small delay to ensure UI is fully loaded
+        return true
+      }
+    }
+  }
+  return false
+}
+
 function createElement (tag, attributes) {
   const el = document.createElement(tag)
 
@@ -106,6 +133,7 @@ function marshalActionsJsonToHtml (json) {
   const currentIterationTimestamp = Date.now()
 
   window.actionButtons = {}
+  window.actionButtonsJson = {} // Store the JSON representation
 
   for (const jsonButton of json.actions) {
     let htmlButton = window.actionButtons[jsonButton.id]
@@ -115,6 +143,7 @@ function marshalActionsJsonToHtml (json) {
       htmlButton.constructFromJson(jsonButton)
 
       window.actionButtons[jsonButton.title] = htmlButton
+      window.actionButtonsJson[jsonButton.title] = jsonButton // Store the JSON representation
     }
 
     htmlButton.updateFromJson(jsonButton)
@@ -169,7 +198,7 @@ function onExecutionFinished (evt) {
 	  }
 
       break
-	case 'execution-dialog-output-html':
+    case 'execution-dialog-output-html':
     case 'execution-dialog-stdout-only':
     case 'execution-dialog':
       // We don't need to fetch the logEntry for the dialog because we already
@@ -246,7 +275,10 @@ function showSection (pathName) {
     }
   }
 
-  pushNewNavigationPath(pathName)
+  // Check for action parameter in query string
+  if (!checkAndTriggerActionFromQueryParam()) {
+    pushNewNavigationPath(pathName)
+  }
 
   setSectionNavigationVisible(false)
 
@@ -254,9 +286,13 @@ function showSection (pathName) {
 }
 
 function pushNewNavigationPath (pathName) {
+  // Get the current query string
+  const queryString = window.location.search
+
+  // Push the new state with the path and preserve the query string
   window.history.pushState({
     path: pathName
-  }, null, pathName)
+  }, null, pathName + queryString)
 }
 
 function setSectionNavigationVisible (visible) {
