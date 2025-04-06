@@ -49,6 +49,7 @@ jobs:
         with:
           go-version-file: 'service/go.mod'
           cache: true
+          cache-dependency-path: 'service/go.mod'
 
       - name: grpc
         run: make -w grpc
