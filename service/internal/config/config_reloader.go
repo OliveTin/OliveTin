@@ -6,7 +6,6 @@ import (
 	"reflect"
 	"regexp"
 
-	"github.com/mitchellh/mapstructure"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	log "github.com/sirupsen/logrus"
@@ -32,7 +31,7 @@ func AddListener(l func()) {
 }
 
 func Reload(cfg *Config) {
-	if err := viper.UnmarshalExact(&cfg, configureDecoder); err != nil {
+	if err := viper.UnmarshalExact(&cfg, viper.DecodeHook(envDecodeHookFunc)); err != nil {
 		log.Errorf("Config unmarshal error %+v", err)
 		os.Exit(1)
 	}
@@ -46,11 +45,6 @@ func Reload(cfg *Config) {
 	for _, l := range listeners {
 		l()
 	}
-}
-
-func configureDecoder(config *mapstructure.DecoderConfig) {
-	config.DecodeHook = mapstructure.ComposeDecodeHookFunc(envDecodeHookFunc, config.DecodeHook)
-
 }
 
 var envRegex = regexp.MustCompile(`\${{ *?(\S+) *?}}`)
