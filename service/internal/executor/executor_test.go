@@ -82,7 +82,7 @@ func TestArgumentNameCamelCase(t *testing.T) {
 		"personName": "Fred",
 	}
 
-	out, err := parseActionArguments(a1.Shell, values, a1, a1.Title, "")
+	out, err := parseActionArguments(values, a1, a1.Title, "")
 
 	assert.Equal(t, "echo 'Tickling Fred'", out)
 	assert.Nil(t, err)
@@ -104,7 +104,7 @@ func TestArgumentNameSnakeCase(t *testing.T) {
 		"person_name": "Fred",
 	}
 
-	out, err := parseActionArguments(a1.Shell, values, a1, a1.Title, "")
+	out, err := parseActionArguments(values, a1, a1.Title, "")
 
 	assert.Equal(t, "echo 'Tickling Fred'", out)
 	assert.Nil(t, err)
