@@ -395,7 +395,7 @@ func stepParseArgs(req *ExecutionRequest) bool {
 	req.Arguments["ot_executionTrackingId"] = req.TrackingID
 	req.Arguments["ot_username"] = req.AuthenticatedUser.Username
 
-	req.finalParsedCommand, err = parseActionArguments(req.Action.Shell, req.Arguments, req.Action, req.logEntry.ActionTitle, req.EntityPrefix)
+	req.finalParsedCommand, err = parseActionArguments(req.Arguments, req.Action, req.logEntry.ActionTitle, req.EntityPrefix)
 
 	if err != nil {
 		req.logEntry.Output = err.Error()

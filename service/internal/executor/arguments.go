@@ -46,13 +46,13 @@ func parseCommandForReplacements(rawShellCommand string, values map[string]strin
 	return rawShellCommand, usedArguments, nil
 }
 
-func parseActionArguments(rawShellCommand string, values map[string]string, action *config.Action, actionTitle string, entityPrefix string) (string, error) {
+func parseActionArguments(values map[string]string, action *config.Action, actionTitle string, entityPrefix string) (string, error) {
 	log.WithFields(log.Fields{
 		"actionTitle": actionTitle,
-		"cmd":         rawShellCommand,
+		"cmd":         action.Shell,
 	}).Infof("Action parse args - Before")
 
-	rawShellCommand, usedArgs, err := parseCommandForReplacements(rawShellCommand, values)
+	rawShellCommand, usedArgs, err := parseCommandForReplacements(action.Shell, values)
 
 	if err != nil {
 		return "", err
