@@ -55,8 +55,7 @@ func parseRequestMetadata(ctx context.Context, req *http.Request) metadata.MD {
 	sid := ""
 
 	if cfg.AuthJwtHeader != "" {
-		// JWTs in the Authorization header are usually prefixed with "Bearer " which is not part of the JWT token.
-		username, usergroup = parseJwt(strings.TrimPrefix(req.Header.Get(cfg.AuthJwtHeader), "Bearer "))
+		username, usergroup = parseJwtHeader(req)
 		provider = "jwt-header"
 	}
 
@@ -90,6 +89,11 @@ func parseRequestMetadata(ctx context.Context, req *http.Request) metadata.MD {
 	log.Tracef("api request metadata: %+v", md)
 
 	return md
+}
+
+func parseJwtHeader(req *http.Request) (string, string) {
+	// JWTs in the Authorization header are usually prefixed with "Bearer " which is not part of the JWT token.
+	return parseJwt(strings.TrimPrefix(req.Header.Get(cfg.AuthJwtHeader), "Bearer "))
 }
 
 func forwardResponseHandler(ctx context.Context, w http.ResponseWriter, msg protoreflect.ProtoMessage) error {
