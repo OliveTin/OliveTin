@@ -14,6 +14,7 @@ RUN mkdir -p /config /config/entities/ /var/www/olivetin \
 	microdnf install -y --nodocs --noplugins --setopt=keepcache=0 --setopt=install_weak_deps=0 \
 		iputils \
 		openssh-clients \
+		kubernetes-client \
 		shadow-utils \
 		apprise \
 		jq \
