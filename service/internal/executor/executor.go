@@ -335,6 +335,7 @@ func parseDuration(rate config.RateSpec) time.Duration {
 	return duration
 }
 
+//gocyclo:ignore
 func getExecutionsCount(rate config.RateSpec, req *ExecutionRequest) int {
 	executions := -1 // Because we will find ourself when checking execution logs
 
