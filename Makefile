@@ -48,7 +48,7 @@ devrun: compile
 devcontainer: compile podman-image podman-container
 
 webui-codestyle:
-	make -wC webui.dev codestyle
+	$(MAKE) -wC webui.dev codestyle
 
 webui-dist:
 	$(call delete-files,webui)
