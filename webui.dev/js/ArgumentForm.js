@@ -1,5 +1,9 @@
 
 class ArgumentForm extends window.HTMLElement {
+  getQueryParams () {
+    return new URLSearchParams(window.location.search.substring(1))
+  }
+
   setup (json, callback) {
     this.setAttribute('class', 'action-arguments')
 
@@ -23,6 +27,7 @@ class ArgumentForm extends window.HTMLElement {
     }
 
     this.domBtnCancel.onclick = () => {
+      this.clearBookmark()
       this.remove()
     }
   }
@@ -189,7 +194,19 @@ class ArgumentForm extends window.HTMLElement {
     }
 
     domEl.name = arg.name
-    domEl.value = arg.defaultValue
+
+    // Use query parameter value if available
+    const params = this.getQueryParams()
+    const paramValue = params.get(arg.name)
+
+    if (paramValue !== null) {
+      domEl.value = paramValue
+    } else {
+      domEl.value = arg.defaultValue
+    }
+
+    // update the URL when a parameter is changed
+    domEl.addEventListener('change', this.updateUrlWithArg)
 
     if (typeof arg.suggestions === 'object' && Object.keys(arg.suggestions).length > 0) {
       domEl.setAttribute('list', arg.name + '-choices')
@@ -198,6 +215,20 @@ class ArgumentForm extends window.HTMLElement {
     this.argInputs.push(domEl)
 
     return domEl
+  }
+
+  updateUrlWithArg (ev) {
+    if (!ev.target.name) {
+      return
+    }
+    // Get the current URL and create a new URL object
+    const url = new URL(window.location.href)
+
+    // copy the parameter value
+    url.searchParams.set(ev.target.name, ev.target.value)
+
+    // Update the URL without reloading the page
+    window.history.replaceState({}, '', url.toString())
   }
 
   createDomDescription (arg) {
@@ -215,6 +246,13 @@ class ArgumentForm extends window.HTMLElement {
     domEl.innerText = choice.title
 
     return domEl
+  }
+
+  clearBookmark () {
+    // remove the action from the URL
+    window.history.replaceState({
+      path: window.location.pathname
+    }, '', window.location.pathname)
   }
 }
 

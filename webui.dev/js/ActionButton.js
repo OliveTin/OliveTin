@@ -45,6 +45,8 @@ class ActionButton extends ExecutionFeedbackButton {
           oldArgumentForm.remove()
         }
 
+        this.updateUrlWithAction()
+
         const frm = document.createElement('argument-form')
         frm.setup(json, (args) => {
           this.startAction(args)
@@ -130,6 +132,17 @@ class ActionButton extends ExecutionFeedbackButton {
     }).catch(err => {
       throw err // We used to flash buttons red, but now hand to the global error handler
     })
+  }
+
+  updateUrlWithAction () {
+    // Get the current URL and create a new URL object
+    const url = new URL(window.location.href)
+
+    // Set the action parameter
+    url.searchParams.set('action', this.btn.title)
+
+    // Update the URL without reloading the page
+    window.history.replaceState({}, '', url.toString())
   }
 
   onActionStarted (executionTrackingId) {
