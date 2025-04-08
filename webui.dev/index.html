@@ -251,7 +251,7 @@
 			to at least display a helpful error message if we can't use OliveTin.
 			 */
 			window.showBigError = function (type, friendlyType, message, isFatal) {
-				bigErrorDialog.innerHTML = '<h1>Error ' + friendlyType + '</h1><p>' + message + "</p><p><a href = 'http://docs.olivetin.app/err-" + type + ".html' target = 'blank'/>" + type + " error in OliveTin Documentation</a></p>"
+				bigErrorDialog.innerHTML = '<h1>Error ' + friendlyType + '</h1><p>' + message + "</p><p><a href = 'http://docs.olivetin.app/troubleshooting/err-" + type + ".html' target = 'blank'/>" + type + " error in OliveTin Documentation</a></p>"
 
 				if (isFatal) {
 					bigErrorDialog.innerHTML += '<p>You will need to refresh your browser to clear this message.</p>'
