@@ -187,15 +187,14 @@ function onExecutionFinished (evt) {
     return
   }
 
-  let feedbackButton = actionButton;
+  const executionButton = document.querySelector('execution-button#execution-' + logEntry.executionTrackingId)
+  let feedbackButton = actionButton
 
   switch (actionButton.popupOnStart) {
     case 'execution-button':
-	  let executionButton = document.querySelector('execution-button#execution-' + logEntry.executionTrackingId)
-
-	  if (executionButton != null) {
-	    feedbackButton = executionButton
-	  }
+      if (executionButton != null) {
+        feedbackButton = executionButton
+      }
 
       break
     case 'execution-dialog-output-html':
@@ -220,7 +219,7 @@ function onExecutionFinished (evt) {
   if (window.executionDialog.dlg.open && window.executionDialog.executionUuid === logEntry.uuid) {
     window.executionDialog.renderExecutionResult({
       logEntry: logEntry,
-	  type: actionButton.popupOnStart,
+      type: actionButton.popupOnStart
     })
   }
 }

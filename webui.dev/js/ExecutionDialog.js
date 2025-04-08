@@ -198,17 +198,17 @@ export class ExecutionDialog {
 
     clearInterval(window.executionDialogTicker)
 
-	if ("type" in res && res.type == "execution-dialog-output-html") {
-		this.domOutputHtml.hidden = false
-		this.domOutput.hidden = true
-		this.domOutputHtml.innerHTML = res.logEntry.output
-		this.domOutputHtml.hidden = false
-		this.hideDetailsonResult = true
-	} else {
-	    this.domOutput.hidden = false
-		this.domOutputHtml.innerHTML = ''
-		this.domOutputHtml.hidden = true
-	}
+    if ('type' in res && res.type === 'execution-dialog-output-html') {
+      this.domOutputHtml.hidden = false
+      this.domOutput.hidden = true
+      this.domOutputHtml.innerHTML = res.logEntry.output
+      this.domOutputHtml.hidden = false
+      this.hideDetailsonResult = true
+    } else {
+      this.domOutput.hidden = false
+      this.domOutputHtml.innerHTML = ''
+      this.domOutputHtml.hidden = true
+    }
 
     if (this.hideDetailsOnResult) {
       this.domExecutionDetails.hidden = true
@@ -228,7 +228,6 @@ export class ExecutionDialog {
     this.domTitle.title = 'Action ID: ' + res.logEntry.actionId + '\nExecution ID: ' + res.logEntry.executionTrackingId
 
     this.updateDuration(res.logEntry)
-
 
     window.terminal.reset()
     window.terminal.write(res.logEntry.output, () => {
