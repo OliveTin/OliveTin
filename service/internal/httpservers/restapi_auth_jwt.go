@@ -9,6 +9,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"net/http"
 	"os"
+	"strings"
 
 	//	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/MicahParks/keyfunc/v3"
@@ -153,7 +154,23 @@ func parseJwt(token string) (string, string) {
 	}
 
 	username := lookupClaimValueOrDefault(claims, cfg.AuthJwtClaimUsername, "")
-	usergroup := lookupClaimValueOrDefault(claims, cfg.AuthJwtClaimUserGroup, "")
+	usergroup := parseGroupClaim(cfg.AuthJwtClaimUserGroup, claims)
 
 	return username, usergroup
+}
+
+func parseGroupClaim(groupClaim string, claims jwt.MapClaims) string {
+	usergroup := ""
+	if val, ok := claims[groupClaim]; ok {
+		if array, ok := val.([]interface{}); ok {
+			groups := make([]string, len(array))
+			for i, v := range array {
+				groups[i] = fmt.Sprintf("%s", v)
+			}
+			usergroup = strings.Join(groups, " ")
+		} else {
+			usergroup = fmt.Sprintf("%s", val)
+		}
+	}
+	return usergroup
 }

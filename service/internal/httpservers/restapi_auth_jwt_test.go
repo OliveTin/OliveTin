@@ -103,3 +103,58 @@ func TestJWTSignatureVerificationSucceeds(t *testing.T) {
 func TestJWTSignatureVerificationFails(t *testing.T) {
 	testJwkValidation(t, -500, 403)
 }
+
+func TestJWTHeader(t *testing.T) {
+	privateKey, publicKeyPath := createKeys(t)
+
+	defer os.Remove(publicKeyPath)
+
+	cfg := config.DefaultConfig()
+	cfg.AuthJwtPubKeyPath = publicKeyPath
+	cfg.AuthJwtClaimUsername = "sub"
+	cfg.AuthJwtClaimUserGroup = "olivetinGroup"
+	cfg.AuthJwtHeader = "Authorization"
+	SetGlobalRestConfig(cfg) // ugly, setting global var, we should pass configs as params to modules... :/
+
+	token := jwt.New(jwt.SigningMethodRS256)
+
+	claims := token.Claims.(jwt.MapClaims)
+	claims["nbf"] = time.Now().Unix() - 1000
+	claims["exp"] = time.Now().Unix() + 2000
+	claims["sub"] = "test"
+	claims["olivetinGroup"] = []string{"test", "test2"}
+
+	tokenStr, _ := token.SignedString(privateKey)
+
+	mux := newMux()
+	mux.HandlePath("GET", "/", func(w http.ResponseWriter, r *http.Request, pathParams map[string]string) {
+		username, usergroup := parseJwtHeader(r)
+
+		if username == "" {
+			w.WriteHeader(403)
+		}
+
+		assert.Equal(t, "test", username)
+		assert.Equal(t, "test test2", usergroup)
+
+		w.Write([]byte(fmt.Sprintf("username=%v, usergroup=%v", username, usergroup)))
+	})
+
+	srv := setupTestingServer(mux, t)
+
+	req, client := newReq("")
+	req.Header.Set("Authorization", "Bearer "+tokenStr)
+
+	res, err := client.Do(req)
+
+	if err != nil {
+		t.Fatalf("Client err: %+v", err)
+	} else {
+		defer res.Body.Close()
+		assert.Equal(t, 200, res.StatusCode)
+		body, _ := io.ReadAll(res.Body)
+		fmt.Println(string(body))
+	}
+
+	srv.Shutdown(context.TODO())
+}
