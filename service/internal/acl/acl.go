@@ -213,7 +213,7 @@ Lists:
 }
 
 func hasGroupsMatch(matchUsergroups []string, usergroup string) bool {
-	for group := range strings.FieldsSeq(usergroup) {
+	for _, group := range strings.Fields(usergroup) {
 		if slices.Contains(matchUsergroups, group) {
 			return true
 		}
