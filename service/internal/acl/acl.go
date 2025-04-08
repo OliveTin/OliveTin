@@ -197,7 +197,6 @@ func UserFromSystem(cfg *config.Config, username string) *AuthenticatedUser {
 }
 
 func buildUserAcls(cfg *config.Config, user *AuthenticatedUser) {
-Lists:
 	for _, acl := range cfg.AccessControlLists {
 		if slices.Contains(acl.MatchUsernames, user.Username) {
 			user.Acls = append(user.Acls, acl.Name)
@@ -207,7 +206,7 @@ Lists:
 		// handle multiple usergroups - groups will be separated by a space
 		if hasGroupsMatch(acl.MatchUsergroups, user.Usergroup) {
 			user.Acls = append(user.Acls, acl.Name)
-			continue Lists
+			continue
 		}
 	}
 }
