@@ -87,6 +87,7 @@ type InternalLogEntry struct {
 	Process             *os.Process
 	Username            string
 	Index               int64
+	EntityPrefix        string
 
 	/*
 		The following 3 properties are obviously on Action normally, but it's useful
@@ -249,6 +250,7 @@ func (e *Executor) ExecRequest(req *ExecutionRequest) (*sync.WaitGroup, string) 
 		ActionTitle:         "notfound",
 		ActionIcon:          "&#x1f4a9;",
 		Username:            req.AuthenticatedUser.Username,
+		EntityPrefix:        req.EntityPrefix,
 	}
 
 	_, isDuplicate := e.GetLog(req.TrackingID)
@@ -341,6 +343,10 @@ func getExecutionsCount(rate config.RateSpec, req *ExecutionRequest) int {
 	then := time.Now().Add(-duration)
 
 	for _, logEntry := range req.executor.GetLogsByActionId(req.Action.ID) {
+		if logEntry.EntityPrefix != req.EntityPrefix {
+			continue
+		}
+
 		if logEntry.DatetimeStarted.After(then) && !logEntry.Blocked {
 
 			executions += 1
