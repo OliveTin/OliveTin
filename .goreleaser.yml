@@ -51,7 +51,7 @@ changelog:
       regexp: '^.*?security(\([[:word:]]+\))??!?:.+$'
       order: 0
     - title: 'Features'
-      regexp: '^.*?feature(\([[:word:]]+\))??!?:.+$'
+      regexp: '^.*?feat.*?(\([[:word:]]+\))??!?:.+$'
       order: 1
     - title: 'Bug fixes'
       regexp: '^.*?bugfix(\([[:word:]]+\))??!?:.+$'
