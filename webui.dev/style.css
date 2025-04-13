@@ -626,7 +626,7 @@ label.input-with-icons button:disabled {
 
 @media screen and (width <= 600px) {
   fieldset {
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   }
 
   label {
