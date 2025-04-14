@@ -85,6 +85,7 @@ type PrometheusConfig struct {
 
 // Config is the global config used through the whole app.
 type Config struct {
+	Subpath                         string
 	UseSingleHTTPFrontend           bool
 	ThemeName                       string
 	ThemeCacheDisabled              bool
@@ -206,6 +207,7 @@ func DefaultConfig() *Config {
 // DefaultConfig gets a new Config structure with sensible default values.
 func DefaultConfigWithBasePort(basePort int) *Config {
 	config := Config{}
+	config.Subpath = "" // Empty string for root path as default
 	config.UseSingleHTTPFrontend = true
 	config.PageTitle = "OliveTin"
 	config.ShowFooter = true

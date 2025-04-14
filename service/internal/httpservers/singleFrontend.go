@@ -9,12 +9,14 @@ away, and several other issues.
 */
 
 import (
-	config "github.com/OliveTin/OliveTin/internal/config"
-	"github.com/OliveTin/OliveTin/internal/websocket"
-	log "github.com/sirupsen/logrus"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"strings"
+
+	config "github.com/OliveTin/OliveTin/internal/config"
+	"github.com/OliveTin/OliveTin/internal/websocket"
+	log "github.com/sirupsen/logrus"
 )
 
 func logDebugRequest(cfg *config.Config, source string, r *http.Request) {
@@ -44,23 +46,24 @@ func StartSingleHTTPFrontend(cfg *config.Config) {
 
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/api/", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc(cfg.Subpath+"/api/", func(w http.ResponseWriter, r *http.Request) {
 		logDebugRequest(cfg, "api ", r)
 
+		r.URL.Path = strings.TrimPrefix(r.URL.Path, cfg.Subpath+"/")
 		apiProxy.ServeHTTP(w, r)
 	})
 
-	mux.HandleFunc("/websocket", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc(cfg.Subpath+"/websocket", func(w http.ResponseWriter, r *http.Request) {
 		logDebugRequest(cfg, "ws  ", r)
 
 		websocket.HandleWebsocket(w, r)
 	})
 
-	mux.HandleFunc("/oauth/login", handleOAuthLogin)
+	mux.HandleFunc(cfg.Subpath+"/oauth/login", handleOAuthLogin)
 
-	mux.HandleFunc("/oauth/callback", handleOAuthCallback)
+	mux.HandleFunc(cfg.Subpath+"/oauth/callback", handleOAuthCallback)
 
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc(cfg.Subpath+"/", func(w http.ResponseWriter, r *http.Request) {
 		logDebugRequest(cfg, "ui  ", r)
 
 		webuiProxy.ServeHTTP(w, r)
@@ -70,7 +73,7 @@ func StartSingleHTTPFrontend(cfg *config.Config) {
 		promURL, _ := url.Parse("http://" + cfg.ListenAddressPrometheus)
 		promProxy := httputil.NewSingleHostReverseProxy(promURL)
 
-		mux.HandleFunc("/metrics", func(w http.ResponseWriter, r *http.Request) {
+		mux.HandleFunc(cfg.Subpath+"/metrics", func(w http.ResponseWriter, r *http.Request) {
 			logDebugRequest(cfg, "prom", r)
 
 			promProxy.ServeHTTP(w, r)
