@@ -8,13 +8,14 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	config "github.com/OliveTin/OliveTin/internal/config"
-	log "github.com/sirupsen/logrus"
-	"golang.org/x/oauth2"
 	"io"
 	"net/http"
 	"os"
 	"time"
+
+	config "github.com/OliveTin/OliveTin/internal/config"
+	log "github.com/sirupsen/logrus"
+	"golang.org/x/oauth2"
 )
 
 var (
@@ -96,14 +97,14 @@ func randString(nByte int) (string, error) {
 	return base64.URLEncoding.EncodeToString(b), nil
 }
 
-func setOAuthCallbackCookie(w http.ResponseWriter, r *http.Request, name, value string) {
+func setOAuthCallbackCookie(w http.ResponseWriter, r *http.Request, name, value, path string) {
 	cookie := &http.Cookie{
 		Name:     name,
 		Value:    value,
 		MaxAge:   31556952, // 1 year
 		Secure:   r.TLS != nil,
 		HttpOnly: true,
-		Path:     "/",
+		Path:     path,
 	}
 
 	http.SetCookie(w, cookie)
@@ -132,7 +133,7 @@ func handleOAuthLogin(w http.ResponseWriter, r *http.Request) {
 		Username:       "",
 	}
 
-	setOAuthCallbackCookie(w, r, "olivetin-sid-oauth", state)
+	setOAuthCallbackCookie(w, r, "olivetin-sid-oauth", state, cfg.Subpath)
 
 	log.Infof("OAuth2 state: %v mapped to provider %v (found: %v), now redirecting", state, providerName, provider != nil)
 

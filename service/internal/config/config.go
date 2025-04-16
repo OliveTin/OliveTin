@@ -85,7 +85,6 @@ type PrometheusConfig struct {
 
 // Config is the global config used through the whole app.
 type Config struct {
-	Subpath                         string
 	UseSingleHTTPFrontend           bool
 	ThemeName                       string
 	ThemeCacheDisabled              bool
@@ -139,6 +138,10 @@ type Config struct {
 	DefaultIconForDirectories       string
 	DefaultIconForBack              string
 	AdditionalNavigationLinks       []*NavigationLink
+
+	// Subpath defines the URL path prefix where the application will be served.
+	// Must start with a forward slash (e.g., "/app") or be empty for root path.
+	Subpath string
 
 	usedConfigDir string
 }

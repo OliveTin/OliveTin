@@ -33,7 +33,7 @@ func logDebugRequest(cfg *config.Config, source string, r *http.Request) {
 
 // StartSingleHTTPFrontend will create a reverse proxy that proxies the API
 // and webui internally.
-func StartSingleHTTPFrontend(cfg *config.Config) {
+func StartSingleHTTPFrontend(cfg *config.Config) *http.Server {
 	log.WithFields(log.Fields{
 		"address": cfg.ListenAddressSingleHTTPFrontend,
 	}).Info("Starting single HTTP frontend")
@@ -87,5 +87,5 @@ func StartSingleHTTPFrontend(cfg *config.Config) {
 		Handler: mux,
 	}
 
-	log.Fatal(srv.ListenAndServe())
+	return srv
 }

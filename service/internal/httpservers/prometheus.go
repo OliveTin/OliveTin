@@ -9,11 +9,12 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-func StartPrometheus(cfg *config.Config) {
+func StartPrometheus(cfg *config.Config) *http.Server {
 	if !cfg.Prometheus.DefaultGoMetrics {
 		prometheus.Unregister(collectors.NewGoCollector())
 	}
 
 	http.Handle("/", promhttp.Handler())
-	http.ListenAndServe(cfg.ListenAddressPrometheus, nil)
+	srv := &http.Server{Addr: cfg.ListenAddressPrometheus}
+	return srv
 }

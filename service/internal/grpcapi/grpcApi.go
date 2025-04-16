@@ -13,7 +13,6 @@ import (
 	"google.golang.org/grpc/status"
 
 	"errors"
-	"net"
 
 	acl "github.com/OliveTin/OliveTin/internal/acl"
 	config "github.com/OliveTin/OliveTin/internal/config"
@@ -454,27 +453,17 @@ func (api *oliveTinAPI) GetReadyz(ctx ctx.Context, req *apiv1.GetReadyzRequest) 
 }
 
 // Start will start the GRPC API.
-func Start(globalConfig *config.Config, ex *executor.Executor) {
+func Start(globalConfig *config.Config, ex *executor.Executor) *grpc.Server {
 	cfg = globalConfig
 
 	log.WithFields(log.Fields{
 		"address": cfg.ListenAddressGrpcActions,
 	}).Info("Starting gRPC API")
 
-	lis, err := net.Listen("tcp", cfg.ListenAddressGrpcActions)
-
-	if err != nil {
-		log.Fatalf("Failed to listen - %v", err)
-	}
-
 	grpcServer := grpc.NewServer()
 	apiv1.RegisterOliveTinApiServiceServer(grpcServer, newServer(ex))
 
-	err = grpcServer.Serve(lis)
-
-	if err != nil {
-		log.Fatalf("Could not start gRPC Server - %v", err)
-	}
+	return grpcServer
 }
 
 func newServer(ex *executor.Executor) *oliveTinAPI {

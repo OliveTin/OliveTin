@@ -5,23 +5,15 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/OliveTin/OliveTin/internal/entityfiles"
-	"github.com/OliveTin/OliveTin/internal/executor"
-	grpcapi "github.com/OliveTin/OliveTin/internal/grpcapi"
-	"github.com/OliveTin/OliveTin/internal/httpservers"
+	"github.com/OliveTin/OliveTin/internal/app"
 	"github.com/OliveTin/OliveTin/internal/installationinfo"
-	"github.com/OliveTin/OliveTin/internal/oncalendarfile"
-	"github.com/OliveTin/OliveTin/internal/oncron"
-	"github.com/OliveTin/OliveTin/internal/onfileindir"
-	"github.com/OliveTin/OliveTin/internal/onstartup"
-	updatecheck "github.com/OliveTin/OliveTin/internal/updatecheck"
-	"github.com/OliveTin/OliveTin/internal/websocket"
+
+	"os"
+	"strconv"
 
 	config "github.com/OliveTin/OliveTin/internal/config"
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
-	"os"
-	"strconv"
 )
 
 var (
@@ -154,29 +146,6 @@ func warnIfPuidGuid() {
 }
 
 func main() {
-	log.WithFields(log.Fields{
-		"configDir": cfg.GetDir(),
-	}).Infof("OliveTin started")
-
-	log.Debugf("Config: %+v", cfg)
-
-	executor := executor.DefaultExecutor(cfg)
-	executor.RebuildActionMap()
-	executor.AddListener(websocket.ExecutionListener)
-	config.AddListener(executor.RebuildActionMap)
-
-	go onstartup.Execute(cfg, executor)
-	go oncron.Schedule(cfg, executor)
-	go onfileindir.WatchFilesInDirectory(cfg, executor)
-	go oncalendarfile.Schedule(cfg, executor)
-
-	entityfiles.AddListener(websocket.OnEntityChanged)
-	entityfiles.AddListener(executor.RebuildActionMap)
-	go entityfiles.SetupEntityFileWatchers(cfg)
-
-	go updatecheck.StartUpdateChecker(cfg)
-
-	go grpcapi.Start(cfg, executor)
-
-	httpservers.StartServers(cfg)
+	o := app.CreateOliveTin(cfg)
+	o.Start()
 }

@@ -171,7 +171,7 @@ func generateWebUISettings(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func startWebUIServer(cfg *config.Config) {
+func startWebUIServer(cfg *config.Config) *http.Server {
 	log.WithFields(log.Fields{
 		"address": cfg.ListenAddressWebUI,
 	}).Info("Starting WebUI server")
@@ -191,7 +191,7 @@ func startWebUIServer(cfg *config.Config) {
 
 			http.ServeFile(w, r, path.Join(webuiDir, "index.html"))
 		} else {
-			dirName := path.Dir(cfg.Subpath + "/")
+			dirName := normaliseSubpath(cfg.Subpath)
 			http.StripPrefix(dirName, http.FileServer(http.Dir(webuiDir))).ServeHTTP(w, r)
 		}
 	})
@@ -200,6 +200,9 @@ func startWebUIServer(cfg *config.Config) {
 		Addr:    cfg.ListenAddressWebUI,
 		Handler: mux,
 	}
+	return srv
+}
 
-	log.Fatal(srv.ListenAndServe())
+func normaliseSubpath(subpath string) string {
+	return "/" + strings.Trim(subpath, "/")
 }
