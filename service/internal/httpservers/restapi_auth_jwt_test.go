@@ -1,20 +1,20 @@
 package httpservers
 
 import (
-	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
-	config "github.com/OliveTin/OliveTin/internal/config"
-	"github.com/golang-jwt/jwt/v4"
-	"github.com/stretchr/testify/assert"
 	"io"
 	"net/http"
 	"os"
 	"testing"
 	"time"
+
+	config "github.com/OliveTin/OliveTin/internal/config"
+	"github.com/golang-jwt/jwt/v4"
+	"github.com/stretchr/testify/assert"
 )
 
 func createKeys(t *testing.T) (*rsa.PrivateKey, string) {
@@ -73,9 +73,10 @@ func testJwkValidation(t *testing.T, expire int64, expectCode int) {
 		w.Write([]byte(fmt.Sprintf("username=%v, usergroup=%v", username, usergroup)))
 	})
 
-	srv := setupTestingServer(mux, t)
+	srv := setupTestingServer(mux)
+	defer srv.Close()
 
-	req, client := newReq("")
+	req, client := newReq(srv.URL, "")
 	req.AddCookie(&http.Cookie{
 		Name:   "authorization_token",
 		Value:  tokenStr,
@@ -93,7 +94,6 @@ func testJwkValidation(t *testing.T, expire int64, expectCode int) {
 		fmt.Println(string(body))
 	}
 
-	srv.Shutdown(context.TODO())
 }
 
 func TestJWTSignatureVerificationSucceeds(t *testing.T) {
@@ -140,9 +140,10 @@ func TestJWTHeader(t *testing.T) {
 		w.Write([]byte(fmt.Sprintf("username=%v, usergroup=%v", username, usergroup)))
 	})
 
-	srv := setupTestingServer(mux, t)
+	srv := setupTestingServer(mux)
+	defer srv.Close()
 
-	req, client := newReq("")
+	req, client := newReq(srv.URL, "")
 	req.Header.Set("Authorization", "Bearer "+tokenStr)
 
 	res, err := client.Do(req)
@@ -155,6 +156,4 @@ func TestJWTHeader(t *testing.T) {
 		body, _ := io.ReadAll(res.Body)
 		fmt.Println(string(body))
 	}
-
-	srv.Shutdown(context.TODO())
 }

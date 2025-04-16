@@ -288,10 +288,14 @@ function pushNewNavigationPath (pathName) {
   // Get the current query string
   const queryString = window.location.search
 
+  // Ensure proper path concatenation with or without trailing slash in BaseUrl
+  const baseUrl = window.BaseUrl || '';
+  const sanitisedBaseUrl = baseUrl.replace(/\/$/, ''); // Ensure we don't get double slashes when concatenating paths
+
   // Push the new state with the path and preserve the query string
   window.history.pushState({
-    path: pathName
-  }, null, pathName + queryString)
+    path: sanitisedBaseUrl + pathName
+  }, null, sanitisedBaseUrl + pathName + queryString)
 }
 
 function setSectionNavigationVisible (visible) {

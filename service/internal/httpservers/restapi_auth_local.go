@@ -1,8 +1,9 @@
 package httpservers
 
 import (
-	"google.golang.org/grpc/metadata"
 	"net/http"
+
+	"google.golang.org/grpc/metadata"
 
 	"github.com/google/uuid"
 )
@@ -45,7 +46,7 @@ func forwardResponseHandlerLoginLocalUser(md metadata.MD, w http.ResponseWriter)
 				Value:    sid,
 				MaxAge:   31556952, // 1 year
 				HttpOnly: true,
-				Path:     "/",
+				Path:     getCookiePath(),
 			},
 		)
 	}

@@ -2,14 +2,15 @@ package httpservers
 
 import (
 	"context"
+	"net/http"
+	"strings"
+
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/reflect/protoreflect"
-	"net/http"
-	"strings"
 
 	apiv1 "github.com/OliveTin/OliveTin/gen/grpc/olivetin/api/v1"
 
@@ -135,7 +136,7 @@ func forwardResponseHandlerLogout(md metadata.MD, w http.ResponseWriter) {
 				MaxAge:   31556952, // 1 year
 				Value:    "",
 				HttpOnly: true,
-				Path:     "/",
+				Path:     getCookiePath(),
 			},
 		)
 
@@ -159,7 +160,7 @@ func SetGlobalRestConfig(config *config.Config) {
 	cfg = config
 }
 
-func startRestAPIServer(globalConfig *config.Config) error {
+func startRestAPIServer(globalConfig *config.Config) *http.Server {
 	cfg = globalConfig
 
 	loadUserSessions()
@@ -170,7 +171,8 @@ func startRestAPIServer(globalConfig *config.Config) error {
 
 	mux := newMux()
 
-	return http.ListenAndServe(cfg.ListenAddressRestActions, cors.AllowCors(mux))
+	srv := &http.Server{Addr: cfg.ListenAddressRestActions, Handler: cors.AllowCors(mux)}
+	return srv
 }
 
 func newMux() *runtime.ServeMux {

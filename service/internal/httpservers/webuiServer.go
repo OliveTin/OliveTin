@@ -2,12 +2,15 @@ package httpservers
 
 import (
 	"encoding/json"
+	"strings"
+
 	//	cors "github.com/OliveTin/OliveTin/internal/cors"
-	log "github.com/sirupsen/logrus"
 	"net/http"
 	"os"
 	"path"
 	"path/filepath"
+
+	log "github.com/sirupsen/logrus"
 
 	config "github.com/OliveTin/OliveTin/internal/config"
 	installationinfo "github.com/OliveTin/OliveTin/internal/installationinfo"
@@ -20,6 +23,7 @@ var (
 )
 
 type webUISettings struct {
+	BaseURL                string
 	Rest                   string
 	ShowFooter             bool
 	ShowNavigation         bool
@@ -128,8 +132,20 @@ func buildPublicOAuth2ProvidersList(cfg *config.Config) []publicOAuth2Provider {
 }
 
 func generateWebUISettings(w http.ResponseWriter, r *http.Request) {
+
+	BaseURL := strings.TrimSuffix(cfg.ExternalRestAddress, "/")
+	if cfg.Subpath != "" {
+		// If we're using a subpath, we cannot define "." as the external rest address, so just assume /
+		if cfg.ExternalRestAddress == "." {
+			BaseURL = "/" + strings.TrimPrefix(cfg.Subpath, "/")
+		} else {
+			BaseURL = strings.TrimSuffix(cfg.ExternalRestAddress, "/") + "/" + strings.TrimPrefix(cfg.Subpath, "/")
+		}
+	}
+	RestURL := BaseURL + "/api/"
 	jsonRet, _ := json.Marshal(webUISettings{
-		Rest:                   cfg.ExternalRestAddress + "/api/",
+		BaseURL:                BaseURL,
+		Rest:                   RestURL,
 		ShowFooter:             cfg.ShowFooter,
 		ShowNavigation:         cfg.ShowNavigation,
 		ShowNewVersions:        cfg.ShowNewVersions,
@@ -155,7 +171,7 @@ func generateWebUISettings(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func startWebUIServer(cfg *config.Config) {
+func startWebUIServer(cfg *config.Config) *http.Server {
 	log.WithFields(log.Fields{
 		"address": cfg.ListenAddressWebUI,
 	}).Info("Starting WebUI server")
@@ -163,20 +179,19 @@ func startWebUIServer(cfg *config.Config) {
 	setupCustomWebuiDir()
 
 	mux := http.NewServeMux()
-	mux.Handle("/custom-webui/", http.StripPrefix("/custom-webui/", http.FileServer(http.Dir(findCustomWebuiDir()))))
-	mux.HandleFunc("/theme.css", generateThemeCss)
-	mux.HandleFunc("/webUiSettings.json", generateWebUISettings)
+	mux.Handle(cfg.Subpath+"/custom-webui/", http.StripPrefix(cfg.Subpath+"/custom-webui/", http.FileServer(http.Dir(findCustomWebuiDir()))))
+	mux.HandleFunc(cfg.Subpath+"/theme.css", generateThemeCss)
+	mux.HandleFunc(cfg.Subpath+"/webUiSettings.json", generateWebUISettings)
 
 	webuiDir := findWebuiDir()
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		dirName := path.Dir(r.URL.Path)
-
+	mux.HandleFunc(cfg.Subpath+"/", func(w http.ResponseWriter, r *http.Request) {
 		// Mangle requests for any path like /logs or /config to load the webui index.html
-		if path.Ext(r.URL.Path) == "" && r.URL.Path != "/" {
+		if path.Ext(r.URL.Path) == "" && r.URL.Path != cfg.Subpath+"/" {
 			log.Debugf("Mangling request for %s to /index.html", r.URL.Path)
 
 			http.ServeFile(w, r, path.Join(webuiDir, "index.html"))
 		} else {
+			dirName := normaliseSubpath(cfg.Subpath)
 			http.StripPrefix(dirName, http.FileServer(http.Dir(webuiDir))).ServeHTTP(w, r)
 		}
 	})
@@ -185,6 +200,9 @@ func startWebUIServer(cfg *config.Config) {
 		Addr:    cfg.ListenAddressWebUI,
 		Handler: mux,
 	}
+	return srv
+}
 
-	log.Fatal(srv.ListenAndServe())
+func normaliseSubpath(subpath string) string {
+	return "/" + strings.Trim(subpath, "/")
 }

@@ -139,6 +139,10 @@ type Config struct {
 	DefaultIconForBack              string
 	AdditionalNavigationLinks       []*NavigationLink
 
+	// Subpath defines the URL path prefix where the application will be served.
+	// Must start with a forward slash (e.g., "/app") or be empty for root path.
+	Subpath string
+
 	usedConfigDir string
 }
 
@@ -206,6 +210,7 @@ func DefaultConfig() *Config {
 // DefaultConfig gets a new Config structure with sensible default values.
 func DefaultConfigWithBasePort(basePort int) *Config {
 	config := Config{}
+	config.Subpath = "" // Empty string for root path as default
 	config.UseSingleHTTPFrontend = true
 	config.PageTitle = "OliveTin"
 	config.ShowFooter = true

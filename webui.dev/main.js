@@ -95,7 +95,13 @@ function fetchGetLogs () {
 function processWebuiSettingsJson (settings) {
   setupSectionNavigation(settings.SectionNavigationStyle)
 
-  window.restBaseUrl = settings.Rest
+  const baseUrl = settings.BaseURL || '';
+  const sanitisedBaseUrl = baseUrl.replace(/\/$/, ''); // Ensure we don't get double slashes when concatenating paths
+  window.BaseUrl = sanitisedBaseUrl
+
+  // Configure the rest base url for the api endpoints
+  const restBaseUrl = settings.Rest || ''
+  window.restBaseUrl = restBaseUrl
 
   document.querySelector('#currentVersion').innerText = settings.CurrentVersion
 
