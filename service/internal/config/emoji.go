@@ -1,5 +1,10 @@
 package config
 
+import (
+	"strings"
+	"fmt"
+)
+
 var emojis = map[string]string{
 	"poop":        "&#x1f4a9;",
 	"smile":       "&#x1F600;",
@@ -25,6 +30,10 @@ func lookupHTMLIcon(keyToLookup string, defaultIcon string) string {
 
 	if emoji, found := emojis[keyToLookup]; found {
 		return emoji
+	}
+
+	if strings.Contains(keyToLookup, "/") && !strings.HasPrefix(keyToLookup, "<") {
+		return fmt.Sprintf("<img src = \"/custom-webui/%s\" />", keyToLookup)
 	}
 
 	return keyToLookup
