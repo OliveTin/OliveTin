@@ -1,4 +1,5 @@
 import './ActionButton.js' // To define action-button
+import { NavigationBar } from './NavigationBar.js'
 import { ExecutionDialog } from './ExecutionDialog.js'
 import { ActionStatusDisplay } from './ActionStatusDisplay.js'
 
@@ -76,6 +77,8 @@ function createAnnotation (key, val) {
  * This is a weird function that just sets some globals.
  */
 export function initMarshaller () {
+  window.navbar = new NavigationBar()
+
   window.showSection = showSection
   window.showSectionView = showSectionView
 
@@ -124,6 +127,10 @@ export function marshalDashboardComponentsJsonToHtml (json) {
 
     marshalActionsJsonToHtml(json)
     marshalDashboardStructureToHtml(json)
+
+	window.navbar.refreshSectionPolicyLinks(json.effectivePolicy)
+
+	refreshDiagnostics(json)
   }
 
   document.body.setAttribute('initial-marshal-complete', 'true')
@@ -342,8 +349,8 @@ export function setupSectionNavigation (style) {
   }
 
   registerSection('/', 'Actions', null, document.getElementById('showActions'))
-  registerSection('/diagnostics', 'Diagnostics', null, document.getElementById('showDiagnostics'))
-  registerSection('/logs', 'Logs', null, document.getElementById('showLogs'))
+  registerSection('/diagnostics', 'Diagnostics', null, null)
+  registerSection('/logs', 'Logs', null, null)
   registerSection('/login', 'Login', null, null)
 }
 
@@ -368,9 +375,9 @@ function addLinkToSection (pathName, element) {
   }
 }
 
-export function refreshDiagnostics () {
-  document.getElementById('diagnostics-sshfoundkey').innerHTML = window.settings.SshFoundKey
-  document.getElementById('diagnostics-sshfoundconfig').innerHTML = window.settings.SshFoundConfig
+function refreshDiagnostics (json) {
+  document.getElementById('diagnostics-sshfoundkey').innerHTML = json.diagnostics.SshFoundKey
+  document.getElementById('diagnostics-sshfoundconfig').innerHTML = json.diagnostics.SshFoundConfig
 }
 
 function getSystemTitle (title) {
@@ -400,17 +407,11 @@ function marshalSingleDashboard (dashboard, nav) {
     oldLi.remove()
   }
 
-  const navigationA = document.createElement('a')
-  navigationA.title = dashboard.title
-  navigationA.innerText = dashboard.title
+  const systemTitleUrl = '/' + getSystemTitle(dashboard.title)
 
-  registerSection('/' + getSystemTitle(section.title), section.title, null, navigationA)
+  window.navbar.createLink(dashboard.title, systemTitleUrl, false)
 
-  const navigationLi = document.createElement('li')
-  navigationLi.appendChild(navigationA)
-  navigationLi.title = dashboard.title
-
-  document.getElementById('navigation-links').appendChild(navigationLi)
+  registerSection(systemTitleUrl, section.title, null, null)
 }
 
 function marshalDashboardStructureToHtml (json) {

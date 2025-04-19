@@ -29,8 +29,6 @@ type webUISettings struct {
 	PageTitle              string
 	SectionNavigationStyle string
 	DefaultIconForBack     string
-	SshFoundKey            string
-	SshFoundConfig         string
 	EnableCustomJs         bool
 	AuthLoginUrl           string
 	AuthLocalLogin         bool
@@ -138,8 +136,6 @@ func generateWebUISettings(w http.ResponseWriter, r *http.Request) {
 		PageTitle:              cfg.PageTitle,
 		SectionNavigationStyle: cfg.SectionNavigationStyle,
 		DefaultIconForBack:     cfg.DefaultIconForBack,
-		SshFoundKey:            installationinfo.Runtime.SshFoundKey,
-		SshFoundConfig:         installationinfo.Runtime.SshFoundConfig,
 		EnableCustomJs:         cfg.EnableCustomJs,
 		AuthLoginUrl:           cfg.AuthLoginUrl,
 		AuthLocalLogin:         cfg.AuthLocalUsers.Enabled,

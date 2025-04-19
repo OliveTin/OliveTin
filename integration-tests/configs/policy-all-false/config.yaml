@@ -1,0 +1,14 @@
+# Integration Test Config: Policy All False
+#
+
+logLevel: "DEBUG"
+checkForUpdates: false
+
+defaultPolicy:
+  showDiagnostics: false
+  showLogList: false
+
+actions:
+- title: sleep 2 seconds
+  shell: sleep 2
+  icon: "&#x1F971"

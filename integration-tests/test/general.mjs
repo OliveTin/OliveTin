@@ -37,6 +37,15 @@ describe('config: general', function () {
     */
   })
 
+  it('navbar contains default policy links', async function () {
+    await getRootAndWait()
+
+    const logListLink = await webdriver.findElements(By.css('[href="/logs"]'))
+    expect(logListLink).to.not.be.empty
+
+    const diagnosticsLink = await webdriver.findElements(By.css('[href="/diagnostics"]'))
+    expect(diagnosticsLink).to.not.be.empty
+  })
 
   it('Footer contains promo', async function () {
     const ftr = await webdriver.findElement(By.tagName('footer')).getText()

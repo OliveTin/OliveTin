@@ -5,6 +5,7 @@ import (
 	acl "github.com/OliveTin/OliveTin/internal/acl"
 	config "github.com/OliveTin/OliveTin/internal/config"
 	executor "github.com/OliveTin/OliveTin/internal/executor"
+	installationinfo "github.com/OliveTin/OliveTin/internal/installationinfo"
 	sv "github.com/OliveTin/OliveTin/internal/stringvariables"
 	"sort"
 )
@@ -35,7 +36,30 @@ func buildDashboardResponse(ex *executor.Executor, cfg *config.Config, user *acl
 		}
 	})
 
+	res.EffectivePolicy = buildEffectivePolicy(user.EffectivePolicy)
+	res.Diagnostics = buildDiagnostics(res.EffectivePolicy.ShowDiagnostics)
+
 	return res
+}
+
+func buildEffectivePolicy(policy *config.ConfigurationPolicy) *apiv1.EffectivePolicy {
+	ret := &apiv1.EffectivePolicy{
+		ShowDiagnostics: policy.ShowDiagnostics,
+		ShowLogList:     policy.ShowLogList,
+	}
+
+	return ret
+}
+
+func buildDiagnostics(showDiagnostics bool) *apiv1.Diagnostics {
+	ret := &apiv1.Diagnostics{}
+
+	if showDiagnostics {
+		ret.SshFoundKey = installationinfo.Runtime.SshFoundKey
+		ret.SshFoundConfig = installationinfo.Runtime.SshFoundConfig
+	}
+
+	return ret
 }
 
 func buildAction(actionId string, actionBinding *executor.ActionBinding, user *acl.AuthenticatedUser) *apiv1.Action {

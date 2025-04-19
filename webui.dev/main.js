@@ -6,7 +6,6 @@ import {
   marshalDashboardComponentsJsonToHtml,
   marshalLogsJsonToHtml,
   refreshServerConnectionLabel,
-  refreshDiagnostics
 } from './js/marshaller.js'
 import { checkWebsocketConnection } from './js/websocket.js'
 
@@ -139,8 +138,6 @@ function processWebuiSettingsJson (settings) {
   document.getElementsByTagName('main')[0].appendChild(loginForm)
 
   window.settings = settings
-
-  refreshDiagnostics()
 }
 
 function processAdditionalLinks (links) {
