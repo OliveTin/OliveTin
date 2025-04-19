@@ -79,6 +79,7 @@ type AccessControlList struct {
 	Policy           ConfigurationPolicy
 }
 
+// ConfigurationPolicy defines global settings which are overridden with an ACL.
 type ConfigurationPolicy struct {
 	ShowDiagnostics bool
 	ShowLogList     bool

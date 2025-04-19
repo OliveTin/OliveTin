@@ -20,13 +20,13 @@ describe('config: policy-all-false', function () {
   });
 
 
-  it('navbar contains default policy links', async function () {
+  it('navbar should not contain default policy links', async function () {
     await getRootAndWait()
 
     const logListLink = await webdriver.findElements(By.css('[href="/logs"]'))
-	expect(logListLink).to.be.empty
+    expect(logListLink).to.be.empty
 
-	const diagnosticsLink = await webdriver.findElements(By.css('[href="/diagnostics"]'))
-	expect(diagnosticsLink).to.be.empty
+    const diagnosticsLink = await webdriver.findElements(By.css('[href="/diagnostics"]'))
+    expect(diagnosticsLink).to.be.empty
   })
 })

@@ -24,7 +24,6 @@ type webUISettings struct {
 	ShowFooter             bool
 	ShowNavigation         bool
 	ShowNewVersions        bool
-	ShowDiagnostics        bool
 	AvailableVersion       string
 	CurrentVersion         string
 	PageTitle              string
