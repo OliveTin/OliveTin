@@ -49,6 +49,19 @@ message GetDashboardComponentsResponse {
 
 	string authenticated_user = 5;
     string authenticated_user_provider = 6;
+
+	EffectivePolicy effective_policy = 7;
+	Diagnostics diagnostics = 8;
+}
+
+message Diagnostics {
+	string SshFoundKey = 1;
+	string SshFoundConfig = 2;
+}
+
+message EffectivePolicy {
+	bool show_diagnostics = 1;
+	bool show_log_list = 2;
 }
 
 message GetDashboardComponentsRequest {}

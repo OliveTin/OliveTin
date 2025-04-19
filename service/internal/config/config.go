@@ -76,6 +76,12 @@ type AccessControlList struct {
 	MatchUsergroups  []string
 	MatchUsernames   []string
 	Permissions      PermissionsList
+	Policy           ConfigurationPolicy
+}
+
+type ConfigurationPolicy struct {
+	ShowDiagnostics bool
+	ShowLogList     bool
 }
 
 type PrometheusConfig struct {
@@ -123,6 +129,7 @@ type Config struct {
 	AuthOAuth2RedirectURL           string
 	AuthOAuth2Providers             map[string]*OAuth2Provider
 	DefaultPermissions              PermissionsList
+	DefaultPolicy                   ConfigurationPolicy
 	AccessControlLists              []*AccessControlList
 	WebUIDir                        string
 	CronSupportForSeconds           bool
@@ -242,6 +249,9 @@ func DefaultConfigWithBasePort(basePort int) *Config {
 	config.ListenAddressGrpcActions = fmt.Sprintf("localhost:%d", basePort+2)
 	config.ListenAddressWebUI = fmt.Sprintf("localhost:%d", basePort+3)
 	config.ListenAddressPrometheus = fmt.Sprintf("localhost:%d", basePort+4)
+
+	config.DefaultPolicy.ShowDiagnostics = true
+	config.DefaultPolicy.ShowLogList = true
 
 	return &config
 }

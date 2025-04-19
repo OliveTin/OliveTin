@@ -32,6 +32,8 @@ type AuthenticatedUser struct {
 	SID      string
 
 	Acls []string
+
+	EffectivePolicy *config.ConfigurationPolicy
 }
 
 func (u *AuthenticatedUser) IsGuest() bool {
@@ -43,15 +45,22 @@ func logAclNotMatched(cfg *config.Config, aclFunction string, user *Authenticate
 		log.WithFields(log.Fields{
 			"User":   user.Username,
 			"Action": action.Title,
-		}).Debugf("%v - No ACLs Matched", aclFunction)
+			"ACL":    acl.Name,
+		}).Debugf("%v - ACL Not Matched", aclFunction)
 	}
 }
 
 func logAclMatched(cfg *config.Config, aclFunction string, user *AuthenticatedUser, action *config.Action, acl *config.AccessControlList) {
+	actionTitle := "N/A"
+
+	if action != nil {
+		actionTitle = action.Title
+	}
+
 	if cfg.LogDebugOptions.AclMatched {
 		log.WithFields(log.Fields{
 			"User":   user.Username,
-			"Action": action.Title,
+			"Action": actionTitle,
 			"ACL":    acl.Name,
 		}).Debugf("%v - Matched ACL", aclFunction)
 	}
@@ -209,6 +218,8 @@ func buildUserAcls(cfg *config.Config, user *AuthenticatedUser) {
 			continue
 		}
 	}
+
+	user.EffectivePolicy = getEffectivePolicy(cfg, user)
 }
 
 func hasGroupsMatch(matchUsergroups []string, usergroup string) bool {
@@ -245,6 +256,35 @@ func getRelevantAcls(cfg *config.Config, actionAcls []string, user *Authenticate
 		if isACLRelevantToAction(cfg, actionAcls, acl, user) {
 			ret = append(ret, acl)
 		}
+	}
+
+	return ret
+}
+
+func getEffectivePolicy(cfg *config.Config, user *AuthenticatedUser) *config.ConfigurationPolicy {
+	ret := &config.ConfigurationPolicy{
+		ShowDiagnostics: cfg.DefaultPolicy.ShowDiagnostics,
+		ShowLogList:     cfg.DefaultPolicy.ShowLogList,
+	}
+
+	for _, acl := range cfg.AccessControlLists {
+		if slices.Contains(user.Acls, acl.Name) {
+			logAclMatched(cfg, "GetEffectivePolicy", user, nil, acl)
+
+			ret = buildConfigurationPolicy(ret, acl.Policy)
+		}
+	}
+
+	return ret
+}
+
+func buildConfigurationPolicy(ret *config.ConfigurationPolicy, policy config.ConfigurationPolicy) *config.ConfigurationPolicy {
+	if policy.ShowDiagnostics {
+		ret.ShowDiagnostics = policy.ShowDiagnostics
+	}
+
+	if policy.ShowLogList {
+		ret.ShowLogList = policy.ShowLogList
 	}
 
 	return ret
