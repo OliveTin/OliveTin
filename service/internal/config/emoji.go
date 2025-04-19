@@ -1,8 +1,8 @@
 package config
 
 import (
-	"strings"
 	"fmt"
+	"strings"
 )
 
 var emojis = map[string]string{
@@ -32,6 +32,12 @@ func lookupHTMLIcon(keyToLookup string, defaultIcon string) string {
 		return emoji
 	}
 
+	keyToLookup = expandShortPathToFullPath(keyToLookup)
+
+	return keyToLookup
+}
+
+func expandShortPathToFullPath(keyToLookup string) string {
 	if strings.Contains(keyToLookup, "/") && !strings.HasPrefix(keyToLookup, "<") {
 		return fmt.Sprintf("<img src = \"/custom-webui/%s\" />", keyToLookup)
 	}
