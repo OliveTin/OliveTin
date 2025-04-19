@@ -219,6 +219,10 @@ span.icon {
   font-size: 3em;
 }
 
+span.icon img {
+  width: 1em;
+}
+
 .action-header {
   display: flex;
   align-items: center;
