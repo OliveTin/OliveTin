@@ -41,10 +41,10 @@ describe('config: general', function () {
     await getRootAndWait()
 
     const logListLink = await webdriver.findElements(By.css('[href="/logs"]'))
-    expect(logListLink).to.not.be.greaterThan(0)
+    expect(logListLink).to.not.be.empty
 
     const diagnosticsLink = await webdriver.findElements(By.css('[href="/diagnostics"]'))
-    expect(diagnosticsLink).to.not.be.greaterThan(0)
+    expect(diagnosticsLink).to.not.be.empty
   })
 
   it('Footer contains promo', async function () {
