@@ -147,7 +147,7 @@ func (e *Executor) AddListener(m listener) {
 //	count: Number of logs to retrieve
 //
 // Returns: The calculated starting index for pagination
-func getPagingStartIndex(startOffset int64, totalLogCount int64, count int64) int64 {
+func getPagingStartIndex(startOffset int64, totalLogCount int64) int64 {
 	var startIndex int64
 
 	if startOffset <= 0 {
@@ -168,7 +168,7 @@ func (e *Executor) GetLogTrackingIds(startOffset int64, pageCount int64) ([]*Int
 
 	totalLogCount := int64(len(e.logsTrackingIdsByDate))
 
-	startIndex := getPagingStartIndex(startOffset, totalLogCount, pageCount)
+	startIndex := getPagingStartIndex(startOffset, totalLogCount)
 
 	pageCount = min(totalLogCount, pageCount)
 
@@ -402,7 +402,7 @@ func stepParseArgs(req *ExecutionRequest) bool {
 	req.Arguments["ot_executionTrackingId"] = req.TrackingID
 	req.Arguments["ot_username"] = req.AuthenticatedUser.Username
 
-	req.finalParsedCommand, err = parseActionArguments(req.Arguments, req.Action, req.logEntry.ActionTitle, req.EntityPrefix)
+	req.finalParsedCommand, err = parseActionArguments(req.Arguments, req.Action, req.EntityPrefix)
 
 	if err != nil {
 		req.logEntry.Output = err.Error()
@@ -595,7 +595,7 @@ func stepExecAfter(req *ExecutionRequest) bool {
 		"ot_username":            req.AuthenticatedUser.Username,
 	}
 
-	finalParsedCommand, _, err := parseCommandForReplacements(req.Action.ShellAfterCompleted, args)
+	finalParsedCommand, err := parseCommandForReplacements(req.Action.ShellAfterCompleted, args)
 
 	if err != nil {
 		msg := "Could not prepare shellAfterCompleted command: " + err.Error() + "\n"

@@ -82,7 +82,7 @@ func TestArgumentNameCamelCase(t *testing.T) {
 		"personName": "Fred",
 	}
 
-	out, err := parseActionArguments(values, a1, a1.Title, "")
+	out, err := parseActionArguments(values, a1, "")
 
 	assert.Equal(t, "echo 'Tickling Fred'", out)
 	assert.Nil(t, err)
@@ -104,7 +104,7 @@ func TestArgumentNameSnakeCase(t *testing.T) {
 		"person_name": "Fred",
 	}
 
-	out, err := parseActionArguments(values, a1, a1.Title, "")
+	out, err := parseActionArguments(values, a1, "")
 
 	assert.Equal(t, "echo 'Tickling Fred'", out)
 	assert.Nil(t, err)
@@ -173,9 +173,56 @@ func execNewReqAndWait(e *Executor, title string, cfg *config.Config) {
 }
 
 func TestGetPagingIndexes(t *testing.T) {
-	assert.Zero(t, getPagingStartIndex(5, 0, 5), "Testing start index from empty list")
-	assert.Equal(t, int64(4), getPagingStartIndex(5, 10, 5), "Testing start index from mid point")
-	assert.Equal(t, int64(9), getPagingStartIndex(-1, 10, 5), "Testing start index with negative offset")
-	assert.Equal(t, int64(0), getPagingStartIndex(15, 10, 5), "Testing start index with large offset")
-	assert.Equal(t, int64(9), getPagingStartIndex(0, 10, 0), "Testing start index with zero count")
+	assert.Zero(t, getPagingStartIndex(5, 0), "Testing start index from empty list")
+	assert.Equal(t, int64(4), getPagingStartIndex(5, 10), "Testing start index from mid point")
+	assert.Equal(t, int64(9), getPagingStartIndex(-1, 10), "Testing start index with negative offset")
+	assert.Equal(t, int64(0), getPagingStartIndex(15, 10), "Testing start index with large offset")
+	assert.Equal(t, int64(9), getPagingStartIndex(0, 10), "Testing start index with zero count")
+}
+
+func TestUnsetRequiredArgument(t *testing.T) {
+	a1 := &config.Action{
+		Title: "Print your name",
+		Shell: "echo 'Your name is: {{ name }}'",
+		Arguments: []config.ActionArgument{
+			{
+				Name:     "name",
+				Type:     "ascii",
+			},
+		},
+	}
+
+	values := map[string]string{}
+
+	out, err := parseActionArguments(values, a1, "")
+
+	assert.Equal(t, "", out)
+	assert.NotNil(t, err)
+}
+
+func TestUnusedArgumentStillPassesTypeSafetyCheck(t *testing.T) {
+	a1 := &config.Action{
+		Title: "Print your name",
+		Shell: "echo 'Your name is: {{ name }}'",
+		Arguments: []config.ActionArgument{
+			{
+				Name:     "name",
+				Type:     "ascii",
+			},
+			{
+				Name:     "age",
+				Type:     "int",
+			},
+		},
+	}
+
+	values := map[string]string{
+		"name": "Fred",
+		"age":  "Not an integer",
+	}
+
+	out, err := parseActionArguments(values, a1, "")
+
+	assert.Equal(t, "", out)
+	assert.NotNil(t, err)
 }
