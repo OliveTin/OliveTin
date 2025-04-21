@@ -11,6 +11,7 @@ import (
 	"regexp"
 	"strings"
 	"time"
+	"fmt"
 )
 
 var (
@@ -24,41 +25,34 @@ var (
 	}
 )
 
-func parseCommandForReplacements(rawShellCommand string, values map[string]string) (string, map[string]string, error) {
+func parseCommandForReplacements(shellCommand string, values map[string]string) (string, error) {
 	r := regexp.MustCompile("{{ *?([a-zA-Z0-9_]+?) *?}}")
-	foundArgumentNames := r.FindAllStringSubmatch(rawShellCommand, -1)
-
-	usedArguments := make(map[string]string)
+	foundArgumentNames := r.FindAllStringSubmatch(shellCommand, -1)
 
 	for _, match := range foundArgumentNames {
 		argName := match[1]
 		argValue, argProvided := values[argName]
 
 		if !argProvided {
-			return "", nil, errors.New("Required arg not provided: " + argName)
+			return "", errors.New("Required arg not provided: " + argName)
 		}
 
-		usedArguments[argName] = argValue
-
-		rawShellCommand = strings.ReplaceAll(rawShellCommand, match[0], argValue)
+		shellCommand = strings.ReplaceAll(shellCommand, match[0], argValue)
 	}
 
-	return rawShellCommand, usedArguments, nil
+	return shellCommand, nil
 }
 
-func parseActionArguments(values map[string]string, action *config.Action, actionTitle string, entityPrefix string) (string, error) {
+func parseActionArguments(values map[string]string, action *config.Action, entityPrefix string) (string, error) {
 	log.WithFields(log.Fields{
-		"actionTitle": actionTitle,
+		"actionTitle": action.Title,
 		"cmd":         action.Shell,
 	}).Infof("Action parse args - Before")
 
-	rawShellCommand, usedArgs, err := parseCommandForReplacements(action.Shell, values)
+	for _, arg := range action.Arguments {
+		argName := arg.Name
+		argValue := values[argName]
 
-	if err != nil {
-		return "", err
-	}
-
-	for argName, argValue := range usedArgs {
 		err := typecheckActionArgument(argName, argValue, action)
 
 		if err != nil {
@@ -71,14 +65,19 @@ func parseActionArguments(values map[string]string, action *config.Action, actio
 		}).Debugf("Arg assigned")
 	}
 
-	rawShellCommand = sv.ReplaceEntityVars(entityPrefix, rawShellCommand)
+	parsedShellCommand, err := parseCommandForReplacements(action.Shell, values)
+	parsedShellCommand = sv.ReplaceEntityVars(entityPrefix, parsedShellCommand)
+
+	if err != nil {
+		return "", err
+	}
 
 	log.WithFields(log.Fields{
-		"actionTitle": actionTitle,
-		"cmd":         rawShellCommand,
+		"actionTitle": action.Title,
+		"cmd":         parsedShellCommand,
 	}).Infof("Action parse args - After")
 
-	return rawShellCommand, nil
+	return parsedShellCommand, nil
 }
 
 func typecheckActionArgument(name string, value string, action *config.Action) error {
@@ -97,6 +96,28 @@ func typecheckActionArgument(name string, value string, action *config.Action) e
 	}
 
 	return TypeSafetyCheck(name, value, arg.Type)
+}
+
+// TypeSafetyCheck checks argument values match a specific type. The types are
+// defined in typecheckRegex, and, you guessed it, uses regex to check for allowed
+// characters.
+//
+//gocyclo:ignore
+func TypeSafetyCheck(name string, value string, argumentType string) error {
+	switch argumentType {
+	case "password":
+		return nil
+	case "raw_string_multiline":
+		return nil
+	case "email":
+		return typeSafetyCheckEmail(value)
+	case "url":
+		return typeSafetyCheckUrl(value)
+	case "datetime":
+		return typeSafetyCheckDatetime(value)
+	}
+
+	return typeSafetyCheckRegex(name, value, argumentType)
 }
 
 func typecheckNull(arg *config.ActionArgument) error {
@@ -135,29 +156,7 @@ func typecheckChoiceEntity(value string, arg *config.ActionArgument) error {
 	return errors.New("argument value cannot be found in entities")
 }
 
-// TypeSafetyCheck checks argument values match a specific type. The types are
-// defined in typecheckRegex, and, you guessed it, uses regex to check for allowed
-// characters.
-//
-//gocyclo:ignore
-func TypeSafetyCheck(name string, value string, argumentType string) error {
-	switch argumentType {
-	case "password":
-		return nil
-	case "raw_string_multiline":
-		return nil
-	case "email":
-		return typeSafetyCheckEmail(name, value)
-	case "url":
-		return typeSafetyCheckUrl(name, value)
-	case "datetime":
-		return typeSafetyCheckDatetime(name, value)
-	}
-
-	return typeSafetyCheckRegex(name, value, argumentType)
-}
-
-func typeSafetyCheckEmail(name string, value string) error {
+func typeSafetyCheckEmail(value string) error {
 	_, err := mail.ParseAddress(value)
 
 	log.Errorf("Email check: %v, %v", err, value)
@@ -169,7 +168,7 @@ func typeSafetyCheckEmail(name string, value string) error {
 	return nil
 }
 
-func typeSafetyCheckDatetime(name string, value string) error {
+func typeSafetyCheckDatetime(value string) error {
 	_, err := time.Parse("2006-01-02T15:04:05", value)
 
 	if err != nil {
@@ -203,13 +202,13 @@ func typeSafetyCheckRegex(name string, value string, argumentType string) error 
 			"pattern": pattern,
 		}).Warn("Arg type check safety failure")
 
-		return errors.New("invalid argument, doesn't match " + argumentType)
+		return errors.New(fmt.Sprintf("invalid argument %v, doesn't match %v", name, argumentType))
 	}
 
 	return nil
 }
 
-func typeSafetyCheckUrl(name string, value string) error {
+func typeSafetyCheckUrl(value string) error {
 	_, err := url.ParseRequestURI(value)
 
 	return err
