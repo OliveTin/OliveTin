@@ -62,7 +62,7 @@ func (u *AuthenticatedUser) matchesUsergroupAcl(matchUsergroups []string, sep st
 
 	for _, group := range groupList {
 		if slices.Contains(matchUsergroups, group) {
-			log.Infof("Group %v found in %+v %v", group, groupList, len(groupList))
+			log.Debugf("Usergroup %v found in %+v (len: %v)", group, groupList, len(groupList))
 			return true
 		}
 	}
