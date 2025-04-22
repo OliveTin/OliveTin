@@ -2,6 +2,7 @@ package grpcapi
 
 import (
 	ctx "context"
+	"net"
 
 	apiv1 "github.com/OliveTin/OliveTin/gen/grpc/olivetin/api/v1"
 	"github.com/google/uuid"
@@ -13,7 +14,6 @@ import (
 	"google.golang.org/grpc/status"
 
 	"errors"
-	"net"
 
 	acl "github.com/OliveTin/OliveTin/internal/acl"
 	config "github.com/OliveTin/OliveTin/internal/config"

@@ -1,6 +1,8 @@
 import * as process from 'node:process'
+import fs from 'node:fs';
 import waitOn from 'wait-on'
 import { spawn } from 'node:child_process'
+import { parse } from 'yaml'
 
 export default function getRunner () {
   const type = process.env.OLIVETIN_TEST_RUNNER
@@ -40,6 +42,15 @@ class OliveTinTestRunnerStartLocalProcess extends OliveTinTestRunner {
 
     this.ot = spawn('./../service/OliveTin', ['-configdir', 'configs/' + cfg + '/'])
 
+    let oliveTinConfig = {};
+    try {
+      const configPath = "configs/" + cfg + "/config.yaml";
+      const data = fs.readFileSync(configPath, 'utf8');
+      oliveTinConfig = parse(data);
+    } catch (error) {
+      console.error(`Error reading/parsing config file: ${error.message}`);
+    }
+
     let logStdout = false
 
     if (process.env.CI === 'true') {
@@ -74,7 +85,10 @@ class OliveTinTestRunnerStartLocalProcess extends OliveTinTestRunner {
     })
 
     if (this.ot.exitCode == null) {
-      this.BASE_URL = 'http://localhost:1337/'
+      this.BASE_URL = 'http://localhost:1337'
+      if (oliveTinConfig["subPath"] != undefined) {
+        this.BASE_URL += oliveTinConfig["subPath"];
+      }
 
       console.log("      OliveTin waiting for local process to start...")
 
@@ -82,7 +96,7 @@ class OliveTinTestRunnerStartLocalProcess extends OliveTinTestRunner {
         resources: [this.BASE_URL]
       })
 
-      console.log("      OliveTin local process started and webUI accessible")
+      console.log("      OliveTin local process started and webUI accessible at " + this.BASE_URL)
     } else {
       console.log("      OliveTin local process start FAILED!")
       console.log(stdout)

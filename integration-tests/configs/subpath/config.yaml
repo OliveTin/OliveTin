@@ -1,0 +1,81 @@
+#
+# Integration Test Config: subpath
+#
+
+listenAddressSingleHTTPFrontend: 0.0.0.0:1337
+
+logLevel: "DEBUG"
+checkForUpdates: false
+
+subPath: /subpath
+
+actions:
+- title: Ping Google.com
+  shell: ping google.com -c 1
+  icon: ping
+
+- title: dir-popup
+  shell: dir
+  popupOnStart: execution-dialog-stdout-only
+
+- title: "{{ server.name }} Wake on Lan"
+  shell: echo "Sending Wake on LAN to {{ server.hostname }}"
+  entity: server
+
+- title: "{{ server.name }} Power Off"
+  shell: "echo 'Power Off Server: {{ server.hostname }}'"
+  entity: server
+
+- title: dashboard action
+  shell: date
+  icon: clock
+
+- title: Ping hypervisor1
+  shell: echo "hypervisor1 online"
+
+- title: Ping hypervisor2
+  shell: echo "hypervisor2 online"
+
+- title: "{{ server.name }} Wake on Lan"
+  shell: echo "Sending Wake on LAN to {{ server.hostname }}"
+  entity: server
+
+- title: "{{ server.name }} Power Off"
+  shell: "echo 'Power Off Server: {{ server.hostname }}'"
+  entity: server
+
+- title: Ping All Servers
+  shell: "echo 'Ping all servers'"
+  icon: ping
+
+entities:
+  - file: entities/servers.yaml
+    name: server
+
+dashboards:
+  - title: My Dashboard
+    contents:
+      - title: dashboard action
+
+  - title: My Servers
+    contents:
+      - title: All Servers
+        type: fieldset
+        contents:
+          - title: Ping All Servers
+          - title: Hypervisors
+            contents:
+              - title: Ping hypervisor1
+              - title: Ping hypervisor2
+
+      - type: fieldset
+        entity: server
+        title: 'Server: {{ server.hostname }}'
+        contents:
+          - type: display
+            title: |
+              Hostname: <strong>{{ server.name }}</strong>
+              IP Address: <strong>{{ server.ip }}</strong>
+
+          - title: '{{ server.name }} Wake on Lan'
+          - title: '{{ server.name }} Power Off'

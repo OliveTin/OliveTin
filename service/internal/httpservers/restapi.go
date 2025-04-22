@@ -122,7 +122,7 @@ func forwardResponseHandlerLogout(md metadata.MD, w http.ResponseWriter) {
 				MaxAge:   31556952, // 1 year
 				Value:    "",
 				HttpOnly: true,
-				Path:     "/",
+				Path:     getCookiePath(),
 			},
 		)
 
@@ -135,7 +135,7 @@ func forwardResponseHandlerLogout(md metadata.MD, w http.ResponseWriter) {
 				MaxAge:   31556952, // 1 year
 				Value:    "",
 				HttpOnly: true,
-				Path:     "/",
+				Path:     getCookiePath(),
 			},
 		)
 

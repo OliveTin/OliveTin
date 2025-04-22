@@ -128,9 +128,9 @@ export function marshalDashboardComponentsJsonToHtml (json) {
     marshalActionsJsonToHtml(json)
     marshalDashboardStructureToHtml(json)
 
-	window.navbar.refreshSectionPolicyLinks(json.effectivePolicy)
+    window.navbar.refreshSectionPolicyLinks(json.effectivePolicy)
 
-	refreshDiagnostics(json)
+    refreshDiagnostics(json)
   }
 
   document.body.setAttribute('initial-marshal-complete', 'true')
@@ -254,6 +254,11 @@ function showExecutionResult (pathName) {
 }
 
 function showSection (pathName) {
+  // don't consider the BaseUrl as part of the navigation
+  if (pathName.startsWith(window.BaseUrl)) {
+    pathName = pathName.replace(window.BaseUrl, '')
+  }
+
   if (pathName.startsWith('/logs/')) {
     showExecutionResult(pathName)
     pushNewNavigationPath(pathName)
@@ -295,10 +300,14 @@ function pushNewNavigationPath (pathName) {
   // Get the current query string
   const queryString = window.location.search
 
+  // Ensure proper path concatenation with or without trailing slash in BaseUrl
+  const baseUrl = window.BaseUrl || ''
+  const sanitisedBaseUrl = baseUrl.replace(/\/$/, '') // Ensure we don't get double slashes when concatenating paths
+
   // Push the new state with the path and preserve the query string
   window.history.pushState({
-    path: pathName
-  }, null, pathName + queryString)
+    path: sanitisedBaseUrl + pathName
+  }, null, sanitisedBaseUrl + pathName + queryString)
 }
 
 function setSectionNavigationVisible (visible) {
