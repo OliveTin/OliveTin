@@ -45,7 +45,11 @@ func (u *AuthenticatedUser) parseUsergroupLine(sep string) []string {
 
 	if sep != "" {
 		for _, v := range strings.Split(u.UsergroupLine, sep) {
-			ret = append(ret, strings.TrimSpace(v))
+			trimmed := strings.TrimSpace(v)
+
+			if trimmed != "" {
+				ret = append(ret, trimmed)
+			}
 		}
 	} else {
 		ret = strings.Fields(u.UsergroupLine)
