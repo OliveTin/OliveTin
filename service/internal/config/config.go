@@ -124,6 +124,7 @@ type Config struct {
 	AuthJwtPubKeyPath               string // will read pub key from file on disk
 	AuthHttpHeaderUsername          string
 	AuthHttpHeaderUserGroup         string
+	AuthHttpHeaderUserGroupSep      string
 	AuthLocalUsers                  AuthLocalUsersConfig
 	AuthLoginUrl                    string
 	AuthRequireGuestsToLogin        bool

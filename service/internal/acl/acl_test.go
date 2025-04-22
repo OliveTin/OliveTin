@@ -1,37 +1,94 @@
 package acl
 
-import "testing"
+import (
+	"github.com/stretchr/testify/assert"
+	"testing"
+)
 
 func Test_hasGroupsMatch(t *testing.T) {
 	tests := []struct {
-		name            string
-		matchUsergroups []string
-		usergroup       string
-		want            bool
+		name               string
+		aclMatchUsergroups []string
+		usergroupLine      string
+		matches            bool
+		sep                string
 	}{
 		{
-			name:            "No groups match",
-			matchUsergroups: []string{"group1", "group2"},
-			usergroup:       "group3",
+			name:               "No groups match",
+			aclMatchUsergroups: []string{"group1", "group2"},
+			usergroupLine:      "group3",
+			matches:            false,
 		},
 		{
-			name:            "Exact match",
-			matchUsergroups: []string{"group1", "group2"},
-			usergroup:       "group1",
-			want:            true,
+			name:               "Exact match",
+			aclMatchUsergroups: []string{"group1", "group2"},
+			usergroupLine:      "group1",
+			matches:            true,
 		},
 		{
-			name:            "Multiple groups match",
-			matchUsergroups: []string{"group1", "group2"},
-			usergroup:       "group1 group2",
-			want:            true,
+			name:               "Multiple groups match",
+			aclMatchUsergroups: []string{"group1", "group2"},
+			usergroupLine:      "group1 group2",
+			matches:            true,
+		},
+		{
+			name:               "Comma-separated groups match",
+			aclMatchUsergroups: []string{"group1", "group2", "group3"},
+			usergroupLine:      "group1, group2",
+			matches:            true,
+			sep:                ",",
+		},
+		{
+			name:               "Comma-separated groups with default separator does not match",
+			aclMatchUsergroups: []string{"group1"},
+			usergroupLine:      "group1, group2",
+			matches:            false,
+			sep:                "",
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := hasGroupsMatch(tt.matchUsergroups, tt.usergroup); got != tt.want {
-				t.Errorf("hasGroupsMatch() = %v, want %v", got, tt.want)
+			user := &AuthenticatedUser{
+				Username:      "testuser",
+				UsergroupLine: tt.usergroupLine,
+			}
+
+			if matches := user.matchesUsergroupAcl(tt.aclMatchUsergroups, tt.sep); matches != tt.matches {
+				t.Errorf("AuthenticatedUser.matchesUsergroupAcl() = %v ", tt.aclMatchUsergroups)
 			}
 		})
+	}
+}
+
+func Test_parseUsergroupLine(t *testing.T) {
+	tests := []struct {
+		usergroupLine  string
+		expectedGroups []string
+		sep            string
+	}{
+		{
+			usergroupLine:  "group1 group2",
+			expectedGroups: []string{"group1", "group2"},
+		},
+		{
+			usergroupLine:  "group1, group2",
+			expectedGroups: []string{"group1", "group2"},
+			sep:            ",",
+		},
+		{
+			usergroupLine:  "group1 , group2      , group3",
+			expectedGroups: []string{"group1", "group2", "group3"},
+			sep:            ",",
+		},
+	}
+
+	for _, tt := range tests {
+		user := &AuthenticatedUser{
+			Username:      "testuser",
+			UsergroupLine: tt.usergroupLine,
+		}
+
+		assert.Equal(t, tt.expectedGroups, user.parseUsergroupLine(tt.sep))
 	}
 }
