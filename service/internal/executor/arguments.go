@@ -6,12 +6,12 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"errors"
+	"fmt"
 	"net/mail"
 	"net/url"
 	"regexp"
 	"strings"
 	"time"
-	"fmt"
 )
 
 var (

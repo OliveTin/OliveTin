@@ -186,8 +186,8 @@ func TestUnsetRequiredArgument(t *testing.T) {
 		Shell: "echo 'Your name is: {{ name }}'",
 		Arguments: []config.ActionArgument{
 			{
-				Name:     "name",
-				Type:     "ascii",
+				Name: "name",
+				Type: "ascii",
 			},
 		},
 	}
@@ -206,12 +206,12 @@ func TestUnusedArgumentStillPassesTypeSafetyCheck(t *testing.T) {
 		Shell: "echo 'Your name is: {{ name }}'",
 		Arguments: []config.ActionArgument{
 			{
-				Name:     "name",
-				Type:     "ascii",
+				Name: "name",
+				Type: "ascii",
 			},
 			{
-				Name:     "age",
-				Type:     "int",
+				Name: "age",
+				Type: "int",
 			},
 		},
 	}

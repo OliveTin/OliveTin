@@ -25,8 +25,8 @@ func (p PermissionBits) Has(permission PermissionBits) bool {
 
 // User respresents a person.
 type AuthenticatedUser struct {
-	Username  string
-	Usergroup string
+	Username      string
+	UsergroupLine string
 
 	Provider string
 	SID      string
@@ -38,6 +38,36 @@ type AuthenticatedUser struct {
 
 func (u *AuthenticatedUser) IsGuest() bool {
 	return u.Username == "guest" && u.Provider == "system"
+}
+
+func (u *AuthenticatedUser) parseUsergroupLine(sep string) []string {
+	ret := []string{}
+
+	if sep != "" {
+		for _, v := range strings.Split(u.UsergroupLine, sep) {
+			trimmed := strings.TrimSpace(v)
+
+			if trimmed != "" {
+				ret = append(ret, trimmed)
+			}
+		}
+	} else {
+		ret = strings.Fields(u.UsergroupLine)
+	}
+	return ret
+}
+
+func (u *AuthenticatedUser) matchesUsergroupAcl(matchUsergroups []string, sep string) bool {
+	groupList := u.parseUsergroupLine(sep)
+
+	for _, group := range groupList {
+		if slices.Contains(matchUsergroups, group) {
+			log.Debugf("Usergroup %v found in %+v (len: %v)", group, groupList, len(groupList))
+			return true
+		}
+	}
+
+	return false
 }
 
 func logAclNotMatched(cfg *config.Config, aclFunction string, user *AuthenticatedUser, action *config.Action, acl *config.AccessControlList) {
@@ -101,7 +131,7 @@ func aclCheck(requiredPermission PermissionBits, defaultValue bool, cfg *config.
 		log.WithFields(log.Fields{
 			"actionTitle":        action.Title,
 			"username":           user.Username,
-			"usergroup":          user.Usergroup,
+			"usergroupLine":      user.UsergroupLine,
 			"relevantAcls":       len(relevantAcls),
 			"requiredPermission": requiredPermission,
 		}).Debugf("ACL check - %v", aclFunction)
@@ -162,7 +192,7 @@ func UserFromContext(ctx context.Context, cfg *config.Config) *AuthenticatedUser
 	if ok {
 		ret = &AuthenticatedUser{}
 		ret.Username = getMetadataKeyOrEmpty(md, "username")
-		ret.Usergroup = getMetadataKeyOrEmpty(md, "usergroup")
+		ret.UsergroupLine = getMetadataKeyOrEmpty(md, "usergroup")
 		ret.Provider = getMetadataKeyOrEmpty(md, "provider")
 
 		buildUserAcls(cfg, ret)
@@ -173,10 +203,10 @@ func UserFromContext(ctx context.Context, cfg *config.Config) *AuthenticatedUser
 	}
 
 	log.WithFields(log.Fields{
-		"username":  ret.Username,
-		"usergroup": ret.Usergroup,
-		"provider":  ret.Provider,
-		"acls":      ret.Acls,
+		"username":      ret.Username,
+		"usergroupLine": ret.UsergroupLine,
+		"provider":      ret.Provider,
+		"acls":          ret.Acls,
 	}).Debugf("UserFromContext")
 
 	return ret
@@ -185,7 +215,7 @@ func UserFromContext(ctx context.Context, cfg *config.Config) *AuthenticatedUser
 func UserGuest(cfg *config.Config) *AuthenticatedUser {
 	ret := &AuthenticatedUser{}
 	ret.Username = "guest"
-	ret.Usergroup = "guest"
+	ret.UsergroupLine = "guest"
 	ret.Provider = "system"
 
 	buildUserAcls(cfg, ret)
@@ -195,9 +225,9 @@ func UserGuest(cfg *config.Config) *AuthenticatedUser {
 
 func UserFromSystem(cfg *config.Config, username string) *AuthenticatedUser {
 	ret := &AuthenticatedUser{
-		Username:  username,
-		Usergroup: "system",
-		Provider:  "system",
+		Username:      username,
+		UsergroupLine: "system",
+		Provider:      "system",
 	}
 
 	buildUserAcls(cfg, ret)
@@ -212,23 +242,13 @@ func buildUserAcls(cfg *config.Config, user *AuthenticatedUser) {
 			continue
 		}
 
-		// handle multiple usergroups - groups will be separated by a space
-		if hasGroupsMatch(acl.MatchUsergroups, user.Usergroup) {
+		if user.matchesUsergroupAcl(acl.MatchUsergroups, cfg.AuthHttpHeaderUserGroupSep) {
 			user.Acls = append(user.Acls, acl.Name)
 			continue
 		}
 	}
 
 	user.EffectivePolicy = getEffectivePolicy(cfg, user)
-}
-
-func hasGroupsMatch(matchUsergroups []string, usergroup string) bool {
-	for _, group := range strings.Fields(usergroup) {
-		if slices.Contains(matchUsergroups, group) {
-			return true
-		}
-	}
-	return false
 }
 
 func isACLRelevantToAction(cfg *config.Config, actionAcls []string, acl *config.AccessControlList, user *AuthenticatedUser) bool {

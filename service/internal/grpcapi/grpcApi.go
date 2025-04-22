@@ -316,7 +316,7 @@ func (api *oliveTinAPI) GetDashboardComponents(ctx ctx.Context, req *apiv1.GetDa
 	if len(res.Actions) == 0 {
 		log.WithFields(log.Fields{
 			"username":         user.Username,
-			"usergroup":        user.Usergroup,
+			"usergroupLine":    user.UsergroupLine,
 			"provider":         user.Provider,
 			"acls":             user.Acls,
 			"availableActions": len(cfg.Actions),
@@ -377,13 +377,11 @@ func (api *oliveTinAPI) WhoAmI(ctx ctx.Context, req *apiv1.WhoAmIRequest) (*apiv
 
 	res := &apiv1.WhoAmIResponse{
 		AuthenticatedUser: user.Username,
-		Usergroup:         user.Usergroup,
+		Usergroup:         user.UsergroupLine,
 		Provider:          user.Provider,
 		Sid:               user.SID,
 		Acls:              user.Acls,
 	}
-
-	log.Warnf("usergroup: %v", user.Usergroup)
 
 	return res, nil
 }
