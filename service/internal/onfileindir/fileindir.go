@@ -2,26 +2,32 @@ package onfileindir
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
+
 	"github.com/OliveTin/OliveTin/internal/acl"
 	"github.com/OliveTin/OliveTin/internal/config"
 	"github.com/OliveTin/OliveTin/internal/executor"
 	"github.com/OliveTin/OliveTin/internal/filehelper"
-	"os"
-	"path/filepath"
 )
 
 func WatchFilesInDirectory(cfg *config.Config, ex *executor.Executor) {
 	for _, action := range cfg.Actions {
 		for _, dirname := range action.ExecOnFileChangedInDir {
-			go filehelper.WatchDirectoryWrite(dirname, func(filename string) {
-				scheduleExec(action, cfg, ex, filename)
-			})
-		}
+			// Pass values into anonymous function because of this issue
+			// https://github.com/OliveTin/OliveTin/issues/503
 
-		for _, dirname := range action.ExecOnFileCreatedInDir {
-			go filehelper.WatchDirectoryCreate(dirname, func(filename string) {
-				scheduleExec(action, cfg, ex, filename)
-			})
+			go func(act *config.Action, dir string) {
+				filehelper.WatchDirectoryWrite(dir, func(filename string) {
+					scheduleExec(act, cfg, ex, filename)
+				})
+			}(action, dirname)
+
+			go func(act *config.Action, dir string) {
+				filehelper.WatchDirectoryCreate(dir, func(filename string) {
+					scheduleExec(act, cfg, ex, filename)
+				})
+			}(action, dirname)
 		}
 	}
 }
