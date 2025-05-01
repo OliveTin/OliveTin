@@ -95,3 +95,40 @@ func TestTypeSafetyCheckUrl(t *testing.T) {
 	assert.NotNil(t, TypeSafetyCheck("test5", "12345", "url"), "Test a badly formed URL")
 	assert.NotNil(t, TypeSafetyCheck("test6", "_!23;", "url"), "Test a badly formed URL")
 }
+
+func TestTypeSafetyCheckRegex(t *testing.T) {
+	tests := []struct {
+		name     string
+		field    string
+		pattern  string
+		value    string
+		hasError bool
+	}{
+		{
+			name:     "Issue #578 - Domain",
+			field:    "domain",
+			pattern:  "regex:^(?:[a-zA-Z0-9-]{1,63}.)+[a-zA-Z]{2,63}$",
+			value:    "immich.example.dev",
+			hasError: false,
+		},
+		{
+			name:     "Don't allow numbers in username",
+			field:    "Username",
+			pattern:  "regex:^[a-zA-Z]$",
+			value:    "James1234",
+			hasError: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := typeSafetyCheckRegex(tt.field, tt.value, tt.pattern)
+
+			if tt.hasError {
+				assert.NotNil(t, err, "Expected error for value %s with pattern %s, but got no error", tt.value, tt.pattern)
+			} else {
+				assert.Nil(t, err, "Expected no error for value %s with pattern %s, but got error: %v", tt.value, tt.pattern, err)
+			}
+		})
+	}
+}
