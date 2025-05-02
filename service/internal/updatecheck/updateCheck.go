@@ -5,6 +5,7 @@ import (
 	config "github.com/OliveTin/OliveTin/internal/config"
 	"github.com/OliveTin/OliveTin/internal/installationinfo"
 	"github.com/robfig/cron/v3"
+	"github.com/Masterminds/semver"
 	log "github.com/sirupsen/logrus"
 	"io"
 	"net/http"
@@ -55,9 +56,26 @@ func parseVersion(input []byte) string {
 		if installationinfo.Build.Version == versionMap.Latest {
 			return "none"
 		} else {
-			return versionMap.Latest
+			return parseIfVersionIsLater(installationinfo.Build.Version, versionMap.Latest)
 		}
 	}
+}
+
+func parseIfVersionIsLater(currentString string, latestString string) string {
+	currentVersion, errCurrent := semver.NewVersion(currentString)
+	latestVersion, errLatest := semver.NewVersion(latestString)
+
+	if errCurrent != nil || errLatest != nil {
+		log.Warnf("Version parse failure: %v %v", errCurrent, errLatest)
+
+		return "version-parse-failure"
+	}
+
+	if latestVersion.GreaterThan(currentVersion) {
+		return latestString
+	}
+
+	return "none"
 }
 
 func doRequest() string {
