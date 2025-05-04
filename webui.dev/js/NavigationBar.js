@@ -7,7 +7,7 @@ export class NavigationBar {
 
 	createLink(title, url, isSupplemental) {
 		const linkA = document.createElement('a')
-		linkA.href = url
+		linkA.href = window.BaseUrl + url
 		linkA.innerText = title
 
 		const navigationLi = document.createElement('li')

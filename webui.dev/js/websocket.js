@@ -15,7 +15,10 @@ function reconnectWebsocket () {
 
   const websocketConnectionUrl = new URL(window.location.toString())
   websocketConnectionUrl.hash = ''
-  websocketConnectionUrl.pathname = '/websocket'
+
+  const baseUrl = window.BaseUrl || ''
+  const sanitisedBaseUrl = baseUrl.replace(/\/$/, '') // Ensure we don't get double slashes when concatenating paths
+  websocketConnectionUrl.pathname = sanitisedBaseUrl + '/websocket'
 
   if (window.location.protocol === 'https:') {
     websocketConnectionUrl.protocol = 'wss'

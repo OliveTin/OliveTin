@@ -5,7 +5,7 @@ import {
   setupSectionNavigation,
   marshalDashboardComponentsJsonToHtml,
   marshalLogsJsonToHtml,
-  refreshServerConnectionLabel,
+  refreshServerConnectionLabel
 } from './js/marshaller.js'
 import { checkWebsocketConnection } from './js/websocket.js'
 
@@ -92,9 +92,15 @@ function fetchGetLogs () {
 }
 
 function processWebuiSettingsJson (settings) {
+  const baseUrl = settings.BaseURL || ''
+  const sanitisedBaseUrl = baseUrl.replace(/\/$/, '') // Ensure we don't get double slashes when concatenating paths
+  window.BaseUrl = sanitisedBaseUrl
+
   setupSectionNavigation(settings.SectionNavigationStyle)
 
-  window.restBaseUrl = settings.Rest
+  // Configure the rest base url for the api endpoints
+  const restBaseUrl = settings.Rest || ''
+  window.restBaseUrl = restBaseUrl
 
   document.querySelector('#currentVersion').innerText = settings.CurrentVersion
 
