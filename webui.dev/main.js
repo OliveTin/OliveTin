@@ -5,11 +5,13 @@ import {
   setupSectionNavigation,
   marshalDashboardComponentsJsonToHtml,
   marshalLogsJsonToHtml,
-  refreshServerConnectionLabel,
+  refreshServerConnectionLabel
 } from './js/marshaller.js'
 import { checkWebsocketConnection } from './js/websocket.js'
 
 import { LoginForm } from './js/LoginForm.js'
+
+import { getVersionMacro } from './js/buildinfo.js' with { type: 'macro' }
 
 function searchLogs (e) {
   document.getElementById('searchLogsClear').disabled = false
@@ -98,6 +100,10 @@ function processWebuiSettingsJson (settings) {
 
   document.querySelector('#currentVersion').innerText = settings.CurrentVersion
 
+  if (window.webuiVersion !== settings.CurrentVersion) {
+    showBigError('webui-mismatch', 'WebUI version mismatch', 'The WebUI version (' + window.webuiVersion + ') does not match the server version (' + settings.CurrentVersion + '). Try forcing a browser refresh (Ctrl+F5 on most desktop browsers).', true)
+  }
+
   if (settings.ShowNewVersions && settings.AvailableVersion !== 'none') {
     document.querySelector('#available-version').innerText = 'New Version Available: ' + settings.AvailableVersion
     document.querySelector('#available-version').hidden = false
@@ -166,6 +172,8 @@ function processAdditionalLinks (links) {
 }
 
 function main () {
+  window.webuiVersion = getVersionMacro()
+
   initMarshaller()
 
   setupLogSearchBox()
