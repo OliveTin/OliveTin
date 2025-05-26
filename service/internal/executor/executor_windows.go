@@ -6,6 +6,7 @@ package executor
 import (
 	"context"
 	"os/exec"
+	"os"
 )
 
 func (e *Executor) Kill(execReq *InternalLogEntry) error {
@@ -13,5 +14,11 @@ func (e *Executor) Kill(execReq *InternalLogEntry) error {
 }
 
 func wrapCommandInShell(ctx context.Context, finalParsedCommand string) *exec.Cmd {
-	return exec.CommandContext(ctx, "cmd", "/C", finalParsedCommand)
+	winCodepage := os.Getenv("OT_WIN_FLAG_U")
+
+	if winCodepage == "0" {
+		return exec.CommandContext(ctx, "cmd", "/C", finalParsedCommand)
+	} else {
+		return exec.CommandContext(ctx, "cmd", "/u", "/C", finalParsedCommand)
+	}
 }
