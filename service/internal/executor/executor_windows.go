@@ -13,5 +13,11 @@ func (e *Executor) Kill(execReq *InternalLogEntry) error {
 }
 
 func wrapCommandInShell(ctx context.Context, finalParsedCommand string) *exec.Cmd {
-	return exec.CommandContext(ctx, "cmd", "/C", finalParsedCommand)
+	winCodepage := os.Getenv("OT_WIN_CODEPAGE")
+
+	if winCodepage == "unicode_flag" {
+		return exec.CommandContext(ctx, "cmd", "/u", "/C", finalParsedCommand)
+	} else {
+		return exec.CommandContext(ctx, "cmd", "/C", finalParsedCommand)
+	}
 }
