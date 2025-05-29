@@ -147,6 +147,7 @@ type Config struct {
 	DefaultIconForDirectories       string
 	DefaultIconForBack              string
 	AdditionalNavigationLinks       []*NavigationLink
+	ServiceHostMode                 string
 
 	usedConfigDir string
 }

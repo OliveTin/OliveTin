@@ -14,6 +14,7 @@ import (
 	"github.com/OliveTin/OliveTin/internal/oncron"
 	"github.com/OliveTin/OliveTin/internal/onfileindir"
 	"github.com/OliveTin/OliveTin/internal/onstartup"
+	"github.com/OliveTin/OliveTin/internal/servicehost"
 	updatecheck "github.com/OliveTin/OliveTin/internal/updatecheck"
 	"github.com/OliveTin/OliveTin/internal/websocket"
 
@@ -21,6 +22,7 @@ import (
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
 	"os"
+	"path/filepath"
 	"strconv"
 )
 
@@ -32,6 +34,8 @@ var (
 )
 
 func init() {
+	cdToExecutableDir()
+
 	initLog()
 
 	initViperConfig(initCliFlags())
@@ -108,7 +112,7 @@ func initViperConfig(configDir string) {
 	viper.SetConfigName("config.yaml")
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath(configDir)
-	viper.AddConfigPath("../")
+	viper.AddConfigPath(servicehost.GetConfigFilePath())
 	viper.AddConfigPath("/config") // For containers.
 	viper.AddConfigPath("/etc/OliveTin/")
 
@@ -153,7 +157,24 @@ func warnIfPuidGuid() {
 	}
 }
 
+func cdToExecutableDir() {
+	ex, err := os.Executable()
+	if err != nil {
+		log.Fatalf("Failed to get executable path: %s", err)
+	}
+
+	exPath := filepath.Dir(ex)
+
+	err = os.Chdir(exPath)
+
+	if err != nil {
+		log.Fatalf("Failed to change directory to executable path: %s", err)
+	}
+}
+
 func main() {
+	servicehost.Start(cfg.ServiceHostMode)
+
 	log.WithFields(log.Fields{
 		"configDir": cfg.GetDir(),
 	}).Infof("OliveTin started")
