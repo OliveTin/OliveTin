@@ -138,8 +138,4 @@ func Start(mode string) {
 	setupLogging()
 
 	go startServiceHandler(mode)
-
-	// Give some time for the logging to be setup before starting
-	// the service to avoid losing any log messages.
-	time.Sleep(2 * time.Second)
 }
