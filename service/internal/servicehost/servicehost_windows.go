@@ -48,9 +48,6 @@ func (m *otWindowsService) Execute(args []string, r <-chan svc.ChangeRequest, st
 			}
 		}
 	}
-
-	// status <- svc.Status{State: svc.StopPending}
-	// return false, 1
 }
 
 func setupLogging() {
