@@ -22,7 +22,6 @@ import (
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
 	"os"
-	"path/filepath"
 	"strconv"
 )
 
@@ -34,8 +33,6 @@ var (
 )
 
 func init() {
-	cdToExecutableDir()
-
 	initLog()
 
 	initViperConfig(initCliFlags())
@@ -154,21 +151,6 @@ func initCheckEnvironment() {
 func warnIfPuidGuid() {
 	if os.Getenv("PUID") != "" || os.Getenv("PGID") != "" {
 		log.Warnf("PUID or PGID seem to be set to something, but they are ignored by OliveTin. Please check https://docs.olivetin.app/no-puid-pgid.html")
-	}
-}
-
-func cdToExecutableDir() {
-	ex, err := os.Executable()
-	if err != nil {
-		log.Fatalf("Failed to get executable path: %s", err)
-	}
-
-	exPath := filepath.Dir(ex)
-
-	err = os.Chdir(exPath)
-
-	if err != nil {
-		log.Fatalf("Failed to change directory to executable path: %s", err)
 	}
 }
 

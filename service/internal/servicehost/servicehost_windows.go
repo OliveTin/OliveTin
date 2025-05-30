@@ -11,6 +11,7 @@ import (
 	"golang.org/x/sys/windows/svc/debug"
 	"os"
 	"path"
+	"path/filepath"
 	"time"
 )
 
@@ -20,17 +21,17 @@ type otWindowsService struct{}
 func (m *otWindowsService) Execute(args []string, r <-chan svc.ChangeRequest, status chan<- svc.Status) (svcSpecificExitCode bool, exitCode uint32) {
 	const cmdsAccepted = svc.AcceptStop | svc.AcceptShutdown | svc.AcceptPauseAndContinue
 
-	tick := time.Tick(30 * time.Second)
+	tick := time.Tick(1 * time.Minute)
 
 	status <- svc.Status{State: svc.StartPending}
 	status <- svc.Status{State: svc.Running, Accepts: cmdsAccepted}
 
-	log.Info("Service started")
+	log.Info("Servicehost started")
 
 	for {
 		select {
 		case <-tick:
-			log.Info("servicehost Tick")
+			log.Debug("servicehost Tick")
 		case c := <-r:
 			switch c.Cmd {
 			case svc.Interrogate:
@@ -86,7 +87,24 @@ func GetConfigFilePath() string {
 	return programDataDir
 }
 
+func cdToExecutableDir() {
+	ex, err := os.Executable()
+	if err != nil {
+		log.Fatalf("Failed to get executable path: %s", err)
+	}
+
+	exPath := filepath.Dir(ex)
+
+	err = os.Chdir(exPath)
+
+	if err != nil {
+		log.Fatalf("Failed to change directory to executable path: %s", err)
+	}
+}
+
 func startServiceHandler(mode string) {
+	cdToExecutableDir()
+
 	const serviceName = "OliveTin"
 
 	var err error
