@@ -87,7 +87,7 @@ func GetConfigFilePath() string {
 func cdToExecutableDir() {
 	ex, err := os.Executable()
 	if err != nil {
-		log.Fatalf("Failed to get executable path: %s", err)
+		panic(fmt.Sprintf("Failed to get executable path: %s", err))
 	}
 
 	exPath := filepath.Dir(ex)
@@ -95,7 +95,7 @@ func cdToExecutableDir() {
 	err = os.Chdir(exPath)
 
 	if err != nil {
-		log.Fatalf("Failed to change directory to executable path: %s", err)
+		panic(fmt.Sprintf("Failed to change directory to executable path: %s", err))
 	}
 }
 
