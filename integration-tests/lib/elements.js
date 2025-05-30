@@ -29,6 +29,10 @@ export function takeScreenshot (webdriver, title) {
 
 export async function getRootAndWait() {
   await webdriver.get(runner.baseUrl())
+  await waitForInitialMarshall()
+}
+
+export async function waitForInitialMarshall() {
   await webdriver.wait(new Condition('wait for initial-marshal-complete', async function() {
     const body = await webdriver.findElement(By.tagName('body'))
     const attr = await body.getAttribute('initial-marshal-complete')

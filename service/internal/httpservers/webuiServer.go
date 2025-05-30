@@ -2,6 +2,8 @@ package httpservers
 
 import (
 	"encoding/json"
+	"fmt"
+	"strings"
 	//	cors "github.com/OliveTin/OliveTin/internal/cors"
 	log "github.com/sirupsen/logrus"
 	"net/http"
@@ -20,6 +22,7 @@ var (
 )
 
 type webUISettings struct {
+	BaseURL                string
 	Rest                   string
 	ShowFooter             bool
 	ShowNavigation         bool
@@ -126,8 +129,11 @@ func buildPublicOAuth2ProvidersList(cfg *config.Config) []publicOAuth2Provider {
 }
 
 func generateWebUISettings(w http.ResponseWriter, r *http.Request) {
+	baseURL := baseURL()
+	restURL := strings.TrimSuffix(baseURL, "/") + "/api/"
 	jsonRet, _ := json.Marshal(webUISettings{
-		Rest:                   cfg.ExternalRestAddress + "/api/",
+		BaseURL:                baseURL,
+		Rest:                   restURL,
 		ShowFooter:             cfg.ShowFooter,
 		ShowNavigation:         cfg.ShowNavigation,
 		ShowNewVersions:        cfg.ShowNewVersions,
@@ -158,22 +164,20 @@ func startWebUIServer(cfg *config.Config) {
 
 	setupCustomWebuiDir()
 
+	baseUrl := baseURL()
 	mux := http.NewServeMux()
-	mux.Handle("/custom-webui/", http.StripPrefix("/custom-webui/", http.FileServer(http.Dir(findCustomWebuiDir()))))
-	mux.HandleFunc("/theme.css", generateThemeCss)
-	mux.HandleFunc("/webUiSettings.json", generateWebUISettings)
+	mux.Handle(baseURLPath("/custom-webui/"), http.StripPrefix(baseURLPath("/custom-webui/"), http.FileServer(http.Dir(findCustomWebuiDir()))))
+	mux.HandleFunc(baseURLPath("/theme.css"), generateThemeCss)
+	mux.HandleFunc(baseURLPath("/webUiSettings.json"), generateWebUISettings)
 
 	webuiDir := findWebuiDir()
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		dirName := path.Dir(r.URL.Path)
-
+	mux.HandleFunc(baseUrl, func(w http.ResponseWriter, r *http.Request) {
 		// Mangle requests for any path like /logs or /config to load the webui index.html
-		if path.Ext(r.URL.Path) == "" && r.URL.Path != "/" {
+		if path.Ext(r.URL.Path) == "" || strings.HasSuffix(r.URL.Path, "/") {
 			log.Debugf("Mangling request for %s to /index.html", r.URL.Path)
-
-			http.ServeFile(w, r, path.Join(webuiDir, "index.html"))
+			serveIndexHtmlWithBasePath(w)
 		} else {
-			http.StripPrefix(dirName, http.FileServer(http.Dir(webuiDir))).ServeHTTP(w, r)
+			http.StripPrefix(baseURLPath("/"), http.FileServer(http.Dir(webuiDir))).ServeHTTP(w, r)
 		}
 	})
 
@@ -183,4 +187,68 @@ func startWebUIServer(cfg *config.Config) {
 	}
 
 	log.Fatal(srv.ListenAndServe())
+}
+
+// serveIndexHtmlWithBasePath allows us to set the base href of the index.html when it is served
+func serveIndexHtmlWithBasePath(w http.ResponseWriter) {
+	webuiDir := findWebuiDir()
+	// Read the file into memory
+	data, err := os.ReadFile(path.Join(webuiDir, "index.html"))
+	if err != nil {
+		http.Error(w, "File not found", 404)
+		return
+	}
+	baseUrl := baseURL()
+	url := fmt.Sprintf("<base href=\"%s\">", baseUrl)
+
+	// Replace the base href
+	content := strings.ReplaceAll(string(data), "<base href=\"/\">", url)
+
+	w.Header().Set("Content-Type", "text/html")
+	w.Write([]byte(content))
+}
+
+// baseURLPath returns the url including the baseUrl
+func baseURLPath(path string) string {
+	baseURL := strings.TrimSuffix(baseURL(), "/")
+	path = strings.TrimPrefix(path, "/")
+	return baseURL + "/" + path
+}
+
+// baseURL returns the baseUrl for the application based on the externalRestAddress and the subpath (if configured)
+// It adds a trailing /
+//
+//gocyclo:ignore
+func baseURL() string {
+	baseURL := strings.TrimSuffix(cfg.ExternalRestAddress, "/")
+
+	// Default externalRestAddress and Subpath
+	if baseURL == "." && cfg.Subpath == "" {
+		return "/"
+	}
+	if baseURL == "." {
+		baseURL = ""
+	}
+	if cfg.Subpath != "" {
+		baseURL += normaliseSubpath(cfg.Subpath)
+		if !strings.HasSuffix(baseURL, "/") {
+			baseURL += "/"
+		}
+	}
+	return baseURL
+}
+
+// normaliseSubpath returns the base url with extra slashes removed
+func normaliseSubpath(subpath string) string {
+	return "/" + strings.Trim(subpath, "/")
+}
+
+// getCookiePath returns the appropriate path for cookies based on the configured subpath.
+// If no subpath is configured, it returns "/", otherwise it returns the normalized subpath.
+func getCookiePath() string {
+	subpath := cfg.Subpath
+	if subpath == "" {
+		return "/"
+	}
+	return normaliseSubpath(subpath)
 }
