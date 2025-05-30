@@ -147,6 +147,7 @@ type Config struct {
 	DefaultIconForDirectories       string
 	DefaultIconForBack              string
 	AdditionalNavigationLinks       []*NavigationLink
+	ServiceHostMode                 string
 
 	usedConfigDir string
 }
@@ -245,6 +246,7 @@ func DefaultConfigWithBasePort(basePort int) *Config {
 	config.DefaultIconForDirectories = "&#128193"
 	config.DefaultIconForBack = "&laquo;"
 	config.ThemeCacheDisabled = false
+	config.ServiceHostMode = ""
 
 	config.ListenAddressSingleHTTPFrontend = fmt.Sprintf("0.0.0.0:%d", basePort)
 	config.ListenAddressRestActions = fmt.Sprintf("localhost:%d", basePort+1)

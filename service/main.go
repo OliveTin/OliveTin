@@ -14,6 +14,7 @@ import (
 	"github.com/OliveTin/OliveTin/internal/oncron"
 	"github.com/OliveTin/OliveTin/internal/onfileindir"
 	"github.com/OliveTin/OliveTin/internal/onstartup"
+	"github.com/OliveTin/OliveTin/internal/servicehost"
 	updatecheck "github.com/OliveTin/OliveTin/internal/updatecheck"
 	"github.com/OliveTin/OliveTin/internal/websocket"
 
@@ -108,7 +109,7 @@ func initViperConfig(configDir string) {
 	viper.SetConfigName("config.yaml")
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath(configDir)
-	viper.AddConfigPath("../")
+	viper.AddConfigPath(servicehost.GetConfigFilePath())
 	viper.AddConfigPath("/config") // For containers.
 	viper.AddConfigPath("/etc/OliveTin/")
 
@@ -154,6 +155,8 @@ func warnIfPuidGuid() {
 }
 
 func main() {
+	servicehost.Start(cfg.ServiceHostMode)
+
 	log.WithFields(log.Fields{
 		"configDir": cfg.GetDir(),
 	}).Infof("OliveTin started")
