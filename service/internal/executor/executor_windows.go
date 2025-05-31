@@ -5,8 +5,8 @@ package executor
 
 import (
 	"context"
-	"os/exec"
 	"os"
+	"os/exec"
 )
 
 func (e *Executor) Kill(execReq *InternalLogEntry) error {
