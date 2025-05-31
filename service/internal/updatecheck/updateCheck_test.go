@@ -1,8 +1,8 @@
 package updatecheck
 
 import (
-	"testing"
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 func TestVersionLater(t *testing.T) {
