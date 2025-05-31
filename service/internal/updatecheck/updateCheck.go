@@ -2,10 +2,10 @@ package updatecheck
 
 import (
 	"encoding/json"
+	"github.com/Masterminds/semver"
 	config "github.com/OliveTin/OliveTin/internal/config"
 	"github.com/OliveTin/OliveTin/internal/installationinfo"
 	"github.com/robfig/cron/v3"
-	"github.com/Masterminds/semver"
 	log "github.com/sirupsen/logrus"
 	"io"
 	"net/http"

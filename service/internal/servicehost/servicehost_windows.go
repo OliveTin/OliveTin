@@ -99,6 +99,7 @@ func cdToExecutableDir() {
 	}
 }
 
+//gocyclo:ignore
 func startServiceHandler(mode string) {
 	cdToExecutableDir()
 
