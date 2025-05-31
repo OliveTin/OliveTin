@@ -221,8 +221,12 @@ class ArgumentForm extends window.HTMLElement {
     if (!ev.target.name) {
       return
     }
-    // Get the current URL and create a new URL object
+
     const url = new URL(window.location.href)
+
+    if (ev.target.type === 'password') {
+      return;
+    }
 
     // copy the parameter value
     url.searchParams.set(ev.target.name, ev.target.value)
