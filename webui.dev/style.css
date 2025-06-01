@@ -38,6 +38,7 @@ dialog.big {
 }
 
 fieldset {
+  font-family: sans-serif;
   display: grid;
   grid-template-columns: repeat(auto-fit, 180px);
   grid-auto-rows: 1fr;
@@ -207,6 +208,7 @@ tr:hover td {
 }
 
 legend {
+  font-family: sans-serif;
   padding-top: 1em;
   text-align: center;
   width: 100%;
@@ -265,6 +267,7 @@ details {
 button,
 input[type="submit"]
 {
+  font-family: sans-serif;
   padding: 1em;
   color: black;
   text-align: center;
@@ -422,6 +425,7 @@ header {
 }
 
 input {
+  font-family: sans-serif;
   padding: 0.6em;
 }
 
