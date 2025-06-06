@@ -402,6 +402,8 @@ func stepParseArgs(req *ExecutionRequest) bool {
 	req.Arguments["ot_executionTrackingId"] = req.TrackingID
 	req.Arguments["ot_username"] = req.AuthenticatedUser.Username
 
+	mangleInvalidArgumentValues(req)
+
 	req.finalParsedCommand, err = parseActionArguments(req.Arguments, req.Action, req.EntityPrefix)
 
 	if err != nil {
