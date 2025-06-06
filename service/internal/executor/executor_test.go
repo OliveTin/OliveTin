@@ -129,6 +129,7 @@ func TestGetLogsLessThanPageSize(t *testing.T) {
 		Title: "blat",
 		Shell: "date",
 	})
+	cfg.Sanitize()
 
 	assert.Equal(t, int64(10), cfg.LogHistoryPageSize, "Logs page size should be 10")
 
@@ -225,4 +226,39 @@ func TestUnusedArgumentStillPassesTypeSafetyCheck(t *testing.T) {
 
 	assert.Equal(t, "", out)
 	assert.NotNil(t, err)
+}
+
+// https://github.com/OliveTin/OliveTin/issues/564
+func TestMangleInvalidArgumentValues(t *testing.T) {
+	e, cfg := testingExecutor()
+
+	a1 := &config.Action{
+		Title: "Validate my date without seconds because I am from an Android phone",
+		Shell: "echo 'The date is: {{ date }}'",
+		Arguments: []config.ActionArgument{
+			{
+				Name: "date",
+				Type: "datetime",
+			},
+		},
+	}
+
+	cfg.Actions = append(cfg.Actions, a1)
+	cfg.Sanitize()
+
+	req := ExecutionRequest{
+		Action: a1,
+		AuthenticatedUser: acl.UserFromSystem(cfg, "testuser"),
+		Cfg:               cfg,
+		Arguments:         map[string]string{
+			"date":  "1990-01-10T12:00", // Invalid format, should be without seconds
+		},
+	}
+
+	wg, _ := e.ExecRequest(&req)
+	wg.Wait()
+
+	assert.NotNil(t, req.logEntry, "Log entry should not be nil")
+	assert.Equal(t, req.logEntry.Output, "The date is: 1990-01-10T12:00:00\n", "Date should be mangled to a valid format")
+
 }
