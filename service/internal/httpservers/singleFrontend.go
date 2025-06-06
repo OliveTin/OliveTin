@@ -60,6 +60,8 @@ func StartSingleHTTPFrontend(cfg *config.Config) {
 
 	mux.HandleFunc("/oauth/callback", handleOAuthCallback)
 
+	mux.HandleFunc("/readyz", handleReadyz)
+
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		logDebugRequest(cfg, "ui  ", r)
 
@@ -85,4 +87,9 @@ func StartSingleHTTPFrontend(cfg *config.Config) {
 	}
 
 	log.Fatal(srv.ListenAndServe())
+}
+
+func handleReadyz(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("OK. Single HTTP Frontend is ready.\n"))
 }
