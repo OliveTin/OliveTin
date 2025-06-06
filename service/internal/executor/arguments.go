@@ -91,6 +91,10 @@ func redactShellCommand(shellCommand string, arguments []config.ActionArgument, 
 				continue
 			}
 
+			if argValue == "" {
+				continue 
+			}
+
 			shellCommand = strings.ReplaceAll(shellCommand, argValue, "<redacted>")
 		}
 	}

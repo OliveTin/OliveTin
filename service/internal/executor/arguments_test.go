@@ -155,4 +155,14 @@ func TestRedactShellCommand(t *testing.T) {
 	res := redactShellCommand(cmd, args, values)
 
 	assert.Equal(t, "echo 'The password for Fred is <redacted>'", res, "Redacted shell command should mask the password argument")
+
+	// Test with empty password
+	values["password"] = ""
+	res = redactShellCommand(cmd, args, values)
+	assert.Equal(t, cmd, res, "Empty password should not change the command")
+
+	// Test with missing password argument
+	delete(values, "password")
+	res = redactShellCommand(cmd, args, values)
+	assert.Equal(t, cmd, res, "Missing password argument should not change the command")
 }
