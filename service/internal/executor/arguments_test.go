@@ -132,3 +132,37 @@ func TestTypeSafetyCheckRegex(t *testing.T) {
 		})
 	}
 }
+
+func TestRedactShellCommand(t *testing.T) {
+	cmd := "echo 'The password for Fred is toomanysecrets'"
+
+	args := []config.ActionArgument{
+		{
+			Name: "personName",
+			Type: "ascii",
+		},
+		{
+			Name: "password",
+			Type: "password",
+		},
+	}
+
+	values := map[string]string{
+		"personName": "Fred",
+		"password": "toomanysecrets",
+	}
+
+	res := redactShellCommand(cmd, args, values)
+
+	assert.Equal(t, "echo 'The password for Fred is <redacted>'", res, "Redacted shell command should mask the password argument")
+
+	// Test with empty password
+	values["password"] = ""
+	res = redactShellCommand(cmd, args, values)
+	assert.Equal(t, cmd, res, "Empty password should not change the command")
+
+	// Test with missing password argument
+	delete(values, "password")
+	res = redactShellCommand(cmd, args, values)
+	assert.Equal(t, cmd, res, "Missing password argument should not change the command")
+}
