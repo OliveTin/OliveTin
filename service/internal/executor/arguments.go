@@ -67,6 +67,7 @@ func parseActionArguments(values map[string]string, action *config.Action, entit
 
 	parsedShellCommand, err := parseCommandForReplacements(action.Shell, values)
 	parsedShellCommand = sv.ReplaceEntityVars(entityPrefix, parsedShellCommand)
+	redactedShellCommand := redactShellCommand(parsedShellCommand, action.Arguments, values)
 
 	if err != nil {
 		return "", err
@@ -74,10 +75,27 @@ func parseActionArguments(values map[string]string, action *config.Action, entit
 
 	log.WithFields(log.Fields{
 		"actionTitle": action.Title,
-		"cmd":         parsedShellCommand,
+		"cmd":         redactedShellCommand,
 	}).Infof("Action parse args - After")
 
 	return parsedShellCommand, nil
+}
+
+func redactShellCommand(shellCommand string, arguments []config.ActionArgument, argumentValues map[string]string) string {
+	for _, arg := range arguments {
+		if arg.Type == "password" {
+			argValue, exists := argumentValues[arg.Name]
+
+			if !exists {
+				log.Warnf("Redact shell command: Argument %s not found in values", arg.Name)
+				continue
+			}
+
+			shellCommand = strings.ReplaceAll(shellCommand, argValue, "<redacted>")
+		}
+	}
+
+	return shellCommand
 }
 
 func typecheckActionArgument(name string, value string, action *config.Action) error {
