@@ -90,6 +90,7 @@ func StartSingleHTTPFrontend(cfg *config.Config) {
 }
 
 func handleReadyz(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("OK. Single HTTP Frontend is ready.\n"))
 }
