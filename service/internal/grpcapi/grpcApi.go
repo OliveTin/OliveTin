@@ -325,8 +325,6 @@ func (api *oliveTinAPI) GetDashboardComponents(ctx ctx.Context, req *apiv1.GetDa
 
 	log.Tracef("GetDashboardComponents: %v", res)
 
-	dashboardCfgToPb(res, cfg.Dashboards, cfg)
-
 	return res, nil
 }
 

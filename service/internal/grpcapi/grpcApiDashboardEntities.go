@@ -4,48 +4,85 @@ import (
 	apiv1 "github.com/OliveTin/OliveTin/gen/grpc/olivetin/api/v1"
 	config "github.com/OliveTin/OliveTin/internal/config"
 	sv "github.com/OliveTin/OliveTin/internal/stringvariables"
+	"golang.org/x/exp/slices"
 )
 
-func buildEntityFieldsets(entityTitle string, tpl *config.DashboardComponent) []*apiv1.DashboardComponent {
+func buildEntityFieldsets(entityTitle string, tpl *config.DashboardComponent, rr *DashboardRenderRequest) []*apiv1.DashboardComponent {
 	ret := make([]*apiv1.DashboardComponent, 0)
 
 	entityCount := sv.GetEntityCount(entityTitle)
 
-	for i := 0; i < entityCount; i++ {
-		ret = append(ret, buildEntityFieldset(tpl, entityTitle, i))
+	for i := range entityCount {
+		fs := buildEntityFieldset(tpl, entityTitle, i, rr)
+
+		if len(fs.Contents) > 0 {
+			ret = append(ret, fs)
+		} else {
+			// If the fieldset has no contents, we don't want to show it
+			continue
+		}
 	}
 
 	return ret
 }
 
-func buildEntityFieldset(tpl *config.DashboardComponent, entityTitle string, entityIndex int) *apiv1.DashboardComponent {
+func buildEntityFieldset(tpl *config.DashboardComponent, entityTitle string, entityIndex int, rr *DashboardRenderRequest) *apiv1.DashboardComponent {
 	prefix := sv.GetEntityPrefix(entityTitle, entityIndex)
 
 	return &apiv1.DashboardComponent{
 		Title:    sv.ReplaceEntityVars(prefix, tpl.Title),
 		Type:     "fieldset",
-		Contents: buildEntityFieldsetContents(tpl.Contents, prefix),
+		Contents: removeFieldsetsWithoutLinks(buildEntityFieldsetContents(tpl.Contents, prefix, rr)),
 		CssClass: sv.ReplaceEntityVars(prefix, tpl.CssClass),
 	}
 }
 
-func buildEntityFieldsetContents(contents []config.DashboardComponent, prefix string) []*apiv1.DashboardComponent {
+func removeFieldsetsWithoutLinks(contents []*apiv1.DashboardComponent) []*apiv1.DashboardComponent {
+	hasLinks := false
+
+	for _, subitem := range contents {
+		if subitem.Type == "link" {
+			hasLinks = true
+			break
+		}
+	}
+
+	if hasLinks {
+		return contents
+	}
+
+	return nil
+}
+
+func buildEntityFieldsetContents(contents []config.DashboardComponent, prefix string, rr *DashboardRenderRequest) []*apiv1.DashboardComponent {
 	ret := make([]*apiv1.DashboardComponent, 0)
 
 	for _, subitem := range contents {
-		clone := &apiv1.DashboardComponent{}
-		clone.CssClass = sv.ReplaceEntityVars(prefix, subitem.CssClass)
+		c := cloneItem(&subitem, prefix, rr)
 
-		if subitem.Type == "" || subitem.Type == "link" {
-			clone.Type = "link"
-			clone.Title = sv.ReplaceEntityVars(prefix, subitem.Title)
-		} else {
-			clone.Title = sv.ReplaceEntityVars(prefix, subitem.Title)
-			clone.Type = subitem.Type
+		if c != nil {
+			ret = append(ret, c)
 		}
-
-		ret = append(ret, clone)
 	}
 
 	return ret
+}
+
+func cloneItem(subitem *config.DashboardComponent, prefix string, rr *DashboardRenderRequest) *apiv1.DashboardComponent {
+	clone := &apiv1.DashboardComponent{}
+	clone.CssClass = sv.ReplaceEntityVars(prefix, subitem.CssClass)
+
+	if subitem.Type == "" || subitem.Type == "link" {
+		clone.Type = "link"
+		clone.Title = sv.ReplaceEntityVars(prefix, subitem.Title)
+
+		if !slices.Contains(rr.AllowedActionTitles, clone.Title) {
+			return nil
+		}
+	} else {
+		clone.Title = sv.ReplaceEntityVars(prefix, subitem.Title)
+		clone.Type = subitem.Type
+	}
+
+	return clone
 }

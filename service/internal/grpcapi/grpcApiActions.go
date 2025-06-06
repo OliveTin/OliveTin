@@ -10,6 +10,12 @@ import (
 	"sort"
 )
 
+type DashboardRenderRequest struct {
+	AuthenticatedUser   *acl.AuthenticatedUser
+	AllowedActionTitles []string `json:"allows_action_titles"`
+	cfg                 *config.Config
+}
+
 func buildDashboardResponse(ex *executor.Executor, cfg *config.Config, user *acl.AuthenticatedUser) *apiv1.GetDashboardComponentsResponse {
 	res := &apiv1.GetDashboardComponentsResponse{
 		AuthenticatedUser:         user.Username,
@@ -36,10 +42,27 @@ func buildDashboardResponse(ex *executor.Executor, cfg *config.Config, user *acl
 		}
 	})
 
+	rr := &DashboardRenderRequest{
+		AuthenticatedUser:   user,
+		AllowedActionTitles: getActionTitles(res.Actions),
+		cfg:                 cfg,
+	}
+
 	res.EffectivePolicy = buildEffectivePolicy(user.EffectivePolicy)
 	res.Diagnostics = buildDiagnostics(res.EffectivePolicy.ShowDiagnostics)
+	res.Dashboards = dashboardCfgToPb(rr)
 
 	return res
+}
+
+func getActionTitles(actions []*apiv1.Action) []string {
+	titles := make([]string, 0, len(actions))
+
+	for _, action := range actions {
+		titles = append(titles, action.Title)
+	}
+
+	return titles
 }
 
 func buildEffectivePolicy(policy *config.ConfigurationPolicy) *apiv1.EffectivePolicy {
