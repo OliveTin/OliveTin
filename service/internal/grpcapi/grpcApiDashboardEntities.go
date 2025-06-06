@@ -17,9 +17,6 @@ func buildEntityFieldsets(entityTitle string, tpl *config.DashboardComponent, rr
 
 		if len(fs.Contents) > 0 {
 			ret = append(ret, fs)
-		} else {
-			// If the fieldset has no contents, we don't want to show it
-			continue
 		}
 	}
 
@@ -32,23 +29,16 @@ func buildEntityFieldset(tpl *config.DashboardComponent, entityTitle string, ent
 	return &apiv1.DashboardComponent{
 		Title:    sv.ReplaceEntityVars(prefix, tpl.Title),
 		Type:     "fieldset",
-		Contents: removeFieldsetsWithoutLinks(buildEntityFieldsetContents(tpl.Contents, prefix, rr)),
+		Contents: removeFieldsetIfHasNoLinks(buildEntityFieldsetContents(tpl.Contents, prefix, rr)),
 		CssClass: sv.ReplaceEntityVars(prefix, tpl.CssClass),
 	}
 }
 
-func removeFieldsetsWithoutLinks(contents []*apiv1.DashboardComponent) []*apiv1.DashboardComponent {
-	hasLinks := false
-
+func removeFieldsetIfHasNoLinks(contents []*apiv1.DashboardComponent) []*apiv1.DashboardComponent {
 	for _, subitem := range contents {
 		if subitem.Type == "link" {
-			hasLinks = true
-			break
+			return contents
 		}
-	}
-
-	if hasLinks {
-		return contents
 	}
 
 	return nil

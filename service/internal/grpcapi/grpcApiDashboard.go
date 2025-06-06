@@ -68,7 +68,7 @@ func buildDashboardComponentSimple(subitem *config.DashboardComponent, rr *Dashb
 		Title:    subitem.Title,
 		Type:     getDashboardComponentType(subitem),
 		Contents: getDashboardComponentContents(subitem, rr),
-		Icon:     getDashboardComponentIcon(subitem, cfg),
+		Icon:     getDashboardComponentIcon(subitem, rr.cfg),
 		CssClass: subitem.CssClass,
 	}
 
