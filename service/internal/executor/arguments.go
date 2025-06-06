@@ -237,10 +237,10 @@ func typeSafetyCheckUrl(value string) error {
 }
 
 func mangleInvalidArgumentValues(req *ExecutionRequest) {
-	mangleIvalidDatetimeValues(req)
+	mangleInvalidDatetimeValues(req)
 }
 
-func mangleIvalidDatetimeValues(req *ExecutionRequest) {
+func mangleInvalidDatetimeValues(req *ExecutionRequest) {
 	for _, arg := range req.Action.Arguments {
 		if arg.Type == "datetime" {
 			value, exists := req.Arguments[arg.Name]
@@ -256,7 +256,7 @@ func mangleIvalidDatetimeValues(req *ExecutionRequest) {
 					"arg":     arg.Name,
 					"value":   value,
 					"actionTitle": req.Action.Title,
-				}).Warnf("Mangled invalid datetime value without seconds to :00 seconds, this is a common issue is commonly caused by Android browsers.")
+				}).Warnf("Mangled invalid datetime value without seconds to :00 seconds, this issue is commonly caused by Android browsers.")
 
 				req.Arguments[arg.Name] = timestamp.Format("2006-01-02T15:04:05")
 			}
