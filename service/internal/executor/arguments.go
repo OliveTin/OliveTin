@@ -81,6 +81,7 @@ func parseActionArguments(values map[string]string, action *config.Action, entit
 	return parsedShellCommand, nil
 }
 
+//gocyclo:ignore
 func redactShellCommand(shellCommand string, arguments []config.ActionArgument, argumentValues map[string]string) string {
 	for _, arg := range arguments {
 		if arg.Type == "password" {
@@ -92,7 +93,7 @@ func redactShellCommand(shellCommand string, arguments []config.ActionArgument, 
 			}
 
 			if argValue == "" {
-				continue 
+				continue
 			}
 
 			shellCommand = strings.ReplaceAll(shellCommand, argValue, "<redacted>")
@@ -237,30 +238,29 @@ func typeSafetyCheckUrl(value string) error {
 }
 
 func mangleInvalidArgumentValues(req *ExecutionRequest) {
-	mangleInvalidDatetimeValues(req)
-}
-
-func mangleInvalidDatetimeValues(req *ExecutionRequest) {
 	for _, arg := range req.Action.Arguments {
 		if arg.Type == "datetime" {
-			value, exists := req.Arguments[arg.Name]
-
-			if !exists || value == "" {
-				continue
-			}
-
-			timestamp, err := time.Parse("2006-01-02T15:04", value)
-
-			if err == nil {
-				log.WithFields(log.Fields {
-					"arg":     arg.Name,
-					"value":   value,
-					"actionTitle": req.Action.Title,
-				}).Warnf("Mangled invalid datetime value without seconds to :00 seconds, this issue is commonly caused by Android browsers.")
-
-				req.Arguments[arg.Name] = timestamp.Format("2006-01-02T15:04:05")
-			}
-
+			mangleInvalidDatetimeValues(req, &arg)
 		}
+	}
+}
+
+func mangleInvalidDatetimeValues(req *ExecutionRequest, arg *config.ActionArgument) {
+	value, exists := req.Arguments[arg.Name]
+
+	if !exists || value == "" {
+		return
+	}
+
+	timestamp, err := time.Parse("2006-01-02T15:04", value)
+
+	if err == nil {
+		log.WithFields(log.Fields{
+			"arg":         arg.Name,
+			"value":       value,
+			"actionTitle": req.Action.Title,
+		}).Warnf("Mangled invalid datetime value without seconds to :00 seconds, this issue is commonly caused by Android browsers.")
+
+		req.Arguments[arg.Name] = timestamp.Format("2006-01-02T15:04:05")
 	}
 }
