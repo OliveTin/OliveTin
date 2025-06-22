@@ -149,7 +149,7 @@ func TestRedactShellCommand(t *testing.T) {
 
 	values := map[string]string{
 		"personName": "Fred",
-		"password": "toomanysecrets",
+		"password":   "toomanysecrets",
 	}
 
 	res := redactShellCommand(cmd, args, values)

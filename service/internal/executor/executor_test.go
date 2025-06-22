@@ -247,11 +247,11 @@ func TestMangleInvalidArgumentValues(t *testing.T) {
 	cfg.Sanitize()
 
 	req := ExecutionRequest{
-		Action: a1,
+		Action:            a1,
 		AuthenticatedUser: acl.UserFromSystem(cfg, "testuser"),
 		Cfg:               cfg,
-		Arguments:         map[string]string{
-			"date":  "1990-01-10T12:00", // Invalid format, should be without seconds
+		Arguments: map[string]string{
+			"date": "1990-01-10T12:00", // Invalid format, should be without seconds
 		},
 	}
 
