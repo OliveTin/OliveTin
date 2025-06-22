@@ -659,6 +659,7 @@ func triggerLoop(req *ExecutionRequest) {
 			TrackingID:        uuid.NewString(),
 			Tags:              []string{"trigger"},
 			AuthenticatedUser: req.AuthenticatedUser,
+			Arguments:         req.Arguments,
 			Cfg:               req.Cfg,
 		}
 
