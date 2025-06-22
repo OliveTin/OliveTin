@@ -28,8 +28,6 @@ describe('config: empty dashboards are hidden', function () {
     const title = await webdriver.getTitle()
     expect(title).to.be.equal("OliveTin")
 
-    await webdriver.findElement(By.id('sidebar-toggler-button')).click()
-
     await openSidebar()
 
     const navigationLinks = await getNavigationLinks()

@@ -33,14 +33,12 @@ describe('config: onlyDashboards', function () {
     const actionsLink = navLinks[0];
     assert.isNotNull(actionsLink, 'Actions link should not be null')
     assert.equal(await actionsLink.getAttribute('title'), 'Actions', 'Actions link should have the title "Actions"')
-    assert.isFalse(await actionsLink.isDisplayed(), 'Actions link should be displayed when there are only dashboards')
+    assert.isFalse(await actionsLink.isDisplayed(), 'Actions link should not be displayed when there are only dashboards')
 
     const firstDashboardLink = await webdriver.findElement(By.css('li[title="My Dashboard"]'), 'The first dashboard link should be present')
     assert.isNotNull(firstDashboardLink, 'First dashboard link should not be null')
     assert.isTrue(await firstDashboardLink.isDisplayed(), 'First dashboard link should be displayed')
     
-//    await closeSidebar()
-
     const actionButtons = await getActionButtons()
 
     assert.isArray(actionButtons, 'Action buttons should be an array')
@@ -49,12 +47,5 @@ describe('config: onlyDashboards', function () {
     const actionButtonsOnDashboard = await getActionButtons('MyDashboard')
     assert.isArray(actionButtonsOnDashboard, 'Action buttons on dashboard should be an array')
     assert.lengthOf(actionButtonsOnDashboard, 3, 'Action buttons on dashboard should have 3 buttons')
-
-    /*
-    const actionButton1 = actionButtonsOnDashboard[0];
-    assert.isNotNull(actionButton1, 'First action button should not be null')
-    assert.equal(await actionButton1, 'Actions', 'First action button should have the title "Actions"')
-    assert.isTrue(await actionButton1.isDisplayed(), 'First action button should be displayed')
-    */
   })
 })
