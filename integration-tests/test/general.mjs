@@ -56,7 +56,7 @@ describe('config: general', function () {
   it('Default buttons are rendered', async function() {
     await getRootAndWait()
 
-    const buttons = await getActionButtons(webdriver)
+    const buttons = await getActionButtons()
 
     expect(buttons).to.have.length(8)
   })

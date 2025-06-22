@@ -3,8 +3,12 @@ import fs from 'fs'
 import { expect } from 'chai'
 import { Condition } from 'selenium-webdriver'
 
-export async function getActionButtons (webdriver) {
-  return await webdriver.findElement(By.id('contentActions')).findElements(By.tagName('button'))
+export async function getActionButtons (dashboardTitle = null) {
+  if (dashboardTitle == null) { 
+    return await webdriver.findElement(By.id('contentActions')).findElements(By.tagName('button'))
+  } else {
+    return await webdriver.findElements(By.css('section[title="' + dashboardTitle + '"] button'))
+  }
 }
 
 export function takeScreenshotOnFailure (test, webdriver) {
@@ -39,6 +43,56 @@ export async function getRootAndWait() {
       return false
     }
   }))
+}
+
+export async function closeSidebar() {
+  await webdriver.findElement(By.id('sidebar-toggler-button')).click()
+
+  const sidebar = await webdriver.findElement(By.id('mainnav'))
+
+  const neededLeft = '-250px' // Assuming sidebar is closed at this position
+
+  let lastLeft = ''
+
+  await webdriver.wait(new Condition('wait for sidebar to close', async function() {
+    const left = await sidebar.getCssValue('left')
+
+    if (left !== lastLeft) {
+      lastLeft = left
+      console.log('Sidebar left changed to: ', left)
+      return false
+    } else {
+      console.log('Sidebar closed, left is: *' + left, left === neededLeft ? ' (as expected)' : '')
+      return left === neededLeft
+    }
+  }), 10000); // Wait up to 10 seconds for the sidebar to close
+}
+
+export async function openSidebar() {
+  await webdriver.findElement(By.id('sidebar-toggler-button')).click()
+
+  const sidebar = await webdriver.findElement(By.id('mainnav'))
+
+  let lastLeft = 0
+
+  await webdriver.wait(new Condition('wait for sidebar to open', async function() {
+    const left = await sidebar.getCssValue('left')
+
+    if (left !== lastLeft) {
+      lastLeft = left
+      console.log('Sidebar left changed to: ', left)
+      return false
+    } else {
+      console.log('Sidebar opened, left is: ', left)
+      return true
+    }
+  }));
+}
+
+export async function getNavigationLinks() {
+  const navigationLinks = await webdriver.findElements(By.css('#navigation-links a'))
+
+  return navigationLinks
 }
 
 export async function requireExecutionDialogStatus (webdriver, expected) {
