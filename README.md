@@ -12,7 +12,7 @@ OliveTin gives **safe** and **simple** access to predefined shell commands from 
 [![Go Report Card](https://goreportcard.com/badge/github.com/Olivetin/OliveTin)](https://goreportcard.com/report/github.com/OliveTin/OliveTin)
 [![Build Snapshot](https://github.com/OliveTin/OliveTin/actions/workflows/build-snapshot.yml/badge.svg)](https://github.com/OliveTin/OliveTin/actions/workflows/build-snapshot.yml)
 
-<img alt = "screenshot" src = "https://github.com/OliveTin/OliveTin/blob/main/var/marketing/screenshotDesktop.png" />
+<img alt = "screenshot" src = "https://github.com/OliveTin/OliveTin/blob/main/var/marketing/screenshots/mainpage-laptop_framed.png" />
 <a href = "#screenshots">More screenshots below</a>
 
 All documentation can be found at [docs.olivetin.app](https://docs.olivetin.app). This includes installation and usage guide, etc.
@@ -53,19 +53,19 @@ All documentation can be found at [docs.olivetin.app](https://docs.olivetin.app)
 Desktop web browser;
 
 <p align = "center">
-<img alt = "screenshot" src = "https://github.com/OliveTin/OliveTin/blob/main/var/marketing/screenshotDesktop.png" />
+<img alt = "screenshot" src = "https://github.com/OliveTin/OliveTin/blob/main/var/marketing/screenshots/mainpage-laptop_framed.png" />
 </p>
 
 Desktop web browser (dark mode);
 
 <p align = "center">
-<img alt = "screenshot" src = "https://github.com/OliveTin/OliveTin/blob/main/var/marketing/screenshotDesktopDark.png" />
+<img alt = "screenshot" src = "https://github.com/OliveTin/OliveTin/blob/main/var/marketing/screenshots/mainpage-darkop_framed.png" />
 </p>
 
 Mobile screen size (responsive layout);
 
 <p align = "center">
-<img alt = "screenshot" src = "https://github.com/OliveTin/OliveTin/blob/main/var/marketing/screenshotMobile.png" style = "height: 700px;" />
+<img alt = "screenshot" src = "https://github.com/OliveTin/OliveTin/blob/main/var/marketing/screenshot/mainpage-phone_framed.png" style = "height: 700px;" />
 </p>
 
 ## Documentation
