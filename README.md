@@ -68,6 +68,16 @@ Mobile screen size (responsive layout);
 <img alt = "screenshot" src = "https://github.com/OliveTin/OliveTin/blob/main/var/marketing/screenshotMobile.png" style = "height: 700px;" />
 </p>
 
+## No-Nonsense Software Principles
+
+The OliveTin project follows the following principles:
+
+* **Open Source & Free Software**: following the [Open Source Definition](https://opensource.org/osd) and the [Free Software Definition](https://www.gnu.org/philosophy/free-sw.html). All code and assets are available under the [AGPL-3.0 License](LICENSE).
+* **Independent**: No company owns the code, or is responsible for the governance of the project.
+* **Inclusive**: No "core", "pro", "premium" or "enterprise" version. The only version is the one you can download and run, and it has all the features.
+* **Invisible**: No usage tracking, no user tracking, no ads, no telemetry. 
+* **Internal**: No internet connection required for any functionality.
+
 ## Documentation
 
 All documentation can be found at [docs.olivetin.app](https://docs.olivetin.app). This includes installation and usage guide, etc.
