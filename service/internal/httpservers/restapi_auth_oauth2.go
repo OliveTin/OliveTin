@@ -259,14 +259,13 @@ func handleOAuthCallback(w http.ResponseWriter, r *http.Request) {
 		log.Debugf("states: %+v %+v", k, v)
 	}
 
-	loginMessage := fmt.Sprintf("OAuth2 login complete for %v", registeredStates[state].Username)
-
 	log.WithFields(log.Fields{
 		"state": state,
-	}).Infof(loginMessage)
+		"username": registeredStates[state].Username,
+	}).Info("OAuth2 login successful")
 
 	http.Redirect(w, r, "/", http.StatusFound)
-	w.Write([]byte(loginMessage))
+	w.Write([]byte("OAuth2 login successful."))
 }
 
 type UserInfo struct {
