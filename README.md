@@ -65,7 +65,7 @@ Desktop web browser (dark mode);
 Mobile screen size (responsive layout);
 
 <p align = "center">
-<img alt = "screenshot" src = "https://github.com/OliveTin/OliveTin/blob/main/var/marketing/screenshot/mainpage-phone_framed.png" style = "height: 700px;" />
+<img alt = "screenshot" src = "https://github.com/OliveTin/OliveTin/blob/main/var/marketing/screenshots/mainpage-phone_framed.png" style = "height: 700px;" />
 </p>
 
 ## Documentation
