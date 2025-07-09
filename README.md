@@ -70,12 +70,12 @@ Mobile screen size (responsive layout);
 
 ## No-Nonsense Software Principles
 
-The OliveTin project follows the following principles:
+OliveTin follows these principles:
 
 * **Open Source & Free Software**: following the [Open Source Definition](https://opensource.org/osd) and the [Free Software Definition](https://www.gnu.org/philosophy/free-sw.html). All code and assets are available under the [AGPL-3.0 License](LICENSE).
-* **Independent**: No company owns the code, or is responsible for the governance of the project.
+* **Independent**: No company owns the code or is responsible for the projects' governance.
 * **Inclusive**: No "core", "pro", "premium" or "enterprise" version. The only version is the one you can download and run, and it has all the features.
-* **Invisible**: No usage tracking, no user tracking, no ads, no telemetry. 
+* **Invisible**: No usage tracking, no user tracking, no ads, and no telemetry. 
 * **Internal**: No internet connection required for any functionality.
 
 ## Documentation

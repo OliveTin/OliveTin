@@ -51,9 +51,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.CONTAINER_TOKEN }}
 
-      - name: grpc
-        run: make -w grpc
-
       - name: make webui
         run: make -w webui-dist
 

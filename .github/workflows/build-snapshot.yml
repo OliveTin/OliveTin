@@ -39,9 +39,6 @@ jobs:
       - name: Print go version
         run: go version
 
-      - name: grpc
-        run: make -w grpc
-
       - name: make service
         run: make -w service
 
