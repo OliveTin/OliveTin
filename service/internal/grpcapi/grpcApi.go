@@ -12,7 +12,7 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
-	"errors"
+	"fmt"
 	"net"
 
 	acl "github.com/OliveTin/OliveTin/internal/acl"
@@ -154,7 +154,7 @@ func (api *oliveTinAPI) StartActionAndWait(ctx ctx.Context, req *apiv1.StartActi
 			LogEntry: internalLogEntryToPb(internalLogEntry),
 		}, nil
 	} else {
-		return nil, errors.New("Execution not found!")
+		return nil, fmt.Errorf("execution not found")
 	}
 }
 

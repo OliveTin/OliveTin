@@ -5,7 +5,6 @@ import (
 	sv "github.com/OliveTin/OliveTin/internal/stringvariables"
 	log "github.com/sirupsen/logrus"
 
-	"errors"
 	"fmt"
 	"net/mail"
 	"net/url"
@@ -34,7 +33,7 @@ func parseCommandForReplacements(shellCommand string, values map[string]string) 
 		argValue, argProvided := values[argName]
 
 		if !argProvided {
-			return "", errors.New("Required arg not provided: " + argName)
+			return "", fmt.Errorf("required arg not provided: %v", argName)
 		}
 
 		shellCommand = strings.ReplaceAll(shellCommand, match[0], argValue)
@@ -107,7 +106,7 @@ func typecheckActionArgument(name string, value string, action *config.Action) e
 	arg := action.FindArg(name)
 
 	if arg == nil {
-		return errors.New("Action arg not defined: " + name)
+		return fmt.Errorf("action arg not defined: %v", name)
 	}
 
 	if value == "" {
@@ -145,7 +144,7 @@ func TypeSafetyCheck(name string, value string, argumentType string) error {
 
 func typecheckNull(arg *config.ActionArgument) error {
 	if arg.RejectNull {
-		return errors.New("Null values are not allowed")
+		return fmt.Errorf("null values are not allowed")
 	}
 
 	return nil
@@ -162,7 +161,7 @@ func typecheckChoice(value string, arg *config.ActionArgument) error {
 		}
 	}
 
-	return errors.New("argument value is not one of the predefined choices")
+	return fmt.Errorf("argument value is not one of the predefined choices")
 }
 
 func typecheckChoiceEntity(value string, arg *config.ActionArgument) error {
@@ -176,7 +175,7 @@ func typecheckChoiceEntity(value string, arg *config.ActionArgument) error {
 		}
 	}
 
-	return errors.New("argument value cannot be found in entities")
+	return fmt.Errorf("argument value cannot be found in entities")
 }
 
 func typeSafetyCheckEmail(value string) error {
@@ -211,7 +210,7 @@ func typeSafetyCheckRegex(name string, value string, argumentType string) error 
 		pattern, found = typecheckRegex[argumentType]
 
 		if !found {
-			return errors.New("argument type not implemented " + argumentType)
+			return fmt.Errorf("argument type not implemented %v", argumentType)
 		}
 	}
 
@@ -225,7 +224,7 @@ func typeSafetyCheckRegex(name string, value string, argumentType string) error 
 			"pattern": pattern,
 		}).Warn("Arg type check safety failure")
 
-		return errors.New(fmt.Sprintf("invalid argument %v, doesn't match %v", name, argumentType))
+		return fmt.Errorf("invalid argument %v, doesn't match %v", name, argumentType)
 	}
 
 	return nil

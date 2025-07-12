@@ -93,7 +93,11 @@ func testJwkValidation(t *testing.T, expire int64, expectCode int) {
 		fmt.Println(string(body))
 	}
 
-	srv.Shutdown(context.TODO())
+	err = srv.Shutdown(context.TODO())
+
+	if err != nil {
+		t.Fatalf("Server shutdown error: %+v", err)
+	}
 }
 
 func TestJWTSignatureVerificationSucceeds(t *testing.T) {
@@ -114,7 +118,7 @@ func TestJWTHeader(t *testing.T) {
 	cfg.AuthJwtClaimUsername = "sub"
 	cfg.AuthJwtClaimUserGroup = "olivetinGroup"
 	cfg.AuthJwtHeader = "Authorization"
-	SetGlobalRestConfig(cfg) // ugly, setting global var, we should pass configs as params to modules... :/
+	SetGlobalRestConfig(cfg) // Ugly, setting global var, we should pass configs as params to modules... :/
 
 	token := jwt.New(jwt.SigningMethodRS256)
 

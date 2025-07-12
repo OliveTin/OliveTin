@@ -33,9 +33,14 @@ func StartUpdateChecker(cfg *config.Config) {
 	// 1st: Every 24h - very spammy.
 	// 2nd: Every 7d - (168 hours - much more reasonable, but it checks in at the same time/day each week.
 	// Current: Every 100h is not so spammy, and has the advantage that the checkin time "shifts" hours.
-	s.AddFunc("@every 100h", func() {
+	_, err := s.AddFunc("@every 100h", func() {
 		actualCheckForUpdate()
 	})
+
+	if err != nil {
+		log.Errorf("update check cron job failed to start: %v", err)
+		return
+	}
 
 	go actualCheckForUpdate() // On startup
 
@@ -48,7 +53,7 @@ func parseVersion(input []byte) string {
 	err := json.Unmarshal(input, &versionMap)
 
 	if err != nil {
-		log.Errorf("Update check unmarshal failure: %v", err)
+		log.Errorf("update check unmarshal failure: %v", err)
 		return "none"
 	} else {
 		log.Infof("Update check remote version: %+v, latest version: %+v", versionMap.Latest, installationinfo.Build.Version)
@@ -95,7 +100,12 @@ func doRequest() string {
 
 	versionMap, _ := io.ReadAll(resp.Body)
 
-	defer resp.Body.Close()
+	err = resp.Body.Close()
+
+	if err != nil {
+		log.Errorf("Update check failed to close body %v", err)
+		return "none"
+	}
 
 	return parseVersion(versionMap)
 }

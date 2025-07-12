@@ -310,9 +310,9 @@ func stepConcurrencyCheck(req *ExecutionRequest) bool {
 	// Note that the current execution is counted int the logs, so when checking we +1
 	if concurrentCount >= (req.Action.MaxConcurrent + 1) {
 		log.WithFields(log.Fields{
-			"actionTitle": req.logEntry.ActionTitle,
+			"actionTitle":     req.logEntry.ActionTitle,
 			"concurrentCount": concurrentCount,
-			"maxConcurrent": req.Action.MaxConcurrent,
+			"maxConcurrent":   req.Action.MaxConcurrent,
 		}).Warnf("Blocked from executing due to concurrency limit")
 
 		req.logEntry.Output = "Blocked from executing due to concurrency limit"
@@ -570,7 +570,14 @@ func stepExec(req *ExecutionRequest) bool {
 		}).Warnf("Action timed out")
 
 		// The context timeout should kill the process, but let's make sure.
-		req.executor.Kill(req.logEntry)
+		err := req.executor.Kill(req.logEntry)
+
+		if err != nil {
+			log.WithFields(log.Fields{
+				"actionTitle": req.logEntry.ActionTitle,
+			}).Warnf("could not kill process: %v", err)
+		}
+
 		req.logEntry.TimedOut = true
 		req.logEntry.Output += "OliveTin::timeout - this action timed out after " + fmt.Sprintf("%v", req.Action.Timeout) + " seconds. If you need more time for this action, set a longer timeout. See https://docs.olivetin.app/timeout.html for more help."
 	}

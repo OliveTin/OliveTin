@@ -94,7 +94,7 @@ func generateThemeCss(w http.ResponseWriter, r *http.Request) {
 		customThemeCssRead = true
 
 		if _, err := os.Stat(themeCssFilename); err == nil {
-			customThemeCss, err = os.ReadFile(themeCssFilename)
+			customThemeCss, _ = os.ReadFile(themeCssFilename)
 		} else {
 			log.Debugf("Theme CSS not read: %v", err)
 			customThemeCss = []byte("/* not found */")
