@@ -12,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"math"
 )
 
 var (
@@ -142,9 +143,20 @@ func serializeValueToSv(prefix string, value interface{}) {
 		serializeMapToSv(prefix, m)
 	} else if s, ok := value.([]interface{}); ok { // if value is a slice we need to flatten it
 		serializeSliceToSv(prefix, s)
+	} else if f, ok := value.(float64); ok {
+		if canConvertToInt64(f) {  
+			s := int64(f)
+			sv.Set(prefix, fmt.Sprintf("%d", s))
+		} else {
+			sv.Set(prefix, fmt.Sprintf("%f", f))
+		}
 	} else {
 		sv.Set(prefix, fmt.Sprintf("%v", value))
 	}
+}
+
+func canConvertToInt64(f float64) bool {
+	return f >= math.MinInt64 && f <= math.MaxInt64 && f == math.Trunc(f)
 }
 
 func serializeMapToSv(prefix string, m map[string]interface{}) {

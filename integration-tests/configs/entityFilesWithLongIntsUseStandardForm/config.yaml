@@ -1,0 +1,9 @@
+actions:
+  - title: 'Test me {{ test_me.name }}'
+    popupOnStart: execution-dialog-stdout-only
+    entity: testrows
+    shell: echo "{{ test_me.val }}"
+
+entities:
+  - name: testrows
+    file: entities/data.json
