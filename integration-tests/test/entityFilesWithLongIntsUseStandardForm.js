@@ -40,7 +40,7 @@ describe('config: entities', function () {
     const buttonFloat10 = await buttons[0]
     expect(await buttonFloat10.getAttribute('title')).to.be.equal('Test me FLOAT with 10 numbers')
     await buttonFloat10.click()
-    expect(await getExecutionDialogOutput()).to.be.equal('1.234568\n', 'Expected output to be an int')
+    expect(await getExecutionDialogOutput()).to.be.equal('1.234568\n', 'Expected output to be a float')
 
   });
 });
