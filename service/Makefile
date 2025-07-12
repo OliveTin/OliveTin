@@ -26,7 +26,7 @@ compile-x64-win:
 
 compile: compile-armhf compile-x64-lin compile-x64-win
 
-codestyle:
+codestyle: go-tools
 	go fmt ./...
 	go vet ./...
 	gocyclo -over 4 internal
@@ -39,6 +39,10 @@ unittests:
 	go tool cover -html=reports/unittests.out -o reports/unittests.html
 
 go-tools:
+	go install "github.com/fzipp/gocyclo/cmd/gocyclo"
+	go install "github.com/go-critic/go-critic/cmd/gocritic"
+
+go-tools-all:
 	go install "github.com/bufbuild/buf/cmd/buf"
 	go install "github.com/fzipp/gocyclo/cmd/gocyclo"
 	go install "github.com/go-critic/go-critic/cmd/gocritic"

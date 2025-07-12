@@ -11,6 +11,22 @@ export async function getActionButtons (dashboardTitle = null) {
   }
 }
 
+export async function getExecutionDialogOutput() {
+    await webdriver.wait(new Condition('Dialog with long int is visible', async () => { 
+      const dialog = await webdriver.findElement({ id: 'execution-results-popup' })
+      return await dialog.isDisplayed()
+    }));
+    
+    const ret = await webdriver.executeScript('return window.logEntries.get(window.executionDialog.executionTrackingId).output')
+
+    return ret
+}
+
+export async function closeExecutionDialog() {
+    const btnClose = await webdriver.findElements(By.css('[title="Close"]'))
+    await btnClose[0].click()
+}
+
 export function takeScreenshotOnFailure (test, webdriver) {
     if (test.state === 'failed') {
       const title = test.fullTitle();
