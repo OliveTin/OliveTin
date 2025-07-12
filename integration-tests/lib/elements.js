@@ -12,7 +12,7 @@ export async function getActionButtons (dashboardTitle = null) {
 }
 
 export async function getExecutionDialogOutput() {
-    webdriver.wait(new Condition('Dialog with long int is visible', async () => { 
+    await webdriver.wait(new Condition('Dialog with long int is visible', async () => { 
       const dialog = await webdriver.findElement({ id: 'execution-results-popup' })
       return await dialog.isDisplayed()
     }));
