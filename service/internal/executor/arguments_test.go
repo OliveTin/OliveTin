@@ -84,7 +84,7 @@ func TestArgumentNotProvided(t *testing.T) {
 	out, err := parseActionArguments(values, &a1, "")
 
 	assert.Equal(t, "", out)
-	assert.Equal(t, err.Error(), "Required arg not provided: personName")
+	assert.Equal(t, err.Error(), "required arg not provided: personName")
 }
 
 func TestTypeSafetyCheckUrl(t *testing.T) {
