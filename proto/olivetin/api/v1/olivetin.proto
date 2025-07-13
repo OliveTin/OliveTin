@@ -138,6 +138,7 @@ message LogEntry {
 	bool execution_finished = 15;
 	bool blocked = 16;
 	int64 datetime_index = 17;
+	bool can_kill = 18;
 }
 
 message GetLogsResponse {

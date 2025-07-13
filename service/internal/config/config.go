@@ -67,6 +67,7 @@ type PermissionsList struct {
 	View bool
 	Exec bool
 	Logs bool
+	Kill bool
 }
 
 // AccessControlList defines what permissions apply to a user or user group.
