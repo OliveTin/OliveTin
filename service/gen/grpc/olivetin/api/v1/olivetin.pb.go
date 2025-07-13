@@ -1125,6 +1125,7 @@ type LogEntry struct {
 	ExecutionFinished   bool                   `protobuf:"varint,15,opt,name=execution_finished,json=executionFinished,proto3" json:"execution_finished,omitempty"`
 	Blocked             bool                   `protobuf:"varint,16,opt,name=blocked,proto3" json:"blocked,omitempty"`
 	DatetimeIndex       int64                  `protobuf:"varint,17,opt,name=datetime_index,json=datetimeIndex,proto3" json:"datetime_index,omitempty"`
+	CanKill             bool                   `protobuf:"varint,18,opt,name=can_kill,json=canKill,proto3" json:"can_kill,omitempty"`
 	unknownFields       protoimpl.UnknownFields
 	sizeCache           protoimpl.SizeCache
 }
@@ -1269,6 +1270,13 @@ func (x *LogEntry) GetDatetimeIndex() int64 {
 		return x.DatetimeIndex
 	}
 	return 0
+}
+
+func (x *LogEntry) GetCanKill() bool {
+	if x != nil {
+		return x.CanKill
+	}
+	return false
 }
 
 type GetLogsResponse struct {
@@ -2733,7 +2741,7 @@ const file_olivetin_api_v1_olivetin_proto_rawDesc = "" +
 	"\x1fStartActionByGetAndWaitResponse\x126\n" +
 	"\tlog_entry\x18\x01 \x01(\v2\x19.olivetin.api.v1.LogEntryR\blogEntry\"3\n" +
 	"\x0eGetLogsRequest\x12!\n" +
-	"\fstart_offset\x18\x01 \x01(\x03R\vstartOffset\"\xad\x04\n" +
+	"\fstart_offset\x18\x01 \x01(\x03R\vstartOffset\"\xc8\x04\n" +
 	"\bLogEntry\x12)\n" +
 	"\x10datetime_started\x18\x01 \x01(\tR\x0fdatetimeStarted\x12!\n" +
 	"\faction_title\x18\x02 \x01(\tR\vactionTitle\x12\x16\n" +
@@ -2753,7 +2761,8 @@ const file_olivetin_api_v1_olivetin_proto_rawDesc = "" +
 	"\x11execution_started\x18\x0e \x01(\bR\x10executionStarted\x12-\n" +
 	"\x12execution_finished\x18\x0f \x01(\bR\x11executionFinished\x12\x18\n" +
 	"\ablocked\x18\x10 \x01(\bR\ablocked\x12%\n" +
-	"\x0edatetime_index\x18\x11 \x01(\x03R\rdatetimeIndex\"\x86\x01\n" +
+	"\x0edatetime_index\x18\x11 \x01(\x03R\rdatetimeIndex\x12\x19\n" +
+	"\bcan_kill\x18\x12 \x01(\bR\acanKill\"\x86\x01\n" +
 	"\x0fGetLogsResponse\x12-\n" +
 	"\x04logs\x18\x01 \x03(\v2\x19.olivetin.api.v1.LogEntryR\x04logs\x12'\n" +
 	"\x0fcount_remaining\x18\x02 \x01(\x03R\x0ecountRemaining\x12\x1b\n" +
