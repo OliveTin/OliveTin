@@ -230,6 +230,7 @@ func DefaultConfigWithBasePort(basePort int) *Config {
 	config.DefaultPermissions.Exec = true
 	config.DefaultPermissions.View = true
 	config.DefaultPermissions.Logs = true
+	config.DefaultPermissions.Kill = true
 	config.AuthJwtClaimUsername = "name"
 	config.AuthJwtClaimUserGroup = "group"
 	config.AuthRequireGuestsToLogin = false

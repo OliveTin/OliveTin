@@ -122,6 +122,10 @@ func permissionsConfigToBits(permissions config.PermissionsList) PermissionBits 
 		ret |= Logs
 	}
 
+	if permissions.Kill {
+		ret |= Kill
+	}
+
 	return ret
 }
 

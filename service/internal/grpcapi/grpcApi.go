@@ -52,6 +52,12 @@ func (api *oliveTinAPI) KillAction(ctx ctx.Context, req *apiv1.KillActionRequest
 	user := acl.UserFromContext(ctx, cfg)
 	action := cfg.FindAction(execReqLogEntry.ActionTitle)
 
+	if action == nil {
+		log.Warnf("Killing execution request not possible - action not found: %v", execReqLogEntry.ActionTitle)
+		ret.Killed = false
+		return ret, nil
+	}
+
 	if !acl.IsAllowedKill(cfg, user, action) {
 		log.Warnf("Killing execution request not possible - user not allowed to kill this action: %v", req.ExecutionTrackingId)
 		ret.Killed = false
