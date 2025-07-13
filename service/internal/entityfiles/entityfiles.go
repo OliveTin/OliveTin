@@ -138,13 +138,14 @@ func updateSvFromFile(entityname string, data []map[string]any) {
 	}
 }
 
+//gocyclo:ignore
 func serializeValueToSv(prefix string, value any) {
 	if m, ok := value.(map[string]any); ok { // if value is a map we need to flatten it
 		serializeMapToSv(prefix, m)
 	} else if s, ok := value.([]any); ok { // if value is a slice we need to flatten it
 		serializeSliceToSv(prefix, s)
 	} else if f, ok := value.(float64); ok {
-		if canConvertToInt64(f) {  
+		if canConvertToInt64(f) {
 			s := int64(f)
 			sv.Set(prefix, fmt.Sprintf("%d", s))
 		} else {

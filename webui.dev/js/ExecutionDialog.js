@@ -219,7 +219,7 @@ export class ExecutionDialog {
     this.domBtnRerun.disabled = !res.logEntry.executionFinished
     this.domBtnRerun.onclick = () => { this.rerunAction(res.logEntry.actionId) }
 
-    this.domBtnKill.disabled = res.logEntry.executionFinished
+    this.domBtnKill.disabled = !res.logEntry.canKill
 
     this.domStatus.update(res.logEntry)
 

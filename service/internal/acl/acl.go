@@ -17,6 +17,7 @@ const (
 	View PermissionBits = 1 << iota
 	Exec
 	Logs
+	Kill
 )
 
 func (p PermissionBits) Has(permission PermissionBits) bool {
@@ -121,6 +122,10 @@ func permissionsConfigToBits(permissions config.PermissionsList) PermissionBits 
 		ret |= Logs
 	}
 
+	if permissions.Kill {
+		ret |= Kill
+	}
+
 	return ret
 }
 
@@ -171,6 +176,10 @@ func IsAllowedView(cfg *config.Config, user *AuthenticatedUser, action *config.A
 	}
 
 	return aclCheck(View, cfg.DefaultPermissions.View, cfg, "isAllowedView", user, action)
+}
+
+func IsAllowedKill(cfg *config.Config, user *AuthenticatedUser, action *config.Action) bool {
+	return aclCheck(Kill, cfg.DefaultPermissions.Kill, cfg, "isAllowedKill", user, action)
 }
 
 func getMetadataKeyOrEmpty(md metadata.MD, key string) string {

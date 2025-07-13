@@ -67,6 +67,7 @@ type PermissionsList struct {
 	View bool
 	Exec bool
 	Logs bool
+	Kill bool
 }
 
 // AccessControlList defines what permissions apply to a user or user group.
@@ -229,6 +230,7 @@ func DefaultConfigWithBasePort(basePort int) *Config {
 	config.DefaultPermissions.Exec = true
 	config.DefaultPermissions.View = true
 	config.DefaultPermissions.Logs = true
+	config.DefaultPermissions.Kill = true
 	config.AuthJwtClaimUsername = "name"
 	config.AuthJwtClaimUserGroup = "group"
 	config.AuthRequireGuestsToLogin = false

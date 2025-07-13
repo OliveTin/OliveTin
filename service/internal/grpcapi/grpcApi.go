@@ -38,24 +38,40 @@ func (api *oliveTinAPI) KillAction(ctx ctx.Context, req *apiv1.KillActionRequest
 		ExecutionTrackingId: req.ExecutionTrackingId,
 	}
 
-	execReqLogEntry, found := api.executor.GetLog(req.ExecutionTrackingId)
+	var execReqLogEntry *executor.InternalLogEntry
 
-	ret.Found = found
+	execReqLogEntry, ret.Found = api.executor.GetLog(req.ExecutionTrackingId)
 
-	if found {
-		log.Warnf("Killing execution request by tracking ID: %v", req.ExecutionTrackingId)
-
-		err := api.executor.Kill(execReqLogEntry)
-
-		if err != nil {
-			log.Warnf("Killing execution request err: %v", err)
-			ret.AlreadyCompleted = true
-			ret.Killed = false
-		} else {
-			ret.Killed = true
-		}
-	} else {
+	if !ret.Found {
 		log.Warnf("Killing execution request not possible - not found by tracking ID: %v", req.ExecutionTrackingId)
+		return ret, nil
+	}
+
+	log.Warnf("Killing execution request by tracking ID: %v", req.ExecutionTrackingId)
+
+	user := acl.UserFromContext(ctx, cfg)
+	action := cfg.FindAction(execReqLogEntry.ActionTitle)
+
+	if action == nil {
+		log.Warnf("Killing execution request not possible - action not found: %v", execReqLogEntry.ActionTitle)
+		ret.Killed = false
+		return ret, nil
+	}
+
+	if !acl.IsAllowedKill(cfg, user, action) {
+		log.Warnf("Killing execution request not possible - user not allowed to kill this action: %v", req.ExecutionTrackingId)
+		ret.Killed = false
+		return ret, nil
+	}
+
+	err := api.executor.Kill(execReqLogEntry)
+
+	if err != nil {
+		log.Warnf("Killing execution request err: %v", err)
+		ret.AlreadyCompleted = true
+		ret.Killed = false
+	} else {
+		ret.Killed = true
 	}
 
 	return ret, nil
@@ -136,11 +152,13 @@ func (api *oliveTinAPI) StartActionAndWait(ctx ctx.Context, req *apiv1.StartActi
 		args[arg.Name] = arg.Value
 	}
 
+	user := acl.UserFromContext(ctx, cfg)
+
 	execReq := executor.ExecutionRequest{
 		Action:            api.executor.FindActionBindingByID(req.ActionId),
 		TrackingID:        uuid.NewString(),
 		Arguments:         args,
-		AuthenticatedUser: acl.UserFromContext(ctx, cfg),
+		AuthenticatedUser: user,
 		Cfg:               cfg,
 	}
 
@@ -151,7 +169,7 @@ func (api *oliveTinAPI) StartActionAndWait(ctx ctx.Context, req *apiv1.StartActi
 
 	if ok {
 		return &apiv1.StartActionAndWaitResponse{
-			LogEntry: internalLogEntryToPb(internalLogEntry),
+			LogEntry: internalLogEntryToPb(internalLogEntry, user),
 		}, nil
 	} else {
 		return nil, fmt.Errorf("execution not found")
@@ -179,11 +197,13 @@ func (api *oliveTinAPI) StartActionByGet(ctx ctx.Context, req *apiv1.StartAction
 func (api *oliveTinAPI) StartActionByGetAndWait(ctx ctx.Context, req *apiv1.StartActionByGetAndWaitRequest) (*apiv1.StartActionByGetAndWaitResponse, error) {
 	args := make(map[string]string)
 
+	user := acl.UserFromContext(ctx, cfg)
+
 	execReq := executor.ExecutionRequest{
 		Action:            api.executor.FindActionBindingByID(req.ActionId),
 		TrackingID:        uuid.NewString(),
 		Arguments:         args,
-		AuthenticatedUser: acl.UserFromContext(ctx, cfg),
+		AuthenticatedUser: user,
 		Cfg:               cfg,
 	}
 
@@ -194,15 +214,15 @@ func (api *oliveTinAPI) StartActionByGetAndWait(ctx ctx.Context, req *apiv1.Star
 
 	if ok {
 		return &apiv1.StartActionByGetAndWaitResponse{
-			LogEntry: internalLogEntryToPb(internalLogEntry),
+			LogEntry: internalLogEntryToPb(internalLogEntry, user),
 		}, nil
 	} else {
 		return nil, status.Errorf(codes.NotFound, "Execution not found.")
 	}
 }
 
-func internalLogEntryToPb(logEntry *executor.InternalLogEntry) *apiv1.LogEntry {
-	return &apiv1.LogEntry{
+func internalLogEntryToPb(logEntry *executor.InternalLogEntry, authenticatedUser *acl.AuthenticatedUser) *apiv1.LogEntry {
+	pble := &apiv1.LogEntry{
 		ActionTitle:         logEntry.ActionTitle,
 		ActionIcon:          logEntry.ActionIcon,
 		ActionId:            logEntry.ActionId,
@@ -219,6 +239,12 @@ func internalLogEntryToPb(logEntry *executor.InternalLogEntry) *apiv1.LogEntry {
 		ExecutionFinished:   logEntry.ExecutionFinished,
 		User:                logEntry.Username,
 	}
+
+	if !pble.ExecutionFinished {
+		pble.CanKill = acl.IsAllowedKill(cfg, authenticatedUser, cfg.FindAction(logEntry.ActionTitle))
+	}
+
+	return pble
 }
 
 func getExecutionStatusByTrackingID(api *oliveTinAPI, executionTrackingId string) *executor.InternalLogEntry {
@@ -249,6 +275,8 @@ func getMostRecentExecutionStatusById(api *oliveTinAPI, actionId string) *execut
 func (api *oliveTinAPI) ExecutionStatus(ctx ctx.Context, req *apiv1.ExecutionStatusRequest) (*apiv1.ExecutionStatusResponse, error) {
 	res := &apiv1.ExecutionStatusResponse{}
 
+	user := acl.UserFromContext(ctx, cfg)
+
 	var ile *executor.InternalLogEntry
 
 	if req.ExecutionTrackingId != "" {
@@ -261,7 +289,7 @@ func (api *oliveTinAPI) ExecutionStatus(ctx ctx.Context, req *apiv1.ExecutionSta
 	if ile == nil {
 		return nil, status.Error(codes.NotFound, "Execution not found")
 	} else {
-		res.LogEntry = internalLogEntryToPb(ile)
+		res.LogEntry = internalLogEntryToPb(ile, user)
 	}
 
 	return res, nil
@@ -339,7 +367,7 @@ func (api *oliveTinAPI) GetLogs(ctx ctx.Context, req *apiv1.GetLogsRequest) (*ap
 		action := cfg.FindAction(logEntry.ActionTitle)
 
 		if action == nil || acl.IsAllowedLogs(cfg, user, action) {
-			pbLogEntry := internalLogEntryToPb(logEntry)
+			pbLogEntry := internalLogEntryToPb(logEntry, user)
 
 			ret.Logs = append(ret.Logs, pbLogEntry)
 		}
