@@ -12,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"math"
 )
 
 var (
@@ -32,7 +33,7 @@ func SetupEntityFileWatchers(cfg *config.Config) {
 		configDir = configDirVar
 	}
 
-	for entityIndex, _ := range cfg.Entities { // #337 - iterate by key, not by value
+	for entityIndex := range cfg.Entities { // #337 - iterate by key, not by value
 		ef := cfg.Entities[entityIndex]
 		p := ef.File
 
@@ -73,12 +74,12 @@ func loadEntityFileJson(filename string, entityname string) {
 		return
 	}
 
-	data := make([]map[string]interface{}, 0)
+	data := make([]map[string]any, 0)
 
 	decoder := json.NewDecoder(bytes.NewReader(jfile))
 
 	for decoder.More() {
-		d := make(map[string]interface{})
+		d := make(map[string]any)
 
 		err := decoder.Decode(&d)
 
@@ -106,7 +107,7 @@ func loadEntityFileYaml(filename string, entityname string) {
 		return
 	}
 
-	data := make([]map[string]interface{}, 1)
+	data := make([]map[string]any, 1)
 
 	err = yaml.Unmarshal(yfile, &data)
 
@@ -117,7 +118,7 @@ func loadEntityFileYaml(filename string, entityname string) {
 	updateSvFromFile(entityname, data)
 }
 
-func updateSvFromFile(entityname string, data []map[string]interface{}) {
+func updateSvFromFile(entityname string, data []map[string]any) {
 	log.Debugf("updateSvFromFile: %+v", data)
 
 	count := len(data)
@@ -137,23 +138,34 @@ func updateSvFromFile(entityname string, data []map[string]interface{}) {
 	}
 }
 
-func serializeValueToSv(prefix string, value interface{}) {
-	if m, ok := value.(map[string]interface{}); ok { // if value is a map we need to flatten it
+func serializeValueToSv(prefix string, value any) {
+	if m, ok := value.(map[string]any); ok { // if value is a map we need to flatten it
 		serializeMapToSv(prefix, m)
-	} else if s, ok := value.([]interface{}); ok { // if value is a slice we need to flatten it
+	} else if s, ok := value.([]any); ok { // if value is a slice we need to flatten it
 		serializeSliceToSv(prefix, s)
+	} else if f, ok := value.(float64); ok {
+		if canConvertToInt64(f) {  
+			s := int64(f)
+			sv.Set(prefix, fmt.Sprintf("%d", s))
+		} else {
+			sv.Set(prefix, fmt.Sprintf("%f", f))
+		}
 	} else {
 		sv.Set(prefix, fmt.Sprintf("%v", value))
 	}
 }
 
-func serializeMapToSv(prefix string, m map[string]interface{}) {
+func canConvertToInt64(f float64) bool {
+	return f >= math.MinInt64 && f <= math.MaxInt64 && f == math.Trunc(f)
+}
+
+func serializeMapToSv(prefix string, m map[string]any) {
 	for k, v := range m {
 		serializeValueToSv(prefix+"."+k, v)
 	}
 }
 
-func serializeSliceToSv(prefix string, s []interface{}) {
+func serializeSliceToSv(prefix string, s []any) {
 	sv.Set(prefix+".count", fmt.Sprintf("%v", len(s)))
 
 	for i, v := range s {

@@ -309,13 +309,13 @@ func stepConcurrencyCheck(req *ExecutionRequest) bool {
 
 	// Note that the current execution is counted int the logs, so when checking we +1
 	if concurrentCount >= (req.Action.MaxConcurrent + 1) {
-		msg := fmt.Sprintf("Blocked from executing. This would mean this action is running %d times concurrently, but this action has maxExecutions set to %d.", concurrentCount, req.Action.MaxConcurrent)
-
 		log.WithFields(log.Fields{
-			"actionTitle": req.logEntry.ActionTitle,
-		}).Warnf(msg)
+			"actionTitle":     req.logEntry.ActionTitle,
+			"concurrentCount": concurrentCount,
+			"maxConcurrent":   req.Action.MaxConcurrent,
+		}).Warnf("Blocked from executing due to concurrency limit")
 
-		req.logEntry.Output = msg
+		req.logEntry.Output = "Blocked from executing due to concurrency limit"
 		req.logEntry.Blocked = true
 		return false
 	}
@@ -362,13 +362,14 @@ func stepRateCheck(req *ExecutionRequest) bool {
 		executions := getExecutionsCount(rate, req)
 
 		if executions >= rate.Limit {
-			msg := fmt.Sprintf("Blocked from executing. This action has run %d out of %d allowed times in the last %s.", executions, rate.Limit, rate.Duration)
-
 			log.WithFields(log.Fields{
 				"actionTitle": req.logEntry.ActionTitle,
-			}).Infof(msg)
+				"executions":  executions,
+				"limit":       rate.Limit,
+				"duration":    rate.Duration,
+			}).Infof("Blocked from executing due to rate limit")
 
-			req.logEntry.Output = msg
+			req.logEntry.Output = "Blocked from executing due to rate limit"
 			req.logEntry.Blocked = true
 			return false
 		}
@@ -409,7 +410,7 @@ func stepParseArgs(req *ExecutionRequest) bool {
 	if err != nil {
 		req.logEntry.Output = err.Error()
 
-		log.Warnf(err.Error())
+		log.Warn(err.Error())
 
 		return false
 	}
@@ -569,7 +570,14 @@ func stepExec(req *ExecutionRequest) bool {
 		}).Warnf("Action timed out")
 
 		// The context timeout should kill the process, but let's make sure.
-		req.executor.Kill(req.logEntry)
+		err := req.executor.Kill(req.logEntry)
+
+		if err != nil {
+			log.WithFields(log.Fields{
+				"actionTitle": req.logEntry.ActionTitle,
+			}).Warnf("could not kill process: %v", err)
+		}
+
 		req.logEntry.TimedOut = true
 		req.logEntry.Output += "OliveTin::timeout - this action timed out after " + fmt.Sprintf("%v", req.Action.Timeout) + " seconds. If you need more time for this action, set a longer timeout. See https://docs.olivetin.app/timeout.html for more help."
 	}
@@ -602,7 +610,7 @@ func stepExecAfter(req *ExecutionRequest) bool {
 	if err != nil {
 		msg := "Could not prepare shellAfterCompleted command: " + err.Error() + "\n"
 		req.logEntry.Output += msg
-		log.Warnf(msg)
+		log.Warn(msg)
 		return true
 	}
 
@@ -659,6 +667,7 @@ func triggerLoop(req *ExecutionRequest) {
 			TrackingID:        uuid.NewString(),
 			Tags:              []string{"trigger"},
 			AuthenticatedUser: req.AuthenticatedUser,
+			Arguments:         req.Arguments,
 			Cfg:               req.Cfg,
 		}
 

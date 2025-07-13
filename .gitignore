@@ -1,6 +1,5 @@
 **/*.swp
 **/*.swo
-service/gen/
 service/OliveTin
 service/OliveTin.armhf
 service/OliveTin.exe

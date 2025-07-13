@@ -66,7 +66,7 @@ func Set(key string, value string) {
 func RemoveKeysThatStartWith(search string) {
 	rwmutex.Lock()
 
-	for k, _ := range contents {
+	for k := range contents {
 		if strings.HasPrefix(k, search) {
 			delete(contents, k)
 		}

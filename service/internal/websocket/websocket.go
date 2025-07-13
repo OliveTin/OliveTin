@@ -118,7 +118,11 @@ func broadcast(pbmsg protoreflect.ProtoMessage) {
 
 	sendmutex.Lock()
 	for _, client := range clients {
-		client.conn.WriteMessage(ws.TextMessage, hackyMessage)
+		err := client.conn.WriteMessage(ws.TextMessage, hackyMessage)
+
+		if err != nil {
+			log.Warnf("websocket send error: %v", err)
+		}
 	}
 	sendmutex.Unlock()
 }

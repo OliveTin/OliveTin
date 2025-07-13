@@ -24,7 +24,7 @@ describe('config: multipleDropdowns', function () {
   it('Multiple dropdowns are possible', async function() {
     await getRootAndWait()
 
-    const buttons = await getActionButtons(webdriver)
+    const buttons = await getActionButtons()
 
     let button = null
     for (const b of buttons) {

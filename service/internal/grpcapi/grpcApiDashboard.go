@@ -60,8 +60,10 @@ func getDashboardComponentContents(dashboard *config.DashboardComponent, rr *Das
 }
 
 func buildDashboardComponentSimple(subitem *config.DashboardComponent, rr *DashboardRenderRequest) *apiv1.DashboardComponent {
-	if !slices.Contains(rr.AllowedActionTitles, subitem.Title) {
-		return nil
+	if subitem.Type == "" || subitem.Type == "link" {
+		if !slices.Contains(rr.AllowedActionTitles, subitem.Title) {
+			return nil
+		}
 	}
 
 	newitem := &apiv1.DashboardComponent{

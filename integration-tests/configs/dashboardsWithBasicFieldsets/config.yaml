@@ -1,0 +1,26 @@
+logLevel: debug
+
+actions:
+  - title: Ping
+
+  - title: Action 1
+  - title: Action 2
+
+  - title: Action 3
+  - title: Action 4
+
+dashboards:
+  - title: Test
+    contents:
+      # Uncomment to see the dashboard with the "Ping" action only
+      - title: Ping
+      - title: Fieldset 1
+        type: fieldset
+        contents:
+          - title: Action 1
+          - title: Action 2
+      - title: Fieldset 2
+        type: fieldset
+        contents:
+          - title: Action 3
+          - title: Action 4

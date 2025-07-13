@@ -12,11 +12,7 @@ import (
 	"time"
 )
 
-var calendar map[*config.Action][]*time.Timer
-
 func Schedule(cfg *config.Config, ex *executor.Executor) {
-	calendar = make(map[*config.Action][]*time.Timer)
-
 	for _, action := range cfg.Actions {
 		if action.ExecOnCalendarFile != "" {
 			x := func(filename string) {
@@ -100,7 +96,6 @@ func sleepUntil(ctx context.Context, instant time.Time, action *config.Action, c
 }
 
 func exec(instant time.Time, action *config.Action, cfg *config.Config, ex *executor.Executor) {
-	// calendar[action] = append(calendar[action], timer)
 	log.WithFields(log.Fields{
 		"instant":     instant,
 		"actionTitle": action.Title,

@@ -76,11 +76,11 @@ func completeProviderConfig(providerName string, providerConfig *config.OAuth2Pr
 	}
 }
 
-func getOAuth2Config(cfg *config.Config, providerName string) (*oauth2.Config, error) {
+func getOAuth2Config(providerName string) (*oauth2.Config, error) {
 	config, ok := registeredProviders[providerName]
 
 	if !ok {
-		return nil, fmt.Errorf("Provider not found in config: %v", providerName)
+		return nil, fmt.Errorf("provider not found in config: %v", providerName)
 	}
 
 	return config, nil
@@ -118,7 +118,7 @@ func handleOAuthLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	providerName := r.URL.Query().Get("provider")
-	provider, err := getOAuth2Config(cfg, providerName)
+	provider, err := getOAuth2Config(providerName)
 
 	if err != nil {
 		log.Errorf("Failed to get provider config: %v %v", providerName, err)
@@ -259,14 +259,13 @@ func handleOAuthCallback(w http.ResponseWriter, r *http.Request) {
 		log.Debugf("states: %+v %+v", k, v)
 	}
 
-	loginMessage := fmt.Sprintf("OAuth2 login complete for %v", registeredStates[state].Username)
-
 	log.WithFields(log.Fields{
-		"state": state,
-	}).Infof(loginMessage)
+		"state":    state,
+		"username": registeredStates[state].Username,
+	}).Info("OAuth2 login successful")
 
 	http.Redirect(w, r, "/", http.StatusFound)
-	w.Write([]byte(loginMessage))
+	w.Write([]byte("OAuth2 login successful."))
 }
 
 type UserInfo struct {
@@ -274,10 +273,16 @@ type UserInfo struct {
 	Usergroup string
 }
 
+//gocyclo:ignore
 func getUserInfo(client *http.Client, provider *config.OAuth2Provider) *UserInfo {
 	ret := &UserInfo{}
 
 	res, err := client.Get(provider.WhoamiUrl)
+
+	if err != nil {
+		log.Errorf("Failed to get user data: %v", err)
+		return ret
+	}
 
 	if res.StatusCode != http.StatusOK {
 		log.Errorf("Failed to get user data: %v", res.StatusCode)
@@ -288,7 +293,12 @@ func getUserInfo(client *http.Client, provider *config.OAuth2Provider) *UserInfo
 
 	contents, err := io.ReadAll(res.Body)
 
-	var userData map[string]interface{}
+	if err != nil {
+		log.Errorf("Failed to read user data: %v", err)
+		return ret
+	}
+
+	var userData map[string]any
 
 	err = json.Unmarshal([]byte(contents), &userData)
 
@@ -304,7 +314,7 @@ func getUserInfo(client *http.Client, provider *config.OAuth2Provider) *UserInfo
 	return ret
 }
 
-func getDataField(data map[string]interface{}, field string) string {
+func getDataField(data map[string]any, field string) string {
 	if field == "" {
 		return ""
 	}

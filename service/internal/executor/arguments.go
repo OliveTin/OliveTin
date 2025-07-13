@@ -5,7 +5,6 @@ import (
 	sv "github.com/OliveTin/OliveTin/internal/stringvariables"
 	log "github.com/sirupsen/logrus"
 
-	"errors"
 	"fmt"
 	"net/mail"
 	"net/url"
@@ -34,7 +33,7 @@ func parseCommandForReplacements(shellCommand string, values map[string]string) 
 		argValue, argProvided := values[argName]
 
 		if !argProvided {
-			return "", errors.New("Required arg not provided: " + argName)
+			return "", fmt.Errorf("required arg not provided: %v", argName)
 		}
 
 		shellCommand = strings.ReplaceAll(shellCommand, match[0], argValue)
@@ -81,6 +80,7 @@ func parseActionArguments(values map[string]string, action *config.Action, entit
 	return parsedShellCommand, nil
 }
 
+//gocyclo:ignore
 func redactShellCommand(shellCommand string, arguments []config.ActionArgument, argumentValues map[string]string) string {
 	for _, arg := range arguments {
 		if arg.Type == "password" {
@@ -92,7 +92,7 @@ func redactShellCommand(shellCommand string, arguments []config.ActionArgument, 
 			}
 
 			if argValue == "" {
-				continue 
+				continue
 			}
 
 			shellCommand = strings.ReplaceAll(shellCommand, argValue, "<redacted>")
@@ -106,7 +106,7 @@ func typecheckActionArgument(name string, value string, action *config.Action) e
 	arg := action.FindArg(name)
 
 	if arg == nil {
-		return errors.New("Action arg not defined: " + name)
+		return fmt.Errorf("action arg not defined: %v", name)
 	}
 
 	if value == "" {
@@ -144,7 +144,7 @@ func TypeSafetyCheck(name string, value string, argumentType string) error {
 
 func typecheckNull(arg *config.ActionArgument) error {
 	if arg.RejectNull {
-		return errors.New("Null values are not allowed")
+		return fmt.Errorf("null values are not allowed")
 	}
 
 	return nil
@@ -161,7 +161,7 @@ func typecheckChoice(value string, arg *config.ActionArgument) error {
 		}
 	}
 
-	return errors.New("argument value is not one of the predefined choices")
+	return fmt.Errorf("argument value is not one of the predefined choices")
 }
 
 func typecheckChoiceEntity(value string, arg *config.ActionArgument) error {
@@ -175,7 +175,7 @@ func typecheckChoiceEntity(value string, arg *config.ActionArgument) error {
 		}
 	}
 
-	return errors.New("argument value cannot be found in entities")
+	return fmt.Errorf("argument value cannot be found in entities")
 }
 
 func typeSafetyCheckEmail(value string) error {
@@ -210,7 +210,7 @@ func typeSafetyCheckRegex(name string, value string, argumentType string) error 
 		pattern, found = typecheckRegex[argumentType]
 
 		if !found {
-			return errors.New("argument type not implemented " + argumentType)
+			return fmt.Errorf("argument type not implemented %v", argumentType)
 		}
 	}
 
@@ -224,7 +224,7 @@ func typeSafetyCheckRegex(name string, value string, argumentType string) error 
 			"pattern": pattern,
 		}).Warn("Arg type check safety failure")
 
-		return errors.New(fmt.Sprintf("invalid argument %v, doesn't match %v", name, argumentType))
+		return fmt.Errorf("invalid argument %v, doesn't match %v", name, argumentType)
 	}
 
 	return nil
@@ -237,30 +237,29 @@ func typeSafetyCheckUrl(value string) error {
 }
 
 func mangleInvalidArgumentValues(req *ExecutionRequest) {
-	mangleInvalidDatetimeValues(req)
-}
-
-func mangleInvalidDatetimeValues(req *ExecutionRequest) {
 	for _, arg := range req.Action.Arguments {
 		if arg.Type == "datetime" {
-			value, exists := req.Arguments[arg.Name]
-
-			if !exists || value == "" {
-				continue
-			}
-
-			timestamp, err := time.Parse("2006-01-02T15:04", value)
-
-			if err == nil {
-				log.WithFields(log.Fields {
-					"arg":     arg.Name,
-					"value":   value,
-					"actionTitle": req.Action.Title,
-				}).Warnf("Mangled invalid datetime value without seconds to :00 seconds, this issue is commonly caused by Android browsers.")
-
-				req.Arguments[arg.Name] = timestamp.Format("2006-01-02T15:04:05")
-			}
-
+			mangleInvalidDatetimeValues(req, &arg)
 		}
+	}
+}
+
+func mangleInvalidDatetimeValues(req *ExecutionRequest, arg *config.ActionArgument) {
+	value, exists := req.Arguments[arg.Name]
+
+	if !exists || value == "" {
+		return
+	}
+
+	timestamp, err := time.Parse("2006-01-02T15:04", value)
+
+	if err == nil {
+		log.WithFields(log.Fields{
+			"arg":         arg.Name,
+			"value":       value,
+			"actionTitle": req.Action.Title,
+		}).Warnf("Mangled invalid datetime value without seconds to :00 seconds, this issue is commonly caused by Android browsers.")
+
+		req.Arguments[arg.Name] = timestamp.Format("2006-01-02T15:04:05")
 	}
 }

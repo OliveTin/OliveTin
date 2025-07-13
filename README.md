@@ -12,7 +12,7 @@ OliveTin gives **safe** and **simple** access to predefined shell commands from 
 [![Go Report Card](https://goreportcard.com/badge/github.com/Olivetin/OliveTin)](https://goreportcard.com/report/github.com/OliveTin/OliveTin)
 [![Build Snapshot](https://github.com/OliveTin/OliveTin/actions/workflows/build-snapshot.yml/badge.svg)](https://github.com/OliveTin/OliveTin/actions/workflows/build-snapshot.yml)
 
-<img alt = "screenshot" src = "https://github.com/OliveTin/OliveTin/blob/main/var/marketing/screenshotDesktop.png" />
+<img alt = "screenshot" src = "https://github.com/OliveTin/OliveTin/blob/main/var/marketing/screenshots/mainpage-laptop_framed.png" />
 <a href = "#screenshots">More screenshots below</a>
 
 All documentation can be found at [docs.olivetin.app](https://docs.olivetin.app). This includes installation and usage guide, etc.
@@ -53,20 +53,30 @@ All documentation can be found at [docs.olivetin.app](https://docs.olivetin.app)
 Desktop web browser;
 
 <p align = "center">
-<img alt = "screenshot" src = "https://github.com/OliveTin/OliveTin/blob/main/var/marketing/screenshotDesktop.png" />
+<img alt = "screenshot" src = "https://github.com/OliveTin/OliveTin/blob/main/var/marketing/screenshots/mainpage-laptop_framed.png" />
 </p>
 
 Desktop web browser (dark mode);
 
 <p align = "center">
-<img alt = "screenshot" src = "https://github.com/OliveTin/OliveTin/blob/main/var/marketing/screenshotDesktopDark.png" />
+<img alt = "screenshot" src = "https://github.com/OliveTin/OliveTin/blob/main/var/marketing/screenshots/mainpage-darkop_framed.png" />
 </p>
 
 Mobile screen size (responsive layout);
 
 <p align = "center">
-<img alt = "screenshot" src = "https://github.com/OliveTin/OliveTin/blob/main/var/marketing/screenshotMobile.png" style = "height: 700px;" />
+<img alt = "screenshot" src = "https://github.com/OliveTin/OliveTin/blob/main/var/marketing/screenshots/mainpage-phone_framed.png" style = "width: 700px;" />
 </p>
+
+## No-Nonsense Software Principles
+
+OliveTin follows these principles:
+
+* **Open Source & Free Software**: following the [Open Source Definition](https://opensource.org/osd) and the [Free Software Definition](https://www.gnu.org/philosophy/free-sw.html). All code and assets are available under the [AGPL-3.0 License](LICENSE).
+* **Independent**: No company owns the code or is responsible for the projects' governance.
+* **Inclusive**: No "core", "pro", "premium" or "enterprise" version. The only version is the one you can download and run, and it has all the features.
+* **Invisible**: No usage tracking, no user tracking, no ads, and no telemetry. 
+* **Internal**: No internet connection required for any functionality.
 
 ## Documentation
 

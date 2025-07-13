@@ -51,9 +51,6 @@ jobs:
           cache: true
           cache-dependency-path: 'service/go.mod'
 
-      - name: grpc
-        run: make -w grpc
-
       # Initializes the CodeQL tools for scanning.
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3

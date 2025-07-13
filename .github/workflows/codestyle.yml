@@ -28,9 +28,6 @@ jobs:
       - name: Print go version
         run: go version
 
-      - name: deps
-        run: make -w grpc
-
       - name: service
         run: make -wC service codestyle
 
