@@ -1,9 +1,9 @@
 package entityfiles
 
 import (
-	"testing"
-	"github.com/stretchr/testify/assert"
 	sv "github.com/OliveTin/OliveTin/internal/stringvariables"
+	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 func TestLoadObjectPerLineJsonFile(t *testing.T) {
