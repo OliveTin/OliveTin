@@ -28,21 +28,17 @@ export class ExecutionDialog {
 
     window.terminal = new OutputTerminal()
     window.terminal.open(this.domOutput)
-  }
-
-  showOutput () {
-    this.domOutput.hidden = false
-    this.domOutput.hidden = false
+    window.terminal.resize(80, 24)
   }
 
   toggleSize () {
     if (this.dlg.classList.contains('big')) {
       this.dlg.classList.remove('big')
+      window.terminal.resize(80, 24)
     } else {
       this.dlg.classList.add('big')
+      window.terminal.fit()
     }
-
-    window.terminal.fit()
   }
 
   reset () {
