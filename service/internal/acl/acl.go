@@ -108,22 +108,24 @@ func logAclNoneMatched(cfg *config.Config, aclFunction string, user *Authenticat
 }
 
 func permissionsConfigToBits(permissions config.PermissionsList) PermissionBits {
+	type permPair struct {
+		enabled bool
+		bit     PermissionBits
+	}
+
+	permMap := []permPair{
+		{permissions.View, View},
+		{permissions.Exec, Exec},
+		{permissions.Logs, Logs},
+		{permissions.Kill, Kill},
+	}
+
 	var ret PermissionBits
 
-	if permissions.View {
-		ret |= View
-	}
-
-	if permissions.Exec {
-		ret |= Exec
-	}
-
-	if permissions.Logs {
-		ret |= Logs
-	}
-
-	if permissions.Kill {
-		ret |= Kill
+	for _, perm := range permMap {
+		if perm.enabled {
+			ret |= perm.bit
+		}
 	}
 
 	return ret
