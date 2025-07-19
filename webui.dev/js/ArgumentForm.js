@@ -38,9 +38,9 @@ class ArgumentForm extends window.HTMLElement {
     for (const arg of this.argInputs) {
       if (arg.type === 'checkbox') {
         if (arg.checked) {
-          arg.value = "1"
+          arg.value = '1'
         } else {
-          arg.value = "0"
+          arg.value = '0'
         }
       }
 
@@ -122,7 +122,7 @@ class ArgumentForm extends window.HTMLElement {
   createDomInput (arg) {
     let domEl = null
 
-    if (arg.choices.length > 0 && (arg.type == "select" || arg.type == "")) {
+    if (arg.choices.length > 0 && (arg.type === 'select' || arg.type === '')) {
       domEl = document.createElement('select')
 
       // select/choice elements don't get an onchange/validation because theoretically
@@ -164,8 +164,8 @@ class ArgumentForm extends window.HTMLElement {
           domEl = document.createElement('input')
           domEl.setAttribute('type', 'checkbox')
           domEl.setAttribute('name', arg.name)
-          domEl.setAttribute('value', "1")
-          
+          domEl.setAttribute('value', '1')
+
           break
         case 'password':
         case 'email':

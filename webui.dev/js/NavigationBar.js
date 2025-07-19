@@ -6,7 +6,7 @@ export class NavigationBar {
   }
 
   createLink (title, url, isSupplemental) {
-    let parent = (isSupplemental) ? this.supplementalLinks : this.mainLinks
+    const parent = (isSupplemental) ? this.supplementalLinks : this.mainLinks
 
     const existsAlready = Array.from(parent.querySelectorAll('li')).some(el => el.title === title)
 

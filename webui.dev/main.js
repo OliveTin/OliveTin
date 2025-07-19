@@ -5,7 +5,7 @@ import {
   setupSectionNavigation,
   marshalDashboardComponentsJsonToHtml,
   marshalLogsJsonToHtml,
-  refreshServerConnectionLabel,
+  refreshServerConnectionLabel
 } from './js/marshaller.js'
 import { checkWebsocketConnection } from './js/websocket.js'
 
