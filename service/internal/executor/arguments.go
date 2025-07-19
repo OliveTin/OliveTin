@@ -247,7 +247,7 @@ func mangleInvalidArgumentValues(req *ExecutionRequest) {
 }
 
 func mangleCheckboxValues(req *ExecutionRequest, arg *config.ActionArgument) {
-	if arg.Type != "checkbox" || len(arg.Choices) == 0 {
+	if arg.Type != "checkbox" {
 		return
 	}
 
@@ -255,7 +255,7 @@ func mangleCheckboxValues(req *ExecutionRequest, arg *config.ActionArgument) {
 
 	for i, _ := range arg.Choices {
 		choice := &arg.Choices[i]
-		
+
 		if req.Arguments[arg.Name] == choice.Title {
 			log.WithFields(log.Fields{
 				"arg":         arg.Name,
