@@ -122,7 +122,7 @@ class ArgumentForm extends window.HTMLElement {
   createDomInput (arg) {
     let domEl = null
 
-    if (arg.choices.length > 0 && (arg.type == "select" || arg.type == "")) {
+    if (arg.choices.length > 0 && (arg.type === "select" || arg.type === "")) {
       domEl = document.createElement('select')
 
       // select/choice elements don't get an onchange/validation because theoretically
