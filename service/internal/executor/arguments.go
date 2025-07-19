@@ -241,6 +241,31 @@ func mangleInvalidArgumentValues(req *ExecutionRequest) {
 		if arg.Type == "datetime" {
 			mangleInvalidDatetimeValues(req, &arg)
 		}
+
+		mangleCheckboxValues(req, &arg)
+	}
+}
+
+func mangleCheckboxValues(req *ExecutionRequest, arg *config.ActionArgument) {
+	if arg.Type != "checkbox" {
+		return
+	}
+
+	log.Infof("Checking checkbox values for argument %s in action %s", arg.Name, req.Action.Title)
+
+	for i, _ := range arg.Choices {
+		choice := &arg.Choices[i]
+
+		if req.Arguments[arg.Name] == choice.Title {
+			log.WithFields(log.Fields{
+				"arg":         arg.Name,
+				"oldValue":    req.Arguments[arg.Name],
+				"newValue":    choice.Value,
+				"actionTitle": req.Action.Title,
+			}).Infof("Mangled checkbox value")
+
+			req.Arguments[arg.Name] = choice.Value
+		}
 	}
 }
 
