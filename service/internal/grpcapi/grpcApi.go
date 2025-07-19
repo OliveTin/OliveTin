@@ -49,7 +49,6 @@ func (api *oliveTinAPI) KillAction(ctx ctx.Context, req *apiv1.KillActionRequest
 
 	log.Warnf("Killing execution request by tracking ID: %v", req.ExecutionTrackingId)
 
-	user := acl.UserFromContext(ctx, cfg)
 	action := cfg.FindAction(execReqLogEntry.ActionTitle)
 
 	if action == nil {
@@ -58,10 +57,17 @@ func (api *oliveTinAPI) KillAction(ctx ctx.Context, req *apiv1.KillActionRequest
 		return ret, nil
 	}
 
+	user := acl.UserFromContext(ctx, cfg)
+
+	api.killActionByTrackingId(user, action, execReqLogEntry, ret)
+
+	return ret, nil
+}
+
+func (api *oliveTinAPI) killActionByTrackingId(user *acl.AuthenticatedUser, action *config.Action, execReqLogEntry *executor.InternalLogEntry, ret *apiv1.KillActionResponse) {
 	if !acl.IsAllowedKill(cfg, user, action) {
-		log.Warnf("Killing execution request not possible - user not allowed to kill this action: %v", req.ExecutionTrackingId)
+		log.Warnf("Killing execution request not possible - user not allowed to kill this action: %v", execReqLogEntry.ExecutionTrackingID)
 		ret.Killed = false
-		return ret, nil
 	}
 
 	err := api.executor.Kill(execReqLogEntry)
@@ -73,8 +79,6 @@ func (api *oliveTinAPI) KillAction(ctx ctx.Context, req *apiv1.KillActionRequest
 	} else {
 		ret.Killed = true
 	}
-
-	return ret, nil
 }
 
 func (api *oliveTinAPI) StartAction(ctx ctx.Context, req *apiv1.StartActionRequest) (*apiv1.StartActionResponse, error) {

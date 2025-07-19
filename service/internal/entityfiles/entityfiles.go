@@ -9,10 +9,10 @@ import (
 	sv "github.com/OliveTin/OliveTin/internal/stringvariables"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
+	"math"
 	"os"
 	"path/filepath"
 	"strings"
-	"math"
 )
 
 var (

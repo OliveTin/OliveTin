@@ -91,7 +91,7 @@ func buildAction(actionId string, actionBinding *executor.ActionBinding, user *a
 	btn := apiv1.Action{
 		Id:           actionId,
 		Title:        sv.ReplaceEntityVars(actionBinding.EntityPrefix, action.Title),
-		Icon:         action.Icon,
+		Icon:         sv.ReplaceEntityVars(actionBinding.EntityPrefix, action.Icon),
 		CanExec:      acl.IsAllowedExec(cfg, user, action),
 		PopupOnStart: action.PopupOnStart,
 		Order:        int32(actionBinding.ConfigOrder),
