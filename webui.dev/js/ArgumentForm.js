@@ -36,6 +36,14 @@ class ArgumentForm extends window.HTMLElement {
     const ret = []
 
     for (const arg of this.argInputs) {
+      if (arg.type === 'checkbox') {
+        if (arg.checked) {
+          arg.value = "1"
+        } else {
+          arg.value = "0"
+        }
+      }
+
       ret.push({
         name: arg.name,
         value: arg.value
@@ -114,7 +122,7 @@ class ArgumentForm extends window.HTMLElement {
   createDomInput (arg) {
     let domEl = null
 
-    if (arg.choices.length > 0) {
+    if (arg.choices.length > 0 && (arg.type == "select" || arg.type == "")) {
       domEl = document.createElement('select')
 
       // select/choice elements don't get an onchange/validation because theoretically
@@ -151,6 +159,13 @@ class ArgumentForm extends window.HTMLElement {
           domEl = document.createElement('input')
           domEl.setAttribute('type', 'datetime-local')
           domEl.setAttribute('step', '1')
+          break
+        case 'checkbox':
+          domEl = document.createElement('input')
+          domEl.setAttribute('type', 'checkbox')
+          domEl.setAttribute('name', arg.name)
+          domEl.setAttribute('value', "1")
+          
           break
         case 'password':
         case 'email':
@@ -225,7 +240,7 @@ class ArgumentForm extends window.HTMLElement {
     const url = new URL(window.location.href)
 
     if (ev.target.type === 'password') {
-      return;
+      return
     }
 
     // copy the parameter value
