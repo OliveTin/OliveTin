@@ -270,7 +270,6 @@ button {
   border-radius: .7em;
   box-shadow: none;
   font-size: 1em;
-  border: 0;
   padding: 0.6em 1em;
   border: 1px solid #ccc;
   font-family: sans-serif;
@@ -278,6 +277,27 @@ button {
   text-align: center;
   background-color: white;
   user-select: none;
+}
+
+action-button {
+  display: flex;
+  flex-direction: column;
+}
+
+action-button button {
+  font-size: .85em;
+  font-weight: normal;
+  flex-grow: 1;
+  width: 100%;
+  z-index: 1;
+  padding: 1em;
+  box-shadow: 0 0 6px 0 #aaa;
+  transition: background-color 1s ease, color .3s ease;
+}
+
+execution-button button {
+  margin-top: 0.2em;
+  margin-bottom: 0.2em;
 }
 
 button:focus {
@@ -305,23 +325,6 @@ button[name="cancel"]:hover {
 button[name="start"]:hover {
   background-color: #aceaac;
   color: black;
-}
-
-/* Action Buttons */
-action-button {
-  display: flex;
-  flex-direction: column;
-}
-
-action-button button {
-  font-size: .85em;
-  font-weight: normal;
-  flex-grow: 1;
-  width: 100%;
-  z-index: 1;
-  padding: 1em;
-  box-shadow: 0 0 6px 0 #aaa;
-  transition: background-color 1s ease, color .3s ease;
 }
 
 action-button button:hover {
@@ -359,11 +362,6 @@ execution-button {
   margin-right: .2em;
   margin-left: .2em;
   margin-top: .2em;
-}
-
-execution-button button {
-  margin-top: 0.2em;
-  margin-bottom: 0.2em;
 }
 
 .action-status {
@@ -707,9 +705,8 @@ label.input-with-icons button:disabled {
     color: white;
   }
 
-  button:hover {
-	background-color: #444;
-	color: white;
+  action-button button {
+    box-shadow: 0 0 6px 0 #444;
   }
 
   button:focus {
@@ -720,9 +717,11 @@ label.input-with-icons button:disabled {
     background-color: black;
   }
 
-  action-button button {
-    box-shadow: 0 0 6px 0 #444;
+  button:hover {
+	background-color: #444;
+	color: white;
   }
+
 
   footer {
     color: #bbb;

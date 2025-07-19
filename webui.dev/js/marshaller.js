@@ -128,9 +128,9 @@ export function marshalDashboardComponentsJsonToHtml (json) {
     marshalActionsJsonToHtml(json)
     marshalDashboardStructureToHtml(json)
 
-	window.navbar.refreshSectionPolicyLinks(json.effectivePolicy)
+    window.navbar.refreshSectionPolicyLinks(json.effectivePolicy)
 
-	refreshDiagnostics(json)
+    refreshDiagnostics(json)
   }
 
   document.body.setAttribute('initial-marshal-complete', 'true')
