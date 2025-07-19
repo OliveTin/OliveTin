@@ -264,26 +264,47 @@ details {
 
 /* General Buttons */
 
-button,
-input[type="submit"]
-{
+button {
+  transition: none;
+  font-weight: bold;
+  border-radius: .7em;
+  box-shadow: none;
+  font-size: 1em;
+  border: 0;
+  padding: 0.6em 1em;
+  border: 1px solid #ccc;
   font-family: sans-serif;
-  padding: 1em;
   color: black;
   text-align: center;
-  border: 1px solid #999;
   background-color: white;
-  box-shadow: 0 0 6px 0 #aaa;
   user-select: none;
-  transition: background-color 1s ease, color .3s ease;
 }
 
-input[type="checkbox"] {
-  justify-self: baseline;
+button:focus {
+  outline: 1px solid black;
 }
 
-fieldset button {
-  border-radius: .7em;
+button:hover {
+  background-color: #ececec;
+  color: black;
+  cursor: pointer;
+}
+
+button:disabled {
+  color: #3c3c3c;
+  background-color: #cecece;
+  cursor: not-allowed;
+  text-decoration: line-through;
+}
+
+button[name="cancel"]:hover {
+  background-color: salmon;
+  color: black;
+}
+
+button[name="start"]:hover {
+  background-color: #aceaac;
+  color: black;
 }
 
 /* Action Buttons */
@@ -293,9 +314,18 @@ action-button {
 }
 
 action-button button {
+  font-size: .85em;
+  font-weight: normal;
   flex-grow: 1;
   width: 100%;
   z-index: 1;
+  padding: 1em;
+  box-shadow: 0 0 6px 0 #aaa;
+  transition: background-color 1s ease, color .3s ease;
+}
+
+action-button button:hover {
+  box-shadow: 0 0 10px 0 #666;
 }
 
 span.title {
@@ -334,26 +364,6 @@ execution-button {
 execution-button button {
   margin-top: 0.2em;
   margin-bottom: 0.2em;
-}
-
-/* Button states */
-
-button:hover,
-input[type="submit"]:hover {
-  box-shadow: 0 0 10px 0 #666;
-  cursor: pointer;
-}
-
-button:focus,
-input[type="submit"]:focus {
-  outline: 1px solid black;
-}
-
-button:disabled,
-input[type="submit"]:disabled {
-  color: #3c3c3c;
-  background-color: #cecece;
-  cursor: not-allowed;
 }
 
 .action-status {
@@ -427,25 +437,21 @@ header {
 input {
   font-family: sans-serif;
   padding: 0.6em;
+  border: 1px solid #ccc;
+  border-radius: .4em;
 }
 
 input:invalid {
   outline: 2px solid red;
 }
 
+input[type="checkbox"] {
+  justify-self: baseline;
+}
+
 form .wrapper span.icon {
   display: inline-block;
   vertical-align: middle;
-}
-
-button[name="cancel"]:hover {
-  background-color: salmon;
-  color: black;
-}
-
-input[name="start"]:hover {
-  background-color: #aceaac;
-  color: black;
 }
 
 div.arguments {
@@ -605,12 +611,9 @@ label.input-with-icons button:disabled {
 }
 
 #content-login button {
-  display: block;
   width: 100%;
   grid-column: 1 / span 3;
   margin-bottom: 1em;
-  font-weight: bold;
-  background-color: #ced3d7;
 }
 
 #content-login button:last-child {
@@ -695,19 +698,30 @@ label.input-with-icons button:disabled {
   input {
     background-color: #383838;
     color: white;
+	border: 1px solid #666;
   }
 
-  button,
-  input[type="submit"] {
+  button {
     border: 1px solid #666;
     background-color: #222;
-    box-shadow: 0 0 6px 0 #444;
     color: white;
   }
 
-  button:focus,
-  input[type="submit"]:focus {
+  button:hover {
+	background-color: #444;
+	color: white;
+  }
+
+  button:focus {
     outline: 2px solid #72B7F4;
+  }
+
+  button:disabled {
+    background-color: black;
+  }
+
+  action-button button {
+    box-shadow: 0 0 6px 0 #444;
   }
 
   footer {
@@ -743,10 +757,6 @@ label.input-with-icons button:disabled {
     color: white;
   }
 
-  button:disabled {
-    background-color: black;
-  }
-
   table,
   td,
   th {
@@ -769,11 +779,5 @@ label.input-with-icons button:disabled {
 
   div.display {
     box-shadow: 0 0 6px 0 #444;
-  }
-
-  #content-login button {
-    background-color: #000;
-    border: 1px solid #666;
-    color: white;
   }
 }
