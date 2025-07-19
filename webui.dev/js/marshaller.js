@@ -170,8 +170,6 @@ function onOutputChunk (evt) {
 
   if (chunk.executionTrackingId === window.executionDialog.executionTrackingId) {
     window.terminal.write(chunk.output)
-
-    window.executionDialog.showOutput()
   }
 }
 

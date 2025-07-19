@@ -28,24 +28,20 @@ export class ExecutionDialog {
 
     window.terminal = new OutputTerminal()
     window.terminal.open(this.domOutput)
-  }
-
-  showOutput () {
-    this.domOutput.hidden = false
-    this.domOutput.hidden = false
+    window.terminal.resize(80, 24)
   }
 
   toggleSize () {
     if (this.dlg.classList.contains('big')) {
       this.dlg.classList.remove('big')
+      window.terminal.resize(80, 24)
     } else {
       this.dlg.classList.add('big')
+      window.terminal.fit()
     }
-
-    window.terminal.fit()
   }
 
-  reset () {
+  async reset () {
     this.executionSeconds = 0
     this.executionTrackingId = 'notset'
 
@@ -69,7 +65,7 @@ export class ExecutionDialog {
 
     this.domExecutionDetails.hidden = true
 
-    window.terminal.reset()
+    await window.terminal.reset()
     window.terminal.fit()
   }
 
@@ -193,7 +189,7 @@ export class ExecutionDialog {
     }
   }
 
-  renderExecutionResult (res) {
+  async renderExecutionResult (res) {
     this.res = res
 
     clearInterval(window.executionDialogTicker)
@@ -229,8 +225,8 @@ export class ExecutionDialog {
 
     this.updateDuration(res.logEntry)
 
-    window.terminal.reset()
-    window.terminal.write(res.logEntry.output, () => {
+    await window.terminal.reset()
+    await window.terminal.write(res.logEntry.output, () => {
       window.terminal.fit()
     })
   }
