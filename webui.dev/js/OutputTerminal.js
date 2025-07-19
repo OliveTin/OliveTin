@@ -37,6 +37,7 @@ export class OutputTerminal {
       })
     } finally {
       unlock()
+      then()
     }
   }
 
