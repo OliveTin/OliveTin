@@ -150,6 +150,7 @@ type Config struct {
 	DefaultIconForBack              string
 	AdditionalNavigationLinks       []*NavigationLink
 	ServiceHostMode                 string
+	StyleMods                       []string
 
 	usedConfigDir string
 }

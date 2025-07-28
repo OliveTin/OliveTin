@@ -92,6 +92,8 @@ function fetchGetLogs () {
 }
 
 function processWebuiSettingsJson (settings) {
+  window.settings = settings
+
   setupSectionNavigation(settings.SectionNavigationStyle)
 
   window.restBaseUrl = settings.Rest
@@ -109,6 +111,12 @@ function processWebuiSettingsJson (settings) {
 
   if (!settings.ShowFooter) {
     document.querySelector('footer[title="footer"]').style.display = 'none'
+  }
+
+  if (settings.StyleMods != null) {
+    for (const style of settings.StyleMods) {
+      document.body.classList.add(style)
+    }
   }
 
   if (settings.EnableCustomJs) {
@@ -136,8 +144,6 @@ function processWebuiSettingsJson (settings) {
   loginForm.processLocalLogin(settings.AuthLocalLogin)
 
   document.getElementsByTagName('main')[0].appendChild(loginForm)
-
-  window.settings = settings
 }
 
 function processAdditionalLinks (links) {
