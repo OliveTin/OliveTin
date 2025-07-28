@@ -138,6 +138,7 @@ type Config struct {
 	CronSupportForSeconds           bool
 	SectionNavigationStyle          string
 	DefaultPopupOnStart             string
+	InsecureAllowDumpOAuth2UserData bool
 	InsecureAllowDumpVars           bool
 	InsecureAllowDumpSos            bool
 	InsecureAllowDumpActionMap      bool
