@@ -44,6 +44,10 @@ class ArgumentForm extends window.HTMLElement {
         }
       }
 
+      if (arg.name === "") {
+        continue
+      }
+
       ret.push({
         name: arg.name,
         value: arg.value
