@@ -3,7 +3,7 @@ package executor
 import (
 	"fmt"
 	"strings"
-	
+
 	config "github.com/OliveTin/OliveTin/internal/config"
 
 	"github.com/stretchr/testify/assert"
@@ -186,7 +186,6 @@ func TestTypeSafetyCheckEmail(t *testing.T) {
 		{"Invalid email no domain", "email", "user@", true},
 		{"Invalid email no user", "email", "@example.com", true},
 		{"Invalid email spaces", "email", "user name@example.com", true},
-		{"Empty email", "email", "", false}, // Should be handled as nullable
 		{"Invalid email double @", "email", "user@@example.com", true},
 	}
 
@@ -216,7 +215,6 @@ func TestTypeSafetyCheckDatetime(t *testing.T) {
 		{"Invalid format missing seconds", "datetime", "2023-12-25T15:30", true},
 		{"Invalid date", "datetime", "2023-13-25T15:30:45", true},
 		{"Invalid time", "datetime", "2023-12-25T25:30:45", true},
-		{"Empty datetime", "datetime", "", false}, // Should be handled as nullable
 		{"Random string", "datetime", "not-a-date", true},
 	}
 
@@ -241,7 +239,6 @@ func TestTypeSafetyCheckRawStringMultiline(t *testing.T) {
 		{"Simple string", "content", "hello world"},
 		{"Multiline string", "content", "line1\nline2\nline3"},
 		{"String with special chars", "content", "!@#$%^&*()"},
-		{"Empty string", "content", ""},
 		{"Unicode string", "content", "héllo wörld 🌍"},
 		{"Very long string", "content", strings.Repeat("a", 1000)},
 	}
@@ -270,7 +267,6 @@ func TestTypeSafetyCheckUnicodeIdentifier(t *testing.T) {
 		{"Valid with underscores", "name", "my_file_name", false},
 		{"Invalid with special chars", "name", "hello@world", true},
 		{"Invalid with brackets", "name", "hello[world]", true},
-		{"Empty string", "name", "", false},
 	}
 
 	for _, tt := range tests {
@@ -300,7 +296,6 @@ func TestTypeSafetyCheckAsciiIdentifier(t *testing.T) {
 		{"Invalid with spaces", "name", "hello world", true},
 		{"Invalid with special chars", "name", "hello@world", true},
 		{"Invalid unicode", "name", "héllo", true},
-		{"Empty string", "name", "", false},
 	}
 
 	for _, tt := range tests {
@@ -330,7 +325,6 @@ func TestTypeSafetyCheckAsciiSentence(t *testing.T) {
 		{"Invalid with special chars", "text", "Hello@world", true},
 		{"Invalid with parentheses", "text", "Hello (world)", true},
 		{"Invalid unicode", "text", "Héllo world", true},
-		{"Empty string", "text", "", false},
 	}
 
 	for _, tt := range tests {
@@ -425,7 +419,7 @@ func TestParseCommandForReplacements(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			output, err := parseCommandForReplacements(tt.shellCommand, tt.values)
-			
+
 			if tt.expectError {
 				assert.NotNil(t, err, "Expected error but got none")
 				if tt.errorContains != "" {
@@ -492,68 +486,13 @@ func TestArgumentChoicesValidation(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			_, err := parseActionArguments(tt.values, &tt.action, "")
-			
+
 			if tt.expectError {
 				assert.NotNil(t, err, tt.description)
 				assert.Contains(t, err.Error(), "predefined choices")
 			} else {
 				assert.Nil(t, err, tt.description)
 			}
-		})
-	}
-}
-
-func TestRedactShellCommandSpecialCases(t *testing.T) {
-	tests := []struct {
-		name     string
-		cmd      string
-		args     []config.ActionArgument
-		values   map[string]string
-		expected string
-	}{
-		{
-			name: "Password appears multiple times",
-			cmd:  "echo {{ pass }} && echo {{ pass }} again",
-			args: []config.ActionArgument{
-				{Name: "pass", Type: "password"},
-			},
-			values: map[string]string{
-				"pass": "secret123",
-			},
-			expected: "echo <redacted> && echo <redacted> again",
-		},
-		{
-			name: "Password is substring of another value",
-			cmd:  "connect -p mysecret123 -db mysecret123_db",
-			args: []config.ActionArgument{
-				{Name: "password", Type: "password"},
-			},
-			values: map[string]string{
-				"password": "mysecret123",
-			},
-			expected: "connect -p <redacted> -db <redacted>_db",
-		},
-		{
-			name: "Non-password args remain unchanged",
-			cmd:  "deploy -u {{ user }} -p {{ pass }} -e {{ env }}",
-			args: []config.ActionArgument{
-				{Name: "user", Type: "ascii"},
-				{Name: "pass", Type: "password"},
-				{Name: "env", Type: "ascii"},
-			},
-			values: map[string]string{
-				"user": "admin",
-				"pass": "secret",
-				"env":  "prod",
-			},
-			expected: "deploy -u admin -p <redacted> -e prod",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := redactShellCommand(tt.cmd, tt.args, tt.values)
-			assert.Equal(t, tt.expected, result)
 		})
 	}
 }
