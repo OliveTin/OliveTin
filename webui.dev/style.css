@@ -599,6 +599,16 @@ label.input-with-icons button {
   transition: color .3s ease;
 }
 
+.sm-side-icons action-button button {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.sm-imageicons-fullwidth action-button button .icon img {
+  width: 100%;
+}
+
 label.input-with-icons button:disabled {
   display: none;
 }
