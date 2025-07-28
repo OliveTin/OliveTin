@@ -103,22 +103,26 @@ func redactShellCommand(shellCommand string, arguments []config.ActionArgument, 
 }
 
 func typecheckActionArgument(name string, value string, action *config.Action) error {
+	if name == "" {
+		return fmt.Errorf("argument name cannot be empty")
+	}
+
 	arg := action.FindArg(name)
 
 	if arg == nil {
 		return fmt.Errorf("action arg not defined: %v", name)
 	}
 
+	return typecheckActionArgumentFound(name, value, action, arg)
+}
+
+func typecheckActionArgumentFound(name string, value string, action *config.Action, arg *config.ActionArgument) error {
 	if value == "" {
 		return typecheckNull(arg)
 	}
 
 	if len(arg.Choices) > 0 {
 		return typecheckChoice(value, arg)
-	}
-
-	if (name == "") {
-		return fmt.Errorf("argument name cannot be empty")
 	}
 
 	return TypeSafetyCheck(name, value, arg.Type)
@@ -214,7 +218,7 @@ func typeSafetyCheckRegex(name string, value string, argumentType string) error 
 		pattern, found = typecheckRegex[argumentType]
 
 		if !found {
-			return fmt.Errorf("argument type not implemented %v", argumentType)
+			return fmt.Errorf("argument type not implemented %v for arg: %v", argumentType, name)
 		}
 	}
 
