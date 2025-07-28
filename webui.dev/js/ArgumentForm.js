@@ -44,7 +44,7 @@ class ArgumentForm extends window.HTMLElement {
         }
       }
 
-      if (arg.name == "") {
+      if (arg.name === "") {
         continue
       }
 
