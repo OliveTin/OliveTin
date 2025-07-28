@@ -117,6 +117,10 @@ func typecheckActionArgument(name string, value string, action *config.Action) e
 		return typecheckChoice(value, arg)
 	}
 
+	if (name == "") {
+		return fmt.Errorf("argument name cannot be empty")
+	}
+
 	return TypeSafetyCheck(name, value, arg.Type)
 }
 
