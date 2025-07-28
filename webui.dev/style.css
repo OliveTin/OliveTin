@@ -599,6 +599,16 @@ label.input-with-icons button {
   transition: color .3s ease;
 }
 
+.sm-side-icons action-button button {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.sm-imageicons-fullwidth action-button button .icon img {
+  width: 100%;
+}
+
 label.input-with-icons button:disabled {
   display: none;
 }
@@ -631,16 +641,6 @@ label.input-with-icons button:disabled {
 .oauth2-icon {
   font-size: 1.8em;
   vertical-align: middle;
-}
-
-.sm-side-icons action-button button {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-}
-
-.sm-imageicons-fullwidth action-button button .icon img {
-  width: 100%;
 }
 
 @media screen and (width <= 600px) {
