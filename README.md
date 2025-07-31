@@ -1,16 +1,17 @@
-# OliveTin
+<div align = "center">
+  <img alt = "project logo" src = "https://github.com/OliveTin/OliveTin/blob/main/webui.dev/OliveTinLogo.png" width = "128" />
+  <h1>OliveTin</h1>
 
-<img alt = "project logo" src = "https://github.com/OliveTin/OliveTin/blob/main/webui.dev/OliveTinLogo.png" align = "right" width = "160px" />
+  OliveTin gives **safe** and **simple** access to predefined shell commands from a web interface.
 
-OliveTin gives **safe** and **simple** access to predefined shell commands from a web interface.
-
-[![Maturity Badge](https://img.shields.io/badge/maturity-Production-brightgreen)](#none)
+  [![Maturity Badge](https://img.shields.io/badge/maturity-Production-brightgreen)](#none)
 [![Discord](https://img.shields.io/discord/846737624960860180?label=Discord%20Server)](https://discord.gg/jhYWWpNJ3v)
 [![Awesome](https://cdn.rawgit.com/sindresorhus/awesome/d7305f38d29fed78fa85652e3a63e154dd8e8829/media/badge.svg)](https://github.com/awesome-selfhosted/awesome-selfhosted#automation)
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/5050/badge)](https://bestpractices.coreinfrastructure.org/projects/5050)
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/Olivetin/OliveTin)](https://goreportcard.com/report/github.com/OliveTin/OliveTin)
 [![Build Snapshot](https://github.com/OliveTin/OliveTin/actions/workflows/build-snapshot.yml/badge.svg)](https://github.com/OliveTin/OliveTin/actions/workflows/build-snapshot.yml)
+</div>
 
 <img alt = "screenshot" src = "https://github.com/OliveTin/OliveTin/blob/main/var/marketing/screenshots/mainpage-laptop_framed.png" />
 <a href = "#screenshots">More screenshots below</a>
