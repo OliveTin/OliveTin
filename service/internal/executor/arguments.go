@@ -52,7 +52,7 @@ func parseActionArguments(values map[string]string, action *config.Action, entit
 		argName := arg.Name
 		argValue := values[argName]
 
-		err := typecheckActionArgument(argName, argValue, action)
+		err := typecheckActionArgument(&arg, argValue, action)
 
 		if err != nil {
 			return "", err
@@ -102,13 +102,19 @@ func redactShellCommand(shellCommand string, arguments []config.ActionArgument, 
 	return shellCommand
 }
 
-func typecheckActionArgument(name string, value string, action *config.Action) error {
-	arg := action.FindArg(name)
-
-	if arg == nil {
-		return fmt.Errorf("action arg not defined: %v", name)
+func typecheckActionArgument(arg *config.ActionArgument, value string, action *config.Action) error {
+	if arg.Type == "confirmation" {
+		return nil
 	}
 
+	if arg.Name == "" {
+		return fmt.Errorf("argument name cannot be empty")
+	}
+
+	return typecheckActionArgumentFound(value, action, arg)
+}
+
+func typecheckActionArgumentFound(value string, action *config.Action, arg *config.ActionArgument) error {
 	if value == "" {
 		return typecheckNull(arg)
 	}
@@ -117,7 +123,7 @@ func typecheckActionArgument(name string, value string, action *config.Action) e
 		return typecheckChoice(value, arg)
 	}
 
-	return TypeSafetyCheck(name, value, arg.Type)
+	return TypeSafetyCheck(arg.Name, value, arg.Type)
 }
 
 // TypeSafetyCheck checks argument values match a specific type. The types are
@@ -210,7 +216,7 @@ func typeSafetyCheckRegex(name string, value string, argumentType string) error 
 		pattern, found = typecheckRegex[argumentType]
 
 		if !found {
-			return fmt.Errorf("argument type not implemented %v", argumentType)
+			return fmt.Errorf("argument type not implemented %v for arg: %v", argumentType, name)
 		}
 	}
 

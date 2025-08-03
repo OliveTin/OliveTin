@@ -260,7 +260,7 @@ func (h *OAuth2Handler) handleOAuthCallback(w http.ResponseWriter, r *http.Reque
 		Timeout: clientSettings.Timeout,
 	}
 
-	userinfo := getUserInfo(userInfoClient, h.cfg.AuthOAuth2Providers[registeredState.providerName])
+	userinfo := getUserInfo(cfg, userInfoClient, cfg.AuthOAuth2Providers[registeredState.providerName])
 
 	h.registeredStates[state].Username = userinfo.Username
 	h.registeredStates[state].Usergroup = userinfo.Usergroup
@@ -284,7 +284,7 @@ type UserInfo struct {
 }
 
 //gocyclo:ignore
-func getUserInfo(client *http.Client, provider *config.OAuth2Provider) *UserInfo {
+func getUserInfo(cfg *config.Config, client *http.Client, provider *config.OAuth2Provider) *UserInfo {
 	ret := &UserInfo{}
 
 	res, err := client.Get(provider.WhoamiUrl)
@@ -309,6 +309,10 @@ func getUserInfo(client *http.Client, provider *config.OAuth2Provider) *UserInfo
 	}
 
 	var userData map[string]any
+
+	if cfg.InsecureAllowDumpOAuth2UserData {
+		log.Debugf("OAuth2 User Data: %v+", string(contents))
+	}
 
 	err = json.Unmarshal([]byte(contents), &userData)
 
@@ -337,7 +341,14 @@ func getDataField(data map[string]any, field string) string {
 		return ""
 	}
 
-	return val.(string)
+	stringVal, ok := val.(string)
+
+	if !ok {
+		log.Errorf("Field %v is not a string: %v", field, val)
+		return ""
+	}
+
+	return stringVal
 }
 
 func (h *OAuth2Handler) parseOAuth2Cookie(r *http.Request) (string, string, string) {

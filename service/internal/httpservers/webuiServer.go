@@ -39,6 +39,7 @@ type webUISettings struct {
 	EnableCustomJs         bool
 	AuthLoginUrl           string
 	AuthLocalLogin         bool
+	StyleMods              []string
 	AuthOAuth2Providers    []publicOAuth2Provider
 	AdditionalLinks        []*config.NavigationLink
 }
@@ -169,6 +170,7 @@ func (s *webUIServer) generateWebUISettings(w http.ResponseWriter, r *http.Reque
 		AuthLocalLogin:         s.cfg.AuthLocalUsers.Enabled,
 		AuthOAuth2Providers:    buildPublicOAuth2ProvidersList(s.cfg),
 		AdditionalLinks:        s.cfg.AdditionalNavigationLinks,
+		StyleMods:              s.cfg.StyleMods,
 	})
 
 	w.Header().Add("Content-Type", "application/json")
