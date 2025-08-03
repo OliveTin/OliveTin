@@ -7,7 +7,6 @@ import (
 
 	"github.com/OliveTin/OliveTin/internal/entityfiles"
 	"github.com/OliveTin/OliveTin/internal/executor"
-	grpcapi "github.com/OliveTin/OliveTin/internal/grpcapi"
 	"github.com/OliveTin/OliveTin/internal/httpservers"
 	"github.com/OliveTin/OliveTin/internal/installationinfo"
 	"github.com/OliveTin/OliveTin/internal/oncalendarfile"
@@ -179,7 +178,5 @@ func main() {
 
 	go updatecheck.StartUpdateChecker(cfg)
 
-	go grpcapi.Start(cfg, executor)
-
-	httpservers.StartServers(cfg)
+	httpservers.StartServers(cfg, executor)
 }

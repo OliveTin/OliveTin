@@ -1,0 +1,6 @@
+- id: kitchen
+  name: Kitchen
+  turned_on: false
+- id: living_room
+  name: Living Room
+  turned_on: false

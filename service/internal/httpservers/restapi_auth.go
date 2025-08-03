@@ -45,14 +45,14 @@ func registerSessionProvider(provider string) {
 	}
 }
 
-func deleteLocalUserSession(provider string, sid string) {
+func deleteLocalUserSession(cfg *config.Config, provider string, sid string) {
 	sessionStorageMutex.Lock()
 
 	deleteLocalUserSessionBatch(provider, sid)
 
 	sessionStorageMutex.Unlock()
 
-	saveUserSessions()
+	saveUserSessions(cfg)
 }
 
 func deleteLocalUserSessionBatch(provider string, sid string) {
@@ -68,7 +68,7 @@ func deleteLocalUserSessionBatch(provider string, sid string) {
 	delete(sessionStorage.Providers[provider].Sessions, sid)
 }
 
-func registerUserSession(provider string, sid string, username string) {
+func registerUserSession(cfg *config.Config, provider string, sid string, username string) {
 	sessionStorageMutex.Lock()
 	sessionStorage.Providers[provider].Sessions[sid] = &UserSession{
 		Username: username,
@@ -76,10 +76,10 @@ func registerUserSession(provider string, sid string, username string) {
 	}
 	sessionStorageMutex.Unlock()
 
-	saveUserSessions()
+	saveUserSessions(cfg)
 }
 
-func saveUserSessions() {
+func saveUserSessions(cfg *config.Config) {
 	sessionStorageMutex.Lock()
 	defer sessionStorageMutex.Unlock()
 
@@ -97,7 +97,7 @@ func saveUserSessions() {
 	filehelper.WriteFile(filename, out)
 }
 
-func loadUserSessions() {
+func loadUserSessions(cfg *config.Config) {
 	registerSessionProviders()
 
 	filename := filepath.Join(cfg.GetDir(), "sessions.db.yaml")
@@ -124,10 +124,10 @@ func loadUserSessions() {
 		return
 	}
 
-	deleteExpiredSessions()
+	deleteExpiredSessions(cfg)
 }
 
-func deleteExpiredSessions() {
+func deleteExpiredSessions(cfg *config.Config) {
 	sessionStorageMutex.Lock()
 
 	for provider, sessions := range sessionStorage.Providers {
@@ -140,10 +140,10 @@ func deleteExpiredSessions() {
 
 	sessionStorageMutex.Unlock()
 
-	saveUserSessions()
+	saveUserSessions(cfg)
 }
 
-func getUserFromSession(providerName string, sid string) *config.LocalUser {
+func getUserFromSession(cfg *config.Config, providerName string, sid string) *config.LocalUser {
 	provider, ok := sessionStorage.Providers[providerName]
 
 	if !ok {

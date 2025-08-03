@@ -2,12 +2,13 @@ package httpservers
 
 import (
 	"google.golang.org/grpc/metadata"
+	"github.com/OliveTin/OliveTin/internal/config"
 	"net/http"
 
 	"github.com/google/uuid"
 )
 
-func parseLocalUserCookie(req *http.Request) (string, string, string) {
+func parseLocalUserCookie(cfg *config.Config, req *http.Request) (string, string, string) {
 	cookie, err := req.Cookie("olivetin-sid-local")
 
 	if err != nil {
@@ -16,7 +17,7 @@ func parseLocalUserCookie(req *http.Request) (string, string, string) {
 
 	cookieValue := cookie.Value
 
-	user := getUserFromSession("local", cookieValue)
+	user := getUserFromSession(cfg, "local", cookieValue)
 
 	if user == nil {
 		return "", "", ""
@@ -25,7 +26,7 @@ func parseLocalUserCookie(req *http.Request) (string, string, string) {
 	return user.Username, user.Usergroup, cookie.Value
 }
 
-func forwardResponseHandlerLoginLocalUser(md metadata.MD, w http.ResponseWriter) error {
+func forwardResponseHandlerLoginLocalUser(cfg *config.Config, md metadata.MD, w http.ResponseWriter) error {
 	setUsername := getMetadataKeyOrEmpty(md, "set-username")
 
 	if setUsername != "" {
@@ -36,7 +37,7 @@ func forwardResponseHandlerLoginLocalUser(md metadata.MD, w http.ResponseWriter)
 		}
 
 		sid := uuid.NewString()
-		registerUserSession("local", sid, user.Username)
+		registerUserSession(cfg, "local", sid, user.Username)
 
 		http.SetCookie(
 			w,

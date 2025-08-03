@@ -10,11 +10,13 @@ away, and several other issues.
 
 import (
 	config "github.com/OliveTin/OliveTin/internal/config"
-	"github.com/OliveTin/OliveTin/internal/websocket"
+	"github.com/OliveTin/OliveTin/internal/api"
+	"github.com/OliveTin/OliveTin/internal/executor"
 	log "github.com/sirupsen/logrus"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"path"
 )
 
 func logDebugRequest(cfg *config.Config, source string, r *http.Request) {
@@ -31,42 +33,40 @@ func logDebugRequest(cfg *config.Config, source string, r *http.Request) {
 
 // StartSingleHTTPFrontend will create a reverse proxy that proxies the API
 // and webui internally.
-func StartSingleHTTPFrontend(cfg *config.Config) {
+func StartSingleHTTPFrontend(cfg *config.Config, ex *executor.Executor) {
 	log.WithFields(log.Fields{
 		"address": cfg.ListenAddressSingleHTTPFrontend,
 	}).Info("Starting single HTTP frontend")
 
-	apiURL, _ := url.Parse("http://" + cfg.ListenAddressRestActions)
-	apiProxy := httputil.NewSingleHostReverseProxy(apiURL)
-
-	webuiURL, _ := url.Parse("http://" + cfg.ListenAddressWebUI)
-	webuiProxy := httputil.NewSingleHostReverseProxy(webuiURL)
-
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/api/", func(w http.ResponseWriter, r *http.Request) {
-		logDebugRequest(cfg, "api ", r)
+	apiPath, apiHandler := api.GetNewHandler(ex)
 
-		apiProxy.ServeHTTP(w, r)
-	})
+	log.Infof("API path is %s", apiPath)
 
-	mux.HandleFunc("/websocket", func(w http.ResponseWriter, r *http.Request) {
-		logDebugRequest(cfg, "ws  ", r)
+	mux.Handle("/api/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fn := path.Base(r.URL.Path)
 
-		websocket.HandleWebsocket(w, r)
-	})
+		r.URL.Path = apiPath + fn
 
-	mux.HandleFunc("/oauth/login", handleOAuthLogin)
+		log.Infof("SingleFrontend HTTP API Req URL after rewrite: %v", r.URL.Path)
 
-	mux.HandleFunc("/oauth/callback", handleOAuthCallback)
+		apiHandler.ServeHTTP(w, r)
+	}))
+
+	oauth2handler := NewOAuth2Handler(cfg) 
+
+	mux.HandleFunc("/oauth/login", oauth2handler.handleOAuthLogin)
+	mux.HandleFunc("/oauth/callback", oauth2handler.handleOAuthCallback)
 
 	mux.HandleFunc("/readyz", handleReadyz)
 
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		logDebugRequest(cfg, "ui  ", r)
+	webuiServer := NewWebUIServer(cfg)
 
-		webuiProxy.ServeHTTP(w, r)
-	})
+	mux.HandleFunc("/webUiSettings.json", webuiServer.generateWebUISettings)
+	mux.HandleFunc("/theme.css", webuiServer.generateThemeCss)	
+	mux.Handle("/custom-webui/", webuiServer.handleCustomWebui())
+	mux.HandleFunc("/", webuiServer.handleWebui)
 
 	if cfg.Prometheus.Enabled {
 		promURL, _ := url.Parse("http://" + cfg.ListenAddressPrometheus)
@@ -78,8 +78,6 @@ func StartSingleHTTPFrontend(cfg *config.Config) {
 			promProxy.ServeHTTP(w, r)
 		})
 	}
-
-	oauth2Init(cfg)
 
 	srv := &http.Server{
 		Addr:    cfg.ListenAddressSingleHTTPFrontend,

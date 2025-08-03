@@ -4,25 +4,17 @@ import (
 	"context"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	log "github.com/sirupsen/logrus"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
-	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"net/http"
 	"strings"
 
-	apiv1 "github.com/OliveTin/OliveTin/gen/grpc/olivetin/api/v1"
+//	apiv1 "github.com/OliveTin/OliveTin/gen/olivetin/api/v1"
 
 	config "github.com/OliveTin/OliveTin/internal/config"
-	cors "github.com/OliveTin/OliveTin/internal/cors"
 )
 
-var (
-	cfg *config.Config
-)
-
-func parseHttpHeaderForAuth(req *http.Request) (string, string) {
+func parseHttpHeaderForAuth(cfg *config.Config, req *http.Request) (string, string) {
 	username, ok := req.Header[cfg.AuthHttpHeaderUsername]
 
 	if !ok {
@@ -49,34 +41,34 @@ func parseHttpHeaderForAuth(req *http.Request) (string, string) {
 }
 
 //gocyclo:ignore
-func parseRequestMetadata(ctx context.Context, req *http.Request) metadata.MD {
+func parseRequestMetadata(cfg *config.Config, ctx context.Context, req *http.Request) metadata.MD {
 	username := ""
 	usergroup := ""
 	provider := "unknown"
 	sid := ""
 
 	if cfg.AuthJwtHeader != "" {
-		username, usergroup = parseJwtHeader(req)
+		username, usergroup = parseJwtHeader(cfg, req)
 		provider = "jwt-header"
 	}
 
 	if cfg.AuthJwtCookieName != "" {
-		username, usergroup = parseJwtCookie(req)
+		username, usergroup = parseJwtCookie(cfg, req)
 		provider = "jwt-cookie"
 	}
 
 	if cfg.AuthHttpHeaderUsername != "" && username == "" {
-		username, usergroup = parseHttpHeaderForAuth(req)
+		username, usergroup = parseHttpHeaderForAuth(cfg, req)
 		provider = "http-header"
 	}
 
-	if len(cfg.AuthOAuth2Providers) > 0 && username == "" {
-		username, usergroup, sid = parseOAuth2Cookie(req)
-		provider = "oauth2"
-	}
+//	if len(cfg.AuthOAuth2Providers) > 0 && username == "" {
+//		username, usergroup, sid = parseOAuth2Cookie(req)
+//		provider = "oauth2"
+//	}
 
 	if cfg.AuthLocalUsers.Enabled && username == "" {
-		username, usergroup, sid = parseLocalUserCookie(req)
+		username, usergroup, sid = parseLocalUserCookie(cfg, req)
 		provider = "local"
 	}
 
@@ -92,12 +84,12 @@ func parseRequestMetadata(ctx context.Context, req *http.Request) metadata.MD {
 	return md
 }
 
-func parseJwtHeader(req *http.Request) (string, string) {
+func parseJwtHeader(cfg *config.Config, req *http.Request) (string, string) {
 	// JWTs in the Authorization header are usually prefixed with "Bearer " which is not part of the JWT token.
-	return parseJwt(strings.TrimPrefix(req.Header.Get(cfg.AuthJwtHeader), "Bearer "))
+	return parseJwt(cfg, strings.TrimPrefix(req.Header.Get(cfg.AuthJwtHeader), "Bearer "))
 }
 
-func forwardResponseHandler(ctx context.Context, w http.ResponseWriter, msg protoreflect.ProtoMessage) error {
+func (h *OAuth2Handler) forwardResponseHandler(cfg *config.Config, ctx context.Context, w http.ResponseWriter, msg protoreflect.ProtoMessage) error {
 	md, ok := runtime.ServerMetadataFromContext(ctx)
 
 	if !ok {
@@ -105,17 +97,17 @@ func forwardResponseHandler(ctx context.Context, w http.ResponseWriter, msg prot
 		return nil
 	}
 
-	forwardResponseHandlerLoginLocalUser(md.HeaderMD, w)
-	forwardResponseHandlerLogout(md.HeaderMD, w)
+	forwardResponseHandlerLoginLocalUser(cfg, md.HeaderMD, w)
+	h.forwardResponseHandlerLogout(cfg, md.HeaderMD, w)
 
 	return nil
 }
 
-func forwardResponseHandlerLogout(md metadata.MD, w http.ResponseWriter) {
+func (h *OAuth2Handler) forwardResponseHandlerLogout(cfg *config.Config, md metadata.MD, w http.ResponseWriter) {
 	if getMetadataKeyOrEmpty(md, "logout-provider") != "" {
 		sid := getMetadataKeyOrEmpty(md, "logout-sid")
 
-		delete(registeredStates, sid)
+		delete(h.registeredStates, sid)
 		http.SetCookie(
 			w,
 			&http.Cookie{
@@ -127,7 +119,7 @@ func forwardResponseHandlerLogout(md metadata.MD, w http.ResponseWriter) {
 			},
 		)
 
-		deleteLocalUserSession("local", sid)
+		deleteLocalUserSession(cfg, "local", sid)
 
 		http.SetCookie(
 			w,
@@ -156,52 +148,3 @@ func getMetadataKeyOrEmpty(md metadata.MD, key string) string {
 	return ""
 }
 
-func SetGlobalRestConfig(config *config.Config) {
-	cfg = config
-}
-
-func startRestAPIServer(globalConfig *config.Config) error {
-	cfg = globalConfig
-
-	loadUserSessions()
-
-	log.WithFields(log.Fields{
-		"address": cfg.ListenAddressRestActions,
-	}).Info("Starting REST API")
-
-	mux := newMux()
-
-	return http.ListenAndServe(cfg.ListenAddressRestActions, cors.AllowCors(mux))
-}
-
-func newMux() *runtime.ServeMux {
-	// The MarshalOptions set some important compatibility settings for the webui. See below.
-	mux := runtime.NewServeMux(
-		runtime.WithMetadata(parseRequestMetadata),
-		runtime.WithForwardResponseOption(forwardResponseHandler),
-		runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.HTTPBodyMarshaler{
-			Marshaler: &runtime.JSONPb{
-				MarshalOptions: protojson.MarshalOptions{
-					UseProtoNames:   false, // eg: canExec for js instead of can_exec from protobuf
-					EmitUnpopulated: true,  // Emit empty fields so that javascript does not get "undefined" when accessing fields with empty values.
-				},
-			},
-		}),
-	)
-
-	ctx := context.Background()
-
-	opts := []grpc.DialOption{
-		grpc.WithTransportCredentials(
-			insecure.NewCredentials(),
-		),
-	}
-
-	err := apiv1.RegisterOliveTinApiServiceHandlerFromEndpoint(ctx, mux, cfg.ListenAddressGrpcActions, opts)
-
-	if err != nil {
-		log.Panicf("Could not register REST API Handler %v", err)
-	}
-
-	return mux
-}

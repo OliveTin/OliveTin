@@ -93,6 +93,7 @@ require (
 	github.com/google/go-containerregistry v0.20.6 // indirect
 	github.com/google/pprof v0.0.0-20250630185457-6e76a2b096b5 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
+	github.com/jamesread/golure v0.0.0-20250619190948-fa38cbd93cc4 // indirect
 	github.com/jdx/go-netrc v1.0.0 // indirect
 	github.com/klauspost/compress v1.18.0 // indirect
 	github.com/klauspost/pgzip v1.2.6 // indirect

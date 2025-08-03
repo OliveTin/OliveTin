@@ -4,11 +4,12 @@ service/OliveTin
 service/OliveTin.armhf
 service/OliveTin.exe
 service/reports
+service/gen
 releases/
 dist/
 installation-id.txt
 tmp/
-webui/
-webui.dev/node_modules
-webui.dev/.parcel-cache
-custom-webui
+frontend/dist/
+frontend/node_modules
+custom-frontend
+integration-tests/screenshots/

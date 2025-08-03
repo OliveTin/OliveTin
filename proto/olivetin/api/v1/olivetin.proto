@@ -2,10 +2,7 @@ syntax = "proto3";
 
 package olivetin.api.v1;
 
-option go_package = "github.com/jamesread/OliveTin/gen/grpc/olivetin/api/v1;apiv1";
-
-import "google/api/annotations.proto";
-import "google/api/httpbody.proto";
+option go_package = "github.com/OliveTin/OliveTin/gen/olivetin/api/v1;apiv1";
 
 message Action {
 	string id = 1;
@@ -43,20 +40,12 @@ message Entity {
 message GetDashboardComponentsResponse {
 	string title = 1;
 
-	repeated Action actions = 2;
-	repeated Entity entities = 3;
-	repeated DashboardComponent dashboards = 4;
+	repeated Dashboard dashboards = 4;
 
 	string authenticated_user = 5;
     string authenticated_user_provider = 6;
 
 	EffectivePolicy effective_policy = 7;
-	Diagnostics diagnostics = 8;
-}
-
-message Diagnostics {
-	string SshFoundKey = 1;
-	string SshFoundConfig = 2;
 }
 
 message EffectivePolicy {
@@ -65,6 +54,11 @@ message EffectivePolicy {
 }
 
 message GetDashboardComponentsRequest {}
+
+message Dashboard {
+	string title = 1;
+	repeated DashboardComponent contents = 2;
+}
 
 message DashboardComponent {
 	string title = 1;
@@ -216,6 +210,19 @@ message GetReadyzResponse {
 	string status = 1;
 }
 
+message EventStreamRequest {
+}
+
+message EventStreamResponse {
+  oneof event {
+    EventEntityChanged entity_changed = 2;
+    EventConfigChanged config_changed = 3;
+    EventExecutionFinished execution_finished = 4;
+    EventExecutionStarted execution_started = 5;
+    EventOutputChunk output_chunk = 6;
+  }
+}
+
 message EventOutputChunk {
 	string execution_tracking_id = 1;
 
@@ -257,117 +264,58 @@ message PasswordHashRequest {
 }
 
 message PasswordHashResponse {
+    string hash = 1;
 }
 
 message LogoutRequest {}
 
+message LogoutResponse {
+}
+
+message GetDiagnosticsRequest {
+}
+
+message GetDiagnosticsResponse {
+	string SshFoundKey = 1;
+	string SshFoundConfig = 2;
+}
+
 service OliveTinApiService {
-	rpc GetDashboardComponents(GetDashboardComponentsRequest) returns (GetDashboardComponentsResponse) {
-		option (google.api.http) = {
-			get: "/api/GetDashboardComponents"
-		};
-	}
+	rpc GetDashboardComponents(GetDashboardComponentsRequest) returns (GetDashboardComponentsResponse) {}
 
-	rpc StartAction(StartActionRequest) returns (StartActionResponse) {
-		option (google.api.http) = {
-			post: "/api/StartAction"
-			body: "*"
-		};
-	}
+	rpc StartAction(StartActionRequest) returns (StartActionResponse) {}
 
-	rpc StartActionAndWait(StartActionAndWaitRequest) returns (StartActionAndWaitResponse) {
-		option (google.api.http) = {
-			post: "/api/StartActionAndWait"
-			body: "*"
-		};
-	}
+	rpc StartActionAndWait(StartActionAndWaitRequest) returns (StartActionAndWaitResponse) {}
 
-	rpc StartActionByGet(StartActionByGetRequest) returns (StartActionByGetResponse) {
-		option (google.api.http) = {
-			get: "/api/StartActionByGet/{action_id}"
-		};
-	}
+	rpc StartActionByGet(StartActionByGetRequest) returns (StartActionByGetResponse) {}
 
-	rpc StartActionByGetAndWait(StartActionByGetAndWaitRequest) returns (StartActionByGetAndWaitResponse) {
-		option (google.api.http) = {
-			get: "/api/StartActionByGetAndWait/{action_id}"
-		};
-	}
+	rpc StartActionByGetAndWait(StartActionByGetAndWaitRequest) returns (StartActionByGetAndWaitResponse) {}
 
-	rpc KillAction(KillActionRequest) returns (KillActionResponse) {
-		option (google.api.http) = {
-			post: "/api/KillAction"
-			body: "*"
-		};
-	}
+	rpc KillAction(KillActionRequest) returns (KillActionResponse) {}
 
-	rpc ExecutionStatus(ExecutionStatusRequest) returns (ExecutionStatusResponse) {
-		option (google.api.http) = {
-			post: "/api/ExecutionStatus"
-			body: "*"
-		};
-	}
+	rpc ExecutionStatus(ExecutionStatusRequest) returns (ExecutionStatusResponse) {}
 
-	rpc GetLogs(GetLogsRequest) returns (GetLogsResponse) {
-		option (google.api.http) = {
-			get: "/api/GetLogs"
-		};
-	}
+	rpc GetLogs(GetLogsRequest) returns (GetLogsResponse) {}
 
-	rpc ValidateArgumentType(ValidateArgumentTypeRequest) returns (ValidateArgumentTypeResponse) {
-		option (google.api.http) = {
-			post: "/api/ValidateArgumentType"
-			body: "*"
-		};
-	}
+	rpc ValidateArgumentType(ValidateArgumentTypeRequest) returns (ValidateArgumentTypeResponse) {}
 
-	rpc WhoAmI(WhoAmIRequest) returns (WhoAmIResponse) {
-		option (google.api.http) = {
-			get: "/api/WhoAmI"
-		};
-	}
+	rpc WhoAmI(WhoAmIRequest) returns (WhoAmIResponse) {}
 
-	rpc SosReport(SosReportRequest) returns (google.api.HttpBody) {
-		option (google.api.http) = {
-			get: "/api/sosreport"
-		};
-	}
+	rpc SosReport(SosReportRequest) returns (SosReportResponse) {}
 
-	rpc DumpVars(DumpVarsRequest) returns (DumpVarsResponse) {
-		option (google.api.http) = {
-			get: "/api/DumpVars"
-		};
-	}
+	rpc DumpVars(DumpVarsRequest) returns (DumpVarsResponse) {}
 
-	rpc DumpPublicIdActionMap(DumpPublicIdActionMapRequest) returns (DumpPublicIdActionMapResponse) {
-		option (google.api.http) = {
-			get: "/api/DumpActionMap"
-		};
-	}
+	rpc DumpPublicIdActionMap(DumpPublicIdActionMapRequest) returns (DumpPublicIdActionMapResponse) {}
 
-	rpc GetReadyz(GetReadyzRequest) returns (GetReadyzResponse) {
-		option (google.api.http) = {
-			get: "/api/readyz"
-		};
-	}
+	rpc GetReadyz(GetReadyzRequest) returns (GetReadyzResponse) {}
 
-    rpc LocalUserLogin(LocalUserLoginRequest) returns (LocalUserLoginResponse) {
-        option (google.api.http) = {
-            post: "/api/LocalUserLogin"
-            body: "*"
-        };
-    }
+    rpc LocalUserLogin(LocalUserLoginRequest) returns (LocalUserLoginResponse) {}
 
-    rpc PasswordHash(PasswordHashRequest) returns (google.api.HttpBody) {
-        option (google.api.http) = {
-            post: "/api/PasswordHash"
-            body: "*"
-        };
-    }
+    rpc PasswordHash(PasswordHashRequest) returns (PasswordHashResponse) {}
 
-    rpc Logout(LogoutRequest) returns (google.api.HttpBody) {
-        option (google.api.http) = {
-            get: "/api/Logout"
-        };
-    }
+    rpc Logout(LogoutRequest) returns (LogoutResponse) {}
+
+    rpc EventStream(EventStreamRequest) returns (stream EventStreamResponse) {}
+
+	rpc GetDiagnostics(GetDiagnosticsRequest) returns (GetDiagnosticsResponse) {}
 }

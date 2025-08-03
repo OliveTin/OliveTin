@@ -47,16 +47,8 @@ devrun: compile
 
 devcontainer: compile podman-image podman-container
 
-webui-codestyle:
-	$(MAKE) -wC webui.dev codestyle
-
 webui-dist:
-	$(call delete-files,webui)
-	$(call delete-files,webui.dev/dist)
-	cd webui.dev && npm install
-	cd webui.dev && npx parcel build --public-url "."
-	python -c "import shutil;shutil.move('webui.dev/dist', 'webui')"
-	python -c "import shutil;import glob;[shutil.copy(f, 'webui') for f in glob.glob('webui.dev/*.png')]"
+	$(MAKE) -wC frontend dist
 
 clean:
 	$(call delete-files,dist)

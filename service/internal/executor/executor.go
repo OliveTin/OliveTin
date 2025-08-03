@@ -21,6 +21,11 @@ import (
 	"time"
 )
 
+const (
+	DefaultExitCodeNotExecuted = -1337
+	MaxTriggerDepth = 10 
+)
+
 var (
 	metricActionsRequested = promauto.NewCounter(prometheus.CounterOpts{
 		Name: "olivetin_actions_requested_count",
@@ -64,6 +69,7 @@ type ExecutionRequest struct {
 	Cfg               *config.Config
 	AuthenticatedUser *acl.AuthenticatedUser
 	EntityPrefix      string
+	TriggerDepth      int
 
 	logEntry           *InternalLogEntry
 	finalParsedCommand string
@@ -88,6 +94,7 @@ type InternalLogEntry struct {
 	Username            string
 	Index               int64
 	EntityPrefix        string
+	ActionConfigTitle   string // This is the title of the action as defined in the config, not the final parsed title.
 
 	/*
 		The following 3 properties are obviously on Action normally, but it's useful
@@ -243,7 +250,7 @@ func (e *Executor) ExecRequest(req *ExecutionRequest) (*sync.WaitGroup, string) 
 		DatetimeStarted:     time.Now(),
 		ExecutionTrackingID: req.TrackingID,
 		Output:              "",
-		ExitCode:            -1337, // If an Action is not actually executed, this is the default exit code.
+		ExitCode:            DefaultExitCodeNotExecuted, 
 		ExecutionStarted:    false,
 		ExecutionFinished:   false,
 		ActionId:            "",
@@ -440,6 +447,7 @@ func stepRequestAction(req *ExecutionRequest) bool {
 
 	metricActionsRequested.Inc()
 
+	req.logEntry.ActionConfigTitle = req.Action.Title
 	req.logEntry.ActionTitle = sv.ReplaceEntityVars(req.EntityPrefix, req.Action.Title)
 	req.logEntry.ActionIcon = req.Action.Icon
 	req.logEntry.ActionId = req.Action.ID
@@ -651,6 +659,15 @@ func stepTrigger(req *ExecutionRequest) bool {
 		return true
 	}
 
+	if req.TriggerDepth >= MaxTriggerDepth {
+		log.WithFields(log.Fields{
+			"actionTitle": req.logEntry.ActionTitle,
+			"depth":       req.TriggerDepth,
+		}).Warnf("Trigger action reached maximum depth of %v. Not triggering further actions.", MaxTriggerDepth)
+		req.logEntry.Output += fmt.Sprintf("OliveTin::trigger - this action reached maximum trigger depth of %v. Not triggering further actions.", MaxTriggerDepth)
+		return true
+	}
+
 	if len(req.Tags) > 0 && req.Tags[0] == "trigger" {
 		log.Warnf("Trigger action is triggering another trigger action. This is allowed, but be careful not to create trigger loops.")
 	}
@@ -669,6 +686,7 @@ func triggerLoop(req *ExecutionRequest) {
 			AuthenticatedUser: req.AuthenticatedUser,
 			Arguments:         req.Arguments,
 			Cfg:               req.Cfg,
+			TriggerDepth:      req.TriggerDepth + 1,
 		}
 
 		req.executor.ExecRequest(trigger)

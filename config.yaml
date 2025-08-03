@@ -11,6 +11,9 @@ logLevel: "INFO"
 # Checking for updates https://docs.olivetin.app/reference/updateChecks.html
 checkForUpdates: false
 
+authLocalUsers:
+  enabled: true
+
 # Actions are commands that are executed by OliveTin, and normally show up as
 # buttons on the WebUI.
 #

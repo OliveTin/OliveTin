@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"sync"
 
-	apiv1 "github.com/OliveTin/OliveTin/gen/grpc/olivetin/api/v1"
+	apiv1 "github.com/OliveTin/OliveTin/gen/olivetin/api/v1"
 	"github.com/OliveTin/OliveTin/internal/executor"
 	ws "github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"

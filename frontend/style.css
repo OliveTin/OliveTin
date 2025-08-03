@@ -1,0 +1,41 @@
+@import 'femtocrank/style.css';
+
+section.transparent {
+	background-color: transparent;
+	box-shadow: none;
+}
+
+fieldset {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, 180px);
+	grid-auto-rows: 1fr;
+	justify-content: center;
+	place-items: stretch;
+}
+
+action-button {
+	display: flex;
+	flex-direction: column;
+	flex-grow: 1;
+}
+
+action-button > button {
+	display: flex;
+	flex-direction: column;
+	flex-grow: 1;
+	justify-content: center;
+	font-weight: normal;
+	font-size: 0.85em;
+	box-shadow: 0 0 .6em #aaa;
+}
+
+action-button > button .icon {
+	font-size: 3em;
+}
+
+dialog {
+	border-radius: 1em;
+}
+footer span {
+	margin-right: 1em;
+}

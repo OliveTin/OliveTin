@@ -17,25 +17,20 @@ import (
 	"time"
 )
 
-var (
-	registeredStates    = make(map[string]*oauth2State)
-	registeredProviders = make(map[string]*oauth2.Config)
-)
-
-type oauth2State struct {
-	providerConfig *oauth2.Config
-	providerName   string
-	Username       string
-	Usergroup      string
+type OAuth2Handler struct {
+	cfg *config.Config
+	registeredStates    map[string]*oauth2State
+	registeredProviders map[string]*oauth2.Config
 }
 
-func assignIfEmpty(target *string, value string) {
-	if *target == "" {
-		*target = value
+func NewOAuth2Handler(cfg *config.Config) *OAuth2Handler {
+	h := &OAuth2Handler{
+		cfg: cfg,
 	}
-}
 
-func oauth2Init(cfg *config.Config) {
+	h.registeredStates    = make(map[string]*oauth2State)
+	h.registeredProviders = make(map[string]*oauth2.Config)
+
 	for providerName, providerConfig := range cfg.AuthOAuth2Providers {
 		completeProviderConfig(providerName, providerConfig)
 
@@ -50,9 +45,24 @@ func oauth2Init(cfg *config.Config) {
 			RedirectURL: cfg.AuthOAuth2RedirectURL,
 		}
 
-		registeredProviders[providerName] = newConfig
+		h.registeredProviders[providerName] = newConfig
 
 		log.Debugf("Dumping newly registered provider: %v = %+v", providerName, providerConfig)
+	}
+
+	return h
+}
+
+type oauth2State struct {
+	providerConfig *oauth2.Config
+	providerName   string
+	Username       string
+	Usergroup      string
+}
+
+func assignIfEmpty(target *string, value string) {
+	if *target == "" {
+		*target = value
 	}
 }
 
@@ -76,8 +86,8 @@ func completeProviderConfig(providerName string, providerConfig *config.OAuth2Pr
 	}
 }
 
-func getOAuth2Config(providerName string) (*oauth2.Config, error) {
-	config, ok := registeredProviders[providerName]
+func (h *OAuth2Handler) getOAuth2Config(providerName string) (*oauth2.Config, error) {
+	config, ok := h.registeredProviders[providerName]
 
 	if !ok {
 		return nil, fmt.Errorf("provider not found in config: %v", providerName)
@@ -96,7 +106,7 @@ func randString(nByte int) (string, error) {
 	return base64.URLEncoding.EncodeToString(b), nil
 }
 
-func setOAuthCallbackCookie(w http.ResponseWriter, r *http.Request, name, value string) {
+func (h *OAuth2Handler) setOAuthCallbackCookie(w http.ResponseWriter, r *http.Request, name, value string) {
 	cookie := &http.Cookie{
 		Name:     name,
 		Value:    value,
@@ -109,7 +119,7 @@ func setOAuthCallbackCookie(w http.ResponseWriter, r *http.Request, name, value 
 	http.SetCookie(w, cookie)
 }
 
-func handleOAuthLogin(w http.ResponseWriter, r *http.Request) {
+func (h *OAuth2Handler) handleOAuthLogin(w http.ResponseWriter, r *http.Request) {
 	state, err := randString(16)
 
 	if err != nil {
@@ -118,7 +128,7 @@ func handleOAuthLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	providerName := r.URL.Query().Get("provider")
-	provider, err := getOAuth2Config(providerName)
+	provider, err := h.getOAuth2Config(providerName)
 
 	if err != nil {
 		log.Errorf("Failed to get provider config: %v %v", providerName, err)
@@ -126,20 +136,20 @@ func handleOAuthLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	registeredStates[state] = &oauth2State{
+	h.registeredStates[state] = &oauth2State{
 		providerConfig: provider,
 		providerName:   providerName,
 		Username:       "",
 	}
 
-	setOAuthCallbackCookie(w, r, "olivetin-sid-oauth", state)
+	h.setOAuthCallbackCookie(w, r, "olivetin-sid-oauth", state)
 
 	log.Infof("OAuth2 state: %v mapped to provider %v (found: %v), now redirecting", state, providerName, provider != nil)
 
 	http.Redirect(w, r, provider.AuthCodeURL(state), http.StatusFound)
 }
 
-func checkOAuthCallbackCookie(w http.ResponseWriter, r *http.Request) (*oauth2State, string, bool) {
+func (h *OAuth2Handler) checkOAuthCallbackCookie(w http.ResponseWriter, r *http.Request) (*oauth2State, string, bool) {
 	cookie, err := r.Cookie("olivetin-sid-oauth")
 	state := cookie.Value
 
@@ -157,7 +167,7 @@ func checkOAuthCallbackCookie(w http.ResponseWriter, r *http.Request) (*oauth2St
 		return nil, state, false
 	}
 
-	registeredState, ok := registeredStates[state]
+	registeredState, ok := h.registeredStates[state]
 
 	if !ok {
 		log.Errorf("State not found in server: %v", state)
@@ -206,10 +216,10 @@ func getOAuthCertBundle(providerConfig *config.OAuth2Provider) *x509.CertPool {
 	return caCertPool
 }
 
-func handleOAuthCallback(w http.ResponseWriter, r *http.Request) {
+func (h *OAuth2Handler) handleOAuthCallback(w http.ResponseWriter, r *http.Request) {
 	log.Infof("OAuth2 Callback received")
 
-	registeredState, state, ok := checkOAuthCallbackCookie(w, r)
+	registeredState, state, ok := h.checkOAuthCallbackCookie(w, r)
 
 	if !ok {
 		return
@@ -222,7 +232,7 @@ func handleOAuthCallback(w http.ResponseWriter, r *http.Request) {
 		"token-code": code,
 	}).Debug("OAuth2 Token Code")
 
-	providerConfig := cfg.AuthOAuth2Providers[registeredState.providerName]
+	providerConfig := h.cfg.AuthOAuth2Providers[registeredState.providerName]
 
 	clientSettings := getOAuth2HttpClient(providerConfig)
 
@@ -250,18 +260,18 @@ func handleOAuthCallback(w http.ResponseWriter, r *http.Request) {
 		Timeout: clientSettings.Timeout,
 	}
 
-	userinfo := getUserInfo(userInfoClient, cfg.AuthOAuth2Providers[registeredState.providerName])
+	userinfo := getUserInfo(userInfoClient, h.cfg.AuthOAuth2Providers[registeredState.providerName])
 
-	registeredStates[state].Username = userinfo.Username
-	registeredStates[state].Usergroup = userinfo.Usergroup
+	h.registeredStates[state].Username = userinfo.Username
+	h.registeredStates[state].Usergroup = userinfo.Usergroup
 
-	for k, v := range registeredStates {
+	for k, v := range h.registeredStates {
 		log.Debugf("states: %+v %+v", k, v)
 	}
 
 	log.WithFields(log.Fields{
 		"state":    state,
-		"username": registeredStates[state].Username,
+		"username": h.registeredStates[state].Username,
 	}).Info("OAuth2 login successful")
 
 	http.Redirect(w, r, "/", http.StatusFound)
@@ -330,7 +340,7 @@ func getDataField(data map[string]any, field string) string {
 	return val.(string)
 }
 
-func parseOAuth2Cookie(r *http.Request) (string, string, string) {
+func (h *OAuth2Handler) parseOAuth2Cookie(r *http.Request) (string, string, string) {
 	cookie, err := r.Cookie("olivetin-sid-oauth")
 
 	if err != nil {
@@ -342,7 +352,7 @@ func parseOAuth2Cookie(r *http.Request) (string, string, string) {
 		return "", "", ""
 	}
 
-	serverState, found := registeredStates[cookie.Value]
+	serverState, found := h.registeredStates[cookie.Value]
 
 	if !found {
 		log.WithFields(log.Fields{

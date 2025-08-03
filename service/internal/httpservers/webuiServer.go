@@ -7,12 +7,19 @@ import (
 	"net/http"
 	"os"
 	"path"
-	"path/filepath"
+
+	"github.com/jamesread/golure/pkg/dirs"
 
 	config "github.com/OliveTin/OliveTin/internal/config"
 	installationinfo "github.com/OliveTin/OliveTin/internal/installationinfo"
 	sv "github.com/OliveTin/OliveTin/internal/stringvariables"
 )
+
+type webUIServer struct {
+	cfg *config.Config
+
+	webuiDir string
+}
 
 var (
 	customThemeCss     []byte
@@ -36,46 +43,65 @@ type webUISettings struct {
 	AdditionalLinks        []*config.NavigationLink
 }
 
-func findWebuiDir() string {
-	directoriesToSearch := []string{
-		cfg.WebUIDir,
-		"../webui/",
-		"/usr/share/OliveTin/webui/",
-		"/var/www/OliveTin/",
-		"/var/www/olivetin/",
-		"/etc/OliveTin/webui/",
+func NewWebUIServer(cfg *config.Config) *webUIServer {
+	s := &webUIServer{
+		cfg: cfg,
 	}
 
-	// Use a classic i := 0 style for loop here instead of range, as the
-	// search order must be deterministic - the order that the slice was defined in.
-	for i := 0; i < len(directoriesToSearch); i++ {
-		dir := directoriesToSearch[i]
-		absdir, _ := filepath.Abs(dir)
+	s.webuiDir = s.findWebuiDir()
+	s.setupCustomWebuiDir()
 
-		if _, err := os.Stat(absdir); !os.IsNotExist(err) {
-			log.WithFields(log.Fields{
-				"dir": absdir,
-			}).Infof("Found the webui directory")
-
-			sv.Set("internal.webuidir", absdir+" ("+dir+")")
-
-			return dir
-		}
-	}
-
-	log.Warnf("Did not find the webui directory, you will probably get 404 errors.")
-
-	return "./webui" // Should not exist
+	return s
 }
 
-func findCustomWebuiDir() string {
-	dir := path.Join(cfg.GetDir(), "custom-webui")
+func (s *webUIServer) handleWebui(w http.ResponseWriter, r *http.Request) {
+	//dirName := path.Dir(r.URL.Path)
+
+	// Mangle requests for any path like /logs or /config to load the webui index.html
+	if path.Ext(r.URL.Path) == "" && r.URL.Path != "/" {
+		log.Debugf("Mangling request for %s to /index.html", r.URL.Path)
+
+		http.ServeFile(w, r, path.Join(s.webuiDir, "index.html"))
+	} else {
+		log.Infof("Serving webui from %s for %s", s.webuiDir, r.URL.Path)
+		http.ServeFile(w, r, path.Join(s.webuiDir, r.URL.Path))
+//		http.StripPrefix(dirName, http.FileServer(http.Dir(s.webuiDir))).ServeHTTP(w, r)
+	}
+}
+
+
+func (s *webUIServer) findWebuiDir() string {
+	directoriesToSearch := []string{
+		s.cfg.WebUIDir,
+		"../frontend/dist/",
+		"../frontend/",
+		"/usr/share/OliveTin/frontend/",
+		"/var/www/OliveTin/",
+		"/var/www/olivetin/",
+		"/etc/OliveTin/frontend/",
+	}
+
+	dir, err := dirs.GetFirstExistingDirectory("webui", directoriesToSearch)
+
+	if err != nil {
+		log.Warnf("Did not find the webui directory, you will probably get 404 errors.")
+
+		return "./webui" // Should not exist
+	}
+
+	log.Infof("Using webui directory: %s", dir)
 
 	return dir
 }
 
-func setupCustomWebuiDir() {
-	dir := findCustomWebuiDir()
+func (s *webUIServer) findCustomWebuiDir() string {
+	dir := path.Join(s.cfg.GetDir(), "custom-webui")
+
+	return dir
+}
+
+func (s *webUIServer) setupCustomWebuiDir() {
+	dir := s.findCustomWebuiDir()
 
 	err := os.MkdirAll(path.Join(dir, "themes/"), 0775)
 
@@ -87,10 +113,10 @@ func setupCustomWebuiDir() {
 	}
 }
 
-func generateThemeCss(w http.ResponseWriter, r *http.Request) {
-	themeCssFilename := path.Join(findCustomWebuiDir(), "themes", cfg.ThemeName, "theme.css")
+func (s *webUIServer) generateThemeCss(w http.ResponseWriter, r *http.Request) {
+	themeCssFilename := path.Join(s.findCustomWebuiDir(), "themes", s.cfg.ThemeName, "theme.css")
 
-	if !customThemeCssRead || cfg.ThemeCacheDisabled {
+	if !customThemeCssRead || s.cfg.ThemeCacheDisabled {
 		customThemeCssRead = true
 
 		if _, err := os.Stat(themeCssFilename); err == nil {
@@ -125,22 +151,24 @@ func buildPublicOAuth2ProvidersList(cfg *config.Config) []publicOAuth2Provider {
 	return publicProviders
 }
 
-func generateWebUISettings(w http.ResponseWriter, r *http.Request) {
+func (s *webUIServer) generateWebUISettings(w http.ResponseWriter, r *http.Request) {
+	log.Infof("Generating webui settings for %s", r.RemoteAddr)
+
 	jsonRet, _ := json.Marshal(webUISettings{
-		Rest:                   cfg.ExternalRestAddress + "/api/",
-		ShowFooter:             cfg.ShowFooter,
-		ShowNavigation:         cfg.ShowNavigation,
-		ShowNewVersions:        cfg.ShowNewVersions,
+		Rest:                   s.cfg.ExternalRestAddress + "/api/",
+		ShowFooter:             s.cfg.ShowFooter,
+		ShowNavigation:         s.cfg.ShowNavigation,
+		ShowNewVersions:        s.cfg.ShowNewVersions,
 		AvailableVersion:       installationinfo.Runtime.AvailableVersion,
 		CurrentVersion:         installationinfo.Build.Version,
-		PageTitle:              cfg.PageTitle,
-		SectionNavigationStyle: cfg.SectionNavigationStyle,
-		DefaultIconForBack:     cfg.DefaultIconForBack,
-		EnableCustomJs:         cfg.EnableCustomJs,
-		AuthLoginUrl:           cfg.AuthLoginUrl,
-		AuthLocalLogin:         cfg.AuthLocalUsers.Enabled,
-		AuthOAuth2Providers:    buildPublicOAuth2ProvidersList(cfg),
-		AdditionalLinks:        cfg.AdditionalNavigationLinks,
+		PageTitle:              s.cfg.PageTitle,
+		SectionNavigationStyle: s.cfg.SectionNavigationStyle,
+		DefaultIconForBack:     s.cfg.DefaultIconForBack,
+		EnableCustomJs:         s.cfg.EnableCustomJs,
+		AuthLoginUrl:           s.cfg.AuthLoginUrl,
+		AuthLocalLogin:         s.cfg.AuthLocalUsers.Enabled,
+		AuthOAuth2Providers:    buildPublicOAuth2ProvidersList(s.cfg),
+		AdditionalLinks:        s.cfg.AdditionalNavigationLinks,
 	})
 
 	w.Header().Add("Content-Type", "application/json")
@@ -151,36 +179,6 @@ func generateWebUISettings(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func startWebUIServer(cfg *config.Config) {
-	log.WithFields(log.Fields{
-		"address": cfg.ListenAddressWebUI,
-	}).Info("Starting WebUI server")
-
-	setupCustomWebuiDir()
-
-	mux := http.NewServeMux()
-	mux.Handle("/custom-webui/", http.StripPrefix("/custom-webui/", http.FileServer(http.Dir(findCustomWebuiDir()))))
-	mux.HandleFunc("/theme.css", generateThemeCss)
-	mux.HandleFunc("/webUiSettings.json", generateWebUISettings)
-
-	webuiDir := findWebuiDir()
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		dirName := path.Dir(r.URL.Path)
-
-		// Mangle requests for any path like /logs or /config to load the webui index.html
-		if path.Ext(r.URL.Path) == "" && r.URL.Path != "/" {
-			log.Debugf("Mangling request for %s to /index.html", r.URL.Path)
-
-			http.ServeFile(w, r, path.Join(webuiDir, "index.html"))
-		} else {
-			http.StripPrefix(dirName, http.FileServer(http.Dir(webuiDir))).ServeHTTP(w, r)
-		}
-	})
-
-	srv := &http.Server{
-		Addr:    cfg.ListenAddressWebUI,
-		Handler: mux,
-	}
-
-	log.Fatal(srv.ListenAndServe())
+func (s *webUIServer) handleCustomWebui() (http.Handler) {
+	return http.StripPrefix("/custom-webui/", http.FileServer(http.Dir(s.findCustomWebuiDir())))
 }

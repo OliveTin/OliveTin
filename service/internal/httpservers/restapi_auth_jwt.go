@@ -11,6 +11,8 @@ import (
 	"os"
 	"strings"
 
+	"github.com/OliveTin/OliveTin/internal/config"
+
 	//	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/MicahParks/keyfunc/v3"
 	"time"
@@ -23,7 +25,7 @@ var (
 	jwksVerifier keyfunc.Keyfunc
 )
 
-func initJwks() {
+func initJwks(cfg *config.Config) {
 	if jwksVerifier == nil {
 		var err error
 
@@ -43,7 +45,7 @@ func initJwks() {
 	}
 }
 
-func readLocalPublicKey() error {
+func readLocalPublicKey(cfg *config.Config) error {
 	if pubKeyBytes != nil {
 		return nil // Already read.
 	}
@@ -62,14 +64,14 @@ func readLocalPublicKey() error {
 	return nil
 }
 
-func parseJwtTokenWithRemoteKey(jwtToken string) (*jwt.Token, error) {
-	initJwks()
+func parseJwtTokenWithRemoteKey(cfg *config.Config, jwtToken string) (*jwt.Token, error) {
+	initJwks(cfg)
 
 	return jwt.Parse(jwtToken, jwksVerifier.Keyfunc, jwt.WithAudience(cfg.AuthJwtAud))
 }
 
-func parseJwtTokenWithLocalKey(jwtString string) (*jwt.Token, error) {
-	err := readLocalPublicKey()
+func parseJwtTokenWithLocalKey(cfg *config.Config, jwtString string) (*jwt.Token, error) {
+	err := readLocalPublicKey(cfg)
 
 	if err != nil {
 		return nil, err
@@ -85,7 +87,7 @@ func parseJwtTokenWithLocalKey(jwtString string) (*jwt.Token, error) {
 }
 
 // Hash-based Message Authentication Code
-func parseJwtTokenWithHMAC(jwtString string) (*jwt.Token, error) {
+func parseJwtTokenWithHMAC(cfg *config.Config, jwtString string) (*jwt.Token, error) {
 	return jwt.Parse(jwtString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("parseJwt expected token algorithm HMAC but got: %v", token.Header["alg"])
@@ -95,20 +97,20 @@ func parseJwtTokenWithHMAC(jwtString string) (*jwt.Token, error) {
 	})
 }
 
-func parseJwtToken(jwtString string) (*jwt.Token, error) {
+func parseJwtToken(cfg *config.Config, jwtString string) (*jwt.Token, error) {
 	if cfg.AuthJwtCertsURL != "" {
-		return parseJwtTokenWithRemoteKey(jwtString)
+		return parseJwtTokenWithRemoteKey(cfg, jwtString)
 	}
 
 	if cfg.AuthJwtPubKeyPath != "" {
-		return parseJwtTokenWithLocalKey(jwtString)
+		return parseJwtTokenWithLocalKey(cfg, jwtString)
 	}
 
-	return parseJwtTokenWithHMAC(jwtString)
+	return parseJwtTokenWithHMAC(cfg, jwtString)
 }
 
-func getClaimsFromJwtToken(jwtString string) (jwt.MapClaims, error) {
-	token, err := parseJwtToken(jwtString)
+func getClaimsFromJwtToken(cfg *config.Config, jwtString string) (jwt.MapClaims, error) {
+	token, err := parseJwtToken(cfg, jwtString)
 
 	if err != nil {
 		log.Errorf("jwt parse failure: %v", err)
@@ -130,7 +132,7 @@ func lookupClaimValueOrDefault(claims jwt.MapClaims, key string, def string) str
 	}
 }
 
-func parseJwtCookie(request *http.Request) (string, string) {
+func parseJwtCookie(cfg *config.Config, request *http.Request) (string, string) {
 	cookie, err := request.Cookie(cfg.AuthJwtCookieName)
 
 	if err != nil {
@@ -138,11 +140,11 @@ func parseJwtCookie(request *http.Request) (string, string) {
 		return "", ""
 	}
 
-	return parseJwt(cookie.Value)
+	return parseJwt(cfg, cookie.Value)
 }
 
-func parseJwt(token string) (string, string) {
-	claims, err := getClaimsFromJwtToken(token)
+func parseJwt(cfg *config.Config, token string) (string, string) {
+	claims, err := getClaimsFromJwtToken(cfg, token)
 
 	if err != nil {
 		log.Warnf("jwt claim error: %+v", err)
