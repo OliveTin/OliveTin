@@ -260,7 +260,7 @@ func (h *OAuth2Handler) handleOAuthCallback(w http.ResponseWriter, r *http.Reque
 		Timeout: clientSettings.Timeout,
 	}
 
-	userinfo := getUserInfo(cfg, userInfoClient, cfg.AuthOAuth2Providers[registeredState.providerName])
+	userinfo := getUserInfo(h.cfg, userInfoClient, h.cfg.AuthOAuth2Providers[registeredState.providerName])
 
 	h.registeredStates[state].Username = userinfo.Username
 	h.registeredStates[state].Usergroup = userinfo.Usergroup
