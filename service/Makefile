@@ -32,6 +32,10 @@ codestyle: go-tools
 	gocyclo -over 4 internal
 	gocritic check ./...
 
+test: unittests
+	
+tests: unittests
+
 unittests:
 	$(call delete-files,reports)
 	mkdir reports

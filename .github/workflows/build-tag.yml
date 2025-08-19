@@ -26,7 +26,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           cache: 'npm'
-          cache-dependency-path: webui.dev/package-lock.json
+          cache-dependency-path: frontend/package-lock.json
 
       - name: Setup Go
         uses: actions/setup-go@v5

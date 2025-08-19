@@ -50,7 +50,7 @@ func StartSingleHTTPFrontend(cfg *config.Config, ex *executor.Executor) {
 
 		r.URL.Path = apiPath + fn
 
-		log.Infof("SingleFrontend HTTP API Req URL after rewrite: %v", r.URL.Path)
+		log.Debugf("SingleFrontend HTTP API Req URL after rewrite: %v", r.URL.Path)
 
 		apiHandler.ServeHTTP(w, r)
 	}))
