@@ -3,17 +3,17 @@ package api
 import (
 	apiv1 "github.com/OliveTin/OliveTin/gen/olivetin/api/v1"
 	config "github.com/OliveTin/OliveTin/internal/config"
-	sv "github.com/OliveTin/OliveTin/internal/stringvariables"
-	"golang.org/x/exp/slices"
+	entities "github.com/OliveTin/OliveTin/internal/entities"
+	log "github.com/sirupsen/logrus"
 )
 
 func buildEntityFieldsets(entityTitle string, tpl *config.DashboardComponent, rr *DashboardRenderRequest) []*apiv1.DashboardComponent {
 	ret := make([]*apiv1.DashboardComponent, 0)
 
-	entityCount := sv.GetEntityCount(entityTitle)
+	entities := entities.GetEntityInstances(entityTitle)
 
-	for i := range entityCount {
-		fs := buildEntityFieldset(tpl, entityTitle, i, rr)
+	for _, ent := range entities {
+		fs := buildEntityFieldset(tpl, ent, rr)
 
 		if len(fs.Contents) > 0 {
 			ret = append(ret, fs)
@@ -23,32 +23,38 @@ func buildEntityFieldsets(entityTitle string, tpl *config.DashboardComponent, rr
 	return ret
 }
 
-func buildEntityFieldset(tpl *config.DashboardComponent, entityTitle string, entityIndex int, rr *DashboardRenderRequest) *apiv1.DashboardComponent {
-	prefix := sv.GetEntityPrefix(entityTitle, entityIndex)
-
+func buildEntityFieldset(tpl *config.DashboardComponent, ent *entities.Entity, rr *DashboardRenderRequest) *apiv1.DashboardComponent {
 	return &apiv1.DashboardComponent{
-		Title:    sv.ReplaceEntityVars(prefix, tpl.Title),
+		Title:    entities.ParseTemplateWith(tpl.Title, ent),
 		Type:     "fieldset",
-		Contents: removeFieldsetIfHasNoLinks(buildEntityFieldsetContents(tpl.Contents, prefix, rr)),
-		CssClass: sv.ReplaceEntityVars(prefix, tpl.CssClass),
+		Contents: removeFieldsetIfHasNoLinks(buildEntityFieldsetContents(tpl.Contents, ent, rr)),
+		CssClass: entities.ParseTemplateWith(tpl.CssClass, ent),
+		Action:   rr.findAction(tpl.Title),
 	}
 }
 
 func removeFieldsetIfHasNoLinks(contents []*apiv1.DashboardComponent) []*apiv1.DashboardComponent {
-	for _, subitem := range contents {
-		if subitem.Type == "link" {
-			return contents
+	return contents
+	/*
+		for _, subitem := range contents {
+			if subitem.Type == "link" {
+				return contents
+			}
 		}
-	}
 
-	return nil
+		log.Infof("removeFieldsetIfHasNoLinks: %+v", contents)
+
+		return nil
+	*/
 }
 
-func buildEntityFieldsetContents(contents []config.DashboardComponent, prefix string, rr *DashboardRenderRequest) []*apiv1.DashboardComponent {
+func buildEntityFieldsetContents(contents []*config.DashboardComponent, ent *entities.Entity, rr *DashboardRenderRequest) []*apiv1.DashboardComponent {
 	ret := make([]*apiv1.DashboardComponent, 0)
 
 	for _, subitem := range contents {
-		c := cloneItem(&subitem, prefix, rr)
+		c := cloneItem(subitem, ent, rr)
+
+		log.Infof("cloneItem: %+v", c)
 
 		if c != nil {
 			ret = append(ret, c)
@@ -58,19 +64,16 @@ func buildEntityFieldsetContents(contents []config.DashboardComponent, prefix st
 	return ret
 }
 
-func cloneItem(subitem *config.DashboardComponent, prefix string, rr *DashboardRenderRequest) *apiv1.DashboardComponent {
+func cloneItem(subitem *config.DashboardComponent, ent *entities.Entity, rr *DashboardRenderRequest) *apiv1.DashboardComponent {
 	clone := &apiv1.DashboardComponent{}
-	clone.CssClass = sv.ReplaceEntityVars(prefix, subitem.CssClass)
+	clone.CssClass = entities.ParseTemplateWith(subitem.CssClass, ent)
 
 	if subitem.Type == "" || subitem.Type == "link" {
 		clone.Type = "link"
-		clone.Title = sv.ReplaceEntityVars(prefix, subitem.Title)
-
-		if !slices.Contains(rr.AllowedActionTitles, clone.Title) {
-			return nil
-		}
+		clone.Title = entities.ParseTemplateWith(subitem.Title, ent)
+		clone.Action = rr.findAction(subitem.Title)
 	} else {
-		clone.Title = sv.ReplaceEntityVars(prefix, subitem.Title)
+		clone.Title = entities.ParseTemplateWith(subitem.Title, ent)
 		clone.Type = subitem.Type
 	}
 

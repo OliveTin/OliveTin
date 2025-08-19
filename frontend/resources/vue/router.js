@@ -1,24 +1,64 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
-// Import components
-import App from './App.vue'
-import ExecutionDialog from './ExecutionDialog.vue'
-import ActionButton from './ActionButton.vue'
-import ArgumentForm from './ArgumentForm.vue'
-
-// Define routes
 const routes = [
   {
     path: '/',
     name: 'Home',
-    component: () => import('./views/DashboardRoot.vue'),
+    component: () => import('./Dashboard.vue'),
+    props: { title: 'default' },
     meta: { title: 'OliveTin - Dashboard' }
+  },
+  {
+    path: '/dashboards/:title',
+    name: 'Dashboard',
+    component: () => import('./Dashboard.vue'),
+    props: true,
+    meta: { title: 'OliveTin - Dashboard' }
+  },
+  {
+    path: '/actionBinding/:bindingId/argumentForm',
+    name: 'ActionBinding',
+    component: () => import('./views/ArgumentForm.vue'),
+    props: true,
+    meta: { title: 'OliveTin - Action Binding' }
   },
   {
     path: '/logs',
     name: 'Logs',
-    component: () => import('./views/LogsView.vue'),
+    component: () => import('./views/LogsListView.vue'),
     meta: { title: 'OliveTin - Logs' }
+  },
+  {
+    path: '/entities',
+    name: 'Entities',
+    component: () => import('./views/EntitiesView.vue'),
+    meta: { title: 'OliveTin - Entities' }
+  },
+  {
+    path: '/entity-details/:entityType/:entityKey',
+    name: 'EntityDetails',
+    component: () => import('./views/EntityDetailsView.vue'),
+    props: true,
+    meta: { 
+      title: 'OliveTin - Entity Details', 
+      breadcrumb: [
+        { name: "Entities", href: "/entities" },
+        { name: "Entity Details" }
+      ]
+    }
+  },
+  {
+    path: '/logs/:executionTrackingId',
+    name: 'Execution',
+    component: () => import('./views/ExecutionView.vue'),
+    props: true,
+    meta: { 
+      title: 'OliveTin - Execution', 
+      breadcrumb: [
+        { name: "Logs", href: "/logs" },
+        { name: "Execution" },
+      ]
+    }
   },
   {
     path: '/diagnostics',

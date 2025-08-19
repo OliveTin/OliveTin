@@ -151,6 +151,8 @@ type Config struct {
 	AdditionalNavigationLinks       []*NavigationLink
 	ServiceHostMode                 string
 	StyleMods                       []string
+	BannerMessage				    string
+	BannerCSS                       string
 
 	usedConfigDir string
 }
@@ -209,7 +211,7 @@ type DashboardComponent struct {
 	Entity   string
 	Icon     string
 	CssClass string
-	Contents []DashboardComponent
+	Contents []*DashboardComponent
 }
 
 func DefaultConfig() *Config {

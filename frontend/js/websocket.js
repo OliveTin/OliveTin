@@ -1,6 +1,4 @@
-import {
-  refreshServerConnectionLabel
-} from './marshaller.js'
+import { buttonResults } from '../resources/vue/stores/buttonResults.js'
 
 export function checkWebsocketConnection () {
   reconnectWebsocket()
@@ -29,8 +27,6 @@ async function reconnectWebsocket () {
 function handleEvent (msg) {
   const typeName = msg.event.value.$typeName.replace('olivetin.api.v1.', '')
 
-  console.log("Websocket event receved: ", typeName)
-
   const j = new Event(typeName)
   j.payload = msg.event.value
 
@@ -38,9 +34,12 @@ function handleEvent (msg) {
     case 'EventOutputChunk':
     case 'EventConfigChanged':
     case 'EventEntityChanged':
+      window.dispatchEvent(j)
+      break
     case 'EventExecutionFinished':
     case 'EventExecutionStarted':
-      window.dispatchEvent(j)
+      console.log('EventExecutionStarted', msg.event.value.logEntry.executionTrackingId)
+      buttonResults[msg.event.value.logEntry.executionTrackingId] = msg.event.value.logEntry
       break
     default:
       console.warn('Unhandled websocket message type from server: ', typeName)

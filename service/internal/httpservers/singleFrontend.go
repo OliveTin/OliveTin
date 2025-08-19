@@ -9,14 +9,15 @@ away, and several other issues.
 */
 
 import (
-	config "github.com/OliveTin/OliveTin/internal/config"
-	"github.com/OliveTin/OliveTin/internal/api"
-	"github.com/OliveTin/OliveTin/internal/executor"
-	log "github.com/sirupsen/logrus"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
 	"path"
+
+	"github.com/OliveTin/OliveTin/internal/api"
+	config "github.com/OliveTin/OliveTin/internal/config"
+	"github.com/OliveTin/OliveTin/internal/executor"
+	log "github.com/sirupsen/logrus"
 )
 
 func logDebugRequest(cfg *config.Config, source string, r *http.Request) {
@@ -54,7 +55,7 @@ func StartSingleHTTPFrontend(cfg *config.Config, ex *executor.Executor) {
 		apiHandler.ServeHTTP(w, r)
 	}))
 
-	oauth2handler := NewOAuth2Handler(cfg) 
+	oauth2handler := NewOAuth2Handler(cfg)
 
 	mux.HandleFunc("/oauth/login", oauth2handler.handleOAuthLogin)
 	mux.HandleFunc("/oauth/callback", oauth2handler.handleOAuthCallback)
@@ -63,8 +64,7 @@ func StartSingleHTTPFrontend(cfg *config.Config, ex *executor.Executor) {
 
 	webuiServer := NewWebUIServer(cfg)
 
-	mux.HandleFunc("/webUiSettings.json", webuiServer.generateWebUISettings)
-	mux.HandleFunc("/theme.css", webuiServer.generateThemeCss)	
+	mux.HandleFunc("/theme.css", webuiServer.generateThemeCss)
 	mux.Handle("/custom-webui/", webuiServer.handleCustomWebui())
 	mux.HandleFunc("/", webuiServer.handleWebui)
 

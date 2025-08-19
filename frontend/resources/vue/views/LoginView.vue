@@ -1,9 +1,11 @@
 <template>
-  <section class = "small">
+  <section class = "small" style = "margin: auto;">
+	<div class = "section-header">
     <div class="login-container">
       <div class="login-form" style="display: grid; grid-template-columns: max-content 1fr; gap: 1em;">
         <h2>Login to OliveTin</h2>
-
+    </div>
+	<div class = "section-content">
         <div v-if="!hasOAuth && !hasLocalLogin" class="login-disabled">
           <p>This server is not configured with either OAuth, or local users, so you cannot login.</p>
         </div>
@@ -40,6 +42,7 @@
         </div>
       </div>
     </div>
+	</div>
   </section>
 </template>
 

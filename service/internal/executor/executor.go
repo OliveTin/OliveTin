@@ -3,7 +3,7 @@ package executor
 import (
 	acl "github.com/OliveTin/OliveTin/internal/acl"
 	config "github.com/OliveTin/OliveTin/internal/config"
-	sv "github.com/OliveTin/OliveTin/internal/stringvariables"
+	"github.com/OliveTin/OliveTin/internal/entities"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 
@@ -23,7 +23,7 @@ import (
 
 const (
 	DefaultExitCodeNotExecuted = -1337
-	MaxTriggerDepth = 10 
+	MaxTriggerDepth            = 10
 )
 
 var (
@@ -34,9 +34,10 @@ var (
 )
 
 type ActionBinding struct {
-	Action       *config.Action
-	EntityPrefix string
-	ConfigOrder  int
+	Action        *config.Action
+	Entity        *entities.Entity
+	ConfigOrder   int
+	IsOnDashboard bool
 }
 
 // Executor represents a helper class for executing commands. It's main method
@@ -68,7 +69,7 @@ type ExecutionRequest struct {
 	Tags              []string
 	Cfg               *config.Config
 	AuthenticatedUser *acl.AuthenticatedUser
-	EntityPrefix      string
+	Entity            *entities.Entity
 	TriggerDepth      int
 
 	logEntry           *InternalLogEntry
@@ -170,10 +171,25 @@ func getPagingStartIndex(startOffset int64, totalLogCount int64) int64 {
 	return startIndex - 1
 }
 
-func (e *Executor) GetLogTrackingIds(startOffset int64, pageCount int64) ([]*InternalLogEntry, int64) {
+type PagingResult struct {
+	CountRemaining int64
+	PageSize       int64
+	TotalCount     int64
+	StartOffset    int64
+}
+
+func (e *Executor) GetLogTrackingIds(startOffset int64, pageCount int64) ([]*InternalLogEntry, *PagingResult) {
+	pagingResult := &PagingResult{
+		CountRemaining: 0,
+		PageSize:       pageCount,
+		TotalCount:     0,
+		StartOffset:    startOffset,
+	}
+
 	e.logmutex.RLock()
 
 	totalLogCount := int64(len(e.logsTrackingIdsByDate))
+	pagingResult.TotalCount = totalLogCount
 
 	startIndex := getPagingStartIndex(startOffset, totalLogCount)
 
@@ -199,9 +215,9 @@ func (e *Executor) GetLogTrackingIds(startOffset int64, pageCount int64) ([]*Int
 
 	e.logmutex.RUnlock()
 
-	remainingLogs := endIndex
+	pagingResult.CountRemaining = endIndex
 
-	return trackingIds, remainingLogs
+	return trackingIds, pagingResult
 }
 
 func (e *Executor) GetLog(trackingID string) (*InternalLogEntry, bool) {
@@ -250,14 +266,13 @@ func (e *Executor) ExecRequest(req *ExecutionRequest) (*sync.WaitGroup, string) 
 		DatetimeStarted:     time.Now(),
 		ExecutionTrackingID: req.TrackingID,
 		Output:              "",
-		ExitCode:            DefaultExitCodeNotExecuted, 
+		ExitCode:            DefaultExitCodeNotExecuted,
 		ExecutionStarted:    false,
 		ExecutionFinished:   false,
 		ActionId:            "",
 		ActionTitle:         "notfound",
 		ActionIcon:          "&#x1f4a9;",
 		Username:            req.AuthenticatedUser.Username,
-		EntityPrefix:        req.EntityPrefix,
 	}
 
 	_, isDuplicate := e.GetLog(req.TrackingID)
@@ -351,9 +366,12 @@ func getExecutionsCount(rate config.RateSpec, req *ExecutionRequest) int {
 	then := time.Now().Add(-duration)
 
 	for _, logEntry := range req.executor.GetLogsByActionId(req.Action.ID) {
-		if logEntry.EntityPrefix != req.EntityPrefix {
-			continue
-		}
+		// FIXME
+		/*
+			if logEntry.EntityPrefix != req.EntityPrefix {
+				continue
+			}
+		*/
 
 		if logEntry.DatetimeStarted.After(then) && !logEntry.Blocked {
 
@@ -412,7 +430,7 @@ func stepParseArgs(req *ExecutionRequest) bool {
 
 	mangleInvalidArgumentValues(req)
 
-	req.finalParsedCommand, err = parseActionArguments(req.Arguments, req.Action, req.EntityPrefix)
+	req.finalParsedCommand, err = parseActionArguments(req.Action.Shell, req.Arguments, req.Action, req.Entity)
 
 	if err != nil {
 		req.logEntry.Output = err.Error()
@@ -448,7 +466,7 @@ func stepRequestAction(req *ExecutionRequest) bool {
 	metricActionsRequested.Inc()
 
 	req.logEntry.ActionConfigTitle = req.Action.Title
-	req.logEntry.ActionTitle = sv.ReplaceEntityVars(req.EntityPrefix, req.Action.Title)
+	req.logEntry.ActionTitle = entities.ParseTemplateWith(req.Action.Title, req.Entity)
 	req.logEntry.ActionIcon = req.Action.Icon
 	req.logEntry.ActionId = req.Action.ID
 	req.logEntry.Tags = req.Tags
@@ -613,7 +631,7 @@ func stepExecAfter(req *ExecutionRequest) bool {
 		"ot_username":            req.AuthenticatedUser.Username,
 	}
 
-	finalParsedCommand, err := parseCommandForReplacements(req.Action.ShellAfterCompleted, args)
+	finalParsedCommand, err := parseCommandForReplacements(req.Action.ShellAfterCompleted, args, req.Entity)
 
 	if err != nil {
 		msg := "Could not prepare shellAfterCompleted command: " + err.Error() + "\n"

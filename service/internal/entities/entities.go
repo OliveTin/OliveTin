@@ -1,24 +1,29 @@
-package entityfiles
+package entities
 
 import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	config "github.com/OliveTin/OliveTin/internal/config"
-	"github.com/OliveTin/OliveTin/internal/filehelper"
-	sv "github.com/OliveTin/OliveTin/internal/stringvariables"
-	log "github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v3"
-	"math"
 	"os"
 	"path/filepath"
 	"strings"
+
+	config "github.com/OliveTin/OliveTin/internal/config"
+	"github.com/OliveTin/OliveTin/internal/filehelper"
+	log "github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v3"
 )
 
 var (
 	EntityChangedSender chan bool
 	listeners           []func()
 )
+
+type Entity struct {
+	Data       any
+	UniqueKey  string
+	Title      string
+}
 
 func AddListener(l func()) {
 	listeners = append(listeners, l)
@@ -121,16 +126,10 @@ func loadEntityFileYaml(filename string, entityname string) {
 func updateSvFromFile(entityname string, data []map[string]any) {
 	log.Debugf("updateSvFromFile: %+v", data)
 
-	count := len(data)
-
-	sv.RemoveKeysThatStartWith("entities." + entityname)
-
-	sv.SetEntityCount(entityname, count)
+	ClearEntities(entityname)
 
 	for i, mapp := range data {
-		prefix := "entities." + entityname + "." + fmt.Sprintf("%v", i)
-
-		serializeValueToSv(prefix, mapp)
+		AddEntity(entityname, fmt.Sprintf("%d", i), mapp)
 	}
 
 	for _, l := range listeners {
@@ -138,6 +137,7 @@ func updateSvFromFile(entityname string, data []map[string]any) {
 	}
 }
 
+/*
 //gocyclo:ignore
 func serializeValueToSv(prefix string, value any) {
 	if m, ok := value.(map[string]any); ok { // if value is a map we need to flatten it
@@ -173,3 +173,5 @@ func serializeSliceToSv(prefix string, s []any) {
 		serializeValueToSv(prefix+"."+fmt.Sprintf("%v", i), v)
 	}
 }
+*/
+

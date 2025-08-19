@@ -4,69 +4,38 @@ import (
 	apiv1 "github.com/OliveTin/OliveTin/gen/olivetin/api/v1"
 	acl "github.com/OliveTin/OliveTin/internal/acl"
 	config "github.com/OliveTin/OliveTin/internal/config"
+	entities "github.com/OliveTin/OliveTin/internal/entities"
 	executor "github.com/OliveTin/OliveTin/internal/executor"
-	sv "github.com/OliveTin/OliveTin/internal/stringvariables"
-	log "github.com/sirupsen/logrus"
 )
 
 type DashboardRenderRequest struct {
-	AuthenticatedUser   *acl.AuthenticatedUser
-	AllowedActionTitles []string `json:"allows_action_titles"`
-	cfg                 *config.Config
-	ex                  *executor.Executor
-
-	usedActions map[string]bool
+	AuthenticatedUser *acl.AuthenticatedUser
+	cfg               *config.Config
+	ex                *executor.Executor
 }
 
 func (rr *DashboardRenderRequest) findAction(title string) *apiv1.Action {
-	for _, action := range rr.cfg.Actions {
-		log.Infof("Checking action %s against %s", title, action.Title)
-		if action.Title == title {
-			return buildAction(action.ID, nil, rr)
+	for id, binding := range rr.ex.MapActionIdToBinding {
+		if binding.Action.Title == title {
+			return buildAction(id, binding, rr)
 		}
 	}
 
 	return nil
 }
 
-func buildDashboardResponse(ex *executor.Executor, cfg *config.Config, user *acl.AuthenticatedUser) *apiv1.GetDashboardComponentsResponse {
-	res := &apiv1.GetDashboardComponentsResponse{
-		AuthenticatedUser:         user.Username,
-		AuthenticatedUserProvider: user.Provider,
-	}
-
-	/*
-		sort.Slice(res.Actions, func(i, j int) bool {
-			if res.Actions[i].Order == res.Actions[j].Order {
-				return res.Actions[i].Title < res.Actions[j].Title
-			} else {
-				return res.Actions[i].Order < res.Actions[j].Order
-			}
-		})
-	*/
+func buildDashboardResponse(ex *executor.Executor, cfg *config.Config, user *acl.AuthenticatedUser, dashboardTitle string) *apiv1.GetDashboardResponse {
+	res := &apiv1.GetDashboardResponse{}
 
 	rr := &DashboardRenderRequest{
 		AuthenticatedUser: user,
-		//		AllowedActionTitles: getActionTitles(res.Actions),
-		cfg:         cfg,
-		ex:          ex,
-		usedActions: make(map[string]bool),
+		cfg:               cfg,
+		ex:                ex,
 	}
 
-	res.EffectivePolicy = buildEffectivePolicy(user.EffectivePolicy)
-	res.Dashboards = dashboardCfgToPb(rr)
+	res.Dashboard = dashboardCfgToPb(rr, dashboardTitle)
 
 	return res
-}
-
-func getActionTitles(actions []*apiv1.Action) []string {
-	titles := make([]string, 0, len(actions))
-
-	for _, action := range actions {
-		titles = append(titles, action.Title)
-	}
-
-	return titles
 }
 
 func buildEffectivePolicy(policy *config.ConfigurationPolicy) *apiv1.EffectivePolicy {
@@ -78,13 +47,13 @@ func buildEffectivePolicy(policy *config.ConfigurationPolicy) *apiv1.EffectivePo
 	return ret
 }
 
-func buildAction(actionId string, actionBinding *executor.ActionBinding, rr *DashboardRenderRequest) *apiv1.Action {
+func buildAction(bindingId string, actionBinding *executor.ActionBinding, rr *DashboardRenderRequest) *apiv1.Action {
 	action := actionBinding.Action
 
 	btn := apiv1.Action{
-		Id:           actionId,
-		Title:        sv.ReplaceEntityVars(actionBinding.EntityPrefix, action.Title),
-		Icon:         sv.ReplaceEntityVars(actionBinding.EntityPrefix, action.Icon),
+		BindingId:    bindingId,
+		Title:        entities.ParseTemplateWith(action.Title, actionBinding.Entity),
+		Icon:         entities.ParseTemplateWith(action.Icon, actionBinding.Entity),
 		CanExec:      acl.IsAllowedExec(rr.cfg, rr.AuthenticatedUser, action),
 		PopupOnStart: action.PopupOnStart,
 		Order:        int32(actionBinding.ConfigOrder),
@@ -118,14 +87,12 @@ func buildChoices(arg config.ActionArgument) []*apiv1.ActionArgumentChoice {
 func buildChoicesEntity(firstChoice config.ActionArgumentChoice, entityTitle string) []*apiv1.ActionArgumentChoice {
 	ret := []*apiv1.ActionArgumentChoice{}
 
-	entityCount := sv.GetEntityCount(entityTitle)
+	entList := entities.GetEntityInstances(entityTitle)
 
-	for i := 0; i < entityCount; i++ {
-		prefix := sv.GetEntityPrefix(entityTitle, i)
-
+	for _, ent := range entList {
 		ret = append(ret, &apiv1.ActionArgumentChoice{
-			Value: sv.ReplaceEntityVars(prefix, firstChoice.Value),
-			Title: sv.ReplaceEntityVars(prefix, firstChoice.Title),
+			Value: entities.ParseTemplateWith(firstChoice.Value, ent),
+			Title: entities.ParseTemplateWith(firstChoice.Title, ent),
 		})
 	}
 

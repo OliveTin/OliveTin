@@ -1,9 +1,9 @@
 package installationinfo
 
-type buildInfo struct {
+type BuildInfo struct {
 	Commit  string
 	Version string
 	Date    string
 }
 
-var Build = &buildInfo{}
+var Build = &BuildInfo{}

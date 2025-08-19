@@ -66,6 +66,10 @@ export class OutputTerminal {
     this.terminal.open(el)
   }
 
+  close () {
+    this.terminal.dispose()
+  }
+
   resize (cols, rows) {
     this.terminal.resize(cols, rows)
   }
