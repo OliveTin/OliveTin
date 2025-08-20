@@ -4,13 +4,12 @@
       <div class="not-found-content">
         <h1>404</h1>
         <h2>Page Not Found</h2>
-        <p>The page you're looking for doesn't exist.</p>
         
         <div class="actions">
-          <router-link to="/" class="btn btn-primary">
+          <button class = "button good" @click="goToHome">
             Go to Home
-          </router-link>
-          <button @click="goBack" class="btn btn-secondary">
+          </button>
+          <button class="button neutral" @click="goBack">
             Go Back
           </button>
         </div>
@@ -25,29 +24,15 @@ export default {
   methods: {
     goBack() {
       this.$router.go(-1)
+    },
+    goToHome() {
+      this.$router.push('/')
     }
   }
 }
 </script>
 
 <style scoped>
-.not-found-view {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 1rem;
-}
-
-.not-found-container {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-  max-width: 500px;
-  width: 100%;
-}
 
 .not-found-content {
   padding: 3rem 2rem;
@@ -57,7 +42,6 @@ export default {
 .not-found-content h1 {
   font-size: 6rem;
   margin: 0;
-  color: #007bff;
   font-weight: 700;
   line-height: 1;
 }
@@ -72,41 +56,5 @@ export default {
   font-size: 1.1rem;
   color: #666;
   margin-bottom: 2rem;
-}
-
-.actions {
-  display: flex;
-  gap: 1rem;
-  justify-content: center;
-  flex-wrap: wrap;
-}
-
-.btn {
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 6px;
-  font-size: 1rem;
-  cursor: pointer;
-  text-decoration: none;
-  display: inline-block;
-  transition: all 0.2s ease;
-}
-
-.btn-primary {
-  background: #007bff;
-  color: white;
-}
-
-.btn-primary:hover {
-  background: #0056b3;
-}
-
-.btn-secondary {
-  background: #6c757d;
-  color: white;
-}
-
-.btn-secondary:hover {
-  background: #545b62;
 }
 </style> 

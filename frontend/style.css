@@ -1,8 +1,13 @@
 @import 'femtocrank/style.css';
 
-section.transparent {
-	background-color: transparent;
-	box-shadow: none;
+header {
+	position: fixed;
+	width: 100%;
+	z-index: 5;
+}
+
+aside {
+	padding-top: 4em;
 }
 
 fieldset {
@@ -11,6 +16,10 @@ fieldset {
 	grid-auto-rows: 1fr;
 	justify-content: center;
 	place-items: stretch;
+}
+
+main {
+	padding-top: 4em;
 }
 
 action-button {
@@ -38,4 +47,67 @@ dialog {
 }
 footer span {
 	margin-right: 1em;
+}
+
+legend {
+	font-weight: bold;
+	text-align: center;
+	padding: 1em;
+	padding-top: 1.5em;
+}
+
+button.neutral {
+	background-color: transparent;
+	color: white;
+}
+
+section {
+	padding: 0;
+}
+
+.display {
+	border: 1px solid #666;
+	padding: 1em;
+	border-radius: .7em;
+	box-shadow: 0 0 .6em #aaa;
+	text-align: center;
+	font-size: small;
+	display: flex;
+	flex-direction: column;
+	flex-grow: 1;
+	justify-content: center;
+	align-items: center;
+}
+
+aside .flex-row {
+	padding-left: 1em;
+	padding-right: .5em;
+}
+
+#sidebar-toggler-button {
+	margin-right: .5em;
+}
+
+div.buttons button svg {
+	vertical-align: middle;
+}
+
+section .section-content {
+	padding-top: 0;
+}
+
+footer {
+	font-size: small;
+}
+
+th {
+	background-color: #fff;
+}
+
+aside {
+	z-index: 3; /* Make sure the sidebar is on top of the terminal */
+}
+
+section.small {
+	border-radius: .4em;
 }

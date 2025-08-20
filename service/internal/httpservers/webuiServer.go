@@ -1,18 +1,17 @@
 package httpservers
 
 import (
-	"encoding/json"
+
 	//	cors "github.com/OliveTin/OliveTin/internal/cors"
-	log "github.com/sirupsen/logrus"
 	"net/http"
 	"os"
 	"path"
 
+	log "github.com/sirupsen/logrus"
+
 	"github.com/jamesread/golure/pkg/dirs"
 
 	config "github.com/OliveTin/OliveTin/internal/config"
-	installationinfo "github.com/OliveTin/OliveTin/internal/installationinfo"
-	sv "github.com/OliveTin/OliveTin/internal/stringvariables"
 )
 
 type webUIServer struct {
@@ -25,24 +24,6 @@ var (
 	customThemeCss     []byte
 	customThemeCssRead = false
 )
-
-type webUISettings struct {
-	Rest                   string
-	ShowFooter             bool
-	ShowNavigation         bool
-	ShowNewVersions        bool
-	AvailableVersion       string
-	CurrentVersion         string
-	PageTitle              string
-	SectionNavigationStyle string
-	DefaultIconForBack     string
-	EnableCustomJs         bool
-	AuthLoginUrl           string
-	AuthLocalLogin         bool
-	StyleMods              []string
-	AuthOAuth2Providers    []publicOAuth2Provider
-	AdditionalLinks        []*config.NavigationLink
-}
 
 func NewWebUIServer(cfg *config.Config) *webUIServer {
 	s := &webUIServer{
@@ -66,10 +47,9 @@ func (s *webUIServer) handleWebui(w http.ResponseWriter, r *http.Request) {
 	} else {
 		log.Infof("Serving webui from %s for %s", s.webuiDir, r.URL.Path)
 		http.ServeFile(w, r, path.Join(s.webuiDir, r.URL.Path))
-//		http.StripPrefix(dirName, http.FileServer(http.Dir(s.webuiDir))).ServeHTTP(w, r)
+		//		http.StripPrefix(dirName, http.FileServer(http.Dir(s.webuiDir))).ServeHTTP(w, r)
 	}
 }
-
 
 func (s *webUIServer) findWebuiDir() string {
 	directoriesToSearch := []string{
@@ -108,9 +88,6 @@ func (s *webUIServer) setupCustomWebuiDir() {
 
 	if err != nil {
 		log.Warnf("Could not create themes directory: %v", err)
-		sv.Set("internal.themesdir", err.Error())
-	} else {
-		sv.Set("internal.themesdir", dir)
 	}
 }
 
@@ -132,55 +109,6 @@ func (s *webUIServer) generateThemeCss(w http.ResponseWriter, r *http.Request) {
 	w.Write(customThemeCss)
 }
 
-type publicOAuth2Provider struct {
-	Name  string
-	Title string
-	Icon  string
-}
-
-func buildPublicOAuth2ProvidersList(cfg *config.Config) []publicOAuth2Provider {
-	var publicProviders []publicOAuth2Provider
-
-	for _, provider := range cfg.AuthOAuth2Providers {
-		publicProviders = append(publicProviders, publicOAuth2Provider{
-			Name:  provider.Name,
-			Title: provider.Title,
-			Icon:  provider.Icon,
-		})
-	}
-
-	return publicProviders
-}
-
-func (s *webUIServer) generateWebUISettings(w http.ResponseWriter, r *http.Request) {
-	log.Infof("Generating webui settings for %s", r.RemoteAddr)
-
-	jsonRet, _ := json.Marshal(webUISettings{
-		Rest:                   s.cfg.ExternalRestAddress + "/api/",
-		ShowFooter:             s.cfg.ShowFooter,
-		ShowNavigation:         s.cfg.ShowNavigation,
-		ShowNewVersions:        s.cfg.ShowNewVersions,
-		AvailableVersion:       installationinfo.Runtime.AvailableVersion,
-		CurrentVersion:         installationinfo.Build.Version,
-		PageTitle:              s.cfg.PageTitle,
-		SectionNavigationStyle: s.cfg.SectionNavigationStyle,
-		DefaultIconForBack:     s.cfg.DefaultIconForBack,
-		EnableCustomJs:         s.cfg.EnableCustomJs,
-		AuthLoginUrl:           s.cfg.AuthLoginUrl,
-		AuthLocalLogin:         s.cfg.AuthLocalUsers.Enabled,
-		AuthOAuth2Providers:    buildPublicOAuth2ProvidersList(s.cfg),
-		AdditionalLinks:        s.cfg.AdditionalNavigationLinks,
-		StyleMods:              s.cfg.StyleMods,
-	})
-
-	w.Header().Add("Content-Type", "application/json")
-	_, err := w.Write([]byte(jsonRet))
-
-	if err != nil {
-		log.Warnf("Could not write webui settings: %v", err)
-	}
-}
-
-func (s *webUIServer) handleCustomWebui() (http.Handler) {
+func (s *webUIServer) handleCustomWebui() http.Handler {
 	return http.StripPrefix("/custom-webui/", http.FileServer(http.Dir(s.findCustomWebuiDir())))
 }

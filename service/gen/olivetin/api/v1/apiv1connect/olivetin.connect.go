@@ -33,9 +33,9 @@ const (
 // reflection-formatted method names, remove the leading slash and convert the remaining slash to a
 // period.
 const (
-	// OliveTinApiServiceGetDashboardComponentsProcedure is the fully-qualified name of the
-	// OliveTinApiService's GetDashboardComponents RPC.
-	OliveTinApiServiceGetDashboardComponentsProcedure = "/olivetin.api.v1.OliveTinApiService/GetDashboardComponents"
+	// OliveTinApiServiceGetDashboardProcedure is the fully-qualified name of the OliveTinApiService's
+	// GetDashboard RPC.
+	OliveTinApiServiceGetDashboardProcedure = "/olivetin.api.v1.OliveTinApiService/GetDashboard"
 	// OliveTinApiServiceStartActionProcedure is the fully-qualified name of the OliveTinApiService's
 	// StartAction RPC.
 	OliveTinApiServiceStartActionProcedure = "/olivetin.api.v1.OliveTinApiService/StartAction"
@@ -90,11 +90,22 @@ const (
 	// OliveTinApiServiceGetDiagnosticsProcedure is the fully-qualified name of the OliveTinApiService's
 	// GetDiagnostics RPC.
 	OliveTinApiServiceGetDiagnosticsProcedure = "/olivetin.api.v1.OliveTinApiService/GetDiagnostics"
+	// OliveTinApiServiceInitProcedure is the fully-qualified name of the OliveTinApiService's Init RPC.
+	OliveTinApiServiceInitProcedure = "/olivetin.api.v1.OliveTinApiService/Init"
+	// OliveTinApiServiceGetActionBindingProcedure is the fully-qualified name of the
+	// OliveTinApiService's GetActionBinding RPC.
+	OliveTinApiServiceGetActionBindingProcedure = "/olivetin.api.v1.OliveTinApiService/GetActionBinding"
+	// OliveTinApiServiceGetEntitiesProcedure is the fully-qualified name of the OliveTinApiService's
+	// GetEntities RPC.
+	OliveTinApiServiceGetEntitiesProcedure = "/olivetin.api.v1.OliveTinApiService/GetEntities"
+	// OliveTinApiServiceGetEntityProcedure is the fully-qualified name of the OliveTinApiService's
+	// GetEntity RPC.
+	OliveTinApiServiceGetEntityProcedure = "/olivetin.api.v1.OliveTinApiService/GetEntity"
 )
 
 // OliveTinApiServiceClient is a client for the olivetin.api.v1.OliveTinApiService service.
 type OliveTinApiServiceClient interface {
-	GetDashboardComponents(context.Context, *connect.Request[v1.GetDashboardComponentsRequest]) (*connect.Response[v1.GetDashboardComponentsResponse], error)
+	GetDashboard(context.Context, *connect.Request[v1.GetDashboardRequest]) (*connect.Response[v1.GetDashboardResponse], error)
 	StartAction(context.Context, *connect.Request[v1.StartActionRequest]) (*connect.Response[v1.StartActionResponse], error)
 	StartActionAndWait(context.Context, *connect.Request[v1.StartActionAndWaitRequest]) (*connect.Response[v1.StartActionAndWaitResponse], error)
 	StartActionByGet(context.Context, *connect.Request[v1.StartActionByGetRequest]) (*connect.Response[v1.StartActionByGetResponse], error)
@@ -113,6 +124,10 @@ type OliveTinApiServiceClient interface {
 	Logout(context.Context, *connect.Request[v1.LogoutRequest]) (*connect.Response[v1.LogoutResponse], error)
 	EventStream(context.Context, *connect.Request[v1.EventStreamRequest]) (*connect.ServerStreamForClient[v1.EventStreamResponse], error)
 	GetDiagnostics(context.Context, *connect.Request[v1.GetDiagnosticsRequest]) (*connect.Response[v1.GetDiagnosticsResponse], error)
+	Init(context.Context, *connect.Request[v1.InitRequest]) (*connect.Response[v1.InitResponse], error)
+	GetActionBinding(context.Context, *connect.Request[v1.GetActionBindingRequest]) (*connect.Response[v1.GetActionBindingResponse], error)
+	GetEntities(context.Context, *connect.Request[v1.GetEntitiesRequest]) (*connect.Response[v1.GetEntitiesResponse], error)
+	GetEntity(context.Context, *connect.Request[v1.GetEntityRequest]) (*connect.Response[v1.Entity], error)
 }
 
 // NewOliveTinApiServiceClient constructs a client for the olivetin.api.v1.OliveTinApiService
@@ -126,10 +141,10 @@ func NewOliveTinApiServiceClient(httpClient connect.HTTPClient, baseURL string, 
 	baseURL = strings.TrimRight(baseURL, "/")
 	oliveTinApiServiceMethods := v1.File_olivetin_api_v1_olivetin_proto.Services().ByName("OliveTinApiService").Methods()
 	return &oliveTinApiServiceClient{
-		getDashboardComponents: connect.NewClient[v1.GetDashboardComponentsRequest, v1.GetDashboardComponentsResponse](
+		getDashboard: connect.NewClient[v1.GetDashboardRequest, v1.GetDashboardResponse](
 			httpClient,
-			baseURL+OliveTinApiServiceGetDashboardComponentsProcedure,
-			connect.WithSchema(oliveTinApiServiceMethods.ByName("GetDashboardComponents")),
+			baseURL+OliveTinApiServiceGetDashboardProcedure,
+			connect.WithSchema(oliveTinApiServiceMethods.ByName("GetDashboard")),
 			connect.WithClientOptions(opts...),
 		),
 		startAction: connect.NewClient[v1.StartActionRequest, v1.StartActionResponse](
@@ -240,12 +255,36 @@ func NewOliveTinApiServiceClient(httpClient connect.HTTPClient, baseURL string, 
 			connect.WithSchema(oliveTinApiServiceMethods.ByName("GetDiagnostics")),
 			connect.WithClientOptions(opts...),
 		),
+		init: connect.NewClient[v1.InitRequest, v1.InitResponse](
+			httpClient,
+			baseURL+OliveTinApiServiceInitProcedure,
+			connect.WithSchema(oliveTinApiServiceMethods.ByName("Init")),
+			connect.WithClientOptions(opts...),
+		),
+		getActionBinding: connect.NewClient[v1.GetActionBindingRequest, v1.GetActionBindingResponse](
+			httpClient,
+			baseURL+OliveTinApiServiceGetActionBindingProcedure,
+			connect.WithSchema(oliveTinApiServiceMethods.ByName("GetActionBinding")),
+			connect.WithClientOptions(opts...),
+		),
+		getEntities: connect.NewClient[v1.GetEntitiesRequest, v1.GetEntitiesResponse](
+			httpClient,
+			baseURL+OliveTinApiServiceGetEntitiesProcedure,
+			connect.WithSchema(oliveTinApiServiceMethods.ByName("GetEntities")),
+			connect.WithClientOptions(opts...),
+		),
+		getEntity: connect.NewClient[v1.GetEntityRequest, v1.Entity](
+			httpClient,
+			baseURL+OliveTinApiServiceGetEntityProcedure,
+			connect.WithSchema(oliveTinApiServiceMethods.ByName("GetEntity")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // oliveTinApiServiceClient implements OliveTinApiServiceClient.
 type oliveTinApiServiceClient struct {
-	getDashboardComponents  *connect.Client[v1.GetDashboardComponentsRequest, v1.GetDashboardComponentsResponse]
+	getDashboard            *connect.Client[v1.GetDashboardRequest, v1.GetDashboardResponse]
 	startAction             *connect.Client[v1.StartActionRequest, v1.StartActionResponse]
 	startActionAndWait      *connect.Client[v1.StartActionAndWaitRequest, v1.StartActionAndWaitResponse]
 	startActionByGet        *connect.Client[v1.StartActionByGetRequest, v1.StartActionByGetResponse]
@@ -264,11 +303,15 @@ type oliveTinApiServiceClient struct {
 	logout                  *connect.Client[v1.LogoutRequest, v1.LogoutResponse]
 	eventStream             *connect.Client[v1.EventStreamRequest, v1.EventStreamResponse]
 	getDiagnostics          *connect.Client[v1.GetDiagnosticsRequest, v1.GetDiagnosticsResponse]
+	init                    *connect.Client[v1.InitRequest, v1.InitResponse]
+	getActionBinding        *connect.Client[v1.GetActionBindingRequest, v1.GetActionBindingResponse]
+	getEntities             *connect.Client[v1.GetEntitiesRequest, v1.GetEntitiesResponse]
+	getEntity               *connect.Client[v1.GetEntityRequest, v1.Entity]
 }
 
-// GetDashboardComponents calls olivetin.api.v1.OliveTinApiService.GetDashboardComponents.
-func (c *oliveTinApiServiceClient) GetDashboardComponents(ctx context.Context, req *connect.Request[v1.GetDashboardComponentsRequest]) (*connect.Response[v1.GetDashboardComponentsResponse], error) {
-	return c.getDashboardComponents.CallUnary(ctx, req)
+// GetDashboard calls olivetin.api.v1.OliveTinApiService.GetDashboard.
+func (c *oliveTinApiServiceClient) GetDashboard(ctx context.Context, req *connect.Request[v1.GetDashboardRequest]) (*connect.Response[v1.GetDashboardResponse], error) {
+	return c.getDashboard.CallUnary(ctx, req)
 }
 
 // StartAction calls olivetin.api.v1.OliveTinApiService.StartAction.
@@ -361,9 +404,29 @@ func (c *oliveTinApiServiceClient) GetDiagnostics(ctx context.Context, req *conn
 	return c.getDiagnostics.CallUnary(ctx, req)
 }
 
+// Init calls olivetin.api.v1.OliveTinApiService.Init.
+func (c *oliveTinApiServiceClient) Init(ctx context.Context, req *connect.Request[v1.InitRequest]) (*connect.Response[v1.InitResponse], error) {
+	return c.init.CallUnary(ctx, req)
+}
+
+// GetActionBinding calls olivetin.api.v1.OliveTinApiService.GetActionBinding.
+func (c *oliveTinApiServiceClient) GetActionBinding(ctx context.Context, req *connect.Request[v1.GetActionBindingRequest]) (*connect.Response[v1.GetActionBindingResponse], error) {
+	return c.getActionBinding.CallUnary(ctx, req)
+}
+
+// GetEntities calls olivetin.api.v1.OliveTinApiService.GetEntities.
+func (c *oliveTinApiServiceClient) GetEntities(ctx context.Context, req *connect.Request[v1.GetEntitiesRequest]) (*connect.Response[v1.GetEntitiesResponse], error) {
+	return c.getEntities.CallUnary(ctx, req)
+}
+
+// GetEntity calls olivetin.api.v1.OliveTinApiService.GetEntity.
+func (c *oliveTinApiServiceClient) GetEntity(ctx context.Context, req *connect.Request[v1.GetEntityRequest]) (*connect.Response[v1.Entity], error) {
+	return c.getEntity.CallUnary(ctx, req)
+}
+
 // OliveTinApiServiceHandler is an implementation of the olivetin.api.v1.OliveTinApiService service.
 type OliveTinApiServiceHandler interface {
-	GetDashboardComponents(context.Context, *connect.Request[v1.GetDashboardComponentsRequest]) (*connect.Response[v1.GetDashboardComponentsResponse], error)
+	GetDashboard(context.Context, *connect.Request[v1.GetDashboardRequest]) (*connect.Response[v1.GetDashboardResponse], error)
 	StartAction(context.Context, *connect.Request[v1.StartActionRequest]) (*connect.Response[v1.StartActionResponse], error)
 	StartActionAndWait(context.Context, *connect.Request[v1.StartActionAndWaitRequest]) (*connect.Response[v1.StartActionAndWaitResponse], error)
 	StartActionByGet(context.Context, *connect.Request[v1.StartActionByGetRequest]) (*connect.Response[v1.StartActionByGetResponse], error)
@@ -382,6 +445,10 @@ type OliveTinApiServiceHandler interface {
 	Logout(context.Context, *connect.Request[v1.LogoutRequest]) (*connect.Response[v1.LogoutResponse], error)
 	EventStream(context.Context, *connect.Request[v1.EventStreamRequest], *connect.ServerStream[v1.EventStreamResponse]) error
 	GetDiagnostics(context.Context, *connect.Request[v1.GetDiagnosticsRequest]) (*connect.Response[v1.GetDiagnosticsResponse], error)
+	Init(context.Context, *connect.Request[v1.InitRequest]) (*connect.Response[v1.InitResponse], error)
+	GetActionBinding(context.Context, *connect.Request[v1.GetActionBindingRequest]) (*connect.Response[v1.GetActionBindingResponse], error)
+	GetEntities(context.Context, *connect.Request[v1.GetEntitiesRequest]) (*connect.Response[v1.GetEntitiesResponse], error)
+	GetEntity(context.Context, *connect.Request[v1.GetEntityRequest]) (*connect.Response[v1.Entity], error)
 }
 
 // NewOliveTinApiServiceHandler builds an HTTP handler from the service implementation. It returns
@@ -391,10 +458,10 @@ type OliveTinApiServiceHandler interface {
 // and JSON codecs. They also support gzip compression.
 func NewOliveTinApiServiceHandler(svc OliveTinApiServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
 	oliveTinApiServiceMethods := v1.File_olivetin_api_v1_olivetin_proto.Services().ByName("OliveTinApiService").Methods()
-	oliveTinApiServiceGetDashboardComponentsHandler := connect.NewUnaryHandler(
-		OliveTinApiServiceGetDashboardComponentsProcedure,
-		svc.GetDashboardComponents,
-		connect.WithSchema(oliveTinApiServiceMethods.ByName("GetDashboardComponents")),
+	oliveTinApiServiceGetDashboardHandler := connect.NewUnaryHandler(
+		OliveTinApiServiceGetDashboardProcedure,
+		svc.GetDashboard,
+		connect.WithSchema(oliveTinApiServiceMethods.ByName("GetDashboard")),
 		connect.WithHandlerOptions(opts...),
 	)
 	oliveTinApiServiceStartActionHandler := connect.NewUnaryHandler(
@@ -505,10 +572,34 @@ func NewOliveTinApiServiceHandler(svc OliveTinApiServiceHandler, opts ...connect
 		connect.WithSchema(oliveTinApiServiceMethods.ByName("GetDiagnostics")),
 		connect.WithHandlerOptions(opts...),
 	)
+	oliveTinApiServiceInitHandler := connect.NewUnaryHandler(
+		OliveTinApiServiceInitProcedure,
+		svc.Init,
+		connect.WithSchema(oliveTinApiServiceMethods.ByName("Init")),
+		connect.WithHandlerOptions(opts...),
+	)
+	oliveTinApiServiceGetActionBindingHandler := connect.NewUnaryHandler(
+		OliveTinApiServiceGetActionBindingProcedure,
+		svc.GetActionBinding,
+		connect.WithSchema(oliveTinApiServiceMethods.ByName("GetActionBinding")),
+		connect.WithHandlerOptions(opts...),
+	)
+	oliveTinApiServiceGetEntitiesHandler := connect.NewUnaryHandler(
+		OliveTinApiServiceGetEntitiesProcedure,
+		svc.GetEntities,
+		connect.WithSchema(oliveTinApiServiceMethods.ByName("GetEntities")),
+		connect.WithHandlerOptions(opts...),
+	)
+	oliveTinApiServiceGetEntityHandler := connect.NewUnaryHandler(
+		OliveTinApiServiceGetEntityProcedure,
+		svc.GetEntity,
+		connect.WithSchema(oliveTinApiServiceMethods.ByName("GetEntity")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/olivetin.api.v1.OliveTinApiService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
-		case OliveTinApiServiceGetDashboardComponentsProcedure:
-			oliveTinApiServiceGetDashboardComponentsHandler.ServeHTTP(w, r)
+		case OliveTinApiServiceGetDashboardProcedure:
+			oliveTinApiServiceGetDashboardHandler.ServeHTTP(w, r)
 		case OliveTinApiServiceStartActionProcedure:
 			oliveTinApiServiceStartActionHandler.ServeHTTP(w, r)
 		case OliveTinApiServiceStartActionAndWaitProcedure:
@@ -545,6 +636,14 @@ func NewOliveTinApiServiceHandler(svc OliveTinApiServiceHandler, opts ...connect
 			oliveTinApiServiceEventStreamHandler.ServeHTTP(w, r)
 		case OliveTinApiServiceGetDiagnosticsProcedure:
 			oliveTinApiServiceGetDiagnosticsHandler.ServeHTTP(w, r)
+		case OliveTinApiServiceInitProcedure:
+			oliveTinApiServiceInitHandler.ServeHTTP(w, r)
+		case OliveTinApiServiceGetActionBindingProcedure:
+			oliveTinApiServiceGetActionBindingHandler.ServeHTTP(w, r)
+		case OliveTinApiServiceGetEntitiesProcedure:
+			oliveTinApiServiceGetEntitiesHandler.ServeHTTP(w, r)
+		case OliveTinApiServiceGetEntityProcedure:
+			oliveTinApiServiceGetEntityHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -554,8 +653,8 @@ func NewOliveTinApiServiceHandler(svc OliveTinApiServiceHandler, opts ...connect
 // UnimplementedOliveTinApiServiceHandler returns CodeUnimplemented from all methods.
 type UnimplementedOliveTinApiServiceHandler struct{}
 
-func (UnimplementedOliveTinApiServiceHandler) GetDashboardComponents(context.Context, *connect.Request[v1.GetDashboardComponentsRequest]) (*connect.Response[v1.GetDashboardComponentsResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("olivetin.api.v1.OliveTinApiService.GetDashboardComponents is not implemented"))
+func (UnimplementedOliveTinApiServiceHandler) GetDashboard(context.Context, *connect.Request[v1.GetDashboardRequest]) (*connect.Response[v1.GetDashboardResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("olivetin.api.v1.OliveTinApiService.GetDashboard is not implemented"))
 }
 
 func (UnimplementedOliveTinApiServiceHandler) StartAction(context.Context, *connect.Request[v1.StartActionRequest]) (*connect.Response[v1.StartActionResponse], error) {
@@ -628,4 +727,20 @@ func (UnimplementedOliveTinApiServiceHandler) EventStream(context.Context, *conn
 
 func (UnimplementedOliveTinApiServiceHandler) GetDiagnostics(context.Context, *connect.Request[v1.GetDiagnosticsRequest]) (*connect.Response[v1.GetDiagnosticsResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("olivetin.api.v1.OliveTinApiService.GetDiagnostics is not implemented"))
+}
+
+func (UnimplementedOliveTinApiServiceHandler) Init(context.Context, *connect.Request[v1.InitRequest]) (*connect.Response[v1.InitResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("olivetin.api.v1.OliveTinApiService.Init is not implemented"))
+}
+
+func (UnimplementedOliveTinApiServiceHandler) GetActionBinding(context.Context, *connect.Request[v1.GetActionBindingRequest]) (*connect.Response[v1.GetActionBindingResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("olivetin.api.v1.OliveTinApiService.GetActionBinding is not implemented"))
+}
+
+func (UnimplementedOliveTinApiServiceHandler) GetEntities(context.Context, *connect.Request[v1.GetEntitiesRequest]) (*connect.Response[v1.GetEntitiesResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("olivetin.api.v1.OliveTinApiService.GetEntities is not implemented"))
+}
+
+func (UnimplementedOliveTinApiServiceHandler) GetEntity(context.Context, *connect.Request[v1.GetEntityRequest]) (*connect.Response[v1.Entity], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("olivetin.api.v1.OliveTinApiService.GetEntity is not implemented"))
 }

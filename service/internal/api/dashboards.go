@@ -1,19 +1,26 @@
 package api
 
 import (
+	"sort"
+
 	apiv1 "github.com/OliveTin/OliveTin/gen/olivetin/api/v1"
 	config "github.com/OliveTin/OliveTin/internal/config"
 	"golang.org/x/exp/slices"
 )
 
-func dashboardCfgToPb(rr *DashboardRenderRequest) []*apiv1.Dashboard {
-	ret := make([]*apiv1.Dashboard, 0)
+func dashboardCfgToPb(rr *DashboardRenderRequest, dashboardTitle string) *apiv1.Dashboard {
+	if dashboardTitle == "default" {
+		return buildDefaultDashboard(rr)
+	}
 
 	for _, dashboard := range rr.cfg.Dashboards {
-		pbdb := &apiv1.Dashboard{
+		if dashboard.Title != dashboardTitle {
+			continue
+		}
+
+		return &apiv1.Dashboard{
 			Title:    dashboard.Title,
-			Contents: removeNulls(getDashboardComponentContents(dashboard, rr)),
-			//			Contents: removeNulls(getDashboardComponentContents(dashboard, rr)),
+			Contents: sortActions(removeNulls(getDashboardComponentContents(dashboard, rr))),
 		}
 
 		/*
@@ -25,13 +32,9 @@ func dashboardCfgToPb(rr *DashboardRenderRequest) []*apiv1.Dashboard {
 				continue
 			}
 		*/
-
-		ret = append(ret, pbdb)
 	}
 
-	ret = append(ret, buildDefaultDashboard(rr))
-
-	return ret
+	return nil
 }
 
 func buildDefaultDashboard(rr *DashboardRenderRequest) *apiv1.Dashboard {
@@ -48,26 +51,48 @@ func buildDefaultDashboard(rr *DashboardRenderRequest) *apiv1.Dashboard {
 			continue
 		}
 
-		if rr.usedActions[id] {
+		if binding.IsOnDashboard {
 			continue
 		}
 
-		rr.usedActions[id] = true
 		actions = append(actions, buildAction(id, binding, rr))
 	}
 
 	for _, action := range actions {
 		fieldset.Contents = append(fieldset.Contents, &apiv1.DashboardComponent{
-			Type:  "link",
-			Title: action.Title,
-			Icon:  action.Icon,
+			Type:   "link",
+			Title:  action.Title,
+			Icon:   action.Icon,
+			Action: action,
 		})
 	}
+
+	fieldset.Contents = sortActions(fieldset.Contents)
 
 	return &apiv1.Dashboard{
 		Title:    "Default",
 		Contents: []*apiv1.DashboardComponent{fieldset},
 	}
+}
+
+func sortActions(components []*apiv1.DashboardComponent) []*apiv1.DashboardComponent {
+	sort.Slice(components, func(i, j int) bool {
+		if components[i].Action == nil {
+			return false
+		}
+
+		if components[j].Action == nil {
+			return true
+		}
+
+		if components[i].Action.Order == components[j].Action.Order {
+			return components[i].Action.Title < components[j].Action.Title
+		} else {
+			return components[i].Action.Order < components[j].Action.Order
+		}
+	})
+
+	return components
 }
 
 func removeNulls(components []*apiv1.DashboardComponent) []*apiv1.DashboardComponent {
@@ -89,9 +114,9 @@ func getDashboardComponentContents(dashboard *config.DashboardComponent, rr *Das
 
 	for _, subitem := range dashboard.Contents {
 		if subitem.Type == "fieldset" && subitem.Entity != "" {
-			ret = append(ret, buildEntityFieldsets(subitem.Entity, &subitem, rr)...)
+			ret = append(ret, buildEntityFieldsets(subitem.Entity, subitem, rr)...)
 		} else {
-			ret = append(ret, buildDashboardComponentSimple(&subitem, rr))
+			ret = append(ret, buildDashboardComponentSimple(subitem, rr))
 		}
 	}
 
@@ -99,18 +124,13 @@ func getDashboardComponentContents(dashboard *config.DashboardComponent, rr *Das
 }
 
 func buildDashboardComponentSimple(subitem *config.DashboardComponent, rr *DashboardRenderRequest) *apiv1.DashboardComponent {
-	if subitem.Type == "" || subitem.Type == "link" {
-		if !slices.Contains(rr.AllowedActionTitles, subitem.Title) {
-			return nil
-		}
-	}
-
 	newitem := &apiv1.DashboardComponent{
 		Title:    subitem.Title,
 		Type:     getDashboardComponentType(subitem),
 		Contents: getDashboardComponentContents(subitem, rr),
 		Icon:     getDashboardComponentIcon(subitem, rr.cfg),
 		CssClass: subitem.CssClass,
+		Action:   rr.findAction(subitem.Title),
 	}
 
 	return newitem

@@ -1,4 +1,4 @@
-package entityfiles
+package entities
 
 import (
 	sv "github.com/OliveTin/OliveTin/internal/stringvariables"

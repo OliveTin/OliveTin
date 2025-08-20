@@ -2,7 +2,7 @@ package executor
 
 import (
 	config "github.com/OliveTin/OliveTin/internal/config"
-	sv "github.com/OliveTin/OliveTin/internal/stringvariables"
+	"github.com/OliveTin/OliveTin/internal/entities"
 	log "github.com/sirupsen/logrus"
 
 	"fmt"
@@ -16,16 +16,16 @@ import (
 var (
 	typecheckRegex = map[string]string{
 		"very_dangerous_raw_string": "",
-		"int":                       "^[\\d]+$",
-		"unicode_identifier":        "^[\\w\\/\\\\.\\_ \\d]+$",
-		"ascii":                     "^[a-zA-Z0-9]+$",
-		"ascii_identifier":          "^[a-zA-Z0-9\\-\\.\\_]+$",
-		"ascii_sentence":            "^[a-zA-Z0-9 \\,\\.]+$",
+		"int":                       `^\d+$`,
+		"unicode_identifier":        `^[\w\-\.\_\d]+$`,
+		"ascii":                     `^[a-zA-Z0-9]+$`,
+		"ascii_identifier":          `^[a-zA-Z0-9\-\._]+$`,
+		"ascii_sentence":            `^[a-zA-Z0-9\-\._, ]+$`,
 	}
 )
 
-func parseCommandForReplacements(shellCommand string, values map[string]string) (string, error) {
-	r := regexp.MustCompile("{{ *?([a-zA-Z0-9_]+?) *?}}")
+func parseCommandForReplacements(shellCommand string, values map[string]string, entity any) (string, error) {
+	r := regexp.MustCompile(`{{ *?\.Arguments\.([a-zA-Z0-9_]+?) *?}}`)
 	foundArgumentNames := r.FindAllStringSubmatch(shellCommand, -1)
 
 	for _, match := range foundArgumentNames {
@@ -42,11 +42,13 @@ func parseCommandForReplacements(shellCommand string, values map[string]string) 
 	return shellCommand, nil
 }
 
-func parseActionArguments(values map[string]string, action *config.Action, entityPrefix string) (string, error) {
+func parseActionArguments(rawShellCommand string, values map[string]string, action *config.Action, entity *entities.Entity) (string, error) {
 	log.WithFields(log.Fields{
 		"actionTitle": action.Title,
 		"cmd":         action.Shell,
 	}).Infof("Action parse args - Before")
+
+	rawShellCommand, err := parseCommandForReplacements(rawShellCommand, values, entity)
 
 	for _, arg := range action.Arguments {
 		argName := arg.Name
@@ -64,8 +66,7 @@ func parseActionArguments(values map[string]string, action *config.Action, entit
 		}).Debugf("Arg assigned")
 	}
 
-	parsedShellCommand, err := parseCommandForReplacements(action.Shell, values)
-	parsedShellCommand = sv.ReplaceEntityVars(entityPrefix, parsedShellCommand)
+	parsedShellCommand := entities.ParseTemplateWith(rawShellCommand, entity)
 	redactedShellCommand := redactShellCommand(parsedShellCommand, action.Arguments, values)
 
 	if err != nil {
@@ -173,8 +174,8 @@ func typecheckChoice(value string, arg *config.ActionArgument) error {
 func typecheckChoiceEntity(value string, arg *config.ActionArgument) error {
 	templateChoice := arg.Choices[0].Value
 
-	for _, ent := range sv.GetEntities(arg.Entity) {
-		choice := sv.ReplaceEntityVars(ent, templateChoice)
+	for _, ent := range entities.GetEntityInstances(arg.Entity) {
+		choice := entities.ParseTemplateWith(templateChoice, ent)
 
 		if value == choice {
 			return nil

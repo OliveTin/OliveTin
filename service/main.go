@@ -5,7 +5,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	"github.com/OliveTin/OliveTin/internal/entityfiles"
+	"github.com/OliveTin/OliveTin/internal/entities"
 	"github.com/OliveTin/OliveTin/internal/executor"
 	"github.com/OliveTin/OliveTin/internal/httpservers"
 	"github.com/OliveTin/OliveTin/internal/installationinfo"
@@ -17,11 +17,12 @@ import (
 	updatecheck "github.com/OliveTin/OliveTin/internal/updatecheck"
 	"github.com/OliveTin/OliveTin/internal/websocket"
 
+	"os"
+	"strconv"
+
 	config "github.com/OliveTin/OliveTin/internal/config"
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
-	"os"
-	"strconv"
 )
 
 var (
@@ -172,9 +173,9 @@ func main() {
 	go onfileindir.WatchFilesInDirectory(cfg, executor)
 	go oncalendarfile.Schedule(cfg, executor)
 
-	entityfiles.AddListener(websocket.OnEntityChanged)
-	entityfiles.AddListener(executor.RebuildActionMap)
-	go entityfiles.SetupEntityFileWatchers(cfg)
+	entities.AddListener(websocket.OnEntityChanged)
+	entities.AddListener(executor.RebuildActionMap)
+	go entities.SetupEntityFileWatchers(cfg)
 
 	go updatecheck.StartUpdateChecker(cfg)
 

@@ -3,23 +3,38 @@ package executor
 import (
 	"crypto/sha256"
 	"fmt"
+	"slices"
+
 	config "github.com/OliveTin/OliveTin/internal/config"
-	sv "github.com/OliveTin/OliveTin/internal/stringvariables"
+	"github.com/OliveTin/OliveTin/internal/entities"
 	log "github.com/sirupsen/logrus"
-	"strconv"
 )
 
-func (e *Executor) FindActionBindingByID(id string) *config.Action {
+func (e *Executor) FindActionByBindingID(id string) *config.Action {
+	binding := e.FindBindingByID(id)
+
+	if binding == nil {
+		return nil
+	}
+
+	return binding.Action
+}
+
+func (e *Executor) FindBindingByID(id string) *ActionBinding {
 	e.MapActionIdToBindingLock.RLock()
 	pair, found := e.MapActionIdToBinding[id]
 	e.MapActionIdToBindingLock.RUnlock()
 
-	if found {
-		log.Infof("findActionBinding %v, %v", id, pair.Action.ID)
-		return pair.Action
+	if !found {
+		return nil
 	}
 
-	return nil
+	return pair
+}
+
+type RebuildActionMapRequest struct {
+	Cfg                   *config.Config
+	DashboardActionTitles []string
 }
 
 func (e *Executor) RebuildActionMap() {
@@ -27,11 +42,20 @@ func (e *Executor) RebuildActionMap() {
 
 	clear(e.MapActionIdToBinding)
 
+	req := &RebuildActionMapRequest{
+		Cfg:                   e.Cfg,
+		DashboardActionTitles: make([]string, 0),
+	}
+
+	findDashboardActionTitles(req)
+
+	log.Infof("dashboardActionTitles: %v", req.DashboardActionTitles)
+
 	for configOrder, action := range e.Cfg.Actions {
 		if action.Entity != "" {
-			registerActionsFromEntities(e, configOrder, action.Entity, action)
+			registerActionsFromEntities(e, configOrder, action.Entity, action, req)
 		} else {
-			registerAction(e, configOrder, action)
+			registerAction(e, configOrder, action, req)
 		}
 	}
 
@@ -42,33 +66,49 @@ func (e *Executor) RebuildActionMap() {
 	}
 }
 
-func registerAction(e *Executor, configOrder int, action *config.Action) {
+func findDashboardActionTitles(req *RebuildActionMapRequest) {
+	for _, dashboard := range req.Cfg.Dashboards {
+		recurseDashboardForActionTitles(dashboard, req)
+	}
+}
+
+func recurseDashboardForActionTitles(component *config.DashboardComponent, req *RebuildActionMapRequest) {
+	for _, sub := range component.Contents {
+		if sub.Type == "link" || sub.Type == "" {
+			req.DashboardActionTitles = append(req.DashboardActionTitles, sub.Title)
+		}
+
+		if len(sub.Contents) > 0 {
+			recurseDashboardForActionTitles(sub, req)
+		}
+	}
+}
+
+func registerAction(e *Executor, configOrder int, action *config.Action, req *RebuildActionMapRequest) {
 	actionId := hashActionToID(action, "")
 
 	e.MapActionIdToBinding[actionId] = &ActionBinding{
-		Action:       action,
-		EntityPrefix: "noent",
-		ConfigOrder:  configOrder,
+		Action:        action,
+		Entity:        nil,
+		ConfigOrder:   configOrder,
+		IsOnDashboard: slices.Contains(req.DashboardActionTitles, action.Title),
 	}
 }
 
-func registerActionsFromEntities(e *Executor, configOrder int, entityTitle string, tpl *config.Action) {
-	entityCount, _ := strconv.Atoi(sv.Get("entities." + entityTitle + ".count"))
-
-	for i := 0; i < entityCount; i++ {
-		registerActionFromEntity(e, configOrder, tpl, entityTitle, i)
+func registerActionsFromEntities(e *Executor, configOrder int, entityTitle string, tpl *config.Action, req *RebuildActionMapRequest) {
+	for _, ent := range entities.GetEntityInstances(entityTitle) {
+		registerActionFromEntity(e, configOrder, tpl, ent, req)
 	}
 }
 
-func registerActionFromEntity(e *Executor, configOrder int, tpl *config.Action, entityTitle string, entityIndex int) {
-	prefix := sv.GetEntityPrefix(entityTitle, entityIndex)
-
-	virtualActionId := hashActionToID(tpl, prefix)
+func registerActionFromEntity(e *Executor, configOrder int, tpl *config.Action, ent *entities.Entity, req *RebuildActionMapRequest) {
+	virtualActionId := hashActionToID(tpl, "ent")
 
 	e.MapActionIdToBinding[virtualActionId] = &ActionBinding{
-		Action:       tpl,
-		EntityPrefix: prefix,
-		ConfigOrder:  configOrder,
+		Action:        tpl,
+		Entity:        ent,
+		ConfigOrder:   configOrder,
+		IsOnDashboard: slices.Contains(req.DashboardActionTitles, tpl.Title),
 	}
 }
 

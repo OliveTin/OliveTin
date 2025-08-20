@@ -2,6 +2,7 @@ package api
 
 import (
 	ctx "context"
+	"encoding/json"
 
 	"connectrpc.com/connect"
 
@@ -15,9 +16,9 @@ import (
 
 	acl "github.com/OliveTin/OliveTin/internal/acl"
 	config "github.com/OliveTin/OliveTin/internal/config"
+	entities "github.com/OliveTin/OliveTin/internal/entities"
 	executor "github.com/OliveTin/OliveTin/internal/executor"
 	installationinfo "github.com/OliveTin/OliveTin/internal/installationinfo"
-	sv "github.com/OliveTin/OliveTin/internal/stringvariables"
 )
 
 type oliveTinAPI struct {
@@ -87,19 +88,17 @@ func (api *oliveTinAPI) StartAction(ctx ctx.Context, req *connect.Request[apiv1.
 		args[arg.Name] = arg.Value
 	}
 
-	api.executor.MapActionIdToBindingLock.RLock()
-	pair := api.executor.MapActionIdToBinding[req.Msg.ActionId]
-	api.executor.MapActionIdToBindingLock.RUnlock()
+	pair := api.executor.FindBindingByID(req.Msg.BindingId)
 
 	if pair == nil || pair.Action == nil {
-		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("action with ID %s not found", req.Msg.ActionId))
+		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("action with ID %s not found", req.Msg.BindingId))
 	}
 
 	authenticatedUser := acl.UserFromContext(ctx, api.cfg)
 
 	execReq := executor.ExecutionRequest{
 		Action:            pair.Action,
-		EntityPrefix:      pair.EntityPrefix,
+		Entity:            pair.Entity,
 		TrackingID:        req.Msg.UniqueTrackingId,
 		Arguments:         args,
 		AuthenticatedUser: authenticatedUser,
@@ -159,7 +158,7 @@ func (api *oliveTinAPI) StartActionAndWait(ctx ctx.Context, req *connect.Request
 	user := acl.UserFromContext(ctx, api.cfg)
 
 	execReq := executor.ExecutionRequest{
-		Action:            api.executor.FindActionBindingByID(req.Msg.ActionId),
+		Action:            api.executor.FindActionByBindingID(req.Msg.ActionId),
 		TrackingID:        uuid.NewString(),
 		Arguments:         args,
 		AuthenticatedUser: user,
@@ -184,7 +183,7 @@ func (api *oliveTinAPI) StartActionByGet(ctx ctx.Context, req *connect.Request[a
 	args := make(map[string]string)
 
 	execReq := executor.ExecutionRequest{
-		Action:            api.executor.FindActionBindingByID(req.Msg.ActionId),
+		Action:            api.executor.FindActionByBindingID(req.Msg.ActionId),
 		TrackingID:        uuid.NewString(),
 		Arguments:         args,
 		AuthenticatedUser: acl.UserFromContext(ctx, api.cfg),
@@ -204,7 +203,7 @@ func (api *oliveTinAPI) StartActionByGetAndWait(ctx ctx.Context, req *connect.Re
 	user := acl.UserFromContext(ctx, api.cfg)
 
 	execReq := executor.ExecutionRequest{
-		Action:            api.executor.FindActionBindingByID(req.Msg.ActionId),
+		Action:            api.executor.FindActionByBindingID(req.Msg.ActionId),
 		TrackingID:        uuid.NewString(),
 		Arguments:         args,
 		AuthenticatedUser: user,
@@ -299,34 +298,6 @@ func (api *oliveTinAPI) ExecutionStatus(ctx ctx.Context, req *connect.Request[ap
 	return connect.NewResponse(res), nil
 }
 
-/**
-func (api *oliveTinAPI) WatchExecution(req *apiv1.WatchExecutionRequest, srv apiv1.OliveTinApi_WatchExecutionServer) error {
-	log.Infof("Watch")
-
-	if logEntry, ok := api.executor.Logs[req.ExecutionUuid]; !ok {
-		log.Errorf("Execution not found: %v", req.ExecutionUuid)
-
-		return nil
-	} else {
-		if logEntry.ExecutionStarted {
-			for !logEntry.ExecutionCompleted {
-				tmp := make([]byte, 256)
-
-				red, err := io.ReadAtLeast(logEntry.StdoutBuffer, tmp, 1)
-
-				log.Infof("%v %v", red, err)
-
-				srv.Send(&apiv1.WatchExecutionUpdate{
-					Update: string(tmp),
-				})
-			}
-		}
-
-		return nil
-	}
-}
-*/
-
 func (api *oliveTinAPI) Logout(ctx ctx.Context, req *connect.Request[apiv1.LogoutRequest]) (*connect.Response[apiv1.LogoutResponse], error) {
 	//user := acl.UserFromContext(ctx, cfg)
 
@@ -336,14 +307,26 @@ func (api *oliveTinAPI) Logout(ctx ctx.Context, req *connect.Request[apiv1.Logou
 	return nil, nil
 }
 
-func (api *oliveTinAPI) GetDashboardComponents(ctx ctx.Context, req *connect.Request[apiv1.GetDashboardComponentsRequest]) (*connect.Response[apiv1.GetDashboardComponentsResponse], error) {
+func (api *oliveTinAPI) GetActionBinding(ctx ctx.Context, req *connect.Request[apiv1.GetActionBindingRequest]) (*connect.Response[apiv1.GetActionBindingResponse], error) {
+	binding := api.executor.FindBindingByID(req.Msg.BindingId)
+
+	return connect.NewResponse(&apiv1.GetActionBindingResponse{
+		Action: buildAction(req.Msg.BindingId, binding, &DashboardRenderRequest{
+			cfg:               api.cfg,
+			AuthenticatedUser: acl.UserFromContext(ctx, api.cfg),
+			ex:                api.executor,
+		}),
+	}), nil
+}
+
+func (api *oliveTinAPI) GetDashboard(ctx ctx.Context, req *connect.Request[apiv1.GetDashboardRequest]) (*connect.Response[apiv1.GetDashboardResponse], error) {
 	user := acl.UserFromContext(ctx, api.cfg)
 
 	if user.IsGuest() && api.cfg.AuthRequireGuestsToLogin {
 		return nil, connect.NewError(connect.CodePermissionDenied, fmt.Errorf("guests are not allowed to access the dashboard"))
 	}
 
-	res := buildDashboardResponse(api.executor, api.cfg, user)
+	res := buildDashboardResponse(api.executor, api.cfg, user, req.Msg.Title)
 
 	/*
 		if len(res.Actions) == 0 {
@@ -367,7 +350,7 @@ func (api *oliveTinAPI) GetLogs(ctx ctx.Context, req *connect.Request[apiv1.GetL
 
 	ret := &apiv1.GetLogsResponse{}
 
-	logEntries, countRemaining := api.executor.GetLogTrackingIds(req.Msg.StartOffset, api.cfg.LogHistoryPageSize)
+	logEntries, pagingResult := api.executor.GetLogTrackingIds(req.Msg.StartOffset, api.cfg.LogHistoryPageSize)
 
 	for _, logEntry := range logEntries {
 		action := api.cfg.FindAction(logEntry.ActionTitle)
@@ -379,8 +362,10 @@ func (api *oliveTinAPI) GetLogs(ctx ctx.Context, req *connect.Request[apiv1.GetL
 		}
 	}
 
-	ret.CountRemaining = countRemaining
-	ret.PageSize = api.cfg.LogHistoryPageSize
+	ret.CountRemaining = pagingResult.CountRemaining
+	ret.PageSize = pagingResult.PageSize
+	ret.TotalCount = pagingResult.TotalCount
+	ret.StartOffset = pagingResult.StartOffset
 
 	return connect.NewResponse(ret), nil
 }
@@ -442,8 +427,10 @@ func (api *oliveTinAPI) DumpVars(ctx ctx.Context, req *connect.Request[apiv1.Dum
 		return connect.NewResponse(res), nil
 	}
 
+	jsonstring, _ := json.MarshalIndent(entities.GetAll(), "", "  ")
+	fmt.Printf("%s", &jsonstring)
+
 	res.Alert = "Dumping variables has been enabled in the configuration. Please set InsecureAllowDumpVars = false again after you don't need it anymore"
-	res.Contents = sv.GetAll()
 
 	return connect.NewResponse(res), nil
 }
@@ -463,7 +450,7 @@ func (api *oliveTinAPI) DumpPublicIdActionMap(ctx ctx.Context, req *connect.Requ
 	for k, v := range api.executor.MapActionIdToBinding {
 		res.Contents[k] = &apiv1.ActionEntityPair{
 			ActionTitle:  v.Action.Title,
-			EntityPrefix: v.EntityPrefix,
+			EntityPrefix: "?",
 		}
 	}
 
@@ -562,6 +549,72 @@ func (api *oliveTinAPI) GetDiagnostics(ctx ctx.Context, req *connect.Request[api
 	return connect.NewResponse(res), nil
 }
 
+func (api *oliveTinAPI) Init(ctx ctx.Context, req *connect.Request[apiv1.InitRequest]) (*connect.Response[apiv1.InitResponse], error) {
+	user := acl.UserFromContext(ctx, api.cfg)
+
+	res := &apiv1.InitResponse{
+		ShowFooter:                api.cfg.ShowFooter,
+		ShowNavigation:            api.cfg.ShowNavigation,
+		ShowNewVersions:           api.cfg.ShowNewVersions,
+		AvailableVersion:          installationinfo.Runtime.AvailableVersion,
+		CurrentVersion:            installationinfo.Build.Version,
+		PageTitle:                 api.cfg.PageTitle,
+		SectionNavigationStyle:    api.cfg.SectionNavigationStyle,
+		DefaultIconForBack:        api.cfg.DefaultIconForBack,
+		EnableCustomJs:            api.cfg.EnableCustomJs,
+		AuthLoginUrl:              api.cfg.AuthLoginUrl,
+		AuthLocalLogin:            api.cfg.AuthLocalUsers.Enabled,
+		OAuth2Providers:           buildPublicOAuth2ProvidersList(api.cfg),
+		AdditionalLinks:           buildAdditionalLinks(api.cfg.AdditionalNavigationLinks),
+		StyleMods:                 api.cfg.StyleMods,
+		RootDashboards:            buildRootDashboards(api.cfg.Dashboards),
+		AuthenticatedUser:         user.Username,
+		AuthenticatedUserProvider: user.Provider,
+		EffectivePolicy:           buildEffectivePolicy(user.EffectivePolicy),
+		BannerMessage:             api.cfg.BannerMessage,
+		BannerCss:                 api.cfg.BannerCSS,
+	}
+
+	return connect.NewResponse(res), nil
+}
+
+func buildRootDashboards(dashboards []*config.DashboardComponent) []string {
+	var rootDashboards []string
+
+	for _, dashboard := range dashboards {
+		rootDashboards = append(rootDashboards, dashboard.Title)
+	}
+
+	return rootDashboards
+}
+
+func buildPublicOAuth2ProvidersList(cfg *config.Config) []*apiv1.OAuth2Provider {
+	var publicProviders []*apiv1.OAuth2Provider
+
+	for _, provider := range cfg.AuthOAuth2Providers {
+		publicProviders = append(publicProviders, &apiv1.OAuth2Provider{
+			Title: provider.Title,
+			Url:   provider.AuthUrl,
+			Icon:  provider.Icon,
+		})
+	}
+
+	return publicProviders
+}
+
+func buildAdditionalLinks(links []*config.NavigationLink) []*apiv1.AdditionalLink {
+	var additionalLinks []*apiv1.AdditionalLink
+
+	for _, link := range links {
+		additionalLinks = append(additionalLinks, &apiv1.AdditionalLink{
+			Title: link.Title,
+			Url:   link.Url,
+		})
+	}
+
+	return additionalLinks
+}
+
 func (api *oliveTinAPI) OnOutputChunk(content []byte, executionTrackingId string) {
 	for _, client := range api.connectedClients {
 		select {
@@ -576,6 +629,73 @@ func (api *oliveTinAPI) OnOutputChunk(content []byte, executionTrackingId string
 		default:
 			log.Warnf("EventStream: client channel is full, dropping message")
 		}
+	}
+}
+
+func (api *oliveTinAPI) GetEntities(ctx ctx.Context, req *connect.Request[apiv1.GetEntitiesRequest]) (*connect.Response[apiv1.GetEntitiesResponse], error) {
+	res := &apiv1.GetEntitiesResponse{
+		EntityDefinitions: make([]*apiv1.EntityDefinition, 0),
+	}
+
+	for name, entityInstances := range entities.GetEntities() {
+		def := &apiv1.EntityDefinition{
+			Title:        name,
+			UsedOnDashboards: findDashboardsForEntity(name, api.cfg.Dashboards),
+		}
+
+		for _, e := range entityInstances {
+			entity := &apiv1.Entity{
+				Title: e.Title,
+				UniqueKey: e.UniqueKey,
+				Type: name,
+			}
+
+			def.Instances = append(def.Instances, entity)
+		}
+
+		res.EntityDefinitions = append(res.EntityDefinitions, def)
+	}
+
+	return connect.NewResponse(res), nil
+}
+
+func findDashboardsForEntity(entityTitle string, dashboards []*config.DashboardComponent) []string {
+	var foundDashboards []string
+
+	findEntityInComponents(entityTitle, "", dashboards, &foundDashboards)
+
+	return foundDashboards
+}
+
+func findEntityInComponents(entityTitle string, parentTitle string, components []*config.DashboardComponent, foundDashboards *[]string) {
+	for _, component := range components {
+		if component.Entity == entityTitle {
+			*foundDashboards = append(*foundDashboards, parentTitle)
+		}
+
+		if len(component.Contents) > 0 {
+			findEntityInComponents(entityTitle, component.Title, component.Contents, foundDashboards)
+		}
+	}
+}
+
+func (api *oliveTinAPI) GetEntity(ctx ctx.Context, req *connect.Request[apiv1.GetEntityRequest]) (*connect.Response[apiv1.Entity], error) {
+	res := &apiv1.Entity{}
+
+	instances := entities.GetEntityInstances(req.Msg.Type)
+
+	log.Infof("msg: %+v", req.Msg)
+
+	if instances == nil || len(instances) == 0 { 
+		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("entity type %s not found", req.Msg.Type))
+	}
+
+	if entity, ok := instances[req.Msg.UniqueKey]; !ok {
+		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("entity with unique key %s not found in type %s", req.Msg.UniqueKey, req.Msg.Type))
+	} else {
+		res.Title = entity.Title
+	
+		return connect.NewResponse(res), nil
 	}
 }
 

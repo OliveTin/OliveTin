@@ -1,30 +1,39 @@
 <template>
   <aside :class="{ 'shown': isOpen, 'stuck': isStuck }" class="sidebar">
-    <button
-      class="stick-toggle"
-      :aria-pressed="isStuck"
-      :title="isStuck ? 'Unstick sidebar' : 'Stick sidebar'"
-      @click="toggleStick"
-    >
-      <span v-if="isStuck">📌 Unstick</span>
-      <span v-else>📍 Stick</span>
-    </button>
+    <div class = "flex-row">
+      <h2>Navigation</h2>
+      <div class = "fg1" />
+      <button
+        class="stick-toggle"
+        :aria-pressed="isStuck"
+        :title="isStuck ? 'Unstick sidebar' : 'Stick sidebar'"
+        @click="toggleStick"
+      >
+        <span v-if="isStuck">
+          <HugeiconsIcon :icon="Pin02Icon" width = "1em" height = "1em" />
+        </span>
+        <span v-else>
+          <HugeiconsIcon :icon="PinIcon" width = "1em" height = "1em" />
+        </span>
+      </button>
+    </div>
+
     <nav class="mainnav">
       <ul class="navigation-links">
         <li v-for="link in navigationLinks" :key="link.id" :title="link.title">
           <router-link :to="link.path" :class="{ active: isActive(link.path) }">
-            <span v-if="link.icon" class="icon" v-html="link.icon"></span>
-            <span class="title">{{ link.title }}</span>
+            <HugeiconsIcon :icon="link.icon" />
+            <span>{{ link.title }}</span>
           </router-link>
         </li>
       </ul>
 
       <ul class="supplemental-links">
         <li v-for="link in supplementalLinks" :key="link.id" :title="link.title">
-          <a :href="link.url" :target="link.target || '_self'">
-            <span v-if="link.icon" class="icon" v-html="link.icon"></span>
-            <span class="title">{{ link.title }}</span>
-          </a>
+          <router-link :to="link.path" :class="{ active: isActive(link.path) }">
+            <HugeiconsIcon :icon="link.icon" />
+            <span>{{ link.title }}</span>
+          </router-link>
         </li>
       </ul>
     </nav>
@@ -34,6 +43,13 @@
 <script setup>
 import { ref, onMounted, getCurrentInstance } from 'vue'
 import { useRoute } from 'vue-router'
+import { HugeiconsIcon } from '@hugeicons/vue'
+import { DashboardSquare01Icon } from '@hugeicons/core-free-icons'
+import { LeftToRightListDashIcon } from '@hugeicons/core-free-icons'
+import { Wrench01Icon } from '@hugeicons/core-free-icons'
+import { Pin02Icon } from '@hugeicons/core-free-icons'
+import { PinIcon } from '@hugeicons/core-free-icons'
+import { CellsIcon } from '@hugeicons/core-free-icons'
 
 const isOpen = ref(false)
 const isStuck = ref(false)
@@ -42,25 +58,32 @@ const navigationLinks = ref([
     id: 'actions',
     title: 'Actions',
     path: '/',
-    icon: '⚡'
+    icon: DashboardSquare01Icon,
+  }
+])
+
+const supplementalLinks = ref([
+  {
+    id: 'entities',
+	title: 'Entities',
+	path: '/entities',
+	icon: CellsIcon,
   },
   {
     id: 'logs',
     title: 'Logs',
     path: '/logs',
-    icon: '📋'
+    icon: LeftToRightListDashIcon,
   },
   {
     id: 'diagnostics',
     title: 'Diagnostics',
     path: '/diagnostics',
-    icon: '🔧'
+    icon: Wrench01Icon,
   }
 ])
-const supplementalLinks = ref([])
 
 const route = useRoute()
-const instance = getCurrentInstance()
 
 function toggleStick() {
   isStuck.value = !isStuck.value
@@ -68,6 +91,7 @@ function toggleStick() {
 
 function toggle() {
   isOpen.value = !isOpen.value
+  isStuck.value = false
 }
 
 function open() {
@@ -76,6 +100,7 @@ function open() {
 
 function close() {
   isOpen.value = false
+  isStuck.value = false
 }
 
 function isActive(path) {
@@ -84,6 +109,8 @@ function isActive(path) {
 
 // Method to add navigation links from other components
 function addNavigationLink(link) {
+  link.icon = DashboardSquare01Icon
+
   const existingIndex = navigationLinks.value.findIndex(l => l.id === link.id)
   if (existingIndex >= 0) {
     navigationLinks.value[existingIndex] = { ...link }
@@ -168,23 +195,15 @@ defineExpose({
 </script>
 
 <style scoped>
-.mainnav {
-  padding: 1rem 0;
+
+.active {
+  text-decoration: underline;
 }
 
-.navigation-links,
-.supplemental-links {
-  list-style: none;
+li {
   margin: 0;
   padding: 0;
 }
-
-.navigation-links li,
-.supplemental-links li {
-  margin: 0;
-  padding: 0;
-}
-
 .navigation-links a,
 .supplemental-links a {
   display: flex;
@@ -192,7 +211,6 @@ defineExpose({
   gap: 0.75rem;
   padding: 0.75rem 1rem;
   color: #333;
-  text-decoration: none;
   transition: background-color 0.2s ease;
   border-left: 3px solid transparent;
 }
@@ -203,41 +221,15 @@ defineExpose({
   color: #007bff;
 }
 
-.navigation-links a.active {
-  background: #e3f2fd;
-  color: #007bff;
-  border-left-color: #007bff;
-}
-
-.navigation-links a.router-link-active {
-  background: #e3f2fd;
-  color: #007bff;
-  border-left-color: #007bff;
-}
-
 .icon {
   font-size: 1.2em;
   width: 1.5rem;
   text-align: center;
 }
 
-.title {
-  font-weight: 500;
-}
-
 .supplemental-links {
   border-top: 1px solid #eee;
   margin-top: 1rem;
-  padding-top: 1rem;
-}
-
-.supplemental-links a {
-  font-size: 0.9rem;
-  color: #666;
-}
-
-.supplemental-links a:hover {
-  color: #007bff;
 }
 
 /* Responsive design */
