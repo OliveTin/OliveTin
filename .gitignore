@@ -13,3 +13,4 @@ frontend/dist/
 frontend/node_modules
 custom-frontend
 integration-tests/screenshots/
+/scrips

@@ -1,0 +1,6 @@
+pageTitle: OliveTin (Local Dev)
+
+actions:
+  - title: Ping localhost
+    shell: ping -c 1 127.0.0.1
+    icon: ping

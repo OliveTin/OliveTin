@@ -1,0 +1,24 @@
+version: "3.9"
+
+services:
+  olivetin:
+    # Build from your local clone (uses Dockerfile in repo)
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: oakcliff-local:dev
+    container_name: oakcliff
+    restart: unless-stopped
+    ports:
+      - "${OAKCLIFF_PORT:-1337}:1337"
+    volumes:
+      # Your config and scripts live in the repo; mount them in
+      - ./config:/config:ro         # must contain config.yaml
+      - ./scripts:/scripts:ro       # optional: any helper scripts you call
+    environment:
+      - TZ=${TZ:-America/Chicago}
+    # If you want OliveTin to control other containers from inside,
+    # you can add the Docker socket (optional, see note below)
+    # volumes:
+    #   - /var/run/docker.sock:/var/run/docker.sock
+    # user: root   # uncomment if you hit permissions issues
