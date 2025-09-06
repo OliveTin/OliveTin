@@ -42,13 +42,13 @@ func parseCommandForReplacements(shellCommand string, values map[string]string, 
 	return shellCommand, nil
 }
 
-func parseActionArguments(rawShellCommand string, values map[string]string, action *config.Action, entity *entities.Entity) (string, error) {
+func parseActionArguments(values map[string]string, action *config.Action, entity *entities.Entity) (string, error) {
 	log.WithFields(log.Fields{
 		"actionTitle": action.Title,
 		"cmd":         action.Shell,
 	}).Infof("Action parse args - Before")
 
-	rawShellCommand, err := parseCommandForReplacements(rawShellCommand, values, entity)
+	rawShellCommand, err := parseCommandForReplacements(action.Shell, values, entity)
 
 	for _, arg := range action.Arguments {
 		argName := arg.Name
@@ -244,7 +244,7 @@ func typeSafetyCheckUrl(value string) error {
 }
 
 func mangleInvalidArgumentValues(req *ExecutionRequest) {
-	for _, arg := range req.Action.Arguments {
+	for _, arg := range req.Binding.Action.Arguments {
 		if arg.Type == "datetime" {
 			mangleInvalidDatetimeValues(req, &arg)
 		}
@@ -258,7 +258,7 @@ func mangleCheckboxValues(req *ExecutionRequest, arg *config.ActionArgument) {
 		return
 	}
 
-	log.Infof("Checking checkbox values for argument %s in action %s", arg.Name, req.Action.Title)
+	log.Infof("Checking checkbox values for argument %s in action %s", arg.Name, req.Binding.Action.Title)
 
 	for i, _ := range arg.Choices {
 		choice := &arg.Choices[i]
@@ -268,7 +268,7 @@ func mangleCheckboxValues(req *ExecutionRequest, arg *config.ActionArgument) {
 				"arg":         arg.Name,
 				"oldValue":    req.Arguments[arg.Name],
 				"newValue":    choice.Value,
-				"actionTitle": req.Action.Title,
+				"actionTitle": req.Binding.Action.Title,
 			}).Infof("Mangled checkbox value")
 
 			req.Arguments[arg.Name] = choice.Value
@@ -289,7 +289,7 @@ func mangleInvalidDatetimeValues(req *ExecutionRequest, arg *config.ActionArgume
 		log.WithFields(log.Fields{
 			"arg":         arg.Name,
 			"value":       value,
-			"actionTitle": req.Action.Title,
+			"actionTitle": req.Binding.Action.Title,
 		}).Warnf("Mangled invalid datetime value without seconds to :00 seconds, this issue is commonly caused by Android browsers.")
 
 		req.Arguments[arg.Name] = timestamp.Format("2006-01-02T15:04:05")

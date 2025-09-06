@@ -10,16 +10,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func (e *Executor) FindActionByBindingID(id string) *config.Action {
-	binding := e.FindBindingByID(id)
-
-	if binding == nil {
-		return nil
-	}
-
-	return binding.Action
-}
-
 func (e *Executor) FindBindingByID(id string) *ActionBinding {
 	e.MapActionIdToBindingLock.RLock()
 	pair, found := e.MapActionIdToBinding[id]
@@ -30,6 +20,20 @@ func (e *Executor) FindBindingByID(id string) *ActionBinding {
 	}
 
 	return pair
+}
+
+func (e *Executor) FindBindingWithNoEntity(action *config.Action) *ActionBinding {
+	e.MapActionIdToBindingLock.RLock()
+
+	defer e.MapActionIdToBindingLock.RUnlock()
+
+	for _, binding := range e.MapActionIdToBinding {
+		if binding.Action == action && binding.Entity == nil {
+			return binding
+		}
+	}
+
+	return nil
 }
 
 type RebuildActionMapRequest struct {
@@ -72,6 +76,7 @@ func findDashboardActionTitles(req *RebuildActionMapRequest) {
 	}
 }
 
+//gocyclo:ignore
 func recurseDashboardForActionTitles(component *config.DashboardComponent, req *RebuildActionMapRequest) {
 	for _, sub := range component.Contents {
 		if sub.Type == "link" || sub.Type == "" {

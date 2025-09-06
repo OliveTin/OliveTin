@@ -20,9 +20,9 @@ var (
 )
 
 type Entity struct {
-	Data       any
-	UniqueKey  string
-	Title      string
+	Data      any
+	UniqueKey string
+	Title     string
 }
 
 func AddListener(l func()) {
@@ -174,4 +174,3 @@ func serializeSliceToSv(prefix string, s []any) {
 	}
 }
 */
-

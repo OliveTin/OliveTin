@@ -30,7 +30,7 @@
     <div id="layout">
         <Sidebar ref="sidebar" />
 
-        <div id="content">
+		<div id="content" initial-martial-complete="{{ hasLoaded }}">
             <main title="Main content">
                 <router-view :key="$route.fullPath" />
             </main>
@@ -78,6 +78,7 @@ const serverConnection = ref('Connected');
 const currentVersion = ref('?');
 const bannerMessage = ref('');
 const bannerCss = ref('');
+const hasLoaded = ref(false);
 
 function toggleSidebar() {
     sidebar.value.toggle()
@@ -102,6 +103,8 @@ async function requestInit() {
                 icon: '📊'
             })
         }
+
+		hasLoaded.value = true;
     } catch (error) {
         console.error("Error initializing client", error)
     }

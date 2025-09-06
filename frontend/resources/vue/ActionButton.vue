@@ -73,7 +73,7 @@ function constructFromJson(json) {
 
   updateFromJson(json)
 
-  actionId.value = json.id
+  actionId.value = json.bindingId
   title.value = json.title
   canExec.value = json.canExec
   popupOnStart.value = json.popupOnStart

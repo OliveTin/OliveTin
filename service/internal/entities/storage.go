@@ -78,17 +78,18 @@ func AddEntity(entityName string, entityKey string, data any) {
 		contents.Entities[entityName] = make(entityInstancesByKey, 0)
 	}
 
-	contents.Entities[entityName][entityKey] = &Entity {
-		Data: data,
+	contents.Entities[entityName][entityKey] = &Entity{
+		Data:      data,
 		UniqueKey: entityKey,
-		Title:      findEntityTitle(data),
+		Title:     findEntityTitle(data),
 	}
 
 	rwmutex.Unlock()
 }
 
+//gocyclo:ignore
 func findEntityTitle(data any) string {
-    if mapData, ok := data.(map[string]any); ok {
+	if mapData, ok := data.(map[string]any); ok {
 		keys := make(map[string]string)
 
 		for k := range mapData {

@@ -102,7 +102,7 @@ func exec(instant time.Time, action *config.Action, cfg *config.Config, ex *exec
 	}).Infof("Executing action from calendar")
 
 	req := &executor.ExecutionRequest{
-		Action:            action,
+		Binding:           ex.FindBindingWithNoEntity(action),
 		Cfg:               cfg,
 		Tags:              []string{},
 		AuthenticatedUser: acl.UserFromSystem(cfg, "calendar"),

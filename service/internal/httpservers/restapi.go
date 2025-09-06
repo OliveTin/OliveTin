@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"strings"
 
-//	apiv1 "github.com/OliveTin/OliveTin/gen/olivetin/api/v1"
+	//	apiv1 "github.com/OliveTin/OliveTin/gen/olivetin/api/v1"
 
 	config "github.com/OliveTin/OliveTin/internal/config"
 )
@@ -62,10 +62,10 @@ func parseRequestMetadata(cfg *config.Config, ctx context.Context, req *http.Req
 		provider = "http-header"
 	}
 
-//	if len(cfg.AuthOAuth2Providers) > 0 && username == "" {
-//		username, usergroup, sid = parseOAuth2Cookie(req)
-//		provider = "oauth2"
-//	}
+	//	if len(cfg.AuthOAuth2Providers) > 0 && username == "" {
+	//		username, usergroup, sid = parseOAuth2Cookie(req)
+	//		provider = "oauth2"
+	//	}
 
 	if cfg.AuthLocalUsers.Enabled && username == "" {
 		username, usergroup, sid = parseLocalUserCookie(cfg, req)
@@ -147,4 +147,3 @@ func getMetadataKeyOrEmpty(md metadata.MD, key string) string {
 
 	return ""
 }
-

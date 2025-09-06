@@ -23,13 +23,13 @@ func TestFindAction(t *testing.T) {
 
 	c.Actions = append(c.Actions, a2)
 
-	assert.NotNil(t, c.FindAction("a1"), "Find action a1")
+	assert.NotNil(t, c.findAction("a1"), "Find action a1")
 
-	assert.NotNil(t, c.FindAction("a2"), "Find action a2")
-	assert.NotNil(t, c.FindAction("a2").FindArg("Blat"), "Find action argument")
-	assert.Nil(t, c.FindAction("a2").FindArg("Blatey Cake"), "Find non-existent action argument")
+	assert.NotNil(t, c.findAction("a2"), "Find action a2")
+	assert.NotNil(t, c.findAction("a2").FindArg("Blat"), "Find action argument")
+	assert.Nil(t, c.findAction("a2").FindArg("Blatey Cake"), "Find non-existent action argument")
 
-	assert.Nil(t, c.FindAction("waffles"), "Find non-existent action")
+	assert.Nil(t, c.findAction("waffles"), "Find non-existent action")
 }
 
 func TestFindAcl(t *testing.T) {

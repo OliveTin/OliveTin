@@ -13,7 +13,7 @@ async function reconnectWebsocket () {
 
   try {
     window.websocketAvailable = true
-    for await (let e of window.client.eventStream()) {
+    for await (const e of window.client.eventStream()) {
       handleEvent(e)
     }
   } catch (err) {
@@ -38,8 +38,8 @@ function handleEvent (msg) {
       break
     case 'EventExecutionFinished':
     case 'EventExecutionStarted':
-      console.log('EventExecutionStarted', msg.event.value.logEntry.executionTrackingId)
       buttonResults[msg.event.value.logEntry.executionTrackingId] = msg.event.value.logEntry
+      window.dispatchEvent(j)
       break
     default:
       console.warn('Unhandled websocket message type from server: ', typeName)

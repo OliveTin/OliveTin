@@ -60,16 +60,14 @@ type Executor struct {
 }
 
 // ExecutionRequest is a request to execute an action. It's passed to an
-// Executor. They're created from the grpcapi.
+// Executor. They're created from the api.
 type ExecutionRequest struct {
-	ActionTitle       string
-	Action            *config.Action
+	Binding           *ActionBinding
 	Arguments         map[string]string
 	TrackingID        string
 	Tags              []string
 	Cfg               *config.Config
 	AuthenticatedUser *acl.AuthenticatedUser
-	Entity            *entities.Entity
 	TriggerDepth      int
 
 	logEntry           *InternalLogEntry
@@ -81,6 +79,8 @@ type ExecutionRequest struct {
 // state of execution (even if the command is not executed). It's designed to be
 // easily serializable.
 type InternalLogEntry struct {
+	Binding             *ActionBinding
+	BindingID           string
 	DatetimeStarted     time.Time
 	DatetimeFinished    time.Time
 	Output              string
@@ -263,6 +263,7 @@ func (e *Executor) ExecRequest(req *ExecutionRequest) (*sync.WaitGroup, string) 
 
 	req.executor = e
 	req.logEntry = &InternalLogEntry{
+		Binding:             req.Binding,
 		DatetimeStarted:     time.Now(),
 		ExecutionTrackingID: req.TrackingID,
 		Output:              "",
@@ -315,7 +316,7 @@ func getConcurrentCount(req *ExecutionRequest) int {
 
 	req.executor.logmutex.RLock()
 
-	for _, log := range req.executor.GetLogsByActionId(req.Action.ID) {
+	for _, log := range req.executor.GetLogsByActionId(req.Binding.Action.ID) {
 		if !log.ExecutionFinished {
 			concurrentCount += 1
 		}
@@ -330,11 +331,11 @@ func stepConcurrencyCheck(req *ExecutionRequest) bool {
 	concurrentCount := getConcurrentCount(req)
 
 	// Note that the current execution is counted int the logs, so when checking we +1
-	if concurrentCount >= (req.Action.MaxConcurrent + 1) {
+	if concurrentCount >= (req.Binding.Action.MaxConcurrent + 1) {
 		log.WithFields(log.Fields{
 			"actionTitle":     req.logEntry.ActionTitle,
 			"concurrentCount": concurrentCount,
-			"maxConcurrent":   req.Action.MaxConcurrent,
+			"maxConcurrent":   req.Binding.Action.MaxConcurrent,
 		}).Warnf("Blocked from executing due to concurrency limit")
 
 		req.logEntry.Output = "Blocked from executing due to concurrency limit"
@@ -365,7 +366,7 @@ func getExecutionsCount(rate config.RateSpec, req *ExecutionRequest) int {
 
 	then := time.Now().Add(-duration)
 
-	for _, logEntry := range req.executor.GetLogsByActionId(req.Action.ID) {
+	for _, logEntry := range req.executor.GetLogsByActionId(req.Binding.Action.ID) {
 		// FIXME
 		/*
 			if logEntry.EntityPrefix != req.EntityPrefix {
@@ -383,7 +384,7 @@ func getExecutionsCount(rate config.RateSpec, req *ExecutionRequest) int {
 }
 
 func stepRateCheck(req *ExecutionRequest) bool {
-	for _, rate := range req.Action.MaxRate {
+	for _, rate := range req.Binding.Action.MaxRate {
 		executions := getExecutionsCount(rate, req)
 
 		if executions >= rate.Limit {
@@ -404,7 +405,7 @@ func stepRateCheck(req *ExecutionRequest) bool {
 }
 
 func stepACLCheck(req *ExecutionRequest) bool {
-	canExec := acl.IsAllowedExec(req.Cfg, req.AuthenticatedUser, req.Action)
+	canExec := acl.IsAllowedExec(req.Cfg, req.AuthenticatedUser, req.Binding.Action)
 
 	if !canExec {
 		req.logEntry.Output = "ACL check failed. Blocked from executing."
@@ -430,7 +431,7 @@ func stepParseArgs(req *ExecutionRequest) bool {
 
 	mangleInvalidArgumentValues(req)
 
-	req.finalParsedCommand, err = parseActionArguments(req.Action.Shell, req.Arguments, req.Action, req.Entity)
+	req.finalParsedCommand, err = parseActionArguments(req.Arguments, req.Binding.Action, req.Binding.Entity)
 
 	if err != nil {
 		req.logEntry.Output = err.Error()
@@ -444,40 +445,21 @@ func stepParseArgs(req *ExecutionRequest) bool {
 }
 
 func stepRequestAction(req *ExecutionRequest) bool {
-	// The grpc API always tries to find the action by ID, but it may
-	if req.Action == nil {
-		log.WithFields(log.Fields{
-			"actionTitle": req.ActionTitle,
-		}).Infof("Action finding by title")
-
-		req.Action = req.Cfg.FindAction(req.ActionTitle)
-
-		if req.Action == nil {
-			log.WithFields(log.Fields{
-				"actionTitle": req.ActionTitle,
-			}).Warnf("Action requested, but not found")
-
-			req.logEntry.Output = "Action not found: " + req.ActionTitle
-
-			return false
-		}
-	}
-
 	metricActionsRequested.Inc()
 
-	req.logEntry.ActionConfigTitle = req.Action.Title
-	req.logEntry.ActionTitle = entities.ParseTemplateWith(req.Action.Title, req.Entity)
-	req.logEntry.ActionIcon = req.Action.Icon
-	req.logEntry.ActionId = req.Action.ID
+	req.logEntry.ActionConfigTitle = req.Binding.Action.Title
+	req.logEntry.ActionTitle = entities.ParseTemplateWith(req.Binding.Action.Title, req.Binding.Entity)
+	req.logEntry.ActionIcon = req.Binding.Action.Icon
+	req.logEntry.ActionId = req.Binding.Action.ID
 	req.logEntry.Tags = req.Tags
 
 	req.executor.logmutex.Lock()
 
-	if _, containsKey := req.executor.LogsByActionId[req.Action.ID]; !containsKey {
-		req.executor.LogsByActionId[req.Action.ID] = make([]*InternalLogEntry, 0)
+	if _, containsKey := req.executor.LogsByActionId[req.Binding.Action.ID]; !containsKey {
+		req.executor.LogsByActionId[req.Binding.Action.ID] = make([]*InternalLogEntry, 0)
 	}
 
-	req.executor.LogsByActionId[req.Action.ID] = append(req.executor.LogsByActionId[req.Action.ID], req.logEntry)
+	req.executor.LogsByActionId[req.Binding.Action.ID] = append(req.executor.LogsByActionId[req.Binding.Action.ID], req.logEntry)
 
 	req.executor.logmutex.Unlock()
 
@@ -494,7 +476,7 @@ func stepRequestAction(req *ExecutionRequest) bool {
 func stepLogStart(req *ExecutionRequest) bool {
 	log.WithFields(log.Fields{
 		"actionTitle": req.logEntry.ActionTitle,
-		"timeout":     req.Action.Timeout,
+		"timeout":     req.Binding.Action.Timeout,
 	}).Infof("Action started")
 
 	return true
@@ -566,7 +548,7 @@ func buildEnv(args map[string]string) []string {
 }
 
 func stepExec(req *ExecutionRequest) bool {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(req.Action.Timeout)*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(req.Binding.Action.Timeout)*time.Second)
 	defer cancel()
 
 	streamer := &OutputStreamer{Req: req}
@@ -605,7 +587,7 @@ func stepExec(req *ExecutionRequest) bool {
 		}
 
 		req.logEntry.TimedOut = true
-		req.logEntry.Output += "OliveTin::timeout - this action timed out after " + fmt.Sprintf("%v", req.Action.Timeout) + " seconds. If you need more time for this action, set a longer timeout. See https://docs.olivetin.app/timeout.html for more help."
+		req.logEntry.Output += "OliveTin::timeout - this action timed out after " + fmt.Sprintf("%v", req.Binding.Action.Timeout) + " seconds. If you need more time for this action, set a longer timeout. See https://docs.olivetin.app/timeout.html for more help."
 	}
 
 	req.logEntry.DatetimeFinished = time.Now()
@@ -614,11 +596,11 @@ func stepExec(req *ExecutionRequest) bool {
 }
 
 func stepExecAfter(req *ExecutionRequest) bool {
-	if req.Action.ShellAfterCompleted == "" {
+	if req.Binding.Action.ShellAfterCompleted == "" {
 		return true
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(req.Action.Timeout)*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(req.Binding.Action.Timeout)*time.Second)
 	defer cancel()
 
 	var stdout bytes.Buffer
@@ -631,7 +613,7 @@ func stepExecAfter(req *ExecutionRequest) bool {
 		"ot_username":            req.AuthenticatedUser.Username,
 	}
 
-	finalParsedCommand, err := parseCommandForReplacements(req.Action.ShellAfterCompleted, args, req.Entity)
+	finalParsedCommand, err := parseCommandForReplacements(req.Binding.Action.ShellAfterCompleted, args, req.Binding.Entity)
 
 	if err != nil {
 		msg := "Could not prepare shellAfterCompleted command: " + err.Error() + "\n"
@@ -672,8 +654,9 @@ func stepExecAfter(req *ExecutionRequest) bool {
 	return true
 }
 
+//gocyclo:ignore
 func stepTrigger(req *ExecutionRequest) bool {
-	if req.Action.Triggers == nil {
+	if req.Binding.Action.Triggers == nil {
 		return true
 	}
 
@@ -696,9 +679,10 @@ func stepTrigger(req *ExecutionRequest) bool {
 }
 
 func triggerLoop(req *ExecutionRequest) {
-	for _, triggerReq := range req.Action.Triggers {
+	for _, triggerReq := range req.Binding.Action.Triggers {
+		binding := req.executor.FindBindingByID(triggerReq)
 		trigger := &ExecutionRequest{
-			ActionTitle:       triggerReq,
+			Binding:           binding,
 			TrackingID:        uuid.NewString(),
 			Tags:              []string{"trigger"},
 			AuthenticatedUser: req.AuthenticatedUser,
@@ -729,7 +713,7 @@ func firstNonEmpty(one, two string) string {
 }
 
 func saveLogResults(req *ExecutionRequest, filename string) {
-	dir := firstNonEmpty(req.Action.SaveLogs.ResultsDirectory, req.Cfg.SaveLogs.ResultsDirectory)
+	dir := firstNonEmpty(req.Binding.Action.SaveLogs.ResultsDirectory, req.Cfg.SaveLogs.ResultsDirectory)
 
 	if dir != "" {
 		data, err := yaml.Marshal(req.logEntry)
@@ -748,7 +732,7 @@ func saveLogResults(req *ExecutionRequest, filename string) {
 }
 
 func saveLogOutput(req *ExecutionRequest, filename string) {
-	dir := firstNonEmpty(req.Action.SaveLogs.OutputDirectory, req.Cfg.SaveLogs.OutputDirectory)
+	dir := firstNonEmpty(req.Binding.Action.SaveLogs.OutputDirectory, req.Cfg.SaveLogs.OutputDirectory)
 
 	if dir != "" {
 		data := req.logEntry.Output

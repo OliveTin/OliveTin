@@ -50,7 +50,7 @@ func scheduleExec(action *config.Action, cfg *config.Config, ex *executor.Execut
 	fmt.Printf("%+v", args)
 
 	req := &executor.ExecutionRequest{
-		ActionTitle:       action.Title,
+		Binding:           ex.FindBindingWithNoEntity(action),
 		Cfg:               cfg,
 		Tags:              []string{},
 		Arguments:         args,

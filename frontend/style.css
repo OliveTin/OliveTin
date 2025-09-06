@@ -1,5 +1,3 @@
-@import 'femtocrank/style.css';
-
 header {
 	position: fixed;
 	width: 100%;
@@ -8,6 +6,7 @@ header {
 
 aside {
 	padding-top: 4em;
+	z-index: 3; /* Make sure the sidebar is on top of the terminal */
 }
 
 fieldset {
@@ -45,6 +44,7 @@ action-button > button .icon {
 dialog {
 	border-radius: 1em;
 }
+
 footer span {
 	margin-right: 1em;
 }
@@ -102,10 +102,6 @@ footer {
 
 th {
 	background-color: #fff;
-}
-
-aside {
-	z-index: 3; /* Make sure the sidebar is on top of the terminal */
 }
 
 section.small {

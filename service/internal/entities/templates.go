@@ -23,7 +23,7 @@ func migrateLegacyArgumentNames(rawShellCommand string) string {
 		if strings.Contains(argName, ".") {
 			replacement := ".CurrentEntity"
 
-			rawShellCommand = strings.Replace(rawShellCommand, entityName, replacement, -1)
+			rawShellCommand = strings.ReplaceAll(rawShellCommand, entityName, replacement)
 
 			log.WithFields(log.Fields{
 				"old": entityName,
@@ -38,7 +38,7 @@ func migrateLegacyArgumentNames(rawShellCommand string) string {
 				"new": ".Arguments." + argName,
 			}).Warnf("Legacy variable name found, changing to Argument")
 
-			rawShellCommand = strings.Replace(rawShellCommand, argName, ".Arguments."+argName, -1)
+			rawShellCommand = strings.ReplaceAll(rawShellCommand, argName, ".Arguments."+argName)
 		}
 	}
 
@@ -64,7 +64,7 @@ func ParseTemplateWithArgs(source string, ent *Entity, args map[string]string) s
 
 	if ent != nil {
 		entdata = ent.Data
-	} 
+	}
 
 	templateVariables := &variableBase{
 		OliveTin:      contents.OliveTin,
@@ -77,8 +77,8 @@ func ParseTemplateWithArgs(source string, ent *Entity, args map[string]string) s
 
 	if err != nil {
 		log.WithFields(log.Fields{
-			"source": source,
-			"err":    err,
+			"source":        source,
+			"err":           err,
 			"currentEntity": ent,
 		}).Errorf("Error executing template")
 		ret = fmt.Sprintf("tpl exec error: %v", err.Error())

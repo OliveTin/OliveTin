@@ -5,7 +5,7 @@ package olivetin.api.v1;
 option go_package = "github.com/OliveTin/OliveTin/gen/olivetin/api/v1;apiv1";
 
 message Action {
-	string id = 1;
+	string binding_id = 1;
 	string title = 2;
 	string icon = 3;
 	bool can_exec = 4;
@@ -33,19 +33,14 @@ message ActionArgumentChoice {
 
 message Entity {
 	string title = 1;
-	string icon = 2;
-	repeated Action actions = 3;
+    string unique_key = 2;
+    string type = 3;
 }
 
-message GetDashboardComponentsResponse {
+message GetDashboardResponse {
 	string title = 1;
 
-	repeated Dashboard dashboards = 4;
-
-	string authenticated_user = 5;
-    string authenticated_user_provider = 6;
-
-	EffectivePolicy effective_policy = 7;
+	Dashboard dashboard = 4;
 }
 
 message EffectivePolicy {
@@ -53,7 +48,9 @@ message EffectivePolicy {
 	bool show_log_list = 2;
 }
 
-message GetDashboardComponentsRequest {}
+message GetDashboardRequest {
+	string title = 1;
+}
 
 message Dashboard {
 	string title = 1;
@@ -66,10 +63,11 @@ message DashboardComponent {
 	repeated DashboardComponent contents = 3;
 	string icon = 4;
 	string css_class = 5;
+	Action action = 6;
 }
 
 message StartActionRequest {
-	string action_id = 1;
+	string binding_id = 1;
 
 	repeated StartActionArgument arguments = 2;
 
@@ -139,6 +137,8 @@ message GetLogsResponse {
 	repeated LogEntry logs = 1;
 	int64 count_remaining = 2;
 	int64 page_size = 3;
+	int64 total_count = 4;
+	int64 start_offset = 5;
 }
 
 message ValidateArgumentTypeRequest {
@@ -280,8 +280,74 @@ message GetDiagnosticsResponse {
 	string SshFoundConfig = 2;
 }
 
+message InitRequest {}
+
+message InitResponse {
+	bool showFooter = 1;
+	bool showNavigation = 2;
+	bool showNewVersions = 3;
+	string availableVersion = 4;
+	string currentVersion = 5;
+	string pageTitle = 6;
+	string sectionNavigationStyle = 7;
+	string defaultIconForBack = 8;
+	bool enableCustomJs = 9;
+	string authLoginUrl = 10;
+	bool authLocalLogin = 11;
+	repeated string styleMods = 12;
+	repeated OAuth2Provider oAuth2Providers = 13;
+	repeated AdditionalLink additionalLinks = 14;
+	repeated string rootDashboards = 15;
+	string authenticated_user = 16;
+    string authenticated_user_provider = 17;
+	EffectivePolicy effective_policy = 18;
+    string banner_message = 19;
+    string banner_css = 20;
+}
+
+message AdditionalLink {
+	string title = 1;
+	string url = 2;
+}
+
+message OAuth2Provider {
+	string title = 1;
+	string url = 2;
+	string icon = 3;
+}
+
+message GetActionBindingRequest {
+	string binding_id = 1;
+}
+
+message GetActionBindingResponse {
+	Action action = 1;
+}
+
+message GetEntitiesRequest {
+}
+
+message GetEntitiesResponse {
+  repeated EntityDefinition entity_definitions = 1;
+}
+
+message EntityDefinition {
+  string title = 1;
+  repeated Entity instances = 2;
+  repeated string used_on_dashboards = 3;
+}
+
+message GetEntityRequest {
+  string unique_key = 1;
+  string type = 2;
+}
+
+message RestartActionRequest {
+    string execution_tracking_id = 1;
+}
+
 service OliveTinApiService {
-	rpc GetDashboardComponents(GetDashboardComponentsRequest) returns (GetDashboardComponentsResponse) {}
+	rpc GetDashboard(GetDashboardRequest) returns (GetDashboardResponse) {}
 
 	rpc StartAction(StartActionRequest) returns (StartActionResponse) {}
 
@@ -290,6 +356,8 @@ service OliveTinApiService {
 	rpc StartActionByGet(StartActionByGetRequest) returns (StartActionByGetResponse) {}
 
 	rpc StartActionByGetAndWait(StartActionByGetAndWaitRequest) returns (StartActionByGetAndWaitResponse) {}
+
+    rpc RestartAction(RestartActionRequest) returns (StartActionResponse) {}
 
 	rpc KillAction(KillActionRequest) returns (KillActionResponse) {}
 
@@ -318,4 +386,12 @@ service OliveTinApiService {
     rpc EventStream(EventStreamRequest) returns (stream EventStreamResponse) {}
 
 	rpc GetDiagnostics(GetDiagnosticsRequest) returns (GetDiagnosticsResponse) {}
+
+	rpc Init(InitRequest) returns (InitResponse) {}
+
+	rpc GetActionBinding(GetActionBindingRequest) returns (GetActionBindingResponse) {}
+
+    rpc GetEntities(GetEntitiesRequest) returns (GetEntitiesResponse) {}
+
+    rpc GetEntity(GetEntityRequest) returns (Entity) {}
 }

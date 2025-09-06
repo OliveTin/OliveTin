@@ -1,8 +1,8 @@
 package api
 
 import (
-	"context"
 	"connectrpc.com/connect"
+	"context"
 	"github.com/stretchr/testify/assert"
 	"testing"
 
@@ -34,14 +34,13 @@ func getNewTestServerAndClient(t *testing.T, injectedConfig *config.Config) (*ht
 
 	log.Infof("API path is %s", path)
 
-	httpclient := &http.Client{
-	}
+	httpclient := &http.Client{}
 
 	ts := httptest.NewServer(mux)
 
-	client := apiv1connect.NewOliveTinApiServiceClient(httpclient, ts.URL + "/api")
+	client := apiv1connect.NewOliveTinApiServiceClient(httpclient, ts.URL+"/api")
 
-	log.Infof("Test server URL is %s", ts.URL + path)
+	log.Infof("Test server URL is %s", ts.URL+path)
 
 	return ts, client
 }
@@ -60,7 +59,7 @@ func TestGetActionsAndStart(t *testing.T) {
 
 	conn, client := getNewTestServerAndClient(t, cfg)
 
-	respGb, err := client.GetDashboardComponents(context.Background(), connect.NewRequest(&apiv1.GetDashboardComponentsRequest{}))
+	respInit, err := client.Init(context.Background(), connect.NewRequest(&apiv1.InitRequest{}))
 	respGetReady, err := client.GetReadyz(context.Background(), connect.NewRequest(&apiv1.GetReadyzRequest{}))
 
 	if err != nil {
@@ -72,11 +71,13 @@ func TestGetActionsAndStart(t *testing.T) {
 
 	assert.Equal(t, true, true, "sayHello Failed")
 
-//	assert.Equal(t, 1, len(respGb.Msg.Actions), "Got 1 action button back")
+	//	assert.Equal(t, 1, len(respGb.Msg.Actions), "Got 1 action button back")
 
-	log.Printf("Response: %+v", respGb)
+	log.Printf("Response: %+v", respInit)
 
-	respSa, err := client.StartAction(context.Background(), connect.NewRequest(&apiv1.StartActionRequest{ActionId: "blat"}))
+	respSa, err := client.StartAction(context.Background(), connect.NewRequest(&apiv1.StartActionRequest{
+		//		ActionId: "blat"
+	}))
 
 	assert.NotNil(t, err, "Error 404 after start action")
 	assert.Nil(t, respSa, "Nil response for non existing action")
