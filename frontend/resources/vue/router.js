@@ -1,12 +1,17 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
+import { Wrench01Icon } from '@hugeicons/core-free-icons'
+import { LeftToRightListDashIcon } from '@hugeicons/core-free-icons'
+import { CellsIcon } from '@hugeicons/core-free-icons'
+import { DashboardSquare01Icon } from '@hugeicons/core-free-icons'
+
 const routes = [
   {
     path: '/',
-    name: 'Home',
+    name: 'Actions',
     component: () => import('./Dashboard.vue'),
     props: { title: 'default' },
-    meta: { title: 'OliveTin - Dashboard' }
+    meta: { title: 'Actions', icon: DashboardSquare01Icon }
   },
   {
     path: '/dashboards/:title',
@@ -26,13 +31,19 @@ const routes = [
     path: '/logs',
     name: 'Logs',
     component: () => import('./views/LogsListView.vue'),
-    meta: { title: 'OliveTin - Logs' }
+    meta: { 
+      title: 'OliveTin - Logs',
+      icon: LeftToRightListDashIcon
+    }
   },
   {
     path: '/entities',
     name: 'Entities',
     component: () => import('./views/EntitiesView.vue'),
-    meta: { title: 'OliveTin - Entities' }
+    meta: { 
+      title: 'OliveTin - Entities',
+      icon: CellsIcon
+    }
   },
   {
     path: '/entity-details/:entityType/:entityKey',
@@ -64,7 +75,10 @@ const routes = [
     path: '/diagnostics',
     name: 'Diagnostics',
     component: () => import('./views/DiagnosticsView.vue'),
-    meta: { title: 'OliveTin - Diagnostics' }
+    meta: { 
+      title: 'OliveTin - Diagnostics',
+      icon: Wrench01Icon
+    }
   },
   {
     path: '/login',

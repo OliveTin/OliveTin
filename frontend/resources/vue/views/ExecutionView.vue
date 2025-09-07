@@ -1,23 +1,16 @@
 <template>
-	<section class="with-header-and-content">
-		<div class="section-header">
-			<h2>Execution Results: {{ title }}</h2>
-
+	<Section :title="'Execution Results: ' + title">
+    <template #toolbar>
 			<button @click="toggleSize" title="Toggle dialog size">
 				<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
 					<path fill="currentColor"
 						  d="M3 3h6v2H6.462l4.843 4.843l-1.415 1.414L5 6.367V9H3zm0 18h6v-2H6.376l4.929-4.928l-1.415-1.414L5 17.548V15H3zm12 0h6v-6h-2v2.524l-4.867-4.866l-1.414 1.414L17.647 19H15zm6-18h-6v2h2.562l-4.843 4.843l1.414 1.414L19 6.39V9h2z" />
 				</svg>
 			</button>
+    </template>
 
-		</div>
-		<div class="section-content">
-			<div v-if="logEntry">
-				<div class="action-header padded-content" style="float: right">
-					<span class="icon" role="img" v-html="icon"></span>
-				</div>
-
-				<dl>
+		<div v-if="logEntry" class = "flex-row">
+				<dl class = "fg1">
 					<dt>Duration</dt>
 					<dd><span v-html="duration"></span></dd>
 
@@ -26,9 +19,10 @@
 						<ActionStatusDisplay :log-entry="logEntry" />
 					</dd>
 				</dl>
-			</div>
+        <span class="icon" role="img" v-html="icon" style = "align-self: start"></span>
+    </div>
 
-			<div ref="xtermOutput"></div>
+    <div ref="xtermOutput"></div>
 
 			<br />
 
@@ -49,13 +43,14 @@
 						Kill
 					</button>
 				</div>
-			</div>
-	</section>
+
+	</Section>
 </template>
 
 <script setup>
-	import { ref, reactive, onMounted, onBeforeUnmount, nextTick, watch } from 'vue'
+	import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import ActionStatusDisplay from '../components/ActionStatusDisplay.vue'
+import Section from 'picocrank/vue/components/Section.vue'
 import { OutputTerminal } from '../../../js/OutputTerminal.js'
 import { HugeiconsIcon } from '@hugeicons/vue'
 import { WorkoutRunIcon, Cancel02Icon, ArrowLeftIcon } from '@hugeicons/core-free-icons'
@@ -66,7 +61,6 @@ const router = useRouter()
 
 // Refs for DOM elements
 const xtermOutput = ref(null)
-const dialog = ref(null)
 
 const props = defineProps({
   executionTrackingId: {

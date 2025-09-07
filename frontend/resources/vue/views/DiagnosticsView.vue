@@ -1,55 +1,40 @@
 <template>
-  <section>
-    <div class="section-header">
-      <h2>Get support</h2>
-    </div>
-    <div class="section-content">
-      <p>If you are having problems with OliveTin and want to raise a support request, it would be very helpful to include a sosreport from this page.
-      </p>
-      <ul>
-        <li>
-          <a href="https://docs.olivetin.app/sosreport.html" target="_blank">sosreport Documentation</a>
-        </li>
-        <li>
-          <a href = "https://docs.olivetin.app/troubleshooting/wheretofindhelp.html" target="_blank">Where to find help</a>
-        </li>
-      </ul>
-    </div>
-  </section>
+  <Section title = "Get support">
+    <p>If you are having problems with OliveTin and want to raise a support request, it would be very helpful to include a sosreport from this page.
+    </p>
+    <ul>
+      <li>
+        <a href="https://docs.olivetin.app/sosreport.html" target="_blank">sosreport Documentation</a>
+      </li>
+      <li>
+        <a href = "https://docs.olivetin.app/troubleshooting/wheretofindhelp.html" target="_blank">Where to find help</a>
+      </li>
+    </ul>
+  </Section>
 
-  <section>
-    <div class="section-header">
-      <h2>SSH</h2>
-    </div>
-    <div class="section-content">
-      <dl>
-        <dt>Found Key</dt>
-        <dd>{{ diagnostics.sshFoundKey || '?' }}</dd>
-        <dt>Found Config</dt>
-        <dd>{{ diagnostics.sshFoundConfig || '?' }}</dd>
-      </dl>
-    </div>
-  </section>
+  <Section title = "SSH">
+    <dl>
+      <dt>Found Key</dt>
+      <dd>{{ diagnostics.sshFoundKey || '?' }}</dd>
+      <dt>Found Config</dt>
+      <dd>{{ diagnostics.sshFoundConfig || '?' }}</dd>
+    </dl>
+  </Section>
 
-  <section>
-    <div class="section-header">
-      <h2>SOS Report</h2>
+  <Section title = "SOS Report">
+    <p>This section allows you to generate a detailed report of your configuration and environment. It is a good idea to include this when raising a support request.</p>
+
+    <div role="toolbar">
+      <button @click="generateSosReport" :disabled="loading" class = "good">Generate SOS Report</button>
     </div>
-    <div class="section-content">
 
-      <p>This section allows you to generate a detailed report of your configuration and environment. It is a good idea to include this when raising a support request.</p>
-
-      <div role="toolbar">
-        <button @click="generateSosReport" :disabled="loading" class = "good">Generate SOS Report</button>
-      </div>
-
-      <textarea v-model="sosReport" readonly style="flex: 1; min-height: 200px; resize: vertical;"></textarea>
-    </div>
-  </section>
+    <textarea v-model="sosReport" readonly style="flex: 1; min-height: 200px; resize: vertical;"></textarea>
+  </Section>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import Section from 'picocrank/vue/components/Section.vue'
 
 const diagnostics = ref({})
 const loading = ref(false)
