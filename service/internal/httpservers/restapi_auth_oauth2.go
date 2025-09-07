@@ -18,7 +18,7 @@ import (
 )
 
 type OAuth2Handler struct {
-	cfg *config.Config
+	cfg                 *config.Config
 	registeredStates    map[string]*oauth2State
 	registeredProviders map[string]*oauth2.Config
 }
@@ -28,7 +28,7 @@ func NewOAuth2Handler(cfg *config.Config) *OAuth2Handler {
 		cfg: cfg,
 	}
 
-	h.registeredStates    = make(map[string]*oauth2State)
+	h.registeredStates = make(map[string]*oauth2State)
 	h.registeredProviders = make(map[string]*oauth2.Config)
 
 	for providerName, providerConfig := range cfg.AuthOAuth2Providers {

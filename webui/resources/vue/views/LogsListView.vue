@@ -1,9 +1,6 @@
 <template>
-  <section>
-    <div class="section-header">
-      <h2>Logs</h2>
-
-      <div>
+  <Section title="Logs" :padding="false">
+      <template #toolbar>
         <label class="input-with-icons">
           <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
             <path fill="currentColor"
@@ -17,12 +14,9 @@
             </svg>
           </button>
         </label>
-      </div>
+      </template>
 
-    </div>
-
-    <div class="section-content">
-      <p>This is a list of logs from actions that have been executed. You can filter the list by action title.</p>
+      <p class = "padding">This is a list of logs from actions that have been executed. You can filter the list by action title.</p>
       <div v-show="filteredLogs.length > 0">
         <table class="logs-table">
           <thead>
@@ -60,7 +54,7 @@
           </tbody>
         </table>
 
-        <Pagination :pageSize="pageSize" :total="totalCount" :currentPage="currentPage" @page-change="handlePageChange"
+        <Pagination :pageSize="pageSize" :total="totalCount" :currentPage="currentPage" @page-change="handlePageChange" class = "padding"
           @page-size-change="handlePageSizeChange" itemTitle="execution logs" />
       </div>
 
@@ -68,13 +62,13 @@
         <p>There are no logs to display.</p>
         <router-link to="/">Return to index</router-link>
       </div>
-    </div>
-  </section>
+  </Section>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import Pagination from '../components/Pagination.vue'
+import Section from 'picocrank/vue/components/Section.vue'
 
 const logs = ref([])
 const searchText = ref('')

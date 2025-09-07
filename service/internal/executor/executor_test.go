@@ -34,7 +34,6 @@ func TestCreateExecutorAndExec(t *testing.T) {
 	e, cfg := testingExecutor()
 
 	req := ExecutionRequest{
-		ActionTitle:       "Do some tickles",
 		AuthenticatedUser: &acl.AuthenticatedUser{Username: "Mr Tickle"},
 		Cfg:               cfg,
 		Arguments: map[string]string{
@@ -54,9 +53,9 @@ func TestExecNonExistant(t *testing.T) {
 	e, cfg := testingExecutor()
 
 	req := ExecutionRequest{
-		ActionTitle: "Waffles",
-		logEntry:    &InternalLogEntry{},
-		Cfg:         cfg,
+		//		Binding:  e.FindBindingWithNoEntity("waffles"),
+		logEntry: &InternalLogEntry{},
+		Cfg:      cfg,
 	}
 
 	wg, _ := e.ExecRequest(&req)
@@ -82,7 +81,7 @@ func TestArgumentNameCamelCase(t *testing.T) {
 		"personName": "Fred",
 	}
 
-	out, err := parseActionArguments(values, a1, "")
+	out, err := parseActionArguments(values, a1, nil)
 
 	assert.Equal(t, "echo 'Tickling Fred'", out)
 	assert.Nil(t, err)
@@ -104,7 +103,7 @@ func TestArgumentNameSnakeCase(t *testing.T) {
 		"person_name": "Fred",
 	}
 
-	out, err := parseActionArguments(values, a1, "")
+	out, err := parseActionArguments(values, a1, nil)
 
 	assert.Equal(t, "echo 'Tickling Fred'", out)
 	assert.Nil(t, err)
@@ -165,8 +164,8 @@ func TestGetLogsLessThanPageSize(t *testing.T) {
 
 func execNewReqAndWait(e *Executor, title string, cfg *config.Config) {
 	req := &ExecutionRequest{
-		ActionTitle: title,
-		Cfg:         cfg,
+		//		ActionTitle: title,
+		Cfg: cfg,
 	}
 
 	wg, _ := e.ExecRequest(req)
@@ -195,7 +194,7 @@ func TestUnsetRequiredArgument(t *testing.T) {
 
 	values := map[string]string{}
 
-	out, err := parseActionArguments(values, a1, "")
+	out, err := parseActionArguments(values, a1, nil)
 
 	assert.Equal(t, "", out)
 	assert.NotNil(t, err)
@@ -222,7 +221,7 @@ func TestUnusedArgumentStillPassesTypeSafetyCheck(t *testing.T) {
 		"age":  "Not an integer",
 	}
 
-	out, err := parseActionArguments(values, a1, "")
+	out, err := parseActionArguments(values, a1, nil)
 
 	assert.Equal(t, "", out)
 	assert.NotNil(t, err)
@@ -247,7 +246,7 @@ func TestMangleInvalidArgumentValues(t *testing.T) {
 	cfg.Sanitize()
 
 	req := ExecutionRequest{
-		Action:            a1,
+		//		Action:            a1,
 		AuthenticatedUser: acl.UserFromSystem(cfg, "testuser"),
 		Cfg:               cfg,
 		Arguments: map[string]string{

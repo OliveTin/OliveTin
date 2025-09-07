@@ -59,7 +59,6 @@ const props = defineProps({
 const dashboard = ref(null)
 
 async function getDashboard() {
-    console.log("getting dashboard", props.title)
     const ret = await window.client.getDashboard({
         title: props.title,
     })

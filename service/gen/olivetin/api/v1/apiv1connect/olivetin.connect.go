@@ -48,6 +48,9 @@ const (
 	// OliveTinApiServiceStartActionByGetAndWaitProcedure is the fully-qualified name of the
 	// OliveTinApiService's StartActionByGetAndWait RPC.
 	OliveTinApiServiceStartActionByGetAndWaitProcedure = "/olivetin.api.v1.OliveTinApiService/StartActionByGetAndWait"
+	// OliveTinApiServiceRestartActionProcedure is the fully-qualified name of the OliveTinApiService's
+	// RestartAction RPC.
+	OliveTinApiServiceRestartActionProcedure = "/olivetin.api.v1.OliveTinApiService/RestartAction"
 	// OliveTinApiServiceKillActionProcedure is the fully-qualified name of the OliveTinApiService's
 	// KillAction RPC.
 	OliveTinApiServiceKillActionProcedure = "/olivetin.api.v1.OliveTinApiService/KillAction"
@@ -110,6 +113,7 @@ type OliveTinApiServiceClient interface {
 	StartActionAndWait(context.Context, *connect.Request[v1.StartActionAndWaitRequest]) (*connect.Response[v1.StartActionAndWaitResponse], error)
 	StartActionByGet(context.Context, *connect.Request[v1.StartActionByGetRequest]) (*connect.Response[v1.StartActionByGetResponse], error)
 	StartActionByGetAndWait(context.Context, *connect.Request[v1.StartActionByGetAndWaitRequest]) (*connect.Response[v1.StartActionByGetAndWaitResponse], error)
+	RestartAction(context.Context, *connect.Request[v1.RestartActionRequest]) (*connect.Response[v1.StartActionResponse], error)
 	KillAction(context.Context, *connect.Request[v1.KillActionRequest]) (*connect.Response[v1.KillActionResponse], error)
 	ExecutionStatus(context.Context, *connect.Request[v1.ExecutionStatusRequest]) (*connect.Response[v1.ExecutionStatusResponse], error)
 	GetLogs(context.Context, *connect.Request[v1.GetLogsRequest]) (*connect.Response[v1.GetLogsResponse], error)
@@ -169,6 +173,12 @@ func NewOliveTinApiServiceClient(httpClient connect.HTTPClient, baseURL string, 
 			httpClient,
 			baseURL+OliveTinApiServiceStartActionByGetAndWaitProcedure,
 			connect.WithSchema(oliveTinApiServiceMethods.ByName("StartActionByGetAndWait")),
+			connect.WithClientOptions(opts...),
+		),
+		restartAction: connect.NewClient[v1.RestartActionRequest, v1.StartActionResponse](
+			httpClient,
+			baseURL+OliveTinApiServiceRestartActionProcedure,
+			connect.WithSchema(oliveTinApiServiceMethods.ByName("RestartAction")),
 			connect.WithClientOptions(opts...),
 		),
 		killAction: connect.NewClient[v1.KillActionRequest, v1.KillActionResponse](
@@ -289,6 +299,7 @@ type oliveTinApiServiceClient struct {
 	startActionAndWait      *connect.Client[v1.StartActionAndWaitRequest, v1.StartActionAndWaitResponse]
 	startActionByGet        *connect.Client[v1.StartActionByGetRequest, v1.StartActionByGetResponse]
 	startActionByGetAndWait *connect.Client[v1.StartActionByGetAndWaitRequest, v1.StartActionByGetAndWaitResponse]
+	restartAction           *connect.Client[v1.RestartActionRequest, v1.StartActionResponse]
 	killAction              *connect.Client[v1.KillActionRequest, v1.KillActionResponse]
 	executionStatus         *connect.Client[v1.ExecutionStatusRequest, v1.ExecutionStatusResponse]
 	getLogs                 *connect.Client[v1.GetLogsRequest, v1.GetLogsResponse]
@@ -332,6 +343,11 @@ func (c *oliveTinApiServiceClient) StartActionByGet(ctx context.Context, req *co
 // StartActionByGetAndWait calls olivetin.api.v1.OliveTinApiService.StartActionByGetAndWait.
 func (c *oliveTinApiServiceClient) StartActionByGetAndWait(ctx context.Context, req *connect.Request[v1.StartActionByGetAndWaitRequest]) (*connect.Response[v1.StartActionByGetAndWaitResponse], error) {
 	return c.startActionByGetAndWait.CallUnary(ctx, req)
+}
+
+// RestartAction calls olivetin.api.v1.OliveTinApiService.RestartAction.
+func (c *oliveTinApiServiceClient) RestartAction(ctx context.Context, req *connect.Request[v1.RestartActionRequest]) (*connect.Response[v1.StartActionResponse], error) {
+	return c.restartAction.CallUnary(ctx, req)
 }
 
 // KillAction calls olivetin.api.v1.OliveTinApiService.KillAction.
@@ -431,6 +447,7 @@ type OliveTinApiServiceHandler interface {
 	StartActionAndWait(context.Context, *connect.Request[v1.StartActionAndWaitRequest]) (*connect.Response[v1.StartActionAndWaitResponse], error)
 	StartActionByGet(context.Context, *connect.Request[v1.StartActionByGetRequest]) (*connect.Response[v1.StartActionByGetResponse], error)
 	StartActionByGetAndWait(context.Context, *connect.Request[v1.StartActionByGetAndWaitRequest]) (*connect.Response[v1.StartActionByGetAndWaitResponse], error)
+	RestartAction(context.Context, *connect.Request[v1.RestartActionRequest]) (*connect.Response[v1.StartActionResponse], error)
 	KillAction(context.Context, *connect.Request[v1.KillActionRequest]) (*connect.Response[v1.KillActionResponse], error)
 	ExecutionStatus(context.Context, *connect.Request[v1.ExecutionStatusRequest]) (*connect.Response[v1.ExecutionStatusResponse], error)
 	GetLogs(context.Context, *connect.Request[v1.GetLogsRequest]) (*connect.Response[v1.GetLogsResponse], error)
@@ -486,6 +503,12 @@ func NewOliveTinApiServiceHandler(svc OliveTinApiServiceHandler, opts ...connect
 		OliveTinApiServiceStartActionByGetAndWaitProcedure,
 		svc.StartActionByGetAndWait,
 		connect.WithSchema(oliveTinApiServiceMethods.ByName("StartActionByGetAndWait")),
+		connect.WithHandlerOptions(opts...),
+	)
+	oliveTinApiServiceRestartActionHandler := connect.NewUnaryHandler(
+		OliveTinApiServiceRestartActionProcedure,
+		svc.RestartAction,
+		connect.WithSchema(oliveTinApiServiceMethods.ByName("RestartAction")),
 		connect.WithHandlerOptions(opts...),
 	)
 	oliveTinApiServiceKillActionHandler := connect.NewUnaryHandler(
@@ -608,6 +631,8 @@ func NewOliveTinApiServiceHandler(svc OliveTinApiServiceHandler, opts ...connect
 			oliveTinApiServiceStartActionByGetHandler.ServeHTTP(w, r)
 		case OliveTinApiServiceStartActionByGetAndWaitProcedure:
 			oliveTinApiServiceStartActionByGetAndWaitHandler.ServeHTTP(w, r)
+		case OliveTinApiServiceRestartActionProcedure:
+			oliveTinApiServiceRestartActionHandler.ServeHTTP(w, r)
 		case OliveTinApiServiceKillActionProcedure:
 			oliveTinApiServiceKillActionHandler.ServeHTTP(w, r)
 		case OliveTinApiServiceExecutionStatusProcedure:
@@ -671,6 +696,10 @@ func (UnimplementedOliveTinApiServiceHandler) StartActionByGet(context.Context, 
 
 func (UnimplementedOliveTinApiServiceHandler) StartActionByGetAndWait(context.Context, *connect.Request[v1.StartActionByGetAndWaitRequest]) (*connect.Response[v1.StartActionByGetAndWaitResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("olivetin.api.v1.OliveTinApiService.StartActionByGetAndWait is not implemented"))
+}
+
+func (UnimplementedOliveTinApiServiceHandler) RestartAction(context.Context, *connect.Request[v1.RestartActionRequest]) (*connect.Response[v1.StartActionResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("olivetin.api.v1.OliveTinApiService.RestartAction is not implemented"))
 }
 
 func (UnimplementedOliveTinApiServiceHandler) KillAction(context.Context, *connect.Request[v1.KillActionRequest]) (*connect.Response[v1.KillActionResponse], error) {

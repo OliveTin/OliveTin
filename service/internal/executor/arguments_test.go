@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	config "github.com/OliveTin/OliveTin/internal/config"
+	"github.com/OliveTin/OliveTin/internal/entities"
 
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -36,14 +37,14 @@ func TestArgumentValueNullable(t *testing.T) {
 		"count": "",
 	}
 
-	out, err := parseActionArguments(values, &a1, "")
+	out, err := parseActionArguments(values, &a1, nil)
 
 	assert.Equal(t, "echo 'Releasing  hounds'", out)
 	assert.Nil(t, err)
 
 	a1.Arguments[0].RejectNull = true
 
-	_, err = parseActionArguments(values, &a1, "")
+	_, err = parseActionArguments(values, &a1, nil)
 
 	assert.NotNil(t, err)
 }
@@ -64,7 +65,7 @@ func TestArgumentNameNumbers(t *testing.T) {
 		"person1name": "Fred",
 	}
 
-	out, err := parseActionArguments(values, &a1, "")
+	out, err := parseActionArguments(values, &a1, nil)
 
 	assert.Equal(t, "echo 'Tickling Fred'", out)
 	assert.Nil(t, err)
@@ -84,7 +85,7 @@ func TestArgumentNotProvided(t *testing.T) {
 
 	values := map[string]string{}
 
-	out, err := parseActionArguments(values, &a1, "")
+	out, err := parseActionArguments(values, &a1, nil)
 
 	assert.Equal(t, "", out)
 	assert.Equal(t, err.Error(), "required arg not provided: personName")
@@ -418,7 +419,7 @@ func TestParseCommandForReplacements(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			output, err := parseCommandForReplacements(tt.shellCommand, tt.values)
+			output, err := parseCommandForReplacements(tt.shellCommand, tt.values, nil)
 
 			if tt.expectError {
 				assert.NotNil(t, err, "Expected error but got none")
@@ -485,7 +486,7 @@ func TestArgumentChoicesValidation(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := parseActionArguments(tt.values, &tt.action, "")
+			_, err := parseActionArguments(tt.values, &tt.action, nil)
 
 			if tt.expectError {
 				assert.NotNil(t, err, tt.description)
@@ -531,8 +532,12 @@ func TestParseActionArgumentsWithEntityPrefix(t *testing.T) {
 		"name": "testuser",
 	}
 
+	ent := &entities.Entity{
+		Title: "entity_123",
+	}
+
 	// Test with entity prefix
-	output, err := parseActionArguments(values, &action, "entity_123")
+	output, err := parseActionArguments(values, &action, ent)
 	assert.Nil(t, err)
 	assert.Contains(t, output, "testuser")
 }

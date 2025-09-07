@@ -1,17 +1,13 @@
 <template>
-	<section class = "with-header-and-content" v-if="entityDefinitions.length === 0">
+	<Section class = "with-header-and-content" v-if="entityDefinitions.length === 0" title="Loading entity definitions...">
 		<div class = "section-header">
 			<h2 class="loading-message">
 				Loading entity definitions...
 			</h2>
 		</div>
-	</section>
+	</Section>
 	<template v-else>
-		<section v-for="def in entityDefinitions" :key="def.name" class="with-header-and-content">
-			<div class = "section-header">
-				<h2>Entity: {{ def.title }}</h2>
-			</div>
-
+		<Section v-for="def in entityDefinitions" :key="def.name" :title="'Entity: ' + def.title ">
 			<div class = "section-content">
 				<p>{{ def.instances.length }} instances.</p>
 
@@ -32,12 +28,13 @@
 					</li>
 				</ul>
 			</div>
-		</section>
+		</Section>
 	</template>
 </template>
 
 <script setup>
 	import { ref, onMounted } from 'vue'
+	import Section from 'picocrank/vue/components/Section.vue'
 
 	const entityDefinitions = ref([])
 

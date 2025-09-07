@@ -17,7 +17,7 @@ func Execute(cfg *config.Config, ex *executor.Executor) {
 			}).Infof("Startup action")
 
 			req := &executor.ExecutionRequest{
-				ActionTitle:       action.Title,
+				Binding:           ex.FindBindingWithNoEntity(action),
 				Arguments:         nil,
 				Cfg:               cfg,
 				Tags:              []string{},

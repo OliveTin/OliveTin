@@ -44,7 +44,7 @@ class ArgumentForm extends window.HTMLElement {
         }
       }
 
-      if (arg.name === "") {
+      if (arg.name === '') {
         continue
       }
 
@@ -184,7 +184,7 @@ class ArgumentForm extends window.HTMLElement {
           }
 
           domEl.onchange = () => {
-            formatValidation(domEl, arg)
+            this.formatValidation(domEl, arg)
           }
       }
     }
@@ -212,7 +212,7 @@ class ArgumentForm extends window.HTMLElement {
 
     return domEl
   }
-  
+
   async formatValidation (domEl, arg) {
     const validateArgumentTypeArgs = {
       value: domEl.value,

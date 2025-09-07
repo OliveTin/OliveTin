@@ -151,7 +151,7 @@ type Config struct {
 	AdditionalNavigationLinks       []*NavigationLink
 	ServiceHostMode                 string
 	StyleMods                       []string
-	BannerMessage				    string
+	BannerMessage                   string
 	BannerCSS                       string
 
 	usedConfigDir string

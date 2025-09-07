@@ -28,7 +28,7 @@ func TestSanitizeConfig(t *testing.T) {
 	c.Actions = append(c.Actions, a)
 	c.Sanitize()
 
-	a2 := c.FindAction("Mr Waffles")
+	a2 := c.findAction("Mr Waffles")
 
 	assert.NotNil(t, a2, "Found action after adding it")
 	assert.Equal(t, 3, a2.Timeout, "Default timeout is set")

@@ -1,19 +1,16 @@
 <template>
-	<section class="with-header-and-content">
-		<div class="section-header">
-			<h2>Entity Details</h2>
-		</div>
-
-		<div class="section-content">
+	<Section title="Entity Details">
+		<div>
 			<p v-if="!entityDetails">Loading entity details...</p>
 			<p v-else-if="!entityDetails.title">No details available for this entity.</p>
 			<p v-else>{{ entityDetails.title }}</p>
 		</div>
-	</section>
+	</Section>
 </template>
 
 <script setup>
-	import { ref, onMounted, onBeforeUnmount } from 'vue'
+	import { ref, onMounted } from 'vue'
+	import Section from 'picocrank/vue/components/Section.vue'
 
 	const entityDetails = ref(null)
 

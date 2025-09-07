@@ -1,8 +1,8 @@
 package httpservers
 
 import (
-	"google.golang.org/grpc/metadata"
 	"github.com/OliveTin/OliveTin/internal/config"
+	"google.golang.org/grpc/metadata"
 	"net/http"
 
 	"github.com/google/uuid"

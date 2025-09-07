@@ -49,7 +49,7 @@ func (api *oliveTinAPI) KillAction(ctx ctx.Context, req *connect.Request[apiv1.K
 
 	log.Warnf("Killing execution request by tracking ID: %v", req.Msg.ExecutionTrackingId)
 
-	action := api.cfg.FindAction(execReqLogEntry.ActionTitle)
+	action := execReqLogEntry.Binding.Action
 
 	if action == nil {
 		log.Warnf("Killing execution request not possible - action not found: %v", execReqLogEntry.ActionTitle)
@@ -97,8 +97,7 @@ func (api *oliveTinAPI) StartAction(ctx ctx.Context, req *connect.Request[apiv1.
 	authenticatedUser := acl.UserFromContext(ctx, api.cfg)
 
 	execReq := executor.ExecutionRequest{
-		Action:            pair.Action,
-		Entity:            pair.Entity,
+		Binding:           pair,
 		TrackingID:        req.Msg.UniqueTrackingId,
 		Arguments:         args,
 		AuthenticatedUser: authenticatedUser,
@@ -132,7 +131,7 @@ func (api *oliveTinAPI) LocalUserLogin(ctx ctx.Context, req *connect.Request[api
 	match := checkUserPassword(api.cfg, req.Msg.Username, req.Msg.Password)
 
 	if match {
-		//grpc.SendHeader(ctx, metadata.Pairs("set-username", req.Username))
+		// grpc.SendHeader(ctx, metadata.Pairs("set-username", req.Username))
 
 		log.WithFields(log.Fields{
 			"username": req.Msg.Username,
@@ -158,7 +157,7 @@ func (api *oliveTinAPI) StartActionAndWait(ctx ctx.Context, req *connect.Request
 	user := acl.UserFromContext(ctx, api.cfg)
 
 	execReq := executor.ExecutionRequest{
-		Action:            api.executor.FindActionByBindingID(req.Msg.ActionId),
+		Binding:           api.executor.FindBindingByID(req.Msg.ActionId),
 		TrackingID:        uuid.NewString(),
 		Arguments:         args,
 		AuthenticatedUser: user,
@@ -183,7 +182,7 @@ func (api *oliveTinAPI) StartActionByGet(ctx ctx.Context, req *connect.Request[a
 	args := make(map[string]string)
 
 	execReq := executor.ExecutionRequest{
-		Action:            api.executor.FindActionByBindingID(req.Msg.ActionId),
+		Binding:           api.executor.FindBindingByID(req.Msg.ActionId),
 		TrackingID:        uuid.NewString(),
 		Arguments:         args,
 		AuthenticatedUser: acl.UserFromContext(ctx, api.cfg),
@@ -203,7 +202,7 @@ func (api *oliveTinAPI) StartActionByGetAndWait(ctx ctx.Context, req *connect.Re
 	user := acl.UserFromContext(ctx, api.cfg)
 
 	execReq := executor.ExecutionRequest{
-		Action:            api.executor.FindActionByBindingID(req.Msg.ActionId),
+		Binding:           api.executor.FindBindingByID(req.Msg.ActionId),
 		TrackingID:        uuid.NewString(),
 		Arguments:         args,
 		AuthenticatedUser: user,
@@ -244,7 +243,7 @@ func (api *oliveTinAPI) internalLogEntryToPb(logEntry *executor.InternalLogEntry
 	}
 
 	if !pble.ExecutionFinished {
-		pble.CanKill = acl.IsAllowedKill(api.cfg, authenticatedUser, api.cfg.FindAction(logEntry.ActionConfigTitle))
+		pble.CanKill = acl.IsAllowedKill(api.cfg, authenticatedUser, logEntry.Binding.Action)
 	}
 
 	return pble
@@ -299,10 +298,10 @@ func (api *oliveTinAPI) ExecutionStatus(ctx ctx.Context, req *connect.Request[ap
 }
 
 func (api *oliveTinAPI) Logout(ctx ctx.Context, req *connect.Request[apiv1.LogoutRequest]) (*connect.Response[apiv1.LogoutResponse], error) {
-	//user := acl.UserFromContext(ctx, cfg)
+	// user := acl.UserFromContext(ctx, cfg)
 
-	//grpc.SendHeader(ctx, metadata.Pairs("logout-provider", user.Provider))
-	//grpc.SendHeader(ctx, metadata.Pairs("logout-sid", user.SID))
+	// grpc.SendHeader(ctx, metadata.Pairs("logout-provider", user.Provider))
+	// grpc.SendHeader(ctx, metadata.Pairs("logout-sid", user.SID))
 
 	return nil, nil
 }
@@ -353,7 +352,7 @@ func (api *oliveTinAPI) GetLogs(ctx ctx.Context, req *connect.Request[apiv1.GetL
 	logEntries, pagingResult := api.executor.GetLogTrackingIds(req.Msg.StartOffset, api.cfg.LogHistoryPageSize)
 
 	for _, logEntry := range logEntries {
-		action := api.cfg.FindAction(logEntry.ActionTitle)
+		action := logEntry.Binding.Action
 
 		if action == nil || acl.IsAllowedLogs(api.cfg, user, action) {
 			pbLogEntry := api.internalLogEntryToPb(logEntry, user)
@@ -639,15 +638,15 @@ func (api *oliveTinAPI) GetEntities(ctx ctx.Context, req *connect.Request[apiv1.
 
 	for name, entityInstances := range entities.GetEntities() {
 		def := &apiv1.EntityDefinition{
-			Title:        name,
+			Title:            name,
 			UsedOnDashboards: findDashboardsForEntity(name, api.cfg.Dashboards),
 		}
 
 		for _, e := range entityInstances {
 			entity := &apiv1.Entity{
-				Title: e.Title,
+				Title:     e.Title,
 				UniqueKey: e.UniqueKey,
-				Type: name,
+				Type:      name,
 			}
 
 			def.Instances = append(def.Instances, entity)
@@ -686,7 +685,7 @@ func (api *oliveTinAPI) GetEntity(ctx ctx.Context, req *connect.Request[apiv1.Ge
 
 	log.Infof("msg: %+v", req.Msg)
 
-	if instances == nil || len(instances) == 0 { 
+	if instances == nil || len(instances) == 0 {
 		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("entity type %s not found", req.Msg.Type))
 	}
 
@@ -694,9 +693,40 @@ func (api *oliveTinAPI) GetEntity(ctx ctx.Context, req *connect.Request[apiv1.Ge
 		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("entity with unique key %s not found in type %s", req.Msg.UniqueKey, req.Msg.Type))
 	} else {
 		res.Title = entity.Title
-	
+
 		return connect.NewResponse(res), nil
 	}
+}
+
+func (api *oliveTinAPI) RestartAction(ctx ctx.Context, req *connect.Request[apiv1.RestartActionRequest]) (*connect.Response[apiv1.StartActionResponse], error) {
+	ret := &apiv1.StartActionResponse{
+		ExecutionTrackingId: req.Msg.ExecutionTrackingId,
+	}
+
+	var execReqLogEntry *executor.InternalLogEntry
+
+	execReqLogEntry, found := api.executor.GetLog(req.Msg.ExecutionTrackingId)
+
+	if !found {
+		log.Warnf("Restarting execution request not possible - not found by tracking ID: %v", req.Msg.ExecutionTrackingId)
+		return connect.NewResponse(ret), nil
+	}
+
+	log.Warnf("Restarting execution request by tracking ID: %v", req.Msg.ExecutionTrackingId)
+
+	action := execReqLogEntry.Binding.Action
+
+	if action == nil {
+		log.Warnf("Restarting execution request not possible - action not found: %v", execReqLogEntry.ActionTitle)
+		return connect.NewResponse(ret), nil
+	}
+
+	return api.StartAction(ctx, &connect.Request[apiv1.StartActionRequest]{
+		Msg: &apiv1.StartActionRequest{
+			// FIXME
+			UniqueTrackingId: req.Msg.ExecutionTrackingId,
+		},
+	})
 }
 
 func newServer(ex *executor.Executor) *oliveTinAPI {

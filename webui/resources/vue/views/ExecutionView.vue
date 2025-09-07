@@ -1,81 +1,75 @@
 <template>
-  <section class="with-header-and-content">
-    <div class="section-header">
-      <h2>Execution Results: {{ title }}</h2>
+	<Section :title="'Execution Results: ' + title">
+    <template #toolbar>
+			<button @click="toggleSize" title="Toggle dialog size">
+				<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+					<path fill="currentColor"
+						  d="M3 3h6v2H6.462l4.843 4.843l-1.415 1.414L5 6.367V9H3zm0 18h6v-2H6.376l4.929-4.928l-1.415-1.414L5 17.548V15H3zm12 0h6v-6h-2v2.524l-4.867-4.866l-1.414 1.414L17.647 19H15zm6-18h-6v2h2.562l-4.843 4.843l1.414 1.414L19 6.39V9h2z" />
+				</svg>
+			</button>
+    </template>
 
-      <button @click="toggleSize" title="Toggle dialog size">
-        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
-          <path fill="currentColor"
-            d="M3 3h6v2H6.462l4.843 4.843l-1.415 1.414L5 6.367V9H3zm0 18h6v-2H6.376l4.929-4.928l-1.415-1.414L5 17.548V15H3zm12 0h6v-6h-2v2.524l-4.867-4.866l-1.414 1.414L17.647 19H15zm6-18h-6v2h2.562l-4.843 4.843l1.414 1.414L19 6.39V9h2z" />
-        </svg>
-      </button>
+		<div v-if="logEntry" class = "flex-row">
+				<dl class = "fg1">
+					<dt>Duration</dt>
+					<dd><span v-html="duration"></span></dd>
 
+					<dt>Status</dt>
+					<dd>
+						<ActionStatusDisplay :log-entry="logEntry" />
+					</dd>
+				</dl>
+        <span class="icon" role="img" v-html="icon" style = "align-self: start"></span>
     </div>
-    <div class="section-content">
-      <div v-if="logEntry">
-        <div class="action-header padded-content" style="float: right">
-          <span class="icon" role="img" v-html="icon"></span>
-        </div>
 
-        <dl>
-          <dt>Duration</dt>
-          <dd><span v-html="duration"></span></dd>
+    <div ref="xtermOutput"></div>
 
-          <dt>Status</dt>
-          <dd>
-            <ActionStatusDisplay :log-entry="logEntry" />
-          </dd>
-        </dl>
-      </div>
+			<br />
 
-      <div ref="xtermOutput"></div>
+			<div class="flex-row g1 buttons padded-content">
+				<button @click="goBack" title="Go back">
+					<HugeiconsIcon :icon="ArrowLeftIcon" />
+					Back
+				</button>
 
-      <br />
+				<div class = "fg1" />
 
-      <div class="flex-row g1 buttons padded-content">
-        <button @click="goBack" title="Go back">
-          <HugeiconsIcon :icon="ArrowLeftIcon" />
-          Back
-        </button>
+					<button :disabled="!canRerun" @click="rerunAction" title="Rerun">
+						<HugeiconsIcon :icon="WorkoutRunIcon" />
+						Rerun
+					</button>
+					<button :disabled="!canKill" @click="killAction" title="Kill">
+						<HugeiconsIcon :icon="Cancel02Icon" />
+						Kill
+					</button>
+				</div>
 
-        <div class = "fg1" />
-
-        <button :disabled="!canRerun" @click="rerunAction" title="Rerun">
-          <HugeiconsIcon :icon="WorkoutRunIcon" />
-          Rerun
-        </button>
-        <button :disabled="!canKill" @click="killAction" title="Kill">
-          <HugeiconsIcon :icon="Cancel02Icon" />
-          Kill
-        </button>
-      </div>
-    </div>
-  </section>
+	</Section>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, onBeforeUnmount, nextTick } from 'vue'
+	import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import ActionStatusDisplay from '../components/ActionStatusDisplay.vue'
+import Section from 'picocrank/vue/components/Section.vue'
 import { OutputTerminal } from '../../../js/OutputTerminal.js'
 import { HugeiconsIcon } from '@hugeicons/vue'
 import { WorkoutRunIcon, Cancel02Icon, ArrowLeftIcon } from '@hugeicons/core-free-icons'
 import { useRouter } from 'vue-router'
+import { buttonResults } from '../stores/buttonResults'
 
 const router = useRouter()
 
 // Refs for DOM elements
 const xtermOutput = ref(null)
-const dialog = ref(null)
 
 const props = defineProps({
   executionTrackingId: {
-    type: String,
-    required: true
+	type: String,
+	required: true
   }
 })
 
 const executionTrackingId = ref(props.executionTrackingId)
-const isBig = ref(false)
 const hideBasics = ref(false)
 const hideDetails = ref(false)
 const hideDetailsOnResult = ref(false)
@@ -92,28 +86,20 @@ let executionTicker = null
 let terminal = null
 
 function initializeTerminal() {
-  terminal = new OutputTerminal()
-
-  console.log('initializeTerminal', xtermOutput.value)
-
+  terminal = new OutputTerminal(executionTrackingId.value, this)
   terminal.open(xtermOutput.value)
   terminal.resize(80, 24)
+
   window.terminal = terminal
 }
 
 function toggleSize() {
-  isBig.value = !isBig.value
-  if (isBig.value) {
-    terminal.fit()
-  } else {
-    terminal.resize(80, 24)
-  }
+  terminal.fit()
 }
 
 async function reset() {
   executionSeconds.value = 0
   executionTrackingId.value = 'notset'
-  isBig.value = false
   hideBasics.value = false
   hideDetails.value = false
   hideDetailsOnResult.value = false
@@ -128,52 +114,50 @@ async function reset() {
   logEntry.value = null
 
   if (terminal) {
-    await terminal.reset()
-    terminal.fit()
+	await terminal.reset()
+	terminal.fit()
   }
 }
 
 function show(actionButton) {
   if (actionButton) {
-    icon.value = actionButton.domIcon.innerText
+	icon.value = actionButton.domIcon.innerText
   }
 
   canKill.value = true
 
   // Clear existing ticker
   if (executionTicker) {
-    clearInterval(executionTicker)
+	clearInterval(executionTicker)
   }
 
   executionSeconds.value = 0
   executionTick()
   executionTicker = setInterval(() => {
-    executionTick()
+	executionTick()
   }, 1000)
 }
 
-function rerunAction() {
-  if (logEntry.value && logEntry.value.actionId) {
-    const actionButton = document.getElementById('actionButton-' + logEntry.value.actionId)
-    if (actionButton && actionButton.btn) {
-      actionButton.btn.click()
-    }
-  }
+async function rerunAction() {
+    let startActionArgs = {}
+	const res = await window.client.startAction(startActionArgs)
+ 
+    router.push(`/logs/${res.executionTrackingId}`)
 }
 
 async function killAction() {
   if (!executionTrackingId.value || executionTrackingId.value === 'notset') {
-    return
+	return
   }
 
   const killActionArgs = {
-    executionTrackingId: executionTrackingId.value
+	executionTrackingId: executionTrackingId.value
   }
 
   try {
-    await window.client.killAction(killActionArgs)
+	await window.client.killAction(killActionArgs)
   } catch (err) {
-    console.error('Failed to kill action:', err)
+	console.error('Failed to kill action:', err)
   }
 }
 
@@ -195,40 +179,40 @@ async function fetchExecutionResult(executionTrackingIdParam) {
   executionTrackingId.value = executionTrackingIdParam
 
   const executionStatusArgs = {
-    executionTrackingId: executionTrackingId.value
+	executionTrackingId: executionTrackingId.value
   }
 
   try {
-    const logEntryResult = await window.client.executionStatus(executionStatusArgs)
+	const logEntryResult = await window.client.executionStatus(executionStatusArgs)
 
-    await renderExecutionResult(logEntryResult)
+	await renderExecutionResult(logEntryResult)
   } catch (err) {
-    renderError(err)
-    throw err
+	renderError(err)
+	throw err
   }
 }
 
 function updateDuration(logEntryParam) {
   logEntry.value = logEntryParam
   if (logEntry.value == null) {
-    duration.value = executionSeconds.value + ' seconds'
-    duration.value = duration.value
+	duration.value = executionSeconds.value + ' seconds'
+	duration.value = duration.value
   } else if (!logEntry.value.executionStarted) {
-    duration.value = logEntry.value.datetimeStarted + ' (request time). Not executed.'
+	duration.value = logEntry.value.datetimeStarted + ' (request time). Not executed.'
   } else if (logEntry.value.executionStarted && !logEntry.value.executionFinished) {
-    duration.value = logEntry.value.datetimeStarted
+	duration.value = logEntry.value.datetimeStarted
   } else {
-    let delta = ''
-    try {
-      delta = (new Date(logEntry.value.datetimeStarted) - new Date(logEntry.value.datetimeStarted)) / 1000
-      delta = new Intl.RelativeTimeFormat().format(delta, 'seconds').replace('in ', '').replace('ago', '')
-    } catch (e) {
-      console.warn('Failed to calculate delta', e)
-    }
-    duration.value = logEntry.value.datetimeStarted + ' &rarr; ' + logEntry.value.datetimeFinished
-    if (delta !== '') {
-      duration.value += ' (' + delta + ')'
-    }
+	let delta = ''
+	try {
+	  delta = (new Date(logEntry.value.datetimeStarted) - new Date(logEntry.value.datetimeStarted)) / 1000
+	  delta = new Intl.RelativeTimeFormat().format(delta, 'seconds').replace('in ', '').replace('ago', '')
+	} catch (e) {
+	  console.warn('Failed to calculate delta', e)
+	}
+	duration.value = logEntry.value.datetimeStarted + ' &rarr; ' + logEntry.value.datetimeFinished
+	if (delta !== '') {
+	  duration.value += ' (' + delta + ')'
+	}
   }
 }
 
@@ -237,12 +221,12 @@ async function renderExecutionResult(res) {
 
   // Clear ticker
   if (executionTicker) {
-    clearInterval(executionTicker)
+	clearInterval(executionTicker)
   }
   executionTicker = null
 
   if (hideDetailsOnResult.value) {
-    hideDetails.value = true
+	hideDetails.value = true
   }
 
   executionTrackingId.value = res.logEntry.executionTrackingId
@@ -256,10 +240,10 @@ async function renderExecutionResult(res) {
   updateDuration(res.logEntry)
 
   if (terminal) {
-    await terminal.reset()
-    await terminal.write(res.logEntry.output, () => {
-      terminal.fit()
-    })
+	await terminal.reset()
+	await terminal.write(res.logEntry.output, () => {
+	  terminal.fit()
+	})
   }
 }
 
@@ -269,7 +253,7 @@ function renderError(err) {
 
 function handleClose() {
   if (executionTicker) {
-    clearInterval(executionTicker)
+	clearInterval(executionTicker)
   }
 
   executionTicker = null
@@ -277,11 +261,11 @@ function handleClose() {
 
 function cleanup() {
   if (executionTicker) {
-    clearInterval(executionTicker)
+	clearInterval(executionTicker)
   }
   executionTicker = null
   if (terminal != null) {
-    terminal.close()
+	terminal.close()
   }
   terminal = null
 }
@@ -293,6 +277,18 @@ function goBack() {
 onMounted(() => {
   initializeTerminal()
   fetchExecutionResult(props.executionTrackingId)
+
+  watch(
+	() => buttonResults[props.executionTrackingId],
+	(newResult, oldResult) => {
+	  if (newResult) {
+		renderExecutionResult({
+		  logEntry: newResult
+		})
+	  }
+	}
+  )
+
 })
 
 onBeforeUnmount(() => {

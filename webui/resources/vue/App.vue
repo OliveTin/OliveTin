@@ -11,10 +11,6 @@
             </button>
         </div>
 
-        <div class="fg1">
-            <Breadcrumbs />
-        </div>
-
 		<div id="banner" v-if="bannerMessage" :style="bannerCss">
 			<p>{{ bannerMessage }}</p>
 		</div>
@@ -30,7 +26,7 @@
     <div id="layout">
         <Sidebar ref="sidebar" />
 
-        <div id="content">
+		<div id="content" initial-martial-complete="{{ hasLoaded }}">
             <main title="Main content">
                 <router-view :key="$route.fullPath" />
             </main>
@@ -65,10 +61,11 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import Sidebar from './components/Sidebar.vue';
+import Sidebar from 'picocrank/vue/components/Sidebar.vue';
 import { HugeiconsIcon } from '@hugeicons/vue'
 import { Menu01Icon } from '@hugeicons/core-free-icons'
 import { UserCircle02Icon } from '@hugeicons/core-free-icons'
+import { DashboardSquare01Icon } from '@hugeicons/core-free-icons'
 
 const sidebar = ref(null);
 const username = ref('guest');
@@ -78,6 +75,7 @@ const serverConnection = ref('Connected');
 const currentVersion = ref('?');
 const bannerMessage = ref('');
 const bannerCss = ref('');
+const hasLoaded = ref(false);
 
 function toggleSidebar() {
     sidebar.value.toggle()
@@ -87,21 +85,30 @@ async function requestInit() {
     try {
         const initResponse = await window.client.init({})
 
-        console.log("init response", initResponse)
-
         username.value = initResponse.authenticatedUser
         currentVersion.value = initResponse.currentVersion
 		bannerMessage.value = initResponse.bannerMessage || '';
 		bannerCss.value = initResponse.bannerCss || '';
 
+        sidebar.value.addRouterLink('Actions')
+
         for (const rootDashboard of initResponse.rootDashboards) {
             sidebar.value.addNavigationLink({
                 id: rootDashboard,
+                name: rootDashboard,
                 title: rootDashboard,
                 path: `/dashboards/${rootDashboard}`,
-                icon: '📊'
+                icon: DashboardSquare01Icon,
             })
         }
+
+        sidebar.value.addSeparator()
+        sidebar.value.addRouterLink('Entities')
+        sidebar.value.addRouterLink('Logs')
+        sidebar.value.addRouterLink('Diagnostics')
+
+
+		hasLoaded.value = true;
     } catch (error) {
         console.error("Error initializing client", error)
     }

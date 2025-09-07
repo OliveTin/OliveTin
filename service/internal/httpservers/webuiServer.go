@@ -37,7 +37,7 @@ func NewWebUIServer(cfg *config.Config) *webUIServer {
 }
 
 func (s *webUIServer) handleWebui(w http.ResponseWriter, r *http.Request) {
-	//dirName := path.Dir(r.URL.Path)
+	// dirName := path.Dir(r.URL.Path)
 
 	// Mangle requests for any path like /logs or /config to load the webui index.html
 	if path.Ext(r.URL.Path) == "" && r.URL.Path != "/" {

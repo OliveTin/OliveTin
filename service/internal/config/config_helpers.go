@@ -1,7 +1,7 @@
 package config
 
 // FindAction will return a action if there is a match on Title
-func (cfg *Config) FindAction(actionTitle string) *Action {
+func (cfg *Config) findAction(actionTitle string) *Action {
 	for _, action := range cfg.Actions {
 		if action.Title == actionTitle {
 			return action

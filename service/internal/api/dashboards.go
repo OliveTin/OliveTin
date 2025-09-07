@@ -37,6 +37,7 @@ func dashboardCfgToPb(rr *DashboardRenderRequest, dashboardTitle string) *apiv1.
 	return nil
 }
 
+//gocyclo:ignore
 func buildDefaultDashboard(rr *DashboardRenderRequest) *apiv1.Dashboard {
 	fieldset := &apiv1.DashboardComponent{
 		Type:     "fieldset",
