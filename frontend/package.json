@@ -36,7 +36,7 @@
 		"@xterm/xterm": "^5.5.0",
 		"picocrank": "^1.3.1",
 		"unplugin-vue-components": "^29.0.0",
-		"vite": "^7.1.4",
+		"vite": "^7.1.5",
 		"vue-router": "^4.5.1"
 	}
 }
