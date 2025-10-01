@@ -1,7 +1,9 @@
 'use strict'
 
 import 'femtocrank/style.css'
-import '/style.css'
+import './style.css'
+
+import 'iconify-icon';
 
 import { createClient } from '@connectrpc/connect'
 import { createConnectTransport } from '@connectrpc/connect-web'
