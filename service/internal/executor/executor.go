@@ -587,7 +587,7 @@ func stepExec(req *ExecutionRequest) bool {
 		}
 
 		req.logEntry.TimedOut = true
-		req.logEntry.Output += "OliveTin::timeout - this action timed out after " + fmt.Sprintf("%v", req.Binding.Action.Timeout) + " seconds. If you need more time for this action, set a longer timeout. See https://docs.olivetin.app/timeout.html for more help."
+		req.logEntry.Output += "OliveTin::timeout - this action timed out after " + fmt.Sprintf("%v", req.Binding.Action.Timeout) + " seconds. If you need more time for this action, set a longer timeout. See https://docs.olivetin.app/action_customization/timeouts.html for more help."
 	}
 
 	req.logEntry.DatetimeFinished = time.Now()
