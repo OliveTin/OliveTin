@@ -5,6 +5,12 @@
 # Listen on all addresses available, port 1337
 listenAddressSingleHTTPFrontend: 0.0.0.0:1337
 
+bannerMessage: "This is an early alpha version of OliveTin 3000. Many thanks are broken, many things will change."
+bannerCss: "background-color: #b2e4b2; color: black; font-size: small; text-align: center; padding: .6em; border-radius: 0.5em;"
+
+insecureAllowDumpSos: true
+insecureAllowDumpVars: true
+
 # Choose from INFO (default), WARN and DEBUG
 logLevel: "INFO"
 
@@ -99,7 +105,7 @@ actions:
   # Docs: https://docs.olivetin.app/solutions/container-control-panel/index.html
   - title: Restart Docker Container
     icon: restart
-    shell: docker restart {{ container }}
+    shell: docker restart {{ .CurrentEntity }}
     arguments:
       - name: container
         title: Container name
@@ -205,15 +211,15 @@ actions:
     shell: "echo 'Ping all servers'"
     icon: ping
 
-  - title: Start {{ container.Names }}
+  - title: Start {{ .CurrentEntity.Names }}
     icon: box
-    shell: docker start {{ container.Names }}
+    shell: docker start {{ .CurrentEntity.Names }}
     entity: container
     triggers: ["Update container entity file"]
 
-  - title: Stop {{ container.Names }}
+  - title: Stop {{ .CurrentEntity.Names }}
     icon: box
-    shell: docker stop {{ container.Names }}
+    shell: docker stop {{ .CurrentEntity.Names }}
     entity: container
     triggers: ["Update container entity file"]
 
@@ -287,7 +293,7 @@ dashboards:
       # actions grouped together without a folder.
       - type: fieldset
         entity: server
-        title: 'Server: {{ server.hostname }}'
+        title: 'Server: {{ .CurrentEntity.hostname }}'
         contents:
           # By default OliveTin will look for an action with a matching title
           # and put it on the dashboard.
@@ -306,7 +312,7 @@ dashboards:
   # This is the second dashboard.
   - title: My Containers
     contents:
-      - title: 'Container {{ container.Names }} ({{ container.Image }})'
+      - title: 'Container {{ .CurrentEntity.Names }} ({{ .CurrentEntity.Image }})'
         entity: container
         type: fieldset
         contents:
@@ -314,5 +320,5 @@ dashboards:
             title: |
               {{ container.RunningFor }} <br /><br /><strong>{{ container.State }}</strong>
 
-          - title: 'Start {{ container.Names }}'
-          - title: 'Stop {{ container.Names }}'
+          - title: 'Start {{ .CurrentEntity.Names }}'
+          - title: 'Stop {{ .CurrentEntity.Names }}'

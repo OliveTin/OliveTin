@@ -25,7 +25,7 @@ var (
 )
 
 func parseCommandForReplacements(shellCommand string, values map[string]string, entity any) (string, error) {
-	r := regexp.MustCompile(`{{ *?\.Arguments\.([a-zA-Z0-9_]+?) *?}}`)
+	r := regexp.MustCompile(`{{ *?([a-zA-Z0-9_]+?) *?}}`)
 	foundArgumentNames := r.FindAllStringSubmatch(shellCommand, -1)
 
 	for _, match := range foundArgumentNames {
@@ -66,7 +66,7 @@ func parseActionArguments(values map[string]string, action *config.Action, entit
 		}).Debugf("Arg assigned")
 	}
 
-	parsedShellCommand := entities.ParseTemplateWith(rawShellCommand, entity)
+	parsedShellCommand := entities.ParseTemplateWithArgs(rawShellCommand, entity, values)
 	redactedShellCommand := redactShellCommand(parsedShellCommand, action.Arguments, values)
 
 	if err != nil {

@@ -1,10 +1,11 @@
 package api
 
 import (
-	"connectrpc.com/connect"
 	"context"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"connectrpc.com/connect"
+	"github.com/stretchr/testify/assert"
 
 	log "github.com/sirupsen/logrus"
 
@@ -15,24 +16,27 @@ import (
 
 	"net/http"
 	"net/http/httptest"
+	"path"
 )
 
 func getNewTestServerAndClient(t *testing.T, injectedConfig *config.Config) (*httptest.Server, apiv1connect.OliveTinApiServiceClient) {
 	ex := executor.DefaultExecutor(injectedConfig)
 	ex.RebuildActionMap()
 
-	path, handler := GetNewHandler(ex)
-
-	path = "/api" + path
+	apiPath, apiHandler := GetNewHandler(ex)
 
 	mux := http.NewServeMux()
-	mux.HandleFunc(path, func(w http.ResponseWriter, r *http.Request) {
+	mux.Handle("/api/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		log.Infof("HTTP Request: %s %s", r.Method, r.URL.Path)
 
-		http.StripPrefix("/api/", handler)
-	})
+		// Translate /api/<service>/<method> to <service>/<method>
+		fn := path.Base(r.URL.Path)
+		r.URL.Path = apiPath + fn
 
-	log.Infof("API path is %s", path)
+		apiHandler.ServeHTTP(w, r)
+	}))
+
+	log.Infof("API path is %s", apiPath)
 
 	httpclient := &http.Client{}
 
@@ -40,7 +44,7 @@ func getNewTestServerAndClient(t *testing.T, injectedConfig *config.Config) (*ht
 
 	client := apiv1connect.NewOliveTinApiServiceClient(httpclient, ts.URL+"/api")
 
-	log.Infof("Test server URL is %s", ts.URL+path)
+	log.Infof("Test server URL is %s", ts.URL+"/api"+apiPath)
 
 	return ts, client
 }
@@ -59,11 +63,16 @@ func TestGetActionsAndStart(t *testing.T) {
 
 	conn, client := getNewTestServerAndClient(t, cfg)
 
-	respInit, err := client.Init(context.Background(), connect.NewRequest(&apiv1.InitRequest{}))
-	respGetReady, err := client.GetReadyz(context.Background(), connect.NewRequest(&apiv1.GetReadyzRequest{}))
+	respInit, errInit := client.Init(context.Background(), connect.NewRequest(&apiv1.InitRequest{}))
+	respGetReady, errReady := client.GetReadyz(context.Background(), connect.NewRequest(&apiv1.GetReadyzRequest{}))
 
-	if err != nil {
-		t.Errorf("GetDashboardComponentsRequest: %v", err)
+	if errInit != nil {
+		t.Errorf("Init request failed: %v", errInit)
+		return
+	}
+
+	if errReady != nil {
+		t.Errorf("GetReadyz request failed: %v", errReady)
 		return
 	}
 

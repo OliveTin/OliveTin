@@ -447,6 +447,13 @@ func stepParseArgs(req *ExecutionRequest) bool {
 func stepRequestAction(req *ExecutionRequest) bool {
 	metricActionsRequested.Inc()
 
+	// If there is no binding or action, do not proceed. Leave default
+	// log entry values (icon/title/id) and stop execution gracefully.
+	if req.Binding == nil || req.Binding.Action == nil {
+		log.Warnf("Action request has no binding/action; skipping execution")
+		return false
+	}
+
 	req.logEntry.ActionConfigTitle = req.Binding.Action.Title
 	req.logEntry.ActionTitle = entities.ParseTemplateWith(req.Binding.Action.Title, req.Binding.Entity)
 	req.logEntry.ActionIcon = req.Binding.Action.Icon

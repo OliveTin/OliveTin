@@ -257,26 +257,35 @@ func TestTypeSafetyCheckUnicodeIdentifier(t *testing.T) {
 		name     string
 		field    string
 		value    string
-		hasError bool
+		expectsError bool
 	}{
 		{"Valid unicode identifier", "name", "hello_world", false},
 		{"Valid with numbers", "name", "test123", false},
-		{"Valid with spaces", "name", "hello world", false},
-		{"Valid with path separators", "name", "path/to/file", false},
-		{"Valid with backslashes", "name", "path\\to\\file", false},
 		{"Valid with dots", "name", "file.txt", false},
 		{"Valid with underscores", "name", "my_file_name", false},
 		{"Invalid with special chars", "name", "hello@world", true},
 		{"Invalid with brackets", "name", "hello[world]", true},
+		{"Invalid with spaces", "name", "hello world", true},
+		{"Invalid with path separators", "name", "path/to/file", true},
+		{"Invalid with backslashes", "name", "path\\to\\file", true},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := TypeSafetyCheck(tt.field, tt.value, "unicode_identifier")
-			if tt.hasError {
-				assert.NotNil(t, err, "Expected error for value '%s'", tt.value)
+
+			if tt.expectsError {
+				if err == nil {
+					t.Errorf("Expected error for value '%s', but got none", tt.value)
+				} else {
+					t.Logf("Received expected error for value '%s': %v", tt.value, err)
+				}
 			} else {
-				assert.Nil(t, err, "Expected no error for value '%s', but got: %v", tt.value, err)
+				if err != nil {
+					t.Errorf("Expected no error for value '%s', but got: %v", tt.value, err)
+				} else {
+					t.Logf("No error for valid value '%s' as expected", tt.value)
+				}
 			}
 		})
 	}

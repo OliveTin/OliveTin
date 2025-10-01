@@ -11,10 +11,11 @@ import (
 
 var tpl = template.New("tpl")
 
-var legacyEntityRegex = regexp.MustCompile(`{{ ([a-zA-Z0-9_]+)\.*?([a-zA-Z0-9_\.]+) }}`)
+var legacyArgumentRegex = regexp.MustCompile(`{{ ([a-zA-Z0-9_]+) }}`)
+var legacyEntityPropertiesRegex = regexp.MustCompile(`{{ ([a-zA-Z0-9_]+)\.([a-zA-Z0-9_\.]+) }}`)
 
-func migrateLegacyArgumentNames(rawShellCommand string) string {
-	foundArgumentNames := legacyEntityRegex.FindAllStringSubmatch(rawShellCommand, -1)
+func migrateLegacyEntityProperties(rawShellCommand string) string {
+	foundArgumentNames := legacyEntityPropertiesRegex.FindAllStringSubmatch(rawShellCommand, -1)
 
 	for _, match := range foundArgumentNames {
 		entityName := match[1]
@@ -45,8 +46,28 @@ func migrateLegacyArgumentNames(rawShellCommand string) string {
 	return rawShellCommand
 }
 
+func migrateLegacyArgumentNames(rawShellCommand string) string {
+	foundArgumentNames := legacyArgumentRegex.FindAllStringSubmatch(rawShellCommand, -1)
+
+	for _, match := range foundArgumentNames {
+		argName := match[1]
+
+		if !strings.HasPrefix(argName, ".Arguments.") {
+			log.WithFields(log.Fields{
+				"old": argName,
+				"new": ".Arguments." + argName,
+			}).Warnf("Legacy variable name found, changing to Argument")
+
+			rawShellCommand = strings.ReplaceAll(rawShellCommand, argName, ".Arguments."+argName)
+		}
+	}
+
+	return rawShellCommand
+}
+
 func ParseTemplateWithArgs(source string, ent *Entity, args map[string]string) string {
 	source = migrateLegacyArgumentNames(source)
+	source = migrateLegacyEntityProperties(source)
 
 	ret := ""
 

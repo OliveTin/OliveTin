@@ -48,6 +48,9 @@ func StartSingleHTTPFrontend(cfg *config.Config, ex *executor.Executor) {
 	mux.Handle("/api/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fn := path.Base(r.URL.Path)
 
+		// Translate /api/foo/bar to /api/bar - this preserves compatibility
+		// with OliveTin 2k.
+
 		r.URL.Path = apiPath + fn
 
 		log.Debugf("SingleFrontend HTTP API Req URL after rewrite: %v", r.URL.Path)

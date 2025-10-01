@@ -1,8 +1,9 @@
 package executor
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 
 	acl "github.com/OliveTin/OliveTin/internal/acl"
 	config "github.com/OliveTin/OliveTin/internal/config"
@@ -39,6 +40,12 @@ func TestCreateExecutorAndExec(t *testing.T) {
 		Arguments: map[string]string{
 			"person": "yourself",
 		},
+	}
+
+	// Ensure bindings are available and set the binding to the only configured action
+	e.RebuildActionMap()
+	if len(cfg.Actions) > 0 {
+		req.Binding = e.FindBindingWithNoEntity(cfg.Actions[0])
 	}
 
 	assert.NotNil(t, e, "Create an executor")
@@ -114,11 +121,11 @@ func TestGetLogsEmpty(t *testing.T) {
 
 	assert.Equal(t, int64(10), cfg.LogHistoryPageSize, "Logs page size should be 10")
 
-	logs, remaining := e.GetLogTrackingIds(0, 10)
+	logs, paging := e.GetLogTrackingIds(0, 10)
 
 	assert.NotNil(t, logs, "Logs should not be nil")
 	assert.Equal(t, 0, len(logs), "No logs yet")
-	assert.Equal(t, int64(0), remaining, "There should be no remaining logs")
+	assert.Equal(t, int64(0), paging.CountRemaining, "There should be no remaining logs")
 }
 
 func TestGetLogsLessThanPageSize(t *testing.T) {
@@ -130,12 +137,15 @@ func TestGetLogsLessThanPageSize(t *testing.T) {
 	})
 	cfg.Sanitize()
 
+	// Rebuild action map to include newly added action
+	e.RebuildActionMap()
+
 	assert.Equal(t, int64(10), cfg.LogHistoryPageSize, "Logs page size should be 10")
 
-	logEntries, remaining := e.GetLogTrackingIds(0, 10)
+	logEntries, paging := e.GetLogTrackingIds(0, 10)
 
 	assert.Equal(t, 0, len(logEntries), "There should be 0 logs")
-	assert.Zero(t, remaining, "There should be no remaining logs")
+	assert.Zero(t, paging.CountRemaining, "There should be no remaining logs")
 
 	execNewReqAndWait(e, "blat", cfg)
 	execNewReqAndWait(e, "blat", cfg)
@@ -145,10 +155,10 @@ func TestGetLogsLessThanPageSize(t *testing.T) {
 	execNewReqAndWait(e, "blat", cfg)
 	execNewReqAndWait(e, "blat", cfg)
 
-	logEntries, remaining = e.GetLogTrackingIds(0, 10)
+	logEntries, paging = e.GetLogTrackingIds(0, 10)
 
 	assert.Equal(t, 7, len(logEntries), "There should be 7 logs")
-	assert.Zero(t, remaining, "There should be no remaining logs")
+	assert.Zero(t, paging.CountRemaining, "There should be no remaining logs")
 
 	execNewReqAndWait(e, "blat", cfg)
 	execNewReqAndWait(e, "blat", cfg)
@@ -156,16 +166,29 @@ func TestGetLogsLessThanPageSize(t *testing.T) {
 	execNewReqAndWait(e, "blat", cfg)
 	execNewReqAndWait(e, "blat", cfg)
 
-	logEntries, remaining = e.GetLogTrackingIds(0, 10)
+	logEntries, paging = e.GetLogTrackingIds(0, 10)
 
 	assert.Equal(t, 10, len(logEntries), "There should be 10 logs")
-	assert.Equal(t, int64(2), remaining, "There should be 1 remaining logs")
+	assert.Equal(t, int64(2), paging.CountRemaining, "There should be 1 remaining logs")
 }
 
 func execNewReqAndWait(e *Executor, title string, cfg *config.Config) {
 	req := &ExecutionRequest{
 		//		ActionTitle: title,
 		Cfg: cfg,
+	}
+
+	// Ensure we have a binding for the requested title
+	e.RebuildActionMap()
+	var action *config.Action
+	for _, a := range cfg.Actions {
+		if a.Title == title {
+			action = a
+			break
+		}
+	}
+	if action != nil {
+		req.Binding = e.FindBindingWithNoEntity(action)
 	}
 
 	wg, _ := e.ExecRequest(req)
@@ -245,6 +268,9 @@ func TestMangleInvalidArgumentValues(t *testing.T) {
 	cfg.Actions = append(cfg.Actions, a1)
 	cfg.Sanitize()
 
+	// Build bindings for newly added action
+	e.RebuildActionMap()
+
 	req := ExecutionRequest{
 		//		Action:            a1,
 		AuthenticatedUser: acl.UserFromSystem(cfg, "testuser"),
@@ -253,6 +279,9 @@ func TestMangleInvalidArgumentValues(t *testing.T) {
 			"date": "1990-01-10T12:00", // Invalid format, should be without seconds
 		},
 	}
+
+	// Set binding to our appended action
+	req.Binding = e.FindBindingWithNoEntity(a1)
 
 	wg, _ := e.ExecRequest(&req)
 	wg.Wait()
