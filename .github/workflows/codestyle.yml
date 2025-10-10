@@ -31,5 +31,5 @@ jobs:
       - name: service
         run: make -wC service codestyle
 
-      - name: webui
-        run: make -wC webui.dev codestyle
+      - name: frontend
+        run: make -wC frontend codestyle
