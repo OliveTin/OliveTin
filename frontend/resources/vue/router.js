@@ -10,7 +10,6 @@ const routes = [
     path: '/',
     name: 'Actions',
     component: () => import('./Dashboard.vue'),
-    props: { title: 'default' },
     meta: { title: 'Actions', icon: DashboardSquare01Icon }
   },
   {
@@ -18,21 +17,21 @@ const routes = [
     name: 'Dashboard',
     component: () => import('./Dashboard.vue'),
     props: true,
-    meta: { title: 'OliveTin - Dashboard' }
+    meta: { title: 'Dashboard' }
   },
   {
     path: '/actionBinding/:bindingId/argumentForm',
     name: 'ActionBinding',
     component: () => import('./views/ArgumentForm.vue'),
     props: true,
-    meta: { title: 'OliveTin - Action Binding' }
+    meta: { title: 'Action Binding' }
   },
   {
     path: '/logs',
     name: 'Logs',
     component: () => import('./views/LogsListView.vue'),
     meta: { 
-      title: 'OliveTin - Logs',
+      title: 'Logs',
       icon: LeftToRightListDashIcon
     }
   },
@@ -41,7 +40,7 @@ const routes = [
     name: 'Entities',
     component: () => import('./views/EntitiesView.vue'),
     meta: { 
-      title: 'OliveTin - Entities',
+      title: 'Entities',
       icon: CellsIcon
     }
   },
@@ -64,7 +63,7 @@ const routes = [
     component: () => import('./views/ExecutionView.vue'),
     props: true,
     meta: { 
-      title: 'OliveTin - Execution', 
+      title: 'Execution', 
       breadcrumb: [
         { name: "Logs", href: "/logs" },
         { name: "Execution" },
@@ -76,7 +75,7 @@ const routes = [
     name: 'Diagnostics',
     component: () => import('./views/DiagnosticsView.vue'),
     meta: { 
-      title: 'OliveTin - Diagnostics',
+      title: 'Diagnostics',
       icon: Wrench01Icon
     }
   },
@@ -84,13 +83,13 @@ const routes = [
     path: '/login',
     name: 'Login',
     component: () => import('./views/LoginView.vue'),
-    meta: { title: 'OliveTin - Login' }
+    meta: { title: 'Login' }
   },
   {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
     component: () => import('./views/NotFoundView.vue'),
-    meta: { title: 'OliveTin - Page Not Found' }
+    meta: { title: 'Page Not Found' }
   }
 ]
 
@@ -110,7 +109,7 @@ const router = createRouter({
 // Navigation guard to update page title
 router.beforeEach((to, from, next) => {
   if (to.meta && to.meta.title) {
-    document.title = to.meta.title
+    document.title = to.meta.title + " - OliveTin"
   }
   next()
 })

@@ -1,5 +1,5 @@
 <template>
-	<Section :title="'Execution Results: ' + title">
+	<Section :title="'Execution Results: ' + title" id = "execution-results-popup">
     <template #toolbar>
 			<button @click="toggleSize" title="Toggle dialog size">
 				<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
@@ -16,7 +16,7 @@
 
 					<dt>Status</dt>
 					<dd>
-						<ActionStatusDisplay :log-entry="logEntry" />
+						<ActionStatusDisplay :log-entry="logEntry" id = "execution-dialog-status" />
 					</dd>
 				</dl>
         <span class="icon" role="img" v-html="icon" style = "align-self: start"></span>
@@ -38,7 +38,7 @@
 						<HugeiconsIcon :icon="WorkoutRunIcon" />
 						Rerun
 					</button>
-					<button :disabled="!canKill" @click="killAction" title="Kill">
+					<button :disabled="!canKill" @click="killAction" title="Kill" id = "execution-dialog-kill-action">
 						<HugeiconsIcon :icon="Cancel02Icon" />
 						Kill
 					</button>

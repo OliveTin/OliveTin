@@ -5,10 +5,11 @@ import (
 
 	apiv1 "github.com/OliveTin/OliveTin/gen/olivetin/api/v1"
 	config "github.com/OliveTin/OliveTin/internal/config"
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/exp/slices"
 )
 
-func dashboardCfgToPb(rr *DashboardRenderRequest, dashboardTitle string) *apiv1.Dashboard {
+func renderDashboard(rr *DashboardRenderRequest, dashboardTitle string) *apiv1.Dashboard {
 	if dashboardTitle == "default" {
 		return buildDefaultDashboard(rr)
 	}
@@ -18,20 +19,18 @@ func dashboardCfgToPb(rr *DashboardRenderRequest, dashboardTitle string) *apiv1.
 			continue
 		}
 
+		if len(dashboard.Contents) == 0 {
+			log.WithFields(log.Fields{
+				"dashboard": dashboard.Title,
+				"username":  rr.AuthenticatedUser.Username,
+			}).Debugf("Dashboard has no readable contents, so it will not be visible in the web ui")
+			return nil
+		}
+
 		return &apiv1.Dashboard{
 			Title:    dashboard.Title,
 			Contents: sortActions(removeNulls(getDashboardComponentContents(dashboard, rr))),
 		}
-
-		/*
-			if len(pbdb.Contents) == 0 {
-				log.WithFields(log.Fields{
-					"dashboard": dashboard.Title,
-					"username":  rr.AuthenticatedUser.Username,
-				}).Debugf("Dashboard has no readable contents, so it will not be visible in the web ui")
-				continue
-			}
-		*/
 	}
 
 	return nil
@@ -39,15 +38,18 @@ func dashboardCfgToPb(rr *DashboardRenderRequest, dashboardTitle string) *apiv1.
 
 //gocyclo:ignore
 func buildDefaultDashboard(rr *DashboardRenderRequest) *apiv1.Dashboard {
-	fieldset := &apiv1.DashboardComponent{
-		Type:     "fieldset",
-		Contents: make([]*apiv1.DashboardComponent, 0),
+	db := &apiv1.Dashboard{
 		Title:    "Default",
+		Contents: make([]*apiv1.DashboardComponent, 0),
 	}
 
-	actions := make([]*apiv1.Action, 0)
+	fieldset := &apiv1.DashboardComponent{
+		Type:     "fieldset",
+		Title:    "Actions",
+		Contents: make([]*apiv1.DashboardComponent, 0),
+	}
 
-	for id, binding := range rr.ex.MapActionIdToBinding {
+	for _, binding := range rr.ex.MapActionIdToBinding {
 		if binding.Action.Hidden {
 			continue
 		}
@@ -56,10 +58,8 @@ func buildDefaultDashboard(rr *DashboardRenderRequest) *apiv1.Dashboard {
 			continue
 		}
 
-		actions = append(actions, buildAction(id, binding, rr))
-	}
+		action := buildAction(binding, rr)
 
-	for _, action := range actions {
 		fieldset.Contents = append(fieldset.Contents, &apiv1.DashboardComponent{
 			Type:   "link",
 			Title:  action.Title,
@@ -68,12 +68,12 @@ func buildDefaultDashboard(rr *DashboardRenderRequest) *apiv1.Dashboard {
 		})
 	}
 
-	fieldset.Contents = sortActions(fieldset.Contents)
-
-	return &apiv1.Dashboard{
-		Title:    "Default",
-		Contents: []*apiv1.DashboardComponent{fieldset},
+	if len(fieldset.Contents) > 0 {
+		fieldset.Contents = sortActions(fieldset.Contents)
+		db.Contents = append(db.Contents, fieldset)
 	}
+
+	return db
 }
 
 func sortActions(components []*apiv1.DashboardComponent) []*apiv1.DashboardComponent {
@@ -113,12 +113,25 @@ func removeNulls(components []*apiv1.DashboardComponent) []*apiv1.DashboardCompo
 func getDashboardComponentContents(dashboard *config.DashboardComponent, rr *DashboardRenderRequest) []*apiv1.DashboardComponent {
 	ret := make([]*apiv1.DashboardComponent, 0)
 
+	rootFieldset := &apiv1.DashboardComponent{
+		Type:     "fieldset",
+		Title:    "Actions",
+		Contents: make([]*apiv1.DashboardComponent, 0),
+	}
+
 	for _, subitem := range dashboard.Contents {
 		if subitem.Type == "fieldset" && subitem.Entity != "" {
 			ret = append(ret, buildEntityFieldsets(subitem.Entity, subitem, rr)...)
-		} else {
+		} else if subitem.Type == "fieldset" {
+			// Handle regular fieldsets by creating them directly
 			ret = append(ret, buildDashboardComponentSimple(subitem, rr))
+		} else {
+			rootFieldset.Contents = append(rootFieldset.Contents, buildDashboardComponentSimple(subitem, rr))
 		}
+	}
+
+	if len(rootFieldset.Contents) > 0 {
+		ret = append(ret, rootFieldset)
 	}
 
 	return ret

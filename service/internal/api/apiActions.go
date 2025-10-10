@@ -15,27 +15,16 @@ type DashboardRenderRequest struct {
 }
 
 func (rr *DashboardRenderRequest) findAction(title string) *apiv1.Action {
-	for id, binding := range rr.ex.MapActionIdToBinding {
+	rr.ex.MapActionIdToBindingLock.RLock()
+	defer rr.ex.MapActionIdToBindingLock.RUnlock()
+
+	for _, binding := range rr.ex.MapActionIdToBinding {
 		if binding.Action.Title == title {
-			return buildAction(id, binding, rr)
+			return buildAction(binding, rr)
 		}
 	}
 
 	return nil
-}
-
-func buildDashboardResponse(ex *executor.Executor, cfg *config.Config, user *acl.AuthenticatedUser, dashboardTitle string) *apiv1.GetDashboardResponse {
-	res := &apiv1.GetDashboardResponse{}
-
-	rr := &DashboardRenderRequest{
-		AuthenticatedUser: user,
-		cfg:               cfg,
-		ex:                ex,
-	}
-
-	res.Dashboard = dashboardCfgToPb(rr, dashboardTitle)
-
-	return res
 }
 
 func buildEffectivePolicy(policy *config.ConfigurationPolicy) *apiv1.EffectivePolicy {
@@ -47,11 +36,11 @@ func buildEffectivePolicy(policy *config.ConfigurationPolicy) *apiv1.EffectivePo
 	return ret
 }
 
-func buildAction(bindingId string, actionBinding *executor.ActionBinding, rr *DashboardRenderRequest) *apiv1.Action {
+func buildAction(actionBinding *executor.ActionBinding, rr *DashboardRenderRequest) *apiv1.Action {
 	action := actionBinding.Action
 
 	btn := apiv1.Action{
-		BindingId:    bindingId,
+		BindingId:    actionBinding.ID,
 		Title:        entities.ParseTemplateWith(action.Title, actionBinding.Entity),
 		Icon:         entities.ParseTemplateWith(action.Icon, actionBinding.Entity),
 		CanExec:      acl.IsAllowedExec(rr.cfg, rr.AuthenticatedUser, action),

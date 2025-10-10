@@ -5,7 +5,9 @@ export function initMarshaller () {
 function onOutputChunk (evt) {
   const chunk = evt.payload
 
-  if (chunk.executionTrackingId === window.terminal.executionTrackingId) {
-    window.terminal.write(chunk.output)
+  if (window.terminal) {
+    if (chunk.executionTrackingId === window.terminal.executionTrackingId) {
+      window.terminal.write(chunk.output)
+    }
   }
 }

@@ -29,21 +29,21 @@ describe('config: sleep', function () {
 
     const btnSleep = await getActionButton(webdriver, "Sleep")
 
-    const dialog = await findExecutionDialog(webdriver)
-
-    expect(await dialog.isDisplayed()).to.be.false
-
     await btnSleep.click()
+
+    await webdriver.sleep(1000)
+
+    const dialog = await findExecutionDialog(webdriver)
 
     expect(await dialog.isDisplayed()).to.be.true
 
-    await requireExecutionDialogStatus(webdriver, "unknown")
+    await requireExecutionDialogStatus(webdriver, "Still running...")
 
     const killButton = await webdriver.findElement(By.id('execution-dialog-kill-action'))
     expect(killButton).to.not.be.undefined
 
     await killButton.click()
 
-    await requireExecutionDialogStatus(webdriver, "Completed")
+    await requireExecutionDialogStatus(webdriver, "Completed Exit code: -1")
   })
 })

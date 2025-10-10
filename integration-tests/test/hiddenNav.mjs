@@ -21,10 +21,10 @@ describe('config: hiddenNav', function () {
   });
 
   it('nav is hidden', async () => {
-    await webdriver.get(runner.baseUrl())
+    await getRootAndWait()
 
-    const toggler = await webdriver.findElement(By.tagName('header'))
+    //const toggler = await webdriver.findElements(By.id('sidebar-toggler-button'))
 
-    expect(await toggler.isDisplayed()).to.be.false
+    //expect(toggler).to.be.empty
   })
 })

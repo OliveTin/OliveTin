@@ -34,6 +34,7 @@ var (
 )
 
 type ActionBinding struct {
+	ID            string
 	Action        *config.Action
 	Entity        *entities.Entity
 	ConfigOrder   int

@@ -62,6 +62,8 @@ const updateIterationTimestamp = ref(0)
 
 function getUnicodeIcon(icon) {
   if (icon === '') {
+	console.log('icon not found	', icon)
+
 	return '&#x1f4a9;'
   } else {
 	return unescape(icon)

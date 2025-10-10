@@ -310,7 +310,7 @@ func (api *oliveTinAPI) GetActionBinding(ctx ctx.Context, req *connect.Request[a
 	binding := api.executor.FindBindingByID(req.Msg.BindingId)
 
 	return connect.NewResponse(&apiv1.GetActionBindingResponse{
-		Action: buildAction(req.Msg.BindingId, binding, &DashboardRenderRequest{
+		Action: buildAction(binding, &DashboardRenderRequest{
 			cfg:               api.cfg,
 			AuthenticatedUser: acl.UserFromContext(ctx, api.cfg),
 			ex:                api.executor,
@@ -325,7 +325,23 @@ func (api *oliveTinAPI) GetDashboard(ctx ctx.Context, req *connect.Request[apiv1
 		return nil, connect.NewError(connect.CodePermissionDenied, fmt.Errorf("guests are not allowed to access the dashboard"))
 	}
 
-	res := buildDashboardResponse(api.executor, api.cfg, user, req.Msg.Title)
+	dashboardRenderRequest := &DashboardRenderRequest{
+		AuthenticatedUser: user,
+		cfg:               api.cfg,
+		ex:                api.executor,
+	}
+
+	if req.Msg.Title == "default" || req.Msg.Title == "" || req.Msg.Title == "Actions" {
+		db := buildDefaultDashboard(dashboardRenderRequest)
+		res := &apiv1.GetDashboardResponse{
+			Dashboard: db,
+		}
+		return connect.NewResponse(res), nil
+	}
+
+	res := &apiv1.GetDashboardResponse{
+		Dashboard: renderDashboard(dashboardRenderRequest, req.Msg.Title),
+	}
 
 	/*
 		if len(res.Actions) == 0 {
@@ -338,8 +354,6 @@ func (api *oliveTinAPI) GetDashboard(ctx ctx.Context, req *connect.Request[apiv1
 			}).Warn("Zero actions found for user")
 		}
 	*/
-
-	log.Tracef("GetDashboardComponents: %v", res)
 
 	return connect.NewResponse(res), nil
 }
@@ -566,22 +580,43 @@ func (api *oliveTinAPI) Init(ctx ctx.Context, req *connect.Request[apiv1.InitReq
 		OAuth2Providers:           buildPublicOAuth2ProvidersList(api.cfg),
 		AdditionalLinks:           buildAdditionalLinks(api.cfg.AdditionalNavigationLinks),
 		StyleMods:                 api.cfg.StyleMods,
-		RootDashboards:            buildRootDashboards(api.cfg.Dashboards),
+		RootDashboards:            api.buildRootDashboards(user, api.cfg.Dashboards),
 		AuthenticatedUser:         user.Username,
 		AuthenticatedUserProvider: user.Provider,
 		EffectivePolicy:           buildEffectivePolicy(user.EffectivePolicy),
 		BannerMessage:             api.cfg.BannerMessage,
 		BannerCss:                 api.cfg.BannerCSS,
+		ShowDiagnostics:           user.EffectivePolicy.ShowDiagnostics,
+		ShowLogList:               user.EffectivePolicy.ShowLogList,
 	}
 
 	return connect.NewResponse(res), nil
 }
 
-func buildRootDashboards(dashboards []*config.DashboardComponent) []string {
+func (api *oliveTinAPI) buildRootDashboards(user *acl.AuthenticatedUser, dashboards []*config.DashboardComponent) []string {
 	var rootDashboards []string
 
+	dashboardRenderRequest := &DashboardRenderRequest{
+		AuthenticatedUser: user,
+		cfg:               api.cfg,
+		ex:                api.executor,
+	}
+
+	defaultDashboard := buildDefaultDashboard(dashboardRenderRequest)
+
+	if defaultDashboard != nil && len(defaultDashboard.Contents) > 0 {
+		log.Infof("defaultDashboard: %+v", defaultDashboard.Contents)
+		rootDashboards = append(rootDashboards, "Actions")
+	}
+
 	for _, dashboard := range dashboards {
-		rootDashboards = append(rootDashboards, dashboard.Title)
+		// We have to build the dashboard response instead of just looping over config.dashboards,
+		// because we need to check if the user has access to the dashboard
+		db := renderDashboard(dashboardRenderRequest, dashboard.Title)
+
+		if db != nil {
+			rootDashboards = append(rootDashboards, dashboard.Title)
+		}
 	}
 
 	return rootDashboards
