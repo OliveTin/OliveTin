@@ -5,6 +5,7 @@ go 1.24
 toolchain go1.24.4
 
 require (
+	connectrpc.com/connect v1.18.1
 	github.com/Masterminds/semver v1.5.0
 	github.com/MicahParks/keyfunc/v3 v3.4.0
 	github.com/alexedwards/argon2id v1.0.0
@@ -12,11 +13,11 @@ require (
 	github.com/fsnotify/fsnotify v1.9.0
 	github.com/fzipp/gocyclo v0.6.0
 	github.com/go-critic/go-critic v0.13.0
-	github.com/golang-jwt/jwt/v4 v4.5.2
 	github.com/golang-jwt/jwt/v5 v5.2.2
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/websocket v1.5.3
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.1
+	github.com/jamesread/golure v0.0.0-20250619190948-fa38cbd93cc4
 	github.com/prometheus/client_golang v1.22.0
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/sirupsen/logrus v1.9.3
@@ -25,7 +26,6 @@ require (
 	golang.org/x/exp v0.0.0-20250620022241-b7579e27df2b
 	golang.org/x/oauth2 v0.30.0
 	golang.org/x/sys v0.33.0
-	google.golang.org/genproto/googleapis/api v0.0.0-20250707201910-8d1bb00bc6a7
 	google.golang.org/grpc v1.73.0
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.5.1
 	google.golang.org/protobuf v1.36.6
@@ -46,7 +46,6 @@ require (
 	buf.build/go/spdx v0.2.0 // indirect
 	buf.build/go/standard v0.1.0 // indirect
 	cel.dev/expr v0.24.0 // indirect
-	connectrpc.com/connect v1.18.1 // indirect
 	connectrpc.com/otelconnect v0.7.2 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20250102033503-faa5f7b0171c // indirect
 	github.com/MicahParks/jwkset v0.9.6 // indirect
@@ -88,7 +87,6 @@ require (
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/go-containerregistry v0.20.6 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
-	github.com/jamesread/golure v0.0.0-20250619190948-fa38cbd93cc4 // indirect
 	github.com/jdx/go-netrc v1.0.0 // indirect
 	github.com/klauspost/compress v1.18.0 // indirect
 	github.com/klauspost/pgzip v1.2.6 // indirect
@@ -113,7 +111,7 @@ require (
 	github.com/quasilyte/regex/syntax v0.0.0-20210819130434-b3f0c404a727 // indirect
 	github.com/quasilyte/stdinfo v0.0.0-20220114132959-f7386bf02567 // indirect
 	github.com/quic-go/qpack v0.5.1 // indirect
-	github.com/quic-go/quic-go v0.53.0 // indirect
+	github.com/quic-go/quic-go v0.54.1 // indirect
 	github.com/rs/cors v1.11.1 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/sagikazarmark/locafero v0.9.0 // indirect
@@ -149,6 +147,7 @@ require (
 	golang.org/x/text v0.26.0 // indirect
 	golang.org/x/time v0.12.0 // indirect
 	golang.org/x/tools v0.34.0 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20250707201910-8d1bb00bc6a7 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250707201910-8d1bb00bc6a7 // indirect
 	pluginrpc.com/pluginrpc v0.5.0 // indirect
 )
