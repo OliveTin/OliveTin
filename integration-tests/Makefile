@@ -4,7 +4,7 @@ test-install:
 	npm install --no-fund
 
 test-run:
-	npx mocha -t 10000
+	npx mocha
 
 find-flakey-tests:
 	echo "Running test-run infinately"

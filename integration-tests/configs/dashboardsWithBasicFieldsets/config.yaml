@@ -2,12 +2,22 @@ logLevel: debug
 
 actions:
   - title: Ping
+    shell: echo "Ping executed"
+    icon: ping
 
   - title: Action 1
+    shell: echo "Action 1 executed"
+    icon: check
   - title: Action 2
+    shell: echo "Action 2 executed"
+    icon: check
 
   - title: Action 3
+    shell: echo "Action 3 executed"
+    icon: check
   - title: Action 4
+    shell: echo "Action 4 executed"
+    icon: check
 
 dashboards:
   - title: Test

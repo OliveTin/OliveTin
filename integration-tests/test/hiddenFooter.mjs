@@ -24,8 +24,8 @@ describe('config: hiddenFooter', function () {
   it('Check that footer is hidden', async () => {
     await webdriver.get(runner.baseUrl())
 
-    const footer = await webdriver.findElement(By.tagName('footer'))
-
-    expect(await footer.isDisplayed()).to.be.false
+    // Pass when footer element is not found, fail if it exists
+    const footers = await webdriver.findElements(By.tagName('footer'))
+    expect(footers.length).to.equal(0)
   })
 })

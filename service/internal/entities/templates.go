@@ -20,26 +20,29 @@ func migrateLegacyEntityProperties(rawShellCommand string) string {
 	for _, match := range foundArgumentNames {
 		entityName := match[1]
 		argName := match[2]
+		fullMatch := match[0] // The entire matched string like "{{ server.hostname }}"
 
 		if strings.Contains(argName, ".") {
-			replacement := ".CurrentEntity"
+			replacement := "{{ .CurrentEntity." + argName + " }}"
 
-			rawShellCommand = strings.ReplaceAll(rawShellCommand, entityName, replacement)
+			rawShellCommand = strings.ReplaceAll(rawShellCommand, fullMatch, replacement)
 
 			log.WithFields(log.Fields{
 				"old": entityName,
-				"new": replacement,
+				"new": ".CurrentEntity",
 			}).Warnf("Legacy entity variable name found, changing to CurrentEntity")
 			continue
 		}
 
 		if !strings.HasPrefix(argName, ".Arguments.") {
+			replacement := "{{ .CurrentEntity." + argName + " }}"
+
+			rawShellCommand = strings.ReplaceAll(rawShellCommand, fullMatch, replacement)
+
 			log.WithFields(log.Fields{
 				"old": argName,
-				"new": ".Arguments." + argName,
-			}).Warnf("Legacy variable name found, changing to Argument")
-
-			rawShellCommand = strings.ReplaceAll(rawShellCommand, argName, ".Arguments."+argName)
+				"new": ".CurrentEntity." + argName,
+			}).Warnf("Legacy variable name found, changing to CurrentEntity")
 		}
 	}
 

@@ -1,9 +1,9 @@
 <template>
-  <section>
+  <section id = "argument-popup">
     <div class="section-header">
       <h2>Start action: {{ title }}</h2>
     </div>
-    <div class="section-content">
+    <div class="section-content padding">
       <form @submit.prevent="handleSubmit">
         <template v-if="actionArguments.length > 0">
 
@@ -18,13 +18,21 @@
               </option>
             </datalist>
 
-            <component :is="getInputComponent(arg)" :id="arg.name" :name="arg.name" :value="getArgumentValue(arg)"
-              :list="arg.suggestions ? `${arg.name}-choices` : undefined" :type="getInputType(arg)"
+            <select v-if="getInputComponent(arg) === 'select'" :id="arg.name" :name="arg.name" :value="getArgumentValue(arg)"
+              :required="arg.required" @input="handleInput(arg, $event)" @change="handleChange(arg, $event)">
+              <option v-for="choice in arg.choices" :key="choice.value" :value="choice.value">
+                {{ choice.title || choice.value }}
+              </option>
+            </select>
+            
+            <component v-else :is="getInputComponent(arg)" :id="arg.name" :name="arg.name" :value="getArgumentValue(arg)"
+              :list="arg.suggestions ? `${arg.name}-choices` : undefined" 
+              :type="getInputComponent(arg) !== 'select' ? getInputType(arg) : undefined"
               :rows="arg.type === 'raw_string_multiline' ? 5 : undefined"
               :step="arg.type === 'datetime' ? 1 : undefined" :pattern="getPattern(arg)" :required="arg.required"
               @input="handleInput(arg, $event)" @change="handleChange(arg, $event)" />
 
-            <span v-if="arg.description" class="argument-description" v-html="arg.description"></span>
+            <span class="argument-description" v-html="arg.description"></span>
           </template>
         </template>
         <div v-else>
@@ -90,7 +98,7 @@ async function setup() {
   hasConfirmation.value = false
 
   // Initialize values from query params or defaults
-  arguments.value.forEach(arg => {
+  actionArguments.value.forEach(arg => {
     const paramValue = getQueryParamValue(arg.name)
     argValues.value[arg.name] = paramValue !== null ? paramValue : arg.defaultValue || ''
 
@@ -195,7 +203,7 @@ function updateUrlWithArg(name, value) {
     const url = new URL(window.location.href)
 
     // Don't add passwords to URL
-    const arg = arguments.value.find(a => a.name === name)
+    const arg = actionArguments.value.find(a => a.name === name)
     if (arg && arg.type === 'password') {
       return
     }
@@ -208,7 +216,7 @@ function updateUrlWithArg(name, value) {
 function getArgumentValues() {
   const ret = []
 
-  for (const arg of arguments.value) {
+  for (const arg of actionArguments.value) {
     let value = argValues.value[arg.name] || ''
 
     if (arg.type === 'checkbox') {
@@ -228,7 +236,7 @@ function handleSubmit() {
   // Validate all inputs
   let isValid = true
 
-  for (const arg of arguments.value) {
+  for (const arg of actionArguments.value) {
     const value = argValues.value[arg.name]
     if (arg.required && (!value || value === '')) {
       formErrors.value[arg.name] = 'This field is required'

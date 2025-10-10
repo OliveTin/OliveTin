@@ -303,6 +303,8 @@ message InitResponse {
 	EffectivePolicy effective_policy = 18;
     string banner_message = 19;
     string banner_css = 20;
+	bool show_diagnostics = 21;
+	bool show_log_list = 22;
 }
 
 message AdditionalLink {

@@ -1,5 +1,5 @@
 import { describe, it, before, after } from 'mocha'
-import { expect } from 'chai'
+import { expect, assert } from 'chai'
 import { By, until, Condition } from 'selenium-webdriver'
 //import * as waitOn from 'wait-on'
 import {
@@ -27,24 +27,37 @@ describe('config: dashboards with basic fieldsets', function () {
     await getRootAndWait()
 
     const title = await webdriver.getTitle()
-    expect(title).to.be.equal("OliveTin » Test")
+    expect(title).to.be.equal("Test - OliveTin")
+
+    await openSidebar()
 
     const navigationLinks = await getNavigationLinks()
-    expect(navigationLinks.length).to.be.equal(2, 'Expected the nav to only have 2 links')
+    assert.equal(navigationLinks.length, 5, 'Expected the nav to only have 5 links') // test dashboard + logs + diagnostics + entities + separator
 
     const firstLink = await navigationLinks[0]
 
-    expect(await firstLink.getAttribute('id')).to.be.equal('showActions', 'Expected the first link to be the actions link')
-    expect(await firstLink.isDisplayed()).to.be.false
-    
-    const secondLink = await navigationLinks[1]
-    expect(await secondLink.getAttribute('href')).to.be.equal('http://localhost:1337/Test', 'Expected the second link to be the test dashboard with basic fieldsets link')
+    expect(await firstLink.getAttribute('title')).to.be.equal('Test', 'Expected the first link to be the actions link')
 
-    const actionButtons = await getActionButtons('Test')
+    const actionButtons = await getActionButtons()
     expect(actionButtons).to.have.length(5, 'Expected 5 action buttons')
 
-    const fieldsets = await webdriver.findElements(By.css('section[title="Test"] fieldset'))
-    expect(fieldsets).to.have.length(3, 'Expected 3 fieldsets in the Test dashboard')
+    // Check that we have the expected number of fieldsets
+    const allFieldsets = await webdriver.findElements(By.css('fieldset'))
+    expect(allFieldsets).to.have.length(5, 'Expected 5 fieldsets total')
+    
+    // Check that we have fieldsets with the expected titles
+    const fieldsetTitles = []
+    for (let i = 0; i < allFieldsets.length; i++) {
+      const legend = await allFieldsets[i].findElements(By.css('legend'))
+      if (legend.length > 0) {
+        const title = await legend[0].getText()
+        fieldsetTitles.push(title)
+      }
+    }
+    
+    // We should have fieldsets for: Fieldset 1, Fieldset 2, and Actions fieldsets
+    expect(fieldsetTitles).to.include('Fieldset 1')
+    expect(fieldsetTitles).to.include('Fieldset 2')
 
   })
 })

@@ -4,10 +4,12 @@ import { expect } from 'chai'
 import { Condition } from 'selenium-webdriver'
 
 export async function getActionButtons (dashboardTitle = null) {
-  if (dashboardTitle == null) { 
-    return await webdriver.findElement(By.id('contentActions')).findElements(By.tagName('button'))
+  // New Vue UI renders action buttons using ActionButton.vue structure
+  // Each button lives under a container with class .action-button
+  if (dashboardTitle == null) {
+    return await webdriver.findElements(By.css('.action-button button'))
   } else {
-    return await webdriver.findElements(By.css('section[title="' + dashboardTitle + '"] button'))
+    return await webdriver.findElements(By.css('section[title="' + dashboardTitle + '"] .action-button button'))
   }
 }
 
@@ -40,8 +42,9 @@ export function takeScreenshot (webdriver, title) {
   return webdriver.takeScreenshot().then((img) => {
     fs.mkdirSync('screenshots', { recursive: true });
 
+  title = title.replaceAll('config: ', '')
 	title = title.replaceAll(/[\(\)\|\*\<\>\:]/g, "_")
-	title = 'failed-test.' + title
+	title = title + '.failed-test'
 
     fs.writeFileSync('screenshots/' + title + '.png', img, 'base64')
   })
@@ -49,11 +52,13 @@ export function takeScreenshot (webdriver, title) {
 
 export async function getRootAndWait() {
   await webdriver.get(runner.baseUrl())
-  await webdriver.wait(new Condition('wait for initial-marshal-complete', async function() {
+  await webdriver.wait(new Condition('wait for loaded-dashboard', async function() {
     const body = await webdriver.findElement(By.tagName('body'))
-    const attr = await body.getAttribute('initial-marshal-complete')
+    const attr = await body.getAttribute('loaded-dashboard')
 
-    if (attr == 'true') {
+    console.log('loaded-dashboard: ', attr)
+
+    if (attr) {
       return true
     } else {
       return false
@@ -106,23 +111,20 @@ export async function openSidebar() {
 }
 
 export async function getNavigationLinks() {
-  const navigationLinks = await webdriver.findElements(By.css('#navigation-links a'))
+  const navigationLinks = await webdriver.findElements(By.css('.navigation-links li'))
 
   return navigationLinks
 }
 
 export async function requireExecutionDialogStatus (webdriver, expected) {
-  // It seems that webdriver will not give us text if domStatus is hidden (which it will be until complete)
-  await webdriver.executeScript('window.executionDialog.domExecutionDetails.hidden = false')
-
   await webdriver.wait(new Condition('wait for action to be running', async function () {
-    const actual = await webdriver.executeScript('return window.executionDialog.domStatus.getText()')
+    const dialogStatus = await webdriver.findElement(By.id('execution-dialog-status'))
+    const actual = await dialogStatus.getText()
 
     if (actual === expected) {
       return true
     } else {
       console.log('Waiting for domStatus text to be: ', expected, ', it is currently: ', actual)
-      console.log(await webdriver.executeScript('return window.executionDialog.res'))
       return false
     }
   }))

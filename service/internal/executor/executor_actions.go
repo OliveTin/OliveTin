@@ -93,6 +93,7 @@ func registerAction(e *Executor, configOrder int, action *config.Action, req *Re
 	actionId := hashActionToID(action, "")
 
 	e.MapActionIdToBinding[actionId] = &ActionBinding{
+		ID:            actionId,
 		Action:        action,
 		Entity:        nil,
 		ConfigOrder:   configOrder,
@@ -107,9 +108,10 @@ func registerActionsFromEntities(e *Executor, configOrder int, entityTitle strin
 }
 
 func registerActionFromEntity(e *Executor, configOrder int, tpl *config.Action, ent *entities.Entity, req *RebuildActionMapRequest) {
-	virtualActionId := hashActionToID(tpl, "ent")
+	virtualActionId := hashActionToID(tpl, ent.UniqueKey)
 
 	e.MapActionIdToBinding[virtualActionId] = &ActionBinding{
+		ID:            virtualActionId,
 		Action:        tpl,
 		Entity:        ent,
 		ConfigOrder:   configOrder,
@@ -127,7 +129,8 @@ func hashActionToID(action *config.Action, entityPrefix string) string {
 	if entityPrefix == "" {
 		h.Write([]byte(action.Title))
 	} else {
-		h.Write([]byte(action.ID + "." + entityPrefix))
+		// Include the entity data to make each entity instance unique
+		h.Write([]byte(action.Title + "." + entityPrefix))
 	}
 
 	return fmt.Sprintf("%x", h.Sum(nil))

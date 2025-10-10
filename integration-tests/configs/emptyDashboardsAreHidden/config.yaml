@@ -8,18 +8,14 @@ logLevel: "DEBUG"
 checkForUpdates: false
 
 actions:
-  - title: Ping {{ server.hostname }}
-    shell: ping {{ server.hostname }}
+  - title: Ping 
+    shell: ping example.com
     icon: ping
     entity: server
 
-entities:
-  - file: entities/servers.yaml
-    name: server
 
 
 dashboards:
   - title: Empty Dashboard
-    contents:
-      - title: Ping {{ server.hostname }}
+    contents: []
 

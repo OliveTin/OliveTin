@@ -13,9 +13,9 @@
   - AI that helps with short tab completion is generally fine.
   - AI that writes lots of new code across lots of files, or makes lots of superfluous changes is generally less likely to be accepted.
   - Vibe coding is not a suitable way to contribute to this project. 
-- [x] Contributors should declare when AI has been used to help write contributions.
+- [x] Contributors should declare when AI has been used to help write contributions in the pull request body message.
 - [x] The project uses AI as an **optional** part of the PR process (coderabbitai). Please raise any concerns about usage within the PR.
--- [x] Suggestions from coderabbitai can be accepted verbaitem, but ideally it should be the PR author that uses coderabbitai as a guide, who then re-writes the contribution.
+  - [x] Suggestions from coderabbitai can be accepted verbaitem, but ideally it should be the PR author that uses coderabbitai as a guide, who then re-writes the contribution.
 - [x] Maintainers are the only agents permitted to accept merges.
 
 ## Development - Build process
