@@ -4,7 +4,8 @@ test-install:
 	npm install --no-fund
 
 test-run:
-	npx mocha
+    # GitHub Actions fails badly on the default timeout of 2000ms
+	npx mocha -t 10000
 
 find-flakey-tests:
 	echo "Running test-run infinately"
