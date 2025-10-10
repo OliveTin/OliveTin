@@ -7,8 +7,9 @@ import (
 	config "github.com/OliveTin/OliveTin/internal/config"
 	"github.com/OliveTin/OliveTin/internal/entities"
 
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestSanitizeUnsafe(t *testing.T) {
@@ -254,9 +255,9 @@ func TestTypeSafetyCheckRawStringMultiline(t *testing.T) {
 
 func TestTypeSafetyCheckUnicodeIdentifier(t *testing.T) {
 	tests := []struct {
-		name     string
-		field    string
-		value    string
+		name         string
+		field        string
+		value        string
 		expectsError bool
 	}{
 		{"Valid unicode identifier", "name", "hello_world", false},
@@ -273,21 +274,32 @@ func TestTypeSafetyCheckUnicodeIdentifier(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := TypeSafetyCheck(tt.field, tt.value, "unicode_identifier")
-
-			if tt.expectsError {
-				if err == nil {
-					t.Errorf("Expected error for value '%s', but got none", tt.value)
-				} else {
-					t.Logf("Received expected error for value '%s': %v", tt.value, err)
-				}
-			} else {
-				if err != nil {
-					t.Errorf("Expected no error for value '%s', but got: %v", tt.value, err)
-				} else {
-					t.Logf("No error for valid value '%s' as expected", tt.value)
-				}
-			}
+			validateTypeSafetyResult(t, tt.value, tt.expectsError, err)
 		})
+	}
+}
+
+func validateTypeSafetyResult(t *testing.T, value string, expectsError bool, err error) {
+	if expectsError {
+		assertErrorExpected(t, value, err)
+	} else {
+		assertNoErrorExpected(t, value, err)
+	}
+}
+
+func assertErrorExpected(t *testing.T, value string, err error) {
+	if err == nil {
+		t.Errorf("Expected error for value '%s', but got none", value)
+	} else {
+		t.Logf("Received expected error for value '%s': %v", value, err)
+	}
+}
+
+func assertNoErrorExpected(t *testing.T, value string, err error) {
+	if err != nil {
+		t.Errorf("Expected no error for value '%s', but got: %v", value, err)
+	} else {
+		t.Logf("No error for valid value '%s' as expected", value)
 	}
 }
 

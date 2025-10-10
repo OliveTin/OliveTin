@@ -321,40 +321,50 @@ func (api *oliveTinAPI) GetActionBinding(ctx ctx.Context, req *connect.Request[a
 func (api *oliveTinAPI) GetDashboard(ctx ctx.Context, req *connect.Request[apiv1.GetDashboardRequest]) (*connect.Response[apiv1.GetDashboardResponse], error) {
 	user := acl.UserFromContext(ctx, api.cfg)
 
-	if user.IsGuest() && api.cfg.AuthRequireGuestsToLogin {
-		return nil, connect.NewError(connect.CodePermissionDenied, fmt.Errorf("guests are not allowed to access the dashboard"))
+	if err := api.checkDashboardAccess(user); err != nil {
+		return nil, err
 	}
 
-	dashboardRenderRequest := &DashboardRenderRequest{
+	dashboardRenderRequest := api.createDashboardRenderRequest(user)
+
+	if api.isDefaultDashboard(req.Msg.Title) {
+		return api.buildDefaultDashboardResponse(dashboardRenderRequest)
+	}
+
+	return api.buildCustomDashboardResponse(dashboardRenderRequest, req.Msg.Title)
+}
+
+func (api *oliveTinAPI) checkDashboardAccess(user *acl.AuthenticatedUser) error {
+	if user.IsGuest() && api.cfg.AuthRequireGuestsToLogin {
+		return connect.NewError(connect.CodePermissionDenied, fmt.Errorf("guests are not allowed to access the dashboard"))
+	}
+	return nil
+}
+
+func (api *oliveTinAPI) createDashboardRenderRequest(user *acl.AuthenticatedUser) *DashboardRenderRequest {
+	return &DashboardRenderRequest{
 		AuthenticatedUser: user,
 		cfg:               api.cfg,
 		ex:                api.executor,
 	}
+}
 
-	if req.Msg.Title == "default" || req.Msg.Title == "" || req.Msg.Title == "Actions" {
-		db := buildDefaultDashboard(dashboardRenderRequest)
-		res := &apiv1.GetDashboardResponse{
-			Dashboard: db,
-		}
-		return connect.NewResponse(res), nil
-	}
+func (api *oliveTinAPI) isDefaultDashboard(title string) bool {
+	return title == "default" || title == "" || title == "Actions"
+}
 
+func (api *oliveTinAPI) buildDefaultDashboardResponse(rr *DashboardRenderRequest) (*connect.Response[apiv1.GetDashboardResponse], error) {
+	db := buildDefaultDashboard(rr)
 	res := &apiv1.GetDashboardResponse{
-		Dashboard: renderDashboard(dashboardRenderRequest, req.Msg.Title),
+		Dashboard: db,
 	}
+	return connect.NewResponse(res), nil
+}
 
-	/*
-		if len(res.Actions) == 0 {
-			log.WithFields(log.Fields{
-				"username":         user.Username,
-				"usergroupLine":    user.UsergroupLine,
-				"provider":         user.Provider,
-				"acls":             user.Acls,
-				"availableActions": len(api.cfg.Actions),
-			}).Warn("Zero actions found for user")
-		}
-	*/
-
+func (api *oliveTinAPI) buildCustomDashboardResponse(rr *DashboardRenderRequest, title string) (*connect.Response[apiv1.GetDashboardResponse], error) {
+	res := &apiv1.GetDashboardResponse{
+		Dashboard: renderDashboard(rr, title),
+	}
 	return connect.NewResponse(res), nil
 }
 
@@ -595,31 +605,31 @@ func (api *oliveTinAPI) Init(ctx ctx.Context, req *connect.Request[apiv1.InitReq
 
 func (api *oliveTinAPI) buildRootDashboards(user *acl.AuthenticatedUser, dashboards []*config.DashboardComponent) []string {
 	var rootDashboards []string
+	dashboardRenderRequest := api.createDashboardRenderRequest(user)
 
-	dashboardRenderRequest := &DashboardRenderRequest{
-		AuthenticatedUser: user,
-		cfg:               api.cfg,
-		ex:                api.executor,
-	}
+	api.addDefaultDashboardIfNeeded(&rootDashboards, dashboardRenderRequest)
+	api.addCustomDashboards(&rootDashboards, dashboards, dashboardRenderRequest)
 
-	defaultDashboard := buildDefaultDashboard(dashboardRenderRequest)
+	return rootDashboards
+}
 
+func (api *oliveTinAPI) addDefaultDashboardIfNeeded(rootDashboards *[]string, rr *DashboardRenderRequest) {
+	defaultDashboard := buildDefaultDashboard(rr)
 	if defaultDashboard != nil && len(defaultDashboard.Contents) > 0 {
 		log.Infof("defaultDashboard: %+v", defaultDashboard.Contents)
-		rootDashboards = append(rootDashboards, "Actions")
+		*rootDashboards = append(*rootDashboards, "Actions")
 	}
+}
 
+func (api *oliveTinAPI) addCustomDashboards(rootDashboards *[]string, dashboards []*config.DashboardComponent, rr *DashboardRenderRequest) {
 	for _, dashboard := range dashboards {
 		// We have to build the dashboard response instead of just looping over config.dashboards,
 		// because we need to check if the user has access to the dashboard
-		db := renderDashboard(dashboardRenderRequest, dashboard.Title)
-
+		db := renderDashboard(rr, dashboard.Title)
 		if db != nil {
-			rootDashboards = append(rootDashboards, dashboard.Title)
+			*rootDashboards = append(*rootDashboards, dashboard.Title)
 		}
 	}
-
-	return rootDashboards
 }
 
 func buildPublicOAuth2ProvidersList(cfg *config.Config) []*apiv1.OAuth2Provider {
@@ -720,7 +730,7 @@ func (api *oliveTinAPI) GetEntity(ctx ctx.Context, req *connect.Request[apiv1.Ge
 
 	log.Infof("msg: %+v", req.Msg)
 
-	if instances == nil || len(instances) == 0 {
+	if len(instances) == 0 {
 		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("entity type %s not found", req.Msg.Type))
 	}
 

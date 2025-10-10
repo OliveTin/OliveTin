@@ -14,32 +14,44 @@ func renderDashboard(rr *DashboardRenderRequest, dashboardTitle string) *apiv1.D
 		return buildDefaultDashboard(rr)
 	}
 
+	return findAndRenderDashboard(rr, dashboardTitle)
+}
+
+func findAndRenderDashboard(rr *DashboardRenderRequest, dashboardTitle string) *apiv1.Dashboard {
 	for _, dashboard := range rr.cfg.Dashboards {
 		if dashboard.Title != dashboardTitle {
 			continue
 		}
 
 		if len(dashboard.Contents) == 0 {
-			log.WithFields(log.Fields{
-				"dashboard": dashboard.Title,
-				"username":  rr.AuthenticatedUser.Username,
-			}).Debugf("Dashboard has no readable contents, so it will not be visible in the web ui")
+			logEmptyDashboard(dashboard.Title, rr.AuthenticatedUser.Username)
 			return nil
 		}
 
-		return &apiv1.Dashboard{
-			Title:    dashboard.Title,
-			Contents: sortActions(removeNulls(getDashboardComponentContents(dashboard, rr))),
-		}
+		return buildDashboardFromConfig(dashboard, rr)
 	}
 
 	return nil
 }
 
+func logEmptyDashboard(dashboardTitle, username string) {
+	log.WithFields(log.Fields{
+		"dashboard": dashboardTitle,
+		"username":  username,
+	}).Debugf("Dashboard has no readable contents, so it will not be visible in the web ui")
+}
+
+func buildDashboardFromConfig(dashboard *config.DashboardComponent, rr *DashboardRenderRequest) *apiv1.Dashboard {
+	return &apiv1.Dashboard{
+		Title:    dashboard.Title,
+		Contents: sortActions(removeNulls(getDashboardComponentContents(dashboard, rr))),
+	}
+}
+
 //gocyclo:ignore
 func buildDefaultDashboard(rr *DashboardRenderRequest) *apiv1.Dashboard {
 	db := &apiv1.Dashboard{
-		Title:    "Default",
+		Title:    "Actions",
 		Contents: make([]*apiv1.DashboardComponent, 0),
 	}
 
@@ -112,28 +124,40 @@ func removeNulls(components []*apiv1.DashboardComponent) []*apiv1.DashboardCompo
 
 func getDashboardComponentContents(dashboard *config.DashboardComponent, rr *DashboardRenderRequest) []*apiv1.DashboardComponent {
 	ret := make([]*apiv1.DashboardComponent, 0)
+	rootFieldset := createRootFieldset()
 
-	rootFieldset := &apiv1.DashboardComponent{
+	for _, subitem := range dashboard.Contents {
+		processDashboardSubitem(subitem, rr, &ret, rootFieldset)
+	}
+
+	return appendRootFieldsetIfNeeded(ret, rootFieldset)
+}
+
+func createRootFieldset() *apiv1.DashboardComponent {
+	return &apiv1.DashboardComponent{
 		Type:     "fieldset",
 		Title:    "Actions",
 		Contents: make([]*apiv1.DashboardComponent, 0),
 	}
+}
 
-	for _, subitem := range dashboard.Contents {
-		if subitem.Type == "fieldset" && subitem.Entity != "" {
-			ret = append(ret, buildEntityFieldsets(subitem.Entity, subitem, rr)...)
-		} else if subitem.Type == "fieldset" {
-			// Handle regular fieldsets by creating them directly
-			ret = append(ret, buildDashboardComponentSimple(subitem, rr))
-		} else {
-			rootFieldset.Contents = append(rootFieldset.Contents, buildDashboardComponentSimple(subitem, rr))
-		}
+func processDashboardSubitem(subitem *config.DashboardComponent, rr *DashboardRenderRequest, ret *[]*apiv1.DashboardComponent, rootFieldset *apiv1.DashboardComponent) {
+	if subitem.Type != "fieldset" {
+		rootFieldset.Contents = append(rootFieldset.Contents, buildDashboardComponentSimple(subitem, rr))
+		return
 	}
 
+	if subitem.Entity != "" {
+		*ret = append(*ret, buildEntityFieldsets(subitem.Entity, subitem, rr)...)
+	} else {
+		*ret = append(*ret, buildDashboardComponentSimple(subitem, rr))
+	}
+}
+
+func appendRootFieldsetIfNeeded(ret []*apiv1.DashboardComponent, rootFieldset *apiv1.DashboardComponent) []*apiv1.DashboardComponent {
 	if len(rootFieldset.Contents) > 0 {
 		ret = append(ret, rootFieldset)
 	}
-
 	return ret
 }
 
