@@ -1,4 +1,3 @@
-
 class ArgumentForm extends window.HTMLElement {
   getQueryParams () {
     return new URLSearchParams(window.location.search.substring(1))

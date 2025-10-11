@@ -55,8 +55,10 @@ func (s *webUIServer) findWebuiDir() string {
 	directoriesToSearch := []string{
 		s.cfg.WebUIDir,
 		"../frontend/dist/",
+		"../webui/",
 		"../frontend/",
 		"/usr/share/OliveTin/frontend/",
+		"/usr/share/OliveTin/webui/",
 		"/var/www/OliveTin/",
 		"/var/www/olivetin/",
 		"/etc/OliveTin/frontend/",
