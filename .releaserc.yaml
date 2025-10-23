@@ -4,8 +4,8 @@ branches:
     prerelease: true
     range: '>=3000.0.0 <4000.0.0'
 
-  - name: release/2k
-    range: '>=2000.0.0 <3000.0.0'
+#  - name: release/2k
+#    range: '>=2000.0.0 <3000.0.0'
 
 plugins:
   - '@semantic-release/commit-analyzer'
