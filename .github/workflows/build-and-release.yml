@@ -1,13 +1,15 @@
 ---
-name: "Build Tag"
+name: "Build & Release pipeline"
 
 on:
+  pull_request:
+  workflow_dispatch:
   push:
     tags:
       - '*'
 
 jobs:
-  build-tag:
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -54,25 +56,44 @@ jobs:
       - name: make webui
         run: make -w webui-dist
 
-      - name: goreleaser
+      - name: unit tests
+        run: make -w service-unittests
+
+      - name: integration tests
+        run: cd integration-tests && make -w
+
+      - name: Install goreleaser
         uses: goreleaser/goreleaser-action@v6
         with:
-          distribution: goreleaser
-          version: latest
-          args: release --clean --timeout 60m
+          install-only: true
+
+      - name: release
+        if: github.ref_type != 'tag'
+        uses: cycjimmy/semantic-release-action@v4
+        with:
+          extra_plugins: |
+            @semantic-release/commit-analyzer
+            @semantic-release/exec
+            @semantic-release/git
         env:
           GITHUB_TOKEN: ${{ secrets.CONTAINER_TOKEN }}
+          GH_TOKEN: ${{ secrets.CONTAINER_TOKEN }}
+
+      - name: get date
+        run: |
+          echo "DATE=$(date +'%Y-%m-%d')" >> "$GITHUB_ENV"
 
       - name: Archive binaries
         uses: actions/upload-artifact@v4.3.1
         with:
-          name: "OliveTin-${{ github.ref_name }}"
+          name: "OliveTin-snapshot-${{ env.DATE }}-${{ github.sha }}"
           path: dist/OliveTin*.*
 
       - name: Archive integration tests
         uses: actions/upload-artifact@v4.3.1
+        if: always()
         with:
-          name: integration-tests
+          name: "OliveTin-integration-tests-${{ env.DATE }}-${{ github.sha }}"
           path: |
             integration-tests
             !integration-tests/node_modules

@@ -12,6 +12,6 @@ plugins:
   - '@semantic-release/git'
   - - "@semantic-release/exec"
     - publishCmd: |
-        goreleaser release --clean
+        goreleaser release --clean --timeout 60m
 
 tagFormat: '${version}'
