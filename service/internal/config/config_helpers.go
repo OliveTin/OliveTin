@@ -54,9 +54,9 @@ func (cfg *Config) FindUserByUsername(searchUsername string) *LocalUser {
 }
 
 func (cfg *Config) SetDir(dir string) {
-	cfg.usedConfigDir = dir
+	cfg.sourceFiles = append(cfg.sourceFiles, dir)
 }
 
 func (cfg *Config) GetDir() string {
-	return cfg.usedConfigDir
+	return cfg.sourceFiles[len(cfg.sourceFiles)-1]
 }

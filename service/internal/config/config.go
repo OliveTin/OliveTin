@@ -154,7 +154,7 @@ type Config struct {
 	BannerMessage                   string
 	BannerCSS                       string
 
-	usedConfigDir string
+	sourceFiles []string
 }
 
 type AuthLocalUsersConfig struct {

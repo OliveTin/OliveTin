@@ -6,10 +6,10 @@ import (
 	"reflect"
 	"regexp"
 
+	"github.com/knadh/koanf/v2"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	log "github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 )
 
 var (
@@ -30,16 +30,90 @@ func AddListener(l func()) {
 	listeners = append(listeners, l)
 }
 
-func Reload(cfg *Config) {
-	if err := viper.UnmarshalExact(&cfg, viper.DecodeHook(envDecodeHookFunc)); err != nil {
-		log.Errorf("Config unmarshal error %+v", err)
-		os.Exit(1)
+func AppendSource(cfg *Config, k *koanf.Koanf, configPath string) {
+	log.Infof("Appending cfg source: %s", configPath)
+
+	// Try default unmarshaling first
+	err := k.Unmarshal(".", cfg)
+	if err != nil {
+		log.Errorf("Error unmarshalling config: %v", err)
+		return
+	}
+
+	// If actions are not loaded by default unmarshaling, try manual unmarshaling
+	// This is a workaround for a koanf issue where []*Action fields are not unmarshaled correctly
+	if len(cfg.Actions) == 0 && k.Exists("actions") {
+		var actions []*Action
+		err := k.Unmarshal("actions", &actions)
+		if err != nil {
+			log.Errorf("Error manually unmarshaling actions: %v", err)
+		} else {
+			cfg.Actions = actions
+		}
+	}
+
+	// If dashboards are not loaded by default unmarshaling, try manual unmarshaling
+	// This is a workaround for a koanf issue where []*DashboardComponent fields are not unmarshaled correctly
+	if len(cfg.Dashboards) == 0 && k.Exists("dashboards") {
+		var dashboards []*DashboardComponent
+		err := k.Unmarshal("dashboards", &dashboards)
+		if err != nil {
+			log.Errorf("Error manually unmarshaling dashboards: %v", err)
+		} else {
+			cfg.Dashboards = dashboards
+		}
+	}
+
+	// If entities are not loaded by default unmarshaling, try manual unmarshaling
+	// This is a workaround for a koanf issue where []*EntityFile fields are not unmarshaled correctly
+	if len(cfg.Entities) == 0 && k.Exists("entities") {
+		var entities []*EntityFile
+		err := k.Unmarshal("entities", &entities)
+		if err != nil {
+			log.Errorf("Error manually unmarshaling entities: %v", err)
+		} else {
+			cfg.Entities = entities
+		}
+	}
+
+	// Manual field assignment for other config fields that might not be unmarshaled correctly
+	if k.Exists("showFooter") {
+		cfg.ShowFooter = k.Bool("showFooter")
+	}
+	if k.Exists("showNavigation") {
+		cfg.ShowNavigation = k.Bool("showNavigation")
+	}
+	if k.Exists("checkForUpdates") {
+		cfg.CheckForUpdates = k.Bool("checkForUpdates")
+	}
+	if k.Exists("pageTitle") {
+		cfg.PageTitle = k.String("pageTitle")
+	}
+
+	// Handle defaultPolicy nested struct
+	if k.Exists("defaultPolicy") {
+		if k.Exists("defaultPolicy.showDiagnostics") {
+			cfg.DefaultPolicy.ShowDiagnostics = k.Bool("defaultPolicy.showDiagnostics")
+		}
+		if k.Exists("defaultPolicy.showLogList") {
+			cfg.DefaultPolicy.ShowLogList = k.Bool("defaultPolicy.showLogList")
+		}
+	}
+
+	// Handle prometheus nested struct
+	if k.Exists("prometheus") {
+		if k.Exists("prometheus.enabled") {
+			cfg.Prometheus.Enabled = k.Bool("prometheus.enabled")
+		}
+		if k.Exists("prometheus.defaultGoMetrics") {
+			cfg.Prometheus.DefaultGoMetrics = k.Bool("prometheus.defaultGoMetrics")
+		}
 	}
 
 	metricConfigReloadedCount.Inc()
 	metricConfigActionCount.Set(float64(len(cfg.Actions)))
 
-	cfg.SetDir(filepath.Dir(viper.ConfigFileUsed()))
+	cfg.SetDir(filepath.Dir(configPath))
 	cfg.Sanitize()
 
 	for _, l := range listeners {
@@ -49,19 +123,23 @@ func Reload(cfg *Config) {
 
 var envRegex = regexp.MustCompile(`\${{ *?(\S+) *?}}`)
 
-func envDecodeHookFunc(from reflect.Value, to reflect.Value) (any, error) {
+func envDecodeHookFunc(from reflect.Type, to reflect.Type, data any) (any, error) {
+	log.Debugf("envDecodeHookFunc called: from=%v, to=%v, data=%v", from, to, data)
 	if from.Kind() != reflect.String {
-		return from.Interface(), nil
+		return data, nil
 	}
-	input := from.Interface().(string)
+	input := data.(string)
+	log.Debugf("Processing string input: %q", input)
 	output := envRegex.ReplaceAllStringFunc(input, func(match string) string {
 		submatches := envRegex.FindStringSubmatch(match)
 		key := submatches[1]
 		val, set := os.LookupEnv(key)
+		log.Debugf("Environment variable %q: set=%v, value=%q", key, set, val)
 		if !set {
 			log.Warnf("Config file references unset environment variable: \"%s\"", key)
 		}
 		return val
 	})
+	log.Debugf("Environment variable interpolation result: %q -> %q", input, output)
 	return output, nil
 }

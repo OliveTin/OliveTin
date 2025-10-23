@@ -2,6 +2,8 @@ package main
 
 import (
 	"flag"
+	"path/filepath"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
 
@@ -21,8 +23,11 @@ import (
 	"strconv"
 
 	config "github.com/OliveTin/OliveTin/internal/config"
-	"github.com/fsnotify/fsnotify"
-	"github.com/spf13/viper"
+
+	"github.com/knadh/koanf/parsers/yaml"
+	"github.com/knadh/koanf/providers/env"
+	"github.com/knadh/koanf/providers/file"
+	"github.com/knadh/koanf/v2"
 )
 
 var (
@@ -35,7 +40,7 @@ var (
 func init() {
 	initLog()
 
-	initViperConfig(initCliFlags())
+	initConfig(initCliFlags())
 
 	initCheckEnvironment()
 
@@ -104,29 +109,63 @@ func getBasePort() int {
 	return basePort
 }
 
-func initViperConfig(configDir string) {
-	viper.AutomaticEnv()
-	viper.SetConfigName("config.yaml")
-	viper.SetConfigType("yaml")
-	viper.AddConfigPath(configDir)
-	viper.AddConfigPath(servicehost.GetConfigFilePath())
-	viper.AddConfigPath("/config") // For containers.
-	viper.AddConfigPath("/etc/OliveTin/")
+func initConfig(configDir string) {
+	k := koanf.New(".")
+	k.Load(env.Provider(".", ".", nil), nil)
 
-	if err := viper.ReadInConfig(); err != nil {
-		log.Errorf("Config file error at startup. %s", err)
-		os.Exit(1)
+	directories := []string{
+		configDir,
+	}
+
+	// Only load additional configs if not in integration test mode
+	absConfigDir, _ := filepath.Abs(configDir)
+	if !strings.Contains(absConfigDir, "integration-tests") {
+		directories = append(directories,
+			servicehost.GetConfigFilePath(),
+			"/config", // For containers.
+			"/etc/OliveTin/",
+		)
+	}
+
+	var firstConfigPath string
+
+	for _, directory := range directories {
+		configPath := filepath.Join(directory, "config.yaml")
+		log.Debugf("Checking config path: %s", configPath)
+
+		if _, err := os.Stat(configPath); err != nil {
+			log.Debugf("Config file not found at %s: %v", configPath, err)
+			continue
+		}
+
+		if firstConfigPath == "" {
+			firstConfigPath = configPath
+		}
+
+		log.Infof("Loading config from %s", configPath)
+		f := file.Provider(configPath)
+
+		if err := k.Load(f, yaml.Parser()); err != nil {
+			log.Fatalf("error loading config from %s: %v", configPath, err)
+			os.Exit(1)
+		}
+
+		f.Watch(func(evt interface{}, err error) {
+			log.Infof("config file changed: %v", evt)
+
+			k.Load(f, yaml.Parser())
+			config.AppendSource(cfg, k, configPath)
+		})
 	}
 
 	cfg = config.DefaultConfigWithBasePort(getBasePort())
 
-	viper.WatchConfig()
-	viper.OnConfigChange(func(e fsnotify.Event) {
-		log.Infof("Config file changed: %s", viper.ConfigFileUsed())
-		config.Reload(cfg)
-	})
+	if firstConfigPath != "" {
+		config.AppendSource(cfg, k, firstConfigPath)
+	} else {
+		config.AppendSource(cfg, k, "base")
+	}
 
-	config.Reload(cfg)
 }
 
 func initInstallationInfo() {

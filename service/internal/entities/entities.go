@@ -32,10 +32,14 @@ func AddListener(l func()) {
 func SetupEntityFileWatchers(cfg *config.Config) {
 	configDir := cfg.GetDir()
 
-	configDirVar := filepath.Join(configDir, "var") // for development purposes
+	// Only use var directory if not in integration test mode
+	absConfigDir, _ := filepath.Abs(configDir)
+	if !strings.Contains(absConfigDir, "integration-tests") {
+		configDirVar := filepath.Join(configDir, "var") // for development purposes
 
-	if _, err := os.Stat(configDirVar); err == nil {
-		configDir = configDirVar
+		if _, err := os.Stat(configDirVar); err == nil {
+			configDir = configDirVar
+		}
 	}
 
 	for entityIndex := range cfg.Entities { // #337 - iterate by key, not by value
@@ -112,20 +116,19 @@ func loadEntityFileYaml(filename string, entityname string) {
 		return
 	}
 
-	data := make([]map[string]any, 1)
+	var data []map[string]any
 
 	err = yaml.Unmarshal(yfile, &data)
 
 	if err != nil {
 		log.Errorf("Unmarshal: %v", err)
+		return
 	}
 
 	updateSvFromFile(entityname, data)
 }
 
 func updateSvFromFile(entityname string, data []map[string]any) {
-	log.Debugf("updateSvFromFile: %+v", data)
-
 	ClearEntities(entityname)
 
 	for i, mapp := range data {

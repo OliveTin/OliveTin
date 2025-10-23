@@ -14,3 +14,5 @@ custom-frontend
 integration-tests/screenshots/
 .vscode/
 webui/
+server.log
+OliveTin
