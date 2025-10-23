@@ -61,6 +61,9 @@ jobs:
       - name: unit tests
         run: make -w service-unittests
 
+      - name: build service
+        run: make -w service
+
       - name: integration tests
         run: cd integration-tests && make -w
 
