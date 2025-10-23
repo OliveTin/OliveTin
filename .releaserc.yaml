@@ -2,7 +2,7 @@
 branches:
   - name: main
     prerelease: true
-    range: '>=3000.0.0 <4000.0.0'
+    range: '>=3000.x.x <4000.x.x'
 
 #  - name: release/2k
 #    range: '>=2000.0.0 <3000.0.0'
