@@ -1,11 +1,11 @@
 package httpservers
 
 import (
-	"github.com/OliveTin/OliveTin/internal/config"
-	"google.golang.org/grpc/metadata"
 	"net/http"
 
-	"github.com/google/uuid"
+	"github.com/OliveTin/OliveTin/internal/auth"
+	"github.com/OliveTin/OliveTin/internal/config"
+	log "github.com/sirupsen/logrus"
 )
 
 func parseLocalUserCookie(cfg *config.Config, req *http.Request) (string, string, string) {
@@ -17,39 +17,18 @@ func parseLocalUserCookie(cfg *config.Config, req *http.Request) (string, string
 
 	cookieValue := cookie.Value
 
-	user := getUserFromSession(cfg, "local", cookieValue)
+	session := auth.GetUserSession("local", cookieValue)
+	if session == nil {
+		return "", "", ""
+	}
 
+	user := cfg.FindUserByUsername(session.Username)
 	if user == nil {
+		log.WithFields(log.Fields{
+			"username": session.Username,
+		}).Warnf("User not found in config")
 		return "", "", ""
 	}
 
 	return user.Username, user.Usergroup, cookie.Value
-}
-
-func forwardResponseHandlerLoginLocalUser(cfg *config.Config, md metadata.MD, w http.ResponseWriter) error {
-	setUsername := getMetadataKeyOrEmpty(md, "set-username")
-
-	if setUsername != "" {
-		user := cfg.FindUserByUsername(setUsername)
-
-		if user == nil {
-			return nil
-		}
-
-		sid := uuid.NewString()
-		registerUserSession(cfg, "local", sid, user.Username)
-
-		http.SetCookie(
-			w,
-			&http.Cookie{
-				Name:     "olivetin-sid-local",
-				Value:    sid,
-				MaxAge:   31556952, // 1 year
-				HttpOnly: true,
-				Path:     "/",
-			},
-		)
-	}
-
-	return nil
 }

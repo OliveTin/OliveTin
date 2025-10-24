@@ -109,6 +109,19 @@ func getBasePort() int {
 	return basePort
 }
 
+func getConfigPath(directory string) string {
+	joinedPath := filepath.Join(directory, "config.yaml")
+
+	configPath, err := filepath.Abs(joinedPath)
+
+	if err != nil {
+		log.WithError(err).Warnf("Error getting absolute path for %s", joinedPath)
+		return joinedPath
+	}
+
+	return configPath
+}
+
 func initConfig(configDir string) {
 	k := koanf.New(".")
 	k.Load(env.Provider(".", ".", nil), nil)
@@ -130,7 +143,8 @@ func initConfig(configDir string) {
 	var firstConfigPath string
 
 	for _, directory := range directories {
-		configPath := filepath.Join(directory, "config.yaml")
+		configPath := getConfigPath(directory)
+
 		log.Debugf("Checking config path: %s", configPath)
 
 		if _, err := os.Stat(configPath); err != nil {

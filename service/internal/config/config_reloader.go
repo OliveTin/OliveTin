@@ -76,38 +76,40 @@ func AppendSource(cfg *Config, k *koanf.Koanf, configPath string) {
 		}
 	}
 
+	// If authLocalUsers are not loaded by default unmarshaling, try manual unmarshaling
+	// This is a workaround for a koanf issue where nested struct fields are not unmarshaled correctly
+	if len(cfg.AuthLocalUsers.Users) == 0 && k.Exists("authLocalUsers") {
+		var authLocalUsers AuthLocalUsersConfig
+		err := k.Unmarshal("authLocalUsers", &authLocalUsers)
+		if err != nil {
+			log.Errorf("Error manually unmarshaling authLocalUsers: %v", err)
+		} else {
+			cfg.AuthLocalUsers = authLocalUsers
+		}
+	}
+
 	// Manual field assignment for other config fields that might not be unmarshaled correctly
-	if k.Exists("showFooter") {
-		cfg.ShowFooter = k.Bool("showFooter")
-	}
-	if k.Exists("showNavigation") {
-		cfg.ShowNavigation = k.Bool("showNavigation")
-	}
-	if k.Exists("checkForUpdates") {
-		cfg.CheckForUpdates = k.Bool("checkForUpdates")
-	}
-	if k.Exists("pageTitle") {
-		cfg.PageTitle = k.String("pageTitle")
-	}
+	boolVal(k, "showFooter", &cfg.ShowFooter)
+	boolVal(k, "showNavigation", &cfg.ShowNavigation)
+	boolVal(k, "checkForUpdates", &cfg.CheckForUpdates)
+	stringVal(k, "pageTitle", &cfg.PageTitle)
+	stringVal(k, "listenAddressSingleHTTPFrontend", &cfg.ListenAddressSingleHTTPFrontend)
+	stringVal(k, "listenAddressWebUI", &cfg.ListenAddressWebUI)
+	stringVal(k, "listenAddressRestActions", &cfg.ListenAddressRestActions)
+	stringVal(k, "listenAddressPrometheus", &cfg.ListenAddressPrometheus)
+	boolVal(k, "useSingleHTTPFrontend", &cfg.UseSingleHTTPFrontend)
+	stringVal(k, "logLevel", &cfg.LogLevel)
 
 	// Handle defaultPolicy nested struct
 	if k.Exists("defaultPolicy") {
-		if k.Exists("defaultPolicy.showDiagnostics") {
-			cfg.DefaultPolicy.ShowDiagnostics = k.Bool("defaultPolicy.showDiagnostics")
-		}
-		if k.Exists("defaultPolicy.showLogList") {
-			cfg.DefaultPolicy.ShowLogList = k.Bool("defaultPolicy.showLogList")
-		}
+		boolVal(k, "defaultPolicy.showDiagnostics", &cfg.DefaultPolicy.ShowDiagnostics)
+		boolVal(k, "defaultPolicy.showLogList", &cfg.DefaultPolicy.ShowLogList)
 	}
 
 	// Handle prometheus nested struct
 	if k.Exists("prometheus") {
-		if k.Exists("prometheus.enabled") {
-			cfg.Prometheus.Enabled = k.Bool("prometheus.enabled")
-		}
-		if k.Exists("prometheus.defaultGoMetrics") {
-			cfg.Prometheus.DefaultGoMetrics = k.Bool("prometheus.defaultGoMetrics")
-		}
+		boolVal(k, "prometheus.enabled", &cfg.Prometheus.Enabled)
+		boolVal(k, "prometheus.defaultGoMetrics", &cfg.Prometheus.DefaultGoMetrics)
 	}
 
 	metricConfigReloadedCount.Inc()
@@ -122,6 +124,25 @@ func AppendSource(cfg *Config, k *koanf.Koanf, configPath string) {
 }
 
 var envRegex = regexp.MustCompile(`\${{ *?(\S+) *?}}`)
+
+// Helper functions to reduce repetitive if/set chains
+func stringVal(k *koanf.Koanf, key string, dest *string) {
+	if k.Exists(key) {
+		*dest = k.String(key)
+	}
+}
+
+func boolVal(k *koanf.Koanf, key string, dest *bool) {
+	if k.Exists(key) {
+		*dest = k.Bool(key)
+	}
+}
+
+func int64Val(k *koanf.Koanf, key string, dest *int64) {
+	if k.Exists(key) {
+		*dest = k.Int64(key)
+	}
+}
 
 func envDecodeHookFunc(from reflect.Type, to reflect.Type, data any) (any, error) {
 	log.Debugf("envDecodeHookFunc called: from=%v, to=%v, data=%v", from, to, data)
