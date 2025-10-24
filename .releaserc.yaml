@@ -1,7 +1,6 @@
 ---
 branches:
   - name: main
-    prerelease: true
     range: '3000.x.x'
 
 #  - name: release/2k
