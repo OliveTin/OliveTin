@@ -126,6 +126,12 @@ docker_manifests:
       - docker.io/jamesread/olivetin:{{ .Version }}-amd64
       - docker.io/jamesread/olivetin:{{ .Version }}-arm64
 
+  - name_template: docker.io/jamesread/olivetin:latest-3k
+    image_templates:
+      - docker.io/jamesread/olivetin:{{ .Version }}-amd64
+      - docker.io/jamesread/olivetin:{{ .Version }}-arm64
+
+
   - name_template: ghcr.io/olivetin/olivetin:{{ .Version }}
     image_templates:
       - ghcr.io/olivetin/olivetin:{{ .Version }}-amd64
@@ -135,6 +141,12 @@ docker_manifests:
     image_templates:
       - ghcr.io/olivetin/olivetin:{{ .Version }}-amd64
       - ghcr.io/olivetin/olivetin:{{ .Version }}-arm64
+
+  - name_template: ghcr.io/olivetin/olivetin:latest-3k
+    image_templates:
+      - ghcr.io/olivetin/olivetin:{{ .Version }}-amd64
+      - ghcr.io/olivetin/olivetin:{{ .Version }}-arm64
+
 
 nfpms:
   - id: default
