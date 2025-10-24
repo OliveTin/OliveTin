@@ -45,6 +45,10 @@ func RegisterUserSession(cfg *config.Config, provider string, sid string, userna
 		}
 	}
 
+	if sessionStorage.Providers == nil {
+		sessionStorage.Providers = make(map[string]*SessionProvider)
+	}
+
 	sessionStorage.Providers[provider].Sessions[sid] = &UserSession{
 		Username: username,
 		Expiry:   time.Now().Unix() + 31556952, // 1 year
@@ -55,8 +59,8 @@ func RegisterUserSession(cfg *config.Config, provider string, sid string, userna
 
 // GetUserSession retrieves a user session
 func GetUserSession(provider string, sid string) *UserSession {
-	sessionStorageMutex.RLock()
-	defer sessionStorageMutex.RUnlock()
+	sessionStorageMutex.Lock()
+	defer sessionStorageMutex.Unlock()
 
 	if sessionStorage.Providers[provider] == nil {
 		return nil
