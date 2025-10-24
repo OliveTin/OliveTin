@@ -130,7 +130,7 @@ func initConfig(configDir string) {
 	var firstConfigPath string
 
 	for _, directory := range directories {
-		configPath := filepath.Join(directory, "config.yaml")
+		configPath, _ := filepath.Abs(filepath.Join(directory, "config.yaml"))
 		log.Debugf("Checking config path: %s", configPath)
 
 		if _, err := os.Stat(configPath); err != nil {
