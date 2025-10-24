@@ -35,6 +35,7 @@ If you are looking for OliveTin's AI policy, you can find it in `AI.md`.
   - Footer visibility is controlled by `showFooter` from Init API; tests may assert the footer is absent when config disables it.
 
 ### Coding Standards (Go)
+- Avoid adding superflous comments that explain what the code is doing. Comments are only to describe business logic decisions.
 - Prefer clear, descriptive names; avoid 1–2 letter identifiers.
 - Use early returns and handle edge cases first.
 - Do not swallow errors; propagate or log meaningfully.
