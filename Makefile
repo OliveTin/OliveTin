@@ -21,7 +21,7 @@ proto: go-tools
 	$(MAKE) -wC proto
 
 dist:
-    echo "dist noop"
+	echo "dist noop"
 
 
 podman-image:
