@@ -1,7 +1,7 @@
 ---
 branches:
   - name: main
-    range: '3000.x.x'
+#    range: '3000.x.x'
 
 #  - name: release/2k
 #    range: '>=2000.0.0 <3000.0.0'
