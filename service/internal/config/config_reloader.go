@@ -89,6 +89,27 @@ func AppendSource(cfg *Config, k *koanf.Koanf, configPath string) {
 	if k.Exists("pageTitle") {
 		cfg.PageTitle = k.String("pageTitle")
 	}
+	if k.Exists("listenAddressSingleHTTPFrontend") {
+		cfg.ListenAddressSingleHTTPFrontend = k.String("listenAddressSingleHTTPFrontend")
+	}
+	if k.Exists("listenAddressWebUI") {
+		cfg.ListenAddressWebUI = k.String("listenAddressWebUI")
+	}
+	if k.Exists("listenAddressRestActions") {
+		cfg.ListenAddressRestActions = k.String("listenAddressRestActions")
+	}
+	if k.Exists("listenAddressGrpcActions") {
+		cfg.ListenAddressGrpcActions = k.String("listenAddressGrpcActions")
+	}
+	if k.Exists("listenAddressPrometheus") {
+		cfg.ListenAddressPrometheus = k.String("listenAddressPrometheus")
+	}
+	if k.Exists("useSingleHTTPFrontend") {
+		cfg.UseSingleHTTPFrontend = k.Bool("useSingleHTTPFrontend")
+	}
+	if k.Exists("logLevel") {
+		cfg.LogLevel = k.String("logLevel")
+	}
 
 	// Handle defaultPolicy nested struct
 	if k.Exists("defaultPolicy") {
