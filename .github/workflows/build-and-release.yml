@@ -67,6 +67,15 @@ jobs:
       - name: integration tests
         run: cd integration-tests && make -w
 
+      - name: Archive integration tests
+        uses: actions/upload-artifact@v4.3.1
+        if: always()
+        with:
+          name: "OliveTin-integration-tests-${{ env.DATE }}-${{ github.sha }}"
+          path: |
+            integration-tests
+            !integration-tests/node_modules
+
       - name: Install goreleaser
         uses: goreleaser/goreleaser-action@v6
         with:
@@ -94,11 +103,3 @@ jobs:
           name: "OliveTin-snapshot-${{ env.DATE }}-${{ github.sha }}"
           path: dist/OliveTin*.*
 
-      - name: Archive integration tests
-        uses: actions/upload-artifact@v4.3.1
-        if: always()
-        with:
-          name: "OliveTin-integration-tests-${{ env.DATE }}-${{ github.sha }}"
-          path: |
-            integration-tests
-            !integration-tests/node_modules
