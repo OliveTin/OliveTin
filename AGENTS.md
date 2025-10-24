@@ -57,7 +57,7 @@ If you are looking for OliveTin's AI policy, you can find it in `AI.md`.
   - Action button behavior: `frontend/resources/vue/ActionButton.vue`
 
 ### Contributing Checklist
-- Review the contributuing guidelines at `CONTRIBUTING.adoc`.
+- Review the contributing guidelines at `CONTRIBUTING.adoc`.
 - Review the AI guidance in `AI.md`.
 - Review the pull request template at `.github/PULL_REQUEST_TEMPLATE.md`. 
 
