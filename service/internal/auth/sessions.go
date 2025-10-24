@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/OliveTin/OliveTin/internal/config"
+	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 )
 
@@ -86,29 +87,50 @@ func LoadUserSessions(cfg *config.Config) {
 
 	data, err := os.ReadFile(cfg.GetDir() + "/sessions.yaml")
 	if err != nil {
+		logrus.WithError(err).Warn("Failed to read sessions.yaml file")
+		// Initialize empty session storage if file doesn't exist
+		if sessionStorage == nil {
+			sessionStorage = &SessionStorage{
+				Providers: make(map[string]*SessionProvider),
+			}
+		}
 		return
 	}
 
 	err = yaml.Unmarshal(data, &sessionStorage)
 	if err != nil {
+		logrus.WithError(err).Error("Failed to unmarshal sessions.yaml")
+		// Initialize empty session storage if unmarshal fails
+		if sessionStorage == nil {
+			sessionStorage = &SessionStorage{
+				Providers: make(map[string]*SessionProvider),
+			}
+		}
 		return
 	}
 
+	// Ensure sessionStorage and Providers are properly initialized
 	if sessionStorage == nil {
 		sessionStorage = &SessionStorage{
 			Providers: make(map[string]*SessionProvider),
 		}
+	}
+
+	if sessionStorage.Providers == nil {
+		sessionStorage.Providers = make(map[string]*SessionProvider)
 	}
 }
 
 func saveUserSessions(cfg *config.Config) {
 	out, err := yaml.Marshal(sessionStorage)
 	if err != nil {
+		logrus.WithError(err).Error("Failed to marshal session storage")
 		return
 	}
 
 	err = os.WriteFile(cfg.GetDir()+"/sessions.yaml", out, 0600)
 	if err != nil {
+		logrus.WithError(err).Error("Failed to write sessions.yaml file")
 		return
 	}
 }
