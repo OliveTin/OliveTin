@@ -46,7 +46,7 @@ All documentation can be found at [docs.olivetin.app](https://docs.olivetin.app)
 * **Dark mode** - for those of you that roll that way.
 * **Accessible** - passes all the accessibility checks in Firefox, and issues with accessibility are taken seriously.
 * **Container** - available for quickly testing and getting it up and running, great for the selfhosted community.
-* **Integrate with anything** - OliveTin just runs Linux shell commands, so theoretially you could integrate with a bunch of stuff just by using curl, ping, etc. However, writing your own shell scripts is a great way to extend OliveTin.
+* **Integrate with anything** - OliveTin just runs Linux shell commands, so theoretically you could integrate with a bunch of stuff just by using curl, ping, etc. However, writing your own shell scripts is a great way to extend OliveTin.
 * **Lightweight on resources** - uses only a few MB of RAM and barely any CPU. Written in Go, with a web interface written as a modern, responsive, Single Page App that uses the REST/gRPC API.
 * **Good amount of unit tests and style checks** - helps potential contributors be consistent, and helps with maintainability.
 
