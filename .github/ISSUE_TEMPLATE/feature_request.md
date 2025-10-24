@@ -2,8 +2,8 @@
 name: Feature request
 about: Suggest an idea for this project
 title: ''
+type: feature
 labels:
-  - "type: feature-request"
   - "waiting-on-developer"
 assignees: ''
 

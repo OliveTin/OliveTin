@@ -2,8 +2,8 @@
 name: Support request
 about: Need some help? Got an error message?
 title: ""
+type: support
 labels:
-  - "type: support"
   - "waiting-on-developer"
 assignees: ''
 
