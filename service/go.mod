@@ -4,6 +4,8 @@ go 1.24.0
 
 toolchain go1.24.9
 
+exclude google.golang.org/genproto v0.0.0-20200513103714-09dca8ec2884
+
 require (
 	connectrpc.com/connect v1.18.1
 	github.com/Masterminds/semver v1.5.0
@@ -16,7 +18,6 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.2.2
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/websocket v1.5.3
-	github.com/grpc-ecosystem/grpc-gateway v1.16.0
 	github.com/jamesread/golure v0.0.0-20250619190948-fa38cbd93cc4
 	github.com/knadh/koanf/parsers/yaml v1.1.0
 	github.com/knadh/koanf/providers/env v1.1.0
@@ -30,7 +31,6 @@ require (
 	golang.org/x/exp v0.0.0-20250620022241-b7579e27df2b
 	golang.org/x/oauth2 v0.30.0
 	golang.org/x/sys v0.35.0
-	google.golang.org/grpc v1.75.1
 	google.golang.org/protobuf v1.36.10
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -86,7 +86,6 @@ require (
 	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect
 	github.com/gofrs/flock v0.12.1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
-	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/cel-go v0.25.0 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/go-containerregistry v0.20.6 // indirect
@@ -150,8 +149,8 @@ require (
 	golang.org/x/text v0.29.0 // indirect
 	golang.org/x/time v0.12.0 // indirect
 	golang.org/x/tools v0.36.0 // indirect
-	google.golang.org/genproto v0.0.0-20200513103714-09dca8ec2884 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20250929231259-57b25ae835d4 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250929231259-57b25ae835d4 // indirect
+	google.golang.org/grpc v1.75.1 // indirect
 	pluginrpc.com/pluginrpc v0.5.0 // indirect
 )
