@@ -4,7 +4,7 @@
       <h2>Start action: {{ title }}</h2>
     </div>
     <div class="section-content padding">
-      <form @submit.prevent="handleSubmit">
+      <form @submit="handleSubmit">
         <template v-if="actionArguments.length > 0">
 
           <template v-for="arg in actionArguments" :key="arg.name" class="argument-group">
@@ -40,7 +40,7 @@
         </div>
 
         <div class="buttons">
-          <button name="start" type="submit" :disabled="!isFormValid || (hasConfirmation && !confirmationChecked)">
+          <button name="start" type="submit" :disabled="hasConfirmation && !confirmationChecked">
             Start
           </button>
           <button name="cancel" type="button" @click="handleCancel">
@@ -53,11 +53,10 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, nextTick } from 'vue'
+import { ref, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
-const emit = defineEmits(['submit', 'cancel', 'close'])
 
 // Reactive data
 const dialog = ref(null)
@@ -71,7 +70,6 @@ const formErrors = ref({})
 const actionArguments = ref([])
 
 // Computed properties
-const isFormValid = computed(() => Object.keys(formErrors.value).length === 0)
 
 const props = defineProps({
   bindingId: {
@@ -87,7 +85,6 @@ async function setup() {
   })
 
   const action = ret.action
-  console.log('action', action)
 
   title.value = action.title
   icon.value = action.icon
@@ -106,6 +103,14 @@ async function setup() {
       hasConfirmation.value = true
     }
   })
+
+  // Run initial validation on all fields after DOM is updated
+  await nextTick()
+  for (const arg of actionArguments.value) {
+    if (arg.type && !arg.type.startsWith('regex:') && arg.type !== 'select' && arg.type !== '') {
+      await validateArgument(arg, argValues.value[arg.name])
+    }
+  }
 }
 
 function getQueryParamValue(paramName) {
@@ -186,15 +191,31 @@ async function validateArgument(arg, value) {
       type: arg.type
     }
 
-    const validation = await window.validateArgumentType(validateArgumentTypeArgs)
+    const validation = await window.client.validateArgumentType(validateArgumentTypeArgs)
 
+    // Get the input element to set custom validity
+    const inputElement = document.getElementById(arg.name)
+    
     if (validation.valid) {
       delete formErrors.value[arg.name]
+      // Clear custom validity message
+      if (inputElement) {
+        inputElement.setCustomValidity('')
+      }
     } else {
       formErrors.value[arg.name] = validation.description
+      // Set custom validity message
+      if (inputElement) {
+        inputElement.setCustomValidity(validation.description)
+      }
     }
   } catch (err) {
     console.warn('Validation failed:', err)
+    // On error, clear any custom validity
+    const inputElement = document.getElementById(arg.name)
+    if (inputElement) {
+      inputElement.setCustomValidity('')
+    }
   }
 }
 
@@ -232,40 +253,66 @@ function getArgumentValues() {
   return ret
 }
 
-function handleSubmit() {
-  // Validate all inputs
-  let isValid = true
+function getUniqueId() {
+  if (window.isSecureContext) {
+    return window.crypto.randomUUID()
+  } else {
+    return Date.now().toString()
+  }
+}
 
+async function startAction(actionArgs) {
+  const startActionArgs = {
+    bindingId: props.bindingId,
+    arguments: actionArgs,
+    uniqueTrackingId: getUniqueId()
+  }
+
+  try {
+    await window.client.startAction(startActionArgs)
+    console.log('Action started successfully with tracking ID:', startActionArgs.uniqueTrackingId)
+  } catch (err) {
+    console.error('Failed to start action:', err)
+  }
+}
+
+async function handleSubmit(event) {
+  // Set custom validity for required fields
   for (const arg of actionArguments.value) {
     const value = argValues.value[arg.name]
+    const inputElement = document.getElementById(arg.name)
+    
     if (arg.required && (!value || value === '')) {
       formErrors.value[arg.name] = 'This field is required'
-      isValid = false
+      // Set custom validity for required field validation
+      if (inputElement) {
+        inputElement.setCustomValidity('This field is required')
+      }
     }
   }
 
-  if (!isValid) {
+  const form = event.target
+  if (!form.checkValidity()) {
+    console.log('argument form has elements that failed validation')
     return
   }
 
+  event.preventDefault()
+  
   const argvs = getArgumentValues()
-  emit('submit', argvs)
-  close()
+  console.log('argument form has elements that passed validation')
+  
+  await startAction(argvs)
+  
+  router.back()
 }
 
 function handleCancel() {
   router.back()
   clearBookmark()
-  emit('cancel')
-  close()
-}
-
-function handleClose() {
-  emit('close')
 }
 
 function clearBookmark() {
-  // Remove the action from the URL
   window.history.replaceState({
     path: window.location.pathname
   }, '', window.location.pathname)
