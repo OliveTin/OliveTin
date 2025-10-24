@@ -10,7 +10,8 @@
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/5050/badge)](https://bestpractices.coreinfrastructure.org/projects/5050)
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/Olivetin/OliveTin)](https://goreportcard.com/report/github.com/OliveTin/OliveTin)
-[![Build Snapshot](https://github.com/OliveTin/OliveTin/actions/workflows/build-snapshot.yml/badge.svg)](https://github.com/OliveTin/OliveTin/actions/workflows/build-snapshot.yml)
+
+[OliveTin 2k to 3k upgrade guide](https://docs.olivetin.app/upgrade/2k3k.html)
 </div>
 
 <img alt = "screenshot" src = "https://github.com/OliveTin/OliveTin/blob/main/var/marketing/screenshots/mainpage-laptop_framed.png" />
