@@ -145,7 +145,6 @@ func (api *oliveTinAPI) LocalUserLogin(ctx ctx.Context, req *connect.Request[api
 
 			log.WithFields(log.Fields{
 				"username": user.Username,
-				"sid":      sid,
 			}).Info("LocalUserLogin: Session created and registered")
 
 			// Set the authentication cookie in the response headers
