@@ -2,13 +2,14 @@ package acl
 
 import (
 	"context"
+	"net/http"
 	"strings"
 
+	"connectrpc.com/connect"
 	config "github.com/OliveTin/OliveTin/internal/config"
 	log "github.com/sirupsen/logrus"
 
 	"golang.org/x/exp/slices"
-	"google.golang.org/grpc/metadata"
 )
 
 type PermissionBits int
@@ -184,32 +185,28 @@ func IsAllowedKill(cfg *config.Config, user *AuthenticatedUser, action *config.A
 	return aclCheck(Kill, cfg.DefaultPermissions.Kill, cfg, "isAllowedKill", user, action)
 }
 
-func getMetadataKeyOrEmpty(md metadata.MD, key string) string {
-	mdValues := md.Get(key)
-
-	if len(mdValues) > 0 {
-		return mdValues[0]
+func getHeaderKeyOrEmpty(headers http.Header, key string) string {
+	values := headers.Values(key)
+	if len(values) > 0 {
+		return values[0]
 	}
-
 	return ""
 }
 
-// UserFromContext tries to find a user from a grpc context
-func UserFromContext(ctx context.Context, cfg *config.Config) *AuthenticatedUser {
+// UserFromContext tries to find a user from a Connect RPC context
+func UserFromContext[T any](ctx context.Context, req *connect.Request[T], cfg *config.Config) *AuthenticatedUser {
 	var ret *AuthenticatedUser
 
-	md, ok := metadata.FromIncomingContext(ctx)
-
-	if ok {
+	if req != nil {
 		ret = &AuthenticatedUser{}
-		ret.Username = getMetadataKeyOrEmpty(md, "username")
-		ret.UsergroupLine = getMetadataKeyOrEmpty(md, "usergroup")
-		ret.Provider = getMetadataKeyOrEmpty(md, "provider")
+		ret.Username = getHeaderKeyOrEmpty(req.Header(), "username")
+		ret.UsergroupLine = getHeaderKeyOrEmpty(req.Header(), "usergroup")
+		ret.Provider = getHeaderKeyOrEmpty(req.Header(), "provider")
 
 		buildUserAcls(cfg, ret)
 	}
 
-	if !ok || ret.Username == "" {
+	if ret == nil || ret.Username == "" {
 		ret = UserGuest(cfg)
 	}
 

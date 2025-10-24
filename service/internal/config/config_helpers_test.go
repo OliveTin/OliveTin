@@ -1,8 +1,9 @@
 package config
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestFindAction(t *testing.T) {
@@ -50,4 +51,41 @@ func TestSetDir(t *testing.T) {
 	c.SetDir("test")
 
 	assert.Equal(t, "test", c.GetDir(), "SetDir")
+}
+
+func TestFindUserByUsername(t *testing.T) {
+	c := DefaultConfig()
+
+	// Test with empty users list
+	assert.Nil(t, c.FindUserByUsername("nonexistent"), "Find user in empty list should return nil")
+
+	// Add test users
+	user1 := &LocalUser{
+		Username:  "admin",
+		Usergroup: "admin",
+		Password:  "adminpass",
+	}
+	user2 := &LocalUser{
+		Username:  "guest",
+		Usergroup: "guest",
+		Password:  "guestpass",
+	}
+
+	c.AuthLocalUsers.Users = append(c.AuthLocalUsers.Users, user1, user2)
+
+	// Test finding existing users
+	foundUser := c.FindUserByUsername("admin")
+	assert.NotNil(t, foundUser, "Find existing user 'admin'")
+	assert.Equal(t, "admin", foundUser.Username, "Found user should have correct username")
+	assert.Equal(t, "admin", foundUser.Usergroup, "Found user should have correct usergroup")
+	assert.Equal(t, "adminpass", foundUser.Password, "Found user should have correct password")
+
+	foundUser = c.FindUserByUsername("guest")
+	assert.NotNil(t, foundUser, "Find existing user 'guest'")
+	assert.Equal(t, "guest", foundUser.Username, "Found user should have correct username")
+	assert.Equal(t, "guest", foundUser.Usergroup, "Found user should have correct usergroup")
+
+	// Test finding non-existent user
+	assert.Nil(t, c.FindUserByUsername("nonexistent"), "Find non-existent user should return nil")
+	assert.Nil(t, c.FindUserByUsername(""), "Find empty username should return nil")
 }

@@ -15,6 +15,7 @@ import (
 	"net/http"
 
 	acl "github.com/OliveTin/OliveTin/internal/acl"
+	auth "github.com/OliveTin/OliveTin/internal/auth"
 	config "github.com/OliveTin/OliveTin/internal/config"
 	entities "github.com/OliveTin/OliveTin/internal/entities"
 	executor "github.com/OliveTin/OliveTin/internal/executor"
@@ -57,7 +58,7 @@ func (api *oliveTinAPI) KillAction(ctx ctx.Context, req *connect.Request[apiv1.K
 		return connect.NewResponse(ret), nil
 	}
 
-	user := acl.UserFromContext(ctx, api.cfg)
+	user := acl.UserFromContext(ctx, req, api.cfg)
 
 	api.killActionByTrackingId(user, action, execReqLogEntry, ret)
 
@@ -94,7 +95,7 @@ func (api *oliveTinAPI) StartAction(ctx ctx.Context, req *connect.Request[apiv1.
 		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("action with ID %s not found", req.Msg.BindingId))
 	}
 
-	authenticatedUser := acl.UserFromContext(ctx, api.cfg)
+	authenticatedUser := acl.UserFromContext(ctx, req, api.cfg)
 
 	execReq := executor.ExecutionRequest{
 		Binding:           pair,
@@ -130,8 +131,33 @@ func (api *oliveTinAPI) PasswordHash(ctx ctx.Context, req *connect.Request[apiv1
 func (api *oliveTinAPI) LocalUserLogin(ctx ctx.Context, req *connect.Request[apiv1.LocalUserLoginRequest]) (*connect.Response[apiv1.LocalUserLoginResponse], error) {
 	match := checkUserPassword(api.cfg, req.Msg.Username, req.Msg.Password)
 
+	response := connect.NewResponse(&apiv1.LocalUserLoginResponse{
+		Success: match,
+	})
+
 	if match {
-		// grpc.SendHeader(ctx, metadata.Pairs("set-username", req.Username))
+		// Set authentication cookie for successful login
+		user := api.cfg.FindUserByUsername(req.Msg.Username)
+		if user != nil {
+			sid := uuid.NewString()
+			// Register the session in the session storage
+			auth.RegisterUserSession(api.cfg, "local", sid, user.Username)
+
+			log.WithFields(log.Fields{
+				"username": user.Username,
+				"sid":      sid,
+			}).Info("LocalUserLogin: Session created and registered")
+
+			// Set the authentication cookie in the response headers
+			cookie := &http.Cookie{
+				Name:     "olivetin-sid-local",
+				Value:    sid,
+				MaxAge:   31556952, // 1 year
+				HttpOnly: true,
+				Path:     "/",
+			}
+			response.Header().Set("Set-Cookie", cookie.String())
+		}
 
 		log.WithFields(log.Fields{
 			"username": req.Msg.Username,
@@ -142,9 +168,7 @@ func (api *oliveTinAPI) LocalUserLogin(ctx ctx.Context, req *connect.Request[api
 		}).Warn("LocalUserLogin: User login failed.")
 	}
 
-	return connect.NewResponse(&apiv1.LocalUserLoginResponse{
-		Success: match,
-	}), nil
+	return response, nil
 }
 
 func (api *oliveTinAPI) StartActionAndWait(ctx ctx.Context, req *connect.Request[apiv1.StartActionAndWaitRequest]) (*connect.Response[apiv1.StartActionAndWaitResponse], error) {
@@ -154,7 +178,7 @@ func (api *oliveTinAPI) StartActionAndWait(ctx ctx.Context, req *connect.Request
 		args[arg.Name] = arg.Value
 	}
 
-	user := acl.UserFromContext(ctx, api.cfg)
+	user := acl.UserFromContext(ctx, req, api.cfg)
 
 	execReq := executor.ExecutionRequest{
 		Binding:           api.executor.FindBindingByID(req.Msg.ActionId),
@@ -185,7 +209,7 @@ func (api *oliveTinAPI) StartActionByGet(ctx ctx.Context, req *connect.Request[a
 		Binding:           api.executor.FindBindingByID(req.Msg.ActionId),
 		TrackingID:        uuid.NewString(),
 		Arguments:         args,
-		AuthenticatedUser: acl.UserFromContext(ctx, api.cfg),
+		AuthenticatedUser: acl.UserFromContext(ctx, req, api.cfg),
 		Cfg:               api.cfg,
 	}
 
@@ -199,7 +223,7 @@ func (api *oliveTinAPI) StartActionByGet(ctx ctx.Context, req *connect.Request[a
 func (api *oliveTinAPI) StartActionByGetAndWait(ctx ctx.Context, req *connect.Request[apiv1.StartActionByGetAndWaitRequest]) (*connect.Response[apiv1.StartActionByGetAndWaitResponse], error) {
 	args := make(map[string]string)
 
-	user := acl.UserFromContext(ctx, api.cfg)
+	user := acl.UserFromContext(ctx, req, api.cfg)
 
 	execReq := executor.ExecutionRequest{
 		Binding:           api.executor.FindBindingByID(req.Msg.ActionId),
@@ -277,7 +301,7 @@ func getMostRecentExecutionStatusById(api *oliveTinAPI, actionId string) *execut
 func (api *oliveTinAPI) ExecutionStatus(ctx ctx.Context, req *connect.Request[apiv1.ExecutionStatusRequest]) (*connect.Response[apiv1.ExecutionStatusResponse], error) {
 	res := &apiv1.ExecutionStatusResponse{}
 
-	user := acl.UserFromContext(ctx, api.cfg)
+	user := acl.UserFromContext(ctx, req, api.cfg)
 
 	var ile *executor.InternalLogEntry
 
@@ -300,9 +324,6 @@ func (api *oliveTinAPI) ExecutionStatus(ctx ctx.Context, req *connect.Request[ap
 func (api *oliveTinAPI) Logout(ctx ctx.Context, req *connect.Request[apiv1.LogoutRequest]) (*connect.Response[apiv1.LogoutResponse], error) {
 	// user := acl.UserFromContext(ctx, cfg)
 
-	// grpc.SendHeader(ctx, metadata.Pairs("logout-provider", user.Provider))
-	// grpc.SendHeader(ctx, metadata.Pairs("logout-sid", user.SID))
-
 	return nil, nil
 }
 
@@ -312,14 +333,14 @@ func (api *oliveTinAPI) GetActionBinding(ctx ctx.Context, req *connect.Request[a
 	return connect.NewResponse(&apiv1.GetActionBindingResponse{
 		Action: buildAction(binding, &DashboardRenderRequest{
 			cfg:               api.cfg,
-			AuthenticatedUser: acl.UserFromContext(ctx, api.cfg),
+			AuthenticatedUser: acl.UserFromContext(ctx, req, api.cfg),
 			ex:                api.executor,
 		}),
 	}), nil
 }
 
 func (api *oliveTinAPI) GetDashboard(ctx ctx.Context, req *connect.Request[apiv1.GetDashboardRequest]) (*connect.Response[apiv1.GetDashboardResponse], error) {
-	user := acl.UserFromContext(ctx, api.cfg)
+	user := acl.UserFromContext(ctx, req, api.cfg)
 
 	if err := api.checkDashboardAccess(user); err != nil {
 		return nil, err
@@ -369,7 +390,7 @@ func (api *oliveTinAPI) buildCustomDashboardResponse(rr *DashboardRenderRequest,
 }
 
 func (api *oliveTinAPI) GetLogs(ctx ctx.Context, req *connect.Request[apiv1.GetLogsRequest]) (*connect.Response[apiv1.GetLogsResponse], error) {
-	user := acl.UserFromContext(ctx, api.cfg)
+	user := acl.UserFromContext(ctx, req, api.cfg)
 
 	ret := &apiv1.GetLogsResponse{}
 
@@ -413,7 +434,7 @@ func (api *oliveTinAPI) ValidateArgumentType(ctx ctx.Context, req *connect.Reque
 }
 
 func (api *oliveTinAPI) WhoAmI(ctx ctx.Context, req *connect.Request[apiv1.WhoAmIRequest]) (*connect.Response[apiv1.WhoAmIResponse], error) {
-	user := acl.UserFromContext(ctx, api.cfg)
+	user := acl.UserFromContext(ctx, req, api.cfg)
 
 	res := &apiv1.WhoAmIResponse{
 		AuthenticatedUser: user.Username,
@@ -497,7 +518,7 @@ func (api *oliveTinAPI) EventStream(ctx ctx.Context, req *connect.Request[apiv1.
 
 	client := &connectedClients{
 		channel:           make(chan *apiv1.EventStreamResponse, 10), // Buffered channel to hold Events
-		AuthenticatedUser: acl.UserFromContext(ctx, api.cfg),
+		AuthenticatedUser: acl.UserFromContext(ctx, req, api.cfg),
 	}
 
 	log.Infof("EventStream: client connected: %v", client.AuthenticatedUser.Username)
@@ -573,7 +594,7 @@ func (api *oliveTinAPI) GetDiagnostics(ctx ctx.Context, req *connect.Request[api
 }
 
 func (api *oliveTinAPI) Init(ctx ctx.Context, req *connect.Request[apiv1.InitRequest]) (*connect.Response[apiv1.InitResponse], error) {
-	user := acl.UserFromContext(ctx, api.cfg)
+	user := acl.UserFromContext(ctx, req, api.cfg)
 
 	res := &apiv1.InitResponse{
 		ShowFooter:                api.cfg.ShowFooter,

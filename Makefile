@@ -17,15 +17,12 @@ it:
 go-tools:
 	$(MAKE) -wC service go-tools
 
-proto: grpc
-
-grpc: go-tools
+proto: go-tools
 	$(MAKE) -wC proto
 
-dist: protoc
+dist:
+    echo "dist noop"
 
-protoc:
-	protoc --go_out=. --go-grpc_out=. --grpc-gateway_out=. -I .:/usr/include/ OliveTin.proto
 
 podman-image:
 	buildah bud -t olivetin
@@ -59,4 +56,4 @@ clean:
 	$(call delete-files,reports)
 	$(call delete-files,gen)
 
-.PHONY: grpc proto service
+.PHONY: proto service

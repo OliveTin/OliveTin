@@ -99,7 +99,6 @@ type Config struct {
 	ListenAddressSingleHTTPFrontend string
 	ListenAddressWebUI              string
 	ListenAddressRestActions        string
-	ListenAddressGrpcActions        string
 	ListenAddressPrometheus         string
 	ExternalRestAddress             string
 	LogLevel                        string
@@ -256,7 +255,6 @@ func DefaultConfigWithBasePort(basePort int) *Config {
 
 	config.ListenAddressSingleHTTPFrontend = fmt.Sprintf("0.0.0.0:%d", basePort)
 	config.ListenAddressRestActions = fmt.Sprintf("localhost:%d", basePort+1)
-	config.ListenAddressGrpcActions = fmt.Sprintf("localhost:%d", basePort+2)
 	config.ListenAddressWebUI = fmt.Sprintf("localhost:%d", basePort+3)
 	config.ListenAddressPrometheus = fmt.Sprintf("localhost:%d", basePort+4)
 

@@ -19,7 +19,6 @@ type sosReportConfig struct {
 	ListenAddressSingleHTTPFrontend string
 	ListenAddressWebUI              string
 	ListenAddressRestActions        string
-	ListenAddressGrpcActions        string
 	Timezone                        string
 	TimeNow                         string
 	ConfigDirectory                 string
@@ -34,7 +33,6 @@ func configToSosreport(cfg *config.Config) *sosReportConfig {
 		ListenAddressSingleHTTPFrontend: cfg.ListenAddressSingleHTTPFrontend,
 		ListenAddressWebUI:              cfg.ListenAddressWebUI,
 		ListenAddressRestActions:        cfg.ListenAddressRestActions,
-		ListenAddressGrpcActions:        cfg.ListenAddressGrpcActions,
 		Timezone:                        time.Now().Location().String(),
 		TimeNow:                         time.Now().String(),
 		ConfigDirectory:                 cfg.GetDir(),

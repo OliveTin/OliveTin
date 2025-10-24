@@ -18,7 +18,6 @@ import (
 	config "github.com/OliveTin/OliveTin/internal/config"
 	"github.com/OliveTin/OliveTin/internal/executor"
 	log "github.com/sirupsen/logrus"
-	"google.golang.org/grpc/metadata"
 )
 
 func logDebugRequest(cfg *config.Config, source string, r *http.Request) {
@@ -55,12 +54,6 @@ func StartSingleHTTPFrontend(cfg *config.Config, ex *executor.Executor) {
 		r.URL.Path = apiPath + fn
 
 		log.Debugf("SingleFrontend HTTP API Req URL after rewrite: %v", r.URL.Path)
-
-		// Process HTTP headers for authentication and add to context
-		ctx := r.Context()
-		md := parseRequestMetadata(cfg, ctx, r)
-		ctx = metadata.NewIncomingContext(ctx, md)
-		r = r.WithContext(ctx)
 
 		apiHandler.ServeHTTP(w, r)
 	}))
