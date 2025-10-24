@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"connectrpc.com/connect"
+	"github.com/OliveTin/OliveTin/internal/auth"
 	config "github.com/OliveTin/OliveTin/internal/config"
 	log "github.com/sirupsen/logrus"
 
@@ -199,11 +200,43 @@ func UserFromContext[T any](ctx context.Context, req *connect.Request[T], cfg *c
 
 	if req != nil {
 		ret = &AuthenticatedUser{}
-		ret.Username = getHeaderKeyOrEmpty(req.Header(), "username")
-		ret.UsergroupLine = getHeaderKeyOrEmpty(req.Header(), "usergroup")
-		ret.Provider = getHeaderKeyOrEmpty(req.Header(), "provider")
+		// Only trust headers if explicitly configured
+		if cfg.AuthHttpHeaderUsername != "" {
+			ret.Username = getHeaderKeyOrEmpty(req.Header(), cfg.AuthHttpHeaderUsername)
+		}
 
-		buildUserAcls(cfg, ret)
+		if cfg.AuthHttpHeaderUserGroup != "" {
+			ret.UsergroupLine = getHeaderKeyOrEmpty(req.Header(), cfg.AuthHttpHeaderUserGroup)
+		}
+		// Optional provider header; otherwise infer below
+		prov := getHeaderKeyOrEmpty(req.Header(), "provider")
+		if prov != "" {
+			ret.Provider = prov
+		}
+
+		// If no username from headers, fall back to local session cookie
+		if ret.Username == "" {
+			// Build a minimal http.Request to parse cookies from headers
+			dummy := &http.Request{Header: req.Header()}
+			if c, err := dummy.Cookie("olivetin-sid-local"); err == nil && c != nil && c.Value != "" {
+				if sess := auth.GetUserSession("local", c.Value); sess != nil {
+					if u := cfg.FindUserByUsername(sess.Username); u != nil {
+						ret.Username = u.Username
+						ret.UsergroupLine = u.Usergroup
+						ret.Provider = "local"
+						ret.SID = c.Value
+					} else {
+						log.WithFields(log.Fields{"username": sess.Username}).Warn("UserFromContext: local session user not in config")
+					}
+				} else {
+					log.WithFields(log.Fields{"sid": c.Value, "provider": "local"}).Warn("UserFromContext: stale local session")
+				}
+			}
+		}
+
+		if ret.Username != "" {
+			buildUserAcls(cfg, ret)
+		}
 	}
 
 	if ret == nil || ret.Username == "" {
