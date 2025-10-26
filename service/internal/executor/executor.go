@@ -15,6 +15,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"os/exec"
 	"path"
 	"strings"
 	"sync"
@@ -73,6 +74,8 @@ type ExecutionRequest struct {
 
 	logEntry           *InternalLogEntry
 	finalParsedCommand string
+	execArgs           []string
+	useDirectExec      bool
 	executor           *Executor
 }
 
@@ -432,7 +435,21 @@ func stepParseArgs(req *ExecutionRequest) bool {
 
 	mangleInvalidArgumentValues(req)
 
-	req.finalParsedCommand, err = parseActionArguments(req.Arguments, req.Binding.Action, req.Binding.Entity)
+	if len(req.Binding.Action.Exec) > 0 {
+		req.useDirectExec = true
+		req.execArgs, err = parseActionExec(req.Arguments, req.Binding.Action, req.Binding.Entity)
+	} else {
+		req.useDirectExec = false
+
+		err = checkShellArgumentSafety(req.Binding.Action)
+		if err != nil {
+			req.logEntry.Output = err.Error()
+			log.Warn(err.Error())
+			return false
+		}
+
+		req.finalParsedCommand, err = parseActionArguments(req.Arguments, req.Binding.Action, req.Binding.Entity)
+	}
 
 	if err != nil {
 		req.logEntry.Output = err.Error()
@@ -561,7 +578,13 @@ func stepExec(req *ExecutionRequest) bool {
 
 	streamer := &OutputStreamer{Req: req}
 
-	cmd := wrapCommandInShell(ctx, req.finalParsedCommand)
+	var cmd *exec.Cmd
+	if req.useDirectExec {
+		cmd = wrapCommandDirect(ctx, req.execArgs)
+	} else {
+		cmd = wrapCommandInShell(ctx, req.finalParsedCommand)
+	}
+
 	cmd.Stdout = streamer
 	cmd.Stderr = streamer
 	cmd.Env = buildEnv(req.Arguments)

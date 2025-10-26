@@ -92,6 +92,110 @@ func TestArgumentNotProvided(t *testing.T) {
 	assert.Equal(t, err.Error(), "required arg not provided: personName")
 }
 
+func TestExecArrayParsing(t *testing.T) {
+	a1 := config.Action{
+		Title:     "List files",
+		Exec:      []string{"ls", "-alh"},
+		Arguments: []config.ActionArgument{},
+	}
+
+	values := map[string]string{}
+
+	out, err := parseActionExec(values, &a1, nil)
+
+	assert.Nil(t, err)
+	assert.Equal(t, []string{"ls", "-alh"}, out)
+}
+
+func TestExecArrayWithTemplateReplacement(t *testing.T) {
+	a1 := config.Action{
+		Title: "List specific path",
+		Exec:  []string{"ls", "-alh", "{{path}}"},
+		Arguments: []config.ActionArgument{
+			{
+				Name: "path",
+				Type: "ascii_identifier",
+			},
+		},
+	}
+
+	values := map[string]string{
+		"path": "tmp",
+	}
+
+	out, err := parseActionExec(values, &a1, nil)
+
+	assert.Nil(t, err)
+	assert.Equal(t, []string{"ls", "-alh", "tmp"}, out)
+}
+
+func TestCheckShellArgumentSafetyWithURL(t *testing.T) {
+	a1 := config.Action{
+		Title: "Download file",
+		Shell: "curl {{url}}",
+		Arguments: []config.ActionArgument{
+			{
+				Name: "url",
+				Type: "url",
+			},
+		},
+	}
+
+	err := checkShellArgumentSafety(&a1)
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "unsafe argument type 'url' cannot be used with Shell execution")
+	assert.Contains(t, err.Error(), "https://docs.olivetin.app/action_execution/shellvsexec.html")
+}
+
+func TestCheckShellArgumentSafetyWithEmail(t *testing.T) {
+	a1 := config.Action{
+		Title: "Send email",
+		Shell: "sendmail {{email}}",
+		Arguments: []config.ActionArgument{
+			{
+				Name: "email",
+				Type: "email",
+			},
+		},
+	}
+
+	err := checkShellArgumentSafety(&a1)
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "unsafe argument type 'email' cannot be used with Shell execution")
+}
+
+func TestCheckShellArgumentSafetyWithExec(t *testing.T) {
+	a1 := config.Action{
+		Title: "Download file",
+		Exec:  []string{"curl", "{{url}}"},
+		Arguments: []config.ActionArgument{
+			{
+				Name: "url",
+				Type: "url",
+			},
+		},
+	}
+
+	err := checkShellArgumentSafety(&a1)
+	assert.Nil(t, err)
+}
+
+func TestCheckShellArgumentSafetyWithSafeTypes(t *testing.T) {
+	a1 := config.Action{
+		Title: "List files",
+		Shell: "ls {{path}}",
+		Arguments: []config.ActionArgument{
+			{
+				Name: "path",
+				Type: "ascii_identifier",
+			},
+		},
+	}
+
+	err := checkShellArgumentSafety(&a1)
+	assert.Nil(t, err)
+}
+
 func TestTypeSafetyCheckUrl(t *testing.T) {
 	assert.Nil(t, TypeSafetyCheck("test1", "http://google.com", "url"), "Test URL: google.com")
 	assert.Nil(t, TypeSafetyCheck("test2", "http://technowax.net:80?foo=bar", "url"), "Test URL: technowax.net with query arguments")
