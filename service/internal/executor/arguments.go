@@ -294,3 +294,68 @@ func mangleInvalidDatetimeValues(req *ExecutionRequest, arg *config.ActionArgume
 		req.Arguments[arg.Name] = timestamp.Format("2006-01-02T15:04:05")
 	}
 }
+
+func parseActionExec(values map[string]string, action *config.Action, entityPrefix string) ([]string, error) {
+	for _, arg := range action.Arguments {
+		argName := arg.Name
+		argValue := values[argName]
+
+		err := typecheckActionArgument(&arg, argValue, action)
+
+		if err != nil {
+			return nil, err
+		}
+
+		log.WithFields(log.Fields{
+			"name":  argName,
+			"value": argValue,
+		}).Debugf("Arg assigned")
+	}
+
+	parsedArgs := make([]string, len(action.Exec))
+	for i, arg := range action.Exec {
+		parsedArg, err := parseCommandForReplacements(arg, values)
+		if err != nil {
+			return nil, err
+		}
+		
+		parsedArg = sv.ReplaceEntityVars(entityPrefix, parsedArg)
+		parsedArgs[i] = parsedArg
+	}
+
+	redactedArgs := redactExecArgs(parsedArgs, action.Arguments, values)
+
+	log.WithFields(log.Fields{
+		"actionTitle": action.Title,
+		"cmd":         redactedArgs,
+	}).Infof("Action parse args - After (Exec)")
+
+	return parsedArgs, nil
+}
+
+//gocyclo:ignore
+func redactExecArgs(execArgs []string, arguments []config.ActionArgument, argumentValues map[string]string) []string {
+	redacted := make([]string, len(execArgs))
+	for i, arg := range execArgs {
+		redacted[i] = redactShellCommand(arg, arguments, argumentValues)
+	}
+	return redacted
+}
+
+func checkShellArgumentSafety(action *config.Action) error {
+	if action.Shell == "" {
+		return nil
+	}
+
+	unsafeTypes := []string{"url", "email", "raw_string_multiline", "very_dangerous_raw_string"}
+
+	for _, arg := range action.Arguments {
+		for _, unsafeType := range unsafeTypes {
+			if arg.Type == unsafeType {
+				return fmt.Errorf("unsafe argument type '%s' cannot be used with Shell execution. Use 'exec' instead. See https://docs.olivetin.app/action_execution/shellvsexec.html", arg.Type)
+			}
+		}
+	}
+
+	return nil
+}

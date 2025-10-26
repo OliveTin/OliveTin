@@ -21,5 +21,17 @@ func wrapCommandInShell(ctx context.Context, finalParsedCommand string) *exec.Cm
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 
 	return cmd
+}
 
+func wrapCommandDirect(ctx context.Context, execArgs []string) *exec.Cmd {
+	if len(execArgs) == 0 {
+		return nil
+	}
+
+	cmd := exec.CommandContext(ctx, execArgs[0], execArgs[1:]...)
+
+	// This is to ensure that the process group is killed when the parent process is killed.
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+
+	return cmd
 }
