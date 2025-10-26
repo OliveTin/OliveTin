@@ -1,0 +1,26 @@
+#
+# Integration Test Config: Local User Authentication
+#
+
+listenAddressSingleHTTPFrontend: 0.0.0.0:1337
+
+logLevel: "DEBUG"
+checkForUpdates: false
+
+# Enable local user authentication
+authLocalUsers:
+  enabled: true
+  users:
+    - username: "testuser"
+      usergroup: "admin"
+      password: "testpass123"
+
+# Simple actions for testing
+actions:
+- title: Ping Google.com
+  shell: ping google.com -c 1
+  icon: ping
+
+- title: sleep 2 seconds
+  shell: sleep 2
+  icon: "&#x1F971"

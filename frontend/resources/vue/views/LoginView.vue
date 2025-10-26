@@ -1,6 +1,6 @@
 <template>
   <Section title="Login to OliveTin" class="small">
-    <div class="login-form" style="display: grid; grid-template-columns: max-content 1fr; gap: 1em;">
+    <div class="login-form">
       <div v-if="!hasOAuth && !hasLocalLogin" class="login-disabled">
         <span>This server is not configured with either OAuth, or local users, so you cannot login.</span>
       </div>
@@ -19,15 +19,12 @@
       <div v-if="hasLocalLogin" class="login-local">
         <h3>Local Login</h3>
         <form @submit.prevent="handleLocalLogin" class="local-login-form">
-          <div v-if="loginError" class="error-message">
+          <div v-if="loginError" class="bad">
             {{ loginError }}
           </div>
 
-          <label for="username">Username:</label>
-          <input id="username" v-model="username" type="text" name="username" autocomplete="username" required />
-
-          <label for="password">Password:</label>
-          <input id="password" v-model="password" type="password" name="password" autocomplete="current-password"
+          <input id="username" v-model="username" type="text" name="username" autocomplete="username" required placeholder="Username" />
+          <input id="password" v-model="password" type="password" name="password" autocomplete="current-password" placeholder="Password"
             required />
 
           <button type="submit" :disabled="loading" class="login-button">
@@ -40,7 +37,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import Section from 'picocrank/vue/components/Section.vue'
 
@@ -54,19 +51,17 @@ const hasOAuth = ref(false)
 const hasLocalLogin = ref(false)
 const oauthProviders = ref([])
 
-async function fetchLoginOptions() {
-  try {
-    const response = await fetch('webUiSettings.json')
-    const settings = await response.json()
-
-    hasOAuth.value = settings.AuthOAuth2Providers && settings.AuthOAuth2Providers.length > 0
-    hasLocalLogin.value = settings.AuthLocalLogin
+function loadLoginOptions() {
+  // Use the init response data that was loaded in App.vue
+  if (window.initResponse) {
+    hasOAuth.value = window.initResponse.oAuth2Providers && window.initResponse.oAuth2Providers.length > 0
+    hasLocalLogin.value = window.initResponse.authLocalLogin
 
     if (hasOAuth.value) {
-      oauthProviders.value = settings.AuthOAuth2Providers
+      oauthProviders.value = window.initResponse.oAuth2Providers
     }
-  } catch (err) {
-    console.error('Failed to fetch login options:', err)
+  } else {
+    console.warn('Init response not available yet, login options will be empty')
   }
 }
 
@@ -75,27 +70,36 @@ async function handleLocalLogin() {
   loginError.value = ''
 
   try {
-    const response = await fetch('/api/login', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        username: username.value,
-        password: password.value
-      })
+    const response = await window.client.localUserLogin({
+      username: username.value,
+      password: password.value
     })
 
-    if (response.ok) {
+    if (response.success) {
+      // Re-initialize to get updated user context
+      try {
+        const initResponse = await window.client.init({})
+        window.initResponse = initResponse
+        window.initError = false
+        window.initErrorMessage = ''
+        window.initCompleted = true
+        
+        // Update the header with new user info
+        if (window.updateHeaderFromInit) {
+          window.updateHeaderFromInit()
+        }
+      } catch (initErr) {
+        console.error('Failed to reinitialize after login:', initErr)
+      }
+      
       // Redirect to home page on successful login
       router.push('/')
     } else {
-      const error = await response.text()
-      loginError.value = error || 'Login failed. Please check your credentials.'
+      loginError.value = 'Login failed. Please check your credentials.'
     }
   } catch (err) {
     console.error('Login error:', err)
-    loginError.value = 'Network error. Please try again.'
+    loginError.value = err.message || 'Network error. Please try again.'
   } finally {
     loading.value = false
   }
@@ -107,7 +111,12 @@ function loginWithOAuth(provider) {
 }
 
 onMounted(() => {
-  fetchLoginOptions()
+  loadLoginOptions()
+  
+  // Also watch for when init response becomes available
+  const stopWatcher = watch(() => window.initResponse, () => {
+    loadLoginOptions()
+  }, { immediate: true })
 })
 </script>
 
@@ -125,7 +134,7 @@ section {
 }
 
 form {
-  grid-template-columns: max-content 1fr;
+  grid-template-columns: 1fr;
   gap: 1em;
 }
 </style>

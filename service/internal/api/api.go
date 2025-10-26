@@ -129,6 +129,13 @@ func (api *oliveTinAPI) PasswordHash(ctx ctx.Context, req *connect.Request[apiv1
 }
 
 func (api *oliveTinAPI) LocalUserLogin(ctx ctx.Context, req *connect.Request[apiv1.LocalUserLoginRequest]) (*connect.Response[apiv1.LocalUserLoginResponse], error) {
+	// Check if local user authentication is enabled
+	if !api.cfg.AuthLocalUsers.Enabled {
+		return connect.NewResponse(&apiv1.LocalUserLoginResponse{
+			Success: false,
+		}), nil
+	}
+
 	match := checkUserPassword(api.cfg, req.Msg.Username, req.Msg.Password)
 
 	response := connect.NewResponse(&apiv1.LocalUserLoginResponse{
@@ -321,9 +328,26 @@ func (api *oliveTinAPI) ExecutionStatus(ctx ctx.Context, req *connect.Request[ap
 }
 
 func (api *oliveTinAPI) Logout(ctx ctx.Context, req *connect.Request[apiv1.LogoutRequest]) (*connect.Response[apiv1.LogoutResponse], error) {
-	// user := acl.UserFromContext(ctx, cfg)
+	user := acl.UserFromContext(ctx, req, api.cfg)
 
-	return nil, nil
+	log.WithFields(log.Fields{
+		"username": user.Username,
+		"provider": user.Provider,
+	}).Info("Logout: User logged out")
+
+	response := connect.NewResponse(&apiv1.LogoutResponse{})
+
+	// Clear the authentication cookie by setting it to expire
+	cookie := &http.Cookie{
+		Name:     "olivetin-sid-local",
+		Value:    "",
+		MaxAge:   -1, // This tells the browser to delete the cookie
+		HttpOnly: true,
+		Path:     "/",
+	}
+	response.Header().Set("Set-Cookie", cookie.String())
+
+	return response, nil
 }
 
 func (api *oliveTinAPI) GetActionBinding(ctx ctx.Context, req *connect.Request[apiv1.GetActionBindingRequest]) (*connect.Response[apiv1.GetActionBindingResponse], error) {

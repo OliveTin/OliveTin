@@ -7,12 +7,11 @@
         </template>
 
         <template #user-info>
-            <div class="flex-row" style="gap: .5em;">
+            <div class="flex-row user-info" style="gap: .5em;">
                 <span id="link-login" v-if="!isLoggedIn"><router-link to="/login">Login</router-link></span>
-                <div v-else>
-                    <span id="username-text" :title="'Provider: ' + userProvider">{{ username }}</span>
-                    <span id="link-logout" v-if="isLoggedIn"><a href="/api/Logout">Logout</a></span>
-                </div>
+                <router-link v-else to="/user" class="user-link">
+                    <span id="username-text">{{ username }}</span>
+                </router-link>
                 <HugeiconsIcon :icon="UserCircle02Icon" width = "1.5em" height = "1.5em" />
             </div>
 
@@ -70,7 +69,6 @@ import logoUrl from '../../OliveTinLogo.png';
 
 const sidebar = ref(null);
 const username = ref('guest');
-const userProvider = ref('system');
 const isLoggedIn = ref(false);
 const serverConnection = ref('Connected');
 const currentVersion = ref('?');
@@ -88,6 +86,23 @@ function toggleSidebar() {
     sidebar.value.toggle()
 }
 
+function updateHeaderFromInit() {
+    if (window.initResponse) {
+        username.value = window.initResponse.authenticatedUser
+        isLoggedIn.value = window.initResponse.authenticatedUser !== '' && window.initResponse.authenticatedUser !== 'guest'
+        currentVersion.value = window.initResponse.currentVersion
+        bannerMessage.value = window.initResponse.bannerMessage || ''
+        bannerCss.value = window.initResponse.bannerCss || ''
+        showFooter.value = window.initResponse.showFooter
+        showNavigation.value = window.initResponse.showNavigation
+        showLogs.value = window.initResponse.showLogList
+        showDiagnostics.value = window.initResponse.showDiagnostics
+    }
+}
+
+// Export the function to window so other components can call it
+window.updateHeaderFromInit = updateHeaderFromInit
+
 async function requestInit() {
     try {
         const initResponse = await window.client.init({})
@@ -98,6 +113,7 @@ async function requestInit() {
         window.initCompleted = true
 
         username.value = initResponse.authenticatedUser
+        isLoggedIn.value = initResponse.authenticatedUser !== '' && initResponse.authenticatedUser !== 'guest'
         currentVersion.value = initResponse.currentVersion
 		bannerMessage.value = initResponse.bannerMessage || '';
 		bannerCss.value = initResponse.bannerCss || '';
@@ -163,3 +179,18 @@ onMounted(() => {
     requestInit()
 })
 </script>
+
+<style scoped>
+.user-info span {
+    margin-left: 1em;
+}
+
+.user-link {
+    text-decoration: none;
+    color: inherit;
+}
+
+.user-link:hover {
+    text-decoration: underline;
+}
+</style>
