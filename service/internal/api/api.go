@@ -129,6 +129,13 @@ func (api *oliveTinAPI) PasswordHash(ctx ctx.Context, req *connect.Request[apiv1
 }
 
 func (api *oliveTinAPI) LocalUserLogin(ctx ctx.Context, req *connect.Request[apiv1.LocalUserLoginRequest]) (*connect.Response[apiv1.LocalUserLoginResponse], error) {
+	// Check if local user authentication is enabled
+	if !api.cfg.AuthLocalUsers.Enabled {
+		return connect.NewResponse(&apiv1.LocalUserLoginResponse{
+			Success: false,
+		}), nil
+	}
+
 	match := checkUserPassword(api.cfg, req.Msg.Username, req.Msg.Password)
 
 	response := connect.NewResponse(&apiv1.LocalUserLoginResponse{

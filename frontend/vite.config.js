@@ -14,11 +14,6 @@ export default defineConfig({
   ],
   server: {
     proxy: {
-      '/webUiSettings.json': {
-        target: 'http://localhost:1337',
-        changeOrigin: true,
-        secure: false,
-      },
       '/api': {
         target: 'http://localhost:1337',
         changeOrigin: true,

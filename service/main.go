@@ -7,6 +7,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	"github.com/OliveTin/OliveTin/internal/auth"
 	"github.com/OliveTin/OliveTin/internal/entities"
 	"github.com/OliveTin/OliveTin/internal/executor"
 	"github.com/OliveTin/OliveTin/internal/httpservers"
@@ -231,6 +232,9 @@ func main() {
 	go entities.SetupEntityFileWatchers(cfg)
 
 	go updatecheck.StartUpdateChecker(cfg)
+
+	// Load persistent sessions from disk
+	auth.LoadUserSessions(cfg)
 
 	httpservers.StartServers(cfg, executor)
 }

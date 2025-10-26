@@ -98,6 +98,7 @@ async function requestInit() {
         window.initCompleted = true
 
         username.value = initResponse.authenticatedUser
+        isLoggedIn.value = initResponse.authenticatedUser !== '' && initResponse.authenticatedUser !== 'guest'
         currentVersion.value = initResponse.currentVersion
 		bannerMessage.value = initResponse.bannerMessage || '';
 		bannerCss.value = initResponse.bannerCss || '';
