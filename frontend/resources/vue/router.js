@@ -86,6 +86,12 @@ const routes = [
     meta: { title: 'Login' }
   },
   {
+    path: '/user',
+    name: 'UserInformation',
+    component: () => import('./views/UserControlPanel.vue'),
+    meta: { title: 'User Information' }
+  },
+  {
     path: '/:pathMatch(.*)*',
     name: 'NotFound',
     component: () => import('./views/NotFoundView.vue'),

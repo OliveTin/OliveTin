@@ -83,6 +83,11 @@ async function handleLocalLogin() {
         window.initError = false
         window.initErrorMessage = ''
         window.initCompleted = true
+        
+        // Update the header with new user info
+        if (window.updateHeaderFromInit) {
+          window.updateHeaderFromInit()
+        }
       } catch (initErr) {
         console.error('Failed to reinitialize after login:', initErr)
       }
