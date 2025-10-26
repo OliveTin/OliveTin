@@ -435,6 +435,13 @@ func stepParseArgs(req *ExecutionRequest) bool {
 
 	mangleInvalidArgumentValues(req)
 
+	if req.Binding == nil || req.Binding.Action == nil {
+		err = fmt.Errorf("cannot parse arguments: Binding or Action is nil")
+		req.logEntry.Output = err.Error()
+		log.Warn(err.Error())
+		return false
+	}
+
 	if len(req.Binding.Action.Exec) > 0 {
 		req.useDirectExec = true
 		req.execArgs, err = parseActionExec(req.Arguments, req.Binding.Action, req.Binding.Entity)
@@ -583,6 +590,12 @@ func stepExec(req *ExecutionRequest) bool {
 		cmd = wrapCommandDirect(ctx, req.execArgs)
 	} else {
 		cmd = wrapCommandInShell(ctx, req.finalParsedCommand)
+	}
+
+	if cmd == nil {
+		req.logEntry.Output = "Cannot execute: no command arguments provided"
+		log.Warn("Cannot execute: no command arguments provided")
+		return false
 	}
 
 	cmd.Stdout = streamer

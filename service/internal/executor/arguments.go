@@ -43,6 +43,10 @@ func parseCommandForReplacements(shellCommand string, values map[string]string, 
 }
 
 func parseActionExec(values map[string]string, action *config.Action, entity *entities.Entity) ([]string, error) {
+	if action == nil {
+		return nil, fmt.Errorf("action is nil")
+	}
+
 	for _, arg := range action.Arguments {
 		argName := arg.Name
 		argValue := values[argName]
