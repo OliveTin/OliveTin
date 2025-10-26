@@ -42,6 +42,48 @@ func parseCommandForReplacements(shellCommand string, values map[string]string, 
 	return shellCommand, nil
 }
 
+func parseActionExec(values map[string]string, action *config.Action, entity *entities.Entity) ([]string, error) {
+	if action == nil {
+		return nil, fmt.Errorf("action is nil")
+	}
+
+	for _, arg := range action.Arguments {
+		argName := arg.Name
+		argValue := values[argName]
+
+		err := typecheckActionArgument(&arg, argValue, action)
+
+		if err != nil {
+			return nil, err
+		}
+
+		log.WithFields(log.Fields{
+			"name":  argName,
+			"value": argValue,
+		}).Debugf("Arg assigned")
+	}
+
+	parsedArgs := make([]string, len(action.Exec))
+	for i, arg := range action.Exec {
+		parsedArg, err := parseCommandForReplacements(arg, values, entity)
+		if err != nil {
+			return nil, err
+		}
+
+		parsedArg = entities.ParseTemplateWithArgs(parsedArg, entity, values)
+		parsedArgs[i] = parsedArg
+	}
+
+	redactedArgs := redactExecArgs(parsedArgs, action.Arguments, values)
+
+	log.WithFields(log.Fields{
+		"actionTitle": action.Title,
+		"cmd":         redactedArgs,
+	}).Infof("Action parse args - After (Exec)")
+
+	return parsedArgs, nil
+}
+
 func parseActionArguments(values map[string]string, action *config.Action, entity *entities.Entity) (string, error) {
 	log.WithFields(log.Fields{
 		"actionTitle": action.Title,
@@ -101,6 +143,15 @@ func redactShellCommand(shellCommand string, arguments []config.ActionArgument, 
 	}
 
 	return shellCommand
+}
+
+//gocyclo:ignore
+func redactExecArgs(execArgs []string, arguments []config.ActionArgument, argumentValues map[string]string) []string {
+	redacted := make([]string, len(execArgs))
+	for i, arg := range execArgs {
+		redacted[i] = redactShellCommand(arg, arguments, argumentValues)
+	}
+	return redacted
 }
 
 func typecheckActionArgument(arg *config.ActionArgument, value string, action *config.Action) error {
@@ -241,6 +292,24 @@ func typeSafetyCheckUrl(value string) error {
 	_, err := url.ParseRequestURI(value)
 
 	return err
+}
+
+func checkShellArgumentSafety(action *config.Action) error {
+	if action.Shell == "" {
+		return nil
+	}
+
+	unsafeTypes := []string{"url", "email", "raw_string_multiline", "very_dangerous_raw_string"}
+
+	for _, arg := range action.Arguments {
+		for _, unsafeType := range unsafeTypes {
+			if arg.Type == unsafeType {
+				return fmt.Errorf("unsafe argument type '%s' cannot be used with Shell execution. Use 'exec' instead. See https://docs.olivetin.app/action_execution/shellvsexec.html", arg.Type)
+			}
+		}
+	}
+
+	return nil
 }
 
 func mangleInvalidArgumentValues(req *ExecutionRequest) {
