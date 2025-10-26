@@ -21,32 +21,8 @@ main {
 	padding-top: 4em;
 }
 
-action-button {
-	display: flex;
-	flex-direction: column;
-	flex-grow: 1;
-}
-
-action-button > button {
-	display: flex;
-	flex-direction: column;
-	flex-grow: 1;
-	justify-content: center;
-	font-weight: normal;
-	font-size: 0.85em;
-	box-shadow: 0 0 .6em #aaa;
-}
-
-action-button > button .icon {
-	font-size: 3em;
-}
-
 dialog {
 	border-radius: 1em;
-}
-
-footer span {
-	margin-right: 1em;
 }
 
 legend {
@@ -90,14 +66,6 @@ aside .flex-row {
 
 div.buttons button svg {
 	vertical-align: middle;
-}
-
-footer {
-	font-size: small;
-}
-
-th {
-	background-color: #fff;
 }
 
 section.small {
