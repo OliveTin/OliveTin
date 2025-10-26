@@ -318,7 +318,7 @@ func parseActionExec(values map[string]string, action *config.Action, entityPref
 		if err != nil {
 			return nil, err
 		}
-		
+
 		parsedArg = sv.ReplaceEntityVars(entityPrefix, parsedArg)
 		parsedArgs[i] = parsedArg
 	}

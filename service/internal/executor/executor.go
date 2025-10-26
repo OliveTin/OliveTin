@@ -68,9 +68,9 @@ type ExecutionRequest struct {
 
 	logEntry           *InternalLogEntry
 	finalParsedCommand string
-	execArgs            []string
-	useDirectExec       bool
-	executor            *Executor
+	execArgs           []string
+	useDirectExec      bool
+	executor           *Executor
 }
 
 // InternalLogEntry objects are created by an Executor, and represent the final
@@ -413,14 +413,14 @@ func stepParseArgs(req *ExecutionRequest) bool {
 		req.execArgs, err = parseActionExec(req.Arguments, req.Action, req.EntityPrefix)
 	} else {
 		req.useDirectExec = false
-		
+
 		err = checkShellArgumentSafety(req.Action)
 		if err != nil {
 			req.logEntry.Output = err.Error()
 			log.Warn(err.Error())
 			return false
 		}
-		
+
 		req.finalParsedCommand, err = parseActionArguments(req.Arguments, req.Action, req.EntityPrefix)
 	}
 
