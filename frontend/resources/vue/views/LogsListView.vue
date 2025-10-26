@@ -161,7 +161,6 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background: #fff;
   border: 1px solid #ddd;
   border-radius: 4px;
   padding: 0.5rem;
@@ -183,7 +182,6 @@ onMounted(() => {
 }
 
 .input-with-icons button:hover:not(:disabled) {
-  background: #f5f5f5;
 }
 
 .input-with-icons button:disabled {

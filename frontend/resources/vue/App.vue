@@ -35,9 +35,8 @@
 
             <footer title="footer" v-if="showFooter && !initError">
                 <p>
-                    <img title="application icon" src="../../OliveTinLogo.png" alt="OliveTin logo" height="1em"
-                        class="logo" />
-                    OliveTin 3000!
+                    <img title="application icon" :src="logoUrl" alt="OliveTin logo" style="height: 1em;" class="logo" />
+                    OliveTin {{ currentVersion }}
                 </p>
                 <p>
                     <span>
@@ -48,8 +47,6 @@
                         <a href="https://github.com/OliveTin/OliveTin/issues/new/choose" target="_new">Raise an issue on
                             GitHub</a>
                     </span>
-
-                    <span>{{ currentVersion }}</span>
 
                     <span>{{ serverConnection }}</span>
                 </p>

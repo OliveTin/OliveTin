@@ -293,4 +293,20 @@ watch(
 	top: 0;
 }
 
+@media (prefers-color-scheme: dark) {
+	.action-button button {
+		background: #111;
+		border-color: #000;
+		box-shadow: 0 0 6px #000;
+		color: #fff;
+	}
+
+	.action-button button:hover:not(:disabled) {
+		background: #222;
+		border-color: #000;
+		box-shadow: 0 0 6px #444;
+		color: #fff;
+	}
+}
+
 </style>

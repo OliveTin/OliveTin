@@ -1,6 +1,7 @@
 'use strict'
 
 import 'femtocrank/style.css'
+import 'femtocrank/dark.css'
 import './style.css'
 
 import 'iconify-icon'
