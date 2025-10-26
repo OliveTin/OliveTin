@@ -22,3 +22,11 @@ func wrapCommandInShell(ctx context.Context, finalParsedCommand string) *exec.Cm
 		return exec.CommandContext(ctx, "cmd", "/u", "/C", finalParsedCommand)
 	}
 }
+
+func wrapCommandDirect(ctx context.Context, execArgs []string) *exec.Cmd {
+	if len(execArgs) == 0 {
+		return nil
+	}
+
+	return exec.CommandContext(ctx, execArgs[0], execArgs[1:]...)
+}
