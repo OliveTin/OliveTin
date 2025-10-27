@@ -65,10 +65,10 @@ type EntityFile struct {
 
 // PermissionsList defines what users can do with an action.
 type PermissionsList struct {
-	View bool
-	Exec bool
-	Logs bool
-	Kill bool
+	View bool `mapstructure:"view"`
+	Exec bool `mapstructure:"exec"`
+	Logs bool `mapstructure:"logs"`
+	Kill bool `mapstructure:"kill"`
 }
 
 // AccessControlList defines what permissions apply to a user or user group.
@@ -83,89 +83,89 @@ type AccessControlList struct {
 
 // ConfigurationPolicy defines global settings which are overridden with an ACL.
 type ConfigurationPolicy struct {
-	ShowDiagnostics bool
-	ShowLogList     bool
+	ShowDiagnostics bool `mapstructure:"showDiagnostics"`
+	ShowLogList     bool `mapstructure:"showLogList"`
 }
 
 type PrometheusConfig struct {
-	Enabled          bool
-	DefaultGoMetrics bool
+	Enabled          bool `mapstructure:"enabled"`
+	DefaultGoMetrics bool `mapstructure:"defaultGoMetrics"`
 }
 
 // Config is the global config used through the whole app.
 type Config struct {
-	UseSingleHTTPFrontend           bool
-	ThemeName                       string
-	ThemeCacheDisabled              bool
-	ListenAddressSingleHTTPFrontend string
-	ListenAddressWebUI              string
-	ListenAddressRestActions        string
-	ListenAddressPrometheus         string
-	ExternalRestAddress             string
-	LogLevel                        string
-	LogDebugOptions                 LogDebugOptions
-	LogHistoryPageSize              int64
-	Actions                         []*Action             `mapstructure:"actions"`
-	Entities                        []*EntityFile         `mapstructure:"entities"`
-	Dashboards                      []*DashboardComponent `mapstructure:"dashboards"`
-	CheckForUpdates                 bool
-	PageTitle                       string
-	ShowFooter                      bool
-	ShowNavigation                  bool
-	ShowNewVersions                 bool
-	EnableCustomJs                  bool
-	AuthJwtCookieName               string
-	AuthJwtHeader                   string
-	AuthJwtAud                      string
-	AuthJwtDomain                   string
-	AuthJwtCertsURL                 string
-	AuthJwtHmacSecret               string // mutually exclusive with pub key config fields
-	AuthJwtClaimUsername            string
-	AuthJwtClaimUserGroup           string
-	AuthJwtPubKeyPath               string // will read pub key from file on disk
-	AuthHttpHeaderUsername          string
-	AuthHttpHeaderUserGroup         string
-	AuthHttpHeaderUserGroupSep      string
-	AuthLocalUsers                  AuthLocalUsersConfig
-	AuthLoginUrl                    string
-	AuthRequireGuestsToLogin        bool
-	AuthOAuth2RedirectURL           string
-	AuthOAuth2Providers             map[string]*OAuth2Provider
-	DefaultPermissions              PermissionsList
-	DefaultPolicy                   ConfigurationPolicy
-	AccessControlLists              []*AccessControlList
-	WebUIDir                        string
-	CronSupportForSeconds           bool
-	SectionNavigationStyle          string
-	DefaultPopupOnStart             string
-	InsecureAllowDumpOAuth2UserData bool
-	InsecureAllowDumpVars           bool
-	InsecureAllowDumpSos            bool
-	InsecureAllowDumpActionMap      bool
-	InsecureAllowDumpJwtClaims      bool
-	Prometheus                      PrometheusConfig
-	SaveLogs                        SaveLogsConfig
-	DefaultIconForActions           string
-	DefaultIconForDirectories       string
-	DefaultIconForBack              string
-	AdditionalNavigationLinks       []*NavigationLink
-	ServiceHostMode                 string
-	StyleMods                       []string
-	BannerMessage                   string
-	BannerCSS                       string
+	UseSingleHTTPFrontend           bool                       `mapstructure:"useSingleHTTPFrontend"`
+	ThemeName                       string                     `mapstructure:"themeName"`
+	ThemeCacheDisabled              bool                       `mapstructure:"themeCacheDisabled"`
+	ListenAddressSingleHTTPFrontend string                     `mapstructure:"listenAddressSingleHTTPFrontend"`
+	ListenAddressWebUI              string                     `mapstructure:"listenAddressWebUI"`
+	ListenAddressRestActions        string                     `mapstructure:"listenAddressRestActions"`
+	ListenAddressPrometheus         string                     `mapstructure:"listenAddressPrometheus"`
+	ExternalRestAddress             string                     `mapstructure:"externalRestAddress"`
+	LogLevel                        string                     `mapstructure:"logLevel"`
+	LogDebugOptions                 LogDebugOptions            `mapstructure:"logDebugOptions"`
+	LogHistoryPageSize              int64                      `mapstructure:"logHistoryPageSize"`
+	Actions                         []*Action                  `mapstructure:"actions"`
+	Entities                        []*EntityFile              `mapstructure:"entities"`
+	Dashboards                      []*DashboardComponent      `mapstructure:"dashboards"`
+	CheckForUpdates                 bool                       `mapstructure:"checkForUpdates"`
+	PageTitle                       string                     `mapstructure:"pageTitle"`
+	ShowFooter                      bool                       `mapstructure:"showFooter"`
+	ShowNavigation                  bool                       `mapstructure:"showNavigation"`
+	ShowNewVersions                 bool                       `mapstructure:"showNewVersions"`
+	EnableCustomJs                  bool                       `mapstructure:"enableCustomJs"`
+	AuthJwtCookieName               string                     `mapstructure:"authJwtCookieName"`
+	AuthJwtHeader                   string                     `mapstructure:"authJwtHeader"`
+	AuthJwtAud                      string                     `mapstructure:"authJwtAud"`
+	AuthJwtDomain                   string                     `mapstructure:"authJwtDomain"`
+	AuthJwtCertsURL                 string                     `mapstructure:"authJwtCertsUrl"`
+	AuthJwtHmacSecret               string                     `mapstructure:"authJwtHmacSecret"` // mutually exclusive with pub key config fields
+	AuthJwtClaimUsername            string                     `mapstructure:"authJwtClaimUsername"`
+	AuthJwtClaimUserGroup           string                     `mapstructure:"authJwtClaimUserGroup"`
+	AuthJwtPubKeyPath               string                     `mapstructure:"authJwtPubKeyPath"` // will read pub key from file on disk
+	AuthHttpHeaderUsername          string                     `mapstructure:"authHttpHeaderUsername"`
+	AuthHttpHeaderUserGroup         string                     `mapstructure:"authHttpHeaderUserGroup"`
+	AuthHttpHeaderUserGroupSep      string                     `mapstructure:"authHttpHeaderUserGroupSep"`
+	AuthLocalUsers                  AuthLocalUsersConfig       `mapstructure:"authLocalUsers"`
+	AuthLoginUrl                    string                     `mapstructure:"authLoginUrl"`
+	AuthRequireGuestsToLogin        bool                       `mapstructure:"authRequireGuestsToLogin"`
+	AuthOAuth2RedirectURL           string                     `mapstructure:"authOAuth2RedirectUrl"`
+	AuthOAuth2Providers             map[string]*OAuth2Provider `mapstructure:"authOAuth2Providers"`
+	DefaultPermissions              PermissionsList            `mapstructure:"defaultPermissions"`
+	DefaultPolicy                   ConfigurationPolicy        `mapstructure:"defaultPolicy"`
+	AccessControlLists              []*AccessControlList       `mapstructure:"accessControlLists"`
+	WebUIDir                        string                     `mapstructure:"webUIDir"`
+	CronSupportForSeconds           bool                       `mapstructure:"cronSupportForSeconds"`
+	SectionNavigationStyle          string                     `mapstructure:"sectionNavigationStyle"`
+	DefaultPopupOnStart             string                     `mapstructure:"defaultPopupOnStart"`
+	InsecureAllowDumpOAuth2UserData bool                       `mapstructure:"insecureAllowDumpOAuth2UserData"`
+	InsecureAllowDumpVars           bool                       `mapstructure:"insecureAllowDumpVars"`
+	InsecureAllowDumpSos            bool                       `mapstructure:"insecureAllowDumpSos"`
+	InsecureAllowDumpActionMap      bool                       `mapstructure:"insecureAllowDumpActionMap"`
+	InsecureAllowDumpJwtClaims      bool                       `mapstructure:"insecureAllowDumpJwtClaims"`
+	Prometheus                      PrometheusConfig           `mapstructure:"prometheus"`
+	SaveLogs                        SaveLogsConfig             `mapstructure:"saveLogs"`
+	DefaultIconForActions           string                     `mapstructure:"defaultIconForActions"`
+	DefaultIconForDirectories       string                     `mapstructure:"defaultIconForDirectories"`
+	DefaultIconForBack              string                     `mapstructure:"defaultIconForBack"`
+	AdditionalNavigationLinks       []*NavigationLink          `mapstructure:"additionalNavigationLinks"`
+	ServiceHostMode                 string                     `mapstructure:"serviceHostMode"`
+	StyleMods                       []string                   `mapstructure:"styleMods"`
+	BannerMessage                   string                     `mapstructure:"bannerMessage"`
+	BannerCSS                       string                     `mapstructure:"bannerCss"`
 
 	sourceFiles []string
 }
 
 type AuthLocalUsersConfig struct {
-	Enabled bool
-	Users   []*LocalUser
+	Enabled bool         `mapstructure:"enabled"`
+	Users   []*LocalUser `mapstructure:"users"`
 }
 
 type LocalUser struct {
-	Username  string
-	Usergroup string
-	Password  string
+	Username  string `mapstructure:"username"`
+	Usergroup string `mapstructure:"usergroup"`
+	Password  string `mapstructure:"password"`
 }
 
 type OAuth2Provider struct {
@@ -186,14 +186,14 @@ type OAuth2Provider struct {
 }
 
 type NavigationLink struct {
-	Title  string
-	Url    string
-	Target string
+	Title  string `mapstructure:"title"`
+	Url    string `mapstructure:"url"`
+	Target string `mapstructure:"target"`
 }
 
 type SaveLogsConfig struct {
-	ResultsDirectory string
-	OutputDirectory  string
+	ResultsDirectory string `mapstructure:"resultsDirectory"`
+	OutputDirectory  string `mapstructure:"outputDirectory"`
 }
 
 type LogDebugOptions struct {

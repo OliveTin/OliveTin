@@ -309,6 +309,10 @@ func (api *oliveTinAPI) ExecutionStatus(ctx ctx.Context, req *connect.Request[ap
 
 	user := acl.UserFromContext(ctx, req, api.cfg)
 
+	if err := api.checkDashboardAccess(user); err != nil {
+		return nil, err
+	}
+
 	var ile *executor.InternalLogEntry
 
 	if req.Msg.ExecutionTrackingId != "" {
@@ -351,12 +355,18 @@ func (api *oliveTinAPI) Logout(ctx ctx.Context, req *connect.Request[apiv1.Logou
 }
 
 func (api *oliveTinAPI) GetActionBinding(ctx ctx.Context, req *connect.Request[apiv1.GetActionBindingRequest]) (*connect.Response[apiv1.GetActionBindingResponse], error) {
+	user := acl.UserFromContext(ctx, req, api.cfg)
+
+	if err := api.checkDashboardAccess(user); err != nil {
+		return nil, err
+	}
+
 	binding := api.executor.FindBindingByID(req.Msg.BindingId)
 
 	return connect.NewResponse(&apiv1.GetActionBindingResponse{
 		Action: buildAction(binding, &DashboardRenderRequest{
 			cfg:               api.cfg,
-			AuthenticatedUser: acl.UserFromContext(ctx, req, api.cfg),
+			AuthenticatedUser: user,
 			ex:                api.executor,
 		}),
 	}), nil
@@ -415,6 +425,10 @@ func (api *oliveTinAPI) buildCustomDashboardResponse(rr *DashboardRenderRequest,
 func (api *oliveTinAPI) GetLogs(ctx ctx.Context, req *connect.Request[apiv1.GetLogsRequest]) (*connect.Response[apiv1.GetLogsResponse], error) {
 	user := acl.UserFromContext(ctx, req, api.cfg)
 
+	if err := api.checkDashboardAccess(user); err != nil {
+		return nil, err
+	}
+
 	ret := &apiv1.GetLogsResponse{}
 
 	logEntries, pagingResult := api.executor.GetLogTrackingIds(req.Msg.StartOffset, api.cfg.LogHistoryPageSize)
@@ -458,6 +472,10 @@ func (api *oliveTinAPI) ValidateArgumentType(ctx ctx.Context, req *connect.Reque
 
 func (api *oliveTinAPI) WhoAmI(ctx ctx.Context, req *connect.Request[apiv1.WhoAmIRequest]) (*connect.Response[apiv1.WhoAmIResponse], error) {
 	user := acl.UserFromContext(ctx, req, api.cfg)
+
+	if err := api.checkDashboardAccess(user); err != nil {
+		return nil, err
+	}
 
 	res := &apiv1.WhoAmIResponse{
 		AuthenticatedUser: user.Username,
@@ -539,9 +557,15 @@ func (api *oliveTinAPI) GetReadyz(ctx ctx.Context, req *connect.Request[apiv1.Ge
 func (api *oliveTinAPI) EventStream(ctx ctx.Context, req *connect.Request[apiv1.EventStreamRequest], srv *connect.ServerStream[apiv1.EventStreamResponse]) error {
 	log.Debugf("EventStream: %v", req.Msg)
 
+	user := acl.UserFromContext(ctx, req, api.cfg)
+
+	if err := api.checkDashboardAccess(user); err != nil {
+		return err
+	}
+
 	client := &connectedClients{
 		channel:           make(chan *apiv1.EventStreamResponse, 10), // Buffered channel to hold Events
-		AuthenticatedUser: acl.UserFromContext(ctx, req, api.cfg),
+		AuthenticatedUser: user,
 	}
 
 	log.Infof("EventStream: client connected: %v", client.AuthenticatedUser.Username)
@@ -618,6 +642,10 @@ func (api *oliveTinAPI) GetDiagnostics(ctx ctx.Context, req *connect.Request[api
 
 func (api *oliveTinAPI) Init(ctx ctx.Context, req *connect.Request[apiv1.InitRequest]) (*connect.Response[apiv1.InitResponse], error) {
 	user := acl.UserFromContext(ctx, req, api.cfg)
+
+	if err := api.checkDashboardAccess(user); err != nil {
+		return nil, err
+	}
 
 	res := &apiv1.InitResponse{
 		ShowFooter:                api.cfg.ShowFooter,
@@ -721,6 +749,12 @@ func (api *oliveTinAPI) OnOutputChunk(content []byte, executionTrackingId string
 }
 
 func (api *oliveTinAPI) GetEntities(ctx ctx.Context, req *connect.Request[apiv1.GetEntitiesRequest]) (*connect.Response[apiv1.GetEntitiesResponse], error) {
+	user := acl.UserFromContext(ctx, req, api.cfg)
+
+	if err := api.checkDashboardAccess(user); err != nil {
+		return nil, err
+	}
+
 	res := &apiv1.GetEntitiesResponse{
 		EntityDefinitions: make([]*apiv1.EntityDefinition, 0),
 	}
@@ -768,6 +802,12 @@ func findEntityInComponents(entityTitle string, parentTitle string, components [
 }
 
 func (api *oliveTinAPI) GetEntity(ctx ctx.Context, req *connect.Request[apiv1.GetEntityRequest]) (*connect.Response[apiv1.Entity], error) {
+	user := acl.UserFromContext(ctx, req, api.cfg)
+
+	if err := api.checkDashboardAccess(user); err != nil {
+		return nil, err
+	}
+
 	res := &apiv1.Entity{}
 
 	instances := entities.GetEntityInstances(req.Msg.Type)

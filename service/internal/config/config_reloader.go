@@ -33,85 +33,45 @@ func AddListener(l func()) {
 func AppendSource(cfg *Config, k *koanf.Koanf, configPath string) {
 	log.Infof("Appending cfg source: %s", configPath)
 
-	// Try default unmarshaling first
+	// Unmarshal the entire config with mapstructure tags
 	err := k.Unmarshal(".", cfg)
 	if err != nil {
 		log.Errorf("Error unmarshalling config: %v", err)
 		return
 	}
 
-	// If actions are not loaded by default unmarshaling, try manual unmarshaling
-	// This is a workaround for a koanf issue where []*Action fields are not unmarshaled correctly
+	// Fallback for complex nested structures that might not unmarshal correctly
+	// Only attempt manual unmarshaling if the automatic approach didn't populate the fields
 	if len(cfg.Actions) == 0 && k.Exists("actions") {
 		var actions []*Action
-		err := k.Unmarshal("actions", &actions)
-		if err != nil {
-			log.Errorf("Error manually unmarshaling actions: %v", err)
-		} else {
+		if err := k.Unmarshal("actions", &actions); err == nil {
 			cfg.Actions = actions
+			log.Debugf("Manually loaded %d actions", len(actions))
 		}
 	}
 
-	// If dashboards are not loaded by default unmarshaling, try manual unmarshaling
-	// This is a workaround for a koanf issue where []*DashboardComponent fields are not unmarshaled correctly
 	if len(cfg.Dashboards) == 0 && k.Exists("dashboards") {
 		var dashboards []*DashboardComponent
-		err := k.Unmarshal("dashboards", &dashboards)
-		if err != nil {
-			log.Errorf("Error manually unmarshaling dashboards: %v", err)
-		} else {
+		if err := k.Unmarshal("dashboards", &dashboards); err == nil {
 			cfg.Dashboards = dashboards
+			log.Debugf("Manually loaded %d dashboards", len(dashboards))
 		}
 	}
 
-	// If entities are not loaded by default unmarshaling, try manual unmarshaling
-	// This is a workaround for a koanf issue where []*EntityFile fields are not unmarshaled correctly
 	if len(cfg.Entities) == 0 && k.Exists("entities") {
 		var entities []*EntityFile
-		err := k.Unmarshal("entities", &entities)
-		if err != nil {
-			log.Errorf("Error manually unmarshaling entities: %v", err)
-		} else {
+		if err := k.Unmarshal("entities", &entities); err == nil {
 			cfg.Entities = entities
+			log.Debugf("Manually loaded %d entities", len(entities))
 		}
 	}
 
-	// If authLocalUsers are not loaded by default unmarshaling, try manual unmarshaling
-	// This is a workaround for a koanf issue where nested struct fields are not unmarshaled correctly
 	if len(cfg.AuthLocalUsers.Users) == 0 && k.Exists("authLocalUsers") {
 		var authLocalUsers AuthLocalUsersConfig
-		err := k.Unmarshal("authLocalUsers", &authLocalUsers)
-		if err != nil {
-			log.Errorf("Error manually unmarshaling authLocalUsers: %v", err)
-		} else {
+		if err := k.Unmarshal("authLocalUsers", &authLocalUsers); err == nil {
 			cfg.AuthLocalUsers = authLocalUsers
+			log.Debugf("Manually loaded local auth config")
 		}
-	}
-
-	// Manual field assignment for other config fields that might not be unmarshaled correctly
-	boolVal(k, "showFooter", &cfg.ShowFooter)
-	boolVal(k, "showNavigation", &cfg.ShowNavigation)
-	boolVal(k, "checkForUpdates", &cfg.CheckForUpdates)
-	stringVal(k, "pageTitle", &cfg.PageTitle)
-	stringVal(k, "bannerMessage", &cfg.BannerMessage)
-	stringVal(k, "bannerCss", &cfg.BannerCSS)
-	stringVal(k, "listenAddressSingleHTTPFrontend", &cfg.ListenAddressSingleHTTPFrontend)
-	stringVal(k, "listenAddressWebUI", &cfg.ListenAddressWebUI)
-	stringVal(k, "listenAddressRestActions", &cfg.ListenAddressRestActions)
-	stringVal(k, "listenAddressPrometheus", &cfg.ListenAddressPrometheus)
-	boolVal(k, "useSingleHTTPFrontend", &cfg.UseSingleHTTPFrontend)
-	stringVal(k, "logLevel", &cfg.LogLevel)
-
-	// Handle defaultPolicy nested struct
-	if k.Exists("defaultPolicy") {
-		boolVal(k, "defaultPolicy.showDiagnostics", &cfg.DefaultPolicy.ShowDiagnostics)
-		boolVal(k, "defaultPolicy.showLogList", &cfg.DefaultPolicy.ShowLogList)
-	}
-
-	// Handle prometheus nested struct
-	if k.Exists("prometheus") {
-		boolVal(k, "prometheus.enabled", &cfg.Prometheus.Enabled)
-		boolVal(k, "prometheus.defaultGoMetrics", &cfg.Prometheus.DefaultGoMetrics)
 	}
 
 	metricConfigReloadedCount.Inc()
