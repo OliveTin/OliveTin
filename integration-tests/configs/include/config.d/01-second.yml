@@ -1,0 +1,9 @@
+# This file should be loaded second
+actions:
+- title: Second Included Action
+  shell: echo "second"
+  icon: ping
+
+# Override base setting
+logLevel: "INFO"
+

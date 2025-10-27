@@ -176,7 +176,7 @@ func initConfig(configDir string) {
 	cfg = config.DefaultConfigWithBasePort(getBasePort())
 
 	if firstConfigPath != "" {
-		config.AppendSource(cfg, k, firstConfigPath)
+		config.AppendSourceWithIncludes(cfg, k, firstConfigPath)
 	} else {
 		config.AppendSource(cfg, k, "base")
 	}

@@ -5,7 +5,11 @@ import (
 	"path/filepath"
 	"reflect"
 	"regexp"
+	"sort"
+	"strings"
 
+	"github.com/knadh/koanf/parsers/yaml"
+	"github.com/knadh/koanf/providers/file"
 	"github.com/knadh/koanf/v2"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -30,10 +34,21 @@ func AddListener(l func()) {
 	listeners = append(listeners, l)
 }
 
+// AppendSourceWithIncludes loads base config and any included configs
+func AppendSourceWithIncludes(cfg *Config, k *koanf.Koanf, configPath string) {
+	// Load base config first
+	AppendSource(cfg, k, configPath)
+
+	// Load included configs if specified
+	if cfg.Include != "" {
+		LoadIncludedConfigs(cfg, k, configPath)
+	}
+}
+
 func AppendSource(cfg *Config, k *koanf.Koanf, configPath string) {
 	log.Infof("Appending cfg source: %s", configPath)
 
-	// Unmarshal the entire config with mapstructure tags
+	// Unmarshal config - koanf will handle mapstructure tags automatically
 	err := k.Unmarshal(".", cfg)
 	if err != nil {
 		log.Errorf("Error unmarshalling config: %v", err)
@@ -74,6 +89,10 @@ func AppendSource(cfg *Config, k *koanf.Koanf, configPath string) {
 		}
 	}
 
+	// Map structure tags should handle these automatically, but we keep fallbacks
+	// for fields that might not unmarshal correctly
+	applyConfigOverrides(k, cfg)
+
 	metricConfigReloadedCount.Inc()
 	metricConfigActionCount.Set(float64(len(cfg.Actions)))
 
@@ -83,6 +102,224 @@ func AppendSource(cfg *Config, k *koanf.Koanf, configPath string) {
 	for _, l := range listeners {
 		l()
 	}
+}
+
+func applyConfigOverrides(k *koanf.Koanf, cfg *Config) {
+	// Override fields that should be read from config
+	// mapstructure tags should make most of this unnecessary, but keep for safety
+	boolVal(k, "showFooter", &cfg.ShowFooter)
+	boolVal(k, "showNavigation", &cfg.ShowNavigation)
+	boolVal(k, "checkForUpdates", &cfg.CheckForUpdates)
+	boolVal(k, "useSingleHTTPFrontend", &cfg.UseSingleHTTPFrontend)
+	stringVal(k, "logLevel", &cfg.LogLevel)
+	stringVal(k, "pageTitle", &cfg.PageTitle)
+	boolVal(k, "authRequireGuestsToLogin", &cfg.AuthRequireGuestsToLogin)
+	stringVal(k, "include", &cfg.Include)
+
+	// Handle nested defaultPolicy struct
+	if k.Exists("defaultPolicy") {
+		boolVal(k, "defaultPolicy.showDiagnostics", &cfg.DefaultPolicy.ShowDiagnostics)
+		boolVal(k, "defaultPolicy.showLogList", &cfg.DefaultPolicy.ShowLogList)
+	}
+
+	// Handle nested prometheus struct
+	if k.Exists("prometheus") {
+		boolVal(k, "prometheus.enabled", &cfg.Prometheus.Enabled)
+		boolVal(k, "prometheus.defaultGoMetrics", &cfg.Prometheus.DefaultGoMetrics)
+	}
+}
+
+// LoadIncludedConfigs loads configuration files from an include directory and merges them
+func LoadIncludedConfigs(cfg *Config, k *koanf.Koanf, baseConfigPath string) {
+	if cfg.Include == "" {
+		return
+	}
+
+	configDir := filepath.Dir(baseConfigPath)
+	includePath := filepath.Join(configDir, cfg.Include)
+
+	log.Infof("Loading included configs from: %s", includePath)
+
+	// Check if the include directory exists
+	dirInfo, err := os.Stat(includePath)
+	if err != nil {
+		log.Warnf("Include directory not found: %s", includePath)
+		return
+	}
+
+	if !dirInfo.IsDir() {
+		log.Warnf("Include path is not a directory: %s", includePath)
+		return
+	}
+
+	// Read all .yml files from the directory
+	entries, err := os.ReadDir(includePath)
+	if err != nil {
+		log.Errorf("Error reading include directory: %v", err)
+		return
+	}
+
+	// Filter and sort .yml files
+	var yamlFiles []string
+	for _, entry := range entries {
+		if !entry.IsDir() && (strings.HasSuffix(entry.Name(), ".yml") || strings.HasSuffix(entry.Name(), ".yaml")) {
+			yamlFiles = append(yamlFiles, entry.Name())
+		}
+	}
+
+	if len(yamlFiles) == 0 {
+		log.Infof("No YAML files found in include directory: %s", includePath)
+		return
+	}
+
+	// Sort files to ensure deterministic load order
+	sort.Strings(yamlFiles)
+
+	// Load each file and merge into config
+	for _, filename := range yamlFiles {
+		filePath := filepath.Join(includePath, filename)
+		log.Infof("Loading included config file: %s", filePath)
+
+		includeK := koanf.New(".")
+		f := file.Provider(filePath)
+
+		if err := includeK.Load(f, yaml.Parser()); err != nil {
+			log.Errorf("Error loading included config file %s: %v", filePath, err)
+			continue
+		}
+
+		// Unmarshal into a temporary config to process properly
+		tempCfg := &Config{}
+		if err := includeK.Unmarshal(".", tempCfg); err != nil {
+			log.Errorf("Error unmarshalling included config file %s: %v", filePath, err)
+			continue
+		}
+
+		// Apply the same manual loading workarounds as in AppendSource
+		if len(tempCfg.Actions) == 0 && includeK.Exists("actions") {
+			var actions []*Action
+			if err := includeK.Unmarshal("actions", &actions); err == nil {
+				tempCfg.Actions = actions
+				log.Debugf("Manually loaded %d actions from %s", len(actions), filename)
+			}
+		}
+
+		// Merge the temp config into the main config
+		// Later files override earlier ones
+		mergeConfig(cfg, tempCfg)
+
+		log.Infof("Successfully loaded and merged %s", filename)
+	}
+
+	log.Infof("Finished loading %d included config file(s)", len(yamlFiles))
+
+	// Sanitize the merged config
+	cfg.Sanitize()
+}
+
+func mergeConfig(base *Config, overlay *Config) {
+	// Merge Actions - overlay appends to base
+	if len(overlay.Actions) > 0 {
+		base.Actions = append(base.Actions, overlay.Actions...)
+	}
+
+	// Merge Dashboards - overlay appends to base
+	if len(overlay.Dashboards) > 0 {
+		base.Dashboards = append(base.Dashboards, overlay.Dashboards...)
+		log.Debugf("Merged %d dashboards from include", len(overlay.Dashboards))
+	}
+
+	// Merge Entities - overlay appends to base
+	if len(overlay.Entities) > 0 {
+		base.Entities = append(base.Entities, overlay.Entities...)
+		log.Debugf("Merged %d entities from include", len(overlay.Entities))
+	}
+
+	// Merge AccessControlLists - overlay appends to base
+	if len(overlay.AccessControlLists) > 0 {
+		base.AccessControlLists = append(base.AccessControlLists, overlay.AccessControlLists...)
+		log.Debugf("Merged %d access control lists from include", len(overlay.AccessControlLists))
+	}
+
+	// Merge AuthLocalUsers.Users - overlay appends to base
+	if len(overlay.AuthLocalUsers.Users) > 0 {
+		base.AuthLocalUsers.Users = append(base.AuthLocalUsers.Users, overlay.AuthLocalUsers.Users...)
+		log.Debugf("Merged %d local users from include", len(overlay.AuthLocalUsers.Users))
+	}
+
+	// Merge slices by appending
+	if len(overlay.StyleMods) > 0 {
+		base.StyleMods = append(base.StyleMods, overlay.StyleMods...)
+	}
+
+	if len(overlay.AdditionalNavigationLinks) > 0 {
+		base.AdditionalNavigationLinks = append(base.AdditionalNavigationLinks, overlay.AdditionalNavigationLinks...)
+	}
+
+	// Override simple fields (later files win)
+	if overlay.LogLevel != "" {
+		base.LogLevel = overlay.LogLevel
+	}
+	if overlay.PageTitle != "" {
+		base.PageTitle = overlay.PageTitle
+	}
+	if overlay.ShowFooter != base.ShowFooter {
+		base.ShowFooter = overlay.ShowFooter
+	}
+	if overlay.ShowNavigation != base.ShowNavigation {
+		base.ShowNavigation = overlay.ShowNavigation
+	}
+	if overlay.CheckForUpdates != base.CheckForUpdates {
+		base.CheckForUpdates = overlay.CheckForUpdates
+	}
+	if overlay.UseSingleHTTPFrontend != base.UseSingleHTTPFrontend {
+		base.UseSingleHTTPFrontend = overlay.UseSingleHTTPFrontend
+	}
+	if overlay.AuthRequireGuestsToLogin != base.AuthRequireGuestsToLogin {
+		base.AuthRequireGuestsToLogin = overlay.AuthRequireGuestsToLogin
+	}
+
+	// Override nested structs
+	if overlay.DefaultPolicy.ShowDiagnostics != base.DefaultPolicy.ShowDiagnostics {
+		base.DefaultPolicy.ShowDiagnostics = overlay.DefaultPolicy.ShowDiagnostics
+	}
+	if overlay.DefaultPolicy.ShowLogList != base.DefaultPolicy.ShowLogList {
+		base.DefaultPolicy.ShowLogList = overlay.DefaultPolicy.ShowLogList
+	}
+
+	if overlay.Prometheus.Enabled != base.Prometheus.Enabled {
+		base.Prometheus.Enabled = overlay.Prometheus.Enabled
+	}
+	if overlay.Prometheus.DefaultGoMetrics != base.Prometheus.DefaultGoMetrics {
+		base.Prometheus.DefaultGoMetrics = overlay.Prometheus.DefaultGoMetrics
+	}
+
+	// Override AuthLocalUsers.Enabled if set
+	if overlay.AuthLocalUsers.Enabled {
+		base.AuthLocalUsers.Enabled = overlay.AuthLocalUsers.Enabled
+	}
+
+	// Override string fields if non-empty
+	overrideString(&base.BannerMessage, overlay.BannerMessage)
+	overrideString(&base.BannerCSS, overlay.BannerCSS)
+	overrideString(&base.LogLevel, overlay.LogLevel)
+	overrideString(&base.PageTitle, overlay.PageTitle)
+	overrideString(&base.SectionNavigationStyle, overlay.SectionNavigationStyle)
+	overrideString(&base.DefaultPopupOnStart, overlay.DefaultPopupOnStart)
+}
+
+func overrideString(base *string, overlay string) {
+	if overlay != "" {
+		*base = overlay
+	}
+}
+
+func getActionTitles(actions []*Action) []string {
+	titles := make([]string, len(actions))
+	for i, action := range actions {
+		titles[i] = action.Title
+	}
+	return titles
 }
 
 var envRegex = regexp.MustCompile(`\${{ *?(\S+) *?}}`)

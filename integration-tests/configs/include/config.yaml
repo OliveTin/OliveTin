@@ -1,0 +1,14 @@
+#
+# Integration Test Config: Include Directive
+#
+
+logLevel: "DEBUG"
+checkForUpdates: false
+
+include: config.d
+
+actions:
+- title: Base Action
+  shell: echo "base"
+  icon: ping
+

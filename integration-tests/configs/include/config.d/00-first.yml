@@ -1,0 +1,6 @@
+# This file should be loaded first
+actions:
+- title: First Included Action
+  shell: echo "first"
+  icon: ping
+

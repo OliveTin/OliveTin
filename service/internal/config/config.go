@@ -153,6 +153,7 @@ type Config struct {
 	StyleMods                       []string                   `mapstructure:"styleMods"`
 	BannerMessage                   string                     `mapstructure:"bannerMessage"`
 	BannerCSS                       string                     `mapstructure:"bannerCss"`
+	Include                         string                     `mapstructure:"include"`
 
 	sourceFiles []string
 }
