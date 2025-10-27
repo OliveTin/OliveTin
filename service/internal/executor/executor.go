@@ -259,6 +259,9 @@ func (e *Executor) ExecRequest(req *ExecutionRequest) (*sync.WaitGroup, string) 
 		req.TrackingID = uuid.NewString()
 	}
 
+	// Update the log entry with the final tracking ID
+	req.logEntry.ExecutionTrackingID = req.TrackingID
+
 	log.Tracef("executor.ExecRequest(): %v", req)
 
 	e.SetLog(req.TrackingID, req.logEntry)
