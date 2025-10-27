@@ -166,7 +166,7 @@ nfpms:
       - src: var/systemd/OliveTin.service
         dst: /etc/systemd/system/OliveTin.service
 
-      - src: webui/*
+      - src: webui/
         dst: /var/www/olivetin/
         type: tree
 
@@ -197,7 +197,7 @@ nfpms:
       - src: var/openrc/OliveTin
         dst: /etc/init.d/OliveTin
 
-      - src: webui/*
+      - src: webui/
         dst: /var/www/olivetin/
         type: tree
 
