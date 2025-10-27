@@ -93,6 +93,8 @@ func AppendSource(cfg *Config, k *koanf.Koanf, configPath string) {
 	boolVal(k, "showNavigation", &cfg.ShowNavigation)
 	boolVal(k, "checkForUpdates", &cfg.CheckForUpdates)
 	stringVal(k, "pageTitle", &cfg.PageTitle)
+	stringVal(k, "bannerMessage", &cfg.BannerMessage)
+	stringVal(k, "bannerCss", &cfg.BannerCSS)
 	stringVal(k, "listenAddressSingleHTTPFrontend", &cfg.ListenAddressSingleHTTPFrontend)
 	stringVal(k, "listenAddressWebUI", &cfg.ListenAddressWebUI)
 	stringVal(k, "listenAddressRestActions", &cfg.ListenAddressRestActions)
