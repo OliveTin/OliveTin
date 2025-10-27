@@ -93,7 +93,7 @@ dockers:
       - "--label=org.opencontainers.image.revision={{.FullCommit}}"
       - "--label=org.opencontainers.image.version={{.Tag}}"
     extra_files:
-      - webui
+      - webui/
       - var/entities/
       - config.yaml
       - var/helper-actions/
@@ -110,7 +110,7 @@ dockers:
       - "--label=org.opencontainers.image.revision={{.FullCommit}}"
       - "--label=org.opencontainers.image.version={{.Tag}}"
     extra_files:
-      - webui
+      - webui/
       - var/entities/
       - config.yaml
       - var/helper-actions/
