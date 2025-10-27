@@ -11,6 +11,7 @@ type Action struct {
 	Title                  string
 	Icon                   string
 	Shell                  string
+	Exec                   []string
 	ShellAfterCompleted    string
 	Timeout                int
 	Acls                   []string
