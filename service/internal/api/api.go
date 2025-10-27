@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 
 	"connectrpc.com/connect"
+	"google.golang.org/protobuf/encoding/protojson"
 
 	apiv1 "github.com/OliveTin/OliveTin/gen/olivetin/api/v1"
 	apiv1connect "github.com/OliveTin/OliveTin/gen/olivetin/api/v1/apiv1connect"
@@ -20,6 +21,7 @@ import (
 	entities "github.com/OliveTin/OliveTin/internal/entities"
 	executor "github.com/OliveTin/OliveTin/internal/executor"
 	installationinfo "github.com/OliveTin/OliveTin/internal/installationinfo"
+	connectproto "go.akshayshah.org/connectproto"
 )
 
 type oliveTinAPI struct {
@@ -870,5 +872,14 @@ func newServer(ex *executor.Executor) *oliveTinAPI {
 func GetNewHandler(ex *executor.Executor) (string, http.Handler) {
 	server := newServer(ex)
 
-	return apiv1connect.NewOliveTinApiServiceHandler(server)
+	jsonOpt := connectproto.WithJSON(
+		protojson.MarshalOptions{
+			EmitUnpopulated: true, // https://github.com/OliveTin/OliveTin/issues/674
+		},
+		protojson.UnmarshalOptions{
+			DiscardUnknown: true,
+		},
+	)
+
+	return apiv1connect.NewOliveTinApiServiceHandler(server, jsonOpt)
 }
