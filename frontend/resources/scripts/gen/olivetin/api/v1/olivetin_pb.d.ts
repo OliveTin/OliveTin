@@ -48,6 +48,11 @@ export declare type Action = Message<"olivetin.api.v1.Action"> & {
    * @generated from field: int32 order = 7;
    */
   order: number;
+
+  /**
+   * @generated from field: int32 timeout = 8;
+   */
+  timeout: number;
 };
 
 /**
@@ -580,6 +585,63 @@ export declare type GetLogsResponse = Message<"olivetin.api.v1.GetLogsResponse">
  * Use `create(GetLogsResponseSchema)` to create a new message.
  */
 export declare const GetLogsResponseSchema: GenMessage<GetLogsResponse>;
+
+/**
+ * @generated from message olivetin.api.v1.GetActionLogsRequest
+ */
+export declare type GetActionLogsRequest = Message<"olivetin.api.v1.GetActionLogsRequest"> & {
+  /**
+   * @generated from field: string action_id = 1;
+   */
+  actionId: string;
+
+  /**
+   * @generated from field: int64 start_offset = 2;
+   */
+  startOffset: bigint;
+};
+
+/**
+ * Describes the message olivetin.api.v1.GetActionLogsRequest.
+ * Use `create(GetActionLogsRequestSchema)` to create a new message.
+ */
+export declare const GetActionLogsRequestSchema: GenMessage<GetActionLogsRequest>;
+
+/**
+ * @generated from message olivetin.api.v1.GetActionLogsResponse
+ */
+export declare type GetActionLogsResponse = Message<"olivetin.api.v1.GetActionLogsResponse"> & {
+  /**
+   * @generated from field: repeated olivetin.api.v1.LogEntry logs = 1;
+   */
+  logs: LogEntry[];
+
+  /**
+   * @generated from field: int64 count_remaining = 2;
+   */
+  countRemaining: bigint;
+
+  /**
+   * @generated from field: int64 page_size = 3;
+   */
+  pageSize: bigint;
+
+  /**
+   * @generated from field: int64 total_count = 4;
+   */
+  totalCount: bigint;
+
+  /**
+   * @generated from field: int64 start_offset = 5;
+   */
+  startOffset: bigint;
+};
+
+/**
+ * Describes the message olivetin.api.v1.GetActionLogsResponse.
+ * Use `create(GetActionLogsResponseSchema)` to create a new message.
+ */
+export declare const GetActionLogsResponseSchema: GenMessage<GetActionLogsResponse>;
 
 /**
  * @generated from message olivetin.api.v1.ValidateArgumentTypeRequest
@@ -1569,6 +1631,14 @@ export declare const OliveTinApiService: GenService<{
     methodKind: "unary";
     input: typeof GetLogsRequestSchema;
     output: typeof GetLogsResponseSchema;
+  },
+  /**
+   * @generated from rpc olivetin.api.v1.OliveTinApiService.GetActionLogs
+   */
+  getActionLogs: {
+    methodKind: "unary";
+    input: typeof GetActionLogsRequestSchema;
+    output: typeof GetActionLogsResponseSchema;
   },
   /**
    * @generated from rpc olivetin.api.v1.OliveTinApiService.ValidateArgumentType
