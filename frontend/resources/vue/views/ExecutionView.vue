@@ -255,7 +255,7 @@ function updateDuration(logEntryParam) {
   } else {
 	let delta = ''
 	try {
-	  delta = (new Date(logEntry.value.datetimeStarted) - new Date(logEntry.value.datetimeStarted)) / 1000
+		  delta = (new Date(logEntry.value.datetimeFinished) - new Date(logEntry.value.datetimeStarted)) / 1000
 	  delta = new Intl.RelativeTimeFormat().format(delta, 'seconds').replace('in ', '').replace('ago', '')
 	} catch (e) {
 	  console.warn('Failed to calculate delta', e)
