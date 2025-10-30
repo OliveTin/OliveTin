@@ -3003,6 +3003,7 @@ type InitResponse struct {
 	BannerCss                 string                 `protobuf:"bytes,20,opt,name=banner_css,json=bannerCss,proto3" json:"banner_css,omitempty"`
 	ShowDiagnostics           bool                   `protobuf:"varint,21,opt,name=show_diagnostics,json=showDiagnostics,proto3" json:"show_diagnostics,omitempty"`
 	ShowLogList               bool                   `protobuf:"varint,22,opt,name=show_log_list,json=showLogList,proto3" json:"show_log_list,omitempty"`
+	LoginRequired             bool                   `protobuf:"varint,23,opt,name=login_required,json=loginRequired,proto3" json:"login_required,omitempty"`
 	unknownFields             protoimpl.UnknownFields
 	sizeCache                 protoimpl.SizeCache
 }
@@ -3187,6 +3188,13 @@ func (x *InitResponse) GetShowDiagnostics() bool {
 func (x *InitResponse) GetShowLogList() bool {
 	if x != nil {
 		return x.ShowLogList
+	}
+	return false
+}
+
+func (x *InitResponse) GetLoginRequired() bool {
+	if x != nil {
+		return x.LoginRequired
 	}
 	return false
 }
@@ -3815,7 +3823,7 @@ const file_olivetin_api_v1_olivetin_proto_rawDesc = "" +
 	"\x16GetDiagnosticsResponse\x12 \n" +
 	"\vSshFoundKey\x18\x01 \x01(\tR\vSshFoundKey\x12&\n" +
 	"\x0eSshFoundConfig\x18\x02 \x01(\tR\x0eSshFoundConfig\"\r\n" +
-	"\vInitRequest\"\xfb\a\n" +
+	"\vInitRequest\"\xa2\b\n" +
 	"\fInitResponse\x12\x1e\n" +
 	"\n" +
 	"showFooter\x18\x01 \x01(\bR\n" +
@@ -3842,7 +3850,8 @@ const file_olivetin_api_v1_olivetin_proto_rawDesc = "" +
 	"\n" +
 	"banner_css\x18\x14 \x01(\tR\tbannerCss\x12)\n" +
 	"\x10show_diagnostics\x18\x15 \x01(\bR\x0fshowDiagnostics\x12\"\n" +
-	"\rshow_log_list\x18\x16 \x01(\bR\vshowLogList\"8\n" +
+	"\rshow_log_list\x18\x16 \x01(\bR\vshowLogList\x12%\n" +
+	"\x0elogin_required\x18\x17 \x01(\bR\rloginRequired\"8\n" +
 	"\x0eAdditionalLink\x12\x14\n" +
 	"\x05title\x18\x01 \x01(\tR\x05title\x12\x10\n" +
 	"\x03url\x18\x02 \x01(\tR\x03url\"L\n" +

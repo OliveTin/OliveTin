@@ -305,6 +305,7 @@ message InitResponse {
     string banner_css = 20;
 	bool show_diagnostics = 21;
 	bool show_log_list = 22;
+	bool login_required = 23;
 }
 
 message AdditionalLink {

@@ -645,9 +645,7 @@ func (api *oliveTinAPI) GetDiagnostics(ctx ctx.Context, req *connect.Request[api
 func (api *oliveTinAPI) Init(ctx ctx.Context, req *connect.Request[apiv1.InitRequest]) (*connect.Response[apiv1.InitResponse], error) {
 	user := acl.UserFromContext(ctx, req, api.cfg)
 
-	if err := api.checkDashboardAccess(user); err != nil {
-		return nil, err
-	}
+	loginRequired := user.IsGuest() && api.cfg.AuthRequireGuestsToLogin
 
 	res := &apiv1.InitResponse{
 		ShowFooter:                api.cfg.ShowFooter,
@@ -672,6 +670,7 @@ func (api *oliveTinAPI) Init(ctx ctx.Context, req *connect.Request[apiv1.InitReq
 		BannerCss:                 api.cfg.BannerCSS,
 		ShowDiagnostics:           user.EffectivePolicy.ShowDiagnostics,
 		ShowLogList:               user.EffectivePolicy.ShowLogList,
+		LoginRequired:             loginRequired,
 	}
 
 	return connect.NewResponse(res), nil

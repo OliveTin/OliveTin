@@ -1,0 +1,39 @@
+providers:
+    local:
+        sessions:
+            4ae3e62f-996c-4b75-abe0-26bd353d9efe:
+                username: alice
+                expiry: 1793346901
+            76e13151-c9c1-4947-8fd6-a203fe56ba0e:
+                username: testuser
+                expiry: 1793343422
+            4761f8d3-985d-4eb0-af1d-b952a91486e3:
+                username: bob
+                expiry: 1793347159
+            5518aa66-77e2-4492-9914-67d8694834a2:
+                username: alice
+                expiry: 1793343843
+            7862bb9e-06c4-436f-b2ed-59fd05e4543e:
+                username: alice
+                expiry: 1793346864
+            a7e0bbaf-a8a1-4408-9ede-50835cadca20:
+                username: bob
+                expiry: 1793344785
+            e9ea850e-11c7-4665-a0e0-790299d0497f:
+                username: bob
+                expiry: 1793346886
+            eb1d1bea-2e59-4c60-a260-7f3e938ce149:
+                username: alice
+                expiry: 1793344330
+            ec1b8e45-020d-4ffb-8410-e7286e7f87f3:
+                username: adminuser
+                expiry: 1793343464
+            f9fbeb98-8bb0-4976-8b59-2bed404b78eb:
+                username: testuser
+                expiry: 1793343243
+            fbc751e3-0b6f-40a8-876a-4e2c6d63e91b:
+                username: alice
+                expiry: 1793344353
+            fd3681fc-6e67-424b-9c57-0fce0236b148:
+                username: alice
+                expiry: 1793346238

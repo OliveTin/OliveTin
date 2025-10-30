@@ -89,6 +89,14 @@ func AppendSource(cfg *Config, k *koanf.Koanf, configPath string) {
 		}
 	}
 
+	if len(cfg.AccessControlLists) == 0 && k.Exists("accessControlLists") {
+		var acls []*AccessControlList
+		if err := k.Unmarshal("accessControlLists", &acls); err == nil {
+			cfg.AccessControlLists = acls
+			log.Debugf("Manually loaded %d access control lists", len(acls))
+		}
+	}
+
 	// Map structure tags should handle these automatically, but we keep fallbacks
 	// for fields that might not unmarshal correctly
 	applyConfigOverrides(k, cfg)
