@@ -436,14 +436,15 @@ func stepParseArgs(req *ExecutionRequest) bool {
 	req.Arguments["ot_executionTrackingId"] = req.TrackingID
 	req.Arguments["ot_username"] = req.AuthenticatedUser.Username
 
-	mangleInvalidArgumentValues(req)
-
 	if req.Binding == nil || req.Binding.Action == nil {
 		err = fmt.Errorf("cannot parse arguments: Binding or Action is nil")
 		req.logEntry.Output = err.Error()
 		log.Warn(err.Error())
 		return false
 	}
+
+	// Only mangle arguments when we have a valid binding/action
+	mangleInvalidArgumentValues(req)
 
 	if len(req.Binding.Action.Exec) > 0 {
 		req.useDirectExec = true
