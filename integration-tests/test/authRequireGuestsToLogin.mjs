@@ -30,8 +30,21 @@ describe('config: authRequireGuestsToLogin', function () {
 
     // Navigate directly to login to avoid SPA timing issues
     await webdriver.get(runner.baseUrl() + '/login')
-    // Wait for login form to be present
-    await webdriver.wait(until.elementLocated(By.css('form.local-login-form, button.login-button, input[name="username"]')), 20000)
+    // Wait for Init to load and then for login UI to appear (local or OAuth)
+    await webdriver.wait(async () => {
+      const hasInit = await webdriver.executeScript('return !!window.initResponse')
+      if (!hasInit) return false
+
+      const hasLocal = await webdriver.executeScript('return !!(window.initResponse && window.initResponse.authLocalLogin)')
+      if (hasLocal) {
+        const els = await webdriver.findElements(By.css('form.local-login-form, button.login-button, input[name="username"]'))
+        if (els.length > 0) return true
+      }
+
+      // If local login not enabled, ensure OAuth or disabled message renders
+      const alt = await webdriver.findElements(By.css('.login-oauth2, .login-disabled'))
+      return alt.length > 0
+    }, 5000)
     
     // Verify we're on the login page
     const currentUrlAtLogin = await webdriver.getCurrentUrl()
