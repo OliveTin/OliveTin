@@ -14,9 +14,32 @@ authRequireGuestsToLogin: true
 authLocalUsers:
   enabled: true
   users:
-    - username: "testuser"
-      usergroup: "admin"
-      password: "testpass123"
+    - username: "alice"
+      usergroup: "admins"
+      password: "$argon2id$v=19$m=65536,t=4,p=6$ORxyZZGW6E3FWZnbQmHJ9Q$BzIOWeXry/BZ6+JV1T4UASBnebVLB9QJ4f5TmUPXsg4" # notsecret: password
+
+    - username: "bob"
+      usergroup: "users"
+      password: "$argon2id$v=19$m=65536,t=4,p=6$ORxyZZGW6E3FWZnbQmHJ9Q$BzIOWeXry/BZ6+JV1T4UASBnebVLB9QJ4f5TmUPXsg4" # notsecret: password
+
+accessControlLists:
+  - name: "admin"
+    matchUsergroups: ["admins"]
+    addToEveryAction: true
+    permissions:
+      view: true
+      exec: true
+      logs: true
+      kill: true
+
+  - name: "users"
+    matchUsergroups: ["users"]
+    addToEveryAction: true
+    permissions:
+      view: true
+      exec: false
+      logs: false
+      kill: false
 
 # Simple actions for testing
 actions:

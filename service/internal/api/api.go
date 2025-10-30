@@ -14,6 +14,7 @@ import (
 
 	"fmt"
 	"net/http"
+	"sync"
 
 	acl "github.com/OliveTin/OliveTin/internal/acl"
 	auth "github.com/OliveTin/OliveTin/internal/auth"
@@ -28,10 +29,26 @@ type oliveTinAPI struct {
 	executor *executor.Executor
 	cfg      *config.Config
 
-	connectedClients []*connectedClients
+	// streamingClients is a set of currently connected clients.
+	// The empty struct value models set semantics (keys only) and keeps add/remove O(1).
+	// We use a map for efficient membership and deletion; ordering is not required.
+	streamingClients      map[*streamingClient]struct{}
+	streamingClientsMutex sync.RWMutex
 }
 
-type connectedClients struct {
+// This is used to avoid race conditions when iterating over the connectedClients map.
+// and holds the lock for as minimal time as possible to avoid blocking the API for too long.
+func (api *oliveTinAPI) copyOfStreamingClients() []*streamingClient {
+	api.streamingClientsMutex.RLock()
+	defer api.streamingClientsMutex.RUnlock()
+	clients := make([]*streamingClient, 0, len(api.streamingClients))
+	for client := range api.streamingClients {
+		clients = append(clients, client)
+	}
+	return clients
+}
+
+type streamingClient struct {
 	channel           chan *apiv1.EventStreamResponse
 	AuthenticatedUser *acl.AuthenticatedUser
 }
@@ -365,6 +382,10 @@ func (api *oliveTinAPI) GetActionBinding(ctx ctx.Context, req *connect.Request[a
 
 	binding := api.executor.FindBindingByID(req.Msg.BindingId)
 
+	if binding == nil {
+		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("action with ID %s not found", req.Msg.BindingId))
+	}
+
 	return connect.NewResponse(&apiv1.GetActionBindingResponse{
 		Action: buildAction(binding, &DashboardRenderRequest{
 			cfg:               api.cfg,
@@ -432,25 +453,96 @@ func (api *oliveTinAPI) GetLogs(ctx ctx.Context, req *connect.Request[apiv1.GetL
 	}
 
 	ret := &apiv1.GetLogsResponse{}
+	logEntries, paging := api.executor.GetLogTrackingIdsACL(api.cfg, user, req.Msg.StartOffset, api.cfg.LogHistoryPageSize)
+	for _, le := range logEntries {
+		ret.Logs = append(ret.Logs, api.internalLogEntryToPb(le, user))
+	}
+	ret.CountRemaining = paging.CountRemaining
+	ret.PageSize = paging.PageSize
+	ret.TotalCount = paging.TotalCount
+	ret.StartOffset = paging.StartOffset
+	return connect.NewResponse(ret), nil
+}
 
-	logEntries, pagingResult := api.executor.GetLogTrackingIds(req.Msg.StartOffset, api.cfg.LogHistoryPageSize)
+func (api *oliveTinAPI) GetActionLogs(ctx ctx.Context, req *connect.Request[apiv1.GetActionLogsRequest]) (*connect.Response[apiv1.GetActionLogsResponse], error) {
+	user := acl.UserFromContext(ctx, req, api.cfg)
 
-	for _, logEntry := range logEntries {
-		action := logEntry.Binding.Action
-
-		if action == nil || acl.IsAllowedLogs(api.cfg, user, action) {
-			pbLogEntry := api.internalLogEntryToPb(logEntry, user)
-
-			ret.Logs = append(ret.Logs, pbLogEntry)
-		}
+	if err := api.checkDashboardAccess(user); err != nil {
+		return nil, err
 	}
 
-	ret.CountRemaining = pagingResult.CountRemaining
-	ret.PageSize = pagingResult.PageSize
-	ret.TotalCount = pagingResult.TotalCount
-	ret.StartOffset = pagingResult.StartOffset
-
+	ret := &apiv1.GetActionLogsResponse{}
+	filtered := api.filterLogsByACL(api.executor.GetLogsByActionId(req.Msg.ActionId), user)
+	page := paginate(int64(len(filtered)), api.cfg.LogHistoryPageSize, req.Msg.StartOffset)
+	if page.empty {
+		ret.CountRemaining = 0
+		ret.PageSize = page.size
+		ret.TotalCount = page.total
+		ret.StartOffset = page.start
+		return connect.NewResponse(ret), nil
+	}
+    // Newest-first slicing: compute reversed indices
+    startIdx := page.total - page.end
+    endIdx := page.total - page.start
+    if startIdx < 0 { startIdx = 0 }
+    if endIdx > int64(len(filtered)) { endIdx = int64(len(filtered)) }
+    for _, le := range filtered[startIdx:endIdx] {
+        ret.Logs = append(ret.Logs, api.internalLogEntryToPb(le, user))
+    }
+    // Entries older than the returned newest page
+    ret.CountRemaining = page.start
+	ret.PageSize = page.size
+	ret.TotalCount = page.total
+	ret.StartOffset = page.start
 	return connect.NewResponse(ret), nil
+}
+
+func (api *oliveTinAPI) pbLogsFiltered(entries []*executor.InternalLogEntry, user *acl.AuthenticatedUser) []*apiv1.LogEntry {
+	out := make([]*apiv1.LogEntry, 0, len(entries))
+	for _, e := range entries {
+		if e == nil || e.Binding == nil || e.Binding.Action == nil {
+			continue
+		}
+		if acl.IsAllowedLogs(api.cfg, user, e.Binding.Action) {
+			out = append(out, api.internalLogEntryToPb(e, user))
+		}
+	}
+	return out
+}
+
+func (api *oliveTinAPI) filterLogsByACL(entries []*executor.InternalLogEntry, user *acl.AuthenticatedUser) []*executor.InternalLogEntry {
+	filtered := make([]*executor.InternalLogEntry, 0, len(entries))
+	for _, e := range entries {
+		if e == nil || e.Binding == nil || e.Binding.Action == nil {
+			continue
+		}
+		if acl.IsAllowedLogs(api.cfg, user, e.Binding.Action) {
+			filtered = append(filtered, e)
+		}
+	}
+	return filtered
+}
+
+type pageInfo struct {
+	total int64
+	size  int64
+	start int64
+	end   int64
+	empty bool
+}
+
+func paginate(total int64, size int64, start int64) pageInfo {
+	if start < 0 {
+		start = 0
+	}
+	if start >= total {
+		return pageInfo{total: total, size: size, start: start, end: start, empty: true}
+	}
+	end := start + size
+	if end > total {
+		end = total
+	}
+	return pageInfo{total: total, size: size, start: start, end: end, empty: false}
 }
 
 /*
@@ -565,20 +657,25 @@ func (api *oliveTinAPI) EventStream(ctx ctx.Context, req *connect.Request[apiv1.
 		return err
 	}
 
-	client := &connectedClients{
+	client := &streamingClient{
 		channel:           make(chan *apiv1.EventStreamResponse, 10), // Buffered channel to hold Events
 		AuthenticatedUser: user,
 	}
 
 	log.Infof("EventStream: client connected: %v", client.AuthenticatedUser.Username)
 
-	api.connectedClients = append(api.connectedClients, client)
+	api.streamingClientsMutex.Lock()
+	api.streamingClients[client] = struct{}{}
+	api.streamingClientsMutex.Unlock()
 
 	// loop over client channel and send events to connectedClient
 	for msg := range client.channel {
 		log.Debugf("Sending event to client: %v", msg)
 		if err := srv.Send(msg); err != nil {
 			log.Errorf("Error sending event to client: %v", err)
+			// Remove disconnected client from the list
+			api.removeClient(client)
+			break
 		}
 	}
 
@@ -587,8 +684,17 @@ func (api *oliveTinAPI) EventStream(ctx ctx.Context, req *connect.Request[apiv1.
 	return nil
 }
 
+func (api *oliveTinAPI) removeClient(clientToRemove *streamingClient) {
+	api.streamingClientsMutex.Lock()
+	delete(api.streamingClients, clientToRemove)
+	api.streamingClientsMutex.Unlock()
+	close(clientToRemove.channel)
+}
+
 func (api *oliveTinAPI) OnActionMapRebuilt() {
-	for _, client := range api.connectedClients {
+	toRemove := []*streamingClient{}
+
+	for _, client := range api.copyOfStreamingClients() {
 		select {
 		case client.channel <- &apiv1.EventStreamResponse{
 			Event: &apiv1.EventStreamResponse_ConfigChanged{
@@ -596,13 +702,20 @@ func (api *oliveTinAPI) OnActionMapRebuilt() {
 			},
 		}:
 		default:
-			log.Warnf("EventStream: client channel is full, dropping message")
+			log.Warnf("EventStream: client channel is full, removing client")
+			toRemove = append(toRemove, client)
 		}
+	}
+
+	for _, client := range toRemove {
+		api.removeClient(client)
 	}
 }
 
 func (api *oliveTinAPI) OnExecutionStarted(ex *executor.InternalLogEntry) {
-	for _, client := range api.connectedClients {
+	toRemove := []*streamingClient{}
+
+	for _, client := range api.copyOfStreamingClients() {
 		select {
 		case client.channel <- &apiv1.EventStreamResponse{
 			Event: &apiv1.EventStreamResponse_ExecutionStarted{
@@ -612,13 +725,20 @@ func (api *oliveTinAPI) OnExecutionStarted(ex *executor.InternalLogEntry) {
 			},
 		}:
 		default:
-			log.Warnf("EventStream: client channel is full, dropping message")
+			log.Warnf("EventStream: client channel is full, removing client")
+			toRemove = append(toRemove, client)
 		}
+	}
+
+	for _, client := range toRemove {
+		api.removeClient(client)
 	}
 }
 
 func (api *oliveTinAPI) OnExecutionFinished(ex *executor.InternalLogEntry) {
-	for _, client := range api.connectedClients {
+	toRemove := []*streamingClient{}
+
+	for _, client := range api.copyOfStreamingClients() {
 		select {
 		case client.channel <- &apiv1.EventStreamResponse{
 			Event: &apiv1.EventStreamResponse_ExecutionFinished{
@@ -628,8 +748,13 @@ func (api *oliveTinAPI) OnExecutionFinished(ex *executor.InternalLogEntry) {
 			},
 		}:
 		default:
-			log.Warnf("EventStream: client channel is full, dropping message")
+			log.Warnf("EventStream: client channel is full, removing client")
+			toRemove = append(toRemove, client)
 		}
+	}
+
+	for _, client := range toRemove {
+		api.removeClient(client)
 	}
 }
 
@@ -645,9 +770,7 @@ func (api *oliveTinAPI) GetDiagnostics(ctx ctx.Context, req *connect.Request[api
 func (api *oliveTinAPI) Init(ctx ctx.Context, req *connect.Request[apiv1.InitRequest]) (*connect.Response[apiv1.InitResponse], error) {
 	user := acl.UserFromContext(ctx, req, api.cfg)
 
-	if err := api.checkDashboardAccess(user); err != nil {
-		return nil, err
-	}
+	loginRequired := user.IsGuest() && api.cfg.AuthRequireGuestsToLogin
 
 	res := &apiv1.InitResponse{
 		ShowFooter:                api.cfg.ShowFooter,
@@ -672,6 +795,7 @@ func (api *oliveTinAPI) Init(ctx ctx.Context, req *connect.Request[apiv1.InitReq
 		BannerCss:                 api.cfg.BannerCSS,
 		ShowDiagnostics:           user.EffectivePolicy.ShowDiagnostics,
 		ShowLogList:               user.EffectivePolicy.ShowLogList,
+		LoginRequired:             loginRequired,
 	}
 
 	return connect.NewResponse(res), nil
@@ -734,7 +858,9 @@ func buildAdditionalLinks(links []*config.NavigationLink) []*apiv1.AdditionalLin
 }
 
 func (api *oliveTinAPI) OnOutputChunk(content []byte, executionTrackingId string) {
-	for _, client := range api.connectedClients {
+	toRemove := []*streamingClient{}
+
+	for _, client := range api.copyOfStreamingClients() {
 		select {
 		case client.channel <- &apiv1.EventStreamResponse{
 			Event: &apiv1.EventStreamResponse_OutputChunk{
@@ -745,8 +871,13 @@ func (api *oliveTinAPI) OnOutputChunk(content []byte, executionTrackingId string
 			},
 		}:
 		default:
-			log.Warnf("EventStream: client channel is full, dropping message")
+			log.Warnf("EventStream: client channel is full, removing client")
+			toRemove = append(toRemove, client)
 		}
+	}
+
+	for _, client := range toRemove {
+		api.removeClient(client)
 	}
 }
 
@@ -864,6 +995,7 @@ func newServer(ex *executor.Executor) *oliveTinAPI {
 	server := oliveTinAPI{}
 	server.cfg = ex.Cfg
 	server.executor = ex
+	server.streamingClients = make(map[*streamingClient]struct{})
 
 	ex.AddListener(&server)
 	return &server

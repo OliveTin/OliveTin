@@ -46,42 +46,42 @@ func parseActionExec(values map[string]string, action *config.Action, entity *en
 	if action == nil {
 		return nil, fmt.Errorf("action is nil")
 	}
+	if err := validateArguments(values, action); err != nil {
+		return nil, err
+	}
+	parsed := make([]string, len(action.Exec))
+	for i, a := range action.Exec {
+		out, err := parseSingleExec(a, values, entity)
+		if err != nil {
+			return nil, err
+		}
+		parsed[i] = out
+	}
+	logParsedExec(action, parsed, values)
+	return parsed, nil
+}
 
+func parseSingleExec(a string, values map[string]string, entity *entities.Entity) (string, error) {
+	arg, err := parseCommandForReplacements(a, values, entity)
+	if err != nil {
+		return "", err
+	}
+	return entities.ParseTemplateWithArgs(arg, entity, values), nil
+}
+
+func validateArguments(values map[string]string, action *config.Action) error {
 	for _, arg := range action.Arguments {
-		argName := arg.Name
-		argValue := values[argName]
-
-		err := typecheckActionArgument(&arg, argValue, action)
-
-		if err != nil {
-			return nil, err
+		if err := typecheckActionArgument(&arg, values[arg.Name], action); err != nil {
+			return err
 		}
-
-		log.WithFields(log.Fields{
-			"name":  argName,
-			"value": argValue,
-		}).Debugf("Arg assigned")
+		log.WithFields(log.Fields{"name": arg.Name, "value": values[arg.Name]}).Debugf("Arg assigned")
 	}
+	return nil
+}
 
-	parsedArgs := make([]string, len(action.Exec))
-	for i, arg := range action.Exec {
-		parsedArg, err := parseCommandForReplacements(arg, values, entity)
-		if err != nil {
-			return nil, err
-		}
-
-		parsedArg = entities.ParseTemplateWithArgs(parsedArg, entity, values)
-		parsedArgs[i] = parsedArg
-	}
-
-	redactedArgs := redactExecArgs(parsedArgs, action.Arguments, values)
-
-	log.WithFields(log.Fields{
-		"actionTitle": action.Title,
-		"cmd":         redactedArgs,
-	}).Infof("Action parse args - After (Exec)")
-
-	return parsedArgs, nil
+func logParsedExec(action *config.Action, parsed []string, values map[string]string) {
+	redacted := redactExecArgs(parsed, action.Arguments, values)
+	log.WithFields(log.Fields{"actionTitle": action.Title, "cmd": redacted}).Infof("Action parse args - After (Exec)")
 }
 
 func parseActionArguments(values map[string]string, action *config.Action, entity *entities.Entity) (string, error) {
@@ -298,17 +298,12 @@ func checkShellArgumentSafety(action *config.Action) error {
 	if action.Shell == "" {
 		return nil
 	}
-
-	unsafeTypes := []string{"url", "email", "raw_string_multiline", "very_dangerous_raw_string"}
-
+	unsafe := map[string]struct{}{"url": {}, "email": {}, "raw_string_multiline": {}, "very_dangerous_raw_string": {}}
 	for _, arg := range action.Arguments {
-		for _, unsafeType := range unsafeTypes {
-			if arg.Type == unsafeType {
-				return fmt.Errorf("unsafe argument type '%s' cannot be used with Shell execution. Use 'exec' instead. See https://docs.olivetin.app/action_execution/shellvsexec.html", arg.Type)
-			}
+		if _, bad := unsafe[arg.Type]; bad {
+			return fmt.Errorf("unsafe argument type '%s' cannot be used with Shell execution. Use 'exec' instead. See https://docs.olivetin.app/action_execution/shellvsexec.html", arg.Type)
 		}
 	}
-
 	return nil
 }
 

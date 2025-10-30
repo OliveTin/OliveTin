@@ -224,6 +224,48 @@ func (e *Executor) GetLogTrackingIds(startOffset int64, pageCount int64) ([]*Int
 	return trackingIds, pagingResult
 }
 
+// GetLogTrackingIdsACL returns logs filtered by ACL visibility for the user and
+// paginated correctly based on the filtered set.
+func (e *Executor) GetLogTrackingIdsACL(cfg *config.Config, user *acl.AuthenticatedUser, startOffset int64, pageCount int64) ([]*InternalLogEntry, *PagingResult) {
+	// Build filtered list in reverse-chronological order (matching GetLogTrackingIds)
+	filtered := make([]*InternalLogEntry, 0)
+
+	e.logmutex.RLock()
+	for i := len(e.logsTrackingIdsByDate) - 1; i >= 0; i-- {
+		entry := e.logs[e.logsTrackingIdsByDate[i]]
+		if entry == nil || entry.Binding == nil || entry.Binding.Action == nil {
+			continue
+		}
+		if acl.IsAllowedLogs(cfg, user, entry.Binding.Action) {
+			filtered = append(filtered, entry)
+		}
+	}
+	e.logmutex.RUnlock()
+
+	total := int64(len(filtered))
+	paging := &PagingResult{PageSize: pageCount, TotalCount: total, StartOffset: startOffset}
+
+	if total == 0 {
+		paging.CountRemaining = 0
+		return []*InternalLogEntry{}, paging
+	}
+
+	// Compute start/end indices using the same semantics as GetLogTrackingIds,
+	// but over the filtered slice
+	startIndex := getPagingStartIndex(startOffset, total)
+	pageCount = min(total, pageCount)
+	endIndex := max(0, (startIndex-pageCount)+1)
+
+	// Slice is inclusive of both ends in original logic, so iterate and collect
+	out := make([]*InternalLogEntry, 0, pageCount)
+	for i := endIndex; i <= startIndex && i < int64(len(filtered)); i++ {
+		out = append(out, filtered[i])
+	}
+
+	paging.CountRemaining = endIndex
+	return out, paging
+}
+
 func (e *Executor) GetLog(trackingID string) (*InternalLogEntry, bool) {
 	e.logmutex.RLock()
 
@@ -427,49 +469,73 @@ func stepACLCheck(req *ExecutionRequest) bool {
 }
 
 func stepParseArgs(req *ExecutionRequest) bool {
-	var err error
+	ensureArgumentMap(req)
+	injectSystemArgs(req)
 
-	if req.Arguments == nil {
-		req.Arguments = make(map[string]string)
+	if !hasBindingAndAction(req) {
+		return fail(req, fmt.Errorf("cannot parse arguments: Binding or Action is nil"))
 	}
-
-	req.Arguments["ot_executionTrackingId"] = req.TrackingID
-	req.Arguments["ot_username"] = req.AuthenticatedUser.Username
 
 	mangleInvalidArgumentValues(req)
 
-	if req.Binding == nil || req.Binding.Action == nil {
-		err = fmt.Errorf("cannot parse arguments: Binding or Action is nil")
-		req.logEntry.Output = err.Error()
-		log.Warn(err.Error())
-		return false
-	}
-
-	if len(req.Binding.Action.Exec) > 0 {
-		req.useDirectExec = true
-		req.execArgs, err = parseActionExec(req.Arguments, req.Binding.Action, req.Binding.Entity)
+	if hasExec(req) {
+		return handleExecBranch(req)
 	} else {
-		req.useDirectExec = false
-
-		err = checkShellArgumentSafety(req.Binding.Action)
-		if err != nil {
-			req.logEntry.Output = err.Error()
-			log.Warn(err.Error())
-			return false
-		}
-
-		req.finalParsedCommand, err = parseActionArguments(req.Arguments, req.Binding.Action, req.Binding.Entity)
+		return handleShellBranch(req)
 	}
+}
+
+func handleExecBranch(req *ExecutionRequest) bool {
+	args, err := parseActionExec(req.Arguments, req.Binding.Action, req.Binding.Entity)
 
 	if err != nil {
-		req.logEntry.Output = err.Error()
-
-		log.Warn(err.Error())
-
-		return false
+		return fail(req, err)
 	}
 
+	req.useDirectExec = true
+	req.execArgs = args
 	return true
+}
+
+func handleShellBranch(req *ExecutionRequest) bool {
+	if err := checkShellArgumentSafety(req.Binding.Action); err != nil {
+		return fail(req, err)
+	}
+
+	cmd, err := parseActionArguments(req.Arguments, req.Binding.Action, req.Binding.Entity)
+
+	if err != nil {
+		return fail(req, err)
+	}
+
+	req.useDirectExec = false
+	req.finalParsedCommand = cmd
+	return true
+}
+
+func ensureArgumentMap(req *ExecutionRequest) {
+	if req.Arguments == nil {
+		req.Arguments = make(map[string]string)
+	}
+}
+
+func injectSystemArgs(req *ExecutionRequest) {
+	req.Arguments["ot_executionTrackingId"] = req.TrackingID
+	req.Arguments["ot_username"] = req.AuthenticatedUser.Username
+}
+
+func hasBindingAndAction(req *ExecutionRequest) bool {
+	return !(req.Binding == nil || req.Binding.Action == nil)
+}
+
+func hasExec(req *ExecutionRequest) bool {
+	return len(req.Binding.Action.Exec) > 0
+}
+
+func fail(req *ExecutionRequest, err error) bool {
+	req.logEntry.Output = err.Error()
+	log.Warn(err.Error())
+	return false
 }
 
 func stepRequestAction(req *ExecutionRequest) bool {
@@ -482,6 +548,7 @@ func stepRequestAction(req *ExecutionRequest) bool {
 		return false
 	}
 
+	req.logEntry.Binding = req.Binding
 	req.logEntry.ActionConfigTitle = req.Binding.Action.Title
 	req.logEntry.ActionTitle = entities.ParseTemplateWith(req.Binding.Action.Title, req.Binding.Entity)
 	req.logEntry.ActionIcon = req.Binding.Action.Icon
@@ -585,34 +652,17 @@ func buildEnv(args map[string]string) []string {
 func stepExec(req *ExecutionRequest) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(req.Binding.Action.Timeout)*time.Second)
 	defer cancel()
-
 	streamer := &OutputStreamer{Req: req}
-
-	var cmd *exec.Cmd
-	if req.useDirectExec {
-		cmd = wrapCommandDirect(ctx, req.execArgs)
-	} else {
-		cmd = wrapCommandInShell(ctx, req.finalParsedCommand)
-	}
-
+	cmd := buildCommand(ctx, req)
 	if cmd == nil {
 		req.logEntry.Output = "Cannot execute: no command arguments provided"
 		log.Warn("Cannot execute: no command arguments provided")
 		return false
 	}
-
-	cmd.Stdout = streamer
-	cmd.Stderr = streamer
-	cmd.Env = buildEnv(req.Arguments)
-
-	req.logEntry.ExecutionStarted = true
-
+	prepareCommand(cmd, streamer, req)
 	runerr := cmd.Start()
-
 	req.logEntry.Process = cmd.Process
-
 	waiterr := cmd.Wait()
-
 	req.logEntry.ExitCode = int32(cmd.ProcessState.ExitCode())
 	req.logEntry.Output = streamer.String()
 
@@ -640,6 +690,20 @@ func stepExec(req *ExecutionRequest) bool {
 	req.logEntry.DatetimeFinished = time.Now()
 
 	return true
+}
+
+func buildCommand(ctx context.Context, req *ExecutionRequest) *exec.Cmd {
+	if req.useDirectExec {
+		return wrapCommandDirect(ctx, req.execArgs)
+	}
+	return wrapCommandInShell(ctx, req.finalParsedCommand)
+}
+
+func prepareCommand(cmd *exec.Cmd, streamer *OutputStreamer, req *ExecutionRequest) {
+	cmd.Stdout = streamer
+	cmd.Stderr = streamer
+	cmd.Env = buildEnv(req.Arguments)
+	req.logEntry.ExecutionStarted = true
 }
 
 func stepExecAfter(req *ExecutionRequest) bool {

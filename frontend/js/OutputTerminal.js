@@ -15,7 +15,8 @@ import { Mutex } from './Mutex.js'
  * occour in sequential order.
  */
 export class OutputTerminal {
-  constructor () {
+  constructor (executionTrackingId) {
+    this.executionTrackingId = executionTrackingId
     this.writeMutex = new Mutex()
     this.terminal = new Terminal({
       convertEol: true
