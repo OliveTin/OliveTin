@@ -90,55 +90,63 @@ var envConfigTests = []struct {
 }
 
 func TestEnvInConfig(t *testing.T) {
-	for _, tt := range envConfigTests {
-		cfg := DefaultConfig()
+    for _, tt := range envConfigTests {
+        cfg := DefaultConfig()
+        setIfNotEmpty("INPUT", tt.input)
+        processed := processYamlWithEnv(tt.yaml)
+        k, err := loadKoanf(processed)
+        if err != nil {
+            t.Errorf("Error loading YAML: %v", err)
+            continue
+        }
+        if err := k.Unmarshal(".", cfg); err != nil {
+            t.Errorf("Error unmarshalling config: %v", err)
+            continue
+        }
+        manualAssigns(k, cfg)
+        field := tt.selector(cfg)
+        assert.Equal(t, tt.output, field, "Unmarshaled config field doesn't match expected value: env=\"%s\"", tt.input)
+        os.Unsetenv("INPUT")
+    }
+}
 
-		if tt.input != "" {
-			os.Setenv("INPUT", tt.input)
-		}
+func setIfNotEmpty(key, val string) {
+    if val != "" {
+        os.Setenv(key, val)
+    }
+}
 
-		// Process the YAML content to replace environment variables
-		processedYaml := envRegex.ReplaceAllStringFunc(tt.yaml, func(match string) string {
-			submatches := envRegex.FindStringSubmatch(match)
-			key := submatches[1]
-			val, _ := os.LookupEnv(key)
-			return val
-		})
+func processYamlWithEnv(content string) string {
+    return envRegex.ReplaceAllStringFunc(content, func(match string) string {
+        submatches := envRegex.FindStringSubmatch(match)
+        key := submatches[1]
+        val, _ := os.LookupEnv(key)
+        return val
+    })
+}
 
-		k := koanf.New(".")
-		err := k.Load(rawbytes.Provider([]byte(processedYaml)), yaml.Parser())
-		if err != nil {
-			t.Errorf("Error loading YAML: %v", err)
-			continue
-		}
+func loadKoanf(processed string) (*koanf.Koanf, error) {
+    k := koanf.New(".")
+    if err := k.Load(rawbytes.Provider([]byte(processed)), yaml.Parser()); err != nil {
+        return nil, err
+    }
+    return k, nil
+}
 
-		// Try default unmarshaling
-		err = k.Unmarshal(".", cfg)
-		if err != nil {
-			t.Errorf("Error unmarshalling config: %v", err)
-			continue
-		}
-
-		// Manual field assignment for testing (since default unmarshaling has issues with field mapping)
-		if k.Exists("PageTitle") {
-			cfg.PageTitle = k.String("PageTitle")
-		}
-		if k.Exists("CheckForUpdates") {
-			cfg.CheckForUpdates = k.Bool("CheckForUpdates")
-		}
-		if k.Exists("LogHistoryPageSize") {
-			cfg.LogHistoryPageSize = k.Int64("LogHistoryPageSize")
-		}
-		if k.Exists("actions") {
-			var actions []*Action
-			if err := k.Unmarshal("actions", &actions); err == nil {
-				cfg.Actions = actions
-			}
-		}
-
-		field := tt.selector(cfg)
-		assert.Equal(t, tt.output, field, "Unmarshaled config field doesn't match expected value: env=\"%s\"", tt.input)
-
-		os.Unsetenv("INPUT")
-	}
+func manualAssigns(k *koanf.Koanf, cfg *Config) {
+    if k.Exists("PageTitle") {
+        cfg.PageTitle = k.String("PageTitle")
+    }
+    if k.Exists("CheckForUpdates") {
+        cfg.CheckForUpdates = k.Bool("CheckForUpdates")
+    }
+    if k.Exists("LogHistoryPageSize") {
+        cfg.LogHistoryPageSize = k.Int64("LogHistoryPageSize")
+    }
+    if k.Exists("actions") {
+        var actions []*Action
+        if err := k.Unmarshal("actions", &actions); err == nil {
+            cfg.Actions = actions
+        }
+    }
 }

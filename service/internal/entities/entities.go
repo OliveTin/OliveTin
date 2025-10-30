@@ -30,36 +30,33 @@ func AddListener(l func()) {
 }
 
 func SetupEntityFileWatchers(cfg *config.Config) {
-	configDir := cfg.GetDir()
+    baseDir := resolveEntitiesBaseDir(cfg.GetDir())
+    for i := range cfg.Entities { // #337 - iterate by key, not by value
+        ef := cfg.Entities[i]
+        watchAndLoadEntity(baseDir, ef)
+    }
+}
 
-	// Only use var directory if not in integration test mode
-	absConfigDir, _ := filepath.Abs(configDir)
-	if !strings.Contains(absConfigDir, "integration-tests") {
-		configDirVar := filepath.Join(configDir, "var") // for development purposes
+func resolveEntitiesBaseDir(configDir string) string {
+    absConfigDir, _ := filepath.Abs(configDir)
+    if strings.Contains(absConfigDir, "integration-tests") {
+        return configDir
+    }
+    devVar := filepath.Join(configDir, "var")
+    if _, err := os.Stat(devVar); err == nil {
+        return devVar
+    }
+    return configDir
+}
 
-		if _, err := os.Stat(configDirVar); err == nil {
-			configDir = configDirVar
-		}
-	}
-
-	for entityIndex := range cfg.Entities { // #337 - iterate by key, not by value
-		ef := cfg.Entities[entityIndex]
-		p := ef.File
-
-		if !filepath.IsAbs(p) {
-			p = filepath.Join(configDir, p)
-
-			log.WithFields(log.Fields{
-				"entityFile": p,
-			}).Debugf("Adding config dir to entity file path")
-		}
-
-		go filehelper.WatchFileWrite(p, func(filename string) {
-			loadEntityFile(p, ef.Name)
-		})
-
-		loadEntityFile(p, ef.Name)
-	}
+func watchAndLoadEntity(baseDir string, ef *config.EntityFile) {
+    p := ef.File
+    if !filepath.IsAbs(p) {
+        p = filepath.Join(baseDir, p)
+        log.WithFields(log.Fields{"entityFile": p}).Debugf("Adding config dir to entity file path")
+    }
+    go filehelper.WatchFileWrite(p, func(filename string) { loadEntityFile(p, ef.Name) })
+    loadEntityFile(p, ef.Name)
 }
 
 func loadEntityFile(filename string, entityname string) {

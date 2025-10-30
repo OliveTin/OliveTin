@@ -452,31 +452,14 @@ func (api *oliveTinAPI) GetLogs(ctx ctx.Context, req *connect.Request[apiv1.GetL
 		return nil, err
 	}
 
-	ret := &apiv1.GetLogsResponse{}
-
-	logEntries, pagingResult := api.executor.GetLogTrackingIds(req.Msg.StartOffset, api.cfg.LogHistoryPageSize)
-
-	for _, logEntry := range logEntries {
-		// Skip if binding is nil or action is nil
-		if logEntry.Binding == nil || logEntry.Binding.Action == nil {
-			continue
-		}
-
-		action := logEntry.Binding.Action
-
-		if acl.IsAllowedLogs(api.cfg, user, action) {
-			pbLogEntry := api.internalLogEntryToPb(logEntry, user)
-
-			ret.Logs = append(ret.Logs, pbLogEntry)
-		}
-	}
-
-	ret.CountRemaining = pagingResult.CountRemaining
-	ret.PageSize = pagingResult.PageSize
-	ret.TotalCount = pagingResult.TotalCount
-	ret.StartOffset = pagingResult.StartOffset
-
-	return connect.NewResponse(ret), nil
+    ret := &apiv1.GetLogsResponse{}
+    logEntries, paging := api.executor.GetLogTrackingIds(req.Msg.StartOffset, api.cfg.LogHistoryPageSize)
+    ret.Logs = api.pbLogsFiltered(logEntries, user)
+    ret.CountRemaining = paging.CountRemaining
+    ret.PageSize = paging.PageSize
+    ret.TotalCount = paging.TotalCount
+    ret.StartOffset = paging.StartOffset
+    return connect.NewResponse(ret), nil
 }
 
 func (api *oliveTinAPI) GetActionLogs(ctx ctx.Context, req *connect.Request[apiv1.GetActionLogsRequest]) (*connect.Response[apiv1.GetActionLogsResponse], error) {
@@ -486,66 +469,72 @@ func (api *oliveTinAPI) GetActionLogs(ctx ctx.Context, req *connect.Request[apiv
 		return nil, err
 	}
 
-	ret := &apiv1.GetActionLogsResponse{}
+    ret := &apiv1.GetActionLogsResponse{}
+    filtered := api.filterLogsByACL(api.executor.GetLogsByActionId(req.Msg.ActionId), user)
+    page := paginate(int64(len(filtered)), api.cfg.LogHistoryPageSize, req.Msg.StartOffset)
+    if page.empty {
+        ret.CountRemaining = 0
+        ret.PageSize = page.size
+        ret.TotalCount = page.total
+        ret.StartOffset = page.start
+        return connect.NewResponse(ret), nil
+    }
+    for _, le := range filtered[page.start:page.end] {
+        ret.Logs = append(ret.Logs, api.internalLogEntryToPb(le, user))
+    }
+    ret.CountRemaining = page.total - page.end
+    ret.PageSize = page.size
+    ret.TotalCount = page.total
+    ret.StartOffset = page.start
+    return connect.NewResponse(ret), nil
+}
 
-	logs := api.executor.GetLogsByActionId(req.Msg.ActionId)
+func (api *oliveTinAPI) pbLogsFiltered(entries []*executor.InternalLogEntry, user *acl.AuthenticatedUser) []*apiv1.LogEntry {
+    out := make([]*apiv1.LogEntry, 0, len(entries))
+    for _, e := range entries {
+        if e == nil || e.Binding == nil || e.Binding.Action == nil {
+            continue
+        }
+        if acl.IsAllowedLogs(api.cfg, user, e.Binding.Action) {
+            out = append(out, api.internalLogEntryToPb(e, user))
+        }
+    }
+    return out
+}
 
-	// Apply ACL filtering
-	filteredLogs := make([]*executor.InternalLogEntry, 0)
-	for _, logEntry := range logs {
-		// Skip if binding is nil or action is nil
-		if logEntry.Binding == nil || logEntry.Binding.Action == nil {
-			continue
-		}
+func (api *oliveTinAPI) filterLogsByACL(entries []*executor.InternalLogEntry, user *acl.AuthenticatedUser) []*executor.InternalLogEntry {
+    filtered := make([]*executor.InternalLogEntry, 0, len(entries))
+    for _, e := range entries {
+        if e == nil || e.Binding == nil || e.Binding.Action == nil {
+            continue
+        }
+        if acl.IsAllowedLogs(api.cfg, user, e.Binding.Action) {
+            filtered = append(filtered, e)
+        }
+    }
+    return filtered
+}
 
-		action := logEntry.Binding.Action
-		if acl.IsAllowedLogs(api.cfg, user, action) {
-			filteredLogs = append(filteredLogs, logEntry)
-		}
-	}
+type pageInfo struct {
+    total int64
+    size  int64
+    start int64
+    end   int64
+    empty bool
+}
 
-	// Pagination
-	totalCount := int64(len(filteredLogs))
-	pageSize := api.cfg.LogHistoryPageSize
-	startOffset := req.Msg.StartOffset
-
-	// Validate and clamp offset to prevent out-of-bounds access
-	if startOffset < 0 {
-		startOffset = 0
-	}
-
-	// If offset is beyond available data, return empty result with correct metadata
-	if startOffset >= totalCount {
-		ret.CountRemaining = 0
-		ret.PageSize = pageSize
-		ret.TotalCount = totalCount
-		ret.StartOffset = startOffset
-		return connect.NewResponse(ret), nil
-	}
-
-	startIdx := startOffset
-	endIdx := startOffset + pageSize
-	if endIdx > totalCount {
-		endIdx = totalCount
-	}
-
-	logEntries := filteredLogs[startIdx:endIdx]
-	countRemaining := totalCount - endIdx
-	if countRemaining < 0 {
-		countRemaining = 0
-	}
-
-	for _, logEntry := range logEntries {
-		pbLogEntry := api.internalLogEntryToPb(logEntry, user)
-		ret.Logs = append(ret.Logs, pbLogEntry)
-	}
-
-	ret.CountRemaining = countRemaining
-	ret.PageSize = pageSize
-	ret.TotalCount = totalCount
-	ret.StartOffset = startOffset
-
-	return connect.NewResponse(ret), nil
+func paginate(total int64, size int64, start int64) pageInfo {
+    if start < 0 {
+        start = 0
+    }
+    if start >= total {
+        return pageInfo{total: total, size: size, start: start, end: start, empty: true}
+    }
+    end := start + size
+    if end > total {
+        end = total
+    }
+    return pageInfo{total: total, size: size, start: start, end: end, empty: false}
 }
 
 /*
