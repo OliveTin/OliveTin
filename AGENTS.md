@@ -64,6 +64,6 @@ If you are looking for OliveTin's AI policy, you can find it in `AI.md`.
 ### Troubleshooting
 - API tests failing with content-type errors: ensure Connect handler is served under `/api/` and the client targets that base URL.
 - Executor panics: check for nil `Binding/Action` and add guards in step functions.
-- Integration timeouts: wait for `initial-marshal-complete` and use selectors matching the Vue UI.
+- Integration timeouts: wait for `loaded-dashboard` and use selectors matching the Vue UI.
 
 
