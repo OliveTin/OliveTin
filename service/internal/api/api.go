@@ -14,6 +14,7 @@ import (
 
 	"fmt"
 	"net/http"
+	"sync"
 
 	acl "github.com/OliveTin/OliveTin/internal/acl"
 	auth "github.com/OliveTin/OliveTin/internal/auth"
@@ -28,10 +29,26 @@ type oliveTinAPI struct {
 	executor *executor.Executor
 	cfg      *config.Config
 
-	connectedClients []*connectedClients
+	// streamingClients is a set of currently connected clients.
+	// The empty struct value models set semantics (keys only) and keeps add/remove O(1).
+	// We use a map for efficient membership and deletion; ordering is not required.
+	streamingClients      map[*streamingClient]struct{}
+	streamingClientsMutex sync.RWMutex
 }
 
-type connectedClients struct {
+// This is used to avoid race conditions when iterating over the connectedClients map.
+// and holds the lock for as minimal time as possible to avoid blocking the API for too long.
+func (api *oliveTinAPI) copyOfStreamingClients() []*streamingClient {
+	api.streamingClientsMutex.RLock()
+	defer api.streamingClientsMutex.RUnlock()
+	clients := make([]*streamingClient, 0, len(api.streamingClients))
+	for client := range api.streamingClients {
+		clients = append(clients, client)
+	}
+	return clients
+}
+
+type streamingClient struct {
 	channel           chan *apiv1.EventStreamResponse
 	AuthenticatedUser *acl.AuthenticatedUser
 }
@@ -629,14 +646,16 @@ func (api *oliveTinAPI) EventStream(ctx ctx.Context, req *connect.Request[apiv1.
 		return err
 	}
 
-	client := &connectedClients{
+	client := &streamingClient{
 		channel:           make(chan *apiv1.EventStreamResponse, 10), // Buffered channel to hold Events
 		AuthenticatedUser: user,
 	}
 
 	log.Infof("EventStream: client connected: %v", client.AuthenticatedUser.Username)
 
-	api.connectedClients = append(api.connectedClients, client)
+	api.streamingClientsMutex.Lock()
+	api.streamingClients[client] = struct{}{}
+	api.streamingClientsMutex.Unlock()
 
 	// loop over client channel and send events to connectedClient
 	for msg := range client.channel {
@@ -654,22 +673,16 @@ func (api *oliveTinAPI) EventStream(ctx ctx.Context, req *connect.Request[apiv1.
 	return nil
 }
 
-func (api *oliveTinAPI) removeClient(clientToRemove *connectedClients) {
-	api.connectedClients = func() []*connectedClients {
-		var filtered []*connectedClients
-		for _, client := range api.connectedClients {
-			if client != clientToRemove {
-				filtered = append(filtered, client)
-			}
-		}
-		return filtered
-	}()
+func (api *oliveTinAPI) removeClient(clientToRemove *streamingClient) {
+	api.streamingClientsMutex.Lock()
+	delete(api.streamingClients, clientToRemove)
+	api.streamingClientsMutex.Unlock()
 }
 
 func (api *oliveTinAPI) OnActionMapRebuilt() {
-	toRemove := []*connectedClients{}
+	toRemove := []*streamingClient{}
 
-	for _, client := range api.connectedClients {
+	for _, client := range api.copyOfStreamingClients() {
 		select {
 		case client.channel <- &apiv1.EventStreamResponse{
 			Event: &apiv1.EventStreamResponse_ConfigChanged{
@@ -688,9 +701,9 @@ func (api *oliveTinAPI) OnActionMapRebuilt() {
 }
 
 func (api *oliveTinAPI) OnExecutionStarted(ex *executor.InternalLogEntry) {
-	toRemove := []*connectedClients{}
+	toRemove := []*streamingClient{}
 
-	for _, client := range api.connectedClients {
+	for _, client := range api.copyOfStreamingClients() {
 		select {
 		case client.channel <- &apiv1.EventStreamResponse{
 			Event: &apiv1.EventStreamResponse_ExecutionStarted{
@@ -711,9 +724,9 @@ func (api *oliveTinAPI) OnExecutionStarted(ex *executor.InternalLogEntry) {
 }
 
 func (api *oliveTinAPI) OnExecutionFinished(ex *executor.InternalLogEntry) {
-	toRemove := []*connectedClients{}
+	toRemove := []*streamingClient{}
 
-	for _, client := range api.connectedClients {
+	for _, client := range api.copyOfStreamingClients() {
 		select {
 		case client.channel <- &apiv1.EventStreamResponse{
 			Event: &apiv1.EventStreamResponse_ExecutionFinished{
@@ -834,9 +847,9 @@ func buildAdditionalLinks(links []*config.NavigationLink) []*apiv1.AdditionalLin
 }
 
 func (api *oliveTinAPI) OnOutputChunk(content []byte, executionTrackingId string) {
-	toRemove := []*connectedClients{}
+	toRemove := []*streamingClient{}
 
-	for _, client := range api.connectedClients {
+	for _, client := range api.copyOfStreamingClients() {
 		select {
 		case client.channel <- &apiv1.EventStreamResponse{
 			Event: &apiv1.EventStreamResponse_OutputChunk{
@@ -971,6 +984,7 @@ func newServer(ex *executor.Executor) *oliveTinAPI {
 	server := oliveTinAPI{}
 	server.cfg = ex.Cfg
 	server.executor = ex
+	server.streamingClients = make(map[*streamingClient]struct{})
 
 	ex.AddListener(&server)
 	return &server
