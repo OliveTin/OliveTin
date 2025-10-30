@@ -26,7 +26,7 @@ If you are looking for OliveTin's AI policy, you can find it in `AI.md`.
 ### Test Notes and Gotchas
 - The top-level Makefile does not expose `unittests`; use `cd service && make unittests`.
 - Connect RPC API must be mounted correctly; in tests, create the handler via `GetNewHandler(ex)` and serve under `/api/`.
-- Frontend “ready” state: the app sets `document.body` attribute `initial-marshal-complete="true"` when loaded. Integration helpers wait for this before selecting elements.
+- Frontend “ready” state: the app sets `document.body` attribute `loaded-dashboard="<name>"` when loading a dashboard. Integration helpers that test dashboard functionality  wait for this before selecting elements. Certain conditions enforcing login will mean that this attribute is not set until a user is logged in.
 - Modern UI uses Vue components:
   - Action buttons are rendered as `.action-button button`.
   - Logs and Diagnostics are Vue router links available via `/logs` and `/diagnostics`.
