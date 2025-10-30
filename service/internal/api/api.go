@@ -452,16 +452,16 @@ func (api *oliveTinAPI) GetLogs(ctx ctx.Context, req *connect.Request[apiv1.GetL
 		return nil, err
 	}
 
-    ret := &apiv1.GetLogsResponse{}
-    logEntries, paging := api.executor.GetLogTrackingIdsACL(api.cfg, user, req.Msg.StartOffset, api.cfg.LogHistoryPageSize)
-    for _, le := range logEntries {
-        ret.Logs = append(ret.Logs, api.internalLogEntryToPb(le, user))
-    }
-    ret.CountRemaining = paging.CountRemaining
-    ret.PageSize = paging.PageSize
-    ret.TotalCount = paging.TotalCount
-    ret.StartOffset = paging.StartOffset
-    return connect.NewResponse(ret), nil
+	ret := &apiv1.GetLogsResponse{}
+	logEntries, paging := api.executor.GetLogTrackingIdsACL(api.cfg, user, req.Msg.StartOffset, api.cfg.LogHistoryPageSize)
+	for _, le := range logEntries {
+		ret.Logs = append(ret.Logs, api.internalLogEntryToPb(le, user))
+	}
+	ret.CountRemaining = paging.CountRemaining
+	ret.PageSize = paging.PageSize
+	ret.TotalCount = paging.TotalCount
+	ret.StartOffset = paging.StartOffset
+	return connect.NewResponse(ret), nil
 }
 
 func (api *oliveTinAPI) GetActionLogs(ctx ctx.Context, req *connect.Request[apiv1.GetActionLogsRequest]) (*connect.Response[apiv1.GetActionLogsResponse], error) {
