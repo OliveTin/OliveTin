@@ -13,6 +13,10 @@
         <dd v-if="userProvider !== 'system'">{{ userProvider }}</dd>
         <dt v-if="usergroup">Group</dt>
         <dd v-if="usergroup">{{ usergroup }}</dd>
+        <dt v-if="acls && acls.length > 0">Matched ACLs</dt>
+        <dd v-if="acls && acls.length > 0">
+          <span class="acl-tag" v-for="(acl, idx) in acls" :key="`acl-${idx}`">{{ acl }}</span>
+        </dd>
       </dl>
 
       <div class="user-actions">
@@ -38,6 +42,7 @@ const username = ref('guest')
 const userProvider = ref('system')
 const usergroup = ref('')
 const loggingOut = ref(false)
+const acls = ref([])
 
 function updateUserInfo() {
   if (window.initResponse) {
@@ -45,6 +50,20 @@ function updateUserInfo() {
     username.value = window.initResponse.authenticatedUser
     userProvider.value = window.initResponse.authenticatedUserProvider || 'system'
     usergroup.value = window.initResponse.effectivePolicy?.usergroup || ''
+  }
+}
+
+async function fetchWhoAmI() {
+  try {
+    const res = await window.client.whoAmI({})
+    acls.value = res.acls || []
+    // Update usergroup from authoritative WhoAmI response
+    if (res.usergroup) {
+      usergroup.value = res.usergroup
+    }
+  } catch (e) {
+    console.warn('Failed to fetch WhoAmI for ACLs', e)
+    acls.value = []
   }
 }
 
@@ -70,8 +89,12 @@ async function handleLogout() {
       console.error('Failed to reinitialize after logout:', initErr)
     }
     
-    // Redirect to home page
-    router.push('/')
+    // Redirect based on init response: if login is required, go to login page
+    if (window.initResponse && window.initResponse.loginRequired) {
+      router.push('/login')
+    } else {
+      router.push('/')
+    }
   } catch (err) {
     console.error('Logout error:', err)
   } finally {
@@ -83,14 +106,9 @@ let watchInterval = null
 
 onMounted(() => {
   updateUserInfo()
+  fetchWhoAmI()
   
-  // Watch for changes to init response
-  watchInterval = setInterval(() => {
-    if (window.initResponse) {
-      updateUserInfo()
-    }
-  }, 1000)
-})
+ })
 
 onUnmounted(() => {
   if (watchInterval) {
@@ -122,6 +140,16 @@ section {
 .action-buttons {
   display: flex;
   gap: 1rem;
+}
+
+.acl-tag {
+  display: inline-block;
+  background: var(--section-background);
+  border: 1px solid var(--border-color);
+  border-radius: 0.25rem;
+  padding: 0.1rem 0.4rem;
+  margin: 0 0.25rem 0.25rem 0;
+  font-size: 0.85rem;
 }
 
 .button {

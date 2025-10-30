@@ -1378,6 +1378,11 @@ export declare type InitResponse = Message<"olivetin.api.v1.InitResponse"> & {
    * @generated from field: bool show_log_list = 22;
    */
   showLogList: boolean;
+
+  /**
+   * @generated from field: bool login_required = 23;
+   */
+  loginRequired: boolean;
 };
 
 /**

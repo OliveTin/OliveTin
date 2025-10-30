@@ -59,6 +59,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import Sidebar from 'picocrank/vue/components/Sidebar.vue';
 import Header from 'picocrank/vue/components/Header.vue';
 import { HugeiconsIcon } from '@hugeicons/vue'
@@ -66,6 +67,8 @@ import { Menu01Icon } from '@hugeicons/core-free-icons'
 import { UserCircle02Icon } from '@hugeicons/core-free-icons'
 import { DashboardSquare01Icon } from '@hugeicons/core-free-icons'
 import logoUrl from '../../OliveTinLogo.png';
+
+const router = useRouter();
 
 const sidebar = ref(null);
 const username = ref('guest');
@@ -107,7 +110,14 @@ async function requestInit() {
     try {
         const initResponse = await window.client.init({})
 
+        // Store init response first so the login view can read options (e.g., authLocalLogin)
         window.initResponse = initResponse
+        
+        // Check if login is required and redirect if so (after storing initResponse)
+        if (initResponse.loginRequired) {
+            router.push('/login')
+            return
+        }
         window.initError = false
         window.initErrorMessage = ''
         window.initCompleted = true

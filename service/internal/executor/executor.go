@@ -429,10 +429,13 @@ func stepACLCheck(req *ExecutionRequest) bool {
 func stepParseArgs(req *ExecutionRequest) bool {
 	ensureArgumentMap(req)
 	injectSystemArgs(req)
-	mangleInvalidArgumentValues(req)
+
 	if !hasBindingAndAction(req) {
 		return fail(req, fmt.Errorf("cannot parse arguments: Binding or Action is nil"))
 	}
+  
+  mangleInvalidArgumentValues(req)
+  
 	if hasExec(req) {
 		return parseExec(req)
 	}

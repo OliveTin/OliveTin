@@ -57,6 +57,9 @@ func (u *AuthenticatedUser) parseUsergroupLine(sep string) []string {
 	} else {
 		ret = strings.Fields(u.UsergroupLine)
 	}
+
+	log.Debugf("parseUsergroupLine: %v, %v, sep:%v", u.UsergroupLine, ret, sep)
+
 	return ret
 }
 
