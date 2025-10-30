@@ -44,6 +44,7 @@ actions:
   # You can also rate-limit actions too.
   - title: date
     shell: date
+    id: date
     timeout: 6
     icon: clock
     popupOnStart: execution-button
