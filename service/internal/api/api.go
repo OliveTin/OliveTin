@@ -509,6 +509,20 @@ func (api *oliveTinAPI) GetActionLogs(ctx ctx.Context, req *connect.Request[apiv
 	pageSize := api.cfg.LogHistoryPageSize
 	startOffset := req.Msg.StartOffset
 
+	// Validate and clamp offset to prevent out-of-bounds access
+	if startOffset < 0 {
+		startOffset = 0
+	}
+
+	// If offset is beyond available data, return empty result with correct metadata
+	if startOffset >= totalCount {
+		ret.CountRemaining = 0
+		ret.PageSize = pageSize
+		ret.TotalCount = totalCount
+		ret.StartOffset = startOffset
+		return connect.NewResponse(ret), nil
+	}
+
 	startIdx := startOffset
 	endIdx := startOffset + pageSize
 	if endIdx > totalCount {
