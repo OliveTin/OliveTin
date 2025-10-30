@@ -15,7 +15,7 @@
         <dd v-if="usergroup">{{ usergroup }}</dd>
         <dt v-if="acls && acls.length > 0">Matched ACLs</dt>
         <dd v-if="acls && acls.length > 0">
-          <span class="acl-tag" v-for="acl in acls" :key="acl">{{ acl }}</span>
+          <span class="acl-tag" v-for="(acl, idx) in acls" :key="`acl-${idx}`">{{ acl }}</span>
         </dd>
       </dl>
 
