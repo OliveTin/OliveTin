@@ -85,21 +85,21 @@ func LoadUserSessions(cfg *config.Config) {
 	sessionStorageMutex.Lock()
 	defer sessionStorageMutex.Unlock()
 
-    data, err := os.ReadFile(cfg.GetDir() + "/sessions.yaml")
-    if err != nil {
-        logrus.WithError(err).Warn("Failed to read sessions.yaml file")
-        // Always reset in-memory sessions on load error
-        sessionStorage = &SessionStorage{Providers: make(map[string]*SessionProvider)}
-        return
-    }
+	data, err := os.ReadFile(cfg.GetDir() + "/sessions.yaml")
+	if err != nil {
+		logrus.WithError(err).Warn("Failed to read sessions.yaml file")
+		// Always reset in-memory sessions on load error
+		sessionStorage = &SessionStorage{Providers: make(map[string]*SessionProvider)}
+		return
+	}
 
-    err = yaml.Unmarshal(data, &sessionStorage)
-    if err != nil {
-        logrus.WithError(err).Error("Failed to unmarshal sessions.yaml")
-        // Always reset in-memory sessions on parse error
-        sessionStorage = &SessionStorage{Providers: make(map[string]*SessionProvider)}
-        return
-    }
+	err = yaml.Unmarshal(data, &sessionStorage)
+	if err != nil {
+		logrus.WithError(err).Error("Failed to unmarshal sessions.yaml")
+		// Always reset in-memory sessions on parse error
+		sessionStorage = &SessionStorage{Providers: make(map[string]*SessionProvider)}
+		return
+	}
 
 	// Ensure sessionStorage and Providers are properly initialized
 	if sessionStorage == nil {
