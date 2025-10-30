@@ -312,15 +312,29 @@ dashboards:
           - title: 'Start {{ .CurrentEntity.Names }}'
           - title: 'Stop {{ .CurrentEntity.Names }}'
 
+
+# Security - Authentication
+
+# This setting effectively enables or disables guests. 
+# If set to "true", then users will have to login to do anything.
+authRequireGuestsToLogin: false
+
 # This form of auth is the simplest to setup - just define users and passwords
-# in the config.
+# in the config. OliveTin also supports header-based auth, OAuth2,
+# and JWT authentication which are documented separately.
+#
 # Docs: https://docs.olivetin.app/security/local.html
+# 
+# How to get a hashed password:
+# Docs: https://docs.olivetin.app/security/local.html#_get_a_argon2id_hashed_password
 authLocalUsers:
   enabled: true
 #  users:
 #    - username: alice
 #      usergroup: admins
-#      password: "$argon2id$v=19$m=65536,t=4,p=6$LnNW4sw+jZfa5Ex3YjfuHQ$vl8pjUJhxNmBxScV4lI3cgAZPkNB1rSrnX6ibgoAP8k"
+#      password: "$argon2id$v=19$m=65536,t=4,p=2$puyxA0s555TSFx7hnFLCXA$PyhLGpZtvpMMvc2DgMWkM8OJMKO55euwV5gm//1iwx4"
+
+# Security - Access Control Lists
 
 # OliveTin uses access control lists to match up policy and permissions to users.
 # Policies affect the whole app (eg: ability to view the log list).
