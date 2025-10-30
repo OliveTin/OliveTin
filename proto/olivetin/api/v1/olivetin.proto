@@ -12,6 +12,7 @@ message Action {
 	repeated ActionArgument arguments = 5;
 	string popup_on_start = 6;
 	int32 order = 7;
+	int32 timeout = 8;
 }
 
 message ActionArgument {
@@ -134,6 +135,19 @@ message LogEntry {
 }
 
 message GetLogsResponse {
+	repeated LogEntry logs = 1;
+	int64 count_remaining = 2;
+	int64 page_size = 3;
+	int64 total_count = 4;
+	int64 start_offset = 5;
+}
+
+message GetActionLogsRequest {
+	string action_id = 1;
+	int64 start_offset = 2;
+}
+
+message GetActionLogsResponse {
 	repeated LogEntry logs = 1;
 	int64 count_remaining = 2;
 	int64 page_size = 3;
@@ -367,6 +381,8 @@ service OliveTinApiService {
 	rpc ExecutionStatus(ExecutionStatusRequest) returns (ExecutionStatusResponse) {}
 
 	rpc GetLogs(GetLogsRequest) returns (GetLogsResponse) {}
+	
+	rpc GetActionLogs(GetActionLogsRequest) returns (GetActionLogsResponse) {}
 
 	rpc ValidateArgumentType(ValidateArgumentTypeRequest) returns (ValidateArgumentTypeResponse) {}
 

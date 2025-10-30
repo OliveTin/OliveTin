@@ -158,319 +158,333 @@ export const GetLogsResponseSchema = /*@__PURE__*/
   messageDesc(file_olivetin_api_v1_olivetin, 20);
 
 /**
+ * Describes the message olivetin.api.v1.GetActionLogsRequest.
+ * Use `create(GetActionLogsRequestSchema)` to create a new message.
+ */
+export const GetActionLogsRequestSchema = /*@__PURE__*/
+  messageDesc(file_olivetin_api_v1_olivetin, 21);
+
+/**
+ * Describes the message olivetin.api.v1.GetActionLogsResponse.
+ * Use `create(GetActionLogsResponseSchema)` to create a new message.
+ */
+export const GetActionLogsResponseSchema = /*@__PURE__*/
+  messageDesc(file_olivetin_api_v1_olivetin, 22);
+
+/**
  * Describes the message olivetin.api.v1.ValidateArgumentTypeRequest.
  * Use `create(ValidateArgumentTypeRequestSchema)` to create a new message.
  */
 export const ValidateArgumentTypeRequestSchema = /*@__PURE__*/
-  messageDesc(file_olivetin_api_v1_olivetin, 21);
+  messageDesc(file_olivetin_api_v1_olivetin, 23);
 
 /**
  * Describes the message olivetin.api.v1.ValidateArgumentTypeResponse.
  * Use `create(ValidateArgumentTypeResponseSchema)` to create a new message.
  */
 export const ValidateArgumentTypeResponseSchema = /*@__PURE__*/
-  messageDesc(file_olivetin_api_v1_olivetin, 22);
+  messageDesc(file_olivetin_api_v1_olivetin, 24);
 
 /**
  * Describes the message olivetin.api.v1.WatchExecutionRequest.
  * Use `create(WatchExecutionRequestSchema)` to create a new message.
  */
 export const WatchExecutionRequestSchema = /*@__PURE__*/
-  messageDesc(file_olivetin_api_v1_olivetin, 23);
+  messageDesc(file_olivetin_api_v1_olivetin, 25);
 
 /**
  * Describes the message olivetin.api.v1.WatchExecutionUpdate.
  * Use `create(WatchExecutionUpdateSchema)` to create a new message.
  */
 export const WatchExecutionUpdateSchema = /*@__PURE__*/
-  messageDesc(file_olivetin_api_v1_olivetin, 24);
+  messageDesc(file_olivetin_api_v1_olivetin, 26);
 
 /**
  * Describes the message olivetin.api.v1.ExecutionStatusRequest.
  * Use `create(ExecutionStatusRequestSchema)` to create a new message.
  */
 export const ExecutionStatusRequestSchema = /*@__PURE__*/
-  messageDesc(file_olivetin_api_v1_olivetin, 25);
+  messageDesc(file_olivetin_api_v1_olivetin, 27);
 
 /**
  * Describes the message olivetin.api.v1.ExecutionStatusResponse.
  * Use `create(ExecutionStatusResponseSchema)` to create a new message.
  */
 export const ExecutionStatusResponseSchema = /*@__PURE__*/
-  messageDesc(file_olivetin_api_v1_olivetin, 26);
+  messageDesc(file_olivetin_api_v1_olivetin, 28);
 
 /**
  * Describes the message olivetin.api.v1.WhoAmIRequest.
  * Use `create(WhoAmIRequestSchema)` to create a new message.
  */
 export const WhoAmIRequestSchema = /*@__PURE__*/
-  messageDesc(file_olivetin_api_v1_olivetin, 27);
+  messageDesc(file_olivetin_api_v1_olivetin, 29);
 
 /**
  * Describes the message olivetin.api.v1.WhoAmIResponse.
  * Use `create(WhoAmIResponseSchema)` to create a new message.
  */
 export const WhoAmIResponseSchema = /*@__PURE__*/
-  messageDesc(file_olivetin_api_v1_olivetin, 28);
+  messageDesc(file_olivetin_api_v1_olivetin, 30);
 
 /**
  * Describes the message olivetin.api.v1.SosReportRequest.
  * Use `create(SosReportRequestSchema)` to create a new message.
  */
 export const SosReportRequestSchema = /*@__PURE__*/
-  messageDesc(file_olivetin_api_v1_olivetin, 29);
+  messageDesc(file_olivetin_api_v1_olivetin, 31);
 
 /**
  * Describes the message olivetin.api.v1.SosReportResponse.
  * Use `create(SosReportResponseSchema)` to create a new message.
  */
 export const SosReportResponseSchema = /*@__PURE__*/
-  messageDesc(file_olivetin_api_v1_olivetin, 30);
+  messageDesc(file_olivetin_api_v1_olivetin, 32);
 
 /**
  * Describes the message olivetin.api.v1.DumpVarsRequest.
  * Use `create(DumpVarsRequestSchema)` to create a new message.
  */
 export const DumpVarsRequestSchema = /*@__PURE__*/
-  messageDesc(file_olivetin_api_v1_olivetin, 31);
+  messageDesc(file_olivetin_api_v1_olivetin, 33);
 
 /**
  * Describes the message olivetin.api.v1.DumpVarsResponse.
  * Use `create(DumpVarsResponseSchema)` to create a new message.
  */
 export const DumpVarsResponseSchema = /*@__PURE__*/
-  messageDesc(file_olivetin_api_v1_olivetin, 32);
+  messageDesc(file_olivetin_api_v1_olivetin, 34);
 
 /**
  * Describes the message olivetin.api.v1.ActionEntityPair.
  * Use `create(ActionEntityPairSchema)` to create a new message.
  */
 export const ActionEntityPairSchema = /*@__PURE__*/
-  messageDesc(file_olivetin_api_v1_olivetin, 33);
+  messageDesc(file_olivetin_api_v1_olivetin, 35);
 
 /**
  * Describes the message olivetin.api.v1.DumpPublicIdActionMapRequest.
  * Use `create(DumpPublicIdActionMapRequestSchema)` to create a new message.
  */
 export const DumpPublicIdActionMapRequestSchema = /*@__PURE__*/
-  messageDesc(file_olivetin_api_v1_olivetin, 34);
+  messageDesc(file_olivetin_api_v1_olivetin, 36);
 
 /**
  * Describes the message olivetin.api.v1.DumpPublicIdActionMapResponse.
  * Use `create(DumpPublicIdActionMapResponseSchema)` to create a new message.
  */
 export const DumpPublicIdActionMapResponseSchema = /*@__PURE__*/
-  messageDesc(file_olivetin_api_v1_olivetin, 35);
+  messageDesc(file_olivetin_api_v1_olivetin, 37);
 
 /**
  * Describes the message olivetin.api.v1.GetReadyzRequest.
  * Use `create(GetReadyzRequestSchema)` to create a new message.
  */
 export const GetReadyzRequestSchema = /*@__PURE__*/
-  messageDesc(file_olivetin_api_v1_olivetin, 36);
+  messageDesc(file_olivetin_api_v1_olivetin, 38);
 
 /**
  * Describes the message olivetin.api.v1.GetReadyzResponse.
  * Use `create(GetReadyzResponseSchema)` to create a new message.
  */
 export const GetReadyzResponseSchema = /*@__PURE__*/
-  messageDesc(file_olivetin_api_v1_olivetin, 37);
+  messageDesc(file_olivetin_api_v1_olivetin, 39);
 
 /**
  * Describes the message olivetin.api.v1.EventStreamRequest.
  * Use `create(EventStreamRequestSchema)` to create a new message.
  */
 export const EventStreamRequestSchema = /*@__PURE__*/
-  messageDesc(file_olivetin_api_v1_olivetin, 38);
+  messageDesc(file_olivetin_api_v1_olivetin, 40);
 
 /**
  * Describes the message olivetin.api.v1.EventStreamResponse.
  * Use `create(EventStreamResponseSchema)` to create a new message.
  */
 export const EventStreamResponseSchema = /*@__PURE__*/
-  messageDesc(file_olivetin_api_v1_olivetin, 39);
+  messageDesc(file_olivetin_api_v1_olivetin, 41);
 
 /**
  * Describes the message olivetin.api.v1.EventOutputChunk.
  * Use `create(EventOutputChunkSchema)` to create a new message.
  */
 export const EventOutputChunkSchema = /*@__PURE__*/
-  messageDesc(file_olivetin_api_v1_olivetin, 40);
+  messageDesc(file_olivetin_api_v1_olivetin, 42);
 
 /**
  * Describes the message olivetin.api.v1.EventEntityChanged.
  * Use `create(EventEntityChangedSchema)` to create a new message.
  */
 export const EventEntityChangedSchema = /*@__PURE__*/
-  messageDesc(file_olivetin_api_v1_olivetin, 41);
+  messageDesc(file_olivetin_api_v1_olivetin, 43);
 
 /**
  * Describes the message olivetin.api.v1.EventConfigChanged.
  * Use `create(EventConfigChangedSchema)` to create a new message.
  */
 export const EventConfigChangedSchema = /*@__PURE__*/
-  messageDesc(file_olivetin_api_v1_olivetin, 42);
+  messageDesc(file_olivetin_api_v1_olivetin, 44);
 
 /**
  * Describes the message olivetin.api.v1.EventExecutionFinished.
  * Use `create(EventExecutionFinishedSchema)` to create a new message.
  */
 export const EventExecutionFinishedSchema = /*@__PURE__*/
-  messageDesc(file_olivetin_api_v1_olivetin, 43);
+  messageDesc(file_olivetin_api_v1_olivetin, 45);
 
 /**
  * Describes the message olivetin.api.v1.EventExecutionStarted.
  * Use `create(EventExecutionStartedSchema)` to create a new message.
  */
 export const EventExecutionStartedSchema = /*@__PURE__*/
-  messageDesc(file_olivetin_api_v1_olivetin, 44);
+  messageDesc(file_olivetin_api_v1_olivetin, 46);
 
 /**
  * Describes the message olivetin.api.v1.KillActionRequest.
  * Use `create(KillActionRequestSchema)` to create a new message.
  */
 export const KillActionRequestSchema = /*@__PURE__*/
-  messageDesc(file_olivetin_api_v1_olivetin, 45);
+  messageDesc(file_olivetin_api_v1_olivetin, 47);
 
 /**
  * Describes the message olivetin.api.v1.KillActionResponse.
  * Use `create(KillActionResponseSchema)` to create a new message.
  */
 export const KillActionResponseSchema = /*@__PURE__*/
-  messageDesc(file_olivetin_api_v1_olivetin, 46);
+  messageDesc(file_olivetin_api_v1_olivetin, 48);
 
 /**
  * Describes the message olivetin.api.v1.LocalUserLoginRequest.
  * Use `create(LocalUserLoginRequestSchema)` to create a new message.
  */
 export const LocalUserLoginRequestSchema = /*@__PURE__*/
-  messageDesc(file_olivetin_api_v1_olivetin, 47);
+  messageDesc(file_olivetin_api_v1_olivetin, 49);
 
 /**
  * Describes the message olivetin.api.v1.LocalUserLoginResponse.
  * Use `create(LocalUserLoginResponseSchema)` to create a new message.
  */
 export const LocalUserLoginResponseSchema = /*@__PURE__*/
-  messageDesc(file_olivetin_api_v1_olivetin, 48);
+  messageDesc(file_olivetin_api_v1_olivetin, 50);
 
 /**
  * Describes the message olivetin.api.v1.PasswordHashRequest.
  * Use `create(PasswordHashRequestSchema)` to create a new message.
  */
 export const PasswordHashRequestSchema = /*@__PURE__*/
-  messageDesc(file_olivetin_api_v1_olivetin, 49);
+  messageDesc(file_olivetin_api_v1_olivetin, 51);
 
 /**
  * Describes the message olivetin.api.v1.PasswordHashResponse.
  * Use `create(PasswordHashResponseSchema)` to create a new message.
  */
 export const PasswordHashResponseSchema = /*@__PURE__*/
-  messageDesc(file_olivetin_api_v1_olivetin, 50);
+  messageDesc(file_olivetin_api_v1_olivetin, 52);
 
 /**
  * Describes the message olivetin.api.v1.LogoutRequest.
  * Use `create(LogoutRequestSchema)` to create a new message.
  */
 export const LogoutRequestSchema = /*@__PURE__*/
-  messageDesc(file_olivetin_api_v1_olivetin, 51);
+  messageDesc(file_olivetin_api_v1_olivetin, 53);
 
 /**
  * Describes the message olivetin.api.v1.LogoutResponse.
  * Use `create(LogoutResponseSchema)` to create a new message.
  */
 export const LogoutResponseSchema = /*@__PURE__*/
-  messageDesc(file_olivetin_api_v1_olivetin, 52);
+  messageDesc(file_olivetin_api_v1_olivetin, 54);
 
 /**
  * Describes the message olivetin.api.v1.GetDiagnosticsRequest.
  * Use `create(GetDiagnosticsRequestSchema)` to create a new message.
  */
 export const GetDiagnosticsRequestSchema = /*@__PURE__*/
-  messageDesc(file_olivetin_api_v1_olivetin, 53);
+  messageDesc(file_olivetin_api_v1_olivetin, 55);
 
 /**
  * Describes the message olivetin.api.v1.GetDiagnosticsResponse.
  * Use `create(GetDiagnosticsResponseSchema)` to create a new message.
  */
 export const GetDiagnosticsResponseSchema = /*@__PURE__*/
-  messageDesc(file_olivetin_api_v1_olivetin, 54);
+  messageDesc(file_olivetin_api_v1_olivetin, 56);
 
 /**
  * Describes the message olivetin.api.v1.InitRequest.
  * Use `create(InitRequestSchema)` to create a new message.
  */
 export const InitRequestSchema = /*@__PURE__*/
-  messageDesc(file_olivetin_api_v1_olivetin, 55);
+  messageDesc(file_olivetin_api_v1_olivetin, 57);
 
 /**
  * Describes the message olivetin.api.v1.InitResponse.
  * Use `create(InitResponseSchema)` to create a new message.
  */
 export const InitResponseSchema = /*@__PURE__*/
-  messageDesc(file_olivetin_api_v1_olivetin, 56);
+  messageDesc(file_olivetin_api_v1_olivetin, 58);
 
 /**
  * Describes the message olivetin.api.v1.AdditionalLink.
  * Use `create(AdditionalLinkSchema)` to create a new message.
  */
 export const AdditionalLinkSchema = /*@__PURE__*/
-  messageDesc(file_olivetin_api_v1_olivetin, 57);
+  messageDesc(file_olivetin_api_v1_olivetin, 59);
 
 /**
  * Describes the message olivetin.api.v1.OAuth2Provider.
  * Use `create(OAuth2ProviderSchema)` to create a new message.
  */
 export const OAuth2ProviderSchema = /*@__PURE__*/
-  messageDesc(file_olivetin_api_v1_olivetin, 58);
+  messageDesc(file_olivetin_api_v1_olivetin, 60);
 
 /**
  * Describes the message olivetin.api.v1.GetActionBindingRequest.
  * Use `create(GetActionBindingRequestSchema)` to create a new message.
  */
 export const GetActionBindingRequestSchema = /*@__PURE__*/
-  messageDesc(file_olivetin_api_v1_olivetin, 59);
+  messageDesc(file_olivetin_api_v1_olivetin, 61);
 
 /**
  * Describes the message olivetin.api.v1.GetActionBindingResponse.
  * Use `create(GetActionBindingResponseSchema)` to create a new message.
  */
 export const GetActionBindingResponseSchema = /*@__PURE__*/
-  messageDesc(file_olivetin_api_v1_olivetin, 60);
+  messageDesc(file_olivetin_api_v1_olivetin, 62);
 
 /**
  * Describes the message olivetin.api.v1.GetEntitiesRequest.
  * Use `create(GetEntitiesRequestSchema)` to create a new message.
  */
 export const GetEntitiesRequestSchema = /*@__PURE__*/
-  messageDesc(file_olivetin_api_v1_olivetin, 61);
+  messageDesc(file_olivetin_api_v1_olivetin, 63);
 
 /**
  * Describes the message olivetin.api.v1.GetEntitiesResponse.
  * Use `create(GetEntitiesResponseSchema)` to create a new message.
  */
 export const GetEntitiesResponseSchema = /*@__PURE__*/
-  messageDesc(file_olivetin_api_v1_olivetin, 62);
+  messageDesc(file_olivetin_api_v1_olivetin, 64);
 
 /**
  * Describes the message olivetin.api.v1.EntityDefinition.
  * Use `create(EntityDefinitionSchema)` to create a new message.
  */
 export const EntityDefinitionSchema = /*@__PURE__*/
-  messageDesc(file_olivetin_api_v1_olivetin, 63);
+  messageDesc(file_olivetin_api_v1_olivetin, 65);
 
 /**
  * Describes the message olivetin.api.v1.GetEntityRequest.
  * Use `create(GetEntityRequestSchema)` to create a new message.
  */
 export const GetEntityRequestSchema = /*@__PURE__*/
-  messageDesc(file_olivetin_api_v1_olivetin, 64);
+  messageDesc(file_olivetin_api_v1_olivetin, 66);
 
 /**
  * Describes the message olivetin.api.v1.RestartActionRequest.
  * Use `create(RestartActionRequestSchema)` to create a new message.
  */
 export const RestartActionRequestSchema = /*@__PURE__*/
-  messageDesc(file_olivetin_api_v1_olivetin, 65);
+  messageDesc(file_olivetin_api_v1_olivetin, 67);
 
 /**
  * @generated from service olivetin.api.v1.OliveTinApiService
