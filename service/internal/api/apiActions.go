@@ -46,6 +46,7 @@ func buildAction(actionBinding *executor.ActionBinding, rr *DashboardRenderReque
 		CanExec:      acl.IsAllowedExec(rr.cfg, rr.AuthenticatedUser, action),
 		PopupOnStart: action.PopupOnStart,
 		Order:        int32(actionBinding.ConfigOrder),
+		Timeout:      int32(action.Timeout),
 	}
 
 	for _, cfgArg := range action.Arguments {

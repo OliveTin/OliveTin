@@ -71,6 +71,19 @@ const routes = [
     }
   },
   {
+    path: '/action/:actionId',
+    name: 'ActionDetails',
+    component: () => import('./views/ActionDetailsView.vue'),
+    props: true,
+    meta: { 
+      title: 'Action Details',
+      breadcrumb: [
+        { name: "Actions", href: "/" },
+        { name: "Action Details" },
+      ]
+    }
+  },
+  {
     path: '/diagnostics',
     name: 'Diagnostics',
     component: () => import('./views/DiagnosticsView.vue'),

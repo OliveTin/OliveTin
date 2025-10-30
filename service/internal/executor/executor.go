@@ -482,6 +482,7 @@ func stepRequestAction(req *ExecutionRequest) bool {
 		return false
 	}
 
+	req.logEntry.Binding = req.Binding
 	req.logEntry.ActionConfigTitle = req.Binding.Action.Title
 	req.logEntry.ActionTitle = entities.ParseTemplateWith(req.Binding.Action.Title, req.Binding.Entity)
 	req.logEntry.ActionIcon = req.Binding.Action.Icon
