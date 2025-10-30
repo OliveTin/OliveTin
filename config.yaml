@@ -9,13 +9,6 @@ listenAddressSingleHTTPFrontend: 0.0.0.0:1337
 # Docs: https://docs.olivetin.app/advanced_configuration/logs.html 
 logLevel: "INFO"
 
-# Docs: https://docs.olivetin.app/reference/updateChecks.html
-checkForUpdates: false
-
-# Docs: https://docs.olivetin.app/security/acl.html
-defaultPolicy:
-  showDiagnostics: false
-
 # Actions are commands that are executed by OliveTin, and normally show up as
 # buttons on the WebUI.
 #
@@ -348,4 +341,8 @@ defaultPermissions:
   view: true
   exec: true
   logs: true
+
+# Docs: https://docs.olivetin.app/security/acl.html
+defaultPolicy:
+  showDiagnostics: false
 
