@@ -90,7 +90,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import Pagination from '../components/Pagination.vue'
 import Section from 'picocrank/vue/components/Section.vue'
@@ -153,6 +153,16 @@ async function fetchAction() {
   } catch (err) {
     console.error('Failed to fetch action:', err)
   }
+}
+
+function resetState() {
+  action.value = null
+  actionTitle.value = 'Action Details'
+  logs.value = []
+  totalCount.value = 0
+  currentPage.value = 1
+  searchText.value = ''
+  loading.value = true
 }
 
 function clearSearch() {
@@ -218,6 +228,16 @@ onMounted(() => {
   fetchAction()
   fetchActionLogs()
 })
+
+watch(
+  () => route.params.actionId,
+  () => {
+    resetState()
+    fetchAction()
+    fetchActionLogs()
+  },
+  { immediate: false }
+)
 </script>
 
 <style scoped>
