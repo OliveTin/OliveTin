@@ -5,20 +5,16 @@
 # Listen on all addresses available, port 1337
 listenAddressSingleHTTPFrontend: 0.0.0.0:1337
 
-bannerMessage: "This is an early alpha version of OliveTin 3000. Many thanks are broken, many things will change."
-bannerCss: "background-color: #b2e4b2; color: black; font-size: small; text-align: center; padding: .6em; border-radius: 0.5em;"
-
-insecureAllowDumpSos: true
-insecureAllowDumpVars: true
-
 # Choose from INFO (default), WARN and DEBUG
+# Docs: https://docs.olivetin.app/advanced_configuration/logs.html 
 logLevel: "INFO"
 
-# Checking for updates https://docs.olivetin.app/reference/updateChecks.html
+# Docs: https://docs.olivetin.app/reference/updateChecks.html
 checkForUpdates: false
 
-authLocalUsers:
-  enabled: true
+# Docs: https://docs.olivetin.app/security/acl.html
+defaultPolicy:
+  showDiagnostics: false
 
 # Actions are commands that are executed by OliveTin, and normally show up as
 # buttons on the WebUI.
@@ -322,3 +318,34 @@ dashboards:
 
           - title: 'Start {{ .CurrentEntity.Names }}'
           - title: 'Stop {{ .CurrentEntity.Names }}'
+
+# This form of auth is the simplest to setup - just define users and passwords
+# in the config.
+# Docs: https://docs.olivetin.app/security/local.html
+authLocalUsers:
+  enabled: true
+#  users:
+#    - username: alice
+#      usergroup: admins
+#      password: "$argon2id$v=19$m=65536,t=4,p=6$LnNW4sw+jZfa5Ex3YjfuHQ$vl8pjUJhxNmBxScV4lI3cgAZPkNB1rSrnX6ibgoAP8k"
+
+# OliveTin uses access control lists to match up policy and permissions to users.
+# Policies affect the whole app (eg: ability to view the log list).
+# Permissions affect actions (eg: ability to view a specific log).
+# Docs: https://docs.olivetin.app/security/acl.html
+accessControlLists:
+  - name: admin_acl
+    matchUsergroups: ["admins"]
+    policy:
+      showDiagnostics: true
+    permissions:
+      view: true
+      exec: true
+      logs: true
+
+# Docs: https://docs.olivetin.app/security/acl.html
+defaultPermissions:
+  view: true
+  exec: true
+  logs: true
+
