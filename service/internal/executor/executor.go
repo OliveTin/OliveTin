@@ -427,50 +427,63 @@ func stepACLCheck(req *ExecutionRequest) bool {
 }
 
 func stepParseArgs(req *ExecutionRequest) bool {
-	var err error
+	ensureArgumentMap(req)
+	injectSystemArgs(req)
 
+	if !hasBindingAndAction(req) {
+		return fail(req, fmt.Errorf("cannot parse arguments: Binding or Action is nil"))
+	}
+  
+  mangleInvalidArgumentValues(req)
+  
+	if hasExec(req) {
+		return parseExec(req)
+	}
+	if err := checkShellArgumentSafety(req.Binding.Action); err != nil {
+		return fail(req, err)
+	}
+	cmd, err := parseActionArguments(req.Arguments, req.Binding.Action, req.Binding.Entity)
+	if err != nil {
+		return fail(req, err)
+	}
+	req.useDirectExec = false
+	req.finalParsedCommand = cmd
+	return true
+}
+
+func ensureArgumentMap(req *ExecutionRequest) {
 	if req.Arguments == nil {
 		req.Arguments = make(map[string]string)
 	}
+}
 
+func injectSystemArgs(req *ExecutionRequest) {
 	req.Arguments["ot_executionTrackingId"] = req.TrackingID
 	req.Arguments["ot_username"] = req.AuthenticatedUser.Username
+}
 
-	if req.Binding == nil || req.Binding.Action == nil {
-		err = fmt.Errorf("cannot parse arguments: Binding or Action is nil")
-		req.logEntry.Output = err.Error()
-		log.Warn(err.Error())
-		return false
-	}
+func hasBindingAndAction(req *ExecutionRequest) bool {
+	return !(req.Binding == nil || req.Binding.Action == nil)
+}
 
-	// Only mangle arguments when we have a valid binding/action
-	mangleInvalidArgumentValues(req)
+func hasExec(req *ExecutionRequest) bool {
+	return len(req.Binding.Action.Exec) > 0
+}
 
-	if len(req.Binding.Action.Exec) > 0 {
-		req.useDirectExec = true
-		req.execArgs, err = parseActionExec(req.Arguments, req.Binding.Action, req.Binding.Entity)
-	} else {
-		req.useDirectExec = false
-
-		err = checkShellArgumentSafety(req.Binding.Action)
-		if err != nil {
-			req.logEntry.Output = err.Error()
-			log.Warn(err.Error())
-			return false
-		}
-
-		req.finalParsedCommand, err = parseActionArguments(req.Arguments, req.Binding.Action, req.Binding.Entity)
-	}
-
+func parseExec(req *ExecutionRequest) bool {
+	req.useDirectExec = true
+	args, err := parseActionExec(req.Arguments, req.Binding.Action, req.Binding.Entity)
 	if err != nil {
-		req.logEntry.Output = err.Error()
-
-		log.Warn(err.Error())
-
-		return false
+		return fail(req, err)
 	}
-
+	req.execArgs = args
 	return true
+}
+
+func fail(req *ExecutionRequest, err error) bool {
+	req.logEntry.Output = err.Error()
+	log.Warn(err.Error())
+	return false
 }
 
 func stepRequestAction(req *ExecutionRequest) bool {
@@ -587,34 +600,17 @@ func buildEnv(args map[string]string) []string {
 func stepExec(req *ExecutionRequest) bool {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(req.Binding.Action.Timeout)*time.Second)
 	defer cancel()
-
 	streamer := &OutputStreamer{Req: req}
-
-	var cmd *exec.Cmd
-	if req.useDirectExec {
-		cmd = wrapCommandDirect(ctx, req.execArgs)
-	} else {
-		cmd = wrapCommandInShell(ctx, req.finalParsedCommand)
-	}
-
+	cmd := buildCommand(ctx, req)
 	if cmd == nil {
 		req.logEntry.Output = "Cannot execute: no command arguments provided"
 		log.Warn("Cannot execute: no command arguments provided")
 		return false
 	}
-
-	cmd.Stdout = streamer
-	cmd.Stderr = streamer
-	cmd.Env = buildEnv(req.Arguments)
-
-	req.logEntry.ExecutionStarted = true
-
+	prepareCommand(cmd, streamer, req)
 	runerr := cmd.Start()
-
 	req.logEntry.Process = cmd.Process
-
 	waiterr := cmd.Wait()
-
 	req.logEntry.ExitCode = int32(cmd.ProcessState.ExitCode())
 	req.logEntry.Output = streamer.String()
 
@@ -642,6 +638,20 @@ func stepExec(req *ExecutionRequest) bool {
 	req.logEntry.DatetimeFinished = time.Now()
 
 	return true
+}
+
+func buildCommand(ctx context.Context, req *ExecutionRequest) *exec.Cmd {
+	if req.useDirectExec {
+		return wrapCommandDirect(ctx, req.execArgs)
+	}
+	return wrapCommandInShell(ctx, req.finalParsedCommand)
+}
+
+func prepareCommand(cmd *exec.Cmd, streamer *OutputStreamer, req *ExecutionRequest) {
+	cmd.Stdout = streamer
+	cmd.Stderr = streamer
+	cmd.Env = buildEnv(req.Arguments)
+	req.logEntry.ExecutionStarted = true
 }
 
 func stepExecAfter(req *ExecutionRequest) bool {

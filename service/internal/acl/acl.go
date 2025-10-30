@@ -199,61 +199,64 @@ func getHeaderKeyOrEmpty(headers http.Header, key string) string {
 
 // UserFromContext tries to find a user from a Connect RPC context
 func UserFromContext[T any](ctx context.Context, req *connect.Request[T], cfg *config.Config) *AuthenticatedUser {
-	var ret *AuthenticatedUser
-
-	if req != nil {
-		ret = &AuthenticatedUser{}
-		// Only trust headers if explicitly configured
-		if cfg.AuthHttpHeaderUsername != "" {
-			ret.Username = getHeaderKeyOrEmpty(req.Header(), cfg.AuthHttpHeaderUsername)
-		}
-
-		if cfg.AuthHttpHeaderUserGroup != "" {
-			ret.UsergroupLine = getHeaderKeyOrEmpty(req.Header(), cfg.AuthHttpHeaderUserGroup)
-		}
-		// Optional provider header; otherwise infer below
-		prov := getHeaderKeyOrEmpty(req.Header(), "provider")
-		if prov != "" {
-			ret.Provider = prov
-		}
-
-		// If no username from headers, fall back to local session cookie
-		if ret.Username == "" {
-			// Build a minimal http.Request to parse cookies from headers
-			dummy := &http.Request{Header: req.Header()}
-			if c, err := dummy.Cookie("olivetin-sid-local"); err == nil && c != nil && c.Value != "" {
-				if sess := auth.GetUserSession("local", c.Value); sess != nil {
-					if u := cfg.FindUserByUsername(sess.Username); u != nil {
-						ret.Username = u.Username
-						ret.UsergroupLine = u.Usergroup
-						ret.Provider = "local"
-						ret.SID = c.Value
-					} else {
-						log.WithFields(log.Fields{"username": sess.Username}).Warn("UserFromContext: local session user not in config")
-					}
-				} else {
-					log.WithFields(log.Fields{"sid": c.Value, "provider": "local"}).Warn("UserFromContext: stale local session")
-				}
-			}
-		}
-
-		if ret.Username != "" {
-			buildUserAcls(cfg, ret)
-		}
+	user := userFromHeaders(req, cfg)
+	if user.Username == "" {
+		user = userFromLocalSession(req, cfg, user)
 	}
-
-	if ret == nil || ret.Username == "" {
-		ret = UserGuest(cfg)
+	if user.Username == "" {
+		user = *UserGuest(cfg)
+	} else {
+		buildUserAcls(cfg, &user)
 	}
-
 	log.WithFields(log.Fields{
-		"username":      ret.Username,
-		"usergroupLine": ret.UsergroupLine,
-		"provider":      ret.Provider,
-		"acls":          ret.Acls,
+		"username":      user.Username,
+		"usergroupLine": user.UsergroupLine,
+		"provider":      user.Provider,
+		"acls":          user.Acls,
 	}).Debugf("UserFromContext")
+	return &user
+}
 
-	return ret
+func userFromHeaders[T any](req *connect.Request[T], cfg *config.Config) AuthenticatedUser {
+	var u AuthenticatedUser
+	if req == nil {
+		return u
+	}
+	if cfg.AuthHttpHeaderUsername != "" {
+		u.Username = getHeaderKeyOrEmpty(req.Header(), cfg.AuthHttpHeaderUsername)
+	}
+	if cfg.AuthHttpHeaderUserGroup != "" {
+		u.UsergroupLine = getHeaderKeyOrEmpty(req.Header(), cfg.AuthHttpHeaderUserGroup)
+	}
+	if prov := getHeaderKeyOrEmpty(req.Header(), "provider"); prov != "" {
+		u.Provider = prov
+	}
+	return u
+}
+
+func userFromLocalSession[T any](req *connect.Request[T], cfg *config.Config, u AuthenticatedUser) AuthenticatedUser {
+	if req == nil || u.Username != "" {
+		return u
+	}
+	dummy := &http.Request{Header: req.Header()}
+	c, err := dummy.Cookie("olivetin-sid-local")
+	if err != nil || c == nil || c.Value == "" {
+		return u
+	}
+	sess := auth.GetUserSession("local", c.Value)
+	if sess == nil {
+		log.WithFields(log.Fields{"sid": c.Value, "provider": "local"}).Warn("UserFromContext: stale local session")
+		return u
+	}
+	if cfgUser := cfg.FindUserByUsername(sess.Username); cfgUser != nil {
+		u.Username = cfgUser.Username
+		u.UsergroupLine = cfgUser.Usergroup
+		u.Provider = "local"
+		u.SID = c.Value
+		return u
+	}
+	log.WithFields(log.Fields{"username": sess.Username}).Warn("UserFromContext: local session user not in config")
+	return u
 }
 
 func UserGuest(cfg *config.Config) *AuthenticatedUser {
