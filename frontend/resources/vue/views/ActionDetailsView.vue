@@ -152,6 +152,7 @@ async function fetchAction() {
     actionTitle.value = action.value?.title || 'Unknown Action'
   } catch (err) {
     console.error('Failed to fetch action:', err)
+    window.showBigError('fetch-action', 'getting action details', err, false)
   }
 }
 
