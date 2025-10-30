@@ -294,17 +294,20 @@ func overrideSimple(base *Config, overlay *Config) {
 }
 
 func overrideNested(base *Config, overlay *Config) {
-	if overlay.DefaultPolicy.ShowDiagnostics != base.DefaultPolicy.ShowDiagnostics {
-		base.DefaultPolicy.ShowDiagnostics = overlay.DefaultPolicy.ShowDiagnostics
+	// Only apply overrides when overlay explicitly enables the option.
+	// This mirrors the presence-check pattern used elsewhere to avoid
+	// unintentionally disabling an already-enabled base setting with a default false.
+	if overlay.DefaultPolicy.ShowDiagnostics {
+		base.DefaultPolicy.ShowDiagnostics = true
 	}
-	if overlay.DefaultPolicy.ShowLogList != base.DefaultPolicy.ShowLogList {
-		base.DefaultPolicy.ShowLogList = overlay.DefaultPolicy.ShowLogList
+	if overlay.DefaultPolicy.ShowLogList {
+		base.DefaultPolicy.ShowLogList = true
 	}
-	if overlay.Prometheus.Enabled != base.Prometheus.Enabled {
-		base.Prometheus.Enabled = overlay.Prometheus.Enabled
+	if overlay.Prometheus.Enabled {
+		base.Prometheus.Enabled = true
 	}
-	if overlay.Prometheus.DefaultGoMetrics != base.Prometheus.DefaultGoMetrics {
-		base.Prometheus.DefaultGoMetrics = overlay.Prometheus.DefaultGoMetrics
+	if overlay.Prometheus.DefaultGoMetrics {
+		base.Prometheus.DefaultGoMetrics = true
 	}
 }
 

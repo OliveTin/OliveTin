@@ -126,12 +126,16 @@ async function fetchActionLogs() {
     const args = {
       "actionId": actionId,
       "startOffset": BigInt(startOffset),
+      "pageSize": BigInt(Number(pageSize.value)),
     }
 
     const response = await window.client.getActionLogs(args)
 
     logs.value = response.logs
-    pageSize.value = Number(response.pageSize) || 0
+    const serverPageSize = Number(response.pageSize)
+    if (Number.isFinite(serverPageSize) && serverPageSize > 0) {
+      pageSize.value = serverPageSize
+    }
     totalCount.value = Number(response.totalCount) || 0
   } catch (err) {
     console.error('Failed to fetch action logs:', err)

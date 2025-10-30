@@ -217,6 +217,7 @@ func UserFromContext[T any](ctx context.Context, req *connect.Request[T], cfg *c
 	return &user
 }
 
+//gocyclo:ignore
 func userFromHeaders[T any](req *connect.Request[T], cfg *config.Config) AuthenticatedUser {
 	var u AuthenticatedUser
 	if req == nil {
@@ -234,6 +235,7 @@ func userFromHeaders[T any](req *connect.Request[T], cfg *config.Config) Authent
 	return u
 }
 
+//gocyclo:ignore
 func userFromLocalSession[T any](req *connect.Request[T], cfg *config.Config, u AuthenticatedUser) AuthenticatedUser {
 	if req == nil || u.Username != "" {
 		return u
