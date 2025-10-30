@@ -629,6 +629,7 @@ func stepExecAfter(req *ExecutionRequest) bool {
 		"exitCode":               fmt.Sprintf("%v", req.logEntry.ExitCode),
 		"ot_executionTrackingId": req.TrackingID,
 		"ot_username":            req.AuthenticatedUser.Username,
+		"actionTitle":            req.logEntry.ActionTitle,
 	}
 
 	finalParsedCommand, err := parseCommandForReplacements(req.Action.ShellAfterCompleted, args)
