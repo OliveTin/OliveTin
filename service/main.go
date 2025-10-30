@@ -45,10 +45,16 @@ func init() {
 }
 
 func initLog() {
-	log.SetFormatter(&log.TextFormatter{
-		ForceQuote:       true,
-		DisableTimestamp: true,
-	})
+	logFormat := os.Getenv("OLIVETIN_LOG_FORMAT")
+
+	if logFormat == "json" {
+		log.SetFormatter(&log.JSONFormatter{})
+	} else {
+		log.SetFormatter(&log.TextFormatter{
+			ForceQuote:       true,
+			DisableTimestamp: true,
+		})
+	}
 
 	// Use debug this early on to catch details about startup errors. The
 	// default config will raise the log level later, if not set.
