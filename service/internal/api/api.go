@@ -453,8 +453,10 @@ func (api *oliveTinAPI) GetLogs(ctx ctx.Context, req *connect.Request[apiv1.GetL
 	}
 
     ret := &apiv1.GetLogsResponse{}
-    logEntries, paging := api.executor.GetLogTrackingIds(req.Msg.StartOffset, api.cfg.LogHistoryPageSize)
-    ret.Logs = api.pbLogsFiltered(logEntries, user)
+    logEntries, paging := api.executor.GetLogTrackingIdsACL(api.cfg, user, req.Msg.StartOffset, api.cfg.LogHistoryPageSize)
+    for _, le := range logEntries {
+        ret.Logs = append(ret.Logs, api.internalLogEntryToPb(le, user))
+    }
     ret.CountRemaining = paging.CountRemaining
     ret.PageSize = paging.PageSize
     ret.TotalCount = paging.TotalCount
@@ -469,72 +471,72 @@ func (api *oliveTinAPI) GetActionLogs(ctx ctx.Context, req *connect.Request[apiv
 		return nil, err
 	}
 
-    ret := &apiv1.GetActionLogsResponse{}
-    filtered := api.filterLogsByACL(api.executor.GetLogsByActionId(req.Msg.ActionId), user)
-    page := paginate(int64(len(filtered)), api.cfg.LogHistoryPageSize, req.Msg.StartOffset)
-    if page.empty {
-        ret.CountRemaining = 0
-        ret.PageSize = page.size
-        ret.TotalCount = page.total
-        ret.StartOffset = page.start
-        return connect.NewResponse(ret), nil
-    }
-    for _, le := range filtered[page.start:page.end] {
-        ret.Logs = append(ret.Logs, api.internalLogEntryToPb(le, user))
-    }
-    ret.CountRemaining = page.total - page.end
-    ret.PageSize = page.size
-    ret.TotalCount = page.total
-    ret.StartOffset = page.start
-    return connect.NewResponse(ret), nil
+	ret := &apiv1.GetActionLogsResponse{}
+	filtered := api.filterLogsByACL(api.executor.GetLogsByActionId(req.Msg.ActionId), user)
+	page := paginate(int64(len(filtered)), api.cfg.LogHistoryPageSize, req.Msg.StartOffset)
+	if page.empty {
+		ret.CountRemaining = 0
+		ret.PageSize = page.size
+		ret.TotalCount = page.total
+		ret.StartOffset = page.start
+		return connect.NewResponse(ret), nil
+	}
+	for _, le := range filtered[page.start:page.end] {
+		ret.Logs = append(ret.Logs, api.internalLogEntryToPb(le, user))
+	}
+	ret.CountRemaining = page.total - page.end
+	ret.PageSize = page.size
+	ret.TotalCount = page.total
+	ret.StartOffset = page.start
+	return connect.NewResponse(ret), nil
 }
 
 func (api *oliveTinAPI) pbLogsFiltered(entries []*executor.InternalLogEntry, user *acl.AuthenticatedUser) []*apiv1.LogEntry {
-    out := make([]*apiv1.LogEntry, 0, len(entries))
-    for _, e := range entries {
-        if e == nil || e.Binding == nil || e.Binding.Action == nil {
-            continue
-        }
-        if acl.IsAllowedLogs(api.cfg, user, e.Binding.Action) {
-            out = append(out, api.internalLogEntryToPb(e, user))
-        }
-    }
-    return out
+	out := make([]*apiv1.LogEntry, 0, len(entries))
+	for _, e := range entries {
+		if e == nil || e.Binding == nil || e.Binding.Action == nil {
+			continue
+		}
+		if acl.IsAllowedLogs(api.cfg, user, e.Binding.Action) {
+			out = append(out, api.internalLogEntryToPb(e, user))
+		}
+	}
+	return out
 }
 
 func (api *oliveTinAPI) filterLogsByACL(entries []*executor.InternalLogEntry, user *acl.AuthenticatedUser) []*executor.InternalLogEntry {
-    filtered := make([]*executor.InternalLogEntry, 0, len(entries))
-    for _, e := range entries {
-        if e == nil || e.Binding == nil || e.Binding.Action == nil {
-            continue
-        }
-        if acl.IsAllowedLogs(api.cfg, user, e.Binding.Action) {
-            filtered = append(filtered, e)
-        }
-    }
-    return filtered
+	filtered := make([]*executor.InternalLogEntry, 0, len(entries))
+	for _, e := range entries {
+		if e == nil || e.Binding == nil || e.Binding.Action == nil {
+			continue
+		}
+		if acl.IsAllowedLogs(api.cfg, user, e.Binding.Action) {
+			filtered = append(filtered, e)
+		}
+	}
+	return filtered
 }
 
 type pageInfo struct {
-    total int64
-    size  int64
-    start int64
-    end   int64
-    empty bool
+	total int64
+	size  int64
+	start int64
+	end   int64
+	empty bool
 }
 
 func paginate(total int64, size int64, start int64) pageInfo {
-    if start < 0 {
-        start = 0
-    }
-    if start >= total {
-        return pageInfo{total: total, size: size, start: start, end: start, empty: true}
-    }
-    end := start + size
-    if end > total {
-        end = total
-    }
-    return pageInfo{total: total, size: size, start: start, end: end, empty: false}
+	if start < 0 {
+		start = 0
+	}
+	if start >= total {
+		return pageInfo{total: total, size: size, start: start, end: start, empty: true}
+	}
+	end := start + size
+	if end > total {
+		end = total
+	}
+	return pageInfo{total: total, size: size, start: start, end: end, empty: false}
 }
 
 /*
@@ -680,6 +682,7 @@ func (api *oliveTinAPI) removeClient(clientToRemove *streamingClient) {
 	api.streamingClientsMutex.Lock()
 	delete(api.streamingClients, clientToRemove)
 	api.streamingClientsMutex.Unlock()
+	close(clientToRemove.channel)
 }
 
 func (api *oliveTinAPI) OnActionMapRebuilt() {

@@ -82,41 +82,32 @@ func GetUserSession(provider string, sid string) *UserSession {
 
 // LoadUserSessions loads sessions from disk
 func LoadUserSessions(cfg *config.Config) {
-    sessionStorageMutex.Lock()
-    defer sessionStorageMutex.Unlock()
+	sessionStorageMutex.Lock()
+	defer sessionStorageMutex.Unlock()
 
-    data, err := os.ReadFile(cfg.GetDir() + "/sessions.yaml")
-    if err != nil {
-        logrus.WithError(err).Warn("Failed to read sessions.yaml file")
-        ensureEmptySessionStorage()
-        return
-    }
+	data, err := os.ReadFile(cfg.GetDir() + "/sessions.yaml")
+	if err != nil {
+		logrus.WithError(err).Warn("Failed to read sessions.yaml file")
+		ensureEmptySessionStorage()
+		return
+	}
 
-    if err := yaml.Unmarshal(data, &sessionStorage); err != nil {
-        logrus.WithError(err).Error("Failed to unmarshal sessions.yaml")
-        ensureEmptySessionStorage()
-        return
-    }
+	if err := yaml.Unmarshal(data, &sessionStorage); err != nil {
+		logrus.WithError(err).Error("Failed to unmarshal sessions.yaml")
+		ensureEmptySessionStorage()
+		return
+	}
 
-    ensureSessionStorageInitialized()
+	ensureEmptySessionStorage()
 }
 
 func ensureEmptySessionStorage() {
-    if sessionStorage == nil {
-        sessionStorage = &SessionStorage{Providers: make(map[string]*SessionProvider)}
-    }
-    if sessionStorage.Providers == nil {
-        sessionStorage.Providers = make(map[string]*SessionProvider)
-    }
-}
-
-func ensureSessionStorageInitialized() {
-    if sessionStorage == nil {
-        sessionStorage = &SessionStorage{Providers: make(map[string]*SessionProvider)}
-    }
-    if sessionStorage.Providers == nil {
-        sessionStorage.Providers = make(map[string]*SessionProvider)
-    }
+	if sessionStorage == nil {
+		sessionStorage = &SessionStorage{Providers: make(map[string]*SessionProvider)}
+	}
+	if sessionStorage.Providers == nil {
+		sessionStorage.Providers = make(map[string]*SessionProvider)
+	}
 }
 
 func saveUserSessions(cfg *config.Config) {

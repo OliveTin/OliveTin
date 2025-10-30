@@ -224,6 +224,48 @@ func (e *Executor) GetLogTrackingIds(startOffset int64, pageCount int64) ([]*Int
 	return trackingIds, pagingResult
 }
 
+// GetLogTrackingIdsACL returns logs filtered by ACL visibility for the user and
+// paginated correctly based on the filtered set.
+func (e *Executor) GetLogTrackingIdsACL(cfg *config.Config, user *acl.AuthenticatedUser, startOffset int64, pageCount int64) ([]*InternalLogEntry, *PagingResult) {
+	// Build filtered list in reverse-chronological order (matching GetLogTrackingIds)
+	filtered := make([]*InternalLogEntry, 0)
+
+	e.logmutex.RLock()
+	for i := len(e.logsTrackingIdsByDate) - 1; i >= 0; i-- {
+		entry := e.logs[e.logsTrackingIdsByDate[i]]
+		if entry == nil || entry.Binding == nil || entry.Binding.Action == nil {
+			continue
+		}
+		if acl.IsAllowedLogs(cfg, user, entry.Binding.Action) {
+			filtered = append(filtered, entry)
+		}
+	}
+	e.logmutex.RUnlock()
+
+	total := int64(len(filtered))
+	paging := &PagingResult{PageSize: pageCount, TotalCount: total, StartOffset: startOffset}
+
+	if total == 0 {
+		paging.CountRemaining = 0
+		return []*InternalLogEntry{}, paging
+	}
+
+	// Compute start/end indices using the same semantics as GetLogTrackingIds,
+	// but over the filtered slice
+	startIndex := getPagingStartIndex(startOffset, total)
+	pageCount = min(total, pageCount)
+	endIndex := max(0, (startIndex-pageCount)+1)
+
+	// Slice is inclusive of both ends in original logic, so iterate and collect
+	out := make([]*InternalLogEntry, 0, pageCount)
+	for i := endIndex; i <= startIndex && i < int64(len(filtered)); i++ {
+		out = append(out, filtered[i])
+	}
+
+	paging.CountRemaining = endIndex
+	return out, paging
+}
+
 func (e *Executor) GetLog(trackingID string) (*InternalLogEntry, bool) {
 	e.logmutex.RLock()
 
@@ -433,19 +475,39 @@ func stepParseArgs(req *ExecutionRequest) bool {
 	if !hasBindingAndAction(req) {
 		return fail(req, fmt.Errorf("cannot parse arguments: Binding or Action is nil"))
 	}
-  
-  mangleInvalidArgumentValues(req)
-  
+
+	mangleInvalidArgumentValues(req)
+
 	if hasExec(req) {
-		return parseExec(req)
+		return handleExecBranch(req)
+	} else {
+		return handleShellBranch(req)
 	}
-	if err := checkShellArgumentSafety(req.Binding.Action); err != nil {
-		return fail(req, err)
-	}
-	cmd, err := parseActionArguments(req.Arguments, req.Binding.Action, req.Binding.Entity)
+}
+
+func handleExecBranch(req *ExecutionRequest) bool {
+	args, err := parseActionExec(req.Arguments, req.Binding.Action, req.Binding.Entity)
+
 	if err != nil {
 		return fail(req, err)
 	}
+
+	req.useDirectExec = true
+	req.execArgs = args
+	return true
+}
+
+func handleShellBranch(req *ExecutionRequest) bool {
+	if err := checkShellArgumentSafety(req.Binding.Action); err != nil {
+		return fail(req, err)
+	}
+
+	cmd, err := parseActionArguments(req.Arguments, req.Binding.Action, req.Binding.Entity)
+
+	if err != nil {
+		return fail(req, err)
+	}
+
 	req.useDirectExec = false
 	req.finalParsedCommand = cmd
 	return true
@@ -468,16 +530,6 @@ func hasBindingAndAction(req *ExecutionRequest) bool {
 
 func hasExec(req *ExecutionRequest) bool {
 	return len(req.Binding.Action.Exec) > 0
-}
-
-func parseExec(req *ExecutionRequest) bool {
-	req.useDirectExec = true
-	args, err := parseActionExec(req.Arguments, req.Binding.Action, req.Binding.Entity)
-	if err != nil {
-		return fail(req, err)
-	}
-	req.execArgs = args
-	return true
 }
 
 func fail(req *ExecutionRequest, err error) bool {

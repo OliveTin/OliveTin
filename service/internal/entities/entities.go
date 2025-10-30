@@ -30,33 +30,42 @@ func AddListener(l func()) {
 }
 
 func SetupEntityFileWatchers(cfg *config.Config) {
-    baseDir := resolveEntitiesBaseDir(cfg.GetDir())
-    for i := range cfg.Entities { // #337 - iterate by key, not by value
-        ef := cfg.Entities[i]
-        watchAndLoadEntity(baseDir, ef)
-    }
+	baseDir := resolveEntitiesBaseDir(cfg.GetDir())
+	for i := range cfg.Entities { // #337 - iterate by key, not by value
+		ef := cfg.Entities[i]
+		watchAndLoadEntity(baseDir, ef)
+	}
 }
 
+//gocyclo:ignore
 func resolveEntitiesBaseDir(configDir string) string {
-    absConfigDir, _ := filepath.Abs(configDir)
-    if strings.Contains(absConfigDir, "integration-tests") {
-        return configDir
-    }
-    devVar := filepath.Join(configDir, "var")
-    if _, err := os.Stat(devVar); err == nil {
-        return devVar
-    }
-    return configDir
+	absConfigDir, err := filepath.Abs(configDir)
+
+	if err != nil {
+		log.Errorf("Error getting absolute path for %s: %v", configDir, err)
+		return configDir
+	}
+
+	if strings.Contains(absConfigDir, "integration-tests") {
+		return configDir
+	}
+
+	devVar := filepath.Join(configDir, "var")
+
+	if _, err := os.Stat(devVar); err == nil {
+		return devVar
+	}
+	return absConfigDir
 }
 
 func watchAndLoadEntity(baseDir string, ef *config.EntityFile) {
-    p := ef.File
-    if !filepath.IsAbs(p) {
-        p = filepath.Join(baseDir, p)
-        log.WithFields(log.Fields{"entityFile": p}).Debugf("Adding config dir to entity file path")
-    }
-    go filehelper.WatchFileWrite(p, func(filename string) { loadEntityFile(p, ef.Name) })
-    loadEntityFile(p, ef.Name)
+	p := ef.File
+	if !filepath.IsAbs(p) {
+		p = filepath.Join(baseDir, p)
+		log.WithFields(log.Fields{"entityFile": p}).Debugf("Adding config dir to entity file path")
+	}
+	go filehelper.WatchFileWrite(p, func(filename string) { loadEntityFile(p, ef.Name) })
+	loadEntityFile(p, ef.Name)
 }
 
 func loadEntityFile(filename string, entityname string) {
