@@ -24,7 +24,7 @@ type WebsocketClient struct {
 	conn *ws.Conn
 }
 
-var clients []*WebsocketClient
+var clients map[*WebsocketClient]struct{}
 
 var marshalOptions = protojson.MarshalOptions{
 	UseProtoNames:   false, // eg: canExec for js instead of can_exec from protobuf
@@ -117,11 +117,14 @@ func broadcast(pbmsg protoreflect.ProtoMessage) {
 	// </EVIL>
 
 	sendmutex.Lock()
-	for _, client := range clients {
-		err := client.conn.WriteMessage(ws.TextMessage, hackyMessage)
-
-		if err != nil {
-			log.Warnf("websocket send error: %v", err)
+	if clients == nil {
+		clients = make(map[*WebsocketClient]struct{})
+	}
+	for client := range clients {
+		if err := client.conn.WriteMessage(ws.TextMessage, hackyMessage); err != nil {
+			log.Debugf("websocket send error: %v - closing connection", err)
+			_ = client.conn.Close()
+			delete(clients, client)
 		}
 	}
 	sendmutex.Unlock()
@@ -156,8 +159,11 @@ func HandleWebsocket(w http.ResponseWriter, r *http.Request) bool {
 
 	sendmutex.Lock()
 
-	clients = append(clients, wsclient)
+	if clients == nil {
+		clients = make(map[*WebsocketClient]struct{})
+	}
 
+	clients[wsclient] = struct{}{}
 	sendmutex.Unlock()
 
 	go wsclient.messageLoop()
