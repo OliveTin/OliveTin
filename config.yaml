@@ -5,20 +5,9 @@
 # Listen on all addresses available, port 1337
 listenAddressSingleHTTPFrontend: 0.0.0.0:1337
 
-bannerMessage: "This is an early alpha version of OliveTin 3000. Many thanks are broken, many things will change."
-bannerCss: "background-color: #b2e4b2; color: black; font-size: small; text-align: center; padding: .6em; border-radius: 0.5em;"
-
-insecureAllowDumpSos: true
-insecureAllowDumpVars: true
-
 # Choose from INFO (default), WARN and DEBUG
+# Docs: https://docs.olivetin.app/advanced_configuration/logs.html 
 logLevel: "INFO"
-
-# Checking for updates https://docs.olivetin.app/reference/updateChecks.html
-checkForUpdates: false
-
-authLocalUsers:
-  enabled: true
 
 # Actions are commands that are executed by OliveTin, and normally show up as
 # buttons on the WebUI.
@@ -55,6 +44,7 @@ actions:
   # You can also rate-limit actions too.
   - title: date
     shell: date
+    id: date
     timeout: 6
     icon: clock
     popupOnStart: execution-button
@@ -322,3 +312,55 @@ dashboards:
 
           - title: 'Start {{ .CurrentEntity.Names }}'
           - title: 'Stop {{ .CurrentEntity.Names }}'
+
+
+# Security - Authentication
+
+# This setting effectively enables or disables guests. 
+# If set to "true", then users will have to login to do anything.
+authRequireGuestsToLogin: false
+
+# This form of auth is the simplest to setup - just define users and passwords
+# in the config. OliveTin also supports header-based auth, OAuth2,
+# and JWT authentication which are documented separately.
+#
+# Docs: https://docs.olivetin.app/security/local.html
+# 
+# How to get a hashed password:
+# Docs: https://docs.olivetin.app/security/local.html#_get_a_argon2id_hashed_password
+authLocalUsers:
+  enabled: true
+#  users:
+#    - username: alice
+#      usergroup: admins
+#      password: "$argon2id$v=19$m=65536,t=4,p=2$puyxA0s555TSFx7hnFLCXA$PyhLGpZtvpMMvc2DgMWkM8OJMKO55euwV5gm//1iwx4"
+
+# Security - Access Control
+
+# Policies affect the whole app (eg: ability to view the log list).
+# Docs: https://docs.olivetin.app/security/acl.html
+defaultPolicy:
+  showDiagnostics: true
+  showLogList: true
+
+# Permissions affect actions (eg: ability to view a specific log).
+# Docs: https://docs.olivetin.app/security/acl.html
+defaultPermissions:
+  view: true
+  exec: true
+  logs: true
+
+# OliveTin uses access control lists to match up policy and permissions to users.
+# Docs: https://docs.olivetin.app/security/acl.html
+accessControlLists:
+  - name: admin_acl
+    matchUsergroups: ["admins"]
+    policy:
+      showDiagnostics: true
+    permissions:
+      view: true
+      exec: true
+      logs: true
+
+# OliveTin contains many more configuration options not in this default config.
+# Check out docs.olivetin.app for a setting if you feel like you're missing something.
