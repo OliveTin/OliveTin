@@ -11,8 +11,7 @@ plugins:
   - remote: buf.build/bufbuild/es
     out: ../frontend/resources/scripts/gen/
 
-#  - name: swagger
-#    out: reports/swagger
-
+#  - local: ["go", "run", "github.com/sudorandom/protoc-gen-connect-openapi@latest"]
+#    out: gen
 #  - local: protoc-gen-openapiv2
 #    out: reports/openapiv2
