@@ -335,11 +335,22 @@ authLocalUsers:
 #      usergroup: admins
 #      password: "$argon2id$v=19$m=65536,t=4,p=2$puyxA0s555TSFx7hnFLCXA$PyhLGpZtvpMMvc2DgMWkM8OJMKO55euwV5gm//1iwx4"
 
-# Security - Access Control Lists
+# Security - Access Control
+
+# Policies affect the whole app (eg: ability to view the log list).
+# Docs: https://docs.olivetin.app/security/acl.html
+defaultPolicy:
+  showDiagnostics: true
+  showLogList: true
+
+# Permissions affect actions (eg: ability to view a specific log).
+# Docs: https://docs.olivetin.app/security/acl.html
+defaultPermissions:
+  view: true
+  exec: true
+  logs: true
 
 # OliveTin uses access control lists to match up policy and permissions to users.
-# Policies affect the whole app (eg: ability to view the log list).
-# Permissions affect actions (eg: ability to view a specific log).
 # Docs: https://docs.olivetin.app/security/acl.html
 accessControlLists:
   - name: admin_acl
@@ -351,13 +362,5 @@ accessControlLists:
       exec: true
       logs: true
 
-# Docs: https://docs.olivetin.app/security/acl.html
-defaultPermissions:
-  view: true
-  exec: true
-  logs: true
-
-# Docs: https://docs.olivetin.app/security/acl.html
-defaultPolicy:
-  showDiagnostics: false
-
+# OliveTin contains many more configuration options not in this default config.
+# Check out docs.olivetin.app for a setting if you feel like you're missing something.
