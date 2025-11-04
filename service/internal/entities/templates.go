@@ -91,7 +91,7 @@ func ParseTemplateWithArgs(source string, ent *Entity, args map[string]string) s
 	}
 
 	templateVariables := &variableBase{
-		OliveTin:      contents.OliveTin,
+		OliveTin:      GetAll().OliveTin,
 		Arguments:     args,
 		CurrentEntity: entdata,
 	}
@@ -126,5 +126,8 @@ func ParseTemplateBoolWith(source string, ent *Entity) bool {
 }
 
 func ClearEntities(entityType string) {
+	rwmutex.Lock()
+	defer rwmutex.Unlock()
+
 	delete(contents.Entities, entityType)
 }

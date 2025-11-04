@@ -60,10 +60,16 @@ func GetAll() *variableBase {
 }
 
 func GetEntities() entitiesByClass {
+	rwmutex.RLock()
+	defer rwmutex.RUnlock()
+
 	return contents.Entities
 }
 
 func GetEntityInstances(entityName string) entityInstancesByKey {
+	rwmutex.RLock()
+	defer rwmutex.RUnlock()
+
 	if entities, ok := contents.Entities[entityName]; ok {
 		return entities
 	}
