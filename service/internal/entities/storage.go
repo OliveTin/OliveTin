@@ -61,9 +61,19 @@ func GetAll() *variableBase {
 
 func GetEntities() entitiesByClass {
 	rwmutex.RLock()
-	defer rwmutex.RUnlock()
 
-	return contents.Entities
+	copiedEntities := make(entitiesByClass, len(contents.Entities))
+	for entityName, entityInstances := range contents.Entities {
+		copiedInstances := make(entityInstancesByKey, len(entityInstances))
+		for key, entity := range entityInstances {
+			copiedInstances[key] = entity
+		}
+		copiedEntities[entityName] = copiedInstances
+	}
+
+	rwmutex.RUnlock()
+
+	return copiedEntities
 }
 
 func GetEntityInstances(entityName string) entityInstancesByKey {
