@@ -63,8 +63,10 @@ func GetEntities() entitiesByClass {
 	rwmutex.RLock()
 
 	copiedEntities := make(entitiesByClass, len(contents.Entities))
+
 	for entityName, entityInstances := range contents.Entities {
 		copiedInstances := make(entityInstancesByKey, len(entityInstances))
+
 		for key, entity := range entityInstances {
 			copiedInstances[key] = entity
 		}
@@ -81,10 +83,15 @@ func GetEntityInstances(entityName string) entityInstancesByKey {
 	defer rwmutex.RUnlock()
 
 	if entities, ok := contents.Entities[entityName]; ok {
-		return entities
+		copiedInstances := make(entityInstancesByKey, len(entities))
+
+		for key, entity := range entities {
+			copiedInstances[key] = entity
+		}
+		return copiedInstances
 	}
 
-	return nil
+	return make(entityInstancesByKey, 0)
 }
 
 func AddEntity(entityName string, entityKey string, data any) {
