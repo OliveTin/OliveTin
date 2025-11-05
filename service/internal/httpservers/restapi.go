@@ -64,7 +64,7 @@ func authHttpRequest(req *http.Request) acl.UnauthenticatedUser {
 		ret.Provider = "jwt-header"
 	}
 
-	if cfg.AuthJwtCookieName != "" {
+	if cfg.AuthJwtCookieName != "" && ret.Username == "" {
 		ret.Username, ret.Usergroup = parseJwtCookie(req)
 		ret.Provider = "jwt-cookie"
 	}
