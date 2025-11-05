@@ -132,9 +132,9 @@ func DefaultExecutor(cfg *config.Config) *Executor {
 }
 
 type listener interface {
-	OnExecutionStarted(logEntry *InternalLogEntry)
-	OnExecutionFinished(logEntry *InternalLogEntry)
-	OnOutputChunk(o []byte, executionTrackingId string)
+	OnExecutionStarted(logEntry *InternalLogEntry, action *config.Action)
+	OnExecutionFinished(logEntry *InternalLogEntry, action *config.Action)
+	OnOutputChunk(o []byte, executionTrackingId string, logEntry *InternalLogEntry, action *config.Action)
 	OnActionMapRebuilt()
 }
 
@@ -509,13 +509,13 @@ func stepLogFinish(req *ExecutionRequest) bool {
 
 func notifyListenersFinished(req *ExecutionRequest) {
 	for _, listener := range req.executor.listeners {
-		listener.OnExecutionFinished(req.logEntry)
+		listener.OnExecutionFinished(req.logEntry, req.Action)
 	}
 }
 
 func notifyListenersStarted(req *ExecutionRequest) {
 	for _, listener := range req.executor.listeners {
-		listener.OnExecutionStarted(req.logEntry)
+		listener.OnExecutionStarted(req.logEntry, req.Action)
 	}
 }
 
@@ -532,7 +532,7 @@ type OutputStreamer struct {
 
 func (ost *OutputStreamer) Write(o []byte) (n int, err error) {
 	for _, listener := range ost.Req.executor.listeners {
-		listener.OnOutputChunk(o, ost.Req.TrackingID)
+		listener.OnOutputChunk(o, ost.Req.TrackingID, ost.Req.logEntry, ost.Req.Action)
 	}
 
 	return ost.output.Write(o)
