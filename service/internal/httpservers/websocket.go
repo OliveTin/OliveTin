@@ -1,10 +1,11 @@
-package websocket
+package httpservers
 
 import (
 	"net/http"
 	"sync"
 
 	apiv1 "github.com/OliveTin/OliveTin/gen/grpc/olivetin/api/v1"
+	"github.com/OliveTin/OliveTin/internal/acl"
 	"github.com/OliveTin/OliveTin/internal/executor"
 	ws "github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"
@@ -21,7 +22,8 @@ var (
 )
 
 type WebsocketClient struct {
-	conn *ws.Conn
+	conn              *ws.Conn
+	authenticatedUser *acl.AuthenticatedUser
 }
 
 var clients map[*WebsocketClient]struct{}
@@ -143,8 +145,12 @@ func (c *WebsocketClient) messageLoop() {
 	}
 }
 
-func HandleWebsocket(w http.ResponseWriter, r *http.Request) bool {
+func handleWebsocket(w http.ResponseWriter, r *http.Request) bool {
 	c, err := upgrader.Upgrade(w, r, nil)
+
+	unauthenticatedUser := authHttpRequest(r)
+
+	authenticatedUser := acl.UserFromUnauthenticatedUser(cfg, unauthenticatedUser)
 
 	if err != nil {
 		log.Warnf("Websocket issue: %v", err)
@@ -154,7 +160,8 @@ func HandleWebsocket(w http.ResponseWriter, r *http.Request) bool {
 	//	defer c.Close()
 
 	wsclient := &WebsocketClient{
-		conn: c,
+		conn:              c,
+		authenticatedUser: authenticatedUser,
 	}
 
 	sendmutex.Lock()

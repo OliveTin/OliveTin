@@ -16,13 +16,13 @@ import (
 	"github.com/OliveTin/OliveTin/internal/onstartup"
 	"github.com/OliveTin/OliveTin/internal/servicehost"
 	updatecheck "github.com/OliveTin/OliveTin/internal/updatecheck"
-	"github.com/OliveTin/OliveTin/internal/websocket"
+
+	"os"
+	"strconv"
 
 	config "github.com/OliveTin/OliveTin/internal/config"
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
-	"os"
-	"strconv"
 )
 
 var (
@@ -171,7 +171,7 @@ func main() {
 
 	executor := executor.DefaultExecutor(cfg)
 	executor.RebuildActionMap()
-	executor.AddListener(websocket.ExecutionListener)
+	executor.AddListener(httpservers.ExecutionListener)
 	config.AddListener(executor.RebuildActionMap)
 
 	go onstartup.Execute(cfg, executor)
@@ -179,7 +179,7 @@ func main() {
 	go onfileindir.WatchFilesInDirectory(cfg, executor)
 	go oncalendarfile.Schedule(cfg, executor)
 
-	entityfiles.AddListener(websocket.OnEntityChanged)
+	entityfiles.AddListener(httpservers.OnEntityChanged)
 	entityfiles.AddListener(executor.RebuildActionMap)
 	go entityfiles.SetupEntityFileWatchers(cfg)
 

@@ -2,6 +2,9 @@ package httpservers
 
 import (
 	"context"
+	"net/http"
+	"strings"
+
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
@@ -9,11 +12,10 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/reflect/protoreflect"
-	"net/http"
-	"strings"
 
 	apiv1 "github.com/OliveTin/OliveTin/gen/grpc/olivetin/api/v1"
 
+	"github.com/OliveTin/OliveTin/internal/acl"
 	config "github.com/OliveTin/OliveTin/internal/config"
 	cors "github.com/OliveTin/OliveTin/internal/cors"
 )
@@ -49,42 +51,50 @@ func parseHttpHeaderForAuth(req *http.Request) (string, string) {
 }
 
 //gocyclo:ignore
-func parseRequestMetadata(ctx context.Context, req *http.Request) metadata.MD {
-	username := ""
-	usergroup := ""
-	provider := "unknown"
-	sid := ""
+func authHttpRequest(req *http.Request) acl.UnauthenticatedUser {
+	ret := acl.UnauthenticatedUser{
+		Username:  "",
+		Usergroup: "",
+		Provider:  "unknown",
+		Sid:       "",
+	}
 
 	if cfg.AuthJwtHeader != "" {
-		username, usergroup = parseJwtHeader(req)
-		provider = "jwt-header"
+		ret.Username, ret.Usergroup = parseJwtHeader(req)
+		ret.Provider = "jwt-header"
 	}
 
 	if cfg.AuthJwtCookieName != "" {
-		username, usergroup = parseJwtCookie(req)
-		provider = "jwt-cookie"
+		ret.Username, ret.Usergroup = parseJwtCookie(req)
+		ret.Provider = "jwt-cookie"
 	}
 
-	if cfg.AuthHttpHeaderUsername != "" && username == "" {
-		username, usergroup = parseHttpHeaderForAuth(req)
-		provider = "http-header"
+	if cfg.AuthHttpHeaderUsername != "" && ret.Username == "" {
+		ret.Username, ret.Usergroup = parseHttpHeaderForAuth(req)
+		ret.Provider = "http-header"
 	}
 
-	if len(cfg.AuthOAuth2Providers) > 0 && username == "" {
-		username, usergroup, sid = parseOAuth2Cookie(req)
-		provider = "oauth2"
+	if len(cfg.AuthOAuth2Providers) > 0 && ret.Username == "" {
+		ret.Username, ret.Usergroup, ret.Sid = parseOAuth2Cookie(req)
+		ret.Provider = "oauth2"
 	}
 
-	if cfg.AuthLocalUsers.Enabled && username == "" {
-		username, usergroup, sid = parseLocalUserCookie(req)
-		provider = "local"
+	if cfg.AuthLocalUsers.Enabled && ret.Username == "" {
+		ret.Username, ret.Usergroup, ret.Sid = parseLocalUserCookie(req)
+		ret.Provider = "local"
 	}
+
+	return ret
+}
+
+func authHttpRequestToMetadata(ctx context.Context, req *http.Request) metadata.MD {
+	authMetadata := authHttpRequest(req)
 
 	md := metadata.New(map[string]string{
-		"username":  username,
-		"usergroup": usergroup,
-		"provider":  provider,
-		"sid":       sid,
+		"username":  authMetadata.Username,
+		"usergroup": authMetadata.Usergroup,
+		"provider":  authMetadata.Provider,
+		"sid":       authMetadata.Sid,
 	})
 
 	log.Tracef("api request metadata: %+v", md)
@@ -177,7 +187,7 @@ func startRestAPIServer(globalConfig *config.Config) error {
 func newMux() *runtime.ServeMux {
 	// The MarshalOptions set some important compatibility settings for the webui. See below.
 	mux := runtime.NewServeMux(
-		runtime.WithMetadata(parseRequestMetadata),
+		runtime.WithMetadata(authHttpRequestToMetadata),
 		runtime.WithForwardResponseOption(forwardResponseHandler),
 		runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.HTTPBodyMarshaler{
 			Marshaler: &runtime.JSONPb{
