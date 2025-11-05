@@ -125,12 +125,17 @@ func updateSvFromFile(entityname string, data []map[string]any) {
 
 	sv.RemoveKeysThatStartWith("entities." + entityname)
 
-	sv.SetEntityCount(entityname, count)
+	// If the file is empty, it will be an array with one nil item.
+	if count == 1 && data[0] == nil {
+		sv.SetEntityCount(entityname, 0)
+	} else {
+		sv.SetEntityCount(entityname, count)
 
-	for i, mapp := range data {
-		prefix := "entities." + entityname + "." + fmt.Sprintf("%v", i)
+		for i, mapp := range data {
+			prefix := "entities." + entityname + "." + fmt.Sprintf("%v", i)
 
-		serializeValueToSv(prefix, mapp)
+			serializeValueToSv(prefix, mapp)
+		}
 	}
 
 	for _, l := range listeners {
