@@ -662,7 +662,9 @@ func (api *oliveTinAPI) EventStream(ctx ctx.Context, req *connect.Request[apiv1.
 		AuthenticatedUser: user,
 	}
 
-	log.Infof("EventStream: client connected: %v", client.AuthenticatedUser.Username)
+	log.WithFields(log.Fields{
+		"authenticatedUser": user.Username,
+	}).Debugf("EventStream: client connected")
 
 	api.streamingClientsMutex.Lock()
 	api.streamingClients[client] = struct{}{}
@@ -814,7 +816,7 @@ func (api *oliveTinAPI) buildRootDashboards(user *acl.AuthenticatedUser, dashboa
 func (api *oliveTinAPI) addDefaultDashboardIfNeeded(rootDashboards *[]string, rr *DashboardRenderRequest) {
 	defaultDashboard := buildDefaultDashboard(rr)
 	if defaultDashboard != nil && len(defaultDashboard.Contents) > 0 {
-		log.Infof("defaultDashboard: %+v", defaultDashboard.Contents)
+		log.Tracef("defaultDashboard: %+v", defaultDashboard.Contents)
 		*rootDashboards = append(*rootDashboards, "Actions")
 	}
 }

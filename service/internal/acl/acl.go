@@ -208,12 +208,19 @@ func UserFromContext[T any](ctx context.Context, req *connect.Request[T], cfg *c
 	} else {
 		buildUserAcls(cfg, &user)
 	}
+
+	path := ""
+	if req != nil {
+		path = req.Spec().Procedure
+	}
+
 	log.WithFields(log.Fields{
 		"username":      user.Username,
 		"usergroupLine": user.UsergroupLine,
 		"provider":      user.Provider,
 		"acls":          user.Acls,
-	}).Debugf("UserFromContext")
+		"path":          path,
+	}).Debugf("Authenticated API request")
 	return &user
 }
 

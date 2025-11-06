@@ -151,10 +151,17 @@ func initConfig(configDir string) {
 	for _, directory := range directories {
 		configPath := getConfigPath(directory)
 
-		log.Debugf("Checking config path: %s", configPath)
-
+		found := true
 		if _, err := os.Stat(configPath); err != nil {
-			log.Debugf("Config file not found at %s: %v", configPath, err)
+			found = false
+		}
+
+		log.WithFields(log.Fields{
+			"configPath": configPath,
+			"found":      found,
+		}).Debug("Checking config path")
+
+		if !found {
 			continue
 		}
 
