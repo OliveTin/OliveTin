@@ -71,6 +71,13 @@ func (u *AuthenticatedUser) matchesUsergroupAcl(matchUsergroups []string, sep st
 	return false
 }
 
+type UnauthenticatedUser struct {
+	Username  string
+	Usergroup string
+	Provider  string
+	Sid       string
+}
+
 func logAclNotMatched(cfg *config.Config, aclFunction string, user *AuthenticatedUser, action *config.Action, acl *config.AccessControlList) {
 	if cfg.LogDebugOptions.AclNotMatched {
 		log.WithFields(log.Fields{
@@ -192,6 +199,29 @@ func getMetadataKeyOrEmpty(md metadata.MD, key string) string {
 	}
 
 	return ""
+}
+
+func UserFromUnauthenticatedUser(cfg *config.Config, unauthenticatedUser UnauthenticatedUser) *AuthenticatedUser {
+	ret := &AuthenticatedUser{}
+	ret.Username = unauthenticatedUser.Username
+	ret.UsergroupLine = unauthenticatedUser.Usergroup
+	ret.Provider = unauthenticatedUser.Provider
+	ret.SID = unauthenticatedUser.Sid
+
+	if ret.Username == "" {
+		ret = UserGuest(cfg)
+	}
+
+	buildUserAcls(cfg, ret)
+
+	log.WithFields(log.Fields{
+		"username":      ret.Username,
+		"usergroupLine": ret.UsergroupLine,
+		"provider":      ret.Provider,
+		"acls":          ret.Acls,
+	}).Debugf("UserFromUnauthenticatedUser")
+
+	return ret
 }
 
 // UserFromContext tries to find a user from a grpc context

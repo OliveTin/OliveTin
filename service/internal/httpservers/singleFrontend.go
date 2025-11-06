@@ -9,12 +9,12 @@ away, and several other issues.
 */
 
 import (
-	config "github.com/OliveTin/OliveTin/internal/config"
-	"github.com/OliveTin/OliveTin/internal/websocket"
-	log "github.com/sirupsen/logrus"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+
+	config "github.com/OliveTin/OliveTin/internal/config"
+	log "github.com/sirupsen/logrus"
 )
 
 func logDebugRequest(cfg *config.Config, source string, r *http.Request) {
@@ -53,7 +53,7 @@ func StartSingleHTTPFrontend(cfg *config.Config) {
 	mux.HandleFunc("/websocket", func(w http.ResponseWriter, r *http.Request) {
 		logDebugRequest(cfg, "ws  ", r)
 
-		websocket.HandleWebsocket(w, r)
+		handleWebsocket(w, r)
 	})
 
 	mux.HandleFunc("/oauth/login", handleOAuthLogin)
