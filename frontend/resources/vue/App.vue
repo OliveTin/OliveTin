@@ -1,5 +1,5 @@
 <template>
-    <Header title="OliveTin" :logoUrl="logoUrl" @toggleSidebar="toggleSidebar">
+    <Header title="OliveTin" :logoUrl="logoUrl" @toggleSidebar="toggleSidebar" :sidebarEnabled="showNavigation">
         <template #toolbar>
             <div id="banner" v-if="bannerMessage" :style="bannerCss">
                 <p>{{ bannerMessage }}</p>
@@ -86,7 +86,9 @@ const initError = ref(false)
 const initErrorMessage = ref('')
 
 function toggleSidebar() {
-    sidebar.value.toggle()
+    if (sidebar.value && showNavigation.value) {
+        sidebar.value.toggle()
+    }
 }
 
 function updateHeaderFromInit() {
@@ -132,25 +134,27 @@ async function requestInit() {
         showLogs.value = initResponse.showLogList
         showDiagnostics.value = initResponse.showDiagnostics
 
-        for (const rootDashboard of initResponse.rootDashboards) {
-            sidebar.value.addNavigationLink({
-                id: rootDashboard,
-                name: rootDashboard,
-                title: rootDashboard,
-                path: rootDashboard === 'Actions' ? '/' : `/dashboards/${rootDashboard}`,
-                icon: DashboardSquare01Icon,
-            })
-        }
+        if (showNavigation.value && sidebar.value) {
+            for (const rootDashboard of initResponse.rootDashboards) {
+                sidebar.value.addNavigationLink({
+                    id: rootDashboard,
+                    name: rootDashboard,
+                    title: rootDashboard,
+                    path: rootDashboard === 'Actions' ? '/' : `/dashboards/${rootDashboard}`,
+                    icon: DashboardSquare01Icon,
+                })
+            }
 
-        sidebar.value.addSeparator()
-        sidebar.value.addRouterLink('Entities')
+            sidebar.value.addSeparator()
+            sidebar.value.addRouterLink('Entities')
 
-        if (showLogs.value) {
-            sidebar.value.addRouterLink('Logs')
-        }
+            if (showLogs.value) {
+                sidebar.value.addRouterLink('Logs')
+            }
 
-        if (showDiagnostics.value) {
-            sidebar.value.addRouterLink('Diagnostics')
+            if (showDiagnostics.value) {
+                sidebar.value.addRouterLink('Diagnostics')
+            }
         }
 
         hasLoaded.value = true;

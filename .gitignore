@@ -17,3 +17,5 @@ webui/
 server.log
 OliveTin
 integration-tests/configs/authRequireGuestsToLogin/sessions.yaml
+webui
+webui.dev
