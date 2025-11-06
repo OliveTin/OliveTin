@@ -18,7 +18,6 @@ import (
 	"github.com/OliveTin/OliveTin/internal/onstartup"
 	"github.com/OliveTin/OliveTin/internal/servicehost"
 	updatecheck "github.com/OliveTin/OliveTin/internal/updatecheck"
-	"github.com/OliveTin/OliveTin/internal/websocket"
 
 	"os"
 	"strconv"
@@ -225,7 +224,6 @@ func main() {
 
 	executor := executor.DefaultExecutor(cfg)
 	executor.RebuildActionMap()
-	executor.AddListener(websocket.ExecutionListener)
 	config.AddListener(executor.RebuildActionMap)
 
 	go onstartup.Execute(cfg, executor)
@@ -233,7 +231,6 @@ func main() {
 	go onfileindir.WatchFilesInDirectory(cfg, executor)
 	go oncalendarfile.Schedule(cfg, executor)
 
-	entities.AddListener(websocket.OnEntityChanged)
 	entities.AddListener(executor.RebuildActionMap)
 	go entities.SetupEntityFileWatchers(cfg)
 
