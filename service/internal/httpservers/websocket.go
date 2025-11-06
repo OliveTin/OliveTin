@@ -161,6 +161,11 @@ func broadcast(pbmsg protoreflect.ProtoMessage) {
 }
 
 func writeMessageToClient(client *WebsocketClient, message []byte) {
+	if message == nil {
+		log.Warnf("writeMessageToClient: message is nil")
+		return
+	}
+
 	sendmutex.Lock()
 	if err := client.conn.WriteMessage(ws.TextMessage, message); err != nil {
 		log.WithFields(log.Fields{
