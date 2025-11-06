@@ -8,11 +8,11 @@
 
         <template #user-info>
             <div class="flex-row user-info" style="gap: .5em;">
-                <span id="link-login" v-if="!isLoggedIn"><router-link to="/login">Login</router-link></span>
-                <router-link v-else to="/user" class="user-link">
+                <span id="link-login" v-if="!isLoggedIn && showLoginLink"><router-link to="/login">Login</router-link></span>
+                <router-link v-else to="/user" class="user-link" v-if="isLoggedIn">
                     <span id="username-text">{{ username }}</span>
                 </router-link>
-                <HugeiconsIcon :icon="UserCircle02Icon" width = "1.5em" height = "1.5em" />
+                <HugeiconsIcon :icon="UserCircle02Icon" width = "1.5em" height = "1.5em" v-if="isLoggedIn" />
             </div>
 
         </template>
@@ -71,7 +71,7 @@ import logoUrl from '../../OliveTinLogo.png';
 const router = useRouter();
 
 const sidebar = ref(null);
-const username = ref('guest');
+const username = ref('notset');
 const isLoggedIn = ref(false);
 const serverConnection = ref('Connected');
 const currentVersion = ref('?');
@@ -84,6 +84,7 @@ const showLogs = ref(true)
 const showDiagnostics = ref(true)
 const initError = ref(false)
 const initErrorMessage = ref('')
+const showLoginLink = ref(true)
 
 function toggleSidebar() {
     if (sidebar.value && showNavigation.value) {
@@ -102,6 +103,10 @@ function updateHeaderFromInit() {
         showNavigation.value = window.initResponse.showNavigation
         showLogs.value = window.initResponse.showLogList
         showDiagnostics.value = window.initResponse.showDiagnostics
+
+        if (!window.initResponse.authLocalLogin && window.initResponse.oAuth2Providers.length === 0) {
+            showLoginLink.value = false
+        }
     }
 }
 
@@ -124,15 +129,7 @@ async function requestInit() {
         window.initErrorMessage = ''
         window.initCompleted = true
 
-        username.value = initResponse.authenticatedUser
-        isLoggedIn.value = initResponse.authenticatedUser !== '' && initResponse.authenticatedUser !== 'guest'
-        currentVersion.value = initResponse.currentVersion
-		bannerMessage.value = initResponse.bannerMessage || '';
-		bannerCss.value = initResponse.bannerCss || '';
-		showFooter.value = initResponse.showFooter
-        showNavigation.value = initResponse.showNavigation
-        showLogs.value = initResponse.showLogList
-        showDiagnostics.value = initResponse.showDiagnostics
+        window.updateHeaderFromInit()
 
         if (showNavigation.value && sidebar.value) {
             for (const rootDashboard of initResponse.rootDashboards) {
