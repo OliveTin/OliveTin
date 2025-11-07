@@ -45,7 +45,7 @@ func (s *webUIServer) handleWebui(w http.ResponseWriter, r *http.Request) {
 
 		http.ServeFile(w, r, path.Join(s.webuiDir, "index.html"))
 	} else {
-		log.Infof("Serving webui from %s for %s", s.webuiDir, r.URL.Path)
+		log.Tracef("Serving webui from %s for %s", s.webuiDir, r.URL.Path)
 		http.ServeFile(w, r, path.Join(s.webuiDir, r.URL.Path))
 		//		http.StripPrefix(dirName, http.FileServer(http.Dir(s.webuiDir))).ServeHTTP(w, r)
 	}

@@ -53,7 +53,9 @@ func (e *Executor) RebuildActionMap() {
 
 	findDashboardActionTitles(req)
 
-	log.Infof("dashboardActionTitles: %v", req.DashboardActionTitles)
+	log.WithFields(log.Fields{
+		"titles": req.DashboardActionTitles,
+	}).Trace("dashboardActionTitles")
 
 	for configOrder, action := range e.Cfg.Actions {
 		if action.Entity != "" {
