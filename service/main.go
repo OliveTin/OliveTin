@@ -192,8 +192,12 @@ func initConfig(configDir string) {
 
 	cfg = config.DefaultConfigWithBasePort(getBasePort())
 
-	config.AppendSource(cfg, k, baseConfigPath)
+	if baseConfigPath == "" {
+		log.Fatalf("No base config file found")
+		os.Exit(1)
+	}
 
+	config.AppendSource(cfg, k, baseConfigPath)
 }
 
 func initInstallationInfo() {
