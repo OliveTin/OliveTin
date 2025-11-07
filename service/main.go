@@ -146,23 +146,28 @@ func initConfig(configDir string) {
 		)
 	}
 
-	var firstConfigPath string
+	var baseConfigPath string
 
 	for _, directory := range directories {
 		configPath := getConfigPath(directory)
 
-		log.Debugf("Checking config path: %s", configPath)
+		log.WithFields(log.Fields{
+			"configPath": configPath,
+		}).Debug("Checking base config file path")
 
 		if _, err := os.Stat(configPath); err != nil {
 			log.Debugf("Config file not found at %s: %v", configPath, err)
 			continue
 		}
 
-		if firstConfigPath == "" {
-			firstConfigPath = configPath
+		if baseConfigPath == "" {
+			baseConfigPath = configPath
 		}
 
-		log.Infof("Loading config from %s", configPath)
+		log.WithFields(log.Fields{
+			"configPath": configPath,
+		}).Info("Loading config from path")
+
 		f := file.Provider(configPath)
 
 		if err := k.Load(f, yaml.Parser()); err != nil {
@@ -176,15 +181,13 @@ func initConfig(configDir string) {
 			k.Load(f, yaml.Parser())
 			config.AppendSource(cfg, k, configPath)
 		})
+
+		break
 	}
 
 	cfg = config.DefaultConfigWithBasePort(getBasePort())
 
-	if firstConfigPath != "" {
-		config.AppendSourceWithIncludes(cfg, k, firstConfigPath)
-	} else {
-		config.AppendSource(cfg, k, "base")
-	}
+	config.AppendSource(cfg, k, baseConfigPath)
 
 }
 

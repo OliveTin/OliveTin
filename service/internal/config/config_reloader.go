@@ -3,6 +3,8 @@ package config
 import (
 	"os"
 	"path/filepath"
+	"reflect"
+	"regexp"
 	"sort"
 	"strings"
 
@@ -33,21 +35,17 @@ func AddListener(l func()) {
 }
 
 func AppendSource(cfg *Config, k *koanf.Koanf, configPath string) {
-	log.Infof("Appending cfg source: %s", configPath)
+	log.WithFields(log.Fields{
+		"configPath": configPath,
+	}).Info("Appending cfg source")
+
+	loadIncludedConfigsFromDir(k, configPath)
 
 	if !unmarshalRoot(k, cfg) {
 		return
 	}
 
 	afterLoadFinalize(cfg, configPath)
-}
-
-func AppendSourceWithIncludes(cfg *Config, k *koanf.Koanf, configPath string) {
-	AppendSource(cfg, k, configPath)
-
-	if cfg.Include != "" {
-		LoadIncludedConfigs(cfg, k, configPath)
-	}
 }
 
 func unmarshalRoot(k *koanf.Koanf, cfg *Config) bool {
@@ -74,14 +72,19 @@ func afterLoadFinalize(cfg *Config, configPath string) {
 	}
 }
 
-// LoadIncludedConfigs loads configuration files from an include directory and merges them
-func LoadIncludedConfigs(cfg *Config, k *koanf.Koanf, baseConfigPath string) {
-	if cfg.Include == "" {
+// loadIncludedConfigsFromDir loads configuration files from an include directory and merges them
+func loadIncludedConfigsFromDir(k *koanf.Koanf, baseConfigPath string) {
+	relativeIncludePath := k.String("include")
+
+	if relativeIncludePath == "" {
 		return
 	}
 
-	includePath := filepath.Join(filepath.Dir(baseConfigPath), cfg.Include)
-	log.Infof("Loading included configs from: %s", includePath)
+	includePath := filepath.Join(filepath.Dir(baseConfigPath), relativeIncludePath)
+
+	log.WithFields(log.Fields{
+		"includePath": includePath,
+	}).Infof("Loading included configs from dir")
 
 	yamlFiles, ok := listYamlFiles(includePath)
 	if !ok || len(yamlFiles) == 0 {
@@ -90,11 +93,10 @@ func LoadIncludedConfigs(cfg *Config, k *koanf.Koanf, baseConfigPath string) {
 
 	sort.Strings(yamlFiles)
 	for _, filename := range yamlFiles {
-		loadAndMergeIncludedFile(k, cfg, includePath, filename)
+		loadAndMergeIncludedFile(k, includePath, filename)
 	}
 
 	log.Infof("Finished loading %d included config file(s)", len(yamlFiles))
-	cfg.Sanitize()
 }
 
 func listYamlFiles(includePath string) ([]string, bool) {
@@ -128,24 +130,43 @@ func listYamlFiles(includePath string) ([]string, bool) {
 	return yamlFiles, true
 }
 
-func loadAndMergeIncludedFile(k *koanf.Koanf, cfg *Config, includePath, filename string) {
+func loadAndMergeIncludedFile(k *koanf.Koanf, includePath, filename string) {
 	filePath := filepath.Join(includePath, filename)
-	log.Infof("Loading included config file: %s", filePath)
 
-	if err := k.Load(file.Provider(filePath), yaml.Parser()); err != nil {
+	if err := k.Load(file.Provider(filePath), yaml.Parser(), koanf.WithMergeFunc(mergeFunc)); err != nil {
 		log.Errorf("Error loading included config file %s: %v", filePath, err)
 		return
 	}
 
-	if err := k.Unmarshal(".", cfg); err != nil {
-		log.Errorf("Error unmarshalling included config file %s: %v", filePath, err)
-		return
-	}
-
-	log.Infof("Successfully loaded %s", filename)
+	log.WithFields(log.Fields{
+		"filePath": filePath,
+	}).Info("Successfully loaded included config file")
 }
 
-/**
+func mergeFunc(src map[string]interface{}, dest map[string]interface{}) error {
+	// Handle actions merging - koanf provides []interface{} not []*Action
+	// Merge src (new) into dest (existing) by appending src's actions to dest's actions
+	if srcActions, ok := src["actions"]; ok {
+		if destActions, ok := dest["actions"]; ok {
+			// Both have actions - append src to dest
+			srcSlice, ok1 := srcActions.([]interface{})
+			destSlice, ok2 := destActions.([]interface{})
+			if ok1 && ok2 {
+				dest["actions"] = append(destSlice, srcSlice...)
+			} else {
+				// Fallback: if types don't match, just use src
+				dest["actions"] = srcActions
+			}
+		} else {
+			// dest doesn't have actions, so use src's actions
+			dest["actions"] = srcActions
+		}
+	}
+	// If src doesn't have actions, leave dest unchanged
+
+	return nil
+}
+
 var envRegex = regexp.MustCompile(`\${{ *?(\S+) *?}}`)
 
 func envDecodeHookFunc(from reflect.Type, to reflect.Type, data any) (any, error) {
@@ -168,4 +189,3 @@ func envDecodeHookFunc(from reflect.Type, to reflect.Type, data any) (any, error
 	log.Debugf("Environment variable interpolation result: %q -> %q", input, output)
 	return output, nil
 }
-*/
