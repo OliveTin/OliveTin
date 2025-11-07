@@ -18,7 +18,6 @@ import (
 	"github.com/OliveTin/OliveTin/internal/onstartup"
 	"github.com/OliveTin/OliveTin/internal/servicehost"
 	updatecheck "github.com/OliveTin/OliveTin/internal/updatecheck"
-	"github.com/OliveTin/OliveTin/internal/websocket"
 
 	"os"
 	"strconv"
@@ -147,23 +146,33 @@ func initConfig(configDir string) {
 		)
 	}
 
-	var firstConfigPath string
+	var baseConfigPath string
 
 	for _, directory := range directories {
 		configPath := getConfigPath(directory)
 
-		log.Debugf("Checking config path: %s", configPath)
-
+		found := true
 		if _, err := os.Stat(configPath); err != nil {
-			log.Debugf("Config file not found at %s: %v", configPath, err)
+			found = false
+		}
+
+		log.WithFields(log.Fields{
+			"configPath": configPath,
+			"found":      found,
+		}).Debug("Checking base config path")
+
+		if !found {
 			continue
 		}
 
-		if firstConfigPath == "" {
-			firstConfigPath = configPath
+		if baseConfigPath == "" {
+			baseConfigPath = configPath
 		}
 
-		log.Infof("Loading config from %s", configPath)
+		log.WithFields(log.Fields{
+			"configPath": configPath,
+		}).Info("Loading config from path")
+
 		f := file.Provider(configPath)
 
 		if err := k.Load(f, yaml.Parser()); err != nil {
@@ -177,16 +186,18 @@ func initConfig(configDir string) {
 			k.Load(f, yaml.Parser())
 			config.AppendSource(cfg, k, configPath)
 		})
+
+		break
 	}
 
 	cfg = config.DefaultConfigWithBasePort(getBasePort())
 
-	if firstConfigPath != "" {
-		config.AppendSourceWithIncludes(cfg, k, firstConfigPath)
-	} else {
-		config.AppendSource(cfg, k, "base")
+	if baseConfigPath == "" {
+		log.Fatalf("No base config file found")
+		os.Exit(1)
 	}
 
+	config.AppendSource(cfg, k, baseConfigPath)
 }
 
 func initInstallationInfo() {
@@ -225,7 +236,6 @@ func main() {
 
 	executor := executor.DefaultExecutor(cfg)
 	executor.RebuildActionMap()
-	executor.AddListener(websocket.ExecutionListener)
 	config.AddListener(executor.RebuildActionMap)
 
 	go onstartup.Execute(cfg, executor)
@@ -233,7 +243,6 @@ func main() {
 	go onfileindir.WatchFilesInDirectory(cfg, executor)
 	go oncalendarfile.Schedule(cfg, executor)
 
-	entities.AddListener(websocket.OnEntityChanged)
 	entities.AddListener(executor.RebuildActionMap)
 	go entities.SetupEntityFileWatchers(cfg)
 

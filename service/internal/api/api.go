@@ -481,16 +481,20 @@ func (api *oliveTinAPI) GetActionLogs(ctx ctx.Context, req *connect.Request[apiv
 		ret.StartOffset = page.start
 		return connect.NewResponse(ret), nil
 	}
-    // Newest-first slicing: compute reversed indices
-    startIdx := page.total - page.end
-    endIdx := page.total - page.start
-    if startIdx < 0 { startIdx = 0 }
-    if endIdx > int64(len(filtered)) { endIdx = int64(len(filtered)) }
-    for _, le := range filtered[startIdx:endIdx] {
-        ret.Logs = append(ret.Logs, api.internalLogEntryToPb(le, user))
-    }
-    // Entries older than the returned newest page
-    ret.CountRemaining = page.start
+	// Newest-first slicing: compute reversed indices
+	startIdx := page.total - page.end
+	endIdx := page.total - page.start
+	if startIdx < 0 {
+		startIdx = 0
+	}
+	if endIdx > int64(len(filtered)) {
+		endIdx = int64(len(filtered))
+	}
+	for _, le := range filtered[startIdx:endIdx] {
+		ret.Logs = append(ret.Logs, api.internalLogEntryToPb(le, user))
+	}
+	// Entries older than the returned newest page
+	ret.CountRemaining = page.start
 	ret.PageSize = page.size
 	ret.TotalCount = page.total
 	ret.StartOffset = page.start
@@ -662,7 +666,9 @@ func (api *oliveTinAPI) EventStream(ctx ctx.Context, req *connect.Request[apiv1.
 		AuthenticatedUser: user,
 	}
 
-	log.Infof("EventStream: client connected: %v", client.AuthenticatedUser.Username)
+	log.WithFields(log.Fields{
+		"authenticatedUser": user.Username,
+	}).Debugf("EventStream: client connected")
 
 	api.streamingClientsMutex.Lock()
 	api.streamingClients[client] = struct{}{}
@@ -814,7 +820,7 @@ func (api *oliveTinAPI) buildRootDashboards(user *acl.AuthenticatedUser, dashboa
 func (api *oliveTinAPI) addDefaultDashboardIfNeeded(rootDashboards *[]string, rr *DashboardRenderRequest) {
 	defaultDashboard := buildDefaultDashboard(rr)
 	if defaultDashboard != nil && len(defaultDashboard.Contents) > 0 {
-		log.Infof("defaultDashboard: %+v", defaultDashboard.Contents)
+		log.Tracef("defaultDashboard: %+v", defaultDashboard.Contents)
 		*rootDashboards = append(*rootDashboards, "Actions")
 	}
 }
