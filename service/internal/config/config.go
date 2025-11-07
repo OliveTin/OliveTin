@@ -7,212 +7,212 @@ import (
 // Action represents the core functionality of OliveTin - commands that show up
 // as buttons in the UI.
 type Action struct {
-	ID                     string
-	Title                  string
-	Icon                   string
-	Shell                  string
-	Exec                   []string
-	ShellAfterCompleted    string
-	Timeout                int
-	Acls                   []string
-	Entity                 string
-	Hidden                 bool
-	ExecOnStartup          bool
-	ExecOnCron             []string
-	ExecOnFileCreatedInDir []string
-	ExecOnFileChangedInDir []string
-	ExecOnCalendarFile     string
-	Triggers               []string
-	MaxConcurrent          int
-	MaxRate                []RateSpec
-	Arguments              []ActionArgument
-	PopupOnStart           string
-	SaveLogs               SaveLogsConfig
+	ID                     string           `koanf:"id"`
+	Title                  string           `koanf:"title"`
+	Icon                   string           `koanf:"icon"`
+	Shell                  string           `koanf:"shell"`
+	Exec                   []string         `koanf:"exec"`
+	ShellAfterCompleted    string           `koanf:"shellAfterCompleted"`
+	Timeout                int              `koanf:"timeout"`
+	Acls                   []string         `koanf:"acls"`
+	Entity                 string           `koanf:"entity"`
+	Hidden                 bool             `koanf:"hidden"`
+	ExecOnStartup          bool             `koanf:"execOnStartup"`
+	ExecOnCron             []string         `koanf:"execOnCron"`
+	ExecOnFileCreatedInDir []string         `koanf:"execOnFileCreatedInDir"`
+	ExecOnFileChangedInDir []string         `koanf:"execOnFileChangedInDir"`
+	ExecOnCalendarFile     string           `koanf:"execOnCalendarFile"`
+	Triggers               []string         `koanf:"triggers"`
+	MaxConcurrent          int              `koanf:"maxConcurrent"`
+	MaxRate                []RateSpec       `koanf:"maxRate"`
+	Arguments              []ActionArgument `koanf:"arguments"`
+	PopupOnStart           string           `koanf:"popupOnStart"`
+	SaveLogs               SaveLogsConfig   `koanf:"saveLogs"`
 }
 
 // ActionArgument objects appear on Actions.
 type ActionArgument struct {
-	Name        string
-	Title       string
-	Description string
-	Type        string
-	Default     string
-	Choices     []ActionArgumentChoice
-	Entity      string
-	RejectNull  bool
-	Suggestions map[string]string
+	Name        string                 `koanf:"name"`
+	Title       string                 `koanf:"title"`
+	Description string                 `koanf:"description"`
+	Type        string                 `koanf:"type"`
+	Default     string                 `koanf:"default"`
+	Choices     []ActionArgumentChoice `koanf:"choices"`
+	Entity      string                 `koanf:"entity"`
+	RejectNull  bool                   `koanf:"rejectNull"`
+	Suggestions map[string]string      `koanf:"suggestions"`
 }
 
 // ActionArgumentChoice represents a predefined choice for an argument.
 type ActionArgumentChoice struct {
-	Value string
-	Title string
+	Value string `koanf:"value"`
+	Title string `koanf:"title"`
 }
 
 // RateSpec allows you to set a max frequency for an action.
 type RateSpec struct {
-	Limit    int
-	Duration string
+	Limit    int    `koanf:"limit"`
+	Duration string `koanf:"duration"`
 }
 
 // Entity represents a "thing" that can have multiple actions associated with it.
 // for example, a media player with a start and stop action.
 type EntityFile struct {
-	File string
-	Name string
-	Icon string
+	File string `koanf:"file"`
+	Name string `koanf:"name"`
+	Icon string `koanf:"icon"`
 }
 
 // PermissionsList defines what users can do with an action.
 type PermissionsList struct {
-	View bool `mapstructure:"view"`
-	Exec bool `mapstructure:"exec"`
-	Logs bool `mapstructure:"logs"`
-	Kill bool `mapstructure:"kill"`
+	View bool `koanf:"view"`
+	Exec bool `koanf:"exec"`
+	Logs bool `koanf:"logs"`
+	Kill bool `koanf:"kill"`
 }
 
 // AccessControlList defines what permissions apply to a user or user group.
 type AccessControlList struct {
-	Name             string
-	AddToEveryAction bool
-	MatchUsergroups  []string
-	MatchUsernames   []string
-	Permissions      PermissionsList
-	Policy           ConfigurationPolicy
+	Name             string              `koanf:"name"`
+	AddToEveryAction bool                `koanf:"addToEveryAction"`
+	MatchUsergroups  []string            `koanf:"matchUsergroups"`
+	MatchUsernames   []string            `koanf:"matchUsernames"`
+	Permissions      PermissionsList     `koanf:"permissions"`
+	Policy           ConfigurationPolicy `koanf:"policy"`
 }
 
 // ConfigurationPolicy defines global settings which are overridden with an ACL.
 type ConfigurationPolicy struct {
-	ShowDiagnostics bool `mapstructure:"showDiagnostics"`
-	ShowLogList     bool `mapstructure:"showLogList"`
+	ShowDiagnostics bool `koanf:"showDiagnostics"`
+	ShowLogList     bool `koanf:"showLogList"`
 }
 
 type PrometheusConfig struct {
-	Enabled          bool `mapstructure:"enabled"`
-	DefaultGoMetrics bool `mapstructure:"defaultGoMetrics"`
+	Enabled          bool `koanf:"enabled"`
+	DefaultGoMetrics bool `koanf:"defaultGoMetrics"`
 }
 
 // Config is the global config used through the whole app.
 type Config struct {
-	UseSingleHTTPFrontend           bool                       `mapstructure:"useSingleHTTPFrontend"`
-	ThemeName                       string                     `mapstructure:"themeName"`
-	ThemeCacheDisabled              bool                       `mapstructure:"themeCacheDisabled"`
-	ListenAddressSingleHTTPFrontend string                     `mapstructure:"listenAddressSingleHTTPFrontend"`
-	ListenAddressWebUI              string                     `mapstructure:"listenAddressWebUI"`
-	ListenAddressRestActions        string                     `mapstructure:"listenAddressRestActions"`
-	ListenAddressPrometheus         string                     `mapstructure:"listenAddressPrometheus"`
-	ExternalRestAddress             string                     `mapstructure:"externalRestAddress"`
-	LogLevel                        string                     `mapstructure:"logLevel"`
-	LogDebugOptions                 LogDebugOptions            `mapstructure:"logDebugOptions"`
-	LogHistoryPageSize              int64                      `mapstructure:"logHistoryPageSize"`
-	Actions                         []*Action                  `mapstructure:"actions"`
-	Entities                        []*EntityFile              `mapstructure:"entities"`
-	Dashboards                      []*DashboardComponent      `mapstructure:"dashboards"`
-	CheckForUpdates                 bool                       `mapstructure:"checkForUpdates"`
-	PageTitle                       string                     `mapstructure:"pageTitle"`
-	ShowFooter                      bool                       `mapstructure:"showFooter"`
-	ShowNavigation                  bool                       `mapstructure:"showNavigation"`
-	ShowNewVersions                 bool                       `mapstructure:"showNewVersions"`
-	EnableCustomJs                  bool                       `mapstructure:"enableCustomJs"`
-	AuthJwtCookieName               string                     `mapstructure:"authJwtCookieName"`
-	AuthJwtHeader                   string                     `mapstructure:"authJwtHeader"`
-	AuthJwtAud                      string                     `mapstructure:"authJwtAud"`
-	AuthJwtDomain                   string                     `mapstructure:"authJwtDomain"`
-	AuthJwtCertsURL                 string                     `mapstructure:"authJwtCertsUrl"`
-	AuthJwtHmacSecret               string                     `mapstructure:"authJwtHmacSecret"` // mutually exclusive with pub key config fields
-	AuthJwtClaimUsername            string                     `mapstructure:"authJwtClaimUsername"`
-	AuthJwtClaimUserGroup           string                     `mapstructure:"authJwtClaimUserGroup"`
-	AuthJwtPubKeyPath               string                     `mapstructure:"authJwtPubKeyPath"` // will read pub key from file on disk
-	AuthHttpHeaderUsername          string                     `mapstructure:"authHttpHeaderUsername"`
-	AuthHttpHeaderUserGroup         string                     `mapstructure:"authHttpHeaderUserGroup"`
-	AuthHttpHeaderUserGroupSep      string                     `mapstructure:"authHttpHeaderUserGroupSep"`
-	AuthLocalUsers                  AuthLocalUsersConfig       `mapstructure:"authLocalUsers"`
-	AuthLoginUrl                    string                     `mapstructure:"authLoginUrl"`
-	AuthRequireGuestsToLogin        bool                       `mapstructure:"authRequireGuestsToLogin"`
-	AuthOAuth2RedirectURL           string                     `mapstructure:"authOAuth2RedirectUrl"`
-	AuthOAuth2Providers             map[string]*OAuth2Provider `mapstructure:"authOAuth2Providers"`
-	DefaultPermissions              PermissionsList            `mapstructure:"defaultPermissions"`
-	DefaultPolicy                   ConfigurationPolicy        `mapstructure:"defaultPolicy"`
-	AccessControlLists              []*AccessControlList       `mapstructure:"accessControlLists"`
-	WebUIDir                        string                     `mapstructure:"webUIDir"`
-	CronSupportForSeconds           bool                       `mapstructure:"cronSupportForSeconds"`
-	SectionNavigationStyle          string                     `mapstructure:"sectionNavigationStyle"`
-	DefaultPopupOnStart             string                     `mapstructure:"defaultPopupOnStart"`
-	InsecureAllowDumpOAuth2UserData bool                       `mapstructure:"insecureAllowDumpOAuth2UserData"`
-	InsecureAllowDumpVars           bool                       `mapstructure:"insecureAllowDumpVars"`
-	InsecureAllowDumpSos            bool                       `mapstructure:"insecureAllowDumpSos"`
-	InsecureAllowDumpActionMap      bool                       `mapstructure:"insecureAllowDumpActionMap"`
-	InsecureAllowDumpJwtClaims      bool                       `mapstructure:"insecureAllowDumpJwtClaims"`
-	Prometheus                      PrometheusConfig           `mapstructure:"prometheus"`
-	SaveLogs                        SaveLogsConfig             `mapstructure:"saveLogs"`
-	DefaultIconForActions           string                     `mapstructure:"defaultIconForActions"`
-	DefaultIconForDirectories       string                     `mapstructure:"defaultIconForDirectories"`
-	DefaultIconForBack              string                     `mapstructure:"defaultIconForBack"`
-	AdditionalNavigationLinks       []*NavigationLink          `mapstructure:"additionalNavigationLinks"`
-	ServiceHostMode                 string                     `mapstructure:"serviceHostMode"`
-	StyleMods                       []string                   `mapstructure:"styleMods"`
-	BannerMessage                   string                     `mapstructure:"bannerMessage"`
-	BannerCSS                       string                     `mapstructure:"bannerCss"`
-	Include                         string                     `mapstructure:"include"`
+	UseSingleHTTPFrontend           bool                       `koanf:"useSingleHTTPFrontend"`
+	ThemeName                       string                     `koanf:"themeName"`
+	ThemeCacheDisabled              bool                       `koanf:"themeCacheDisabled"`
+	ListenAddressSingleHTTPFrontend string                     `koanf:"listenAddressSingleHTTPFrontend"`
+	ListenAddressWebUI              string                     `koanf:"listenAddressWebUI"`
+	ListenAddressRestActions        string                     `koanf:"listenAddressRestActions"`
+	ListenAddressPrometheus         string                     `koanf:"listenAddressPrometheus"`
+	ExternalRestAddress             string                     `koanf:"externalRestAddress"`
+	LogLevel                        string                     `koanf:"logLevel"`
+	LogDebugOptions                 LogDebugOptions            `koanf:"logDebugOptions"`
+	LogHistoryPageSize              int64                      `koanf:"logHistoryPageSize"`
+	Actions                         []*Action                  `koanf:"actions"`
+	Entities                        []*EntityFile              `koanf:"entities"`
+	Dashboards                      []*DashboardComponent      `koanf:"dashboards"`
+	CheckForUpdates                 bool                       `koanf:"checkForUpdates"`
+	PageTitle                       string                     `koanf:"pageTitle"`
+	ShowFooter                      bool                       `koanf:"showFooter"`
+	ShowNavigation                  bool                       `koanf:"showNavigation"`
+	ShowNewVersions                 bool                       `koanf:"showNewVersions"`
+	EnableCustomJs                  bool                       `koanf:"enableCustomJs"`
+	AuthJwtCookieName               string                     `koanf:"authJwtCookieName"`
+	AuthJwtHeader                   string                     `koanf:"authJwtHeader"`
+	AuthJwtAud                      string                     `koanf:"authJwtAud"`
+	AuthJwtDomain                   string                     `koanf:"authJwtDomain"`
+	AuthJwtCertsURL                 string                     `koanf:"authJwtCertsUrl"`
+	AuthJwtHmacSecret               string                     `koanf:"authJwtHmacSecret"` // mutually exclusive with pub key config fields
+	AuthJwtClaimUsername            string                     `koanf:"authJwtClaimUsername"`
+	AuthJwtClaimUserGroup           string                     `koanf:"authJwtClaimUserGroup"`
+	AuthJwtPubKeyPath               string                     `koanf:"authJwtPubKeyPath"` // will read pub key from file on disk
+	AuthHttpHeaderUsername          string                     `koanf:"authHttpHeaderUsername"`
+	AuthHttpHeaderUserGroup         string                     `koanf:"authHttpHeaderUserGroup"`
+	AuthHttpHeaderUserGroupSep      string                     `koanf:"authHttpHeaderUserGroupSep"`
+	AuthLocalUsers                  AuthLocalUsersConfig       `koanf:"authLocalUsers"`
+	AuthLoginUrl                    string                     `koanf:"authLoginUrl"`
+	AuthRequireGuestsToLogin        bool                       `koanf:"authRequireGuestsToLogin"`
+	AuthOAuth2RedirectURL           string                     `koanf:"authOAuth2RedirectUrl"`
+	AuthOAuth2Providers             map[string]*OAuth2Provider `koanf:"authOAuth2Providers"`
+	DefaultPermissions              PermissionsList            `koanf:"defaultPermissions"`
+	DefaultPolicy                   ConfigurationPolicy        `koanf:"defaultPolicy"`
+	AccessControlLists              []*AccessControlList       `koanf:"accessControlLists"`
+	WebUIDir                        string                     `koanf:"webUIDir"`
+	CronSupportForSeconds           bool                       `koanf:"cronSupportForSeconds"`
+	SectionNavigationStyle          string                     `koanf:"sectionNavigationStyle"`
+	DefaultPopupOnStart             string                     `koanf:"defaultPopupOnStart"`
+	InsecureAllowDumpOAuth2UserData bool                       `koanf:"insecureAllowDumpOAuth2UserData"`
+	InsecureAllowDumpVars           bool                       `koanf:"insecureAllowDumpVars"`
+	InsecureAllowDumpSos            bool                       `koanf:"insecureAllowDumpSos"`
+	InsecureAllowDumpActionMap      bool                       `koanf:"insecureAllowDumpActionMap"`
+	InsecureAllowDumpJwtClaims      bool                       `koanf:"insecureAllowDumpJwtClaims"`
+	Prometheus                      PrometheusConfig           `koanf:"prometheus"`
+	SaveLogs                        SaveLogsConfig             `koanf:"saveLogs"`
+	DefaultIconForActions           string                     `koanf:"defaultIconForActions"`
+	DefaultIconForDirectories       string                     `koanf:"defaultIconForDirectories"`
+	DefaultIconForBack              string                     `koanf:"defaultIconForBack"`
+	AdditionalNavigationLinks       []*NavigationLink          `koanf:"additionalNavigationLinks"`
+	ServiceHostMode                 string                     `koanf:"serviceHostMode"`
+	StyleMods                       []string                   `koanf:"styleMods"`
+	BannerMessage                   string                     `koanf:"bannerMessage"`
+	BannerCSS                       string                     `koanf:"bannerCss"`
+	Include                         string                     `koanf:"include"`
 
 	sourceFiles []string
 }
 
 type AuthLocalUsersConfig struct {
-	Enabled bool         `mapstructure:"enabled"`
-	Users   []*LocalUser `mapstructure:"users"`
+	Enabled bool         `koanf:"enabled"`
+	Users   []*LocalUser `koanf:"users"`
 }
 
 type LocalUser struct {
-	Username  string `mapstructure:"username"`
-	Usergroup string `mapstructure:"usergroup"`
-	Password  string `mapstructure:"password"`
+	Username  string `koanf:"username"`
+	Usergroup string `koanf:"usergroup"`
+	Password  string `koanf:"password"`
 }
 
 type OAuth2Provider struct {
-	Name               string
-	Title              string
-	ClientID           string
-	ClientSecret       string
-	Icon               string
-	Scopes             []string
-	AuthUrl            string
-	TokenUrl           string
-	WhoamiUrl          string
-	UsernameField      string
-	UserGroupField     string
-	InsecureSkipVerify bool
-	CallbackTimeout    int
-	CertBundlePath     string
+	Name               string   `koanf:"name"`
+	Title              string   `koanf:"title"`
+	ClientID           string   `koanf:"clientId"`
+	ClientSecret       string   `koanf:"clientSecret"`
+	Icon               string   `koanf:"icon"`
+	Scopes             []string `koanf:"scopes"`
+	AuthUrl            string   `koanf:"authUrl"`
+	TokenUrl           string   `koanf:"tokenUrl"`
+	WhoamiUrl          string   `koanf:"whoamiUrl"`
+	UsernameField      string   `koanf:"usernameField"`
+	UserGroupField     string   `koanf:"userGroupField"`
+	InsecureSkipVerify bool     `koanf:"insecureSkipVerify"`
+	CallbackTimeout    int      `koanf:"callbackTimeout"`
+	CertBundlePath     string   `koanf:"certBundlePath"`
 }
 
 type NavigationLink struct {
-	Title  string `mapstructure:"title"`
-	Url    string `mapstructure:"url"`
-	Target string `mapstructure:"target"`
+	Title  string `koanf:"title"`
+	Url    string `koanf:"url"`
+	Target string `koanf:"target"`
 }
 
 type SaveLogsConfig struct {
-	ResultsDirectory string `mapstructure:"resultsDirectory"`
-	OutputDirectory  string `mapstructure:"outputDirectory"`
+	ResultsDirectory string `koanf:"resultsDirectory"`
+	OutputDirectory  string `koanf:"outputDirectory"`
 }
 
 type LogDebugOptions struct {
-	SingleFrontendRequests       bool
-	SingleFrontendRequestHeaders bool
-	AclCheckStarted              bool
-	AclMatched                   bool
-	AclNotMatched                bool
-	AclNoneMatched               bool
+	SingleFrontendRequests       bool `koanf:"singleFrontendRequests"`
+	SingleFrontendRequestHeaders bool `koanf:"singleFrontendRequestHeaders"`
+	AclCheckStarted              bool `koanf:"aclCheckStarted"`
+	AclMatched                   bool `koanf:"aclMatched"`
+	AclNotMatched                bool `koanf:"aclNotMatched"`
+	AclNoneMatched               bool `koanf:"aclNoneMatched"`
 }
 
 type DashboardComponent struct {
-	Title    string
-	Type     string
-	Entity   string
-	Icon     string
-	CssClass string
-	Contents []*DashboardComponent
+	Title    string                `koanf:"title"`
+	Type     string                `koanf:"type"`
+	Entity   string                `koanf:"entity"`
+	Icon     string                `koanf:"icon"`
+	CssClass string                `koanf:"cssClass"`
+	Contents []*DashboardComponent `koanf:"contents"`
 }
 
 func DefaultConfig() *Config {
