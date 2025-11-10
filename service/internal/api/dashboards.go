@@ -89,13 +89,10 @@ func buildDefaultDashboard(rr *DashboardRenderRequest) *apiv1.Dashboard {
 }
 
 func sortActions(components []*apiv1.DashboardComponent) []*apiv1.DashboardComponent {
+	log.Infof("sortActions: %+v", components)
 	sort.Slice(components, func(i, j int) bool {
-		if components[i].Action == nil {
-			return false
-		}
-
-		if components[j].Action == nil {
-			return true
+		if components[i].Action == nil || components[j].Action == nil {
+			return components[i].Title < components[j].Title
 		}
 
 		if components[i].Action.Order == components[j].Action.Order {
