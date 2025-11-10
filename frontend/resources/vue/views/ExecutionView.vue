@@ -104,7 +104,7 @@ let terminal = null
 function initializeTerminal() {
   terminal = new OutputTerminal(executionTrackingId.value)
   terminal.open(xtermOutput.value)
-  terminal.resize(80, 24)
+  terminal.resize(80, 40)
 
   window.terminal = terminal
 }
@@ -327,6 +327,17 @@ function goBack() {
 }
 
 onMounted(() => {
+  document.addEventListener('fullscreenchange', (e) => {
+    setTimeout(() => { // Wait for the DOM to settle
+      if (document.fullscreenElement) {
+        window.terminal.fit()
+      } else {
+        window.terminal.resize(80, 40)
+        window.terminal.fit()
+      }
+    }, 100)
+  })
+
   initializeTerminal()
   fetchExecutionResult(props.executionTrackingId)
 
