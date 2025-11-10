@@ -172,7 +172,7 @@ function updateHeaderFromInit() {
         window.checkWebsocketConnection()
     }
 
-    if (initResponse.loginRequired) {
+    if (window.initResponse.loginRequired) {
         router.push('/login')
         return
     }
@@ -187,7 +187,7 @@ function renderSidebar() {
         sidebar.value.clear()
     }
 
-    for (const rootDashboard of initResponse.rootDashboards) {
+    for (const rootDashboard of window.initResponse.rootDashboards) {
         sidebar.value.addNavigationLink({
             id: rootDashboard,
             name: rootDashboard,

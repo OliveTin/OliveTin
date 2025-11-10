@@ -7,7 +7,7 @@ translations:
   nav.diagnostics: 诊断
   connected: 已连接
   login-button: 登录
-  raise-issue: 报告问题 on GitHub
+  raise-issue: 在 GitHub 上报告问题
   docs: 文档
   logs.title: 日志
   logs.page-description: 这是一个动作执行日志列表。您可以按动作标题过滤列表。

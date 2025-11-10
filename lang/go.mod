@@ -1,6 +1,6 @@
 module github.com/OliveTin/OliveTin/langtool
 
-go 1.24.9
+go 1.24.0
 
 require (
 	github.com/jamesread/golure v0.0.0-20250919212919-976d085a100c

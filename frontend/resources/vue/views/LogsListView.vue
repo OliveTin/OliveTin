@@ -30,10 +30,12 @@
           <tbody>
             <tr v-for="log in filteredLogs" :key="log.executionTrackingId" class="log-row" :title="log.actionTitle">
               <td class="timestamp">{{ formatTimestamp(log.datetimeStarted) }}</td>
+              <td>
                 <span class="icon" v-html="log.actionIcon"></span>
                 <router-link :to="`/logs/${log.executionTrackingId}`">
                   {{ log.actionTitle }}
                 </router-link>
+              </td>
               <td class="tags">
                 <span class="annotation">
                   <span class="annotation-key">User:</span>

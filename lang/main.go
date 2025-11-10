@@ -34,7 +34,6 @@ func main() {
 
 	if err != nil {
 		log.Fatalf("Error saving combined language content to file: %v", err)
-		return
 	}
 
 	log.Infof("Combined language content saved to combined_output.json")
