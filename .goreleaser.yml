@@ -199,6 +199,7 @@ nfpms:
         dst: /usr/share/man/man1/OliveTin.1.gz
 
 release:
+  make_latest: false
   footer: |
     ## Container images (from GitHub)
 
