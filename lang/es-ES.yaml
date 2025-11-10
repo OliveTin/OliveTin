@@ -1,0 +1,20 @@
+schemaVersion: 1
+translations:
+  welcome: Bienvenido a OliveTin
+  nav.actions: Acciones
+  nav.logs: Registros
+  nav.entities: Entidades
+  nav.diagnostics: Diagnósticos
+  connected: Conectado
+  login-button: Iniciar sesión
+  raise-issue: Reportar un problema en GitHub
+  docs: Documentación
+  logs.title: Registros
+  logs.page-description: Esta es una lista de registros de acciones que han sido ejecutadas. Puede filtrar la lista por título de acción.
+  logs.timestamp: Timestamp
+  logs.action: Acción
+  logs.metadata: Metadatos
+  logs.status: Status
+  logs.no-logs-to-display: No hay registros para mostrar.
+  return-to-index: Volver a la página principal
+  search-filter: Filtrar página actual

@@ -30,9 +30,10 @@
 		"@xterm/addon-fit": "^0.10.0",
 		"@xterm/xterm": "^5.5.0",
 		"iconify-icon": "^3.0.2",
-		"picocrank": "^1.8.0",
+		"picocrank": "^1.8.1",
 		"unplugin-vue-components": "^30.0.0",
 		"vite": "^7.1.12",
+		"vue-i18n": "^11.1.12",
 		"vue-router": "^4.6.3"
 	}
 }

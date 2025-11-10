@@ -1,0 +1,20 @@
+schemaVersion: 1
+translations:
+  welcome: 欢迎使用 OliveTin
+  nav.actions: 动作
+  nav.logs: 日志
+  nav.entities: 实体
+  nav.diagnostics: 诊断
+  connected: 已连接
+  login-button: 登录
+  raise-issue: 报告问题 on GitHub
+  docs: 文档
+  logs.title: 日志
+  logs.page-description: 这是一个动作执行日志列表。您可以按动作标题过滤列表。
+  logs.timestamp: 时间戳
+  logs.action: 动作
+  logs.metadata: 元数据
+  logs.status: 状态
+  logs.no-logs-to-display: 没有日志可显示。
+  return-to-index: 返回首页
+  search-filter: 过滤当前页面
