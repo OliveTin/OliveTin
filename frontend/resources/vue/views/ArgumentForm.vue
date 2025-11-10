@@ -7,15 +7,7 @@
       <form @submit="handleSubmit">
         <template v-if="actionArguments.length > 0">
 
-          <template v-for="arg in actionArguments" :key="arg.name" class="argument-group">
-            <div v-if="arg.type === 'confirmation'">
-              <label :for="arg.name">
-                {{ formatLabel(arg.title) }}
-              </label>
-              <input :id="arg.name" :name="arg.name" type="checkbox" :checked="getArgumentValue(arg)"
-                @input="handleInput(arg, $event)" @change="handleChange(arg, $event)" />
-            </div>
-            <template v-else>
+          <template v-for="arg in actionArguments" :key="arg.name">
               <label :for="arg.name">
                 {{ formatLabel(arg.title) }}
               </label>
@@ -39,7 +31,6 @@
                 :rows="arg.type === 'raw_string_multiline' ? 5 : undefined"
                 :step="arg.type === 'datetime' ? 1 : undefined" :pattern="getPattern(arg)" :required="arg.required"
                 @input="handleInput(arg, $event)" @change="handleChange(arg, $event)" />
-            </template>
 
             <span class="argument-description" v-html="arg.description"></span>
           </template>
@@ -165,7 +156,7 @@ function getInputType(arg) {
     return 'checkbox'
   }
 
-  if (arg.type === 'ascii_identifier') {
+  if (arg.type === 'ascii_identifier' || arg.type === 'ascii') {
     return 'text'
   }
 
@@ -370,22 +361,6 @@ form {
   grid-template-columns: max-content auto auto;
 }
 
-.argument-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.argument-group label {
-  font-weight: 500;
-  color: #333;
-}
-
-.argument-group input:invalid,
-.argument-group select:invalid,
-.argument-group textarea:invalid {
-  border-color: #dc3545;
-}
 
 .argument-description {
   font-size: 0.875rem;
