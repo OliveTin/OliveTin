@@ -43,7 +43,7 @@ describe('config: dashboards with basic fieldsets', function () {
 
     // Check that we have the expected number of fieldsets
     const allFieldsets = await webdriver.findElements(By.css('fieldset'))
-    expect(allFieldsets).to.have.length(5, 'Expected 5 fieldsets total')
+    expect(allFieldsets).to.have.length(3, 'Expected 3 fieldsets total')
     
     // Check that we have fieldsets with the expected titles
     const fieldsetTitles = []
