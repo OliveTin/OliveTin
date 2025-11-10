@@ -11,4 +11,5 @@ tmp/
 webui/
 webui.dev/node_modules
 webui.dev/.parcel-cache
+frontend/node_modules
 custom-webui
