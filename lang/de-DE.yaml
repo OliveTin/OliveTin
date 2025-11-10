@@ -18,3 +18,7 @@ translations:
   logs.no-logs-to-display: Es gibt keine Protokolle zu anzeigen.
   return-to-index: Zurück zur Startseite
   search-filter: Filter aktuelle Seite
+  language-dialog.title: Sprache auswählen
+  language-dialog.browser-languages: Browser-Sprachen
+  language-dialog.not-available: Nicht verfügbar
+  language-dialog.close: Schließen

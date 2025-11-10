@@ -55,19 +55,19 @@
 
     <dialog ref="languageDialog" class="language-dialog" @click="handleDialogClick">
         <div class="dialog-content" @click.stop>
-            <h2>Select Language</h2>
+            <h2>{{ t('language-dialog.title') }}</h2>
             <select v-model="selectedLanguage" @change="changeLanguage" class="language-select">
                 <option v-for="(name, code) in availableLanguages" :key="code" :value="code">
                     {{ name }}
                 </option>
             </select>
             <p class="browser-languages">
-                Browser languages: 
+                {{ t('language-dialog.browser-languages') }}: 
                 <span v-if="browserLanguages.length > 0">{{ browserLanguages.join(', ') }}</span>
-                <span v-else>Not available</span>
+                <span v-else>{{ t('language-dialog.not-available') }}</span>
             </p>
             <div class="dialog-buttons">
-                <button @click="closeLanguageDialog">Close</button>
+                <button @click="closeLanguageDialog">{{ t('language-dialog.close') }}</button>
             </div>
         </div>
     </dialog>

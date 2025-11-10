@@ -18,3 +18,7 @@ translations:
   logs.no-logs-to-display: There are no logs to display.
   return-to-index: Return to index
   search-filter: Filter current page
+  language-dialog.title: Select Language
+  language-dialog.browser-languages: Browser languages
+  language-dialog.not-available: Not available
+  language-dialog.close: Close

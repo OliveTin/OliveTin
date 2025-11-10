@@ -18,3 +18,7 @@ translations:
   logs.no-logs-to-display: 没有日志可显示。
   return-to-index: 返回首页
   search-filter: 过滤当前页面
+  language-dialog.title: 选择语言
+  language-dialog.browser-languages: 浏览器语言
+  language-dialog.not-available: 不可用
+  language-dialog.close: 关闭

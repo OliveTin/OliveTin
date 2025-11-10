@@ -90,7 +90,70 @@ func getCombinedLanguageContent() *CombinedTranslationsOutput {
 		output.Messages[languageName] = yamlData.Translations
 	}
 
+	validateTranslations(output)
+
 	return output
+}
+
+// getReferenceKeys returns the keys from the "en" translation as the reference set.
+func getReferenceKeys(messages map[string]map[string]string) map[string]bool {
+	enTranslations, exists := messages["en"]
+	if !exists {
+		return nil
+	}
+
+	referenceKeys := make(map[string]bool, len(enTranslations))
+	for key := range enTranslations {
+		referenceKeys[key] = true
+	}
+	return referenceKeys
+}
+
+// findMissingKeys returns the keys that are in referenceKeys but not in translations.
+func findMissingKeys(referenceKeys map[string]bool, translations map[string]string) []string {
+	missing := make([]string, 0)
+	for key := range referenceKeys {
+		if _, exists := translations[key]; !exists {
+			missing = append(missing, key)
+		}
+	}
+	return missing
+}
+
+// findExtraKeys returns the keys that are in translations but not in referenceKeys.
+func findExtraKeys(referenceKeys map[string]bool, translations map[string]string) []string {
+	extra := make([]string, 0)
+	for key := range translations {
+		if !referenceKeys[key] {
+			extra = append(extra, key)
+		}
+	}
+	return extra
+}
+
+// validateTranslations checks all translations against the "en" reference and prints warnings for missing and extra keys.
+func validateTranslations(output *CombinedTranslationsOutput) {
+	referenceKeys := getReferenceKeys(output.Messages)
+	if referenceKeys == nil {
+		log.Warnf("No 'en' translation found, skipping validation")
+		return
+	}
+
+	for langName, translations := range output.Messages {
+		if langName == "en" {
+			continue
+		}
+
+		missing := findMissingKeys(referenceKeys, translations)
+		if len(missing) > 0 {
+			log.Warnf("Translation '%s' is missing %d key(s): %v", langName, len(missing), missing)
+		}
+
+		extra := findExtraKeys(referenceKeys, translations)
+		if len(extra) > 0 {
+			log.Warnf("Translation '%s' has %d extra key(s) not in 'en': %v", langName, len(extra), extra)
+		}
+	}
 }
 
 func filterLanguageFiles(files []os.DirEntry) []os.DirEntry {
