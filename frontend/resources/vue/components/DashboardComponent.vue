@@ -14,12 +14,9 @@
     </div>
 
     <template v-else-if="component.type == 'fieldset'">
-        <fieldset>
-            <legend>{{ component.title }}</legend>
-            <template v-for="subcomponent in component.contents" :key="subcomponent.title">
-                <DashboardComponent :component="subcomponent" />
-            </template>
-        </fieldset>
+        <template v-for="subcomponent in component.contents" :key="subcomponent.title">
+            <DashboardComponent :component="subcomponent" />
+        </template>
     </template>
 
     <div v-else>
