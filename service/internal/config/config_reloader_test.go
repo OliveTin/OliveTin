@@ -101,7 +101,10 @@ func TestEnvInConfig(t *testing.T) {
 			t.Errorf("Error loading YAML: %v", err)
 			continue
 		}
-		if err := k.Unmarshal(".", cfg); err != nil {
+
+		if err := k.UnmarshalWithConf("", cfg, koanf.UnmarshalConf{
+			Tag: "koanf",
+		}); err != nil {
 			t.Errorf("Error unmarshalling config: %v", err)
 			continue
 		}
