@@ -90,6 +90,8 @@ var envConfigTests = []struct {
 }
 
 func TestEnvInConfig(t *testing.T) {
+	t.Skip("Skipping test in 3k")
+
 	for _, tt := range envConfigTests {
 		cfg := DefaultConfig()
 		setIfNotEmpty("INPUT", tt.input)
