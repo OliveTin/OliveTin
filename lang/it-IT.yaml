@@ -16,6 +16,10 @@ translations:
   logs.metadata: Metadati
   logs.status: Status
   logs.no-logs-to-display: Non ci sono registri da mostrare.
+  logs.timed-out: Tempo scaduto
+  logs.blocked: Bloccato
+  logs.exit-code: Codice di uscita
+  logs.completed: Completato
   return-to-index: Torna alla pagina principale
   search-filter: Filtra la pagina corrente
   language-dialog.title: Seleziona lingua

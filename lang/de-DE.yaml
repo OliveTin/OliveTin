@@ -16,6 +16,10 @@ translations:
   logs.metadata: Metadaten
   logs.status: Status
   logs.no-logs-to-display: Es gibt keine Protokolle zu anzeigen.
+  logs.timed-out: Zeitüberschreitung
+  logs.blocked: Blockiert
+  logs.exit-code: Ausführungscode
+  logs.completed: Abgeschlossen
   return-to-index: Zurück zur Startseite
   search-filter: Filter aktuelle Seite
   language-dialog.title: Sprache auswählen

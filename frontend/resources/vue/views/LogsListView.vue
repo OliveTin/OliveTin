@@ -134,10 +134,10 @@ function getStatusClass(log) {
 }
 
 function getStatusText(log) {
-  if (log.timedOut) return 'Timed out'
-  if (log.blocked) return 'Blocked'
-  if (log.exitCode !== 0) return `Exit code ${log.exitCode}`
-  return 'Completed'
+  if (log.timedOut) return t('logs.timed-out')
+  if (log.blocked) return t('logs.blocked')
+  if (log.exitCode !== 0) return `${t('logs.exit-code')} ${log.exitCode}`
+  return t('logs.completed')
 }
 
 function handlePageChange(page) {

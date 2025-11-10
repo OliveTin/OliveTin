@@ -22,3 +22,7 @@ translations:
   language-dialog.browser-languages: 浏览器语言
   language-dialog.not-available: 不可用
   language-dialog.close: 关闭
+  logs.timed-out: 超时
+  logs.blocked: 阻塞
+  logs.exit-code: 退出代码
+  logs.completed: 完成
