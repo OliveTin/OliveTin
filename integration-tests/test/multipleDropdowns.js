@@ -52,15 +52,8 @@ describe('config: multipleDropdowns', function () {
       return url.includes('/actionBinding/') && url.includes('/argumentForm')
     }), 8000)
 
-    // Wait for form elements to be rendered
-    await webdriver.wait(new Condition('wait for form elements', async () => {
-      const selects = await webdriver.findElements(By.tagName('select'))
-      return selects.length >= 2
-    }), 5000)
-
-    // Find the select elements after the wait condition
-    const selects = await webdriver.findElements(By.tagName('select'))
-
+    const selects = await webdriver.findElements(By.css('main select'))
+   
     expect(selects).to.have.length(2)
     expect(await selects[0].findElements(By.tagName('option'))).to.have.length(2)
     expect(await selects[1].findElements(By.tagName('option'))).to.have.length(3)

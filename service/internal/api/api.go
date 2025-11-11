@@ -464,6 +464,53 @@ func (api *oliveTinAPI) GetLogs(ctx ctx.Context, req *connect.Request[apiv1.GetL
 	return connect.NewResponse(ret), nil
 }
 
+// isValidLogEntry checks if a log entry has all required fields populated.
+func isValidLogEntry(e *executor.InternalLogEntry) bool {
+	return e != nil && e.Binding != nil && e.Binding.Action != nil
+}
+
+// isLogEntryAllowed checks if a log entry is allowed to be viewed by the user.
+func (api *oliveTinAPI) isLogEntryAllowed(e *executor.InternalLogEntry, user *acl.AuthenticatedUser) bool {
+	return acl.IsAllowedLogs(api.cfg, user, e.Binding.Action)
+}
+
+// buildEmptyPageResponse creates a response for an empty page.
+func buildEmptyPageResponse(page pageInfo) *apiv1.GetActionLogsResponse {
+	return &apiv1.GetActionLogsResponse{
+		CountRemaining: 0,
+		PageSize:       page.size,
+		TotalCount:     page.total,
+		StartOffset:    page.start,
+	}
+}
+
+// calculateReversedIndices computes the reversed indices for newest-first pagination.
+func calculateReversedIndices(page pageInfo, filteredLen int) (int64, int64) {
+	startIdx := page.total - page.end
+	endIdx := page.total - page.start
+	if startIdx < 0 {
+		startIdx = 0
+	}
+	if endIdx > int64(filteredLen) {
+		endIdx = int64(filteredLen)
+	}
+	return startIdx, endIdx
+}
+
+// buildActionLogsResponse builds the response with paginated log entries.
+func (api *oliveTinAPI) buildActionLogsResponse(filtered []*executor.InternalLogEntry, page pageInfo, user *acl.AuthenticatedUser) *apiv1.GetActionLogsResponse {
+	startIdx, endIdx := calculateReversedIndices(page, len(filtered))
+	ret := &apiv1.GetActionLogsResponse{}
+	for _, le := range filtered[startIdx:endIdx] {
+		ret.Logs = append(ret.Logs, api.internalLogEntryToPb(le, user))
+	}
+	ret.CountRemaining = page.start
+	ret.PageSize = page.size
+	ret.TotalCount = page.total
+	ret.StartOffset = page.start
+	return ret
+}
+
 func (api *oliveTinAPI) GetActionLogs(ctx ctx.Context, req *connect.Request[apiv1.GetActionLogsRequest]) (*connect.Response[apiv1.GetActionLogsResponse], error) {
 	user := acl.UserFromContext(ctx, req, api.cfg)
 
@@ -471,43 +518,22 @@ func (api *oliveTinAPI) GetActionLogs(ctx ctx.Context, req *connect.Request[apiv
 		return nil, err
 	}
 
-	ret := &apiv1.GetActionLogsResponse{}
 	filtered := api.filterLogsByACL(api.executor.GetLogsByActionId(req.Msg.ActionId), user)
 	page := paginate(int64(len(filtered)), api.cfg.LogHistoryPageSize, req.Msg.StartOffset)
 	if page.empty {
-		ret.CountRemaining = 0
-		ret.PageSize = page.size
-		ret.TotalCount = page.total
-		ret.StartOffset = page.start
-		return connect.NewResponse(ret), nil
+		return connect.NewResponse(buildEmptyPageResponse(page)), nil
 	}
-	// Newest-first slicing: compute reversed indices
-	startIdx := page.total - page.end
-	endIdx := page.total - page.start
-	if startIdx < 0 {
-		startIdx = 0
-	}
-	if endIdx > int64(len(filtered)) {
-		endIdx = int64(len(filtered))
-	}
-	for _, le := range filtered[startIdx:endIdx] {
-		ret.Logs = append(ret.Logs, api.internalLogEntryToPb(le, user))
-	}
-	// Entries older than the returned newest page
-	ret.CountRemaining = page.start
-	ret.PageSize = page.size
-	ret.TotalCount = page.total
-	ret.StartOffset = page.start
-	return connect.NewResponse(ret), nil
+
+	return connect.NewResponse(api.buildActionLogsResponse(filtered, page, user)), nil
 }
 
 func (api *oliveTinAPI) pbLogsFiltered(entries []*executor.InternalLogEntry, user *acl.AuthenticatedUser) []*apiv1.LogEntry {
 	out := make([]*apiv1.LogEntry, 0, len(entries))
 	for _, e := range entries {
-		if e == nil || e.Binding == nil || e.Binding.Action == nil {
+		if !isValidLogEntry(e) {
 			continue
 		}
-		if acl.IsAllowedLogs(api.cfg, user, e.Binding.Action) {
+		if api.isLogEntryAllowed(e, user) {
 			out = append(out, api.internalLogEntryToPb(e, user))
 		}
 	}
@@ -517,10 +543,10 @@ func (api *oliveTinAPI) pbLogsFiltered(entries []*executor.InternalLogEntry, use
 func (api *oliveTinAPI) filterLogsByACL(entries []*executor.InternalLogEntry, user *acl.AuthenticatedUser) []*executor.InternalLogEntry {
 	filtered := make([]*executor.InternalLogEntry, 0, len(entries))
 	for _, e := range entries {
-		if e == nil || e.Binding == nil || e.Binding.Action == nil {
+		if !isValidLogEntry(e) {
 			continue
 		}
-		if acl.IsAllowedLogs(api.cfg, user, e.Binding.Action) {
+		if api.isLogEntryAllowed(e, user) {
 			filtered = append(filtered, e)
 		}
 	}

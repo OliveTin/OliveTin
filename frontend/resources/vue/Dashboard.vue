@@ -105,7 +105,7 @@ function waitForInitAndLoadDashboard() {
     }, 1000)
     
     // Check if init has completed successfully
-    if (window.initCompleted && window.initResponse) {
+    if (window.initResponse) {
         getDashboard()
     } else if (window.initError) {
         // Init failed, show error immediately
@@ -118,7 +118,7 @@ function waitForInitAndLoadDashboard() {
     } else {
         // Init hasn't completed yet, poll for completion
         checkInitInterval = setInterval(() => {
-            if (window.initCompleted && window.initResponse) {
+            if (window.initResponse) {
                 clearInterval(checkInitInterval)
                 checkInitInterval = null
                 getDashboard()
