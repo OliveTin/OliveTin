@@ -16,7 +16,7 @@ your browser reports by opening the "Select Language" dialog from the footer.
 Internally, OliveTin uses the vue-i18n library for translations. This does support
 language pluralization and other advanced features. For docs, check the following;
 
-https://vue-i18n.intlify.dev/guide/essentials/pluralization.html
+[Vue i18n Pluralization Guide](https://vue-i18n.intlify.dev/guide/essentials/pluralization.html)
 
 The translation files are in YAML format. Each file contains key-value pairs. 
 
@@ -24,7 +24,7 @@ OliveTin developers then "process" these files into JSON format used for the app
 
 If you are able, it would be appreciated if you run `make` in the language directory 
 to process your language file before submitting a PR. This will ensure that the JSON
-file is up to date. If you don't understand how to do this, don't worry; just submit
+file is up-to-date. If you don't understand how to do this, don't worry; just submit
 the YAML file and the developers will take care of it.
 
 ## Contributing improvements

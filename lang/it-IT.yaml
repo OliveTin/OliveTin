@@ -11,15 +11,16 @@ translations:
   raise-issue: Segnala un problema su GitHub
   logs.title: Registri
   logs.page-description: Questa è una lista di registri delle azioni che sono state eseguite. Puoi filtrare la lista per titolo dell'azione.
-  logs.timestamp: Timestamp
+  logs.timestamp: Date e ora
   logs.action: Azione
   logs.metadata: Metadati
-  logs.status: Status
+  logs.status: Stato
   logs.no-logs-to-display: Non ci sono registri da mostrare.
   logs.timed-out: Tempo scaduto
   logs.blocked: Bloccato
   logs.exit-code: Codice di uscita
   logs.completed: Completato
+  logs.clear-filter: Cancella filtro di ricerca
   return-to-index: Torna alla pagina principale
   search-filter: Filtra la pagina corrente
   language-dialog.title: Seleziona lingua

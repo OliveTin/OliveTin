@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -18,13 +19,16 @@ type LanguageFilev1 struct {
 }
 
 type CombinedTranslationsOutput struct {
+	Comment  string                       `json:"_comment"`
 	Messages map[string]map[string]string `json:"messages"`
 }
 
 func main() {
 	combinedContent := getCombinedLanguageContent()
 
-	jsonData, err := json.Marshal(combinedContent)
+	sortedContent := sortTranslations(combinedContent)
+
+	jsonData, err := json.MarshalIndent(sortedContent, "", "    ")
 
 	if err != nil {
 		log.Fatalf("Error marshalling combined language content: %v", err)
@@ -37,6 +41,41 @@ func main() {
 	}
 
 	log.Infof("Combined language content saved to combined_output.json")
+}
+
+// sortTranslations creates a new structure with sorted keys for deterministic output.
+func sortTranslations(input *CombinedTranslationsOutput) *CombinedTranslationsOutput {
+	sorted := &CombinedTranslationsOutput{
+		Comment:  input.Comment,
+		Messages: make(map[string]map[string]string),
+	}
+
+	// Sort language names
+	langNames := make([]string, 0, len(input.Messages))
+	for langName := range input.Messages {
+		langNames = append(langNames, langName)
+	}
+	sort.Strings(langNames)
+
+	// For each language, sort the translation keys
+	for _, langName := range langNames {
+		translations := input.Messages[langName]
+		sortedTranslations := make(map[string]string)
+
+		keys := make([]string, 0, len(translations))
+		for key := range translations {
+			keys = append(keys, key)
+		}
+		sort.Strings(keys)
+
+		for _, key := range keys {
+			sortedTranslations[key] = translations[key]
+		}
+
+		sorted.Messages[langName] = sortedTranslations
+	}
+
+	return sorted
 }
 
 func getLanguageDir() string {
@@ -53,6 +92,7 @@ func getLanguageDir() string {
 
 func getCombinedLanguageContent() *CombinedTranslationsOutput {
 	output := &CombinedTranslationsOutput{
+		Comment:  "This file is generated. Please re-generate this file using 'make' when you update a translation.",
 		Messages: make(map[string]map[string]string),
 	}
 

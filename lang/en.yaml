@@ -20,6 +20,7 @@ translations:
   logs.blocked: Blocked
   logs.exit-code: Exit code
   logs.completed: Completed
+  logs.clear-filter: Clear search filter
   return-to-index: Return to index
   search-filter: Filter current page
   language-dialog.title: Select Language

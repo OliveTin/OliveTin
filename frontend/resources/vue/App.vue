@@ -84,6 +84,7 @@ import { UserCircle02Icon } from '@hugeicons/core-free-icons'
 import { DashboardSquare01Icon } from '@hugeicons/core-free-icons'
 import logoUrl from '../../OliveTinLogo.png';
 import { useI18n } from 'vue-i18n';
+import combinedTranslations from '../../../lang/combined_output.json';
 
 const { t, locale } = useI18n();
 
@@ -129,13 +130,25 @@ const currentLanguageName = computed(() => {
     return availableLanguages[languagePreference.value] || languagePreference.value
 })
 
-function getBrowserLanguage() {
-    if (navigator.languages && navigator.languages.length > 0) {
-        return navigator.languages[0]
-    }
+function normalizeBrowserLanguage() {
+    const available = Object.keys(combinedTranslations.messages || {})
 
-    if (navigator.language) {
-        return navigator.language
+    if (navigator.languages && navigator.languages.length > 0) {
+        for (const candidate of navigator.languages) {
+            const lowerCandidate = candidate.toLowerCase()
+            
+            // Try exact match (case-insensitive)
+            const exact = available.find(locale => locale.toLowerCase() === lowerCandidate)
+            if (exact) {
+                return exact
+            }
+
+            // Try prefix match (e.g., "zh-CN" -> "zh-Hans-CN")
+            const prefix = available.find(locale => locale.toLowerCase().startsWith(lowerCandidate.split('-')[0] + '-'))
+            if (prefix) {
+                return prefix
+            }
+        }
     }
 
     return 'en'
@@ -235,7 +248,7 @@ function changeLanguage() {
     if (selectedLanguage.value === 'auto') {
         localStorage.removeItem('olivetin-language')
         languagePreference.value = 'auto'
-        window.i18n.locale.value = getBrowserLanguage()
+        window.i18n.locale.value = normalizeBrowserLanguage()
     } else {
         window.i18n.locale.value = selectedLanguage.value
         localStorage.setItem('olivetin-language', selectedLanguage.value)

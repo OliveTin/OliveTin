@@ -26,3 +26,4 @@ translations:
   logs.blocked: 阻塞
   logs.exit-code: 退出代码
   logs.completed: 完成
+  logs.clear-filter: 清除搜索筛选器

@@ -11,15 +11,16 @@ translations:
   docs: Documentación
   logs.title: Registros
   logs.page-description: Esta es una lista de registros de acciones que han sido ejecutadas. Puede filtrar la lista por título de acción.
-  logs.timestamp: Timestamp
+  logs.timestamp: Marca de tiempo
   logs.action: Acción
   logs.metadata: Metadatos
-  logs.status: Status
+  logs.status: Estado
   logs.no-logs-to-display: No hay registros para mostrar.
   logs.timed-out: Tiempo agotado
   logs.blocked: Bloqueado
   logs.exit-code: Código de salida
   logs.completed: Completado
+  logs.clear-filter: Limpiar filtro de búsqueda
   return-to-index: Volver a la página principal
   search-filter: Filtrar página actual
   language-dialog.title: Seleccionar idioma
