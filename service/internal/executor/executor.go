@@ -237,11 +237,14 @@ func isLogEntryAllowedByACL(cfg *config.Config, user *acl.AuthenticatedUser, ent
 // filterLogsByACL builds a filtered list of logs in reverse-chronological order
 // that are visible to the user based on ACL rules.
 func (e *Executor) filterLogsByACL(cfg *config.Config, user *acl.AuthenticatedUser) []*InternalLogEntry {
-	filtered := make([]*InternalLogEntry, 0)
-
 	e.logmutex.RLock()
-	for i := len(e.logsTrackingIdsByDate) - 1; i >= 0; i-- {
-		entry := e.logs[e.logsTrackingIdsByDate[i]]
+	defer e.logmutex.RUnlock()
+
+	filtered := make([]*InternalLogEntry, 0, len(e.logsTrackingIdsByDate))
+
+	for _, trackingId := range e.logsTrackingIdsByDate {
+		entry := e.logs[trackingId]
+
 		if !isValidLogEntryForACL(entry) {
 			continue
 		}
@@ -249,7 +252,6 @@ func (e *Executor) filterLogsByACL(cfg *config.Config, user *acl.AuthenticatedUs
 			filtered = append(filtered, entry)
 		}
 	}
-	e.logmutex.RUnlock()
 
 	return filtered
 }

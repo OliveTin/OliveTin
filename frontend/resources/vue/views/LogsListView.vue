@@ -81,13 +81,21 @@ const totalCount = ref(0)
 const { t } = useI18n()
 
 const filteredLogs = computed(() => {
-  if (!searchText.value) {
-    return logs.value
+  let result = logs.value
+  
+  if (searchText.value) {
+    const searchLower = searchText.value.toLowerCase()
+    result = logs.value.filter(log =>
+      log.actionTitle.toLowerCase().includes(searchLower)
+    )
   }
-  const searchLower = searchText.value.toLowerCase()
-  return logs.value.filter(log =>
-    log.actionTitle.toLowerCase().includes(searchLower)
-  )
+  
+  // Sort by timestamp with most recent first
+  return [...result].sort((a, b) => {
+    const dateA = a.datetimeStarted ? new Date(a.datetimeStarted).getTime() : 0
+    const dateB = b.datetimeStarted ? new Date(b.datetimeStarted).getTime() : 0
+    return dateB - dateA // Descending order (most recent first)
+  })
 })
 
 async function fetchLogs() {
