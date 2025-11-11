@@ -651,6 +651,7 @@ function marshalDisplay (item, fieldset) {
 
 function marshalDirectoryButton (item, fieldset, path) {
   const directoryButton = document.createElement('button')
+  directoryButton.classList.add('directory')
   directoryButton.innerHTML = '<span class = "icon">' + item.icon + '</span> ' + item.title
   directoryButton.onclick = () => {
     showSection(path)
@@ -665,6 +666,7 @@ function marshalDirectory (item, section) {
 
   const directoryBackButton = document.createElement('button')
   directoryBackButton.innerHTML = window.settings.DefaultIconForBack
+  directoryBackButton.classList.add('directory')
   directoryBackButton.title = 'Go back one directory'
   directoryBackButton.onclick = () => {
     showSection('/' + section.title)
