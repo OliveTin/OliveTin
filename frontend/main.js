@@ -20,12 +20,6 @@ import App from './resources/vue/App.vue'
 import { initWebsocket } from './js/websocket.js'
 import combinedTranslations from '../lang/combined_output.json'
 
-import {
-  initMarshaller
-} from './js/marshaller.js'
-
-import { checkWebsocketConnection } from './js/websocket.js'
-
 function getSelectedLanguage() {
   const storedLanguage = localStorage.getItem('olivetin-language');
 
@@ -38,7 +32,22 @@ function getSelectedLanguage() {
   }
 
   if (navigator.languages && navigator.languages.length > 0) {
-    return navigator.languages[0];
+    const available = Object.keys(combinedTranslations.messages || {})
+
+    for (const candidate of navigator.languages) {
+      const lowerCandidate = candidate.toLowerCase()
+      const exact = available.find(locale => locale.toLowerCase() === lowerCandidate)
+
+      if (exact) {
+        return exact
+      }
+
+      const prefix = available.find(locale => locale.toLowerCase().startsWith(lowerCandidate.split('-')[0] + '-'))
+
+      if (prefix) {
+        return prefix
+      }
+    }
   }
 
   return 'en';
@@ -77,24 +86,17 @@ function setupVue (i18nSettings) {
   app.use(router)
   app.use(i18nSettings)
   
-  // Make i18n instance accessible globally for language switching
   window.i18n = i18nSettings.global
   
   app.mount('#app')
 }
 
-function main () {
-  initClient()
+async function main () {
+  const i18nSettings = await initClient()
 
   initWebsocket()
 
-  setupVue()
-
-  const i18nSettings = await initClient()
-
   setupVue(i18nSettings)
-
-  initMarshaller()
 }
 
 main()

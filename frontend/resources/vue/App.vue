@@ -183,11 +183,13 @@ function renderSidebar() {
         return
     }
 
+    const rootDashboards = window.initResponse?.rootDashboards || []
+
     if (typeof sidebar.value.clear === 'function') {
         sidebar.value.clear()
     }
 
-    for (const rootDashboard of window.initResponse.rootDashboards) {
+    for (const rootDashboard of rootDashboards) {
         sidebar.value.addNavigationLink({
             id: rootDashboard,
             name: rootDashboard,

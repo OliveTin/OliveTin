@@ -330,10 +330,10 @@ onMounted(() => {
   document.addEventListener('fullscreenchange', (e) => {
     setTimeout(() => { // Wait for the DOM to settle
       if (document.fullscreenElement) {
-        window.terminal.fit()
+        terminal.fit()
       } else {
-        window.terminal.resize(80, 40)
-        window.terminal.fit()
+        terminal.resize(80, 40)
+        terminal.fit()
       }
     }, 100)
   })
