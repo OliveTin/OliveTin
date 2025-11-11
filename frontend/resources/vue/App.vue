@@ -168,10 +168,6 @@ function updateHeaderFromInit() {
 
     renderSidebar()
 
-    if (window.checkWebsocketConnection) {
-        window.checkWebsocketConnection()
-    }
-
     if (window.initResponse.loginRequired) {
         router.push('/login')
         return

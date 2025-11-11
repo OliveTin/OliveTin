@@ -3,10 +3,6 @@ import { buttonResults } from '../resources/vue/stores/buttonResults.js'
 export function initWebsocket () {
   window.addEventListener('EventOutputChunk', onOutputChunk)
 
-  window.checkWebsocketConnection = checkWebsocketConnection
-}
-
-export function checkWebsocketConnection () {
   reconnectWebsocket()
 }
 
