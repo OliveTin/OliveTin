@@ -1,12 +1,12 @@
 <template>
-  <Section title="Logs" :padding="false">
+  <Section :title="t('logs.title')" :padding="false">
       <template #toolbar>
         <label class="input-with-icons">
           <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
             <path fill="currentColor"
               d="m19.6 21l-6.3-6.3q-.75.6-1.725.95T9.5 16q-2.725 0-4.612-1.888T3 9.5t1.888-4.612T9.5 3t4.613 1.888T16 9.5q0 1.1-.35 2.075T14.7 13.3l6.3 6.3zM9.5 14q1.875 0 3.188-1.312T14 9.5t-1.312-3.187T9.5 5T6.313 6.313T5 9.5t1.313 3.188T9.5 14" />
           </svg>
-          <input placeholder="Filter current page" v-model="searchText" />
+          <input :placeholder="t('search-filter')" v-model="searchText" />
           <button title="Clear search filter" :disabled="!searchText" @click="clearSearch">
             <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
               <path fill="currentColor"
@@ -16,15 +16,15 @@
         </label>
       </template>
 
-      <p class = "padding">This is a list of logs from actions that have been executed. You can filter the list by action title.</p>
+      <p class = "padding">{{ t('logs.page-description') }}</p>
       <div v-show="filteredLogs.length > 0">
         <table class="logs-table">
           <thead>
             <tr>
-              <th>Timestamp</th>
-              <th>Action</th>
-              <th>Metadata</th>
-              <th>Status</th>
+              <th>{{ t('logs.timestamp') }}</th>
+              <th>{{ t('logs.action') }}</th>
+              <th>{{ t('logs.metadata') }}</th>
+              <th>{{ t('logs.status') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -59,8 +59,8 @@
       </div>
 
       <div v-show="logs.length === 0" class="empty-state">
-        <p>There are no logs to display.</p>
-        <router-link to="/">Return to index</router-link>
+        <p>{{ t('logs.no-logs-to-display') }}</p>
+        <router-link to="/">{{ t('return-to-index') }}</router-link>
       </div>
   </Section>
 </template>
@@ -69,6 +69,7 @@
 import { ref, computed, onMounted } from 'vue'
 import Pagination from '../components/Pagination.vue'
 import Section from 'picocrank/vue/components/Section.vue'
+import { useI18n } from 'vue-i18n'
 
 const logs = ref([])
 const searchText = ref('')
@@ -76,6 +77,8 @@ const pageSize = ref(10)
 const currentPage = ref(1)
 const loading = ref(false)
 const totalCount = ref(0)
+
+const { t } = useI18n()
 
 const filteredLogs = computed(() => {
   if (!searchText.value) {
@@ -131,10 +134,10 @@ function getStatusClass(log) {
 }
 
 function getStatusText(log) {
-  if (log.timedOut) return 'Timed out'
-  if (log.blocked) return 'Blocked'
-  if (log.exitCode !== 0) return `Exit code ${log.exitCode}`
-  return 'Completed'
+  if (log.timedOut) return t('logs.timed-out')
+  if (log.blocked) return t('logs.blocked')
+  if (log.exitCode !== 0) return `${t('logs.exit-code')} ${log.exitCode}`
+  return t('logs.completed')
 }
 
 function handlePageChange(page) {
