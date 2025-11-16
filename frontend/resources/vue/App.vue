@@ -40,11 +40,11 @@
                         <a href="https://github.com/OliveTin/OliveTin/issues/new/choose" target="_new">{{ t('raise-issue') }}</a>
                     </span>
 
-                    <span>{{ t('connected') }}</span>
-
                     <span>
                         <a href="#" @click.prevent="openLanguageDialog">{{ currentLanguageName }}</a>
                     </span>
+
+                    <span>{{ t('connected') }}</span>
                 </p>
                 <p>
                     <a id="available-version" href="http://olivetin.app" target="_blank" hidden>?</a>
@@ -58,7 +58,7 @@
             <h2>{{ t('language-dialog.title') }}</h2>
             <select v-model="selectedLanguage" @change="changeLanguage" class="language-select">
                 <option v-for="(name, code) in availableLanguages" :key="code" :value="code">
-                    {{ name }}
+                    {{ code === 'auto' ? name : `${name} (${code})` }}
                 </option>
             </select>
             <p class="browser-languages">

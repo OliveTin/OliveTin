@@ -67,7 +67,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import Pagination from '../components/Pagination.vue'
+import Pagination from 'picocrank/vue/components/Pagination.vue'
 import Section from 'picocrank/vue/components/Section.vue'
 import { useI18n } from 'vue-i18n'
 
@@ -172,16 +172,20 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
   padding: 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 0.25rem;
+  background: var(--section-background);
+  width: 100%;
+  max-width: 300px;
 }
 
 .input-with-icons input {
   border: none;
   outline: none;
+  background: transparent;
   flex: 1;
-  font-size: 1rem;
+  color: var(--text-primary);
 }
 
 .input-with-icons button {
@@ -190,9 +194,6 @@ onMounted(() => {
   cursor: pointer;
   padding: 0.25rem;
   border-radius: 3px;
-}
-
-.input-with-icons button:hover:not(:disabled) {
 }
 
 .input-with-icons button:disabled {
@@ -221,24 +222,25 @@ onMounted(() => {
   text-decoration: underline;
 }
 
-.status-success {
-  color: #28a745;
+.annotation {
   font-weight: 500;
+  font-size: smaller;
+}
+
+.status-success {
+  color: var(--karma-good-fg);
 }
 
 .status-error {
-  color: #dc3545;
-  font-weight: 500;
+  color: var(--karma-bad-fg);
 }
 
 .status-timeout {
-  color: #ffc107;
-  font-weight: 500;
+  color: var(--karma-warning-fg);
 }
 
 .status-blocked {
-  color: #6c757d;
-  font-weight: 500;
+  color: var(--karma-neutral-fg);
 }
 
 .empty-state {

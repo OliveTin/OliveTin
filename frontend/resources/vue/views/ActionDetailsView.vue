@@ -92,7 +92,7 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import Pagination from '../components/Pagination.vue'
+import Pagination from 'picocrank/vue/components/Pagination.vue'
 import Section from 'picocrank/vue/components/Section.vue'
 
 const route = useRoute()
