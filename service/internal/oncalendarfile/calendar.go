@@ -10,6 +10,7 @@ import (
 	"gopkg.in/yaml.v3"
 	"os"
 	"time"
+	"sync"
 )
 
 type ExistingTimers struct {
@@ -18,6 +19,7 @@ type ExistingTimers struct {
 
 var (
 	scheduleMap map[string]ExistingTimers = make(map[string]ExistingTimers, 0)
+	scheduleMapMutex sync.Mutex = sync.Mutex{}
 )
 
 func Schedule(cfg *config.Config, ex *executor.Executor) {
@@ -35,6 +37,9 @@ func Schedule(cfg *config.Config, ex *executor.Executor) {
 }
 
 func clearExistingTimers(action *config.Action) {
+	scheduleMapMutex.Lock()
+	defer scheduleMapMutex.Unlock()
+
 	if _, exists := scheduleMap[action.ID]; exists {
 		for instant, timer := range scheduleMap[action.ID].timers {
 			log.WithFields(log.Fields{
@@ -109,6 +114,10 @@ func sleepUntil(ctx context.Context, instant time.Time, action *config.Action, c
 	}).Infof("Scheduling action on calendar")
 
 	timer := time.NewTimer(time.Until(instant))
+
+	scheduleMapMutex.Lock()
+	scheduleMap[action.ID].timers[instant] = timer
+	scheduleMapMutex.Unlock()
 
 	defer timer.Stop()
 
