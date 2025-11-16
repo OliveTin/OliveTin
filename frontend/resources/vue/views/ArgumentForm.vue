@@ -7,30 +7,30 @@
       <form @submit="handleSubmit">
         <template v-if="actionArguments.length > 0">
 
-          <template v-for="arg in actionArguments" :key="arg.name" class="argument-group">
-            <label :for="arg.name">
-              {{ formatLabel(arg.title) }}
-            </label>
+          <template v-for="arg in actionArguments" :key="arg.name">
+              <label :for="arg.name">
+                {{ formatLabel(arg.title) }}
+              </label>
 
-            <datalist v-if="arg.suggestions && Object.keys(arg.suggestions).length > 0" :id="`${arg.name}-choices`">
-              <option v-for="(suggestion, key) in arg.suggestions" :key="key" :value="key">
-                {{ suggestion }}
-              </option>
-            </datalist>
+              <datalist v-if="arg.suggestions && Object.keys(arg.suggestions).length > 0" :id="`${arg.name}-choices`">
+                <option v-for="(suggestion, key) in arg.suggestions" :key="key" :value="key">
+                  {{ suggestion }}
+                </option>
+              </datalist>
 
-            <select v-if="getInputComponent(arg) === 'select'" :id="arg.name" :name="arg.name" :value="getArgumentValue(arg)"
-              :required="arg.required" @input="handleInput(arg, $event)" @change="handleChange(arg, $event)">
-              <option v-for="choice in arg.choices" :key="choice.value" :value="choice.value">
-                {{ choice.title || choice.value }}
-              </option>
-            </select>
-            
-            <component v-else :is="getInputComponent(arg)" :id="arg.name" :name="arg.name" :value="getArgumentValue(arg)"
-              :list="arg.suggestions ? `${arg.name}-choices` : undefined" 
-              :type="getInputComponent(arg) !== 'select' ? getInputType(arg) : undefined"
-              :rows="arg.type === 'raw_string_multiline' ? 5 : undefined"
-              :step="arg.type === 'datetime' ? 1 : undefined" :pattern="getPattern(arg)" :required="arg.required"
-              @input="handleInput(arg, $event)" @change="handleChange(arg, $event)" />
+              <select v-if="getInputComponent(arg) === 'select'" :id="arg.name" :name="arg.name" :value="getArgumentValue(arg)"
+                :required="arg.required" @input="handleInput(arg, $event)" @change="handleChange(arg, $event)">
+                <option v-for="choice in arg.choices" :key="choice.value" :value="choice.value">
+                  {{ choice.title || choice.value }}
+                </option>
+              </select>
+              
+              <component v-else :is="getInputComponent(arg)" :id="arg.name" :name="arg.name" :value="getArgumentValue(arg)"
+                :list="arg.suggestions ? `${arg.name}-choices` : undefined" 
+                :type="getInputComponent(arg) !== 'select' ? getInputType(arg) : undefined"
+                :rows="arg.type === 'raw_string_multiline' ? 5 : undefined"
+                :step="arg.type === 'datetime' ? 1 : undefined" :pattern="getPattern(arg)" :required="arg.required"
+                @input="handleInput(arg, $event)" @change="handleChange(arg, $event)" />
 
             <span class="argument-description" v-html="arg.description"></span>
           </template>
@@ -96,18 +96,27 @@ async function setup() {
 
   // Initialize values from query params or defaults
   actionArguments.value.forEach(arg => {
-    const paramValue = getQueryParamValue(arg.name)
-    argValues.value[arg.name] = paramValue !== null ? paramValue : arg.defaultValue || ''
-
     if (arg.type === 'confirmation') {
       hasConfirmation.value = true
+      const paramValue = getQueryParamValue(arg.name)
+      let checkedValue = false
+      if (paramValue !== null) {
+        checkedValue = paramValue === '1' || paramValue === 'true' || paramValue === true
+      } else if (arg.defaultValue !== undefined && arg.defaultValue !== '') {
+        checkedValue = arg.defaultValue === '1' || arg.defaultValue === 'true' || arg.defaultValue === true
+      }
+      argValues.value[arg.name] = checkedValue
+      confirmationChecked.value = checkedValue
+    } else {
+      const paramValue = getQueryParamValue(arg.name)
+      argValues.value[arg.name] = paramValue !== null ? paramValue : arg.defaultValue || ''
     }
   })
 
   // Run initial validation on all fields after DOM is updated
   await nextTick()
   for (const arg of actionArguments.value) {
-    if (arg.type && !arg.type.startsWith('regex:') && arg.type !== 'select' && arg.type !== '') {
+    if (arg.type && !arg.type.startsWith('regex:') && arg.type !== 'select' && arg.type !== '' && arg.type !== 'confirmation') {
       await validateArgument(arg, argValues.value[arg.name])
     }
   }
@@ -143,7 +152,11 @@ function getInputType(arg) {
     return undefined
   }
 
-  if (arg.type === 'ascii_identifier') {
+  if (arg.type === 'confirmation') {
+    return 'checkbox'
+  }
+
+  if (arg.type === 'ascii_identifier' || arg.type === 'ascii') {
     return 'text'
   }
 
@@ -158,8 +171,8 @@ function getPattern(arg) {
 }
 
 function getArgumentValue(arg) {
-  if (arg.type === 'checkbox') {
-    return argValues.value[arg.name] === '1' || argValues.value[arg.name] === true
+  if (arg.type === 'checkbox' || arg.type === 'confirmation') {
+    return argValues.value[arg.name] === '1' || argValues.value[arg.name] === true || argValues.value[arg.name] === 'true'
   }
   return argValues.value[arg.name] || ''
 }
@@ -240,7 +253,7 @@ function getArgumentValues() {
   for (const arg of actionArguments.value) {
     let value = argValues.value[arg.name] || ''
 
-    if (arg.type === 'checkbox') {
+    if (arg.type === 'checkbox' || arg.type === 'confirmation') {
       value = value ? '1' : '0'
     }
 
@@ -348,22 +361,6 @@ form {
   grid-template-columns: max-content auto auto;
 }
 
-.argument-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.argument-group label {
-  font-weight: 500;
-  color: #333;
-}
-
-.argument-group input:invalid,
-.argument-group select:invalid,
-.argument-group textarea:invalid {
-  border-color: #dc3545;
-}
 
 .argument-description {
   font-size: 0.875rem;

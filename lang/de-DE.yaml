@@ -1,0 +1,29 @@
+schemaVersion: 1
+translations:
+  welcome: Willkommen bei OliveTin
+  nav.actions: Aktionen
+  nav.logs: Protokolle
+  nav.entities: Entitäten
+  nav.diagnostics: Diagnostik
+  connected: Verbunden
+  login-button: Login
+  raise-issue: Ein Problem melden auf GitHub
+  docs: Dokumentation
+  logs.title: Protokolle
+  logs.page-description: Dies ist eine Liste von Protokollen von Aktionen, die ausgeführt wurden. Sie können die Liste nach Aktionstitel filtern.
+  logs.timestamp: Zeitstempel
+  logs.action: Aktion
+  logs.metadata: Metadaten
+  logs.status: Status
+  logs.no-logs-to-display: Es gibt keine Protokolle zu anzeigen.
+  logs.timed-out: Zeitüberschreitung
+  logs.blocked: Blockiert
+  logs.exit-code: Ausführungscode
+  logs.completed: Abgeschlossen
+  logs.clear-filter: Suchfilter löschen
+  return-to-index: Zurück zur Startseite
+  search-filter: Filter aktuelle Seite
+  language-dialog.title: Sprache auswählen
+  language-dialog.browser-languages: Browser-Sprachen
+  language-dialog.not-available: Nicht verfügbar
+  language-dialog.close: Schließen

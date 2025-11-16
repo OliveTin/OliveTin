@@ -42,13 +42,8 @@ func parseCommandForReplacements(shellCommand string, values map[string]string, 
 	return shellCommand, nil
 }
 
-func parseActionExec(values map[string]string, action *config.Action, entity *entities.Entity) ([]string, error) {
-	if action == nil {
-		return nil, fmt.Errorf("action is nil")
-	}
-	if err := validateArguments(values, action); err != nil {
-		return nil, err
-	}
+// parseExecArray parses all exec arguments in the action.
+func parseExecArray(action *config.Action, values map[string]string, entity *entities.Entity) ([]string, error) {
 	parsed := make([]string, len(action.Exec))
 	for i, a := range action.Exec {
 		out, err := parseSingleExec(a, values, entity)
@@ -56,6 +51,20 @@ func parseActionExec(values map[string]string, action *config.Action, entity *en
 			return nil, err
 		}
 		parsed[i] = out
+	}
+	return parsed, nil
+}
+
+func parseActionExec(values map[string]string, action *config.Action, entity *entities.Entity) ([]string, error) {
+	if action == nil {
+		return nil, fmt.Errorf("action is nil")
+	}
+	if err := validateArguments(values, action); err != nil {
+		return nil, err
+	}
+	parsed, err := parseExecArray(action, values, entity)
+	if err != nil {
+		return nil, err
 	}
 	logParsedExec(action, parsed, values)
 	return parsed, nil

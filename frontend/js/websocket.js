@@ -1,6 +1,8 @@
 import { buttonResults } from '../resources/vue/stores/buttonResults.js'
 
-export function checkWebsocketConnection () {
+export function initWebsocket () {
+  window.addEventListener('EventOutputChunk', onOutputChunk)
+
   reconnectWebsocket()
 }
 
@@ -45,5 +47,15 @@ function handleEvent (msg) {
       console.warn('Unhandled websocket message type from server: ', typeName)
 
       window.showBigError('ws-unhandled-message', 'handling websocket message', 'Unhandled websocket message type from server: ' + typeName, true)
+  }
+}
+
+function onOutputChunk (evt) {
+  const chunk = evt.payload
+
+  if (window.terminal) {
+    if (chunk.executionTrackingId === window.terminal.executionTrackingId) {
+      window.terminal.write(chunk.output)
+    }
   }
 }

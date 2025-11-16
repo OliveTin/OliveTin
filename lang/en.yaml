@@ -1,0 +1,29 @@
+schemaVersion: 1
+translations:
+  welcome: Welcome to OliveTin
+  docs: Documentation
+  raise-issue: Raise an issue on GitHub
+  nav.actions: Actions
+  nav.logs: Logs
+  nav.entities: Entities
+  nav.diagnostics: Diagnostics
+  connected: Connected
+  login-button: Login
+  logs.title: Logs
+  logs.page-description: This is a list of logs from actions that have been executed. You can filter the list by action title.
+  logs.timestamp: Timestamp
+  logs.action: Action
+  logs.metadata: Metadata
+  logs.status: Status
+  logs.no-logs-to-display: There are no logs to display.
+  logs.timed-out: Timed out
+  logs.blocked: Blocked
+  logs.exit-code: Exit code
+  logs.completed: Completed
+  logs.clear-filter: Clear search filter
+  return-to-index: Return to index
+  search-filter: Filter current page
+  language-dialog.title: Select Language
+  language-dialog.browser-languages: Browser languages
+  language-dialog.not-available: Not available
+  language-dialog.close: Close

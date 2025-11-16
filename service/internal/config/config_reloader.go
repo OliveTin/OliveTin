@@ -72,16 +72,29 @@ func afterLoadFinalize(cfg *Config, configPath string) {
 	}
 }
 
+// buildIncludePath constructs the full path to the include directory.
+func buildIncludePath(k *koanf.Koanf, baseConfigPath string) string {
+	relativeIncludePath := k.String("include")
+	return filepath.Join(filepath.Dir(baseConfigPath), relativeIncludePath)
+}
+
+// loadAndMergeYamlFiles loads and merges all YAML files from the include directory.
+func loadAndMergeYamlFiles(k *koanf.Koanf, includePath string, yamlFiles []string) {
+	sort.Strings(yamlFiles)
+	for _, filename := range yamlFiles {
+		loadAndMergeIncludedFile(k, includePath, filename)
+	}
+	log.Infof("Finished loading %d included config file(s)", len(yamlFiles))
+}
+
 // loadIncludedConfigsFromDir loads configuration files from an include directory and merges them
 func loadIncludedConfigsFromDir(k *koanf.Koanf, baseConfigPath string) {
 	relativeIncludePath := k.String("include")
-
 	if relativeIncludePath == "" {
 		return
 	}
 
-	includePath := filepath.Join(filepath.Dir(baseConfigPath), relativeIncludePath)
-
+	includePath := buildIncludePath(k, baseConfigPath)
 	log.WithFields(log.Fields{
 		"includePath": includePath,
 	}).Infof("Loading included configs from dir")
@@ -91,42 +104,58 @@ func loadIncludedConfigsFromDir(k *koanf.Koanf, baseConfigPath string) {
 		return
 	}
 
-	sort.Strings(yamlFiles)
-	for _, filename := range yamlFiles {
-		loadAndMergeIncludedFile(k, includePath, filename)
-	}
-
-	log.Infof("Finished loading %d included config file(s)", len(yamlFiles))
+	loadAndMergeYamlFiles(k, includePath, yamlFiles)
 }
 
-func listYamlFiles(includePath string) ([]string, bool) {
+// validateIncludeDirectory checks if the given path exists and is a directory.
+func validateIncludeDirectory(includePath string) bool {
 	dirInfo, err := os.Stat(includePath)
 	if err != nil {
 		log.Warnf("Include directory not found: %s", includePath)
-		return nil, false
+		return false
 	}
 	if !dirInfo.IsDir() {
 		log.Warnf("Include path is not a directory: %s", includePath)
-		return nil, false
+		return false
 	}
-	entries, err := os.ReadDir(includePath)
-	if err != nil {
-		log.Errorf("Error reading include directory: %v", err)
-		return nil, false
-	}
+	return true
+}
+
+// isYamlFile checks if a filename has a YAML extension.
+func isYamlFile(name string) bool {
+	return strings.HasSuffix(name, ".yml") || strings.HasSuffix(name, ".yaml")
+}
+
+// filterYamlFilesFromEntries extracts YAML file names from directory entries.
+func filterYamlFilesFromEntries(entries []os.DirEntry) []string {
 	var yamlFiles []string
 	for _, entry := range entries {
 		if entry.IsDir() {
 			continue
 		}
-		name := entry.Name()
-		if strings.HasSuffix(name, ".yml") || strings.HasSuffix(name, ".yaml") {
-			yamlFiles = append(yamlFiles, name)
+		if isYamlFile(entry.Name()) {
+			yamlFiles = append(yamlFiles, entry.Name())
 		}
 	}
+	return yamlFiles
+}
+
+func listYamlFiles(includePath string) ([]string, bool) {
+	if !validateIncludeDirectory(includePath) {
+		return nil, false
+	}
+
+	entries, err := os.ReadDir(includePath)
+	if err != nil {
+		log.Errorf("Error reading include directory: %v", err)
+		return nil, false
+	}
+
+	yamlFiles := filterYamlFilesFromEntries(entries)
 	if len(yamlFiles) == 0 {
 		log.Infof("No YAML files found in include directory: %s", includePath)
 	}
+
 	return yamlFiles, true
 }
 
@@ -143,27 +172,30 @@ func loadAndMergeIncludedFile(k *koanf.Koanf, includePath, filename string) {
 	}).Info("Successfully loaded included config file")
 }
 
-func mergeFunc(src map[string]interface{}, dest map[string]interface{}) error {
-	// Handle actions merging - koanf provides []interface{} not []*Action
-	// Merge src (new) into dest (existing) by appending src's actions to dest's actions
-	if srcActions, ok := src["actions"]; ok {
-		if destActions, ok := dest["actions"]; ok {
-			// Both have actions - append src to dest
-			srcSlice, ok1 := srcActions.([]interface{})
-			destSlice, ok2 := destActions.([]interface{})
-			if ok1 && ok2 {
-				dest["actions"] = append(destSlice, srcSlice...)
-			} else {
-				// Fallback: if types don't match, just use src
-				dest["actions"] = srcActions
-			}
-		} else {
-			// dest doesn't have actions, so use src's actions
-			dest["actions"] = srcActions
-		}
+// mergeActionsWhenBothExist merges actions when both src and dest have actions.
+func mergeActionsWhenBothExist(srcActions interface{}, destActions interface{}, dest map[string]interface{}) {
+	srcSlice, ok1 := srcActions.([]interface{})
+	destSlice, ok2 := destActions.([]interface{})
+	if ok1 && ok2 {
+		dest["actions"] = append(destSlice, srcSlice...)
+	} else {
+		dest["actions"] = srcActions
 	}
-	// If src doesn't have actions, leave dest unchanged
+}
 
+// mergeActionsFromSource merges actions from source into destination.
+func mergeActionsFromSource(srcActions interface{}, dest map[string]interface{}) {
+	if destActions, ok := dest["actions"]; ok {
+		mergeActionsWhenBothExist(srcActions, destActions, dest)
+	} else {
+		dest["actions"] = srcActions
+	}
+}
+
+func mergeFunc(src map[string]interface{}, dest map[string]interface{}) error {
+	if srcActions, ok := src["actions"]; ok {
+		mergeActionsFromSource(srcActions, dest)
+	}
 	return nil
 }
 
