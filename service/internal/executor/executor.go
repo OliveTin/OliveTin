@@ -234,8 +234,6 @@ func isLogEntryAllowedByACL(cfg *config.Config, user *acl.AuthenticatedUser, ent
 	return acl.IsAllowedLogs(cfg, user, entry.Binding.Action)
 }
 
-// filterLogsByACL builds a filtered list of logs in reverse-chronological order
-// that are visible to the user based on ACL rules.
 func (e *Executor) filterLogsByACL(cfg *config.Config, user *acl.AuthenticatedUser) []*InternalLogEntry {
 	e.logmutex.RLock()
 	defer e.logmutex.RUnlock()

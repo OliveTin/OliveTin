@@ -213,15 +213,3 @@ func filterLanguageFiles(files []os.DirEntry) []os.DirEntry {
 
 	return ret
 }
-
-func parseAcceptLanguages(headerLanguage string) []string {
-	acceptLanguages := make([]string, 0)
-
-	for _, lang := range strings.Split(headerLanguage, ",") {
-		lang = strings.TrimSpace(lang)
-
-		acceptLanguages = append(acceptLanguages, lang)
-	}
-
-	return acceptLanguages
-}
