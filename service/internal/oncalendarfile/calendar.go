@@ -12,6 +12,14 @@ import (
 	"time"
 )
 
+type ExistingTimers struct {
+	timers map[time.Time]*time.Timer
+}
+
+var (
+	scheduleMap map[string]ExistingTimers = make(map[string]ExistingTimers, 0)
+)
+
 func Schedule(cfg *config.Config, ex *executor.Executor) {
 	for _, action := range cfg.Actions {
 		if action.ExecOnCalendarFile != "" {
@@ -26,7 +34,26 @@ func Schedule(cfg *config.Config, ex *executor.Executor) {
 	}
 }
 
+func clearExistingTimers(action *config.Action) {
+	if _, exists := scheduleMap[action.ID]; exists {
+		for instant, timer := range scheduleMap[action.ID].timers {
+			log.WithFields(log.Fields{
+				"instant":     instant,
+				"actionTitle": action.Title,
+			}).Infof("Clearing existing scheduled action from calendar")
+
+			timer.Stop()
+		}
+	}
+
+	scheduleMap[action.ID] = ExistingTimers{
+		timers: make(map[time.Time]*time.Timer),
+	}
+}
+
 func parseCalendarFile(action *config.Action, cfg *config.Config, ex *executor.Executor, filename string) {
+	clearExistingTimers(action)
+
 	filehelper.Touch(action.ExecOnCalendarFile, "calendar file")
 
 	log.WithFields(log.Fields{
