@@ -35,14 +35,14 @@ The preferred way to communicate is probably via Discord or GitHub issues.
 ```
 # Step1: setup compile env
 # - Fedora
-dnf install git go protobuf-compiler make -y
+dnf install git go protobuf-compiler make pre-commit -y
 # - Windows with chocolatey
-choco install git go protoc make python nodejs-lts -y
+choco install git go protoc make python nodejs-lts -y && pip install pre-commit
 
 # Step2: clone and setup repo
 git clone https://github.com/OliveTin/OliveTin.git
 cd OliveTin
-make githooks
+pre-commit install
 
 # Step3: compile binary for current dev env (OS, ARCH)
 # `make proto` will also run `make go-tools`, which installs "buf". This binary
