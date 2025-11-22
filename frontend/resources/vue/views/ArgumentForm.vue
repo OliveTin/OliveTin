@@ -160,6 +160,10 @@ function getInputType(arg) {
     return 'text'
   }
 
+  if (arg.type === 'datetime') {
+    return 'datetime-local'
+  }
+
   return arg.type
 }
 
