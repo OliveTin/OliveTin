@@ -61,6 +61,16 @@ func main() {
 
 func backupOriginalConfig(configPath string) {
 	originalConfigPath := filepath.Join(filepath.Dir(configPath), "config.original.yaml")
+
+	_, err := os.Stat(originalConfigPath)
+	if err == nil {
+		log.Infof("Backup already exists at %s, skipping backup to preserve original", originalConfigPath)
+		return
+	}
+	if !os.IsNotExist(err) {
+		log.Fatalf("Error checking backup file: %v", err)
+	}
+
 	data, err := os.ReadFile(configPath)
 	if err != nil {
 		log.Fatalf("Error reading config for backup: %v", err)
