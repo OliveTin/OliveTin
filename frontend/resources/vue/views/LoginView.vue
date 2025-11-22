@@ -8,10 +8,10 @@
       <div v-if="hasOAuth" class="login-oauth2">
         <h3>OAuth Login</h3>
         <div class="oauth-providers">
-          <button v-for="provider in oauthProviders" :key="provider.name" class="oauth-button"
+          <button v-for="provider in oauthProviders" :key="provider.name || provider.title" class="oauth-button"
             @click="loginWithOAuth(provider)">
             <span v-if="provider.icon" class="provider-icon" v-html="provider.icon"></span>
-            <span class="provider-name">Login with {{ provider.name }}</span>
+            <span class="provider-name">Login with {{ provider.title }}</span>
           </button>
         </div>
       </div>
@@ -106,8 +106,9 @@ async function handleLocalLogin() {
 }
 
 function loginWithOAuth(provider) {
-  // Redirect to OAuth provider
-  window.location.href = provider.authUrl
+  const providerName = provider.title.toLowerCase()
+  
+  window.location.href = `/oauth/login?provider=${providerName}`
 }
 
 onMounted(() => {

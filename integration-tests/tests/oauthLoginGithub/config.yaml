@@ -1,0 +1,30 @@
+#
+# Integration Test Config: GitHub OAuth2 Authentication
+#
+
+listenAddressSingleHTTPFrontend: 0.0.0.0:1337
+
+logLevel: "DEBUG"
+checkForUpdates: false
+
+# Enable GitHub OAuth2 authentication
+authOAuth2RedirectUrl: "http://localhost:1337/oauth2/callback"
+authOAuth2Providers:
+  github:
+    title: "GitHub"
+    clientId: "test-client-id"
+    clientSecret: "test-client-secret"
+
+# Require login for guests
+authRequireGuestsToLogin: true
+
+# Simple actions for testing
+actions:
+- title: Ping Google.com
+  shell: ping google.com -c 1
+  icon: ping
+
+- title: sleep 2 seconds
+  shell: sleep 2
+  icon: "&#x1F971"
+
