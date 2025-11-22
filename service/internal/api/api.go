@@ -3,6 +3,7 @@ package api
 import (
 	ctx "context"
 	"encoding/json"
+	"sort"
 
 	"connectrpc.com/connect"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -865,13 +866,17 @@ func (api *oliveTinAPI) addCustomDashboards(rootDashboards *[]string, dashboards
 func buildPublicOAuth2ProvidersList(cfg *config.Config) []*apiv1.OAuth2Provider {
 	var publicProviders []*apiv1.OAuth2Provider
 
-	for _, provider := range cfg.AuthOAuth2Providers {
+	for providerKey, provider := range cfg.AuthOAuth2Providers {
 		publicProviders = append(publicProviders, &apiv1.OAuth2Provider{
 			Title: provider.Title,
-			Url:   provider.AuthUrl,
 			Icon:  provider.Icon,
+			Key:   providerKey,
 		})
 	}
+
+	sort.Slice(publicProviders, func(i, j int) bool {
+		return publicProviders[i].Key < publicProviders[j].Key
+	})
 
 	return publicProviders
 }

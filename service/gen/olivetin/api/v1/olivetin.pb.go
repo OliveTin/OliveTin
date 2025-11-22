@@ -3390,8 +3390,8 @@ func (x *AdditionalLink) GetUrl() string {
 type OAuth2Provider struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Title         string                 `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
-	Url           string                 `protobuf:"bytes,2,opt,name=url,proto3" json:"url,omitempty"`
 	Icon          string                 `protobuf:"bytes,3,opt,name=icon,proto3" json:"icon,omitempty"`
+	Key           string                 `protobuf:"bytes,4,opt,name=key,proto3" json:"key,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3433,16 +3433,16 @@ func (x *OAuth2Provider) GetTitle() string {
 	return ""
 }
 
-func (x *OAuth2Provider) GetUrl() string {
+func (x *OAuth2Provider) GetIcon() string {
 	if x != nil {
-		return x.Url
+		return x.Icon
 	}
 	return ""
 }
 
-func (x *OAuth2Provider) GetIcon() string {
+func (x *OAuth2Provider) GetKey() string {
 	if x != nil {
-		return x.Icon
+		return x.Key
 	}
 	return ""
 }
@@ -4003,9 +4003,9 @@ const file_olivetin_api_v1_olivetin_proto_rawDesc = "" +
 	"\x05title\x18\x01 \x01(\tR\x05title\x12\x10\n" +
 	"\x03url\x18\x02 \x01(\tR\x03url\"L\n" +
 	"\x0eOAuth2Provider\x12\x14\n" +
-	"\x05title\x18\x01 \x01(\tR\x05title\x12\x10\n" +
-	"\x03url\x18\x02 \x01(\tR\x03url\x12\x12\n" +
-	"\x04icon\x18\x03 \x01(\tR\x04icon\"8\n" +
+	"\x05title\x18\x01 \x01(\tR\x05title\x12\x12\n" +
+	"\x04icon\x18\x03 \x01(\tR\x04icon\x12\x10\n" +
+	"\x03key\x18\x04 \x01(\tR\x03key\"8\n" +
 	"\x17GetActionBindingRequest\x12\x1d\n" +
 	"\n" +
 	"binding_id\x18\x01 \x01(\tR\tbindingId\"K\n" +
