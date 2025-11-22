@@ -17,7 +17,6 @@ require (
 	github.com/go-critic/go-critic v0.13.0
 	github.com/golang-jwt/jwt/v5 v5.2.2
 	github.com/google/uuid v1.6.0
-	github.com/gorilla/websocket v1.5.3
 	github.com/jamesread/golure v0.0.0-20250619190948-fa38cbd93cc4
 	github.com/knadh/koanf/parsers/yaml v1.1.0
 	github.com/knadh/koanf/providers/env v1.1.0
@@ -28,9 +27,10 @@ require (
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.10.0
+	go.akshayshah.org/connectproto v0.6.0
 	golang.org/x/exp v0.0.0-20250620022241-b7579e27df2b
 	golang.org/x/oauth2 v0.30.0
-	golang.org/x/sys v0.35.0
+	golang.org/x/sys v0.38.0
 	google.golang.org/protobuf v1.36.10
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -127,7 +127,6 @@ require (
 	github.com/stoewer/go-strcase v1.3.1 // indirect
 	github.com/tetratelabs/wazero v1.9.0 // indirect
 	github.com/vbatts/tar-split v0.12.1 // indirect
-	go.akshayshah.org/connectproto v0.6.0 // indirect
 	go.lsp.dev/jsonrpc2 v0.10.0 // indirect
 	go.lsp.dev/pkg v0.0.0-20210717090340-384b27a52fb2 // indirect
 	go.lsp.dev/protocol v0.12.0 // indirect
