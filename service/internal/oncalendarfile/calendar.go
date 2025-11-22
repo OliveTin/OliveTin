@@ -99,7 +99,15 @@ func scheduleCalendarActions(entries []string, action *config.Action, cfg *confi
 			continue
 		}
 
-		until, _ := time.Parse(time.RFC3339, instant)
+		until, err := time.Parse(time.RFC3339, instant)
+
+		if err != nil {
+			log.WithFields(log.Fields{
+				"instant":     instant,
+				"actionTitle": action.Title,
+			}).Warnf("Invalid calendar entry, skipping: %v", err)
+			continue
+		}
 
 		go sleepUntil(ctx, until, action, cfg, ex)
 	}
@@ -140,9 +148,15 @@ func sleepUntil(ctx context.Context, instant time.Time, action *config.Action, c
 
 	select {
 	case <-timer.C:
+		scheduleMapMutex.Lock()
+		delete(scheduleMap[action.ID].timers, instant)
+		scheduleMapMutex.Unlock()
 		exec(instant, action, cfg, ex)
 		return
 	case <-childCtx.Done():
+		scheduleMapMutex.Lock()
+		delete(scheduleMap[action.ID].timers, instant)
+		scheduleMapMutex.Unlock()
 		log.Infof("Cancelled scheduled action")
 		return
 	}
