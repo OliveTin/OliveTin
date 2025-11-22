@@ -13,7 +13,7 @@
   "devDependencies": {
     "chai": "^6.2.0",
     "eslint": "^9.37.0",
-    "mocha": "^11.7.4",
+    "mocha": "^11.7.5",
     "selenium-webdriver": "^4.36.0"
   },
   "dependencies": {
