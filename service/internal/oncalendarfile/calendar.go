@@ -19,12 +19,12 @@ type timerEntry struct {
 	cancel context.CancelFunc
 }
 
-type ExistingTimers struct {
+type existingTimers struct {
 	timers map[time.Time]timerEntry
 }
 
 var (
-	scheduleMap      = make(map[string]ExistingTimers)
+	scheduleMap      = make(map[string]existingTimers)
 	scheduleMapMutex sync.RWMutex
 )
 
@@ -58,7 +58,7 @@ func clearExistingTimers(action *config.Action) {
 		}
 	}
 
-	scheduleMap[action.ID] = ExistingTimers{
+	scheduleMap[action.ID] = existingTimers{
 		timers: make(map[time.Time]timerEntry),
 	}
 }
@@ -133,7 +133,7 @@ func sleepUntil(ctx context.Context, instant time.Time, action *config.Action, c
 
 	scheduleMapMutex.Lock()
 	if _, exists := scheduleMap[action.ID]; !exists {
-		scheduleMap[action.ID] = ExistingTimers{
+		scheduleMap[action.ID] = existingTimers{
 			timers: make(map[time.Time]timerEntry),
 		}
 	}
