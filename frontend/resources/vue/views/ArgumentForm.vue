@@ -29,7 +29,7 @@
                 :list="arg.suggestions ? `${arg.name}-choices` : undefined" 
                 :type="getInputComponent(arg) !== 'select' ? getInputType(arg) : undefined"
                 :rows="arg.type === 'raw_string_multiline' ? 5 : undefined"
-                :step="arg.type === 'datetime' ? 1 : undefined" :pattern="getPattern(arg)" :required="arg.required"
+                :step="arg.type === 'datetime' ? 1 : undefined" :pattern="getPattern(arg)"
                 @input="handleInput(arg, $event)" @change="handleChange(arg, $event)" />
 
             <span class="argument-description" v-html="arg.description"></span>
@@ -202,6 +202,16 @@ async function validateArgument(arg, value) {
     return
   }
 
+  // Skip validation for datetime - backend will handle mangling values without seconds
+  if (arg.type === 'datetime') {
+    const inputElement = document.getElementById(arg.name)
+    if (inputElement) {
+      inputElement.setCustomValidity('')
+    }
+    delete formErrors.value[arg.name]
+    return
+  }
+
   try {
     const validateArgumentTypeArgs = {
       value: value,
@@ -286,10 +296,12 @@ async function startAction(actionArgs) {
   }
 
   try {
-    await window.client.startAction(startActionArgs)
-    console.log('Action started successfully with tracking ID:', startActionArgs.uniqueTrackingId)
+    const response = await window.client.startAction(startActionArgs)
+    console.log('Action started successfully with tracking ID:', response.executionTrackingId)
+    return response
   } catch (err) {
     console.error('Failed to start action:', err)
+    throw err
   }
 }
 
@@ -319,9 +331,12 @@ async function handleSubmit(event) {
   const argvs = getArgumentValues()
   console.log('argument form has elements that passed validation')
   
-  await startAction(argvs)
-  
-  router.back()
+  try {
+    const response = await startAction(argvs)
+    router.push(`/logs/${response.executionTrackingId}`)
+  } catch (err) {
+    console.error('Failed to start action:', err)
+  }
 }
 
 function handleCancel() {
