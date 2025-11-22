@@ -2,21 +2,39 @@ package oncalendarfile
 
 import (
 	"context"
+	"os"
+	"sync"
+	"time"
+
 	"github.com/OliveTin/OliveTin/internal/acl"
 	"github.com/OliveTin/OliveTin/internal/config"
 	"github.com/OliveTin/OliveTin/internal/executor"
 	"github.com/OliveTin/OliveTin/internal/filehelper"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
-	"os"
-	"time"
+)
+
+type timerEntry struct {
+	timer  *time.Timer
+	cancel context.CancelFunc
+}
+
+type existingTimers struct {
+	timers map[time.Time]timerEntry
+}
+
+var (
+	scheduleMap      = make(map[string]existingTimers)
+	scheduleMapMutex sync.RWMutex
 )
 
 func Schedule(cfg *config.Config, ex *executor.Executor) {
 	for _, action := range cfg.Actions {
+		captured := action
+
 		if action.ExecOnCalendarFile != "" {
 			x := func(filename string) {
-				parseCalendarFile(action, cfg, ex, filename)
+				parseCalendarFile(captured, cfg, ex, filename)
 			}
 
 			go filehelper.WatchFileWrite(action.ExecOnCalendarFile, x)
@@ -26,7 +44,30 @@ func Schedule(cfg *config.Config, ex *executor.Executor) {
 	}
 }
 
+func clearExistingTimers(action *config.Action) {
+	scheduleMapMutex.Lock()
+	defer scheduleMapMutex.Unlock()
+
+	if _, exists := scheduleMap[action.ID]; exists {
+		for instant, entry := range scheduleMap[action.ID].timers {
+			log.WithFields(log.Fields{
+				"instant":     instant,
+				"actionTitle": action.Title,
+			}).Infof("Clearing existing scheduled action from calendar")
+
+			entry.cancel()
+			entry.timer.Stop()
+		}
+	}
+
+	scheduleMap[action.ID] = existingTimers{
+		timers: make(map[time.Time]timerEntry),
+	}
+}
+
 func parseCalendarFile(action *config.Action, cfg *config.Config, ex *executor.Executor, filename string) {
+	clearExistingTimers(action)
+
 	filehelper.Touch(action.ExecOnCalendarFile, "calendar file")
 
 	log.WithFields(log.Fields{
@@ -60,7 +101,15 @@ func scheduleCalendarActions(entries []string, action *config.Action, cfg *confi
 			continue
 		}
 
-		until, _ := time.Parse(time.RFC3339, instant)
+		until, err := time.Parse(time.RFC3339, instant)
+
+		if err != nil {
+			log.WithFields(log.Fields{
+				"instant":     instant,
+				"actionTitle": action.Title,
+			}).Warnf("Invalid calendar entry, skipping: %v", err)
+			continue
+		}
 
 		go sleepUntil(ctx, until, action, cfg, ex)
 	}
@@ -81,15 +130,35 @@ func sleepUntil(ctx context.Context, instant time.Time, action *config.Action, c
 		"actionTitle": action.Title,
 	}).Infof("Scheduling action on calendar")
 
+	childCtx, cancel := context.WithCancel(ctx)
 	timer := time.NewTimer(time.Until(instant))
 
+	scheduleMapMutex.Lock()
+	if _, exists := scheduleMap[action.ID]; !exists {
+		scheduleMap[action.ID] = existingTimers{
+			timers: make(map[time.Time]timerEntry),
+		}
+	}
+	scheduleMap[action.ID].timers[instant] = timerEntry{
+		timer:  timer,
+		cancel: cancel,
+	}
+	scheduleMapMutex.Unlock()
+
 	defer timer.Stop()
+	defer cancel()
 
 	select {
 	case <-timer.C:
+		scheduleMapMutex.Lock()
+		delete(scheduleMap[action.ID].timers, instant)
+		scheduleMapMutex.Unlock()
 		exec(instant, action, cfg, ex)
 		return
-	case <-ctx.Done():
+	case <-childCtx.Done():
+		scheduleMapMutex.Lock()
+		delete(scheduleMap[action.ID].timers, instant)
+		scheduleMapMutex.Unlock()
 		log.Infof("Cancelled scheduled action")
 		return
 	}
