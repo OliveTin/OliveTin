@@ -12,7 +12,7 @@
   "license": "AGPL-3.0-only",
   "devDependencies": {
     "chai": "^5.2.0",
-    "eslint": "^9.22.0",
+    "eslint": "^9.39.1",
     "mocha": "^11.1.0",
     "selenium-webdriver": "^4.29.0"
   },
