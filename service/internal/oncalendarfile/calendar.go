@@ -2,24 +2,30 @@ package oncalendarfile
 
 import (
 	"context"
+	"os"
+	"sync"
+	"time"
+
 	"github.com/OliveTin/OliveTin/internal/acl"
 	"github.com/OliveTin/OliveTin/internal/config"
 	"github.com/OliveTin/OliveTin/internal/executor"
 	"github.com/OliveTin/OliveTin/internal/filehelper"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
-	"os"
-	"time"
-	"sync"
 )
 
+type timerEntry struct {
+	timer  *time.Timer
+	cancel context.CancelFunc
+}
+
 type ExistingTimers struct {
-	timers map[time.Time]*time.Timer
+	timers map[time.Time]timerEntry
 }
 
 var (
-	scheduleMap map[string]ExistingTimers = make(map[string]ExistingTimers, 0)
-	scheduleMapMutex sync.Mutex = sync.Mutex{}
+	scheduleMap      = make(map[string]ExistingTimers)
+	scheduleMapMutex sync.RWMutex
 )
 
 func Schedule(cfg *config.Config, ex *executor.Executor) {
@@ -41,18 +47,19 @@ func clearExistingTimers(action *config.Action) {
 	defer scheduleMapMutex.Unlock()
 
 	if _, exists := scheduleMap[action.ID]; exists {
-		for instant, timer := range scheduleMap[action.ID].timers {
+		for instant, entry := range scheduleMap[action.ID].timers {
 			log.WithFields(log.Fields{
 				"instant":     instant,
 				"actionTitle": action.Title,
 			}).Infof("Clearing existing scheduled action from calendar")
 
-			timer.Stop()
+			entry.cancel()
+			entry.timer.Stop()
 		}
 	}
 
 	scheduleMap[action.ID] = ExistingTimers{
-		timers: make(map[time.Time]*time.Timer),
+		timers: make(map[time.Time]timerEntry),
 	}
 }
 
@@ -113,19 +120,29 @@ func sleepUntil(ctx context.Context, instant time.Time, action *config.Action, c
 		"actionTitle": action.Title,
 	}).Infof("Scheduling action on calendar")
 
+	childCtx, cancel := context.WithCancel(ctx)
 	timer := time.NewTimer(time.Until(instant))
 
 	scheduleMapMutex.Lock()
-	scheduleMap[action.ID].timers[instant] = timer
+	if _, exists := scheduleMap[action.ID]; !exists {
+		scheduleMap[action.ID] = ExistingTimers{
+			timers: make(map[time.Time]timerEntry),
+		}
+	}
+	scheduleMap[action.ID].timers[instant] = timerEntry{
+		timer:  timer,
+		cancel: cancel,
+	}
 	scheduleMapMutex.Unlock()
 
 	defer timer.Stop()
+	defer cancel()
 
 	select {
 	case <-timer.C:
 		exec(instant, action, cfg, ex)
 		return
-	case <-ctx.Done():
+	case <-childCtx.Done():
 		log.Infof("Cancelled scheduled action")
 		return
 	}
