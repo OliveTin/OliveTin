@@ -3,6 +3,7 @@ package api
 import (
 	ctx "context"
 	"encoding/json"
+	"sort"
 
 	"connectrpc.com/connect"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -872,6 +873,10 @@ func buildPublicOAuth2ProvidersList(cfg *config.Config) []*apiv1.OAuth2Provider 
 			Key:   providerKey,
 		})
 	}
+
+	sort.Slice(publicProviders, func(i, j int) bool {
+		return publicProviders[i].Key < publicProviders[j].Key
+	})
 
 	return publicProviders
 }
