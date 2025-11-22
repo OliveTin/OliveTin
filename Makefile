@@ -56,4 +56,7 @@ clean:
 	$(call delete-files,reports)
 	$(call delete-files,gen)
 
+config-tool:
+	cd service && go run cmd/config-tool/main.go
+
 .PHONY: proto service

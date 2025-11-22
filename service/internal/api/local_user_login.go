@@ -1,10 +1,11 @@
 package api
 
 import (
+	"runtime"
+
 	config "github.com/OliveTin/OliveTin/internal/config"
 	"github.com/alexedwards/argon2id"
 	log "github.com/sirupsen/logrus"
-	"runtime"
 )
 
 var defaultParams = argon2id.Params{
@@ -15,7 +16,7 @@ var defaultParams = argon2id.Params{
 	KeyLength:   32,
 }
 
-func createHash(password string) (string, error) {
+func CreateHash(password string) (string, error) {
 	hash, err := argon2id.CreateHash(password, &defaultParams)
 
 	if err != nil {
@@ -24,6 +25,10 @@ func createHash(password string) (string, error) {
 	}
 
 	return hash, nil
+}
+
+func createHash(password string) (string, error) {
+	return CreateHash(password)
 }
 
 func comparePasswordAndHash(password, hash string) bool {

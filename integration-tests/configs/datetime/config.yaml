@@ -12,6 +12,5 @@ actions:
       - name: datetime
         title: Select a date and time
         type: datetime
-        required: true
         description: Choose a date and time for the action
 

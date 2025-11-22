@@ -1,15 +1,18 @@
 package config
 
 import (
+	"strings"
+
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
-	"strings"
 )
 
 // Sanitize will look for common configuration issues, and fix them. For example,
 // populating undefined fields - name -> title, etc.
 func (cfg *Config) Sanitize() {
 	cfg.sanitizeLogLevel()
+	cfg.sanitizeAuthRequireGuestsToLogin()
+	cfg.sanitizeLogHistoryPageSize()
 
 	// log.Infof("cfg %p", cfg)
 
@@ -41,12 +44,9 @@ func (action *Action) sanitize(cfg *Config) {
 	for idx := range action.Arguments {
 		action.Arguments[idx].sanitize()
 	}
-
-	sanitizeAuthRequireGuestsToLogin(cfg)
-	sanitizeLogHistoryPageSize(cfg)
 }
 
-func sanitizeAuthRequireGuestsToLogin(cfg *Config) {
+func (cfg *Config) sanitizeAuthRequireGuestsToLogin() {
 	if cfg.AuthRequireGuestsToLogin {
 		log.Infof("AuthRequireGuestsToLogin is enabled. All defaultPermissions will be set to false")
 
@@ -56,7 +56,7 @@ func sanitizeAuthRequireGuestsToLogin(cfg *Config) {
 	}
 }
 
-func sanitizeLogHistoryPageSize(cfg *Config) {
+func (cfg *Config) sanitizeLogHistoryPageSize() {
 	if cfg.LogHistoryPageSize < 10 {
 		log.Warnf("LogsHistoryLimit is too low, setting it to 10")
 		cfg.LogHistoryPageSize = 10

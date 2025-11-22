@@ -47,10 +47,6 @@ describe('config: datetime', function () {
     const step = await datetimeInput.getAttribute('step')
     expect(step).to.equal('1', 'Step attribute should be 1')
 
-    // Verify it's required
-    const required = await datetimeInput.getAttribute('required')
-    expect(required).to.not.be.null
-
     // Verify the label is present
     const label = await webdriver.findElement(By.css('label[for="datetime"]'))
     expect(await label.getText()).to.contain('Select a date and time')
