@@ -30,9 +30,11 @@ var (
 
 func Schedule(cfg *config.Config, ex *executor.Executor) {
 	for _, action := range cfg.Actions {
+		captured := action
+
 		if action.ExecOnCalendarFile != "" {
 			x := func(filename string) {
-				parseCalendarFile(action, cfg, ex, filename)
+				parseCalendarFile(captured, cfg, ex, filename)
 			}
 
 			go filehelper.WatchFileWrite(action.ExecOnCalendarFile, x)
