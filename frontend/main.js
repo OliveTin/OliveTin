@@ -20,15 +20,15 @@ import App from './resources/vue/App.vue'
 import { initWebsocket } from './js/websocket.js'
 import combinedTranslations from '../lang/combined_output.json'
 
-function getSelectedLanguage() {
-  const storedLanguage = localStorage.getItem('olivetin-language');
+function getSelectedLanguage () {
+  const storedLanguage = localStorage.getItem('olivetin-language')
 
   if (storedLanguage && storedLanguage !== 'auto') {
-    return storedLanguage;
+    return storedLanguage
   }
 
   if (storedLanguage === 'auto') {
-    localStorage.removeItem('olivetin-language');
+    localStorage.removeItem('olivetin-language')
   }
 
   if (navigator.languages && navigator.languages.length > 0) {
@@ -50,7 +50,7 @@ function getSelectedLanguage() {
     }
   }
 
-  return 'en';
+  return 'en'
 }
 
 async function initClient () {
@@ -60,7 +60,7 @@ async function initClient () {
 
   window.client = createClient(OliveTinApiService, transport)
   window.initResponse = await window.client.init({})
-  
+
   const i18nSettings = createI18n({
     legacy: false,
     locale: getSelectedLanguage(),
@@ -85,9 +85,9 @@ function setupVue (i18nSettings) {
 
   app.use(router)
   app.use(i18nSettings)
-  
+
   window.i18n = i18nSettings.global
-  
+
   app.mount('#app')
 }
 
