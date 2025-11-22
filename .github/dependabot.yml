@@ -1,0 +1,82 @@
+version: 2
+updates:
+  # npm updates for frontend - targeting "next" branch
+  - package-ecosystem: "npm"
+    directory: "/frontend"
+    schedule:
+      interval: "weekly"
+    target-branch: "next"
+    open-pull-requests-limit: 10
+
+  # npm updates for frontend - targeting "release/2k" branch
+  - package-ecosystem: "npm"
+    directory: "/frontend"
+    schedule:
+      interval: "weekly"
+    target-branch: "release/2k"
+    open-pull-requests-limit: 10
+
+  # npm updates for integration-tests - targeting "next" branch
+  - package-ecosystem: "npm"
+    directory: "/integration-tests"
+    schedule:
+      interval: "weekly"
+    target-branch: "next"
+    open-pull-requests-limit: 10
+
+  # npm updates for integration-tests - targeting "release/2k" branch
+  - package-ecosystem: "npm"
+    directory: "/integration-tests"
+    schedule:
+      interval: "weekly"
+    target-branch: "release/2k"
+    open-pull-requests-limit: 10
+
+  # Go modules updates for service - targeting "next" branch
+  - package-ecosystem: "gomod"
+    directory: "/service"
+    schedule:
+      interval: "weekly"
+    target-branch: "next"
+    open-pull-requests-limit: 10
+
+  # Go modules updates for service - targeting "release/2k" branch
+  - package-ecosystem: "gomod"
+    directory: "/service"
+    schedule:
+      interval: "weekly"
+    target-branch: "release/2k"
+    open-pull-requests-limit: 10
+
+  # Go modules updates for lang - targeting "next" branch
+  - package-ecosystem: "gomod"
+    directory: "/lang"
+    schedule:
+      interval: "weekly"
+    target-branch: "next"
+    open-pull-requests-limit: 10
+
+  # Go modules updates for lang - targeting "release/2k" branch
+  - package-ecosystem: "gomod"
+    directory: "/lang"
+    schedule:
+      interval: "weekly"
+    target-branch: "release/2k"
+    open-pull-requests-limit: 10
+
+  # Docker updates - targeting "next" branch
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    target-branch: "next"
+    open-pull-requests-limit: 10
+
+  # Docker updates - targeting "release/2k" branch
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    target-branch: "release/2k"
+    open-pull-requests-limit: 10
+
