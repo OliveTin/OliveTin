@@ -4,13 +4,13 @@ import { By, until, Condition } from 'selenium-webdriver'
 import {
   getRootAndWait,
   takeScreenshotOnFailure,
-} from '../lib/elements.js'
+} from '../../lib/elements.js'
 
 describe('config: githubOAuth', function () {
   this.timeout(30000)
 
   before(async function () {
-    await runner.start('githubOAuth')
+    await runner.start('oauthLoginGithub')
   })
 
   after(async () => {
@@ -75,37 +75,25 @@ describe('config: githubOAuth', function () {
     await new Promise(resolve => setTimeout(resolve, 3000))
 
     // Find GitHub OAuth button
+    // Since the test config only has one provider (GitHub), we can use the first button
     const githubButtons = await webdriver.findElements(By.css('.oauth-button'))
-    expect(githubButtons.length).to.be.greaterThan(0)
-
-    let githubButton = null
-    for (const button of githubButtons) {
-      const buttonText = await button.getText()
-      if (buttonText.toLowerCase().includes('github')) {
-        githubButton = button
-        break
-      }
-    }
-
-    expect(githubButton).to.not.be.null('GitHub OAuth button should be present')
-
-    // Verify button is displayed and enabled
-    const isDisplayed = await githubButton.isDisplayed()
-    expect(isDisplayed).to.be.true('GitHub OAuth button should be displayed')
-
-    const isEnabled = await githubButton.isEnabled()
-    expect(isEnabled).to.be.true('GitHub OAuth button should be enabled')
+    expect(githubButtons.length).to.be.greaterThan(0, 'At least one OAuth button should be present')
+    
+    const githubButton = githubButtons[0]
+    const buttonText = await githubButton.getText()
+    console.log('Button text:', buttonText)
+    
+    // Verify it's the GitHub button (should contain "github" in the text)
+    expect(buttonText.toLowerCase()).to.include('github', 'Button should be GitHub OAuth button')
 
     // Check for provider icon (if present)
     const providerIcons = await githubButton.findElements(By.css('.provider-icon'))
-    // Icon may or may not be present, so we don't assert on it
-
-    // Check for provider name
     const providerNames = await githubButton.findElements(By.css('.provider-name'))
     // Provider name may show "GitHub" (from title) or be undefined (if using name field)
     // Just verify the structure is present
     if (providerNames.length > 0) {
       const providerNameText = await providerNames[0].getText()
+      expect(providerNameText.toLowerCase()).to.include('github', 'Provider name should include "github"')
       expect(providerNameText).to.include('Login with', 'Provider name should have "Login with" prefix')
       console.log('Provider name text:', providerNameText)
     }

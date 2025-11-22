@@ -8,13 +8,14 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	config "github.com/OliveTin/OliveTin/internal/config"
-	log "github.com/sirupsen/logrus"
-	"golang.org/x/oauth2"
 	"io"
 	"net/http"
 	"os"
 	"time"
+
+	config "github.com/OliveTin/OliveTin/internal/config"
+	log "github.com/sirupsen/logrus"
+	"golang.org/x/oauth2"
 )
 
 type OAuth2Handler struct {

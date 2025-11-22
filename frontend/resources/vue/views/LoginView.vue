@@ -8,7 +8,7 @@
       <div v-if="hasOAuth" class="login-oauth2">
         <h3>OAuth Login</h3>
         <div class="oauth-providers">
-          <button v-for="provider in oauthProviders" :key="provider.name || provider.title" class="oauth-button"
+          <button v-for="provider in oauthProviders" :key="provider.key" class="oauth-button"
             @click="loginWithOAuth(provider)">
             <span v-if="provider.icon" class="provider-icon" v-html="provider.icon"></span>
             <span class="provider-name">Login with {{ provider.title }}</span>
@@ -106,9 +106,13 @@ async function handleLocalLogin() {
 }
 
 function loginWithOAuth(provider) {
-  const providerName = provider.title.toLowerCase()
+  if (!provider.key) {
+    console.error('OAuth provider missing key:', provider)
+    return
+  }
   
-  window.location.href = `/oauth/login?provider=${providerName}`
+  const providerKey = encodeURIComponent(provider.key)
+  window.location.href = `/oauth/login?provider=${providerKey}`
 }
 
 onMounted(() => {
@@ -137,5 +141,13 @@ section {
 form {
   grid-template-columns: 1fr;
   gap: 1em;
+}
+
+.provider-icon {
+  width: 1em;
+  height: 1em;
+  margin-right: .4em;
+  display: inline-flex;
+  vertical-align: middle;
 }
 </style>

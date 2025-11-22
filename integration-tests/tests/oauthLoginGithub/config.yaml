@@ -11,7 +11,8 @@ checkForUpdates: false
 authOAuth2RedirectUrl: "http://localhost:1337/oauth2/callback"
 authOAuth2Providers:
   github:
-    title: "GitHub"
+    name: github
+    title: "Good old GitHub"
     clientId: "test-client-id"
     clientSecret: "test-client-secret"
 
@@ -21,7 +22,7 @@ authRequireGuestsToLogin: true
 # Simple actions for testing
 actions:
 - title: Ping Google.com
-  shell: ping google.com -c 1
+  shell: echo "ping google.com"
   icon: ping
 
 - title: sleep 2 seconds

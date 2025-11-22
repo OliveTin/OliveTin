@@ -865,11 +865,11 @@ func (api *oliveTinAPI) addCustomDashboards(rootDashboards *[]string, dashboards
 func buildPublicOAuth2ProvidersList(cfg *config.Config) []*apiv1.OAuth2Provider {
 	var publicProviders []*apiv1.OAuth2Provider
 
-	for _, provider := range cfg.AuthOAuth2Providers {
+	for providerKey, provider := range cfg.AuthOAuth2Providers {
 		publicProviders = append(publicProviders, &apiv1.OAuth2Provider{
 			Title: provider.Title,
-			Url:   provider.AuthUrl,
 			Icon:  provider.Icon,
+			Key:   providerKey,
 		})
 	}
 
