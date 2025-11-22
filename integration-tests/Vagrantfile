@@ -4,7 +4,8 @@
 
 Vagrant.configure("2") do |config|
   config.vm.provision "shell", inline: "mkdir /etc/OliveTin && chmod o+w /etc/OliveTin/ && mkdir -p /opt/OliveTin-configs/ && chmod 0777 /opt/OliveTin-configs", privileged: true
-  config.vm.provision "file", source: "configs/.", destination: "/opt/OliveTin-configs/"
+  config.vm.provision "file", source: "tests/.", destination: "/tmp/test-configs/"
+  config.vm.provision "shell", inline: "for dir in /tmp/test-configs/*/; do if [ -f \"$dir/config.yaml\" ]; then cp -r \"$dir\" /opt/OliveTin-configs/$(basename \"$dir\")/; fi; done", privileged: true
 
   config.vm.provider :libvirt do |libvirt|
     libvirt.management_network_device = 'virbr0'
