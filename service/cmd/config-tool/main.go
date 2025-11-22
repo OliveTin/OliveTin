@@ -56,7 +56,7 @@ func main() {
 		resetAllPasswords(k, cfg)
 	}
 
-	saveConfig(k)
+	saveConfig(configPath, k)
 }
 
 func backupOriginalConfig(configPath string) {
@@ -132,23 +132,17 @@ func resetAllPasswords(k *koanf.Koanf, cfg *config.Config) {
 	log.Infof("Reset %d password(s) to 'password'", len(cfg.AuthLocalUsers.Users))
 }
 
-func saveConfig(k *koanf.Koanf) {
-	pwd, err := os.Getwd()
-	if err != nil {
-		log.Fatalf("Error getting working directory: %v", err)
-	}
-	fullPath := filepath.Join(filepath.Dir(filepath.Dir(filepath.Dir(pwd))), "config.yaml")
-
+func saveConfig(configPath string, k *koanf.Koanf) {
 	out, err := k.Marshal(yaml.Parser())
 
 	if err != nil {
 		log.Fatalf("Error marshalling config: %v", err)
 	}
 
-	err = os.WriteFile(fullPath, out, 0644)
+	err = os.WriteFile(configPath, out, 0644)
 	if err != nil {
 		log.Fatalf("Error saving config: %v", err)
 	}
 
-	log.Infof("Config saved to %s", fullPath)
+	log.Infof("Config saved to %s", configPath)
 }
