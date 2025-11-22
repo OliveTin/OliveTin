@@ -42,7 +42,7 @@ fieldset {
   display: grid;
   grid-template-columns: repeat(auto-fit, 180px);
   grid-auto-rows: 1fr;
-  grid-gap: 1em;
+  gap: 1em;
   padding: 0;
   text-align: center;
   justify-content: center;
@@ -467,7 +467,7 @@ div.arguments {
   display: grid;
   grid-template-columns: max-content auto auto; /* We don't want the label or the description to wrap, and the input to take up the rest of the space */
   grid-template-rows: auto;
-  grid-gap: 1em;
+  gap: 1em;
   align-items: center;
 
 }
