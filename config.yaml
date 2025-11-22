@@ -272,6 +272,11 @@ dashboards:
           # matching title IF the `contents: ` property is empty.
           - title: Ping All Servers
 
+          - title: 
+              <a href = "#">Foo</a>
+            type: display
+          
+
           # If you create an item with some "contents:", OliveTin will show that as
           # directory.
           - title: Hypervisors
