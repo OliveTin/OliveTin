@@ -13,7 +13,7 @@ var oauth2ProviderDatabase = map[string]config.OAuth2Provider{
 		WhoamiUrl:     "https://api.github.com/user",
 		TokenUrl:      endpoints.GitHub.TokenURL,
 		AuthUrl:       endpoints.GitHub.AuthURL,
-		Scopes:        []string{"user", "user:email"},
+		Scopes:        []string{"read:user", "user:email"},
 		UsernameField: "login",
 	},
 	"google": {
