@@ -19,6 +19,7 @@ import (
 
 	acl "github.com/OliveTin/OliveTin/internal/acl"
 	auth "github.com/OliveTin/OliveTin/internal/auth"
+	authpublic "github.com/OliveTin/OliveTin/internal/auth/authpublic"
 	config "github.com/OliveTin/OliveTin/internal/config"
 	entities "github.com/OliveTin/OliveTin/internal/entities"
 	executor "github.com/OliveTin/OliveTin/internal/executor"
@@ -51,7 +52,7 @@ func (api *oliveTinAPI) copyOfStreamingClients() []*streamingClient {
 
 type streamingClient struct {
 	channel           chan *apiv1.EventStreamResponse
-	AuthenticatedUser *acl.AuthenticatedUser
+	AuthenticatedUser *authpublic.AuthenticatedUser
 }
 
 func (api *oliveTinAPI) KillAction(ctx ctx.Context, req *connect.Request[apiv1.KillActionRequest]) (*connect.Response[apiv1.KillActionResponse], error) {
@@ -78,14 +79,14 @@ func (api *oliveTinAPI) KillAction(ctx ctx.Context, req *connect.Request[apiv1.K
 		return connect.NewResponse(ret), nil
 	}
 
-	user := acl.UserFromContext(ctx, req, api.cfg)
+	user := auth.UserFromApiCall(ctx, req, api.cfg)
 
 	api.killActionByTrackingId(user, action, execReqLogEntry, ret)
 
 	return connect.NewResponse(ret), nil
 }
 
-func (api *oliveTinAPI) killActionByTrackingId(user *acl.AuthenticatedUser, action *config.Action, execReqLogEntry *executor.InternalLogEntry, ret *apiv1.KillActionResponse) {
+func (api *oliveTinAPI) killActionByTrackingId(user *authpublic.AuthenticatedUser, action *config.Action, execReqLogEntry *executor.InternalLogEntry, ret *apiv1.KillActionResponse) {
 	if !acl.IsAllowedKill(api.cfg, user, action) {
 		log.Warnf("Killing execution request not possible - user not allowed to kill this action: %v", execReqLogEntry.ExecutionTrackingID)
 		ret.Killed = false
@@ -115,7 +116,7 @@ func (api *oliveTinAPI) StartAction(ctx ctx.Context, req *connect.Request[apiv1.
 		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("action with ID %s not found", req.Msg.BindingId))
 	}
 
-	authenticatedUser := acl.UserFromContext(ctx, req, api.cfg)
+	authenticatedUser := auth.UserFromApiCall(ctx, req, api.cfg)
 
 	execReq := executor.ExecutionRequest{
 		Binding:           pair,
@@ -204,7 +205,7 @@ func (api *oliveTinAPI) StartActionAndWait(ctx ctx.Context, req *connect.Request
 		args[arg.Name] = arg.Value
 	}
 
-	user := acl.UserFromContext(ctx, req, api.cfg)
+	user := auth.UserFromApiCall(ctx, req, api.cfg)
 
 	execReq := executor.ExecutionRequest{
 		Binding:           api.executor.FindBindingByID(req.Msg.ActionId),
@@ -235,7 +236,7 @@ func (api *oliveTinAPI) StartActionByGet(ctx ctx.Context, req *connect.Request[a
 		Binding:           api.executor.FindBindingByID(req.Msg.ActionId),
 		TrackingID:        uuid.NewString(),
 		Arguments:         args,
-		AuthenticatedUser: acl.UserFromContext(ctx, req, api.cfg),
+		AuthenticatedUser: auth.UserFromApiCall(ctx, req, api.cfg),
 		Cfg:               api.cfg,
 	}
 
@@ -249,7 +250,7 @@ func (api *oliveTinAPI) StartActionByGet(ctx ctx.Context, req *connect.Request[a
 func (api *oliveTinAPI) StartActionByGetAndWait(ctx ctx.Context, req *connect.Request[apiv1.StartActionByGetAndWaitRequest]) (*connect.Response[apiv1.StartActionByGetAndWaitResponse], error) {
 	args := make(map[string]string)
 
-	user := acl.UserFromContext(ctx, req, api.cfg)
+	user := auth.UserFromApiCall(ctx, req, api.cfg)
 
 	execReq := executor.ExecutionRequest{
 		Binding:           api.executor.FindBindingByID(req.Msg.ActionId),
@@ -273,7 +274,7 @@ func (api *oliveTinAPI) StartActionByGetAndWait(ctx ctx.Context, req *connect.Re
 	}
 }
 
-func (api *oliveTinAPI) internalLogEntryToPb(logEntry *executor.InternalLogEntry, authenticatedUser *acl.AuthenticatedUser) *apiv1.LogEntry {
+func (api *oliveTinAPI) internalLogEntryToPb(logEntry *executor.InternalLogEntry, authenticatedUser *authpublic.AuthenticatedUser) *apiv1.LogEntry {
 	pble := &apiv1.LogEntry{
 		ActionTitle:         logEntry.ActionTitle,
 		ActionIcon:          logEntry.ActionIcon,
@@ -327,7 +328,7 @@ func getMostRecentExecutionStatusById(api *oliveTinAPI, actionId string) *execut
 func (api *oliveTinAPI) ExecutionStatus(ctx ctx.Context, req *connect.Request[apiv1.ExecutionStatusRequest]) (*connect.Response[apiv1.ExecutionStatusResponse], error) {
 	res := &apiv1.ExecutionStatusResponse{}
 
-	user := acl.UserFromContext(ctx, req, api.cfg)
+	user := auth.UserFromApiCall(ctx, req, api.cfg)
 
 	if err := api.checkDashboardAccess(user); err != nil {
 		return nil, err
@@ -352,7 +353,7 @@ func (api *oliveTinAPI) ExecutionStatus(ctx ctx.Context, req *connect.Request[ap
 }
 
 func (api *oliveTinAPI) Logout(ctx ctx.Context, req *connect.Request[apiv1.LogoutRequest]) (*connect.Response[apiv1.LogoutResponse], error) {
-	user := acl.UserFromContext(ctx, req, api.cfg)
+	user := auth.UserFromApiCall(ctx, req, api.cfg)
 
 	log.WithFields(log.Fields{
 		"username": user.Username,
@@ -375,7 +376,7 @@ func (api *oliveTinAPI) Logout(ctx ctx.Context, req *connect.Request[apiv1.Logou
 }
 
 func (api *oliveTinAPI) GetActionBinding(ctx ctx.Context, req *connect.Request[apiv1.GetActionBindingRequest]) (*connect.Response[apiv1.GetActionBindingResponse], error) {
-	user := acl.UserFromContext(ctx, req, api.cfg)
+	user := auth.UserFromApiCall(ctx, req, api.cfg)
 
 	if err := api.checkDashboardAccess(user); err != nil {
 		return nil, err
@@ -397,7 +398,7 @@ func (api *oliveTinAPI) GetActionBinding(ctx ctx.Context, req *connect.Request[a
 }
 
 func (api *oliveTinAPI) GetDashboard(ctx ctx.Context, req *connect.Request[apiv1.GetDashboardRequest]) (*connect.Response[apiv1.GetDashboardResponse], error) {
-	user := acl.UserFromContext(ctx, req, api.cfg)
+	user := auth.UserFromApiCall(ctx, req, api.cfg)
 
 	if err := api.checkDashboardAccess(user); err != nil {
 		return nil, err
@@ -412,14 +413,14 @@ func (api *oliveTinAPI) GetDashboard(ctx ctx.Context, req *connect.Request[apiv1
 	return api.buildCustomDashboardResponse(dashboardRenderRequest, req.Msg.Title)
 }
 
-func (api *oliveTinAPI) checkDashboardAccess(user *acl.AuthenticatedUser) error {
+func (api *oliveTinAPI) checkDashboardAccess(user *authpublic.AuthenticatedUser) error {
 	if user.IsGuest() && api.cfg.AuthRequireGuestsToLogin {
 		return connect.NewError(connect.CodePermissionDenied, fmt.Errorf("guests are not allowed to access the dashboard"))
 	}
 	return nil
 }
 
-func (api *oliveTinAPI) createDashboardRenderRequest(user *acl.AuthenticatedUser) *DashboardRenderRequest {
+func (api *oliveTinAPI) createDashboardRenderRequest(user *authpublic.AuthenticatedUser) *DashboardRenderRequest {
 	return &DashboardRenderRequest{
 		AuthenticatedUser: user,
 		cfg:               api.cfg,
@@ -447,7 +448,7 @@ func (api *oliveTinAPI) buildCustomDashboardResponse(rr *DashboardRenderRequest,
 }
 
 func (api *oliveTinAPI) GetLogs(ctx ctx.Context, req *connect.Request[apiv1.GetLogsRequest]) (*connect.Response[apiv1.GetLogsResponse], error) {
-	user := acl.UserFromContext(ctx, req, api.cfg)
+	user := auth.UserFromApiCall(ctx, req, api.cfg)
 
 	if err := api.checkDashboardAccess(user); err != nil {
 		return nil, err
@@ -471,7 +472,7 @@ func isValidLogEntry(e *executor.InternalLogEntry) bool {
 }
 
 // isLogEntryAllowed checks if a log entry is allowed to be viewed by the user.
-func (api *oliveTinAPI) isLogEntryAllowed(e *executor.InternalLogEntry, user *acl.AuthenticatedUser) bool {
+func (api *oliveTinAPI) isLogEntryAllowed(e *executor.InternalLogEntry, user *authpublic.AuthenticatedUser) bool {
 	return acl.IsAllowedLogs(api.cfg, user, e.Binding.Action)
 }
 
@@ -499,7 +500,7 @@ func calculateReversedIndices(page pageInfo, filteredLen int) (int64, int64) {
 }
 
 // buildActionLogsResponse builds the response with paginated log entries.
-func (api *oliveTinAPI) buildActionLogsResponse(filtered []*executor.InternalLogEntry, page pageInfo, user *acl.AuthenticatedUser) *apiv1.GetActionLogsResponse {
+func (api *oliveTinAPI) buildActionLogsResponse(filtered []*executor.InternalLogEntry, page pageInfo, user *authpublic.AuthenticatedUser) *apiv1.GetActionLogsResponse {
 	startIdx, endIdx := calculateReversedIndices(page, len(filtered))
 	ret := &apiv1.GetActionLogsResponse{}
 	for _, le := range filtered[startIdx:endIdx] {
@@ -513,7 +514,7 @@ func (api *oliveTinAPI) buildActionLogsResponse(filtered []*executor.InternalLog
 }
 
 func (api *oliveTinAPI) GetActionLogs(ctx ctx.Context, req *connect.Request[apiv1.GetActionLogsRequest]) (*connect.Response[apiv1.GetActionLogsResponse], error) {
-	user := acl.UserFromContext(ctx, req, api.cfg)
+	user := auth.UserFromApiCall(ctx, req, api.cfg)
 
 	if err := api.checkDashboardAccess(user); err != nil {
 		return nil, err
@@ -528,20 +529,7 @@ func (api *oliveTinAPI) GetActionLogs(ctx ctx.Context, req *connect.Request[apiv
 	return connect.NewResponse(api.buildActionLogsResponse(filtered, page, user)), nil
 }
 
-func (api *oliveTinAPI) pbLogsFiltered(entries []*executor.InternalLogEntry, user *acl.AuthenticatedUser) []*apiv1.LogEntry {
-	out := make([]*apiv1.LogEntry, 0, len(entries))
-	for _, e := range entries {
-		if !isValidLogEntry(e) {
-			continue
-		}
-		if api.isLogEntryAllowed(e, user) {
-			out = append(out, api.internalLogEntryToPb(e, user))
-		}
-	}
-	return out
-}
-
-func (api *oliveTinAPI) filterLogsByACL(entries []*executor.InternalLogEntry, user *acl.AuthenticatedUser) []*executor.InternalLogEntry {
+func (api *oliveTinAPI) filterLogsByACL(entries []*executor.InternalLogEntry, user *authpublic.AuthenticatedUser) []*executor.InternalLogEntry {
 	filtered := make([]*executor.InternalLogEntry, 0, len(entries))
 	for _, e := range entries {
 		if !isValidLogEntry(e) {
@@ -596,7 +584,7 @@ func (api *oliveTinAPI) ValidateArgumentType(ctx ctx.Context, req *connect.Reque
 }
 
 func (api *oliveTinAPI) WhoAmI(ctx ctx.Context, req *connect.Request[apiv1.WhoAmIRequest]) (*connect.Response[apiv1.WhoAmIResponse], error) {
-	user := acl.UserFromContext(ctx, req, api.cfg)
+	user := auth.UserFromApiCall(ctx, req, api.cfg)
 
 	if err := api.checkDashboardAccess(user); err != nil {
 		return nil, err
@@ -682,7 +670,7 @@ func (api *oliveTinAPI) GetReadyz(ctx ctx.Context, req *connect.Request[apiv1.Ge
 func (api *oliveTinAPI) EventStream(ctx ctx.Context, req *connect.Request[apiv1.EventStreamRequest], srv *connect.ServerStream[apiv1.EventStreamResponse]) error {
 	log.Debugf("EventStream: %v", req.Msg)
 
-	user := acl.UserFromContext(ctx, req, api.cfg)
+	user := auth.UserFromApiCall(ctx, req, api.cfg)
 
 	if err := api.checkDashboardAccess(user); err != nil {
 		return err
@@ -801,7 +789,7 @@ func (api *oliveTinAPI) GetDiagnostics(ctx ctx.Context, req *connect.Request[api
 }
 
 func (api *oliveTinAPI) Init(ctx ctx.Context, req *connect.Request[apiv1.InitRequest]) (*connect.Response[apiv1.InitResponse], error) {
-	user := acl.UserFromContext(ctx, req, api.cfg)
+	user := auth.UserFromApiCall(ctx, req, api.cfg)
 
 	loginRequired := user.IsGuest() && api.cfg.AuthRequireGuestsToLogin
 
@@ -834,7 +822,7 @@ func (api *oliveTinAPI) Init(ctx ctx.Context, req *connect.Request[apiv1.InitReq
 	return connect.NewResponse(res), nil
 }
 
-func (api *oliveTinAPI) buildRootDashboards(user *acl.AuthenticatedUser, dashboards []*config.DashboardComponent) []string {
+func (api *oliveTinAPI) buildRootDashboards(user *authpublic.AuthenticatedUser, dashboards []*config.DashboardComponent) []string {
 	var rootDashboards []string
 	dashboardRenderRequest := api.createDashboardRenderRequest(user)
 
@@ -919,7 +907,7 @@ func (api *oliveTinAPI) OnOutputChunk(content []byte, executionTrackingId string
 }
 
 func (api *oliveTinAPI) GetEntities(ctx ctx.Context, req *connect.Request[apiv1.GetEntitiesRequest]) (*connect.Response[apiv1.GetEntitiesResponse], error) {
-	user := acl.UserFromContext(ctx, req, api.cfg)
+	user := auth.UserFromApiCall(ctx, req, api.cfg)
 
 	if err := api.checkDashboardAccess(user); err != nil {
 		return nil, err
@@ -972,7 +960,7 @@ func findEntityInComponents(entityTitle string, parentTitle string, components [
 }
 
 func (api *oliveTinAPI) GetEntity(ctx ctx.Context, req *connect.Request[apiv1.GetEntityRequest]) (*connect.Response[apiv1.Entity], error) {
-	user := acl.UserFromContext(ctx, req, api.cfg)
+	user := auth.UserFromApiCall(ctx, req, api.cfg)
 
 	if err := api.checkDashboardAccess(user); err != nil {
 		return nil, err

@@ -1,14 +1,14 @@
 package onstartup
 
 import (
-	"github.com/OliveTin/OliveTin/internal/acl"
+	"github.com/OliveTin/OliveTin/internal/auth"
 	config "github.com/OliveTin/OliveTin/internal/config"
 	"github.com/OliveTin/OliveTin/internal/executor"
 	log "github.com/sirupsen/logrus"
 )
 
 func Execute(cfg *config.Config, ex *executor.Executor) {
-	user := acl.UserFromSystem(cfg, "startup")
+	user := auth.UserFromSystem(cfg, "startup")
 
 	for _, action := range cfg.Actions {
 		if action.ExecOnStartup {

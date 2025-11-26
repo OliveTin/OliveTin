@@ -2,14 +2,15 @@ package oncalendarfile
 
 import (
 	"context"
-	"github.com/OliveTin/OliveTin/internal/acl"
+	"os"
+	"time"
+
+	"github.com/OliveTin/OliveTin/internal/auth"
 	"github.com/OliveTin/OliveTin/internal/config"
 	"github.com/OliveTin/OliveTin/internal/executor"
 	"github.com/OliveTin/OliveTin/internal/filehelper"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
-	"os"
-	"time"
 )
 
 func Schedule(cfg *config.Config, ex *executor.Executor) {
@@ -105,7 +106,7 @@ func exec(instant time.Time, action *config.Action, cfg *config.Config, ex *exec
 		Binding:           ex.FindBindingWithNoEntity(action),
 		Cfg:               cfg,
 		Tags:              []string{},
-		AuthenticatedUser: acl.UserFromSystem(cfg, "calendar"),
+		AuthenticatedUser: auth.UserFromSystem(cfg, "calendar"),
 	}
 
 	ex.ExecRequest(req)

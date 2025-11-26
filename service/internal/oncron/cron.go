@@ -1,7 +1,7 @@
 package oncron
 
 import (
-	"github.com/OliveTin/OliveTin/internal/acl"
+	"github.com/OliveTin/OliveTin/internal/auth"
 	"github.com/OliveTin/OliveTin/internal/config"
 	"github.com/OliveTin/OliveTin/internal/executor"
 	"github.com/robfig/cron/v3"
@@ -37,7 +37,7 @@ func scheduleAction(cfg *config.Config, scheduler *cron.Cron, cronline string, e
 			Binding:           ex.FindBindingWithNoEntity(action),
 			Cfg:               cfg,
 			Tags:              []string{},
-			AuthenticatedUser: acl.UserFromSystem(cfg, "cron"),
+			AuthenticatedUser: auth.UserFromSystem(cfg, "cron"),
 		}
 
 		ex.ExecRequest(req)
