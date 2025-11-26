@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/OliveTin/OliveTin/internal/acl"
+	"github.com/OliveTin/OliveTin/internal/auth"
 	"github.com/OliveTin/OliveTin/internal/config"
 	"github.com/OliveTin/OliveTin/internal/executor"
 	"github.com/OliveTin/OliveTin/internal/filehelper"
@@ -54,7 +54,7 @@ func scheduleExec(action *config.Action, cfg *config.Config, ex *executor.Execut
 		Cfg:               cfg,
 		Tags:              []string{},
 		Arguments:         args,
-		AuthenticatedUser: acl.UserFromSystem(cfg, "fileindir"),
+		AuthenticatedUser: auth.UserFromSystem(cfg, "fileindir"),
 	}
 
 	ex.ExecRequest(req)

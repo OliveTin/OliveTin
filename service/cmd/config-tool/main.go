@@ -125,11 +125,23 @@ func resetAllPasswords(k *koanf.Koanf, cfg *config.Config) {
 			}
 			log.Infof("Reset password for user '%s' (old hash: %s...)", username, oldHashPreview)
 		}
-		k.Set("authLocalUsers.users", newUsersSlice)
+		err = k.Set("authLocalUsers.users", newUsersSlice)
+
+		if err != nil {
+			log.WithFields(log.Fields{
+				"error": err,
+			}).Fatalf("Error setting users")
+		}
 	} else {
 		for index, user := range cfg.AuthLocalUsers.Users {
 			key := "authLocalUsers.users." + strconv.Itoa(index) + ".password"
-			k.Set(key, hashedPassword)
+			err = k.Set(key, hashedPassword)
+
+			if err != nil {
+				log.WithFields(log.Fields{
+					"error": err,
+				}).Fatalf("Error setting user password")
+			}
 
 			oldHashPreview := user.Password
 			if len(oldHashPreview) > 20 {

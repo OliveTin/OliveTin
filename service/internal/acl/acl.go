@@ -1,12 +1,7 @@
 package acl
 
 import (
-	"context"
-	"net/http"
-	"strings"
-
-	"connectrpc.com/connect"
-	"github.com/OliveTin/OliveTin/internal/auth"
+	authpublic "github.com/OliveTin/OliveTin/internal/auth/authpublic"
 	config "github.com/OliveTin/OliveTin/internal/config"
 	log "github.com/sirupsen/logrus"
 
@@ -26,57 +21,7 @@ func (p PermissionBits) Has(permission PermissionBits) bool {
 	return p&permission != 0
 }
 
-// User respresents a person.
-type AuthenticatedUser struct {
-	Username      string
-	UsergroupLine string
-
-	Provider string
-	SID      string
-
-	Acls []string
-
-	EffectivePolicy *config.ConfigurationPolicy
-}
-
-func (u *AuthenticatedUser) IsGuest() bool {
-	return u.Username == "guest" && u.Provider == "system"
-}
-
-func (u *AuthenticatedUser) parseUsergroupLine(sep string) []string {
-	ret := []string{}
-
-	if sep != "" {
-		for _, v := range strings.Split(u.UsergroupLine, sep) {
-			trimmed := strings.TrimSpace(v)
-
-			if trimmed != "" {
-				ret = append(ret, trimmed)
-			}
-		}
-	} else {
-		ret = strings.Fields(u.UsergroupLine)
-	}
-
-	log.Debugf("parseUsergroupLine: %v, %v, sep:%v", u.UsergroupLine, ret, sep)
-
-	return ret
-}
-
-func (u *AuthenticatedUser) matchesUsergroupAcl(matchUsergroups []string, sep string) bool {
-	groupList := u.parseUsergroupLine(sep)
-
-	for _, group := range groupList {
-		if slices.Contains(matchUsergroups, group) {
-			log.Debugf("Usergroup %v found in %+v (len: %v)", group, groupList, len(groupList))
-			return true
-		}
-	}
-
-	return false
-}
-
-func logAclNotMatched(cfg *config.Config, aclFunction string, user *AuthenticatedUser, action *config.Action, acl *config.AccessControlList) {
+func logAclNotMatched(cfg *config.Config, aclFunction string, user *authpublic.AuthenticatedUser, action *config.Action, acl *config.AccessControlList) {
 	if cfg.LogDebugOptions.AclNotMatched {
 		log.WithFields(log.Fields{
 			"User":   user.Username,
@@ -86,7 +31,7 @@ func logAclNotMatched(cfg *config.Config, aclFunction string, user *Authenticate
 	}
 }
 
-func logAclMatched(cfg *config.Config, aclFunction string, user *AuthenticatedUser, action *config.Action, acl *config.AccessControlList) {
+func logAclMatched(cfg *config.Config, aclFunction string, user *authpublic.AuthenticatedUser, action *config.Action, acl *config.AccessControlList) {
 	actionTitle := "N/A"
 
 	if action != nil {
@@ -102,7 +47,7 @@ func logAclMatched(cfg *config.Config, aclFunction string, user *AuthenticatedUs
 	}
 }
 
-func logAclNoneMatched(cfg *config.Config, aclFunction string, user *AuthenticatedUser, action *config.Action, defaultPermission bool) {
+func logAclNoneMatched(cfg *config.Config, aclFunction string, user *authpublic.AuthenticatedUser, action *config.Action, defaultPermission bool) {
 	if cfg.LogDebugOptions.AclNoneMatched {
 		log.WithFields(log.Fields{
 			"User":    user.Username,
@@ -136,7 +81,7 @@ func permissionsConfigToBits(permissions config.PermissionsList) PermissionBits 
 	return ret
 }
 
-func aclCheck(requiredPermission PermissionBits, defaultValue bool, cfg *config.Config, aclFunction string, user *AuthenticatedUser, action *config.Action) bool {
+func aclCheck(requiredPermission PermissionBits, defaultValue bool, cfg *config.Config, aclFunction string, user *authpublic.AuthenticatedUser, action *config.Action) bool {
 	relevantAcls := getRelevantAcls(cfg, action.Acls, user)
 
 	if cfg.LogDebugOptions.AclCheckStarted {
@@ -167,17 +112,17 @@ func aclCheck(requiredPermission PermissionBits, defaultValue bool, cfg *config.
 }
 
 // IsAllowedLogs checks if a AuthenticatedUser is allowed to view an action's logs
-func IsAllowedLogs(cfg *config.Config, user *AuthenticatedUser, action *config.Action) bool {
+func IsAllowedLogs(cfg *config.Config, user *authpublic.AuthenticatedUser, action *config.Action) bool {
 	return aclCheck(Logs, cfg.DefaultPermissions.Logs, cfg, "isAllowedLogs", user, action)
 }
 
 // IsAllowedExec checks if a AuthenticatedUser is allowed to execute an Action
-func IsAllowedExec(cfg *config.Config, user *AuthenticatedUser, action *config.Action) bool {
+func IsAllowedExec(cfg *config.Config, user *authpublic.AuthenticatedUser, action *config.Action) bool {
 	return aclCheck(Exec, cfg.DefaultPermissions.Exec, cfg, "isAllowedExec", user, action)
 }
 
 // IsAllowedView checks if a User is allowed to view an Action
-func IsAllowedView(cfg *config.Config, user *AuthenticatedUser, action *config.Action) bool {
+func IsAllowedView(cfg *config.Config, user *authpublic.AuthenticatedUser, action *config.Action) bool {
 	if action.Hidden {
 		return false
 	}
@@ -185,129 +130,11 @@ func IsAllowedView(cfg *config.Config, user *AuthenticatedUser, action *config.A
 	return aclCheck(View, cfg.DefaultPermissions.View, cfg, "isAllowedView", user, action)
 }
 
-func IsAllowedKill(cfg *config.Config, user *AuthenticatedUser, action *config.Action) bool {
+func IsAllowedKill(cfg *config.Config, user *authpublic.AuthenticatedUser, action *config.Action) bool {
 	return aclCheck(Kill, cfg.DefaultPermissions.Kill, cfg, "isAllowedKill", user, action)
 }
 
-func getHeaderKeyOrEmpty(headers http.Header, key string) string {
-	values := headers.Values(key)
-	if len(values) > 0 {
-		return values[0]
-	}
-	return ""
-}
-
-// UserFromContext tries to find a user from a Connect RPC context
-func UserFromContext[T any](ctx context.Context, req *connect.Request[T], cfg *config.Config) *AuthenticatedUser {
-	user := userFromHeaders(req, cfg)
-	if user.Username == "" {
-		user = userFromLocalSession(req, cfg, user)
-	}
-	if user.Username == "" {
-		user = *UserGuest(cfg)
-	} else {
-		buildUserAcls(cfg, &user)
-	}
-
-	path := ""
-	if req != nil {
-		path = req.Spec().Procedure
-	}
-
-	log.WithFields(log.Fields{
-		"username":      user.Username,
-		"usergroupLine": user.UsergroupLine,
-		"provider":      user.Provider,
-		"acls":          user.Acls,
-		"path":          path,
-	}).Debugf("Authenticated API request")
-	return &user
-}
-
-//gocyclo:ignore
-func userFromHeaders[T any](req *connect.Request[T], cfg *config.Config) AuthenticatedUser {
-	var u AuthenticatedUser
-	if req == nil {
-		return u
-	}
-	if cfg.AuthHttpHeaderUsername != "" {
-		u.Username = getHeaderKeyOrEmpty(req.Header(), cfg.AuthHttpHeaderUsername)
-	}
-	if cfg.AuthHttpHeaderUserGroup != "" {
-		u.UsergroupLine = getHeaderKeyOrEmpty(req.Header(), cfg.AuthHttpHeaderUserGroup)
-	}
-	if prov := getHeaderKeyOrEmpty(req.Header(), "provider"); prov != "" {
-		u.Provider = prov
-	}
-	return u
-}
-
-//gocyclo:ignore
-func userFromLocalSession[T any](req *connect.Request[T], cfg *config.Config, u AuthenticatedUser) AuthenticatedUser {
-	if req == nil || u.Username != "" {
-		return u
-	}
-	dummy := &http.Request{Header: req.Header()}
-	c, err := dummy.Cookie("olivetin-sid-local")
-	if err != nil || c == nil || c.Value == "" {
-		return u
-	}
-	sess := auth.GetUserSession("local", c.Value)
-	if sess == nil {
-		log.WithFields(log.Fields{"sid": c.Value, "provider": "local"}).Warn("UserFromContext: stale local session")
-		return u
-	}
-	if cfgUser := cfg.FindUserByUsername(sess.Username); cfgUser != nil {
-		u.Username = cfgUser.Username
-		u.UsergroupLine = cfgUser.Usergroup
-		u.Provider = "local"
-		u.SID = c.Value
-		return u
-	}
-	log.WithFields(log.Fields{"username": sess.Username}).Warn("UserFromContext: local session user not in config")
-	return u
-}
-
-func UserGuest(cfg *config.Config) *AuthenticatedUser {
-	ret := &AuthenticatedUser{}
-	ret.Username = "guest"
-	ret.UsergroupLine = "guest"
-	ret.Provider = "system"
-
-	buildUserAcls(cfg, ret)
-
-	return ret
-}
-
-func UserFromSystem(cfg *config.Config, username string) *AuthenticatedUser {
-	ret := &AuthenticatedUser{
-		Username:      username,
-		UsergroupLine: "system",
-		Provider:      "system",
-	}
-
-	buildUserAcls(cfg, ret)
-
-	return ret
-}
-
-func buildUserAcls(cfg *config.Config, user *AuthenticatedUser) {
-	for _, acl := range cfg.AccessControlLists {
-		if slices.Contains(acl.MatchUsernames, user.Username) {
-			user.Acls = append(user.Acls, acl.Name)
-			continue
-		}
-
-		if user.matchesUsergroupAcl(acl.MatchUsergroups, cfg.AuthHttpHeaderUserGroupSep) {
-			user.Acls = append(user.Acls, acl.Name)
-			continue
-		}
-	}
-
-	user.EffectivePolicy = getEffectivePolicy(cfg, user)
-}
-
-func isACLRelevantToAction(cfg *config.Config, actionAcls []string, acl *config.AccessControlList, user *AuthenticatedUser) bool {
+func isACLRelevantToAction(cfg *config.Config, actionAcls []string, acl *config.AccessControlList, user *authpublic.AuthenticatedUser) bool {
 	if !slices.Contains(user.Acls, acl.Name) {
 		// If the user does not have this ACL, then it is not relevant
 
@@ -325,42 +152,13 @@ func isACLRelevantToAction(cfg *config.Config, actionAcls []string, acl *config.
 	return false
 }
 
-func getRelevantAcls(cfg *config.Config, actionAcls []string, user *AuthenticatedUser) []*config.AccessControlList {
+func getRelevantAcls(cfg *config.Config, actionAcls []string, user *authpublic.AuthenticatedUser) []*config.AccessControlList {
 	var ret []*config.AccessControlList
 
 	for _, acl := range cfg.AccessControlLists {
 		if isACLRelevantToAction(cfg, actionAcls, acl, user) {
 			ret = append(ret, acl)
 		}
-	}
-
-	return ret
-}
-
-func getEffectivePolicy(cfg *config.Config, user *AuthenticatedUser) *config.ConfigurationPolicy {
-	ret := &config.ConfigurationPolicy{
-		ShowDiagnostics: cfg.DefaultPolicy.ShowDiagnostics,
-		ShowLogList:     cfg.DefaultPolicy.ShowLogList,
-	}
-
-	for _, acl := range cfg.AccessControlLists {
-		if slices.Contains(user.Acls, acl.Name) {
-			logAclMatched(cfg, "GetEffectivePolicy", user, nil, acl)
-
-			ret = buildConfigurationPolicy(ret, acl.Policy)
-		}
-	}
-
-	return ret
-}
-
-func buildConfigurationPolicy(ret *config.ConfigurationPolicy, policy config.ConfigurationPolicy) *config.ConfigurationPolicy {
-	if policy.ShowDiagnostics {
-		ret.ShowDiagnostics = policy.ShowDiagnostics
-	}
-
-	if policy.ShowLogList {
-		ret.ShowLogList = policy.ShowLogList
 	}
 
 	return ret
