@@ -9,28 +9,12 @@ aside {
 	z-index: 3; /* Make sure the sidebar is on top of the terminal */
 }
 
-fieldset {
-	display: grid;
-	grid-template-columns: repeat(auto-fit, 180px);
-	grid-auto-rows: 1fr;
-	justify-content: center;
-	place-items: stretch;
-}
-
 main {
 	padding-top: 4em;
 }
 
 dialog {
 	border-radius: 1em;
-}
-
-legend {
-	font-weight: bold;
-	text-align: center;
-	padding: 1em;
-	padding-top: 1.5em;
-	width: 100%;
 }
 
 section {
