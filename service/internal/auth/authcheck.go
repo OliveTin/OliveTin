@@ -45,7 +45,7 @@ func runAuthChain[T any](req *connect.Request[T], cfg *config.Config) *types.Aut
 func UserFromApiCall[T any](ctx context.Context, req *connect.Request[T], cfg *config.Config) *types.AuthenticatedUser {
 	user := runAuthChain(req, cfg)
 
-	log.Infof("Context: %+v", ctx)
+	log.Tracef("UserFromApiCall Context: %+v", ctx)
 
 	if user == nil || user.Username == "" {
 		user = UserGuest(cfg)

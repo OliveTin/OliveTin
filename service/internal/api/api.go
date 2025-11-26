@@ -90,6 +90,7 @@ func (api *oliveTinAPI) killActionByTrackingId(user *authpublic.AuthenticatedUse
 	if !acl.IsAllowedKill(api.cfg, user, action) {
 		log.Warnf("Killing execution request not possible - user not allowed to kill this action: %v", execReqLogEntry.ExecutionTrackingID)
 		ret.Killed = false
+		return
 	}
 
 	err := api.executor.Kill(execReqLogEntry)
