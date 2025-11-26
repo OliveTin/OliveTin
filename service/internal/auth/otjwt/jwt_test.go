@@ -33,7 +33,7 @@ func generateRSAKeyPair(t *testing.T) (*rsa.PrivateKey, []byte) {
 
 	pubPem := pem.EncodeToMemory(
 		&pem.Block{
-			Type:  "RSA PUBLIC KEY",
+			Type:  "PUBLIC KEY",
 			Bytes: pkixPubKey,
 		},
 	)

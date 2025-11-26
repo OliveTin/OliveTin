@@ -20,7 +20,7 @@ var oauth2ProviderDatabase = map[string]config.OAuth2Provider{
 		Title:         "Google",
 		Name:          "google",
 		Icon:          "google",
-		UsernameField: "preferred_username",
+		UsernameField: "email",
 		WhoamiUrl:     "https://www.googleapis.com/oauth2/v3/userinfo",
 		TokenUrl:      endpoints.Google.TokenURL,
 		AuthUrl:       endpoints.Google.AuthURL,

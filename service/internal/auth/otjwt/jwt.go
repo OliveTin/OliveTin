@@ -214,6 +214,7 @@ func parseJwt(cfg *config.Config, token string) *authTypes.AuthenticatedUser {
 	user := &authTypes.AuthenticatedUser{
 		Username:      lookupClaimValueOrDefault(claims, cfg.AuthJwtClaimUsername, ""),
 		UsergroupLine: parseGroupClaim(cfg.AuthJwtClaimUserGroup, claims),
+		Provider:      "jwt",
 	}
 
 	return user
