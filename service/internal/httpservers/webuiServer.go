@@ -100,11 +100,18 @@ func shouldReloadThemeCss() bool {
 func loadThemeCssFromFile(filename string) []byte {
 	_, err := os.Stat(filename)
 	if err == nil {
-		css, _ := os.ReadFile(filename)
+		css, err := os.ReadFile(filename)
+
+		if err != nil {
+			log.Tracef("Theme CSS file not read: %s", filename)
+			return nil
+		}
+
 		return css
 	}
-	log.Debugf("Theme CSS not read: %v", err)
-	return []byte("/* not found */")
+
+	log.Tracef("Theme CSS file not found: %s", filename)
+	return nil
 }
 
 func (s *webUIServer) generateThemeCss(w http.ResponseWriter, r *http.Request) {
