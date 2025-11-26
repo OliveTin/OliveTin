@@ -15,6 +15,8 @@ import (
 	"path"
 
 	"github.com/OliveTin/OliveTin/internal/api"
+	"github.com/OliveTin/OliveTin/internal/auth"
+	"github.com/OliveTin/OliveTin/internal/auth/otoauth2"
 	config "github.com/OliveTin/OliveTin/internal/config"
 	"github.com/OliveTin/OliveTin/internal/executor"
 	log "github.com/sirupsen/logrus"
@@ -32,12 +34,12 @@ func logDebugRequest(cfg *config.Config, source string, r *http.Request) {
 	}
 }
 
-// StartSingleHTTPFrontend will create a reverse proxy that proxies the API
-// and webui internally.
-func StartSingleHTTPFrontend(cfg *config.Config, ex *executor.Executor) {
+func StartFrontendMux(cfg *config.Config, ex *executor.Executor) {
 	log.WithFields(log.Fields{
 		"address": cfg.ListenAddressSingleHTTPFrontend,
 	}).Info("Starting single HTTP frontend")
+
+	go StartPrometheus(cfg)
 
 	mux := http.NewServeMux()
 
@@ -62,10 +64,11 @@ func StartSingleHTTPFrontend(cfg *config.Config, ex *executor.Executor) {
 		apiHandler.ServeHTTP(w, r)
 	}))
 
-	oauth2handler := NewOAuth2Handler(cfg)
+	oauth2handler := otoauth2.NewOAuth2Handler(cfg)
+	auth.AddAuthChainFunction(oauth2handler.CheckUserFromOAuth2Cookie)
 
-	mux.HandleFunc("/oauth/login", oauth2handler.handleOAuthLogin)
-	mux.HandleFunc("/oauth/callback", oauth2handler.handleOAuthCallback)
+	mux.HandleFunc("/oauth/login", oauth2handler.HandleOAuthLogin)
+	mux.HandleFunc("/oauth/callback", oauth2handler.HandleOAuthCallback)
 
 	mux.HandleFunc("/readyz", handleReadyz)
 
@@ -97,5 +100,11 @@ func StartSingleHTTPFrontend(cfg *config.Config, ex *executor.Executor) {
 func handleReadyz(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("OK. Single HTTP Frontend is ready.\n"))
+	_, err := w.Write([]byte("OK. Single HTTP Frontend is ready.\n"))
+
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err,
+		}).Warnf("Failed to write readyz response")
+	}
 }

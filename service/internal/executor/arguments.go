@@ -333,12 +333,13 @@ func mangleCheckboxValues(req *ExecutionRequest, arg *config.ActionArgument) {
 
 	log.Infof("Checking checkbox values for argument %s in action %s", arg.Name, req.Binding.Action.Title)
 
-	for i, _ := range arg.Choices {
+	for i, v := range arg.Choices {
 		choice := &arg.Choices[i]
 
 		if req.Arguments[arg.Name] == choice.Title {
 			log.WithFields(log.Fields{
 				"arg":         arg.Name,
+				"choice":      v,
 				"oldValue":    req.Arguments[arg.Name],
 				"newValue":    choice.Value,
 				"actionTitle": req.Binding.Action.Title,

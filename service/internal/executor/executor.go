@@ -2,6 +2,8 @@ package executor
 
 import (
 	acl "github.com/OliveTin/OliveTin/internal/acl"
+	"github.com/OliveTin/OliveTin/internal/auth"
+	authpublic "github.com/OliveTin/OliveTin/internal/auth/authpublic"
 	config "github.com/OliveTin/OliveTin/internal/config"
 	"github.com/OliveTin/OliveTin/internal/entities"
 	"github.com/google/uuid"
@@ -69,7 +71,7 @@ type ExecutionRequest struct {
 	TrackingID        string
 	Tags              []string
 	Cfg               *config.Config
-	AuthenticatedUser *acl.AuthenticatedUser
+	AuthenticatedUser *authpublic.AuthenticatedUser
 	TriggerDepth      int
 
 	logEntry           *InternalLogEntry
@@ -230,11 +232,11 @@ func isValidLogEntryForACL(entry *InternalLogEntry) bool {
 }
 
 // isLogEntryAllowedByACL checks if a log entry is allowed to be viewed by the user.
-func isLogEntryAllowedByACL(cfg *config.Config, user *acl.AuthenticatedUser, entry *InternalLogEntry) bool {
+func isLogEntryAllowedByACL(cfg *config.Config, user *authpublic.AuthenticatedUser, entry *InternalLogEntry) bool {
 	return acl.IsAllowedLogs(cfg, user, entry.Binding.Action)
 }
 
-func (e *Executor) filterLogsByACL(cfg *config.Config, user *acl.AuthenticatedUser) []*InternalLogEntry {
+func (e *Executor) filterLogsByACL(cfg *config.Config, user *authpublic.AuthenticatedUser) []*InternalLogEntry {
 	e.logmutex.RLock()
 	defer e.logmutex.RUnlock()
 
@@ -280,7 +282,7 @@ func paginateFilteredLogs(filtered []*InternalLogEntry, startOffset int64, pageC
 
 // GetLogTrackingIdsACL returns logs filtered by ACL visibility for the user and
 // paginated correctly based on the filtered set.
-func (e *Executor) GetLogTrackingIdsACL(cfg *config.Config, user *acl.AuthenticatedUser, startOffset int64, pageCount int64) ([]*InternalLogEntry, *PagingResult) {
+func (e *Executor) GetLogTrackingIdsACL(cfg *config.Config, user *authpublic.AuthenticatedUser, startOffset int64, pageCount int64) ([]*InternalLogEntry, *PagingResult) {
 	filtered := e.filterLogsByACL(cfg, user)
 	return paginateFilteredLogs(filtered, startOffset, pageCount)
 }
@@ -323,7 +325,7 @@ func (e *Executor) SetLog(trackingID string, entry *InternalLogEntry) {
 // ExecRequest processes an ExecutionRequest
 func (e *Executor) ExecRequest(req *ExecutionRequest) (*sync.WaitGroup, string) {
 	if req.AuthenticatedUser == nil {
-		req.AuthenticatedUser = acl.UserGuest(req.Cfg)
+		req.AuthenticatedUser = auth.UserGuest(req.Cfg)
 	}
 
 	req.executor = e

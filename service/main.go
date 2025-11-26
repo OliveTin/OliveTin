@@ -130,7 +130,13 @@ func getConfigPath(directory string) string {
 
 func initConfig(configDir string) {
 	k := koanf.New(".")
-	k.Load(env.Provider(".", ".", nil), nil)
+	err := k.Load(env.Provider(".", ".", nil), nil)
+
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err,
+		}).Fatalf("Error loading environment variables")
+	}
 
 	directories := []string{
 		configDir,
@@ -180,12 +186,25 @@ func initConfig(configDir string) {
 			os.Exit(1)
 		}
 
-		f.Watch(func(evt interface{}, err error) {
+		err := f.Watch(func(evt interface{}, err error) {
 			log.Infof("config file changed: %v", evt)
 
-			k.Load(f, yaml.Parser())
+			errLoad := k.Load(f, yaml.Parser())
+
+			if errLoad != nil {
+				log.WithFields(log.Fields{
+					"error": errLoad,
+				}).Fatalf("Error loading config file")
+			}
+
 			config.AppendSource(cfg, k, configPath)
 		})
+
+		if err != nil {
+			log.WithFields(log.Fields{
+				"error": err,
+			}).Fatalf("Error watching config file")
+		}
 
 		break
 	}
@@ -251,5 +270,5 @@ func main() {
 	// Load persistent sessions from disk
 	auth.LoadUserSessions(cfg)
 
-	httpservers.StartServers(cfg, executor)
+	httpservers.StartFrontendMux(cfg, executor)
 }
