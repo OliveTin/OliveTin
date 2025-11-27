@@ -3,13 +3,14 @@ package api
 import (
 	apiv1 "github.com/OliveTin/OliveTin/gen/olivetin/api/v1"
 	acl "github.com/OliveTin/OliveTin/internal/acl"
+	authpublic "github.com/OliveTin/OliveTin/internal/auth/authpublic"
 	config "github.com/OliveTin/OliveTin/internal/config"
 	entities "github.com/OliveTin/OliveTin/internal/entities"
 	executor "github.com/OliveTin/OliveTin/internal/executor"
 )
 
 type DashboardRenderRequest struct {
-	AuthenticatedUser *acl.AuthenticatedUser
+	AuthenticatedUser *authpublic.AuthenticatedUser
 	cfg               *config.Config
 	ex                *executor.Executor
 }

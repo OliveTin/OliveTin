@@ -329,8 +329,8 @@ message AdditionalLink {
 
 message OAuth2Provider {
 	string title = 1;
-	string url = 2;
 	string icon = 3;
+	string key = 4;
 }
 
 message GetActionBindingRequest {

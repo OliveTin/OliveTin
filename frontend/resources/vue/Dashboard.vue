@@ -9,24 +9,24 @@
         <p>{{ initError }}</p>
         <p style="color: var(--fg2);">Please check your configuration and try again.</p>
     </section>
-    <div v-else-if="dashboard">
+    <template v-else-if="dashboard">
         <section v-if="dashboard.contents.length == 0">
-            <legend>{{ dashboard.title }}</legend>
+            <h2>{{ dashboard.title }}</h2>
             <p style = "text-align: center" class = "padding">This dashboard is empty.</p>
         </section>
 
         <section class="transparent" v-else>
-            <div v-for="component in dashboard.contents" :key="component.title">
-                <fieldset>
-                    <legend v-if = "dashboard.title != 'Default'">{{ component.title }}</legend>
+            <div class = "dashboard-row" v-for="component in dashboard.contents" :key="component.title">
+                <h2 v-if = "dashboard.title != 'Default'">{{ component.title }}</h2>
 
+                <fieldset>
                     <template v-for="subcomponent in component.contents">
                         <DashboardComponent :component="subcomponent" />
                     </template>
                 </fieldset>
             </div>
         </section>
-    </div>
+    </template>
 </template>
 
 <script setup>
@@ -154,14 +154,24 @@ onUnmounted(() => {
 
 </script>
 
-<style>
-fieldset {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, 180px);
-    grid-auto-rows: 1fr;
-    justify-content: center;
-    place-items: stretch;
+<style scoped>
+
+h2 {
+	font-weight: bold;
+	text-align: center;
+	padding: 1em;
+	padding-top: 1.5em;
+    grid-column: 1 / -1;
 }
+
+fieldset {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, 180px);
+	grid-auto-rows: 1fr;
+	justify-content: center;
+	place-items: stretch;
+}
+
 
 @keyframes spin {
     from {

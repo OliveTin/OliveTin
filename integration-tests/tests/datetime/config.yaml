@@ -1,0 +1,16 @@
+---
+listenAddressSingleHTTPFrontend: 0.0.0.0:1337
+
+logLevel: "DEBUG"
+checkForUpdates: false
+
+actions:
+  - title: Test datetime argument
+    shell: "echo 'Selected datetime: {{ datetime }}'"
+    icon: ping
+    arguments:
+      - name: datetime
+        title: Select a date and time
+        type: datetime
+        description: Choose a date and time for the action
+

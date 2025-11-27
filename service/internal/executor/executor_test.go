@@ -5,7 +5,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	acl "github.com/OliveTin/OliveTin/internal/acl"
+	"github.com/OliveTin/OliveTin/internal/auth"
+	authpublic "github.com/OliveTin/OliveTin/internal/auth/authpublic"
 	config "github.com/OliveTin/OliveTin/internal/config"
 )
 
@@ -35,7 +36,7 @@ func TestCreateExecutorAndExec(t *testing.T) {
 	e, cfg := testingExecutor()
 
 	req := ExecutionRequest{
-		AuthenticatedUser: &acl.AuthenticatedUser{Username: "Mr Tickle"},
+		AuthenticatedUser: &authpublic.AuthenticatedUser{Username: "Mr Tickle"},
 		Cfg:               cfg,
 		Arguments: map[string]string{
 			"person": "yourself",
@@ -273,7 +274,7 @@ func TestMangleInvalidArgumentValues(t *testing.T) {
 
 	req := ExecutionRequest{
 		//		Action:            a1,
-		AuthenticatedUser: acl.UserFromSystem(cfg, "testuser"),
+		AuthenticatedUser: auth.UserFromSystem(cfg, "testuser"),
 		Cfg:               cfg,
 		Arguments: map[string]string{
 			"date": "1990-01-10T12:00", // Invalid format, should be without seconds

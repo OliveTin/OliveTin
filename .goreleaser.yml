@@ -63,7 +63,10 @@ changelog:
       - '^docs:'
       - '^test:'
       - '^cicd:'
+      - '^chore:'
+      - '^release:'
       - '^refactor:'
+      - '^Merge branch'
 
 archives:
   - formats: tar.gz

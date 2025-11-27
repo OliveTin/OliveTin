@@ -5,7 +5,7 @@ test-install:
 
 test-run:
     # GitHub Actions fails badly on the default timeout of 2000ms
-	npx mocha -t 10000
+	npx mocha tests --recursive -t 10000
 
 find-flakey-tests:
 	echo "Running test-run infinately"

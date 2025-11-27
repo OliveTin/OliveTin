@@ -93,22 +93,42 @@ func (s *webUIServer) setupCustomWebuiDir() {
 	}
 }
 
+func shouldReloadThemeCss() bool {
+	return !customThemeCssRead
+}
+
+func loadThemeCssFromFile(filename string) []byte {
+	_, err := os.Stat(filename)
+	if err == nil {
+		css, err := os.ReadFile(filename)
+
+		if err != nil {
+			log.Tracef("Theme CSS file not read: %s", filename)
+			return nil
+		}
+
+		return css
+	}
+
+	log.Tracef("Theme CSS file not found: %s", filename)
+	return nil
+}
+
 func (s *webUIServer) generateThemeCss(w http.ResponseWriter, r *http.Request) {
 	themeCssFilename := path.Join(s.findCustomWebuiDir(), "themes", s.cfg.ThemeName, "theme.css")
 
-	if !customThemeCssRead || s.cfg.ThemeCacheDisabled {
+	if shouldReloadThemeCss() || s.cfg.ThemeCacheDisabled {
 		customThemeCssRead = true
-
-		if _, err := os.Stat(themeCssFilename); err == nil {
-			customThemeCss, _ = os.ReadFile(themeCssFilename)
-		} else {
-			log.Debugf("Theme CSS not read: %v", err)
-			customThemeCss = []byte("/* not found */")
-		}
+		customThemeCss = loadThemeCssFromFile(themeCssFilename)
 	}
 
 	w.Header().Add("Content-Type", "text/css")
-	w.Write(customThemeCss)
+	_, err := w.Write(customThemeCss)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err,
+		}).Warnf("Failed to write theme CSS")
+	}
 }
 
 func (s *webUIServer) handleCustomWebui() http.Handler {
