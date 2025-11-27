@@ -7,12 +7,12 @@
 		</div>
 	</Section>
 	<template v-else>
-		<Section v-for="def in entityDefinitions" :key="def.name" :title="'Entity: ' + def.title ">
+		<Section v-for="def in entityDefinitions" :key="def.title" :title="'Entity: ' + def.title ">
 			<div class = "section-content">
 				<p>{{ def.instances.length }} instances.</p>
 
 				<ul>
-					<li v-for="inst in def.instances" :key="inst.id">
+					<li v-for="inst in def.instances" :key="inst.uniqueKey">
 						<router-link :to="{ name: 'EntityDetails', params: { entityType: inst.type, entityKey: inst.uniqueKey } }">
 							{{ inst.title }}
 						</router-link>

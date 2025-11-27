@@ -914,30 +914,47 @@ func (api *oliveTinAPI) GetEntities(ctx ctx.Context, req *connect.Request[apiv1.
 		return nil, err
 	}
 
-	res := &apiv1.GetEntitiesResponse{
-		EntityDefinitions: make([]*apiv1.EntityDefinition, 0),
+	entityMap := entities.GetEntities()
+	entityNames := make([]string, 0, len(entityMap))
+	for name := range entityMap {
+		entityNames = append(entityNames, name)
 	}
+	sort.Strings(entityNames)
 
-	for name, entityInstances := range entities.GetEntities() {
+	entityDefinitions := make([]*apiv1.EntityDefinition, 0, len(entityNames))
+	for _, name := range entityNames {
 		def := &apiv1.EntityDefinition{
 			Title:            name,
 			UsedOnDashboards: findDashboardsForEntity(name, api.cfg.Dashboards),
+			Instances:        buildSortedEntityInstances(name, entityMap[name]),
 		}
+		entityDefinitions = append(entityDefinitions, def)
+	}
 
-		for _, e := range entityInstances {
-			entity := &apiv1.Entity{
-				Title:     e.Title,
-				UniqueKey: e.UniqueKey,
-				Type:      name,
-			}
-
-			def.Instances = append(def.Instances, entity)
-		}
-
-		res.EntityDefinitions = append(res.EntityDefinitions, def)
+	res := &apiv1.GetEntitiesResponse{
+		EntityDefinitions: entityDefinitions,
 	}
 
 	return connect.NewResponse(res), nil
+}
+
+func buildSortedEntityInstances(entityType string, entityInstances map[string]*entities.Entity) []*apiv1.Entity {
+	instanceKeys := make([]string, 0, len(entityInstances))
+	for key := range entityInstances {
+		instanceKeys = append(instanceKeys, key)
+	}
+	sort.Strings(instanceKeys)
+
+	instances := make([]*apiv1.Entity, 0, len(instanceKeys))
+	for _, key := range instanceKeys {
+		e := entityInstances[key]
+		instances = append(instances, &apiv1.Entity{
+			Title:     e.Title,
+			UniqueKey: e.UniqueKey,
+			Type:      entityType,
+		})
+	}
+	return instances
 }
 
 func findDashboardsForEntity(entityTitle string, dashboards []*config.DashboardComponent) []string {
