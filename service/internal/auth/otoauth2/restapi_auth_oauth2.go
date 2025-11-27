@@ -350,7 +350,6 @@ func (h *OAuth2Handler) CheckUserFromOAuth2Cookie(context *authTypes.AuthCheckin
 	user := &authTypes.AuthenticatedUser{}
 
 	if err != nil {
-		log.Warnf("Failed to read OAuth2 cookie: %v", err)
 		return nil
 	}
 
