@@ -1,0 +1,16 @@
+#
+# Integration Test Config: pageTitle
+#
+
+listenAddressSingleHTTPFrontend: 0.0.0.0:1337
+
+logLevel: "DEBUG"
+checkForUpdates: false
+
+pageTitle: "Custom Test Title"
+
+actions:
+- title: Ping example.com
+  shell: ping example.com -c 1
+  icon: ping
+

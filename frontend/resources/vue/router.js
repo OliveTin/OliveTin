@@ -128,7 +128,8 @@ const router = createRouter({
 // Navigation guard to update page title
 router.beforeEach((to, from, next) => {
   if (to.meta && to.meta.title) {
-    document.title = to.meta.title + " - OliveTin"
+    const pageTitle = window.initResponse?.pageTitle || 'OliveTin'
+    document.title = to.meta.title + " - " + pageTitle
   }
   next()
 })

@@ -67,7 +67,8 @@ async function getDashboard() {
         }
 
         dashboard.value = ret.dashboard 
-        document.title = ret.dashboard.title + ' - OliveTin'
+        const pageTitle = window.initResponse?.pageTitle || 'OliveTin'
+        document.title = ret.dashboard.title + ' - ' + pageTitle
         
         // Clear any previous init error since we successfully loaded
         initError.value = null
@@ -84,7 +85,8 @@ async function getDashboard() {
         // On error, provide a safe fallback state
         console.error('Failed to load dashboard', e)
         dashboard.value = { title: title || 'Default', contents: [] }
-        document.title = 'Error - OliveTin'
+        const pageTitle = window.initResponse?.pageTitle || 'OliveTin'
+        document.title = 'Error - ' + pageTitle
         
         // Stop the loading timer on error
         if (loadingTimer) {

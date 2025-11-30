@@ -1,5 +1,5 @@
 <template>
-    <Header title="OliveTin" :logoUrl="logoUrl" @toggleSidebar="toggleSidebar" :sidebarEnabled="showNavigation">
+    <Header :title="pageTitle" :logoUrl="logoUrl" @toggleSidebar="toggleSidebar" :sidebarEnabled="showNavigation">
         <template #toolbar>
             <div id="banner" v-if="bannerMessage" :style="bannerCss">
                 <p>{{ bannerMessage }}</p>
@@ -95,6 +95,7 @@ const username = ref('notset');
 const isLoggedIn = ref(false);
 const serverConnection = ref(true);
 const currentVersion = ref('?');
+const pageTitle = ref('OliveTin');
 const bannerMessage = ref('');
 const bannerCss = ref('');
 const hasLoaded = ref(false);
@@ -168,6 +169,7 @@ function updateHeaderFromInit() {
     username.value = window.initResponse.authenticatedUser
     isLoggedIn.value = window.initResponse.authenticatedUser !== '' && window.initResponse.authenticatedUser !== 'guest'
     currentVersion.value = window.initResponse.currentVersion
+    pageTitle.value = window.initResponse.pageTitle || 'OliveTin'
     bannerMessage.value = window.initResponse.bannerMessage || ''
     bannerCss.value = window.initResponse.bannerCss || ''
     showFooter.value = window.initResponse.showFooter
