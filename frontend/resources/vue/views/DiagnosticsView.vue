@@ -26,6 +26,7 @@
 
     <div role="toolbar">
       <button @click="generateSosReport" :disabled="loading" class = "good">{{ t('diagnostics.generate-sos-report') }}</button>
+      <button @click="copySosReport" :disabled="!sosReport || loading" :class="sosReportCopied ? 'good' : ''">{{ sosReportCopied ? t('diagnostics.copied') : t('diagnostics.copy-to-clipboard') }}</button>
     </div>
 
     <textarea v-model="sosReport" readonly style="flex: 1; min-height: 200px; resize: vertical; width: 100%; box-sizing: border-box;"></textarea>
@@ -36,6 +37,7 @@
 
     <div role="toolbar">
       <button @click="generateBrowserInfo" :disabled="loading" class = "good">{{ t('diagnostics.generate-browser-info') }}</button>
+      <button @click="copyBrowserInfo" :disabled="!browserInfo || loading" :class="browserInfoCopied ? 'good' : ''">{{ browserInfoCopied ? t('diagnostics.copied') : t('diagnostics.copy-to-clipboard') }}</button>
     </div>
 
     <textarea v-model="browserInfo" readonly style="flex: 1; min-height: 200px; resize: vertical; width: 100%; box-sizing: border-box;"></textarea>
@@ -53,6 +55,8 @@ const diagnostics = ref({})
 const loading = ref(false)
 const sosReport = ref('')
 const browserInfo = ref('')
+const sosReportCopied = ref(false)
+const browserInfoCopied = ref(false)
 
 async function fetchDiagnostics() {
   loading.value = true
@@ -83,7 +87,19 @@ function formatKey(key) {
 async function generateSosReport() {
   const response = await window.client.sosReport()
   console.log("response", response)
-  sosReport.value = response.alert
+  sosReport.value = `\`\`\`\n${response.alert}\n\`\`\`\n`
+}
+
+async function copySosReport() {
+  try {
+    await navigator.clipboard.writeText(sosReport.value)
+    sosReportCopied.value = true
+    setTimeout(() => {
+      sosReportCopied.value = false
+    }, 2000)
+  } catch (err) {
+    console.error('Failed to copy SOS report to clipboard:', err)
+  }
 }
 
 async function generateBrowserInfo() {
@@ -143,17 +159,15 @@ async function generateBrowserInfo() {
       })(),
       hardwareConcurrency: navigator.hardwareConcurrency || 'N/A',
       maxTouchPoints: navigator.maxTouchPoints || 'N/A',
-      vendor: navigator.vendor || 'N/A',
-      appName: navigator.appName,
-      appVersion: navigator.appVersion,
-      product: navigator.product,
       userAgentData: userAgentData
     }
 
     const olivetinVersion = window.initResponse?.currentVersion || t('diagnostics.unknown')
     const currentLanguage = locale.value || t('diagnostics.unknown')
 
-    let output = '### BROWSER INFO START (copy all text to BROWSER INFO END)\n'
+    let output = '';
+    output += `\`\`\`\n`
+    output += '### BROWSER INFO START (copy all text to BROWSER INFO END)\n'
     output += `# OliveTin Information\n`
     output += `olivetinVersion: ${olivetinVersion}\n`
     output += `currentLanguage: ${currentLanguage}\n`
@@ -162,10 +176,6 @@ async function generateBrowserInfo() {
     output += `platform: ${info.platform}\n`
     output += `language: ${info.language}\n`
     output += `languages: ${info.languages}\n`
-    output += `vendor: ${info.vendor}\n`
-    output += `appName: ${info.appName}\n`
-    output += `appVersion: ${info.appVersion}\n`
-    output += `product: ${info.product}\n`
     output += `\n# User Agent Data\n`
     output += `userAgentData:\n${info.userAgentData}\n`
     output += `\n# Display Information\n`
@@ -186,11 +196,24 @@ async function generateBrowserInfo() {
     output += `\n# Location & Time\n`
     output += `timezone: ${info.timezone}\n`
     output += `timezoneOffset: ${info.timezoneOffset}\n`
-    output += `\n### BROWSER INFO END (copy all text from BROWSER INFO START)\n`
+    output += `\n### BROWSER INFO END (copy all text from BROWSER INFO START)`
+    output += `\n\`\`\`\n`
 
     browserInfo.value = output
   } finally {
     loading.value = false
+  }
+}
+
+async function copyBrowserInfo() {
+  try {
+    await navigator.clipboard.writeText(browserInfo.value)
+    browserInfoCopied.value = true
+    setTimeout(() => {
+      browserInfoCopied.value = false
+    }, 2000)
+  } catch (err) {
+    console.error('Failed to copy browser info to clipboard:', err)
   }
 }
 

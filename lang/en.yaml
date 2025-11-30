@@ -34,6 +34,8 @@ translations:
   diagnostics.browser-info: Browser Info
   diagnostics.browser-info-description: This section allows you to generate a detailed report of your browser information. This can be helpful when troubleshooting browser-specific issues.
   diagnostics.generate-browser-info: Generate Browser Info
+  diagnostics.copy-to-clipboard: Copy to Clipboard
+  diagnostics.copied: Copied!
   diagnostics.unknown: Unknown
   diagnostics.useragent-data-error: Error retrieving userAgentData
   return-to-index: Return to index
