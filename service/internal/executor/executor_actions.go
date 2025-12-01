@@ -86,7 +86,9 @@ func recurseDashboardForActionTitles(component *config.DashboardComponent, req *
 			if title == "" {
 				title = sub.InlineAction.Title
 			}
-			req.DashboardActionTitles = append(req.DashboardActionTitles, title)
+			if title != "" {
+				req.DashboardActionTitles = append(req.DashboardActionTitles, title)
+			}
 		} else if sub.Type == "link" || sub.Type == "" {
 			req.DashboardActionTitles = append(req.DashboardActionTitles, sub.Title)
 		}

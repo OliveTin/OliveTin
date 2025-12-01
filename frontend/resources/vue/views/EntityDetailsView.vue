@@ -19,15 +19,21 @@
 				</dd>
 				<dt v-if="entityDetails.title">Title</dt>
 				<dd v-if="entityDetails.title">{{ entityDetails.title }}</dd>
+				<template v-if="entityDetails.fields">
+					<template v-for="(value, key) in entityDetails.fields" :key="key">
+						<dt>{{ key }}</dt>
+						<dd>{{ value }}</dd>
+					</template>
+				</template>
 			</dl>
-			<p v-if="!entityDetails.title">No details available for this entity.</p>
+			<p v-if="!entityDetails.title && (!entityDetails.fields || Object.keys(entityDetails.fields).length === 0)">No details available for this entity.</p>
 
 			<hr />
 			
 			<h3>Dashboard Entity Directories</h3>
-			<div v-if="entityDetails.directories && entityDetails.directories.length > 0" class="directories-section">
+			<div v-if="filteredDirectories.length > 0" class="directories-section">
 				<ul class="directory-list">
-					<li v-for="directory in entityDetails.directories" :key="directory">
+					<li v-for="(directory, idx) in filteredDirectories" :key="idx">
 						<router-link 
 							:to="{ 
 								name: 'Dashboard', 
@@ -50,7 +56,7 @@
 </template>
 
 <script setup>
-	import { ref, onMounted } from 'vue'
+	import { ref, computed, onMounted } from 'vue'
 	import { useRouter } from 'vue-router'
 	import { HugeiconsIcon } from '@hugeicons/vue'
 	import { ArrowLeftIcon } from '@hugeicons/core-free-icons'
@@ -62,6 +68,13 @@
 	const props = defineProps({
 		entityType: String,
 		entityKey: String
+	})
+
+	const filteredDirectories = computed(() => {
+		if (!entityDetails.value?.directories) {
+			return []
+		}
+		return entityDetails.value.directories.filter(d => d)
 	})
 
 	function goBack() {

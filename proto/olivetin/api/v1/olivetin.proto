@@ -37,6 +37,7 @@ message Entity {
     string unique_key = 2;
     string type = 3;
     repeated string directories = 4;
+    map<string, string> fields = 5;
 }
 
 message GetDashboardResponse {

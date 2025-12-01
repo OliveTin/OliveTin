@@ -3,17 +3,17 @@ entities:
     name: person
 
 dashboards:
-  - title: People
+  - title: Second Dashboard
     contents:
       - type: action
         inlineAction:
           title: Third Action
-          shell: echo "First Dashboard, Third Action!"
+          shell: echo "Second Dashboard, Third Action!"
 
       - type: action
         inlineAction:
           title: Forth Action
-          shell: echo "First Dashboard, Forth Action!"
+          shell: echo "Second Dashboard, Fourth Action!"
 
       - title: "Person: {{ person.name }}"
         type: fieldset

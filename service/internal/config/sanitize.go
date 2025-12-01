@@ -29,12 +29,23 @@ func (cfg *Config) sanitizeDashboardsForInlineActions() {
 	}
 }
 func (cfg *Config) sanitizeDashboardComponentForInlineActions(component *DashboardComponent) {
+	visited := make(map[*DashboardComponent]bool)
+	cfg.sanitizeDashboardComponentForInlineActionsHelper(component, visited)
+}
+
+func (cfg *Config) sanitizeDashboardComponentForInlineActionsHelper(component *DashboardComponent, visited map[*DashboardComponent]bool) {
 	if component == nil {
 		return
 	}
 
+	if visited[component] {
+		return
+	}
+
+	visited[component] = true
+
 	cfg.sanitizeInlineAction(component)
-	cfg.sanitizeChildDashboardComponents(component)
+	cfg.sanitizeChildDashboardComponents(component, visited)
 }
 
 func (cfg *Config) sanitizeInlineAction(component *DashboardComponent) {
@@ -107,13 +118,13 @@ func (cfg *Config) inlineActionIDExists(action *Action) bool {
 	return false
 }
 
-func (cfg *Config) sanitizeChildDashboardComponents(component *DashboardComponent) {
+func (cfg *Config) sanitizeChildDashboardComponents(component *DashboardComponent, visited map[*DashboardComponent]bool) {
 	for _, child := range component.Contents {
 		if child.Entity == "" {
 			child.Entity = component.Entity
 		}
 
-		cfg.sanitizeDashboardComponentForInlineActions(child)
+		cfg.sanitizeDashboardComponentForInlineActionsHelper(child, visited)
 	}
 }
 

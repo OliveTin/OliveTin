@@ -84,10 +84,10 @@ describe('config: multi-dashboard-includes', function () {
 
     // Ensure actions from the second dashboard are not rendered here
     expect(titles).to.not.include('Third Action')
-    expect(titles).to.not.include('Forth Action')
+    expect(titles).to.not.include('Fourth Action')
   })
 
-  it('Second Dashboard shows Third and Forth inline actions from include', async function () {
+  it('Second Dashboard shows Third and Fourth inline actions from include', async function () {
     await getRootAndWait()
 
     // Navigate to "Second Dashboard"
@@ -96,7 +96,7 @@ describe('config: multi-dashboard-includes', function () {
     const titles = await getActionTitlesOnDashboard('Second Dashboard')
 
     expect(titles).to.include('Third Action')
-    expect(titles).to.include('Forth Action')
+    expect(titles).to.include('Fourth Action')
 
     // Ensure actions from the first dashboard are not rendered here
     expect(titles).to.not.include('First Action')
