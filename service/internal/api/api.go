@@ -977,21 +977,46 @@ func buildSortedEntityInstances(entityType string, entityInstances map[string]*e
 
 func findDashboardsForEntity(entityTitle string, dashboards []*config.DashboardComponent) []string {
 	var foundDashboards []string
+	seen := make(map[string]bool)
 
-	findEntityInComponents(entityTitle, "", dashboards, &foundDashboards)
+	findEntityInComponents(entityTitle, "", dashboards, &foundDashboards, seen)
 
 	return foundDashboards
 }
 
-func findEntityInComponents(entityTitle string, parentTitle string, components []*config.DashboardComponent, foundDashboards *[]string) {
+func findEntityInComponents(entityTitle string, parentTitle string, components []*config.DashboardComponent, foundDashboards *[]string, seen map[string]bool) {
 	for _, component := range components {
 		if component.Entity == entityTitle {
-			*foundDashboards = append(*foundDashboards, parentTitle)
+			addEntityDashboard(component, parentTitle, foundDashboards, seen)
 		}
 
 		if len(component.Contents) > 0 {
-			findEntityInComponents(entityTitle, component.Title, component.Contents, foundDashboards)
+			findEntityInComponents(entityTitle, component.Title, component.Contents, foundDashboards, seen)
 		}
+	}
+}
+
+func addEntityDashboard(component *config.DashboardComponent, parentTitle string, foundDashboards *[]string, seen map[string]bool) {
+	if component.Type == "directory" {
+		addEntityDirectory(component, foundDashboards, seen)
+	} else {
+		addParentDashboard(parentTitle, foundDashboards, seen)
+	}
+}
+
+func addEntityDirectory(component *config.DashboardComponent, foundDashboards *[]string, seen map[string]bool) {
+	dashboardTitle := component.Title + " [Entity Directory]"
+	if !seen[dashboardTitle] {
+		*foundDashboards = append(*foundDashboards, dashboardTitle)
+		seen[dashboardTitle] = true
+		seen[component.Title] = true
+	}
+}
+
+func addParentDashboard(parentTitle string, foundDashboards *[]string, seen map[string]bool) {
+	if parentTitle != "" && !seen[parentTitle] {
+		*foundDashboards = append(*foundDashboards, parentTitle)
+		seen[parentTitle] = true
 	}
 }
 
@@ -1036,26 +1061,46 @@ func (api *oliveTinAPI) GetEntity(ctx ctx.Context, req *connect.Request[apiv1.Ge
 		return nil, err
 	}
 
-	res := &apiv1.Entity{}
-
 	instances := entities.GetEntityInstances(req.Msg.Type)
-
-	log.Infof("msg: %+v", req.Msg)
-
 	if len(instances) == 0 {
 		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("entity type %s not found", req.Msg.Type))
 	}
 
-	if entity, ok := instances[req.Msg.UniqueKey]; !ok {
+	entity, ok := instances[req.Msg.UniqueKey]
+	if !ok {
 		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("entity with unique key %s not found in type %s", req.Msg.UniqueKey, req.Msg.Type))
-	} else {
-		res.Title = entity.Title
-		res.UniqueKey = entity.UniqueKey
-		res.Type = req.Msg.Type
-		res.Directories = findDirectoriesInEntityFieldsets(req.Msg.Type, api.cfg.Dashboards)
-
-		return connect.NewResponse(res), nil
 	}
+
+	res := buildEntityResponse(entity, req.Msg.Type, api.cfg.Dashboards)
+	return connect.NewResponse(res), nil
+}
+
+func buildEntityResponse(entity *entities.Entity, entityType string, dashboards []*config.DashboardComponent) *apiv1.Entity {
+	res := &apiv1.Entity{
+		Title:       entity.Title,
+		UniqueKey:   entity.UniqueKey,
+		Type:        entityType,
+		Directories: findDirectoriesInEntityFieldsets(entityType, dashboards),
+		Fields:      serializeEntityFields(entity.Data),
+	}
+	return res
+}
+
+func serializeEntityFields(data any) map[string]string {
+	if data == nil {
+		return nil
+	}
+
+	dataMap, ok := data.(map[string]any)
+	if !ok {
+		return nil
+	}
+
+	fields := make(map[string]string)
+	for k, v := range dataMap {
+		fields[k] = fmt.Sprintf("%v", v)
+	}
+	return fields
 }
 
 func (api *oliveTinAPI) RestartAction(ctx ctx.Context, req *connect.Request[apiv1.RestartActionRequest]) (*connect.Response[apiv1.StartActionResponse], error) {

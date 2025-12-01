@@ -207,12 +207,13 @@ type LogDebugOptions struct {
 }
 
 type DashboardComponent struct {
-	Title    string                `koanf:"title"`
-	Type     string                `koanf:"type"`
-	Entity   string                `koanf:"entity"`
-	Icon     string                `koanf:"icon"`
-	CssClass string                `koanf:"cssClass"`
-	Contents []*DashboardComponent `koanf:"contents"`
+	Title        string                `koanf:"title"`
+	Type         string                `koanf:"type"`
+	Entity       string                `koanf:"entity"`
+	Icon         string                `koanf:"icon"`
+	CssClass     string                `koanf:"cssClass"`
+	InlineAction *Action               `koanf:"inlineAction"`
+	Contents     []*DashboardComponent `koanf:"contents"`
 }
 
 func DefaultConfig() *Config {

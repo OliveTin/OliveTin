@@ -19,6 +19,113 @@ func (cfg *Config) Sanitize() {
 	for idx := range cfg.Actions {
 		cfg.Actions[idx].sanitize(cfg)
 	}
+
+	cfg.sanitizeDashboardsForInlineActions()
+}
+
+func (cfg *Config) sanitizeDashboardsForInlineActions() {
+	for _, dashboard := range cfg.Dashboards {
+		cfg.sanitizeDashboardComponentForInlineActions(dashboard)
+	}
+}
+func (cfg *Config) sanitizeDashboardComponentForInlineActions(component *DashboardComponent) {
+	visited := make(map[*DashboardComponent]bool)
+	cfg.sanitizeDashboardComponentForInlineActionsHelper(component, visited)
+}
+
+func (cfg *Config) sanitizeDashboardComponentForInlineActionsHelper(component *DashboardComponent, visited map[*DashboardComponent]bool) {
+	if component == nil {
+		return
+	}
+
+	if visited[component] {
+		return
+	}
+
+	visited[component] = true
+
+	cfg.sanitizeInlineAction(component)
+	cfg.sanitizeChildDashboardComponents(component, visited)
+}
+
+func (cfg *Config) sanitizeInlineAction(component *DashboardComponent) {
+	if component.InlineAction == nil {
+		return
+	}
+
+	sanitizeInlineActionTitles(component)
+
+	if component.Entity != "" && component.InlineAction.Entity == "" {
+		component.InlineAction.Entity = component.Entity
+	}
+
+	component.InlineAction.sanitize(cfg)
+
+	cfg.addInlineActionIfNotExists(component.InlineAction)
+}
+
+func (cfg *Config) addInlineActionIfNotExists(action *Action) {
+	if cfg.inlineActionExists(action) {
+		return
+	}
+
+	cfg.Actions = append(cfg.Actions, action)
+}
+
+func sanitizeInlineActionTitles(component *DashboardComponent) {
+	if component.InlineAction.Title == "" {
+		component.InlineAction.Title = component.Title
+	}
+
+	if component.Title == "" {
+		component.Title = component.InlineAction.Title
+	}
+}
+
+func (cfg *Config) inlineActionExists(action *Action) bool {
+	if cfg.inlineActionPointerExists(action) {
+		return true
+	}
+
+	if cfg.inlineActionIDExists(action) {
+		return true
+	}
+
+	return false
+}
+
+func (cfg *Config) inlineActionPointerExists(action *Action) bool {
+	for _, existingAction := range cfg.Actions {
+		if existingAction == action {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (cfg *Config) inlineActionIDExists(action *Action) bool {
+	if action.ID == "" {
+		return false
+	}
+
+	for _, existingAction := range cfg.Actions {
+		if existingAction.ID == action.ID {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (cfg *Config) sanitizeChildDashboardComponents(component *DashboardComponent, visited map[*DashboardComponent]bool) {
+	for _, child := range component.Contents {
+		if child.Entity == "" {
+			child.Entity = component.Entity
+		}
+
+		cfg.sanitizeDashboardComponentForInlineActionsHelper(child, visited)
+	}
 }
 
 func (cfg *Config) sanitizeLogLevel() {

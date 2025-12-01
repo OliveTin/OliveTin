@@ -1,0 +1,30 @@
+entities:
+  - file: entities/person.yaml
+    name: person
+
+dashboards:
+  - title: Second Dashboard
+    contents:
+      - type: action
+        inlineAction:
+          title: Third Action
+          shell: echo "Second Dashboard, Third Action!"
+
+      - type: action
+        inlineAction:
+          title: Fourth Action
+          shell: echo "Second Dashboard, Fourth Action!"
+
+      - title: "Person: {{ person.name }}"
+        type: fieldset
+        entity: person
+        contents:
+          - type: display
+            title: " {{ person.name }} is a person"
+            cssStyle:
+              background-color: red;
+
+          - title: "Greet {{ person.name }}"
+            inlineAction:
+              shell: echo "Hello, {{ person.name }}!"
+              icon: ping
