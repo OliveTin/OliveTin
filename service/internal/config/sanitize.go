@@ -19,6 +19,82 @@ func (cfg *Config) Sanitize() {
 	for idx := range cfg.Actions {
 		cfg.Actions[idx].sanitize(cfg)
 	}
+
+	cfg.sanitizeDashboardsForInlineActions()
+}
+
+func (cfg *Config) sanitizeDashboardsForInlineActions() {
+	for _, dashboard := range cfg.Dashboards {
+		cfg.sanitizeDashboardComponentForInlineActions(dashboard)
+	}
+}
+func (cfg *Config) sanitizeDashboardComponentForInlineActions(component *DashboardComponent) {
+	if component == nil {
+		return
+	}
+
+	cfg.sanitizeInlineAction(component)
+	cfg.sanitizeChildDashboardComponents(component)
+}
+
+func (cfg *Config) sanitizeInlineAction(component *DashboardComponent) {
+	if component.InlineAction == nil {
+		return
+	}
+
+	if component.InlineAction.Title == "" {
+		component.InlineAction.Title = component.Title
+	}
+
+	component.InlineAction.sanitize(cfg)
+
+	if cfg.inlineActionExists(component.InlineAction) {
+		return
+	}
+
+	cfg.Actions = append(cfg.Actions, component.InlineAction)
+}
+
+func (cfg *Config) inlineActionExists(action *Action) bool {
+	if cfg.inlineActionPointerExists(action) {
+		return true
+	}
+
+	if cfg.inlineActionIDExists(action) {
+		return true
+	}
+
+	return false
+}
+
+func (cfg *Config) inlineActionPointerExists(action *Action) bool {
+	for _, existingAction := range cfg.Actions {
+		if existingAction == action {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (cfg *Config) inlineActionIDExists(action *Action) bool {
+	if action.ID == "" {
+		return false
+	}
+
+	for _, existingAction := range cfg.Actions {
+		if existingAction.ID == action.ID {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (cfg *Config) sanitizeChildDashboardComponents(component *DashboardComponent) {
+	for _, child := range component.Contents {
+		cfg.sanitizeDashboardComponentForInlineActions(child)
+	}
 }
 
 func (cfg *Config) sanitizeLogLevel() {

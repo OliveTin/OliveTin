@@ -1,0 +1,21 @@
+#
+# Integration Test Config: inline dashboard actions
+#
+
+listenAddressSingleHTTPFrontend: 0.0.0.0:1337
+
+logLevel: "DEBUG"
+checkForUpdates: false
+
+# No top-level actions – actions will be defined inline on dashboard components.
+actions: []
+
+dashboards:
+  - title: Inline Dashboard
+    contents:
+      - title: Inline Dashboard Action
+        inlineAction:
+          shell: date
+          icon: clock
+
+
