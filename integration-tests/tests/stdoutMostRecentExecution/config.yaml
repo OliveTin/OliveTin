@@ -1,0 +1,21 @@
+logLevel: debug
+
+actions:
+  - title: Check status
+    id: status_command
+    shell: |
+      date
+
+    icon: poop
+
+dashboards:
+  - title: Test Dashboard
+    contents:
+      - title: Status Section
+        type: fieldset
+        contents:
+          - type: stdout-most-recent-execution
+            title: status_command
+
+          - title: Check status
+

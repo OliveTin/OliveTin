@@ -13,6 +13,8 @@
         <div v-html="component.title" />
     </div>
 
+    <DashboardComponentMostRecentExecution v-else-if="component.type == 'stdout-most-recent-execution'" :component="component" />
+
     <template v-else-if="component.type == 'fieldset'">
         <template v-for="subcomponent in component.contents" :key="subcomponent.title">
             <DashboardComponent :component="subcomponent" />
@@ -28,6 +30,7 @@
 
 <script setup>
 import ActionButton from '../ActionButton.vue'
+import DashboardComponentMostRecentExecution from './DashboardComponentMostRecentExecution.vue'
 
 const props = defineProps({
     component: {
