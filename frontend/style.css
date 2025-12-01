@@ -21,20 +21,6 @@ section {
 	padding: 0;
 }
 
-.display {
-	border: 1px solid #666;
-	padding: 1em;
-	border-radius: .7em;
-	box-shadow: 0 0 .6em #aaa;
-	text-align: center;
-	font-size: small;
-	display: flex;
-	flex-direction: column;
-	flex-grow: 1;
-	justify-content: center;
-	align-items: center;
-}
-
 aside .flex-row {
 	padding-left: 1em;
 	padding-right: .5em;
