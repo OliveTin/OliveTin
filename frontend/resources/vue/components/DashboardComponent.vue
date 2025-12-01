@@ -1,11 +1,7 @@
 <template>
     <ActionButton v-if="component.type == 'link'" :actionData="component.action" :key="component.title" />
 
-
     <DashboardComponentDirectory v-else-if="component.type == 'directory'" :component="component" />
-    <div v-else-if="component.type == 'directory'">
-    </div>
-
 
     <DashboardComponentDisplay v-else-if="component.type == 'display'" :component="component" />
 

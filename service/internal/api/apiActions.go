@@ -30,18 +30,20 @@ func (rr *DashboardRenderRequest) findActionForEntity(title string, entity *enti
 			continue
 		}
 
-		if entity == nil {
-			if binding.Entity == nil {
-				return buildAction(binding, rr)
-			}
-		} else {
-			if binding.Entity != nil && binding.Entity.UniqueKey == entity.UniqueKey {
-				return buildAction(binding, rr)
-			}
+		if matchesEntity(binding, entity) {
+			return buildAction(binding, rr)
 		}
 	}
 
 	return nil
+}
+
+func matchesEntity(binding *executor.ActionBinding, entity *entities.Entity) bool {
+	if entity == nil {
+		return binding.Entity == nil
+	}
+
+	return binding.Entity != nil && binding.Entity.UniqueKey == entity.UniqueKey
 }
 
 func buildEffectivePolicy(policy *config.ConfigurationPolicy) *apiv1.EffectivePolicy {

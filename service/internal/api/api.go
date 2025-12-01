@@ -1007,17 +1007,25 @@ func findDirectoriesInEntityFieldsets(entityType string, dashboards []*config.Da
 
 func findDirectoriesInEntityFieldsetsRecursive(entityType string, component *config.DashboardComponent, directories *[]string) {
 	if component.Entity == entityType {
-		for _, subitem := range component.Contents {
-			if subitem.Type == "directory" {
-				*directories = append(*directories, subitem.Title)
-			}
-		}
+		collectDirectoriesFromComponent(component, directories)
 	}
 
 	if len(component.Contents) > 0 {
-		for _, subitem := range component.Contents {
-			findDirectoriesInEntityFieldsetsRecursive(entityType, subitem, directories)
+		searchSubcomponentsForDirectories(entityType, component.Contents, directories)
+	}
+}
+
+func collectDirectoriesFromComponent(component *config.DashboardComponent, directories *[]string) {
+	for _, subitem := range component.Contents {
+		if subitem.Type == "directory" {
+			*directories = append(*directories, subitem.Title)
 		}
+	}
+}
+
+func searchSubcomponentsForDirectories(entityType string, contents []*config.DashboardComponent, directories *[]string) {
+	for _, subitem := range contents {
+		findDirectoriesInEntityFieldsetsRecursive(entityType, subitem, directories)
 	}
 }
 

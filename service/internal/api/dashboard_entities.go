@@ -25,11 +25,11 @@ func buildEntityFieldsets(entityTitle string, tpl *config.DashboardComponent, rr
 
 func buildEntityFieldset(tpl *config.DashboardComponent, ent *entities.Entity, rr *DashboardRenderRequest) *apiv1.DashboardComponent {
 	return &apiv1.DashboardComponent{
-		Title:     entities.ParseTemplateWith(tpl.Title, ent),
-		Type:      "fieldset",
-		Contents:  removeFieldsetIfHasNoLinks(buildEntityFieldsetContents(tpl.Contents, ent, tpl.Entity, rr)),
-		CssClass:  entities.ParseTemplateWith(tpl.CssClass, ent),
-		Action:    rr.findAction(tpl.Title),
+		Title:      entities.ParseTemplateWith(tpl.Title, ent),
+		Type:       "fieldset",
+		Contents:   removeFieldsetIfHasNoLinks(buildEntityFieldsetContents(tpl.Contents, ent, tpl.Entity, rr)),
+		CssClass:   entities.ParseTemplateWith(tpl.CssClass, ent),
+		Action:     rr.findAction(tpl.Title),
 		EntityType: tpl.Entity,
 		EntityKey:  ent.UniqueKey,
 	}
@@ -70,23 +70,40 @@ func cloneItem(subitem *config.DashboardComponent, ent *entities.Entity, entityT
 	clone := &apiv1.DashboardComponent{}
 	clone.CssClass = entities.ParseTemplateWith(subitem.CssClass, ent)
 
-	if subitem.Type == "" || subitem.Type == "link" {
-		clone.Type = "link"
-		clone.Title = entities.ParseTemplateWith(subitem.Title, ent)
-		clone.Action = rr.findActionForEntity(subitem.Title, ent)
-	} else {
-		clone.Title = entities.ParseTemplateWith(subitem.Title, ent)
-		clone.Type = subitem.Type
-		
-		if clone.Type == "directory" && ent != nil && entityType != "" {
-			clone.EntityType = entityType
-			clone.EntityKey = ent.UniqueKey
-		}
-		
-		if len(subitem.Contents) > 0 {
-			clone.Contents = buildEntityFieldsetContents(subitem.Contents, ent, entityType, rr)
-		}
+	if isLinkType(subitem.Type) {
+		return cloneLinkItem(subitem, ent, clone, rr)
+	}
+
+	return cloneNonLinkItem(subitem, ent, entityType, clone, rr)
+}
+
+func isLinkType(itemType string) bool {
+	return itemType == "" || itemType == "link"
+}
+
+func cloneLinkItem(subitem *config.DashboardComponent, ent *entities.Entity, clone *apiv1.DashboardComponent, rr *DashboardRenderRequest) *apiv1.DashboardComponent {
+	clone.Type = "link"
+	clone.Title = entities.ParseTemplateWith(subitem.Title, ent)
+	clone.Action = rr.findActionForEntity(subitem.Title, ent)
+	return clone
+}
+
+func cloneNonLinkItem(subitem *config.DashboardComponent, ent *entities.Entity, entityType string, clone *apiv1.DashboardComponent, rr *DashboardRenderRequest) *apiv1.DashboardComponent {
+	clone.Title = entities.ParseTemplateWith(subitem.Title, ent)
+	clone.Type = subitem.Type
+
+	if isDirectoryWithEntity(clone.Type, ent, entityType) {
+		clone.EntityType = entityType
+		clone.EntityKey = ent.UniqueKey
+	}
+
+	if len(subitem.Contents) > 0 {
+		clone.Contents = buildEntityFieldsetContents(subitem.Contents, ent, entityType, rr)
 	}
 
 	return clone
+}
+
+func isDirectoryWithEntity(itemType string, ent *entities.Entity, entityType string) bool {
+	return itemType == "directory" && ent != nil && entityType != ""
 }

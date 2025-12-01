@@ -32,26 +32,38 @@ func getEntityFromRequest(rr *DashboardRenderRequest) *entities.Entity {
 }
 
 func findAndRenderDashboard(rr *DashboardRenderRequest, dashboardTitle string) *apiv1.Dashboard {
+	if dashboard := findDashboardByTitle(rr, dashboardTitle); dashboard != nil {
+		return renderDashboardIfValid(dashboard, rr)
+	}
+
+	return renderDirectoryDashboard(rr, dashboardTitle)
+}
+
+func findDashboardByTitle(rr *DashboardRenderRequest, dashboardTitle string) *config.DashboardComponent {
 	for _, dashboard := range rr.cfg.Dashboards {
-		if dashboard.Title != dashboardTitle {
-			continue
+		if dashboard.Title == dashboardTitle {
+			return dashboard
 		}
-
-		if len(dashboard.Contents) == 0 {
-			logEmptyDashboard(dashboard.Title, rr.AuthenticatedUser.Username)
-			return nil
-		}
-
-		return buildDashboardFromConfig(dashboard, rr)
 	}
-
-	directoryComponent := findDirectoryComponent(rr, dashboardTitle)
-	if directoryComponent != nil {
-		entity := getEntityFromRequest(rr)
-		return buildDashboardFromConfigWithEntity(directoryComponent, rr, entity)
-	}
-
 	return nil
+}
+
+func renderDashboardIfValid(dashboard *config.DashboardComponent, rr *DashboardRenderRequest) *apiv1.Dashboard {
+	if len(dashboard.Contents) == 0 {
+		logEmptyDashboard(dashboard.Title, rr.AuthenticatedUser.Username)
+		return nil
+	}
+	return buildDashboardFromConfig(dashboard, rr)
+}
+
+func renderDirectoryDashboard(rr *DashboardRenderRequest, dashboardTitle string) *apiv1.Dashboard {
+	directoryComponent := findDirectoryComponent(rr, dashboardTitle)
+	if directoryComponent == nil {
+		return nil
+	}
+
+	entity := getEntityFromRequest(rr)
+	return buildDashboardFromConfigWithEntity(directoryComponent, rr, entity)
 }
 
 func findDirectoryComponent(rr *DashboardRenderRequest, title string) *config.DashboardComponent {
@@ -64,11 +76,19 @@ func findDirectoryComponent(rr *DashboardRenderRequest, title string) *config.Da
 }
 
 func searchDirectoryInComponent(component *config.DashboardComponent, title string) *config.DashboardComponent {
-	if component.Title == title && len(component.Contents) > 0 && component.Type != "fieldset" {
+	if isMatchingDirectory(component, title) {
 		return component
 	}
 
-	for _, subitem := range component.Contents {
+	return searchDirectoryInSubcomponents(component.Contents, title)
+}
+
+func isMatchingDirectory(component *config.DashboardComponent, title string) bool {
+	return component.Title == title && len(component.Contents) > 0 && component.Type != "fieldset"
+}
+
+func searchDirectoryInSubcomponents(contents []*config.DashboardComponent, title string) *config.DashboardComponent {
+	for _, subitem := range contents {
 		if found := searchDirectoryInComponent(subitem, title); found != nil {
 			return found
 		}
@@ -252,24 +272,39 @@ func getDashboardComponentIcon(item *config.DashboardComponent, cfg *config.Conf
 }
 
 func getDashboardComponentType(item *config.DashboardComponent, action *apiv1.Action) string {
+	if hasContents(item) {
+		return getTypeForComponentWithContents(item)
+	}
+
+	if isAllowedType(item.Type) {
+		return item.Type
+	}
+
+	return getDefaultType(action)
+}
+
+func hasContents(item *config.DashboardComponent) bool {
+	return len(item.Contents) > 0
+}
+
+func getTypeForComponentWithContents(item *config.DashboardComponent) string {
+	if item.Type != "fieldset" {
+		return "directory"
+	}
+	return "fieldset"
+}
+
+func isAllowedType(itemType string) bool {
 	allowedTypes := []string{
 		"stdout-most-recent-execution",
 		"display",
 	}
+	return slices.Contains(allowedTypes, itemType)
+}
 
-	if len(item.Contents) > 0 {
-		if item.Type != "fieldset" {
-			return "directory"
-		}
-
-		return "fieldset"
-	} else if slices.Contains(allowedTypes, item.Type) {
-		return item.Type
-	}
-
+func getDefaultType(action *apiv1.Action) string {
 	if action == nil {
 		return "display"
 	}
-
 	return "link"
 }
