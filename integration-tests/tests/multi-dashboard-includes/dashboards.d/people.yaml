@@ -12,7 +12,7 @@ dashboards:
 
       - type: action
         inlineAction:
-          title: Forth Action
+          title: Fourth Action
           shell: echo "Second Dashboard, Fourth Action!"
 
       - title: "Person: {{ person.name }}"
