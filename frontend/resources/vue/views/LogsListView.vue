@@ -46,9 +46,7 @@
                 </span>
               </td>
               <td class="exit-code">
-                <span :class="getStatusClass(log) + ' annotation'">
-                  {{ getStatusText(log) }}
-                </span>
+                <ActionStatusDisplay :logEntry="log" />
               </td>
             </tr>
           </tbody>
@@ -70,6 +68,7 @@ import { ref, computed, onMounted } from 'vue'
 import Pagination from 'picocrank/vue/components/Pagination.vue'
 import Section from 'picocrank/vue/components/Section.vue'
 import { useI18n } from 'vue-i18n'
+import ActionStatusDisplay from '../components/ActionStatusDisplay.vue'
 
 const logs = ref([])
 const searchText = ref('')
@@ -132,20 +131,6 @@ function formatTimestamp(timestamp) {
   } catch (err) {
     return timestamp
   }
-}
-
-function getStatusClass(log) {
-  if (log.timedOut) return 'status-timeout'
-  if (log.blocked) return 'status-blocked'
-  if (log.exitCode !== 0) return 'status-error'
-  return 'status-success'
-}
-
-function getStatusText(log) {
-  if (log.timedOut) return t('logs.timed-out')
-  if (log.blocked) return t('logs.blocked')
-  if (log.exitCode !== 0) return `${t('logs.exit-code')} ${log.exitCode}`
-  return t('logs.completed')
 }
 
 function handlePageChange(page) {
@@ -225,22 +210,6 @@ onMounted(() => {
 .annotation {
   font-weight: 500;
   font-size: smaller;
-}
-
-.status-success {
-  color: var(--karma-good-fg);
-}
-
-.status-error {
-  color: var(--karma-bad-fg);
-}
-
-.status-timeout {
-  color: var(--karma-warning-fg);
-}
-
-.status-blocked {
-  color: var(--karma-neutral-fg);
 }
 
 .empty-state {

@@ -36,6 +36,7 @@ message Entity {
 	string title = 1;
     string unique_key = 2;
     string type = 3;
+    repeated string directories = 4;
 }
 
 message GetDashboardResponse {
@@ -51,6 +52,8 @@ message EffectivePolicy {
 
 message GetDashboardRequest {
 	string title = 1;
+	string entity_type = 2;
+	string entity_key = 3;
 }
 
 message Dashboard {
@@ -65,6 +68,8 @@ message DashboardComponent {
 	string icon = 4;
 	string css_class = 5;
 	Action action = 6;
+	string entity_type = 7;
+	string entity_key = 8;
 }
 
 message StartActionRequest {

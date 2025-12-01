@@ -1,17 +1,11 @@
 <template>
     <ActionButton v-if="component.type == 'link'" :actionData="component.action" :key="component.title" />
 
-    <div v-else-if="component.type == 'directory'">
-        <router-link :to="{ name: 'Dashboard', params: { title: component.title } }" class="dashboard-link">
-            <button>
-                {{ component.title }}
-            </button>
-        </router-link>
-    </div>
+    <DashboardComponentDirectory v-else-if="component.type == 'directory'" :component="component" />
 
-    <div v-else-if="component.type == 'display'" class="display">
-        <div v-html="component.title" />
-    </div>
+    <DashboardComponentDisplay v-else-if="component.type == 'display'" :component="component" />
+
+    <DashboardComponentMostRecentExecution v-else-if="component.type == 'stdout-most-recent-execution'" :component="component" />
 
     <template v-else-if="component.type == 'fieldset'">
         <template v-for="subcomponent in component.contents" :key="subcomponent.title">
@@ -28,6 +22,9 @@
 
 <script setup>
 import ActionButton from '../ActionButton.vue'
+import DashboardComponentMostRecentExecution from './DashboardComponentMostRecentExecution.vue'
+import DashboardComponentDirectory from './DashboardComponentDirectory.vue'
+import DashboardComponentDisplay from './DashboardComponentDisplay.vue'
 
 const props = defineProps({
     component: {

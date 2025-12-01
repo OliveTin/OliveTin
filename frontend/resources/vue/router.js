@@ -13,7 +13,7 @@ const routes = [
     meta: { title: 'Actions', icon: DashboardSquare01Icon }
   },
   {
-    path: '/dashboards/:title',
+    path: '/dashboards/:title/:entityType?/:entityKey?',
     name: 'Dashboard',
     component: () => import('./Dashboard.vue'),
     props: true,
@@ -128,7 +128,8 @@ const router = createRouter({
 // Navigation guard to update page title
 router.beforeEach((to, from, next) => {
   if (to.meta && to.meta.title) {
-    document.title = to.meta.title + " - OliveTin"
+    const pageTitle = window.initResponse?.pageTitle || 'OliveTin'
+    document.title = to.meta.title + " - " + pageTitle
   }
   next()
 })

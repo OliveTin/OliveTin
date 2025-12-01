@@ -11,7 +11,7 @@ import { createConnectTransport } from '@connectrpc/connect-web'
 
 import { OliveTinApiService } from './resources/scripts/gen/olivetin/api/v1/olivetin_pb'
 
-import { createApp } from 'vue'
+import { createApp, h } from 'vue'
 import { createI18n } from 'vue-i18n'
 
 import router from './resources/vue/router.js'
@@ -91,12 +91,33 @@ function setupVue (i18nSettings) {
   app.mount('#app')
 }
 
+function setupErrorDisplay (errorMessage) {
+  const ErrorApp = {
+    render() {
+      return h('section', { class: 'bad', style: 'padding: 2em; text-align: center; margin: 2em auto;' }, [
+        h('h2', 'OliveTin Init Failed'),
+        h('p', errorMessage),
+        h('p', 'Please check your browser console for more details.')
+      ])
+    }
+  }
+
+  const app = createApp(ErrorApp)
+  app.mount('#app')
+}
+
 async function main () {
-  const i18nSettings = await initClient()
+  try {
+    const i18nSettings = await initClient()
 
-  initWebsocket()
+    initWebsocket()
 
-  setupVue(i18nSettings)
+    setupVue(i18nSettings)
+  } catch (err) {
+    const errorMessage = err.message || 'Failed to initialize. Please check your configuration and try again.'
+    console.error('Init failed:', err)
+    setupErrorDisplay(errorMessage)
+  }
 }
 
 main()

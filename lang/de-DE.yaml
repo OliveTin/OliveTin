@@ -21,6 +21,23 @@ translations:
   logs.exit-code: Ausführungscode
   logs.completed: Abgeschlossen
   logs.clear-filter: Suchfilter löschen
+  diagnostics.get-support: Unterstützung erhalten
+  diagnostics.get-support-description: Wenn Sie Probleme mit OliveTin haben und eine Support-Anfrage stellen möchten, wäre es sehr hilfreich, einen sosreport von dieser Seite einzufügen.
+  diagnostics.where-to-find-help: Wo Sie Hilfe finden
+  diagnostics.ssh: SSH
+  diagnostics.found-key: Schlüssel gefunden
+  diagnostics.found-config: Konfiguration gefunden
+  diagnostics.sos-report: SOS-Bericht
+  diagnostics.sos-report-description: Dieser Abschnitt ermöglicht es Ihnen, einen detaillierten Bericht über Ihre Konfiguration und Umgebung zu erstellen. Es ist eine gute Idee, dies bei einer Support-Anfrage einzufügen.
+  diagnostics.sos-report-docs: sosreport Dokumentation
+  diagnostics.generate-sos-report: SOS-Bericht erstellen
+  diagnostics.browser-info: Browser-Informationen
+  diagnostics.browser-info-description: Dieser Abschnitt ermöglicht es Ihnen, einen detaillierten Bericht über Ihre Browser-Informationen zu erstellen. Dies kann bei der Fehlerbehebung von browser-spezifischen Problemen hilfreich sein.
+  diagnostics.generate-browser-info: Browser-Informationen erstellen
+  diagnostics.copy-to-clipboard: In Zwischenablage kopieren
+  diagnostics.copied: Kopiert!
+  diagnostics.unknown: Unbekannt
+  diagnostics.useragent-data-error: Fehler beim Abrufen von userAgentData
   return-to-index: Zurück zur Startseite
   search-filter: Filter aktuelle Seite
   language-dialog.title: Sprache auswählen

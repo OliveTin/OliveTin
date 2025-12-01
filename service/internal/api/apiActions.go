@@ -13,19 +13,37 @@ type DashboardRenderRequest struct {
 	AuthenticatedUser *authpublic.AuthenticatedUser
 	cfg               *config.Config
 	ex                *executor.Executor
+	EntityType        string
+	EntityKey         string
 }
 
 func (rr *DashboardRenderRequest) findAction(title string) *apiv1.Action {
+	return rr.findActionForEntity(title, nil)
+}
+
+func (rr *DashboardRenderRequest) findActionForEntity(title string, entity *entities.Entity) *apiv1.Action {
 	rr.ex.MapActionIdToBindingLock.RLock()
 	defer rr.ex.MapActionIdToBindingLock.RUnlock()
 
 	for _, binding := range rr.ex.MapActionIdToBinding {
-		if binding.Action.Title == title {
+		if binding.Action.Title != title {
+			continue
+		}
+
+		if matchesEntity(binding, entity) {
 			return buildAction(binding, rr)
 		}
 	}
 
 	return nil
+}
+
+func matchesEntity(binding *executor.ActionBinding, entity *entities.Entity) bool {
+	if entity == nil {
+		return binding.Entity == nil
+	}
+
+	return binding.Entity != nil && binding.Entity.UniqueKey == entity.UniqueKey
 }
 
 func buildEffectivePolicy(policy *config.ConfigurationPolicy) *apiv1.EffectivePolicy {
