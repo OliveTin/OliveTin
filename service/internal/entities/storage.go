@@ -120,7 +120,7 @@ func findEntityTitle(data any) string {
 			keys[lookupKey] = k
 		}
 
-		for _, key := range []string{"title", "name", "id"} {
+		for _, key := range []string{"title", "name", "id", "hostname", "host", "label"} {
 			if lookupKey, exists := keys[strings.ToLower(key)]; exists {
 				if value, ok := mapData[lookupKey]; ok {
 					if valueStr, ok := value.(string); ok {

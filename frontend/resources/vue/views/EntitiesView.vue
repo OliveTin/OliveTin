@@ -21,10 +21,14 @@
 
 				<h3>Used on Dashboards:</h3>
 				<ul>
-					<li v-for="dash in def.usedOnDashboards">
-						<router-link :to="{ name: 'Dashboard', params: { title: dash } }">
-							{{ dash }}
+					<li v-for="dash in filteredDashboards(def.usedOnDashboards)" :key="dash">
+						<template v-if="isEntityDirectory(dash)">
+							{{ getDashboardTitle(dash) }} <span class="entity-directory-label">[Entity Directory]</span>
+						</template>
+						<router-link v-else-if="!dash.includes('entity:')" :to="{ name: 'Dashboard', params: { title: getDashboardTitle(dash) } }">
+							{{ getDashboardTitle(dash) }}
 						</router-link>
+						<span v-else>{{ dash }}</span>
 					</li>
 				</ul>
 			</div>
@@ -42,6 +46,21 @@
 	    const ret = await window.client.getEntities()
 
         entityDefinitions.value = ret.entityDefinitions
+	}
+
+	function filteredDashboards(dashboards) {
+		return dashboards.filter(d => d && !d.includes('{{'))
+	}
+
+	function isEntityDirectory(dashboardTitle) {
+		return dashboardTitle.endsWith(' [Entity Directory]')
+	}
+
+	function getDashboardTitle(dashboardTitle) {
+		if (isEntityDirectory(dashboardTitle)) {
+			return dashboardTitle.slice(0, -' [Entity Directory]'.length)
+		}
+		return dashboardTitle
 	}
 
     onMounted(() => {

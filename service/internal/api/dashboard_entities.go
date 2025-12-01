@@ -84,7 +84,16 @@ func isLinkType(itemType string) bool {
 func cloneLinkItem(subitem *config.DashboardComponent, ent *entities.Entity, clone *apiv1.DashboardComponent, rr *DashboardRenderRequest) *apiv1.DashboardComponent {
 	clone.Type = "link"
 	clone.Title = entities.ParseTemplateWith(subitem.Title, ent)
-	clone.Action = rr.findActionForEntity(subitem.Title, ent)
+	// Prefer an entity-specific action when available, but fall back to a
+	// non-entity-scoped action with the same title. This allows inline actions
+	// defined inside entity dashboards to work without requiring an explicit
+	// entity binding.
+	action := rr.findActionForEntity(subitem.Title, ent)
+	if action == nil {
+		action = rr.findAction(subitem.Title)
+	}
+
+	clone.Action = action
 	return clone
 }
 

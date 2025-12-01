@@ -1,0 +1,12 @@
+dashboards:
+  - title: First Dashboard
+    contents:
+      - type: action
+        inlineAction:
+          title: First Action
+          shell: echo "First Dashboard, First Action!"
+
+      - type: action
+        inlineAction:
+          title: Second Action
+          shell: echo "First Dashboard, Second Action!"
