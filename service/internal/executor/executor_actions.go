@@ -81,7 +81,15 @@ func findDashboardActionTitles(req *RebuildActionMapRequest) {
 //gocyclo:ignore
 func recurseDashboardForActionTitles(component *config.DashboardComponent, req *RebuildActionMapRequest) {
 	for _, sub := range component.Contents {
-		if sub.Type == "link" || sub.Type == "" {
+		if sub.InlineAction != nil {
+			title := sub.Title
+			if title == "" {
+				title = sub.InlineAction.Title
+			}
+			if title != "" {
+				req.DashboardActionTitles = append(req.DashboardActionTitles, title)
+			}
+		} else if sub.Type == "link" || sub.Type == "" {
 			req.DashboardActionTitles = append(req.DashboardActionTitles, sub.Title)
 		}
 

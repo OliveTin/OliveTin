@@ -151,6 +151,11 @@ export declare type Entity = Message<"olivetin.api.v1.Entity"> & {
    * @generated from field: repeated string directories = 4;
    */
   directories: string[];
+
+  /**
+   * @generated from field: map<string, string> fields = 5;
+   */
+  fields: { [key: string]: string };
 };
 
 /**

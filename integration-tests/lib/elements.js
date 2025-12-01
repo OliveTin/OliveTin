@@ -3,14 +3,10 @@ import fs from 'fs'
 import { expect } from 'chai'
 import { Condition } from 'selenium-webdriver'
 
-export async function getActionButtons (dashboardTitle = null) {
-  // New Vue UI renders action buttons using ActionButton.vue structure
-  // Each button lives under a container with class .action-button
-  if (dashboardTitle == null) {
-    return await webdriver.findElements(By.css('.action-button button'))
-  } else {
-    return await webdriver.findElements(By.css('section[title="' + dashboardTitle + '"] .action-button button'))
-  }
+export async function getActionButtons () {
+  // Currently, only the active dashboard's contents are rendered,
+  // so we don't need to scope the selector by dashboard title.
+  return await webdriver.findElements(By.css('.action-button button'))
 }
 
 export async function getExecutionDialogOutput() {

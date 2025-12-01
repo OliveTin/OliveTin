@@ -1,0 +1,7 @@
+
+include: dashboards.d
+
+actions:
+  - title: Base Action
+    shell: echo "base"
+    icon: ping

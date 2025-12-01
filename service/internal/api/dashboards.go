@@ -185,10 +185,6 @@ func removeNulls(components []*apiv1.DashboardComponent) []*apiv1.DashboardCompo
 	return ret
 }
 
-func getDashboardComponentContents(dashboard *config.DashboardComponent, rr *DashboardRenderRequest) []*apiv1.DashboardComponent {
-	return getDashboardComponentContentsWithEntity(dashboard, rr, nil)
-}
-
 func getDashboardComponentContentsWithEntity(dashboard *config.DashboardComponent, rr *DashboardRenderRequest, entity *entities.Entity) []*apiv1.DashboardComponent {
 	ret := make([]*apiv1.DashboardComponent, 0)
 	rootFieldset := createRootFieldset()
@@ -206,10 +202,6 @@ func createRootFieldset() *apiv1.DashboardComponent {
 		Title:    "Actions",
 		Contents: make([]*apiv1.DashboardComponent, 0),
 	}
-}
-
-func processDashboardSubitem(subitem *config.DashboardComponent, rr *DashboardRenderRequest, ret *[]*apiv1.DashboardComponent, rootFieldset *apiv1.DashboardComponent) {
-	processDashboardSubitemWithEntity(subitem, rr, ret, rootFieldset, nil)
 }
 
 func processDashboardSubitemWithEntity(subitem *config.DashboardComponent, rr *DashboardRenderRequest, ret *[]*apiv1.DashboardComponent, rootFieldset *apiv1.DashboardComponent, entity *entities.Entity) {
@@ -230,10 +222,6 @@ func appendRootFieldsetIfNeeded(ret []*apiv1.DashboardComponent, rootFieldset *a
 		ret = append(ret, rootFieldset)
 	}
 	return ret
-}
-
-func buildDashboardComponentSimple(subitem *config.DashboardComponent, rr *DashboardRenderRequest) *apiv1.DashboardComponent {
-	return buildDashboardComponentSimpleWithEntity(subitem, rr, nil)
 }
 
 func buildDashboardComponentSimpleWithEntity(subitem *config.DashboardComponent, rr *DashboardRenderRequest, entity *entities.Entity) *apiv1.DashboardComponent {

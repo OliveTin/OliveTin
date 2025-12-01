@@ -30,7 +30,7 @@ func migrateLegacyEntityProperties(rawShellCommand string) string {
 			log.WithFields(log.Fields{
 				"old": entityName,
 				"new": ".CurrentEntity",
-			}).Warnf("Legacy entity variable name found, changing to CurrentEntity")
+			}).Debugf("Legacy entity variable name found, changing to CurrentEntity")
 			continue
 		}
 
@@ -42,7 +42,7 @@ func migrateLegacyEntityProperties(rawShellCommand string) string {
 			log.WithFields(log.Fields{
 				"old": argName,
 				"new": ".CurrentEntity." + argName,
-			}).Warnf("Legacy variable name found, changing to CurrentEntity")
+			}).Debugf("Legacy variable name found, changing to CurrentEntity")
 		}
 	}
 
@@ -59,7 +59,7 @@ func migrateLegacyArgumentNames(rawShellCommand string) string {
 			log.WithFields(log.Fields{
 				"old": argName,
 				"new": ".Arguments." + argName,
-			}).Warnf("Legacy variable name found, changing to Argument")
+			}).Debugf("Legacy variable name found, changing to Argument")
 
 			rawShellCommand = strings.ReplaceAll(rawShellCommand, argName, ".Arguments."+argName)
 		}
