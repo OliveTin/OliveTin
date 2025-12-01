@@ -44,6 +44,6 @@ describe('config: sleep', function () {
 
     await killButton.click()
 
-    await requireExecutionDialogStatus(webdriver, "Completed Exit code: -1")
+    await requireExecutionDialogStatus(webdriver, "Completed (Exit code: -1)")
   })
 })
