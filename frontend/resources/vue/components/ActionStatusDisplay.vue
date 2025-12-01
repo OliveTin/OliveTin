@@ -1,7 +1,7 @@
 <template>
-    <span>
-        <span :class="['action-status', statusClass]">{{ statusText }}</span><span>{{ exitCodeText }}</span>
-    </span>
+    <div :class = "statusClass + ' annotation'">
+        <span>{{ statusText }}</span><span>{{ exitCodeText }}</span>
+    </div>
 
 </template>
 
@@ -35,11 +35,14 @@ const statusText = computed(() => {
 const exitCodeText = computed(() => {
     const logEntry = props.logEntry
     if (!logEntry) return ''
+    if (logEntry.exitCode === 0) {
+        return ''
+    }
     if (logEntry.executionFinished) {
         if (logEntry.blocked || logEntry.timedOut) {
             return ''
         }
-        return ' Exit code: ' + logEntry.exitCode
+        return ' (Exit code: ' + logEntry.exitCode + ')'
     }
     return ''
 })
@@ -49,15 +52,35 @@ const statusClass = computed(() => {
     if (!logEntry) return ''
     if (logEntry.executionFinished) {
         if (logEntry.blocked) {
-            return 'action-blocked'
+            return 'status-blocked'
         } else if (logEntry.timedOut) {
-            return 'action-timeout'
+            return 'status-timeout'
         } else if (logEntry.exitCode === 0) {
-            return 'action-success'
+            return 'status-success'
         } else {
-            return 'action-nonzero-exit'
+            return 'status-nonzero-exit'
         }
     }
     return ''
 })
 </script>
+
+<style scoped>
+.status-success {
+  color: var(--karma-good-fg);
+}
+
+.status-nonzero-exit {
+  color: var(--karma-bad-fg);
+}
+
+.status-timeout {
+  color: var(--karma-warning-fg);
+}
+
+.status-blocked {
+  color: #ca79ff;
+}
+
+
+</style>

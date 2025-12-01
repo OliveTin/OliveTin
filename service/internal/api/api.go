@@ -363,15 +363,25 @@ func (api *oliveTinAPI) Logout(ctx ctx.Context, req *connect.Request[apiv1.Logou
 
 	response := connect.NewResponse(&apiv1.LogoutResponse{})
 
-	// Clear the authentication cookie by setting it to expire
-	cookie := &http.Cookie{
+	// Clear the local authentication cookie by setting it to expire
+	localCookie := &http.Cookie{
 		Name:     "olivetin-sid-local",
 		Value:    "",
 		MaxAge:   -1, // This tells the browser to delete the cookie
 		HttpOnly: true,
 		Path:     "/",
 	}
-	response.Header().Set("Set-Cookie", cookie.String())
+	response.Header().Set("Set-Cookie", localCookie.String())
+
+	// Clear the OAuth2 authentication cookie by setting it to expire
+	oauth2Cookie := &http.Cookie{
+		Name:     "olivetin-sid-oauth",
+		Value:    "",
+		MaxAge:   -1, // This tells the browser to delete the cookie
+		HttpOnly: true,
+		Path:     "/",
+	}
+	response.Header().Add("Set-Cookie", oauth2Cookie.String())
 
 	return response, nil
 }
