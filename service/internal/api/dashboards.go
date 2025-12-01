@@ -5,6 +5,7 @@ import (
 
 	apiv1 "github.com/OliveTin/OliveTin/gen/olivetin/api/v1"
 	config "github.com/OliveTin/OliveTin/internal/config"
+	entities "github.com/OliveTin/OliveTin/internal/entities"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/exp/slices"
 )
@@ -15,6 +16,19 @@ func renderDashboard(rr *DashboardRenderRequest, dashboardTitle string) *apiv1.D
 	}
 
 	return findAndRenderDashboard(rr, dashboardTitle)
+}
+
+func getEntityFromRequest(rr *DashboardRenderRequest) *entities.Entity {
+	if rr.EntityType == "" || rr.EntityKey == "" {
+		return nil
+	}
+
+	entityInstances := entities.GetEntityInstances(rr.EntityType)
+	if entity, ok := entityInstances[rr.EntityKey]; ok {
+		return entity
+	}
+
+	return nil
 }
 
 func findAndRenderDashboard(rr *DashboardRenderRequest, dashboardTitle string) *apiv1.Dashboard {
@@ -31,6 +45,35 @@ func findAndRenderDashboard(rr *DashboardRenderRequest, dashboardTitle string) *
 		return buildDashboardFromConfig(dashboard, rr)
 	}
 
+	directoryComponent := findDirectoryComponent(rr, dashboardTitle)
+	if directoryComponent != nil {
+		entity := getEntityFromRequest(rr)
+		return buildDashboardFromConfigWithEntity(directoryComponent, rr, entity)
+	}
+
+	return nil
+}
+
+func findDirectoryComponent(rr *DashboardRenderRequest, title string) *config.DashboardComponent {
+	for _, dashboard := range rr.cfg.Dashboards {
+		if component := searchDirectoryInComponent(dashboard, title); component != nil {
+			return component
+		}
+	}
+	return nil
+}
+
+func searchDirectoryInComponent(component *config.DashboardComponent, title string) *config.DashboardComponent {
+	if component.Title == title && len(component.Contents) > 0 && component.Type != "fieldset" {
+		return component
+	}
+
+	for _, subitem := range component.Contents {
+		if found := searchDirectoryInComponent(subitem, title); found != nil {
+			return found
+		}
+	}
+
 	return nil
 }
 
@@ -42,9 +85,13 @@ func logEmptyDashboard(dashboardTitle, username string) {
 }
 
 func buildDashboardFromConfig(dashboard *config.DashboardComponent, rr *DashboardRenderRequest) *apiv1.Dashboard {
+	return buildDashboardFromConfigWithEntity(dashboard, rr, nil)
+}
+
+func buildDashboardFromConfigWithEntity(dashboard *config.DashboardComponent, rr *DashboardRenderRequest, entity *entities.Entity) *apiv1.Dashboard {
 	return &apiv1.Dashboard{
 		Title:    dashboard.Title,
-		Contents: sortActions(removeNulls(getDashboardComponentContents(dashboard, rr))),
+		Contents: sortActions(removeNulls(getDashboardComponentContentsWithEntity(dashboard, rr, entity))),
 	}
 }
 
@@ -119,11 +166,15 @@ func removeNulls(components []*apiv1.DashboardComponent) []*apiv1.DashboardCompo
 }
 
 func getDashboardComponentContents(dashboard *config.DashboardComponent, rr *DashboardRenderRequest) []*apiv1.DashboardComponent {
+	return getDashboardComponentContentsWithEntity(dashboard, rr, nil)
+}
+
+func getDashboardComponentContentsWithEntity(dashboard *config.DashboardComponent, rr *DashboardRenderRequest, entity *entities.Entity) []*apiv1.DashboardComponent {
 	ret := make([]*apiv1.DashboardComponent, 0)
 	rootFieldset := createRootFieldset()
 
 	for _, subitem := range dashboard.Contents {
-		processDashboardSubitem(subitem, rr, &ret, rootFieldset)
+		processDashboardSubitemWithEntity(subitem, rr, &ret, rootFieldset, entity)
 	}
 
 	return appendRootFieldsetIfNeeded(ret, rootFieldset)
@@ -138,15 +189,19 @@ func createRootFieldset() *apiv1.DashboardComponent {
 }
 
 func processDashboardSubitem(subitem *config.DashboardComponent, rr *DashboardRenderRequest, ret *[]*apiv1.DashboardComponent, rootFieldset *apiv1.DashboardComponent) {
+	processDashboardSubitemWithEntity(subitem, rr, ret, rootFieldset, nil)
+}
+
+func processDashboardSubitemWithEntity(subitem *config.DashboardComponent, rr *DashboardRenderRequest, ret *[]*apiv1.DashboardComponent, rootFieldset *apiv1.DashboardComponent, entity *entities.Entity) {
 	if subitem.Type != "fieldset" {
-		rootFieldset.Contents = append(rootFieldset.Contents, buildDashboardComponentSimple(subitem, rr))
+		rootFieldset.Contents = append(rootFieldset.Contents, buildDashboardComponentSimpleWithEntity(subitem, rr, entity))
 		return
 	}
 
 	if subitem.Entity != "" {
 		*ret = append(*ret, buildEntityFieldsets(subitem.Entity, subitem, rr)...)
 	} else {
-		*ret = append(*ret, buildDashboardComponentSimple(subitem, rr))
+		*ret = append(*ret, buildDashboardComponentSimpleWithEntity(subitem, rr, entity))
 	}
 }
 
@@ -158,13 +213,31 @@ func appendRootFieldsetIfNeeded(ret []*apiv1.DashboardComponent, rootFieldset *a
 }
 
 func buildDashboardComponentSimple(subitem *config.DashboardComponent, rr *DashboardRenderRequest) *apiv1.DashboardComponent {
+	return buildDashboardComponentSimpleWithEntity(subitem, rr, nil)
+}
+
+func buildDashboardComponentSimpleWithEntity(subitem *config.DashboardComponent, rr *DashboardRenderRequest, entity *entities.Entity) *apiv1.DashboardComponent {
+	var contents []*apiv1.DashboardComponent
+
+	if len(subitem.Contents) > 0 {
+		contents = getDashboardComponentContentsWithEntity(subitem, rr, entity)
+	}
+
+	action := rr.findActionForEntity(subitem.Title, entity)
+	componentType := getDashboardComponentType(subitem, action)
+
+	title := subitem.Title
+	if entity != nil {
+		title = entities.ParseTemplateWith(subitem.Title, entity)
+	}
+
 	newitem := &apiv1.DashboardComponent{
-		Title:    subitem.Title,
-		Type:     getDashboardComponentType(subitem),
-		Contents: getDashboardComponentContents(subitem, rr),
+		Title:    title,
+		Type:     componentType,
+		Contents: contents,
 		Icon:     getDashboardComponentIcon(subitem, rr.cfg),
 		CssClass: subitem.CssClass,
-		Action:   rr.findAction(subitem.Title),
+		Action:   action,
 	}
 
 	return newitem
@@ -178,7 +251,7 @@ func getDashboardComponentIcon(item *config.DashboardComponent, cfg *config.Conf
 	return item.Icon
 }
 
-func getDashboardComponentType(item *config.DashboardComponent) string {
+func getDashboardComponentType(item *config.DashboardComponent, action *apiv1.Action) string {
 	allowedTypes := []string{
 		"stdout-most-recent-execution",
 		"display",
@@ -192,6 +265,10 @@ func getDashboardComponentType(item *config.DashboardComponent) string {
 		return "fieldset"
 	} else if slices.Contains(allowedTypes, item.Type) {
 		return item.Type
+	}
+
+	if action == nil {
+		return "display"
 	}
 
 	return "link"

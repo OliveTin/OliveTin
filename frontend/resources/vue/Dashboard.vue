@@ -11,13 +11,39 @@
     </section>
     <template v-else-if="dashboard">
         <section v-if="dashboard.contents.length == 0">
+            <div class="back-button-container" v-if="isDirectory">
+                <button @click="goBack" class="back-button">
+                    <HugeiconsIcon :icon="ArrowLeftIcon" width="1.2em" height="1.2em" />
+                    <span>Back</span>
+                </button>
+            </div>
             <h2>{{ dashboard.title }}</h2>
             <p style = "text-align: center" class = "padding">This dashboard is empty.</p>
         </section>
 
         <section class="transparent" v-else>
+            <div class="back-button-container" v-if="isDirectory">
+                <button @click="goBack" class="back-button">
+                    <HugeiconsIcon :icon="ArrowLeftIcon" width="1.2em" height="1.2em" />
+                    <span>Back</span>
+                </button>
+            </div>
             <div class = "dashboard-row" v-for="component in dashboard.contents" :key="component.title">
-                <h2 v-if = "dashboard.title != 'Default'">{{ component.title }}</h2>
+                <h2 v-if = "dashboard.title != 'Default'">
+                    <router-link 
+                        v-if="component.entityType && component.entityKey" 
+                        :to="{ 
+                            name: 'EntityDetails', 
+                            params: { 
+                                entityType: component.entityType,
+                                entityKey: component.entityKey
+                            }
+                        }"
+                        class="entity-link">
+                        {{ component.title }}
+                    </router-link>
+                    <span v-else>{{ component.title }}</span>
+                </h2>
 
                 <fieldset>
                     <template v-for="subcomponent in component.contents">
@@ -31,22 +57,53 @@
 
 <script setup>
 import DashboardComponent from './components/DashboardComponent.vue'
-import { onMounted, onUnmounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { HugeiconsIcon } from '@hugeicons/vue'
-import { Loading03Icon } from '@hugeicons/core-free-icons'
+import { Loading03Icon, ArrowLeftIcon } from '@hugeicons/core-free-icons'
 
 const props = defineProps({
     title: {
         type: String,
         required: false
+    },
+    entityType: {
+        type: String,
+        required: false
+    },
+    entityKey: {
+        type: String,
+        required: false
     }
 })
 
+const router = useRouter()
 const dashboard = ref(null)
 const loadingTime = ref(0)
 const initError = ref(null)
 let loadingTimer = null
 let checkInitInterval = null
+
+const isDirectory = computed(() => {
+    if (!dashboard.value || !window.initResponse) {
+        return false
+    }
+    const rootDashboards = window.initResponse.rootDashboards || []
+    return !rootDashboards.includes(dashboard.value.title) && dashboard.value.title !== 'Actions'
+})
+
+function goBack() {
+    if (window.history.length > 1) {
+        router.back()
+    } else {
+        const rootDashboards = window.initResponse?.rootDashboards || []
+        if (rootDashboards.length > 0) {
+            router.push({ name: 'Dashboard', params: { title: rootDashboards[0] } })
+        } else {
+            router.push({ name: 'Actions' })
+        }
+    }
+}
 
 async function getDashboard() {
     let title = props.title
@@ -58,9 +115,16 @@ async function getDashboard() {
     }
 
     try {
-        const ret = await window.client.getDashboard({
+        const request = {
             title: title,
-        })
+        }
+        
+        if (props.entityType && props.entityKey) {
+            request.entityType = props.entityType
+            request.entityKey = props.entityKey
+        }
+        
+        const ret = await window.client.getDashboard(request)
 
         if (!ret || !ret.dashboard) {
             throw new Error('No dashboard found')
@@ -166,6 +230,17 @@ h2 {
     grid-column: 1 / -1;
 }
 
+h2 .entity-link {
+	color: inherit;
+	text-decoration: none;
+	transition: opacity 0.2s;
+}
+
+h2 .entity-link:hover {
+	opacity: 0.7;
+	text-decoration: underline;
+}
+
 fieldset {
 	display: grid;
 	grid-template-columns: repeat(auto-fit, 180px);
@@ -181,6 +256,43 @@ fieldset {
     }
     to {
         transform: rotate(360deg);
+    }
+}
+
+.back-button-container {
+    display: flex;
+    justify-content: flex-start;
+    padding: 1em;
+    padding-bottom: 0;
+}
+
+.back-button {
+    display: flex;
+    align-items: center;
+    gap: 0.5em;
+    padding: 0.5em 1em;
+    background-color: var(--bg, #fff);
+    border: 1px solid var(--border-color, #ccc);
+    border-radius: 0.5em;
+    cursor: pointer;
+    font-size: 0.9em;
+    box-shadow: 0 0 .3em rgba(0, 0, 0, 0.1);
+    transition: background-color 0.2s, box-shadow 0.2s;
+}
+
+.back-button:hover {
+    background-color: var(--bg-hover, #f5f5f5);
+    box-shadow: 0 0 .5em rgba(0, 0, 0, 0.15);
+}
+
+@media (prefers-color-scheme: dark) {
+    .back-button {
+        background-color: var(--bg, #111);
+        border-color: var(--border-color, #333);
+    }
+
+    .back-button:hover {
+        background-color: var(--bg-hover, #222);
     }
 }
 </style>

@@ -415,7 +415,13 @@ func (api *oliveTinAPI) GetDashboard(ctx ctx.Context, req *connect.Request[apiv1
 		return nil, err
 	}
 
-	dashboardRenderRequest := api.createDashboardRenderRequest(user)
+	entityType := ""
+	entityKey := ""
+	if req.Msg != nil {
+		entityType = req.Msg.EntityType
+		entityKey = req.Msg.EntityKey
+	}
+	dashboardRenderRequest := api.createDashboardRenderRequest(user, entityType, entityKey)
 
 	if api.isDefaultDashboard(req.Msg.Title) {
 		return api.buildDefaultDashboardResponse(dashboardRenderRequest)
@@ -431,11 +437,13 @@ func (api *oliveTinAPI) checkDashboardAccess(user *authpublic.AuthenticatedUser)
 	return nil
 }
 
-func (api *oliveTinAPI) createDashboardRenderRequest(user *authpublic.AuthenticatedUser) *DashboardRenderRequest {
+func (api *oliveTinAPI) createDashboardRenderRequest(user *authpublic.AuthenticatedUser, entityType, entityKey string) *DashboardRenderRequest {
 	return &DashboardRenderRequest{
 		AuthenticatedUser: user,
 		cfg:               api.cfg,
 		ex:                api.executor,
+		EntityType:        entityType,
+		EntityKey:         entityKey,
 	}
 }
 
@@ -835,7 +843,7 @@ func (api *oliveTinAPI) Init(ctx ctx.Context, req *connect.Request[apiv1.InitReq
 
 func (api *oliveTinAPI) buildRootDashboards(user *authpublic.AuthenticatedUser, dashboards []*config.DashboardComponent) []string {
 	var rootDashboards []string
-	dashboardRenderRequest := api.createDashboardRenderRequest(user)
+	dashboardRenderRequest := api.createDashboardRenderRequest(user, "", "")
 
 	api.addDefaultDashboardIfNeeded(&rootDashboards, dashboardRenderRequest)
 	api.addCustomDashboards(&rootDashboards, dashboards, dashboardRenderRequest)
@@ -987,6 +995,32 @@ func findEntityInComponents(entityTitle string, parentTitle string, components [
 	}
 }
 
+func findDirectoriesInEntityFieldsets(entityType string, dashboards []*config.DashboardComponent) []string {
+	var directories []string
+
+	for _, dashboard := range dashboards {
+		findDirectoriesInEntityFieldsetsRecursive(entityType, dashboard, &directories)
+	}
+
+	return directories
+}
+
+func findDirectoriesInEntityFieldsetsRecursive(entityType string, component *config.DashboardComponent, directories *[]string) {
+	if component.Entity == entityType {
+		for _, subitem := range component.Contents {
+			if subitem.Type == "directory" {
+				*directories = append(*directories, subitem.Title)
+			}
+		}
+	}
+
+	if len(component.Contents) > 0 {
+		for _, subitem := range component.Contents {
+			findDirectoriesInEntityFieldsetsRecursive(entityType, subitem, directories)
+		}
+	}
+}
+
 func (api *oliveTinAPI) GetEntity(ctx ctx.Context, req *connect.Request[apiv1.GetEntityRequest]) (*connect.Response[apiv1.Entity], error) {
 	user := auth.UserFromApiCall(ctx, req, api.cfg)
 
@@ -1008,6 +1042,9 @@ func (api *oliveTinAPI) GetEntity(ctx ctx.Context, req *connect.Request[apiv1.Ge
 		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("entity with unique key %s not found in type %s", req.Msg.UniqueKey, req.Msg.Type))
 	} else {
 		res.Title = entity.Title
+		res.UniqueKey = entity.UniqueKey
+		res.Type = req.Msg.Type
+		res.Directories = findDirectoriesInEntityFieldsets(req.Msg.Type, api.cfg.Dashboards)
 
 		return connect.NewResponse(res), nil
 	}

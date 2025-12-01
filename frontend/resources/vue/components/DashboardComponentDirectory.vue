@@ -1,5 +1,5 @@
 <template>
-    <button @click="router.push({ name: 'Dashboard', params: { title: component.title } })">
+    <button @click="navigateToDirectory">
         {{ component.title }}
     </button>
 </template>
@@ -15,6 +15,17 @@ const props = defineProps({
         required: true
     }
 })
+
+function navigateToDirectory() {
+    const params = { title: props.component.title }
+    
+    if (props.component.entityType && props.component.entityKey) {
+        params.entityType = props.component.entityType
+        params.entityKey = props.component.entityKey
+    }
+    
+    router.push({ name: 'Dashboard', params })
+}
 </script>
 
 <style scoped>

@@ -13,15 +13,31 @@ type DashboardRenderRequest struct {
 	AuthenticatedUser *authpublic.AuthenticatedUser
 	cfg               *config.Config
 	ex                *executor.Executor
+	EntityType        string
+	EntityKey         string
 }
 
 func (rr *DashboardRenderRequest) findAction(title string) *apiv1.Action {
+	return rr.findActionForEntity(title, nil)
+}
+
+func (rr *DashboardRenderRequest) findActionForEntity(title string, entity *entities.Entity) *apiv1.Action {
 	rr.ex.MapActionIdToBindingLock.RLock()
 	defer rr.ex.MapActionIdToBindingLock.RUnlock()
 
 	for _, binding := range rr.ex.MapActionIdToBinding {
-		if binding.Action.Title == title {
-			return buildAction(binding, rr)
+		if binding.Action.Title != title {
+			continue
+		}
+
+		if entity == nil {
+			if binding.Entity == nil {
+				return buildAction(binding, rr)
+			}
+		} else {
+			if binding.Entity != nil && binding.Entity.UniqueKey == entity.UniqueKey {
+				return buildAction(binding, rr)
+			}
 		}
 	}
 

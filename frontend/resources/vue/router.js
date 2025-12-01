@@ -13,7 +13,7 @@ const routes = [
     meta: { title: 'Actions', icon: DashboardSquare01Icon }
   },
   {
-    path: '/dashboards/:title',
+    path: '/dashboards/:title/:entityType?/:entityKey?',
     name: 'Dashboard',
     component: () => import('./Dashboard.vue'),
     props: true,

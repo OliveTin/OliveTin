@@ -270,6 +270,7 @@ type Entity struct {
 	Title         string                 `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
 	UniqueKey     string                 `protobuf:"bytes,2,opt,name=unique_key,json=uniqueKey,proto3" json:"unique_key,omitempty"`
 	Type          string                 `protobuf:"bytes,3,opt,name=type,proto3" json:"type,omitempty"`
+	Directories   []string               `protobuf:"bytes,4,rep,name=directories,proto3" json:"directories,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -323,6 +324,13 @@ func (x *Entity) GetType() string {
 		return x.Type
 	}
 	return ""
+}
+
+func (x *Entity) GetDirectories() []string {
+	if x != nil {
+		return x.Directories
+	}
+	return nil
 }
 
 type GetDashboardResponse struct {
@@ -432,6 +440,8 @@ func (x *EffectivePolicy) GetShowLogList() bool {
 type GetDashboardRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Title         string                 `protobuf:"bytes,1,opt,name=title,proto3" json:"title,omitempty"`
+	EntityType    string                 `protobuf:"bytes,2,opt,name=entity_type,json=entityType,proto3" json:"entity_type,omitempty"`
+	EntityKey     string                 `protobuf:"bytes,3,opt,name=entity_key,json=entityKey,proto3" json:"entity_key,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -469,6 +479,20 @@ func (*GetDashboardRequest) Descriptor() ([]byte, []int) {
 func (x *GetDashboardRequest) GetTitle() string {
 	if x != nil {
 		return x.Title
+	}
+	return ""
+}
+
+func (x *GetDashboardRequest) GetEntityType() string {
+	if x != nil {
+		return x.EntityType
+	}
+	return ""
+}
+
+func (x *GetDashboardRequest) GetEntityKey() string {
+	if x != nil {
+		return x.EntityKey
 	}
 	return ""
 }
@@ -533,6 +557,8 @@ type DashboardComponent struct {
 	Icon          string                 `protobuf:"bytes,4,opt,name=icon,proto3" json:"icon,omitempty"`
 	CssClass      string                 `protobuf:"bytes,5,opt,name=css_class,json=cssClass,proto3" json:"css_class,omitempty"`
 	Action        *Action                `protobuf:"bytes,6,opt,name=action,proto3" json:"action,omitempty"`
+	EntityType    string                 `protobuf:"bytes,7,opt,name=entity_type,json=entityType,proto3" json:"entity_type,omitempty"`
+	EntityKey     string                 `protobuf:"bytes,8,opt,name=entity_key,json=entityKey,proto3" json:"entity_key,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -607,6 +633,20 @@ func (x *DashboardComponent) GetAction() *Action {
 		return x.Action
 	}
 	return nil
+}
+
+func (x *DashboardComponent) GetEntityType() string {
+	if x != nil {
+		return x.EntityType
+	}
+	return ""
+}
+
+func (x *DashboardComponent) GetEntityKey() string {
+	if x != nil {
+		return x.EntityKey
+	}
+	return ""
 }
 
 type StartActionRequest struct {
@@ -3799,30 +3839,39 @@ const file_olivetin_api_v1_olivetin_proto_rawDesc = "" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"B\n" +
 	"\x14ActionArgumentChoice\x12\x14\n" +
 	"\x05value\x18\x01 \x01(\tR\x05value\x12\x14\n" +
-	"\x05title\x18\x02 \x01(\tR\x05title\"Q\n" +
+	"\x05title\x18\x02 \x01(\tR\x05title\"s\n" +
 	"\x06Entity\x12\x14\n" +
 	"\x05title\x18\x01 \x01(\tR\x05title\x12\x1d\n" +
 	"\n" +
 	"unique_key\x18\x02 \x01(\tR\tuniqueKey\x12\x12\n" +
-	"\x04type\x18\x03 \x01(\tR\x04type\"f\n" +
+	"\x04type\x18\x03 \x01(\tR\x04type\x12 \n" +
+	"\vdirectories\x18\x04 \x03(\tR\vdirectories\"f\n" +
 	"\x14GetDashboardResponse\x12\x14\n" +
 	"\x05title\x18\x01 \x01(\tR\x05title\x128\n" +
 	"\tdashboard\x18\x04 \x01(\v2\x1a.olivetin.api.v1.DashboardR\tdashboard\"`\n" +
 	"\x0fEffectivePolicy\x12)\n" +
 	"\x10show_diagnostics\x18\x01 \x01(\bR\x0fshowDiagnostics\x12\"\n" +
-	"\rshow_log_list\x18\x02 \x01(\bR\vshowLogList\"+\n" +
+	"\rshow_log_list\x18\x02 \x01(\bR\vshowLogList\"k\n" +
 	"\x13GetDashboardRequest\x12\x14\n" +
-	"\x05title\x18\x01 \x01(\tR\x05title\"b\n" +
+	"\x05title\x18\x01 \x01(\tR\x05title\x12\x1f\n" +
+	"\ventity_type\x18\x02 \x01(\tR\n" +
+	"entityType\x12\x1d\n" +
+	"\n" +
+	"entity_key\x18\x03 \x01(\tR\tentityKey\"b\n" +
 	"\tDashboard\x12\x14\n" +
 	"\x05title\x18\x01 \x01(\tR\x05title\x12?\n" +
-	"\bcontents\x18\x02 \x03(\v2#.olivetin.api.v1.DashboardComponentR\bcontents\"\xe1\x01\n" +
+	"\bcontents\x18\x02 \x03(\v2#.olivetin.api.v1.DashboardComponentR\bcontents\"\xa1\x02\n" +
 	"\x12DashboardComponent\x12\x14\n" +
 	"\x05title\x18\x01 \x01(\tR\x05title\x12\x12\n" +
 	"\x04type\x18\x02 \x01(\tR\x04type\x12?\n" +
 	"\bcontents\x18\x03 \x03(\v2#.olivetin.api.v1.DashboardComponentR\bcontents\x12\x12\n" +
 	"\x04icon\x18\x04 \x01(\tR\x04icon\x12\x1b\n" +
 	"\tcss_class\x18\x05 \x01(\tR\bcssClass\x12/\n" +
-	"\x06action\x18\x06 \x01(\v2\x17.olivetin.api.v1.ActionR\x06action\"\xa5\x01\n" +
+	"\x06action\x18\x06 \x01(\v2\x17.olivetin.api.v1.ActionR\x06action\x12\x1f\n" +
+	"\ventity_type\x18\a \x01(\tR\n" +
+	"entityType\x12\x1d\n" +
+	"\n" +
+	"entity_key\x18\b \x01(\tR\tentityKey\"\xa5\x01\n" +
 	"\x12StartActionRequest\x12\x1d\n" +
 	"\n" +
 	"binding_id\x18\x01 \x01(\tR\tbindingId\x12B\n" +

@@ -146,6 +146,11 @@ export declare type Entity = Message<"olivetin.api.v1.Entity"> & {
    * @generated from field: string type = 3;
    */
   type: string;
+
+  /**
+   * @generated from field: repeated string directories = 4;
+   */
+  directories: string[];
 };
 
 /**
@@ -204,6 +209,16 @@ export declare type GetDashboardRequest = Message<"olivetin.api.v1.GetDashboardR
    * @generated from field: string title = 1;
    */
   title: string;
+
+  /**
+   * @generated from field: string entity_type = 2;
+   */
+  entityType: string;
+
+  /**
+   * @generated from field: string entity_key = 3;
+   */
+  entityKey: string;
 };
 
 /**
@@ -266,6 +281,16 @@ export declare type DashboardComponent = Message<"olivetin.api.v1.DashboardCompo
    * @generated from field: olivetin.api.v1.Action action = 6;
    */
   action?: Action;
+
+  /**
+   * @generated from field: string entity_type = 7;
+   */
+  entityType: string;
+
+  /**
+   * @generated from field: string entity_key = 8;
+   */
+  entityKey: string;
 };
 
 /**

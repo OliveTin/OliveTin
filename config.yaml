@@ -189,12 +189,24 @@ actions:
   - title: Ping hypervisor2
     shell: echo "hypervisor2 online"
 
+  - title: Ping hypervisor3
+    shell: echo "hypervisor3 online"
+
+  - title: Ping hypervisor4
+    shell: echo "hypervisor4 online"
+
   - title: "{{ server.name }} Wake on Lan"
     shell: echo "Sending Wake on LAN to {{ server.hostname }}"
+    icon: <iconify-icon icon="carbon:awake"></iconify-icon>
     entity: server
 
   - title: "{{ server.name }} Power Off"
     shell: "echo 'Power Off Server: {{ server.hostname }}'"
+    icon: <iconify-icon icon="carbon:flash-off"></iconify-icon>
+    entity: server
+
+  - title: "{{ server.name }} Print server name"
+    shell: 'echo "Server name: {{ server.name }}"'
     entity: server
 
   - title: Ping All Servers
@@ -278,6 +290,11 @@ dashboards:
             contents:
               - title: Ping hypervisor1
               - title: Ping hypervisor2
+              - title: More hypervisors
+                type: directory
+                contents:
+                  - title: Ping hypervisor3
+                  - title: Ping hypervisor4
 
       # If you specify `type: fieldset` and some `contents`, it will show your
       # actions grouped together without a folder.
@@ -298,6 +315,11 @@ dashboards:
           # These are the actions (defined above) that we want on the dashboard.
           - title: '{{ server.name }} Wake on Lan'
           - title: '{{ server.name }} Power Off'
+
+          - title: More Options
+            type: directory
+            contents:
+              - title: '{{ server.name }} Print server name'
 
   # This is the second dashboard.
   - title: My Containers
