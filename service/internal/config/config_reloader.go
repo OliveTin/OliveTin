@@ -192,10 +192,59 @@ func mergeActionsFromSource(srcActions interface{}, dest map[string]interface{})
 	}
 }
 
+// mergeDashboardsWhenBothExist merges dashboards when both src and dest have dashboards.
+func mergeDashboardsWhenBothExist(srcDashboards interface{}, destDashboards interface{}, dest map[string]interface{}) {
+	srcSlice, ok1 := srcDashboards.([]interface{})
+	destSlice, ok2 := destDashboards.([]interface{})
+	if ok1 && ok2 {
+		dest["dashboards"] = append(destSlice, srcSlice...)
+	} else {
+		dest["dashboards"] = srcDashboards
+	}
+}
+
+// mergeDashboardsFromSource merges dashboards from source into destination.
+func mergeDashboardsFromSource(srcDashboards interface{}, dest map[string]interface{}) {
+	if destDashboards, ok := dest["dashboards"]; ok {
+		mergeDashboardsWhenBothExist(srcDashboards, destDashboards, dest)
+	} else {
+		dest["dashboards"] = srcDashboards
+	}
+}
+
+// mergeEntitiesWhenBothExist merges entities when both src and dest have entities.
+func mergeEntitiesWhenBothExist(srcEntities interface{}, destEntities interface{}, dest map[string]interface{}) {
+	srcSlice, ok1 := srcEntities.([]interface{})
+	destSlice, ok2 := destEntities.([]interface{})
+	if ok1 && ok2 {
+		dest["entities"] = append(destSlice, srcSlice...)
+	} else {
+		dest["entities"] = srcEntities
+	}
+}
+
+// mergeEntitiesFromSource merges entities from source into destination.
+func mergeEntitiesFromSource(srcEntities interface{}, dest map[string]interface{}) {
+	if destEntities, ok := dest["entities"]; ok {
+		mergeEntitiesWhenBothExist(srcEntities, destEntities, dest)
+	} else {
+		dest["entities"] = srcEntities
+	}
+}
+
 func mergeFunc(src map[string]interface{}, dest map[string]interface{}) error {
 	if srcActions, ok := src["actions"]; ok {
 		mergeActionsFromSource(srcActions, dest)
 	}
+
+	if srcDashboards, ok := src["dashboards"]; ok {
+		mergeDashboardsFromSource(srcDashboards, dest)
+	}
+
+	if srcEntities, ok := src["entities"]; ok {
+		mergeEntitiesFromSource(srcEntities, dest)
+	}
+
 	return nil
 }
 

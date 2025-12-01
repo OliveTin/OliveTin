@@ -42,17 +42,33 @@ func (cfg *Config) sanitizeInlineAction(component *DashboardComponent) {
 		return
 	}
 
-	if component.InlineAction.Title == "" {
-		component.InlineAction.Title = component.Title
+	sanitizeInlineActionTitles(component)
+
+	if component.Entity != "" && component.InlineAction.Entity == "" {
+		component.InlineAction.Entity = component.Entity
 	}
 
 	component.InlineAction.sanitize(cfg)
 
-	if cfg.inlineActionExists(component.InlineAction) {
+	cfg.addInlineActionIfNotExists(component.InlineAction)
+}
+
+func (cfg *Config) addInlineActionIfNotExists(action *Action) {
+	if cfg.inlineActionExists(action) {
 		return
 	}
 
-	cfg.Actions = append(cfg.Actions, component.InlineAction)
+	cfg.Actions = append(cfg.Actions, action)
+}
+
+func sanitizeInlineActionTitles(component *DashboardComponent) {
+	if component.InlineAction.Title == "" {
+		component.InlineAction.Title = component.Title
+	}
+
+	if component.Title == "" {
+		component.Title = component.InlineAction.Title
+	}
 }
 
 func (cfg *Config) inlineActionExists(action *Action) bool {
@@ -93,6 +109,10 @@ func (cfg *Config) inlineActionIDExists(action *Action) bool {
 
 func (cfg *Config) sanitizeChildDashboardComponents(component *DashboardComponent) {
 	for _, child := range component.Contents {
+		if child.Entity == "" {
+			child.Entity = component.Entity
+		}
+
 		cfg.sanitizeDashboardComponentForInlineActions(child)
 	}
 }
