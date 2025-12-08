@@ -14,7 +14,7 @@
     "chai": "^6.2.1",
     "eslint": "^9.39.1",
     "mocha": "^11.7.5",
-    "selenium-webdriver": "^4.38.0"
+    "selenium-webdriver": "^4.39.0"
   },
   "dependencies": {
     "wait-on": "^9.0.3"
