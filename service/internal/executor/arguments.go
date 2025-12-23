@@ -388,34 +388,46 @@ func mangleInvalidDatetimeValues(req *ExecutionRequest, arg *config.ActionArgume
 // used during actual execution.
 func MangleArgumentValue(arg *config.ActionArgument, value string, actionTitle string) string {
 	if arg.Type == "datetime" {
-		if value == "" {
-			return value
-		}
-
-		timestamp, err := time.Parse("2006-01-02T15:04", value)
-		if err == nil {
-			log.WithFields(log.Fields{
-				"arg":         arg.Name,
-				"value":       value,
-				"actionTitle": actionTitle,
-			}).Warnf("Mangled invalid datetime value without seconds to :00 seconds, this issue is commonly caused by Android browsers.")
-
-			return timestamp.Format("2006-01-02T15:04:05")
-		}
+		return mangleDatetimeValue(arg, value, actionTitle)
 	}
 
 	if arg.Type == "checkbox" {
-		for _, choice := range arg.Choices {
-			if value == choice.Title {
-				log.WithFields(log.Fields{
-					"arg":         arg.Name,
-					"oldValue":    value,
-					"newValue":    choice.Value,
-					"actionTitle": actionTitle,
-				}).Infof("Mangled checkbox value")
+		return mangleCheckboxValue(arg, value, actionTitle)
+	}
 
-				return choice.Value
-			}
+	return value
+}
+
+func mangleDatetimeValue(arg *config.ActionArgument, value string, actionTitle string) string {
+	if value == "" {
+		return value
+	}
+
+	timestamp, err := time.Parse("2006-01-02T15:04", value)
+	if err != nil {
+		return value
+	}
+
+	log.WithFields(log.Fields{
+		"arg":         arg.Name,
+		"value":       value,
+		"actionTitle": actionTitle,
+	}).Warnf("Mangled invalid datetime value without seconds to :00 seconds, this issue is commonly caused by Android browsers.")
+
+	return timestamp.Format("2006-01-02T15:04:05")
+}
+
+func mangleCheckboxValue(arg *config.ActionArgument, value string, actionTitle string) string {
+	for _, choice := range arg.Choices {
+		if value == choice.Title {
+			log.WithFields(log.Fields{
+				"arg":         arg.Name,
+				"oldValue":    value,
+				"newValue":    choice.Value,
+				"actionTitle": actionTitle,
+			}).Infof("Mangled checkbox value")
+
+			return choice.Value
 		}
 	}
 

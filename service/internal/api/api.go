@@ -592,43 +592,8 @@ It uses the same validation logic as the executor, including mangling argument
 values (e.g., datetime formatting, checkbox title-to-value conversion).
 */
 func (api *oliveTinAPI) ValidateArgumentType(ctx ctx.Context, req *connect.Request[apiv1.ValidateArgumentTypeRequest]) (*connect.Response[apiv1.ValidateArgumentTypeResponse], error) {
-	var err error
+	err := api.validateArgumentTypeInternal(req.Msg)
 	desc := ""
-
-	// If binding_id and argument_name are provided, use the full validation path
-	if req.Msg.BindingId != "" && req.Msg.ArgumentName != "" {
-		binding := api.executor.FindBindingByID(req.Msg.BindingId)
-		if binding == nil || binding.Action == nil {
-			return connect.NewResponse(&apiv1.ValidateArgumentTypeResponse{
-				Valid:       false,
-				Description: "action binding not found",
-			}), nil
-		}
-
-		// Find the specific argument
-		var arg *config.ActionArgument
-		for i := range binding.Action.Arguments {
-			if binding.Action.Arguments[i].Name == req.Msg.ArgumentName {
-				arg = &binding.Action.Arguments[i]
-				break
-			}
-		}
-
-		if arg == nil {
-			return connect.NewResponse(&apiv1.ValidateArgumentTypeResponse{
-				Valid:       false,
-				Description: "argument not found",
-			}), nil
-		}
-
-		// Use the same validation path as the executor (includes mangling)
-		err = executor.ValidateArgument(arg, req.Msg.Value, binding.Action)
-	} else {
-		// Fallback to simple type check if binding_id/argument_name not provided
-		// (for backwards compatibility, though this path doesn't handle choices/null checks)
-		err = executor.TypeSafetyCheck("", req.Msg.Value, req.Msg.Type)
-	}
-
 	if err != nil {
 		desc = err.Error()
 	}
@@ -637,6 +602,38 @@ func (api *oliveTinAPI) ValidateArgumentType(ctx ctx.Context, req *connect.Reque
 		Valid:       err == nil,
 		Description: desc,
 	}), nil
+}
+
+func (api *oliveTinAPI) validateArgumentTypeInternal(msg *apiv1.ValidateArgumentTypeRequest) error {
+	if msg.BindingId == "" || msg.ArgumentName == "" {
+		return executor.TypeSafetyCheck("", msg.Value, msg.Type)
+	}
+
+	arg, action := api.findArgumentForValidation(msg.BindingId, msg.ArgumentName)
+	if arg == nil {
+		return fmt.Errorf("argument not found")
+	}
+
+	return executor.ValidateArgument(arg, msg.Value, action)
+}
+
+func (api *oliveTinAPI) findArgumentForValidation(bindingId string, argumentName string) (*config.ActionArgument, *config.Action) {
+	binding := api.executor.FindBindingByID(bindingId)
+	if binding == nil || binding.Action == nil {
+		return nil, nil
+	}
+
+	arg := api.findArgumentByName(binding.Action, argumentName)
+	return arg, binding.Action
+}
+
+func (api *oliveTinAPI) findArgumentByName(action *config.Action, name string) *config.ActionArgument {
+	for i := range action.Arguments {
+		if action.Arguments[i].Name == name {
+			return &action.Arguments[i]
+		}
+	}
+	return nil
 }
 
 func (api *oliveTinAPI) WhoAmI(ctx ctx.Context, req *connect.Request[apiv1.WhoAmIRequest]) (*connect.Response[apiv1.WhoAmIResponse], error) {
