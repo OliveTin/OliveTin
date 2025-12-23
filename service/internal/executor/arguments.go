@@ -179,6 +179,14 @@ func typecheckActionArgument(arg *config.ActionArgument, value string, action *c
 // It applies mangling transformations and performs full validation including null checks,
 // choice validation, and type safety checks.
 func ValidateArgument(arg *config.ActionArgument, value string, action *config.Action) error {
+	if arg == nil {
+		return fmt.Errorf("ValidateArgument: arg is nil")
+	}
+
+	if action == nil {
+		return fmt.Errorf("ValidateArgument: action is nil")
+	}
+
 	// Apply mangling transformations
 	mangledValue := MangleArgumentValue(arg, value, action.Title)
 
@@ -387,6 +395,11 @@ func mangleInvalidDatetimeValues(req *ExecutionRequest, arg *config.ActionArgume
 // This is used by the validation API to ensure the value matches what would be
 // used during actual execution.
 func MangleArgumentValue(arg *config.ActionArgument, value string, actionTitle string) string {
+	if arg == nil {
+		log.Debugf("MangleArgumentValue called with nil arg, returning value unchanged")
+		return value
+	}
+
 	if arg.Type == "datetime" {
 		return mangleDatetimeValue(arg, value, actionTitle)
 	}
@@ -399,6 +412,11 @@ func MangleArgumentValue(arg *config.ActionArgument, value string, actionTitle s
 }
 
 func mangleDatetimeValue(arg *config.ActionArgument, value string, actionTitle string) string {
+	if arg == nil {
+		log.Debugf("mangleDatetimeValue called with nil arg, returning value unchanged")
+		return value
+	}
+
 	if value == "" {
 		return value
 	}
@@ -418,6 +436,11 @@ func mangleDatetimeValue(arg *config.ActionArgument, value string, actionTitle s
 }
 
 func mangleCheckboxValue(arg *config.ActionArgument, value string, actionTitle string) string {
+	if arg == nil {
+		log.Debugf("mangleCheckboxValue called with nil arg, returning value unchanged")
+		return value
+	}
+
 	for _, choice := range arg.Choices {
 		if value == choice.Title {
 			log.WithFields(log.Fields{
