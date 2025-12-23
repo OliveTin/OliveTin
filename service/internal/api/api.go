@@ -587,10 +587,47 @@ func paginate(total int64, size int64, start int64) pageInfo {
 This function is ONLY a helper for the UI - the arguments are validated properly
 on the StartAction -> Executor chain. This is here basically to provide helpful
 error messages more quickly before starting the action.
+
+It uses the same validation logic as the executor, including mangling argument
+values (e.g., datetime formatting, checkbox title-to-value conversion).
 */
 func (api *oliveTinAPI) ValidateArgumentType(ctx ctx.Context, req *connect.Request[apiv1.ValidateArgumentTypeRequest]) (*connect.Response[apiv1.ValidateArgumentTypeResponse], error) {
-	err := executor.TypeSafetyCheck("", req.Msg.Value, req.Msg.Type)
+	var err error
 	desc := ""
+
+	// If binding_id and argument_name are provided, use the full validation path
+	if req.Msg.BindingId != "" && req.Msg.ArgumentName != "" {
+		binding := api.executor.FindBindingByID(req.Msg.BindingId)
+		if binding == nil || binding.Action == nil {
+			return connect.NewResponse(&apiv1.ValidateArgumentTypeResponse{
+				Valid:       false,
+				Description: "action binding not found",
+			}), nil
+		}
+
+		// Find the specific argument
+		var arg *config.ActionArgument
+		for i := range binding.Action.Arguments {
+			if binding.Action.Arguments[i].Name == req.Msg.ArgumentName {
+				arg = &binding.Action.Arguments[i]
+				break
+			}
+		}
+
+		if arg == nil {
+			return connect.NewResponse(&apiv1.ValidateArgumentTypeResponse{
+				Valid:       false,
+				Description: "argument not found",
+			}), nil
+		}
+
+		// Use the same validation path as the executor (includes mangling)
+		err = executor.ValidateArgument(arg, req.Msg.Value, binding.Action)
+	} else {
+		// Fallback to simple type check if binding_id/argument_name not provided
+		// (for backwards compatibility, though this path doesn't handle choices/null checks)
+		err = executor.TypeSafetyCheck("", req.Msg.Value, req.Msg.Type)
+	}
 
 	if err != nil {
 		desc = err.Error()

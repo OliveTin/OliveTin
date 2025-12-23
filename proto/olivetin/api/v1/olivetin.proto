@@ -164,6 +164,8 @@ message GetActionLogsResponse {
 message ValidateArgumentTypeRequest {
 	string value = 1;
 	string type = 2;
+	string binding_id = 3;
+	string argument_name = 4;
 }
 
 message ValidateArgumentTypeResponse {
