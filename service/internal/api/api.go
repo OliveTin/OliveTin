@@ -587,11 +587,13 @@ func paginate(total int64, size int64, start int64) pageInfo {
 This function is ONLY a helper for the UI - the arguments are validated properly
 on the StartAction -> Executor chain. This is here basically to provide helpful
 error messages more quickly before starting the action.
+
+It uses the same validation logic as the executor, including mangling argument
+values (e.g., datetime formatting, checkbox title-to-value conversion).
 */
 func (api *oliveTinAPI) ValidateArgumentType(ctx ctx.Context, req *connect.Request[apiv1.ValidateArgumentTypeRequest]) (*connect.Response[apiv1.ValidateArgumentTypeResponse], error) {
-	err := executor.TypeSafetyCheck("", req.Msg.Value, req.Msg.Type)
+	err := api.validateArgumentTypeInternal(req.Msg)
 	desc := ""
-
 	if err != nil {
 		desc = err.Error()
 	}
@@ -600,6 +602,38 @@ func (api *oliveTinAPI) ValidateArgumentType(ctx ctx.Context, req *connect.Reque
 		Valid:       err == nil,
 		Description: desc,
 	}), nil
+}
+
+func (api *oliveTinAPI) validateArgumentTypeInternal(msg *apiv1.ValidateArgumentTypeRequest) error {
+	if msg.BindingId == "" || msg.ArgumentName == "" {
+		return executor.TypeSafetyCheck("", msg.Value, msg.Type)
+	}
+
+	arg, action := api.findArgumentForValidation(msg.BindingId, msg.ArgumentName)
+	if arg == nil {
+		return fmt.Errorf("argument not found")
+	}
+
+	return executor.ValidateArgument(arg, msg.Value, action)
+}
+
+func (api *oliveTinAPI) findArgumentForValidation(bindingId string, argumentName string) (*config.ActionArgument, *config.Action) {
+	binding := api.executor.FindBindingByID(bindingId)
+	if binding == nil || binding.Action == nil {
+		return nil, nil
+	}
+
+	arg := api.findArgumentByName(binding.Action, argumentName)
+	return arg, binding.Action
+}
+
+func (api *oliveTinAPI) findArgumentByName(action *config.Action, name string) *config.ActionArgument {
+	for i := range action.Arguments {
+		if action.Arguments[i].Name == name {
+			return &action.Arguments[i]
+		}
+	}
+	return nil
 }
 
 func (api *oliveTinAPI) WhoAmI(ctx ctx.Context, req *connect.Request[apiv1.WhoAmIRequest]) (*connect.Response[apiv1.WhoAmIResponse], error) {

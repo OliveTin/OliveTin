@@ -175,6 +175,25 @@ func typecheckActionArgument(arg *config.ActionArgument, value string, action *c
 	return typecheckActionArgumentFound(value, action, arg)
 }
 
+// ValidateArgument validates a single argument value using the same logic as the executor.
+// It applies mangling transformations and performs full validation including null checks,
+// choice validation, and type safety checks.
+func ValidateArgument(arg *config.ActionArgument, value string, action *config.Action) error {
+	if arg == nil {
+		return fmt.Errorf("ValidateArgument: arg is nil")
+	}
+
+	if action == nil {
+		return fmt.Errorf("ValidateArgument: action is nil")
+	}
+
+	// Apply mangling transformations
+	mangledValue := MangleArgumentValue(arg, value, action.Title)
+
+	// Use the same validation path as the executor
+	return typecheckActionArgument(arg, mangledValue, action)
+}
+
 func typecheckActionArgumentFound(value string, action *config.Action, arg *config.ActionArgument) error {
 	if value == "" {
 		return typecheckNull(arg)
@@ -197,6 +216,8 @@ func TypeSafetyCheck(name string, value string, argumentType string) error {
 	case "password":
 		return nil
 	case "raw_string_multiline":
+		return nil
+	case "checkbox":
 		return nil
 	case "email":
 		return typeSafetyCheckEmail(value)
@@ -368,4 +389,70 @@ func mangleInvalidDatetimeValues(req *ExecutionRequest, arg *config.ActionArgume
 
 		req.Arguments[arg.Name] = timestamp.Format("2006-01-02T15:04:05")
 	}
+}
+
+// MangleArgumentValue applies mangling transformations to a single argument value.
+// This is used by the validation API to ensure the value matches what would be
+// used during actual execution.
+func MangleArgumentValue(arg *config.ActionArgument, value string, actionTitle string) string {
+	if arg == nil {
+		log.Debugf("MangleArgumentValue called with nil arg, returning value unchanged")
+		return value
+	}
+
+	if arg.Type == "datetime" {
+		return mangleDatetimeValue(arg, value, actionTitle)
+	}
+
+	if arg.Type == "checkbox" {
+		return mangleCheckboxValue(arg, value, actionTitle)
+	}
+
+	return value
+}
+
+func mangleDatetimeValue(arg *config.ActionArgument, value string, actionTitle string) string {
+	if arg == nil {
+		log.Debugf("mangleDatetimeValue called with nil arg, returning value unchanged")
+		return value
+	}
+
+	if value == "" {
+		return value
+	}
+
+	timestamp, err := time.Parse("2006-01-02T15:04", value)
+	if err != nil {
+		return value
+	}
+
+	log.WithFields(log.Fields{
+		"arg":         arg.Name,
+		"value":       value,
+		"actionTitle": actionTitle,
+	}).Warnf("Mangled invalid datetime value without seconds to :00 seconds, this issue is commonly caused by Android browsers.")
+
+	return timestamp.Format("2006-01-02T15:04:05")
+}
+
+func mangleCheckboxValue(arg *config.ActionArgument, value string, actionTitle string) string {
+	if arg == nil {
+		log.Debugf("mangleCheckboxValue called with nil arg, returning value unchanged")
+		return value
+	}
+
+	for _, choice := range arg.Choices {
+		if value == choice.Title {
+			log.WithFields(log.Fields{
+				"arg":         arg.Name,
+				"oldValue":    value,
+				"newValue":    choice.Value,
+				"actionTitle": actionTitle,
+			}).Infof("Mangled checkbox value")
+
+			return choice.Value
+		}
+	}
+
+	return value
 }

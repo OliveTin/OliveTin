@@ -116,8 +116,8 @@ async function setup() {
   // Run initial validation on all fields after DOM is updated
   await nextTick()
   for (const arg of actionArguments.value) {
-    if (arg.type && !arg.type.startsWith('regex:') && arg.type !== 'select' && arg.type !== '' && arg.type !== 'confirmation') {
-      await validateArgument(arg, argValues.value[arg.name])
+    if (arg.type && !arg.type.startsWith('regex:') && arg.type !== 'select' && arg.type !== '' && arg.type !== 'confirmation' && arg.type !== 'checkbox') {
+      await validateArgument(arg, argValues.value[arg.name] || '')
     }
   }
 }
@@ -212,10 +212,22 @@ async function validateArgument(arg, value) {
     return
   }
 
+  // Skip validation for checkbox and confirmation - they're always valid
+  if (arg.type === 'checkbox' || arg.type === 'confirmation') {
+    const inputElement = document.getElementById(arg.name)
+    if (inputElement) {
+      inputElement.setCustomValidity('')
+    }
+    delete formErrors.value[arg.name]
+    return
+  }
+
   try {
     const validateArgumentTypeArgs = {
       value: value,
-      type: arg.type
+      type: arg.type,
+      bindingId: props.bindingId,
+      argumentName: arg.name
     }
 
     const validation = await window.client.validateArgumentType(validateArgumentTypeArgs)
