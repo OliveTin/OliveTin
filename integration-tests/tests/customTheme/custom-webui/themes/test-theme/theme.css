@@ -1,0 +1,14 @@
+/* Custom theme for integration testing */
+body {
+    background-color: #ff6b6b;
+}
+
+/* Add a distinctive style that we can test for */
+#content {
+    border: 5px solid #4ecdc4;
+}
+
+
+
+
+

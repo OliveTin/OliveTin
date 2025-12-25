@@ -25,7 +25,9 @@
                 </option>
               </select>
               
-              <component v-else :is="getInputComponent(arg)" :id="arg.name" :name="arg.name" :value="getArgumentValue(arg)"
+              <component v-else :is="getInputComponent(arg)" :id="arg.name" :name="arg.name" 
+                :value="(arg.type === 'checkbox' || arg.type === 'confirmation') ? undefined : getArgumentValue(arg)"
+                :checked="(arg.type === 'checkbox' || arg.type === 'confirmation') ? getArgumentValue(arg) : undefined"
                 :list="arg.suggestions ? `${arg.name}-choices` : undefined" 
                 :type="getInputComponent(arg) !== 'select' ? getInputType(arg) : undefined"
                 :rows="arg.type === 'raw_string_multiline' ? 5 : undefined"
@@ -109,15 +111,26 @@ async function setup() {
       confirmationChecked.value = checkedValue
     } else {
       const paramValue = getQueryParamValue(arg.name)
-      argValues.value[arg.name] = paramValue !== null ? paramValue : arg.defaultValue || ''
+      if (arg.type === 'checkbox') {
+        // For checkboxes, handle boolean default values properly
+        if (paramValue !== null) {
+          argValues.value[arg.name] = paramValue === '1' || paramValue === 'true' || paramValue === true
+        } else if (arg.defaultValue !== undefined && arg.defaultValue !== '') {
+          argValues.value[arg.name] = arg.defaultValue === '1' || arg.defaultValue === 'true' || arg.defaultValue === true
+        } else {
+          argValues.value[arg.name] = false
+        }
+      } else {
+        argValues.value[arg.name] = paramValue !== null ? paramValue : arg.defaultValue || ''
+      }
     }
   })
 
   // Run initial validation on all fields after DOM is updated
   await nextTick()
   for (const arg of actionArguments.value) {
-    if (arg.type && !arg.type.startsWith('regex:') && arg.type !== 'select' && arg.type !== '' && arg.type !== 'confirmation') {
-      await validateArgument(arg, argValues.value[arg.name])
+    if (arg.type && !arg.type.startsWith('regex:') && arg.type !== 'select' && arg.type !== '' && arg.type !== 'confirmation' && arg.type !== 'checkbox') {
+      await validateArgument(arg, argValues.value[arg.name] || '')
     }
   }
 }
@@ -212,10 +225,22 @@ async function validateArgument(arg, value) {
     return
   }
 
+  // Skip validation for checkbox and confirmation - they're always valid
+  if (arg.type === 'checkbox' || arg.type === 'confirmation') {
+    const inputElement = document.getElementById(arg.name)
+    if (inputElement) {
+      inputElement.setCustomValidity('')
+    }
+    delete formErrors.value[arg.name]
+    return
+  }
+
   try {
     const validateArgumentTypeArgs = {
       value: value,
-      type: arg.type
+      type: arg.type,
+      bindingId: props.bindingId,
+      argumentName: arg.name
     }
 
     const validation = await window.client.validateArgumentType(validateArgumentTypeArgs)

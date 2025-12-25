@@ -1,0 +1,18 @@
+---
+listenAddressSingleHTTPFrontend: 0.0.0.0:1337
+
+logLevel: "DEBUG"
+checkForUpdates: false
+
+actions:
+  - title: Test checkbox argument
+    shell: "echo 'Checkbox value: {{ confirm }}'"
+    icon: ping
+    arguments:
+      - name: confirm
+        title: Confirm option
+        type: checkbox
+        description: "When checked: 1, when unchecked: 0"
+        default: false
+
+

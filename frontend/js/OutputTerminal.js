@@ -74,4 +74,25 @@ export class OutputTerminal {
   resize (cols, rows) {
     this.terminal.resize(cols, rows)
   }
+
+  /**
+   * Get the terminal buffer content as a string.
+   * This method is intended for use in integration tests to verify output.
+   * @returns {string} The terminal buffer content as a string
+   */
+  getBufferAsString () {
+    if (!this.terminal) {
+      return ''
+    }
+
+    const buffer = this.terminal.buffer.active
+    let text = ''
+    for (let i = 0; i < buffer.length; i++) {
+      const line = buffer.getLine(i)
+      if (line) {
+        text += line.translateToString(true) + '\n'
+      }
+    }
+    return text
+  }
 }
