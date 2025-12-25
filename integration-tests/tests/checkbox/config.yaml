@@ -13,6 +13,6 @@ actions:
         title: Confirm option
         type: checkbox
         description: "When checked: 1, when unchecked: 0"
-        default: "false"
+        default: false
 
 
