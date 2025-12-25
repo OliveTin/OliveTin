@@ -19,7 +19,9 @@
     </Header>
 
     <div id="layout">
-        <Sidebar ref="sidebar" id = "mainnav" v-if="showNavigation" />
+        <Navigation ref="navigation" id="mainnav" v-if="showNavigation">
+            <Sidebar ref="sidebar" id = "mainnav" v-if="showNavigation" />
+        </Navigation>
 
 		<div id="content" initial-martial-complete="{{ hasLoaded }}">
             <main title="Main content">
@@ -77,6 +79,7 @@
 import { ref, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import Sidebar from 'picocrank/vue/components/Sidebar.vue';
+import Navigation from 'picocrank/vue/components/Navigation.vue';
 import Header from 'picocrank/vue/components/Header.vue';
 import { HugeiconsIcon } from '@hugeicons/vue'
 import { Menu01Icon } from '@hugeicons/core-free-icons'
@@ -91,6 +94,7 @@ const { t, locale } = useI18n();
 const router = useRouter();
 
 const sidebar = ref(null);
+const navigation = ref(null);
 const username = ref('notset');
 const isLoggedIn = ref(false);
 const serverConnection = ref(true);
@@ -181,7 +185,7 @@ function updateHeaderFromInit() {
         showLoginLink.value = false
     }
 
-    renderSidebar()
+    renderNavigation()
 
     if (window.initResponse.loginRequired) {
         router.push('/login')
@@ -189,19 +193,19 @@ function updateHeaderFromInit() {
     }
 }
 
-function renderSidebar() {
-    if (!sidebar.value) {
+function renderNavigation() {
+    if (!navigation.value) {
         return
     }
 
     const rootDashboards = window.initResponse?.rootDashboards || []
 
-    if (typeof sidebar.value.clear === 'function') {
-        sidebar.value.clear()
+    if (typeof navigation.value.clear === 'function') {
+        navigation.value.clear()
     }
 
     for (const rootDashboard of rootDashboards) {
-        sidebar.value.addNavigationLink({
+        navigation.value.addNavigationLink({
             id: rootDashboard,
             name: rootDashboard,
             title: rootDashboard,
@@ -210,15 +214,15 @@ function renderSidebar() {
         })
     }
 
-    sidebar.value.addSeparator()
-    sidebar.value.addRouterLink('Entities', t('nav.entities'))
+    navigation.value.addSeparator()
+    navigation.value.addRouterLink('Entities', t('nav.entities'))
 
     if (showLogs.value) {
-        sidebar.value.addRouterLink('Logs', t('nav.logs'))
+        navigation.value.addRouterLink('Logs', t('nav.logs'))
     }
 
     if (showDiagnostics.value) {
-        sidebar.value.addRouterLink('Diagnostics', t('nav.diagnostics'))
+        navigation.value.addRouterLink('Diagnostics', t('nav.diagnostics'))
     }
 }
 
@@ -257,9 +261,9 @@ function changeLanguage() {
         languagePreference.value = selectedLanguage.value
     }
 
-    // Update sidebar with new translations
-    if (sidebar.value) {
-        renderSidebar()
+    // Update navigation with new translations
+    if (navigation.value) {
+        renderNavigation()
     }
 
     closeLanguageDialog()
