@@ -1,0 +1,17 @@
+---
+listenAddressSingleHTTPFrontend: 0.0.0.0:1337
+
+logLevel: "DEBUG"
+checkForUpdates: false
+
+themeName: "test-theme"
+
+actions:
+  - title: Test action
+    shell: "echo 'Hello from themed OliveTin'"
+    icon: ping
+
+
+
+
+
