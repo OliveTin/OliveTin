@@ -184,6 +184,7 @@ type OAuth2Provider struct {
 	InsecureSkipVerify bool     `koanf:"insecureSkipVerify"`
 	CallbackTimeout    int      `koanf:"callbackTimeout"`
 	CertBundlePath     string   `koanf:"certBundlePath"`
+	AddToUsergroup     string   `koanf:"addToUsergroup"`
 }
 
 type NavigationLink struct {

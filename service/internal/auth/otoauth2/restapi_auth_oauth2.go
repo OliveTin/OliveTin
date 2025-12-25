@@ -263,10 +263,21 @@ func (h *OAuth2Handler) HandleOAuthCallback(w http.ResponseWriter, r *http.Reque
 		Timeout: clientSettings.Timeout,
 	}
 
-	userinfo := getUserInfo(h.cfg, userInfoClient, h.cfg.AuthOAuth2Providers[registeredState.providerName])
+	userinfo := getUserInfo(h.cfg, userInfoClient, providerConfig)
 
 	h.registeredStates[state].Username = userinfo.Username
-	h.registeredStates[state].Usergroup = userinfo.Usergroup
+	
+	usergroup := userinfo.Usergroup
+	if providerConfig != nil && providerConfig.AddToUsergroup != "" {
+		// Append configured usergroup name if addToUsergroup is set
+		if usergroup != "" {
+			usergroup = usergroup + " " + providerConfig.AddToUsergroup
+		} else {
+			usergroup = providerConfig.AddToUsergroup
+		}
+	}
+	
+	h.registeredStates[state].Usergroup = usergroup
 
 	http.Redirect(w, r, "/", http.StatusFound)
 }
