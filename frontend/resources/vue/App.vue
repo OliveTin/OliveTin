@@ -19,7 +19,7 @@
     </Header>
 
     <div id="layout">
-        <Navigation ref="navigation" id="mainnav" v-if="showNavigation">
+        <Navigation ref="navigation" v-if="showNavigation">
             <Sidebar ref="sidebar" id = "mainnav" v-if="showNavigation" />
         </Navigation>
 
