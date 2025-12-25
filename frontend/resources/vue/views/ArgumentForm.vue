@@ -25,7 +25,9 @@
                 </option>
               </select>
               
-              <component v-else :is="getInputComponent(arg)" :id="arg.name" :name="arg.name" :value="getArgumentValue(arg)"
+              <component v-else :is="getInputComponent(arg)" :id="arg.name" :name="arg.name" 
+                :value="(arg.type === 'checkbox' || arg.type === 'confirmation') ? undefined : getArgumentValue(arg)"
+                :checked="(arg.type === 'checkbox' || arg.type === 'confirmation') ? getArgumentValue(arg) : undefined"
                 :list="arg.suggestions ? `${arg.name}-choices` : undefined" 
                 :type="getInputComponent(arg) !== 'select' ? getInputType(arg) : undefined"
                 :rows="arg.type === 'raw_string_multiline' ? 5 : undefined"
@@ -109,7 +111,18 @@ async function setup() {
       confirmationChecked.value = checkedValue
     } else {
       const paramValue = getQueryParamValue(arg.name)
-      argValues.value[arg.name] = paramValue !== null ? paramValue : arg.defaultValue || ''
+      if (arg.type === 'checkbox') {
+        // For checkboxes, handle boolean default values properly
+        if (paramValue !== null) {
+          argValues.value[arg.name] = paramValue === '1' || paramValue === 'true' || paramValue === true
+        } else if (arg.defaultValue !== undefined && arg.defaultValue !== '') {
+          argValues.value[arg.name] = arg.defaultValue === '1' || arg.defaultValue === 'true' || arg.defaultValue === true
+        } else {
+          argValues.value[arg.name] = false
+        }
+      } else {
+        argValues.value[arg.name] = paramValue !== null ? paramValue : arg.defaultValue || ''
+      }
     }
   })
 

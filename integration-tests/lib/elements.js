@@ -137,3 +137,18 @@ export async function getActionButton (webdriver, title) {
 
   return buttons[0]
 }
+
+export async function getTerminalBuffer() {
+  try {
+    const output = await webdriver.executeScript(`
+      if (window.terminal && window.terminal.getBufferAsString) {
+        return window.terminal.getBufferAsString();
+      }
+      return null;
+    `)
+    return output
+  } catch (e) {
+    console.log('[getTerminalBuffer] Error:', e.message)
+    return null
+  }
+}

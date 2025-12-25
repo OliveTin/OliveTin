@@ -6,6 +6,7 @@ import (
 
 	config "github.com/OliveTin/OliveTin/internal/config"
 	"github.com/OliveTin/OliveTin/internal/entities"
+	log "github.com/sirupsen/logrus"
 
 	"testing"
 
@@ -20,6 +21,97 @@ func TestSanitizeUnimplemented(t *testing.T) {
 	err := TypeSafetyCheck("", "I am a happy little argument", "greeting_type")
 
 	assert.NotNil(t, err, "Test an argument type that does not exist")
+}
+
+func TestValidateArgumentCheckboxDefaultValues(t *testing.T) {
+	arg := config.ActionArgument{
+		Name: "confirm",
+		Type: "checkbox",
+	}
+	action := config.Action{
+		Title: "Test checkbox default values",
+	}
+
+	// Default checkbox values without choices should accept "1" and "0"
+	err := ValidateArgument(&arg, "1", &action)
+	assert.Nil(t, err, "Expected checkbox value \"1\" to be accepted without choices")
+
+	err = ValidateArgument(&arg, "0", &action)
+	assert.Nil(t, err, "Expected checkbox value \"0\" to be accepted without choices")
+}
+
+func TestMangleCheckboxValueWithChoices(t *testing.T) {
+	log.SetLevel(log.PanicLevel)
+
+	arg := config.ActionArgument{
+		Name: "confirm",
+		Type: "checkbox",
+		Choices: []config.ActionArgumentChoice{
+			{Title: "Enabled", Value: "on"},
+			{Title: "Disabled", Value: "off"},
+		},
+	}
+
+	// When the incoming value matches a choice title, it should be mapped to the choice value
+	out := mangleCheckboxValue(&arg, "Enabled", "Test action")
+	assert.Equal(t, "on", out, "Expected checkbox title to be mangled to its value")
+
+	out = mangleCheckboxValue(&arg, "Disabled", "Test action")
+	assert.Equal(t, "off", out, "Expected checkbox title to be mangled to its value")
+
+	// When there is no matching title, the value should be returned unchanged
+	out = mangleCheckboxValue(&arg, "something-else", "Test action")
+	assert.Equal(t, "something-else", out, "Expected non-matching value to be returned unchanged")
+}
+
+func TestMangleArgumentValueCheckbox(t *testing.T) {
+	log.SetLevel(log.PanicLevel)
+
+	arg := config.ActionArgument{
+		Name: "confirm",
+		Type: "checkbox",
+		Choices: []config.ActionArgumentChoice{
+			{Title: "Yes", Value: "true-value"},
+			{Title: "No", Value: "false-value"},
+		},
+	}
+
+	out := MangleArgumentValue(&arg, "Yes", "Test action")
+	assert.Equal(t, "true-value", out, "Expected MangleArgumentValue to delegate to mangleCheckboxValue for checkbox types")
+
+	out = MangleArgumentValue(&arg, "No", "Test action")
+	assert.Equal(t, "false-value", out)
+
+	// For non-matching values, it should return the original value
+	out = MangleArgumentValue(&arg, "maybe", "Test action")
+	assert.Equal(t, "maybe", out)
+}
+
+func TestValidateArgumentCheckboxWithChoices(t *testing.T) {
+	log.SetLevel(log.PanicLevel)
+
+	arg := config.ActionArgument{
+		Name: "confirm",
+		Type: "checkbox",
+		Choices: []config.ActionArgumentChoice{
+			{Title: "Enabled", Value: "on"},
+			{Title: "Disabled", Value: "off"},
+		},
+	}
+	action := config.Action{
+		Title: "Test checkbox with choices",
+	}
+
+	// Titles should be accepted once mangled to their values
+	err := ValidateArgument(&arg, "Enabled", &action)
+	assert.Nil(t, err, "Expected checkbox title \"Enabled\" to be accepted after mangling to choice value")
+
+	err = ValidateArgument(&arg, "Disabled", &action)
+	assert.Nil(t, err, "Expected checkbox title \"Disabled\" to be accepted after mangling to choice value")
+
+	// Unknown titles should be rejected because they do not match any choice value
+	err = ValidateArgument(&arg, "Maybe", &action)
+	assert.NotNil(t, err, "Expected unknown checkbox title to be rejected against choices")
 }
 
 func TestArgumentValueNullable(t *testing.T) {

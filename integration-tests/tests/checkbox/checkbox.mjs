@@ -5,7 +5,92 @@ import {
   getRootAndWait,
   getActionButton,
   takeScreenshotOnFailure,
+  getTerminalBuffer,
 } from '../../lib/elements.js'
+
+async function openCheckboxArgumentForm() {
+  await getRootAndWait()
+  const btn = await getActionButton(webdriver, 'Test checkbox argument')
+  await btn.click()
+
+  await webdriver.wait(
+    new Condition('wait for argument form page', async () => {
+      const url = await webdriver.getCurrentUrl()
+      return url.includes('/actionBinding/') && url.includes('/argumentForm')
+    }),
+    5000
+  )
+}
+
+async function getCheckboxInput() {
+  return await webdriver.findElement(By.id('confirm'))
+}
+
+async function submitCheckboxForm() {
+  const submitButton = await webdriver.findElement(By.css('button[name="start"]'))
+  await submitButton.click()
+}
+
+async function waitForLogsPage() {
+  await webdriver.wait(
+    new Condition('wait for logs page', async () => {
+      const url = await webdriver.getCurrentUrl()
+      return url.includes('/logs/') && !url.endsWith('/logs')
+    }),
+    5000
+  )
+}
+
+async function waitForExecutionComplete() {
+  await webdriver.wait(
+    new Condition('wait for execution status', async () => {
+      const statusElements = await webdriver.findElements(By.id('execution-dialog-status'))
+      return statusElements.length > 0
+    }),
+    5000
+  )
+
+  await webdriver.wait(
+    new Condition('wait for execution to finish', async () => {
+      try {
+        const statusElement = await webdriver.findElement(By.id('execution-dialog-status'))
+        const statusText = await statusElement.getText()
+        return !statusText.includes('Executing')
+      } catch (e) {
+        return false
+      }
+    }),
+    5000
+  )
+
+  // Small delay to allow terminal to write output
+  await webdriver.sleep(500)
+}
+
+async function waitForTerminalOutput(expectedValue) {
+  await webdriver.wait(
+    new Condition(`wait for checkbox value ${expectedValue} in output`, async () => {
+      try {
+        const terminalReady = await webdriver.executeScript(`
+          return !!(window.terminal && window.terminal.getBufferAsString);
+        `)
+        if (!terminalReady) {
+          return false
+        }
+        
+        const output = await getTerminalBuffer()
+        if (!output) {
+          return false
+        }
+        
+        return output.trim().includes(`Checkbox value: ${expectedValue}`)
+      } catch (e) {
+        return false
+      }
+    }),
+    5000
+  )
+}
 
 describe('config: checkbox', function () {
   before(async function () {
@@ -21,82 +106,44 @@ describe('config: checkbox', function () {
   })
 
   it('Checkbox argument is rendered as a checkbox input', async function () {
-    await getRootAndWait()
+    await openCheckboxArgumentForm()
 
-    const btn = await getActionButton(webdriver, 'Test checkbox argument')
+    const checkboxInput = await getCheckboxInput()
 
-    await btn.click()
+    expect(await checkboxInput.getTagName()).to.equal('input')
+    expect(await checkboxInput.getAttribute('type')).to.equal('checkbox')
 
-    // Wait for navigation to argument form page
-    await webdriver.wait(
-      new Condition('wait for argument form page', async () => {
-        const url = await webdriver.getCurrentUrl()
-        return url.includes('/actionBinding/') && url.includes('/argumentForm')
-      }),
-      8000
-    )
-
-    // Find the checkbox input field
-    const checkboxInput = await webdriver.findElement(By.id('confirm'))
-
-    // Verify it's an input of type checkbox
-    const tagName = await checkboxInput.getTagName()
-    expect(tagName).to.equal('input')
-
-    const inputType = await checkboxInput.getAttribute('type')
-    expect(inputType).to.equal('checkbox')
-
-    // Verify the label is present
     const label = await webdriver.findElement(By.css('label[for="confirm"]'))
     expect(await label.getText()).to.contain('Confirm option')
   })
 
+  it('Checkbox argument submits 0 by default when unchecked', async function () {
+    this.timeout(15000)
+    await openCheckboxArgumentForm()
+
+    const checkboxInput = await getCheckboxInput()
+    expect(await checkboxInput.isSelected()).to.be.false
+
+    await submitCheckboxForm()
+    await waitForLogsPage()
+    await waitForExecutionComplete()
+    await waitForTerminalOutput('0')
+  })
+
   it('Checkbox argument can be toggled and submitted', async function () {
-    await getRootAndWait()
+    this.timeout(15000)
+    await openCheckboxArgumentForm()
 
-    const btn = await getActionButton(webdriver, 'Test checkbox argument')
-
-    await btn.click()
-
-    // Wait for navigation to argument form page
-    await webdriver.wait(
-      new Condition('wait for argument form page', async () => {
-        const url = await webdriver.getCurrentUrl()
-        return url.includes('/actionBinding/') && url.includes('/argumentForm')
-      }),
-      8000
-    )
-
-    const checkboxInput = await webdriver.findElement(By.id('confirm'))
-
-    // Toggle the checkbox
+    const checkboxInput = await getCheckboxInput()
     await checkboxInput.click()
-
-    // Small wait for Vue to process the change
     await webdriver.sleep(100)
 
-    // Verify the checkbox is checked
-    const isChecked = await checkboxInput.isSelected()
-    expect(isChecked).to.be.true
+    expect(await checkboxInput.isSelected()).to.be.true
 
-    // Find and click the submit button
-    const submitButton = await webdriver.findElement(
-      By.css('button[name="start"]')
-    )
-    await submitButton.click()
-
-    // Wait for navigation to logs page
-    await webdriver.wait(
-      new Condition('wait for logs page', async () => {
-        const url = await webdriver.getCurrentUrl()
-        return url.includes('/logs/')
-      }),
-      8000
-    )
-
-    // Verify we're on the logs page (action was executed)
-    const url = await webdriver.getCurrentUrl()
-    expect(url).to.include('/logs/')
+    await submitCheckboxForm()
+    await waitForLogsPage()
+    await waitForExecutionComplete()
+    await waitForTerminalOutput('1')
   })
 })
 
