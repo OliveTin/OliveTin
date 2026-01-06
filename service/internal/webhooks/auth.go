@@ -2,9 +2,9 @@ package webhooks
 
 import (
 	"crypto/hmac"
-	"crypto/subtle"
 	"crypto/sha1"
 	"crypto/sha256"
+	"crypto/subtle"
 	"encoding/hex"
 	"net/http"
 	"strings"
@@ -123,14 +123,6 @@ func (v *AuthVerifier) verifyBasic(r *http.Request) bool {
 		return false
 	}
 
-import (
-	"crypto/subtle"
-	// ... existing imports
-)
-
-func (v *AuthVerifier) verifyBasic(r *http.Request) bool {
-	// ... existing checks ...
-
 	parts := strings.SplitN(v.config.Secret, ":", 2)
 	if len(parts) == 2 {
 		usernameMatch := subtle.ConstantTimeCompare([]byte(username), []byte(parts[0]))
@@ -139,5 +131,4 @@ func (v *AuthVerifier) verifyBasic(r *http.Request) bool {
 	}
 
 	return subtle.ConstantTimeCompare([]byte(password), []byte(v.config.Secret)) == 1
-}
 }

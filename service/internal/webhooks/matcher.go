@@ -19,7 +19,6 @@ func NewWebhookMatcher(cfg config.WebhookConfig, r *http.Request, bodyBytes []by
 	return &WebhookMatcher{
 		config:    cfg,
 		req:       r,
-		body:      body,
 		bodyBytes: bodyBytes,
 	}
 }
