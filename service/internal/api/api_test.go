@@ -11,6 +11,7 @@ import (
 
 	apiv1 "github.com/OliveTin/OliveTin/gen/olivetin/api/v1"
 	apiv1connect "github.com/OliveTin/OliveTin/gen/olivetin/api/v1/apiv1connect"
+	authpublic "github.com/OliveTin/OliveTin/internal/auth/authpublic"
 	config "github.com/OliveTin/OliveTin/internal/config"
 	"github.com/OliveTin/OliveTin/internal/entities"
 	"github.com/OliveTin/OliveTin/internal/executor"
@@ -172,4 +173,165 @@ func validateConsistency(t *testing.T, client apiv1connect.OliveTinApiServiceCli
 			assert.Equal(t, inst.UniqueKey, resp2.Msg.EntityDefinitions[i].Instances[j].UniqueKey, "Instance order should be consistent across calls")
 		}
 	}
+}
+
+func TestEvaluateEnabledExpression(t *testing.T) {
+	tests := []struct {
+		name           string
+		expression     string
+		entity         *entities.Entity
+		expectedResult bool
+	}{
+		{
+			name:           "empty expression returns true",
+			expression:     "",
+			entity:         nil,
+			expectedResult: true,
+		},
+		{
+			name:           "literal true returns true",
+			expression:     "true",
+			entity:         nil,
+			expectedResult: true,
+		},
+		{
+			name:           "literal True returns true (case insensitive)",
+			expression:     "True",
+			entity:         nil,
+			expectedResult: true,
+		},
+		{
+			name:           "literal 1 returns true",
+			expression:     "1",
+			entity:         nil,
+			expectedResult: true,
+		},
+		{
+			name:           "literal false returns false",
+			expression:     "false",
+			entity:         nil,
+			expectedResult: false,
+		},
+		{
+			name:           "literal 0 returns false",
+			expression:     "0",
+			entity:         nil,
+			expectedResult: false,
+		},
+		{
+			name:           "empty result returns false",
+			expression:     "{{ .NonExistent }}",
+			entity:         nil,
+			expectedResult: false,
+		},
+		{
+			name:           "expression with CurrentEntity true",
+			expression:     "{{ eq .CurrentEntity.powered_on true }}",
+			entity:         &entities.Entity{Data: map[string]any{"powered_on": true}},
+			expectedResult: true,
+		},
+		{
+			name:           "expression with CurrentEntity false",
+			expression:     "{{ eq .CurrentEntity.powered_on true }}",
+			entity:         &entities.Entity{Data: map[string]any{"powered_on": false}},
+			expectedResult: false,
+		},
+		{
+			name:           "expression with CurrentEntity integer 1",
+			expression:     "{{ .CurrentEntity.status }}",
+			entity:         &entities.Entity{Data: map[string]any{"status": 1}},
+			expectedResult: true,
+		},
+		{
+			name:           "expression with CurrentEntity integer 0",
+			expression:     "{{ .CurrentEntity.status }}",
+			entity:         &entities.Entity{Data: map[string]any{"status": 0}},
+			expectedResult: false,
+		},
+		{
+			name:           "template parse error returns false",
+			expression:     "{{ invalid syntax }}",
+			entity:         nil,
+			expectedResult: false,
+		},
+		{
+			name:           "template exec error returns false",
+			expression:     "{{ .CurrentEntity.nonexistent }}",
+			entity:         nil,
+			expectedResult: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			action := &config.Action{
+				EnabledExpression: tt.expression,
+			}
+			result := evaluateEnabledExpression(action, tt.entity)
+			assert.Equal(t, tt.expectedResult, result, "evaluateEnabledExpression should return expected result")
+		})
+	}
+}
+
+func TestBuildActionWithEnabledExpression(t *testing.T) {
+	cfg := config.DefaultConfig()
+	cfg.DefaultPermissions.Exec = true
+
+	action := &config.Action{
+		Title:             "Test Action",
+		Shell:             "echo test",
+		EnabledExpression: "{{ eq .CurrentEntity.enabled true }}",
+	}
+	cfg.Actions = append(cfg.Actions, action)
+
+	ex := executor.DefaultExecutor(cfg)
+	ex.RebuildActionMap()
+
+	binding := findBindingByTitle(ex, "Test Action")
+	assert.NotNil(t, binding, "Binding should be found")
+
+	rr := &DashboardRenderRequest{
+		AuthenticatedUser: &authpublic.AuthenticatedUser{Username: "testuser"},
+		cfg:               cfg,
+		ex:                ex,
+	}
+
+	testWithEntity(t, binding, rr, true, true, "Action should be executable when entity.enabled is true")
+	testWithEntity(t, binding, rr, false, false, "Action should not be executable when entity.enabled is false")
+
+	bindingNoExpr := findBindingByTitle(ex, "Test Action No Expression")
+	if bindingNoExpr == nil {
+		actionNoExpression := &config.Action{
+			Title: "Test Action No Expression",
+			Shell: "echo test",
+		}
+		cfg.Actions = append(cfg.Actions, actionNoExpression)
+		ex.RebuildActionMap()
+		bindingNoExpr = findBindingByTitle(ex, "Test Action No Expression")
+	}
+
+	actionResult := buildAction(bindingNoExpr, rr)
+	assert.True(t, actionResult.CanExec, "Action without enabledExpression should be executable")
+}
+
+func findBindingByTitle(ex *executor.Executor, title string) *executor.ActionBinding {
+	ex.MapActionIdToBindingLock.RLock()
+	defer ex.MapActionIdToBindingLock.RUnlock()
+
+	for _, b := range ex.MapActionIdToBinding {
+		if b.Action.Title == title {
+			return b
+		}
+	}
+	return nil
+}
+
+func testWithEntity(t *testing.T, binding *executor.ActionBinding, rr *DashboardRenderRequest, enabled bool, expectedCanExec bool, message string) {
+	binding.Entity = &entities.Entity{
+		UniqueKey: "test-entity",
+		Data:      map[string]any{"enabled": enabled},
+	}
+
+	actionResult := buildAction(binding, rr)
+	assert.Equal(t, expectedCanExec, actionResult.CanExec, message)
 }
