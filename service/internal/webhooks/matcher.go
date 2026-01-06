@@ -12,7 +12,6 @@ import (
 type WebhookMatcher struct {
 	config    config.WebhookConfig
 	req       *http.Request
-	body      interface{}
 	bodyBytes []byte
 }
 
@@ -50,9 +49,9 @@ func (m *WebhookMatcher) matchHeaders() bool {
 		actualValue := m.req.Header.Get(key)
 		if !m.compareValues(actualValue, expectedValue) {
 			log.WithFields(log.Fields{
-				"header":      key,
-				"expected":    expectedValue,
-				"actual":      actualValue,
+				"header":   key,
+				"expected": expectedValue,
+				"actual":   actualValue,
 			}).Debugf("Header mismatch")
 			return false
 		}
@@ -70,9 +69,9 @@ func (m *WebhookMatcher) matchQuery() bool {
 		actualValue := query.Get(key)
 		if !m.compareValues(actualValue, expectedValue) {
 			log.WithFields(log.Fields{
-				"query":       key,
-				"expected":    expectedValue,
-				"actual":      actualValue,
+				"query":    key,
+				"expected": expectedValue,
+				"actual":   actualValue,
 			}).Debugf("Query parameter mismatch")
 			return false
 		}
@@ -144,7 +143,7 @@ func (m *WebhookMatcher) ExtractArguments() (map[string]string, error) {
 		value, err := matcher.ExtractValue(jsonPath)
 		if err != nil {
 			log.WithFields(log.Fields{
-				"argName": argName,
+				"argName":  argName,
 				"jsonPath": jsonPath,
 				"error":    err,
 			}).Debugf("Failed to extract value")

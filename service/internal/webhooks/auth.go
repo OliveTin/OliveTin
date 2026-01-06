@@ -2,6 +2,7 @@ package webhooks
 
 import (
 	"crypto/hmac"
+	"crypto/subtle"
 	"crypto/sha1"
 	"crypto/sha256"
 	"encoding/hex"
@@ -105,7 +106,9 @@ func (v *AuthVerifier) verifyBearer(r *http.Request) bool {
 	}
 
 	token := strings.TrimPrefix(authHeader, "Bearer ")
-	return token == v.config.Secret
+	tokenBytes := []byte(token)
+	secretBytes := []byte(v.config.Secret)
+	return len(tokenBytes) == len(secretBytes) && subtle.ConstantTimeCompare(tokenBytes, secretBytes) == 1
 }
 
 func (v *AuthVerifier) verifyBasic(r *http.Request) bool {
