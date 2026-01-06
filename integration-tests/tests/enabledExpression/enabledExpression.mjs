@@ -19,7 +19,7 @@ describe('config: enabledExpression', function () {
     takeScreenshotOnFailure(this.currentTest, webdriver);
   });
 
-  it('Action with enabledExpression false is disabled', async function() {
+  it('Action with enabledExpression for lights enable the correct action', async function() {
     await getRootAndWait()
 
     // Navigate to the Lights Dashboard

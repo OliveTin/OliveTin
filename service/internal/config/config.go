@@ -28,6 +28,7 @@ type Action struct {
 	Arguments              []ActionArgument `koanf:"arguments"`
 	PopupOnStart           string           `koanf:"popupOnStart"`
 	SaveLogs               SaveLogsConfig   `koanf:"saveLogs"`
+	EnabledExpression      string           `koanf:"enabledExpression"`
 }
 
 // ActionArgument objects appear on Actions.
