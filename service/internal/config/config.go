@@ -22,12 +22,14 @@ type Action struct {
 	ExecOnFileCreatedInDir []string         `koanf:"execOnFileCreatedInDir"`
 	ExecOnFileChangedInDir []string         `koanf:"execOnFileChangedInDir"`
 	ExecOnCalendarFile     string           `koanf:"execOnCalendarFile"`
+	ExecOnWebhook          []WebhookConfig  `koanf:"execOnWebhook"`
 	Triggers               []string         `koanf:"triggers"`
 	MaxConcurrent          int              `koanf:"maxConcurrent"`
 	MaxRate                []RateSpec       `koanf:"maxRate"`
 	Arguments              []ActionArgument `koanf:"arguments"`
 	PopupOnStart           string           `koanf:"popupOnStart"`
 	SaveLogs               SaveLogsConfig   `koanf:"saveLogs"`
+	EnabledExpression      string           `koanf:"enabledExpression"`
 }
 
 // ActionArgument objects appear on Actions.
@@ -53,6 +55,18 @@ type ActionArgumentChoice struct {
 type RateSpec struct {
 	Limit    int    `koanf:"limit"`
 	Duration string `koanf:"duration"`
+}
+
+// WebhookConfig defines configuration for generic webhook triggers.
+type WebhookConfig struct {
+	Secret       string            `koanf:"secret"`       // Optional: secret for signature verification
+	AuthType     string            `koanf:"authType"`     // Optional: "hmac-sha256", "hmac-sha1", "bearer", "basic", "none"
+	AuthHeader   string            `koanf:"authHeader"`   // Optional: custom header name for auth (default: "X-Webhook-Signature")
+	MatchHeaders map[string]string `koanf:"matchHeaders"` // Match HTTP headers
+	MatchPath    string            `koanf:"matchPath"`    // JSONPath expression to match in request body (format: "jsonpath=value" or just "jsonpath")
+	MatchQuery   map[string]string `koanf:"matchQuery"`   // Match URL query parameters
+	Extract      map[string]string `koanf:"extract"`      // Map action argument names to JSONPath expressions
+	Template     string            `koanf:"template"`     // Optional: template name (e.g., "github-push", "github-pr")
 }
 
 // Entity represents a "thing" that can have multiple actions associated with it.

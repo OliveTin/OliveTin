@@ -10,6 +10,7 @@ require (
 	connectrpc.com/connect v1.19.1
 	github.com/Masterminds/semver v1.5.0
 	github.com/MicahParks/keyfunc/v3 v3.7.0
+	github.com/PaesslerAG/jsonpath v0.1.1
 	github.com/alexedwards/argon2id v1.0.0
 	github.com/bufbuild/buf v1.61.0
 	github.com/fsnotify/fsnotify v1.9.0
@@ -55,6 +56,7 @@ require (
 	github.com/Azure/go-ansiterm v0.0.0-20250102033503-faa5f7b0171c // indirect
 	github.com/MicahParks/jwkset v0.11.0 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
+	github.com/PaesslerAG/gval v1.0.0 // indirect
 	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bufbuild/protocompile v0.14.2-0.20251223142729-db46c1b9d34e // indirect
