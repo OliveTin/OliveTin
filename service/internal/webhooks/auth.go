@@ -22,23 +22,47 @@ func NewAuthVerifier(cfg config.WebhookConfig) *AuthVerifier {
 }
 
 func (v *AuthVerifier) Verify(r *http.Request, payload []byte) bool {
-	switch v.config.AuthType {
-	case "hmac-sha256":
-		return v.verifyHMAC256(r, payload)
-	case "hmac-sha1":
-		return v.verifyHMAC1(r, payload)
-	case "bearer":
-		return v.verifyBearer(r)
-	case "basic":
-		return v.verifyBasic(r)
-	case "none", "":
-		return true
-	default:
-		log.WithFields(log.Fields{
-			"authType": v.config.AuthType,
-		}).Warnf("Unknown auth type, rejecting")
-		return false
+	verifier := v.getVerifier()
+	if verifier == nil {
+		return v.handleUnknownAuthType()
 	}
+	return verifier(r, payload)
+}
+
+type authVerifierFunc func(*http.Request, []byte) bool
+
+func (v *AuthVerifier) getVerifier() authVerifierFunc {
+	if v.config.AuthType == "" || v.config.AuthType == "none" {
+		return func(_ *http.Request, _ []byte) bool {
+			return true
+		}
+	}
+
+	verifierMap := v.buildVerifierMap()
+	if verifier, ok := verifierMap[v.config.AuthType]; ok {
+		return verifier
+	}
+	return nil
+}
+
+func (v *AuthVerifier) buildVerifierMap() map[string]authVerifierFunc {
+	return map[string]authVerifierFunc{
+		"hmac-sha256": v.verifyHMAC256,
+		"hmac-sha1":   v.verifyHMAC1,
+		"bearer": func(r *http.Request, _ []byte) bool {
+			return v.verifyBearer(r)
+		},
+		"basic": func(r *http.Request, _ []byte) bool {
+			return v.verifyBasic(r)
+		},
+	}
+}
+
+func (v *AuthVerifier) handleUnknownAuthType() bool {
+	log.WithFields(log.Fields{
+		"authType": v.config.AuthType,
+	}).Warnf("Unknown auth type, rejecting")
+	return false
 }
 
 func (v *AuthVerifier) verifyHMAC256(r *http.Request, payload []byte) bool {
@@ -123,12 +147,23 @@ func (v *AuthVerifier) verifyBasic(r *http.Request) bool {
 		return false
 	}
 
+	return v.verifyBasicCredentials(username, password)
+}
+
+func (v *AuthVerifier) verifyBasicCredentials(username, password string) bool {
 	parts := strings.SplitN(v.config.Secret, ":", 2)
 	if len(parts) == 2 {
-		usernameMatch := subtle.ConstantTimeCompare([]byte(username), []byte(parts[0]))
-		passwordMatch := subtle.ConstantTimeCompare([]byte(password), []byte(parts[1]))
-		return usernameMatch == 1 && passwordMatch == 1
+		return v.verifyBasicWithUsername(username, password, parts[0], parts[1])
 	}
+	return v.verifyBasicPasswordOnly(password)
+}
 
+func (v *AuthVerifier) verifyBasicWithUsername(username, password, expectedUsername, expectedPassword string) bool {
+	usernameMatch := subtle.ConstantTimeCompare([]byte(username), []byte(expectedUsername))
+	passwordMatch := subtle.ConstantTimeCompare([]byte(password), []byte(expectedPassword))
+	return usernameMatch == 1 && passwordMatch == 1
+}
+
+func (v *AuthVerifier) verifyBasicPasswordOnly(password string) bool {
 	return subtle.ConstantTimeCompare([]byte(password), []byte(v.config.Secret)) == 1
 }

@@ -1,7 +1,6 @@
 package webhooks
 
 import (
-	"encoding/json"
 	"io"
 	"net/http"
 
@@ -34,70 +33,83 @@ func (h *WebhookHandler) HandleWebhook(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	payload, err := h.readPayload(r)
+	if err != nil {
+		http.Error(w, "Failed to read payload", http.StatusBadRequest)
+		return
+	}
+
+	matchingActions := h.findMatchingActions(r, payload)
+	if len(matchingActions) == 0 {
+		h.writeOKResponse(w, "no matching webhook actions")
+		return
+	}
+
+	processed := h.processMatchingActions(matchingActions, r, payload)
+	log.WithFields(log.Fields{
+		"matched":   len(matchingActions),
+		"processed": processed,
+	}).Infof("Webhook processed")
+
+	h.writeOKResponse(w, "webhook actions")
+}
+
+func (h *WebhookHandler) readPayload(r *http.Request) ([]byte, error) {
 	maxSize := int64(1024 * 1024)
 	payload, err := io.ReadAll(io.LimitReader(r.Body, maxSize))
 	if err != nil {
 		log.WithFields(log.Fields{
 			"error": err,
 		}).Warnf("Failed to read webhook payload")
-		http.Error(w, "Failed to read payload", http.StatusBadRequest)
-		return
+		return nil, err
 	}
 
-	var bodyData interface{}
-	if err := json.Unmarshal(payload, &bodyData); err != nil {
-		log.WithFields(log.Fields{
-			"error": err,
-		}).Debugf("Webhook payload is not valid JSON")
+	return payload, nil
+}
+
+func (h *WebhookHandler) writeOKResponse(w http.ResponseWriter, context string) {
+	w.WriteHeader(http.StatusOK)
+	if _, err := w.Write([]byte("OK")); err != nil {
+		log.WithError(err).Warnf("Failed to write response for %s", context)
 	}
+}
 
-	matchingActions := h.findMatchingActions(r, payload, bodyData)
-
-	if len(matchingActions) == 0 {
-		log.WithFields(log.Fields{
-			"path":   r.URL.Path,
-			"method": r.Method,
-		}).Debugf("No matching webhook actions found")
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("OK"))
-		return
-	}
-
+func (h *WebhookHandler) processMatchingActions(matchingActions []ActionWebhookConfig, r *http.Request, payload []byte) int {
 	processed := 0
 	for _, actionConfig := range matchingActions {
 		if h.processWebhook(actionConfig, r, payload) {
 			processed++
 		}
 	}
-
-	log.WithFields(log.Fields{
-		"matched":   len(matchingActions),
-		"processed": processed,
-	}).Infof("Webhook processed")
-
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("OK"))
+	return processed
 }
 
-func (h *WebhookHandler) findMatchingActions(r *http.Request, payload []byte, bodyData interface{}) []ActionWebhookConfig {
+func (h *WebhookHandler) findMatchingActions(r *http.Request, payload []byte) []ActionWebhookConfig {
 	var matches []ActionWebhookConfig
 
 	for _, action := range h.cfg.Actions {
-		for _, webhookConfig := range action.ExecOnWebhook {
-			webhookConfigCopy := webhookConfig
+		matches = append(matches, h.findMatchingWebhooksForAction(action, r, payload)...)
+	}
 
-			if webhookConfigCopy.Template != "" {
-				ApplyGitHubTemplate(&webhookConfigCopy, webhookConfigCopy.Template)
-			}
+	return matches
+}
 
-			matcher := NewWebhookMatcher(webhookConfigCopy, r, payload, bodyData)
+func (h *WebhookHandler) findMatchingWebhooksForAction(action *config.Action, r *http.Request, payload []byte) []ActionWebhookConfig {
+	var matches []ActionWebhookConfig
 
-			if matcher.Matches() {
-				matches = append(matches, ActionWebhookConfig{
-					Action: action,
-					Config: webhookConfigCopy,
-				})
-			}
+	for _, webhookConfig := range action.ExecOnWebhook {
+		webhookConfigCopy := webhookConfig
+
+		if webhookConfigCopy.Template != "" {
+			ApplyGitHubTemplate(&webhookConfigCopy, webhookConfigCopy.Template)
+		}
+
+		matcher := NewWebhookMatcher(webhookConfigCopy, r, payload)
+		if matcher.Matches() {
+			matches = append(matches, ActionWebhookConfig{
+				Action: action,
+				Config: webhookConfigCopy,
+			})
 		}
 	}
 
@@ -114,10 +126,7 @@ func (h *WebhookHandler) processWebhook(actionConfig ActionWebhookConfig, r *htt
 		return false
 	}
 
-	var bodyData interface{}
-	json.Unmarshal(payload, &bodyData)
-
-	matcher := NewWebhookMatcher(actionConfig.Config, r, payload, bodyData)
+	matcher := NewWebhookMatcher(actionConfig.Config, r, payload)
 
 	args, err := matcher.ExtractArguments()
 	if err != nil {

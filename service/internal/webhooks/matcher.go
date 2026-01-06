@@ -15,7 +15,7 @@ type WebhookMatcher struct {
 	bodyBytes []byte
 }
 
-func NewWebhookMatcher(cfg config.WebhookConfig, r *http.Request, bodyBytes []byte, body interface{}) *WebhookMatcher {
+func NewWebhookMatcher(cfg config.WebhookConfig, r *http.Request, bodyBytes []byte) *WebhookMatcher {
 	return &WebhookMatcher{
 		config:    cfg,
 		req:       r,
@@ -83,13 +83,7 @@ func (m *WebhookMatcher) matchPath() bool {
 		return true
 	}
 
-	parts := strings.SplitN(m.config.MatchPath, "=", 2)
-	jsonPath := parts[0]
-	expectedValue := ""
-	if len(parts) == 2 {
-		expectedValue = parts[1]
-	}
-
+	jsonPath, expectedValue := m.parseMatchPath()
 	matcher, err := NewJSONMatcher(m.bodyBytes)
 	if err != nil {
 		log.WithFields(log.Fields{
@@ -98,6 +92,20 @@ func (m *WebhookMatcher) matchPath() bool {
 		return false
 	}
 
+	return m.matchPathValue(matcher, jsonPath, expectedValue)
+}
+
+func (m *WebhookMatcher) parseMatchPath() (string, string) {
+	parts := strings.SplitN(m.config.MatchPath, "=", 2)
+	jsonPath := parts[0]
+	expectedValue := ""
+	if len(parts) == 2 {
+		expectedValue = parts[1]
+	}
+	return jsonPath, expectedValue
+}
+
+func (m *WebhookMatcher) matchPathValue(matcher *JSONMatcher, jsonPath, expectedValue string) bool {
 	if expectedValue == "" {
 		_, err := matcher.ExtractValue(jsonPath)
 		return err == nil
@@ -131,12 +139,20 @@ func (m *WebhookMatcher) compareValues(actual, expected string) bool {
 }
 
 func (m *WebhookMatcher) ExtractArguments() (map[string]string, error) {
-	args := make(map[string]string)
-
 	matcher, err := NewJSONMatcher(m.bodyBytes)
 	if err != nil {
 		return nil, err
 	}
+
+	args := m.extractJSONPathValues(matcher)
+	m.addWebhookMetadata(args)
+	m.addWebhookHeaders(args)
+
+	return args, nil
+}
+
+func (m *WebhookMatcher) extractJSONPathValues(matcher *JSONMatcher) map[string]string {
+	args := make(map[string]string)
 
 	for argName, jsonPath := range m.config.Extract {
 		value, err := matcher.ExtractValue(jsonPath)
@@ -151,15 +167,19 @@ func (m *WebhookMatcher) ExtractArguments() (map[string]string, error) {
 		args[argName] = value
 	}
 
+	return args
+}
+
+func (m *WebhookMatcher) addWebhookMetadata(args map[string]string) {
 	args["webhook_method"] = m.req.Method
 	args["webhook_path"] = m.req.URL.Path
 	args["webhook_query"] = m.req.URL.RawQuery
+}
 
+func (m *WebhookMatcher) addWebhookHeaders(args map[string]string) {
 	for key, values := range m.req.Header {
 		if len(values) > 0 {
 			args["webhook_header_"+strings.ToLower(key)] = values[0]
 		}
 	}
-
-	return args, nil
 }

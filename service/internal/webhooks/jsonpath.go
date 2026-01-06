@@ -25,7 +25,13 @@ func (m *JSONMatcher) MatchPath(pathExpr string, expectedValue string) (bool, er
 		return false, err
 	}
 
-	valueStr := fmt.Sprintf("%v", value)
+	// Marshal to JSON for consistent string representation
+	jsonBytes, err := json.Marshal(value)
+	if err != nil {
+		return false, fmt.Errorf("failed to marshal extracted value: %w", err)
+	}
+
+	valueStr := string(jsonBytes)
 	return valueStr == expectedValue, nil
 }
 
@@ -34,7 +40,14 @@ func (m *JSONMatcher) ExtractValue(pathExpr string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return fmt.Sprintf("%v", value), nil
+
+	// Marshal to JSON for consistent string representation
+	jsonBytes, err := json.Marshal(value)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal extracted value: %w", err)
+	}
+
+	return string(jsonBytes), nil
 }
 
 func (m *JSONMatcher) GetPayload() interface{} {
