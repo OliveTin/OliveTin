@@ -120,10 +120,21 @@ func (v *AuthVerifier) verifyBasic(r *http.Request) bool {
 		return false
 	}
 
+import (
+	"crypto/subtle"
+	// ... existing imports
+)
+
+func (v *AuthVerifier) verifyBasic(r *http.Request) bool {
+	// ... existing checks ...
+
 	parts := strings.SplitN(v.config.Secret, ":", 2)
 	if len(parts) == 2 {
-		return username == parts[0] && password == parts[1]
+		usernameMatch := subtle.ConstantTimeCompare([]byte(username), []byte(parts[0]))
+		passwordMatch := subtle.ConstantTimeCompare([]byte(password), []byte(parts[1]))
+		return usernameMatch == 1 && passwordMatch == 1
 	}
 
-	return password == v.config.Secret
+	return subtle.ConstantTimeCompare([]byte(password), []byte(v.config.Secret)) == 1
+}
 }
