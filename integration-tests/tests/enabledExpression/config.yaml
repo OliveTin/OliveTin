@@ -1,0 +1,39 @@
+#
+# Integration Test Config: EnabledExpression
+#
+
+listenAddressSingleHTTPFrontend: 0.0.0.0:1337
+
+logLevel: "DEBUG"
+checkForUpdates: false
+
+actions:
+  - title: Turn On Light
+    shell: echo "Turning on light"
+    icon: light
+    entity: light
+    enabledExpression: "{{ eq .CurrentEntity.powered_on false }}"
+
+  - title: Turn Off Light
+    shell: echo "Turning off light"
+    icon: light
+    entity: light
+    enabledExpression: "{{ eq .CurrentEntity.powered_on true }}"
+
+  - title: Always Enabled Action
+    shell: echo "Always enabled"
+    icon: check
+
+entities:
+  - file: entities/lights.yaml
+    name: light
+
+dashboards:
+  - title: LightDashboard
+    contents:
+      - title: Light Controls
+        type: fieldset
+        entity: light
+        contents:
+          - title: Turn On Light
+          - title: Turn Off Light

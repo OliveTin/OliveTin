@@ -1,6 +1,11 @@
 package api
 
 import (
+	"strconv"
+	"strings"
+
+	log "github.com/sirupsen/logrus"
+
 	apiv1 "github.com/OliveTin/OliveTin/gen/olivetin/api/v1"
 	acl "github.com/OliveTin/OliveTin/internal/acl"
 	authpublic "github.com/OliveTin/OliveTin/internal/auth/authpublic"
@@ -55,14 +60,61 @@ func buildEffectivePolicy(policy *config.ConfigurationPolicy) *apiv1.EffectivePo
 	return ret
 }
 
+func evaluateEnabledExpression(action *config.Action, entity *entities.Entity) bool {
+	if action.EnabledExpression == "" {
+		return true
+	}
+
+	result := entities.ParseTemplateWith(action.EnabledExpression, entity)
+	result = strings.TrimSpace(result)
+
+	if result == "" {
+		return false
+	}
+
+	if isTemplateError(result, action) {
+		return false
+	}
+
+	return evaluateResultValue(result)
+}
+
+func isTemplateError(result string, action *config.Action) bool {
+	if !strings.HasPrefix(result, "tpl ") || !strings.Contains(result, "error") {
+		return false
+	}
+
+	log.WithFields(log.Fields{
+		"actionTitle":       action.Title,
+		"enabledExpression": action.EnabledExpression,
+		"result":            result,
+	}).Warn("enabledExpression template evaluation failed, treating as disabled")
+	return true
+}
+
+func evaluateResultValue(result string) bool {
+	if strings.EqualFold(result, "true") {
+		return true
+	}
+
+	if num, err := strconv.Atoi(result); err == nil {
+		return num != 0
+	}
+
+	return false
+}
+
 func buildAction(actionBinding *executor.ActionBinding, rr *DashboardRenderRequest) *apiv1.Action {
 	action := actionBinding.Action
+
+	aclCanExec := acl.IsAllowedExec(rr.cfg, rr.AuthenticatedUser, action)
+	enabledExprCanExec := evaluateEnabledExpression(action, actionBinding.Entity)
 
 	btn := apiv1.Action{
 		BindingId:    actionBinding.ID,
 		Title:        entities.ParseTemplateWith(action.Title, actionBinding.Entity),
 		Icon:         entities.ParseTemplateWith(action.Icon, actionBinding.Entity),
-		CanExec:      acl.IsAllowedExec(rr.cfg, rr.AuthenticatedUser, action),
+		CanExec:      aclCanExec && enabledExprCanExec,
 		PopupOnStart: action.PopupOnStart,
 		Order:        int32(actionBinding.ConfigOrder),
 		Timeout:      int32(action.Timeout),
