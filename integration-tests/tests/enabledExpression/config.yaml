@@ -29,7 +29,7 @@ entities:
     name: light
 
 dashboards:
-  - title: Lights Dashboard
+  - title: LightDashboard
     contents:
       - title: Light Controls
         type: fieldset
