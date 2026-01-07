@@ -723,6 +723,10 @@ func (api *oliveTinAPI) GetReadyz(ctx ctx.Context, req *connect.Request[apiv1.Ge
 func (api *oliveTinAPI) EventStream(ctx ctx.Context, req *connect.Request[apiv1.EventStreamRequest], srv *connect.ServerStream[apiv1.EventStreamResponse]) error {
 	log.Debugf("EventStream: %v", req.Msg)
 
+	// Set X-Accel-Buffering header to disable nginx buffering for this stream
+	// https://github.com/OliveTin/OliveTin/issues/765
+	srv.ResponseHeader().Set("X-Accel-Buffering", "no")
+
 	user := auth.UserFromApiCall(ctx, req, api.cfg)
 
 	if err := api.checkDashboardAccess(user); err != nil {
