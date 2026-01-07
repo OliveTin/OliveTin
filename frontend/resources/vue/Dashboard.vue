@@ -108,21 +108,6 @@ function goBack() {
 async function getDashboard() {
     let title = props.title
 
-    // Decode URL-encoded title if present (Vue Router should decode automatically,
-    // but handle cases where it might not)
-    if (title) {
-        try {
-            // Try decoding in case it's URL-encoded (e.g., "Lights%20Dashboard" -> "Lights Dashboard")
-            const decoded = decodeURIComponent(title)
-            // Use decoded version if it's different from the original
-            if (decoded !== title) {
-                title = decoded
-            }
-        } catch (e) {
-            // If decoding fails (e.g., invalid encoding), use original title
-        }
-    }
-
     // If no specific title was provided or it's the placeholder 'default',
     // prefer the first configured root dashboard (e.g., "Test").
     if ((!title || title === 'default') && window.initResponse.rootDashboards && window.initResponse.rootDashboards.length > 0) {
