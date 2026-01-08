@@ -2,7 +2,7 @@
   <Section :title="t('logs.title')" :padding="false">
       <template #toolbar>
         <router-link to="/logs/calendar" class="button neutral">
-          Calendar
+          {{ t('logs.calendar') }}
         </router-link>
         <label class="input-with-icons">
           <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
@@ -130,7 +130,8 @@ const filteredLogs = computed(() => {
     result = result.filter(log => {
       if (!log.datetimeStarted) return false
       const logDate = new Date(log.datetimeStarted)
-      const logDateString = `${logDate.getFullYear()}-${String(logDate.getMonth() + 1).padStart(2, '0')}-${String(logDate.getDate()).padStart(2, '0')}`
+      // Normalize to UTC ISO date string (YYYY-MM-DD) for comparison
+      const logDateString = logDate.toISOString().split('T')[0]
       return logDateString === selectedDate.value
     })
   }

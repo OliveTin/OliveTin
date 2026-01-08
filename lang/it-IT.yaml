@@ -21,6 +21,8 @@ translations:
   logs.exit-code: Codice di uscita
   logs.completed: Completato
   logs.clear-filter: Cancella filtro di ricerca
+  logs.clear-date-filter: Cancella filtro data
+  logs.calendar: Calendario
   logs.calendar-title: Calendario dei Registri
   logs.back-to-list: Torna all'Elenco
   diagnostics.get-support: Ottenere supporto

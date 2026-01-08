@@ -27,6 +27,8 @@ translations:
   logs.exit-code: 退出代码
   logs.completed: 完成
   logs.clear-filter: 清除搜索筛选器
+  logs.clear-date-filter: 清除日期筛选器
+  logs.calendar: 日历
   logs.calendar-title: 日志日历
   logs.back-to-list: 返回列表
   diagnostics.get-support: 获取支持

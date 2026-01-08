@@ -77,14 +77,40 @@ async function fetchLogs() {
   error.value = null
   
   try {
-    // Fetch a large number of logs to populate the calendar
-    // We'll fetch more than a single page to get better calendar coverage
-    const args = {
-      "startOffset": BigInt(0),
-    }
+    // Currently fetches only the default page (startOffset: 0)
+    // Multi-page fetching: loop through pages until no more logs or limit reached
+    const allLogs = []
+    let startOffset = BigInt(0)
+    const maxLogs = 10000 // Reasonable limit to prevent excessive API calls
+    const pageSize = 100 // Typical page size, will be updated from API response
+    
+    while (allLogs.length < maxLogs) {
+      const args = {
+        "startOffset": startOffset,
+      }
 
-    const response = await window.client.getLogs(args)
-    logs.value = response.logs || []
+      const response = await window.client.getLogs(args)
+      const pageLogs = response.logs || []
+      
+      // If no logs returned, we've reached the end
+      if (pageLogs.length === 0) {
+        break
+      }
+      
+      // Append logs from this page
+      allLogs.push(...pageLogs)
+      
+      // Update offset for next page
+      const currentPageSize = Number(response.pageSize) || pageLogs.length
+      startOffset += BigInt(currentPageSize)
+      
+      // If we got fewer logs than the page size, we've reached the end
+      if (pageLogs.length < currentPageSize) {
+        break
+      }
+    }
+    
+    logs.value = allLogs
   } catch (err) {
     console.error('Failed to fetch logs:', err)
     error.value = 'Failed to load logs'
