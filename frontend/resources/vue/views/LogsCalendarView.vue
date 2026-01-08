@@ -127,4 +127,16 @@ onMounted(() => {
 .padding {
   padding: 1rem;
 }
+
+@media (prefers-color-scheme: dark) {
+  :deep(div.calendar-header-nav) {
+    background-color: var(--bg, #111);
+    color: var(--text-color, #fff);
+    border-color: var(--border-color, #333);
+  }
+
+  :deep(div.calendar-header-nav h2.calendar-title) {
+    color: #fff !important;
+  }
+}
 </style>
