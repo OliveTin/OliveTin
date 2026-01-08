@@ -1,5 +1,5 @@
 <template>
-  <div class="mre-container">   
+  <div class="mre-container" :class="component.cssClass">   
     <router-link 
         v-if="executionTrackingId" 
         :to="`/logs/${executionTrackingId}`" 

@@ -1,7 +1,7 @@
 <template>
 	<div :id="`actionButton-${actionId}`" role="none" class="action-button">
 		<button :id="`actionButtonInner-${actionId}`" :title="title" :disabled="!canExec || isDisabled"
-													  :class="buttonClasses" @click="handleClick">
+													  :class="combinedClasses" @click="handleClick">
 
 			<div class="navigate-on-start-container">
 				<div v-if="navigateOnStart == 'pop'" class="navigate-on-start" title="Opens a popup dialog on start">
@@ -29,7 +29,7 @@ import { useRouter } from 'vue-router'
 import { HugeiconsIcon } from '@hugeicons/vue'
 import { WorkoutRunIcon, TypeCursorIcon, ComputerTerminal01Icon } from '@hugeicons/core-free-icons'
 
-import { ref, watch, onMounted, inject } from 'vue'
+import { ref, watch, onMounted, inject, computed } from 'vue'
 
 const router = useRouter()
 const navigateOnStart = ref('')
@@ -38,6 +38,11 @@ const props = defineProps({
   actionData: {
 	type: Object,
 	required: true
+  },
+  cssClass: {
+	type: String,
+	required: false,
+	default: ''
   }
 })
 
@@ -56,6 +61,15 @@ const showArgumentForm = ref(false)
 
 // Animation classes
 const buttonClasses = ref([])
+
+// Combined classes including custom cssClass
+const combinedClasses = computed(() => {
+	const classes = [...buttonClasses.value]
+	if (props.cssClass) {
+		classes.push(props.cssClass)
+	}
+	return classes
+})
 
 // Timestamps
 const updateIterationTimestamp = ref(0)
