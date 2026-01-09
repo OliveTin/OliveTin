@@ -339,8 +339,8 @@ function saveBrowserSuggestions() {
     if (arg.suggestionsBrowserKey) {
       const value = argValues.value[arg.name]
       
-      // Only save non-empty values for non-checkbox/confirmation types
-      if (value && value !== '' && arg.type !== 'checkbox' && arg.type !== 'confirmation') {
+      // Only save non-empty values for non-checkbox/confirmation/password types
+      if (value && value !== '' && arg.type !== 'checkbox' && arg.type !== 'confirmation' && arg.type !== 'password') {
         try {
           const key = `olivetin-suggestions-${arg.suggestionsBrowserKey}`
           const stored = localStorage.getItem(key)

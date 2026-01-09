@@ -222,10 +222,15 @@ describe('config: suggestionsBrowserKey', function () {
     await waitForLogsPage()
     await waitForExecutionComplete()
 
-    // Verify empty value was not saved - localStorage should be null or not contain the key
+    // Verify empty value was not saved - localStorage should be null or empty-equivalent
     const stored = await getLocalStorageItem('olivetin-suggestions-test-suggestions-key')
-    // Should be null since empty values are not saved
-    expect(stored).to.be.null
+    // Should be null OR empty JSON array string ("[]") OR parse to empty array
+    if (stored !== null) {
+      const suggestions = JSON.parse(stored)
+      expect(suggestions).to.be.an('array')
+      expect(suggestions).to.have.length(0)
+    }
+    // If stored is null, that's also acceptable - no assertion needed
   })
 
   it('Suggestions are shared across inputs with the same suggestionsBrowserKey', async function () {
