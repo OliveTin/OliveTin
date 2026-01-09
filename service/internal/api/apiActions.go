@@ -122,13 +122,14 @@ func buildAction(actionBinding *executor.ActionBinding, rr *DashboardRenderReque
 
 	for _, cfgArg := range action.Arguments {
 		pbArg := apiv1.ActionArgument{
-			Name:         cfgArg.Name,
-			Title:        cfgArg.Title,
-			Type:         cfgArg.Type,
-			Description:  cfgArg.Description,
-			DefaultValue: cfgArg.Default,
-			Choices:      buildChoices(cfgArg),
-			Suggestions:  cfgArg.Suggestions,
+			Name:                  cfgArg.Name,
+			Title:                 cfgArg.Title,
+			Type:                  cfgArg.Type,
+			Description:           cfgArg.Description,
+			DefaultValue:          cfgArg.Default,
+			Choices:               buildChoices(cfgArg),
+			Suggestions:           cfgArg.Suggestions,
+			SuggestionsBrowserKey: cfgArg.SuggestionsBrowserKey,
 		}
 
 		btn.Arguments = append(btn.Arguments, &pbArg)

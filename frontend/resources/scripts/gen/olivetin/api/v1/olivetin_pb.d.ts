@@ -99,6 +99,11 @@ export declare type ActionArgument = Message<"olivetin.api.v1.ActionArgument"> &
    * @generated from field: map<string, string> suggestions = 7;
    */
   suggestions: { [key: string]: string };
+
+  /**
+   * @generated from field: string suggestions_browser_key = 8;
+   */
+  suggestionsBrowserKey: string;
 };
 
 /**

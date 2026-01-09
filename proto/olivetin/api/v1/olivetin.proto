@@ -25,6 +25,7 @@ message ActionArgument {
 
 	string description = 6;
 	map<string, string> suggestions = 7;
+	string suggestions_browser_key = 8;
 }
 
 message ActionArgumentChoice {

@@ -12,8 +12,11 @@
                 {{ formatLabel(arg.title) }}
               </label>
 
-              <datalist v-if="arg.suggestions && Object.keys(arg.suggestions).length > 0" :id="`${arg.name}-choices`">
+              <datalist v-if="(arg.suggestions && Object.keys(arg.suggestions).length > 0) || getBrowserSuggestions(arg).length > 0" :id="`${arg.name}-choices`">
                 <option v-for="(suggestion, key) in arg.suggestions" :key="key" :value="key">
+                  {{ suggestion }}
+                </option>
+                <option v-for="(suggestion, index) in getBrowserSuggestions(arg)" :key="`browser-${index}`" :value="suggestion">
                   {{ suggestion }}
                 </option>
               </datalist>
@@ -28,7 +31,7 @@
               <component v-else :is="getInputComponent(arg)" :id="arg.name" :name="arg.name" 
                 :value="(arg.type === 'checkbox' || arg.type === 'confirmation') ? undefined : getArgumentValue(arg)"
                 :checked="(arg.type === 'checkbox' || arg.type === 'confirmation') ? getArgumentValue(arg) : undefined"
-                :list="arg.suggestions ? `${arg.name}-choices` : undefined" 
+                :list="(arg.suggestions || getBrowserSuggestions(arg).length > 0) ? `${arg.name}-choices` : undefined" 
                 :type="getInputComponent(arg) !== 'select' ? getInputType(arg) : undefined"
                 :rows="arg.type === 'raw_string_multiline' ? 5 : undefined"
                 :step="arg.type === 'datetime' ? 1 : undefined" :pattern="getPattern(arg)"
@@ -313,6 +316,60 @@ function getUniqueId() {
   }
 }
 
+function getBrowserSuggestions(arg) {
+  if (!arg.suggestionsBrowserKey) {
+    return []
+  }
+  
+  try {
+    const stored = localStorage.getItem(`olivetin-suggestions-${arg.suggestionsBrowserKey}`)
+    if (stored) {
+      const suggestions = JSON.parse(stored)
+      return Array.isArray(suggestions) ? suggestions : []
+    }
+  } catch (err) {
+    console.warn('Failed to load browser suggestions:', err)
+  }
+  
+  return []
+}
+
+function saveBrowserSuggestions() {
+  for (const arg of actionArguments.value) {
+    if (arg.suggestionsBrowserKey) {
+      const value = argValues.value[arg.name]
+      
+      // Only save non-empty values for non-checkbox/confirmation types
+      if (value && value !== '' && arg.type !== 'checkbox' && arg.type !== 'confirmation') {
+        try {
+          const key = `olivetin-suggestions-${arg.suggestionsBrowserKey}`
+          const stored = localStorage.getItem(key)
+          let suggestions = []
+          
+          if (stored) {
+            suggestions = JSON.parse(stored)
+            if (!Array.isArray(suggestions)) {
+              suggestions = []
+            }
+          }
+          
+          // Add value if not already present
+          if (!suggestions.includes(value)) {
+            suggestions.unshift(value) // Add to beginning
+            // Keep only the most recent 50 suggestions
+            if (suggestions.length > 50) {
+              suggestions = suggestions.slice(0, 50)
+            }
+            localStorage.setItem(key, JSON.stringify(suggestions))
+          }
+        } catch (err) {
+          console.warn('Failed to save browser suggestions:', err)
+        }
+      }
+    }
+  }
+}
+
 async function startAction(actionArgs) {
   const startActionArgs = {
     bindingId: props.bindingId,
@@ -355,6 +412,9 @@ async function handleSubmit(event) {
   
   const argvs = getArgumentValues()
   console.log('argument form has elements that passed validation')
+  
+  // Save values to localStorage for arguments with suggestionsBrowserKey
+  saveBrowserSuggestions()
   
   try {
     const response = await startAction(argvs)

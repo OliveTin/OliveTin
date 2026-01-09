@@ -122,16 +122,17 @@ func (x *Action) GetTimeout() int32 {
 }
 
 type ActionArgument struct {
-	state         protoimpl.MessageState  `protogen:"open.v1"`
-	Name          string                  `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Title         string                  `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
-	Type          string                  `protobuf:"bytes,3,opt,name=type,proto3" json:"type,omitempty"`
-	DefaultValue  string                  `protobuf:"bytes,4,opt,name=default_value,json=defaultValue,proto3" json:"default_value,omitempty"`
-	Choices       []*ActionArgumentChoice `protobuf:"bytes,5,rep,name=choices,proto3" json:"choices,omitempty"`
-	Description   string                  `protobuf:"bytes,6,opt,name=description,proto3" json:"description,omitempty"`
-	Suggestions   map[string]string       `protobuf:"bytes,7,rep,name=suggestions,proto3" json:"suggestions,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state                 protoimpl.MessageState  `protogen:"open.v1"`
+	Name                  string                  `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Title                 string                  `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
+	Type                  string                  `protobuf:"bytes,3,opt,name=type,proto3" json:"type,omitempty"`
+	DefaultValue          string                  `protobuf:"bytes,4,opt,name=default_value,json=defaultValue,proto3" json:"default_value,omitempty"`
+	Choices               []*ActionArgumentChoice `protobuf:"bytes,5,rep,name=choices,proto3" json:"choices,omitempty"`
+	Description           string                  `protobuf:"bytes,6,opt,name=description,proto3" json:"description,omitempty"`
+	Suggestions           map[string]string       `protobuf:"bytes,7,rep,name=suggestions,proto3" json:"suggestions,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	SuggestionsBrowserKey string                  `protobuf:"bytes,8,opt,name=suggestions_browser_key,json=suggestionsBrowserKey,proto3" json:"suggestions_browser_key,omitempty"`
+	unknownFields         protoimpl.UnknownFields
+	sizeCache             protoimpl.SizeCache
 }
 
 func (x *ActionArgument) Reset() {
@@ -211,6 +212,13 @@ func (x *ActionArgument) GetSuggestions() map[string]string {
 		return x.Suggestions
 	}
 	return nil
+}
+
+func (x *ActionArgument) GetSuggestionsBrowserKey() string {
+	if x != nil {
+		return x.SuggestionsBrowserKey
+	}
+	return ""
 }
 
 type ActionArgumentChoice struct {
@@ -3849,7 +3857,7 @@ const file_olivetin_api_v1_olivetin_proto_rawDesc = "" +
 	"\targuments\x18\x05 \x03(\v2\x1f.olivetin.api.v1.ActionArgumentR\targuments\x12$\n" +
 	"\x0epopup_on_start\x18\x06 \x01(\tR\fpopupOnStart\x12\x14\n" +
 	"\x05order\x18\a \x01(\x05R\x05order\x12\x18\n" +
-	"\atimeout\x18\b \x01(\x05R\atimeout\"\xea\x02\n" +
+	"\atimeout\x18\b \x01(\x05R\atimeout\"\xa2\x03\n" +
 	"\x0eActionArgument\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\x12\x12\n" +
@@ -3857,7 +3865,8 @@ const file_olivetin_api_v1_olivetin_proto_rawDesc = "" +
 	"\rdefault_value\x18\x04 \x01(\tR\fdefaultValue\x12?\n" +
 	"\achoices\x18\x05 \x03(\v2%.olivetin.api.v1.ActionArgumentChoiceR\achoices\x12 \n" +
 	"\vdescription\x18\x06 \x01(\tR\vdescription\x12R\n" +
-	"\vsuggestions\x18\a \x03(\v20.olivetin.api.v1.ActionArgument.SuggestionsEntryR\vsuggestions\x1a>\n" +
+	"\vsuggestions\x18\a \x03(\v20.olivetin.api.v1.ActionArgument.SuggestionsEntryR\vsuggestions\x126\n" +
+	"\x17suggestions_browser_key\x18\b \x01(\tR\x15suggestionsBrowserKey\x1a>\n" +
 	"\x10SuggestionsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"B\n" +
