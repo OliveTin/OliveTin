@@ -129,9 +129,11 @@ function handleEventClick(event) {
 
 function handleDayClick(date) {
   // Navigate to logs list filtered by the selected date
-  // Format date as YYYY-MM-DD in UTC to match LogsListView filtering
-  // Convert to UTC before formatting to avoid timezone off-by-one errors
-  const dateString = new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().split('T')[0]
+  // Format date as YYYY-MM-DD using local date components to avoid timezone issues
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  const dateString = `${year}-${month}-${day}`
   router.push({ path: '/logs', query: { date: dateString } })
 }
 

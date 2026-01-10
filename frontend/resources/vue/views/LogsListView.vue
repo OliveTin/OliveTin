@@ -73,9 +73,9 @@
       </div>
 
       <div v-show="selectedDate && filteredLogs.length === 0" class="empty-state">
-        <p>No logs found for {{ formatDateFilter(selectedDate) }}.</p>
+        <p>{{ t('logs.no-logs-to-display') }} {{ formatDateFilter(selectedDate) }}.</p>
         <button @click="clearDateFilter" class="button neutral">
-          Clear date filter
+          {{ t('logs.clear-date-filter') }}
         </button>
       </div>
 
