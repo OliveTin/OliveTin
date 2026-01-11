@@ -21,7 +21,7 @@ import (
 	"path"
 )
 
-func getNewTestServerAndClient(t *testing.T, injectedConfig *config.Config) (*httptest.Server, apiv1connect.OliveTinApiServiceClient) {
+func getNewTestServerAndClient(injectedConfig *config.Config) (*httptest.Server, apiv1connect.OliveTinApiServiceClient) {
 	ex := executor.DefaultExecutor(injectedConfig)
 	ex.RebuildActionMap()
 
@@ -63,7 +63,7 @@ func TestGetActionsAndStart(t *testing.T) {
 	ex := executor.DefaultExecutor(cfg)
 	ex.RebuildActionMap()
 
-	conn, client := getNewTestServerAndClient(t, cfg)
+	conn, client := getNewTestServerAndClient(cfg)
 
 	respInit, errInit := client.Init(context.Background(), connect.NewRequest(&apiv1.InitRequest{}))
 	respGetReady, errReady := client.GetReadyz(context.Background(), connect.NewRequest(&apiv1.GetReadyzRequest{}))
@@ -99,7 +99,7 @@ func TestGetActionsAndStart(t *testing.T) {
 func TestGetEntities(t *testing.T) {
 	cfg := config.DefaultConfig()
 
-	ts, client := getNewTestServerAndClient(t, cfg)
+	ts, client := getNewTestServerAndClient(cfg)
 	defer ts.Close()
 
 	setupTestEntities()
@@ -315,10 +315,10 @@ func TestBuildActionWithEnabledExpression(t *testing.T) {
 }
 
 func findBindingByTitle(ex *executor.Executor, title string) *executor.ActionBinding {
-	ex.MapActionIdToBindingLock.RLock()
-	defer ex.MapActionIdToBindingLock.RUnlock()
+	ex.MapActionBindingsLock.RLock()
+	defer ex.MapActionBindingsLock.RUnlock()
 
-	for _, b := range ex.MapActionIdToBinding {
+	for _, b := range ex.MapActionBindings {
 		if b.Action.Title == title {
 			return b
 		}

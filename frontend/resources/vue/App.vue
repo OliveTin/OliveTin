@@ -1,5 +1,5 @@
 <template>
-    <Header :title="pageTitle" :logoUrl="logoUrl" @toggleSidebar="toggleSidebar" :sidebarEnabled="showNavigation">
+    <Header :title="pageTitle" :logoUrl="logoUrl" @toggleSidebar="toggleSidebar" :sidebarEnabled="sidebarEnabled" :topBarEnabled="topbarEnabled" :navigation="navigation">
         <template #toolbar>
             <div id="banner" v-if="bannerMessage" :style="bannerCss">
                 <p>{{ bannerMessage }}</p>
@@ -19,8 +19,8 @@
     </Header>
 
     <div id="layout">
-        <Navigation ref="navigation" v-if="showNavigation">
-            <Sidebar ref="sidebar" id = "mainnav" v-if="showNavigation" />
+        <Navigation ref="navigation">
+            <Sidebar ref="sidebar" id = "mainnav" v-if="sidebarEnabled && showNavigation"/>
         </Navigation>
 
 		<div id="content" initial-martial-complete="{{ hasLoaded }}">
@@ -108,6 +108,7 @@ const showNavigation = ref(true)
 const showLogs = ref(true)
 const showDiagnostics = ref(true)
 const showLoginLink = ref(true)
+const sectionNavigationStyle = ref('sidebar')
 
 const languageDialog = ref(null)
 const browserLanguages = ref([])
@@ -133,6 +134,15 @@ const currentLanguageName = computed(() => {
     }
 
     return availableLanguages[languagePreference.value] || languagePreference.value
+})
+
+// Computed properties for navigation style
+const topbarEnabled = computed(() => {
+    return sectionNavigationStyle.value === 'topbar'
+})
+
+const sidebarEnabled = computed(() => {
+    return sectionNavigationStyle.value !== 'topbar' && showNavigation.value
 })
 
 function normalizeBrowserLanguage() {
@@ -180,6 +190,7 @@ function updateHeaderFromInit() {
     showNavigation.value = window.initResponse.showNavigation
     showLogs.value = window.initResponse.showLogList
     showDiagnostics.value = window.initResponse.showDiagnostics
+    sectionNavigationStyle.value = window.initResponse.sectionNavigationStyle || 'sidebar'
 
     if (!window.initResponse.authLocalLogin && window.initResponse.oAuth2Providers.length === 0) {
         showLoginLink.value = false

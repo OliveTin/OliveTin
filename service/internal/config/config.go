@@ -34,15 +34,16 @@ type Action struct {
 
 // ActionArgument objects appear on Actions.
 type ActionArgument struct {
-	Name        string                 `koanf:"name"`
-	Title       string                 `koanf:"title"`
-	Description string                 `koanf:"description"`
-	Type        string                 `koanf:"type"`
-	Default     string                 `koanf:"default"`
-	Choices     []ActionArgumentChoice `koanf:"choices"`
-	Entity      string                 `koanf:"entity"`
-	RejectNull  bool                   `koanf:"rejectNull"`
-	Suggestions map[string]string      `koanf:"suggestions"`
+	Name                  string                 `koanf:"name"`
+	Title                 string                 `koanf:"title"`
+	Description           string                 `koanf:"description"`
+	Type                  string                 `koanf:"type"`
+	Default               string                 `koanf:"default"`
+	Choices               []ActionArgumentChoice `koanf:"choices"`
+	Entity                string                 `koanf:"entity"`
+	RejectNull            bool                   `koanf:"rejectNull"`
+	Suggestions           map[string]string      `koanf:"suggestions"`
+	SuggestionsBrowserKey string                 `koanf:"suggestionsBrowserKey"`
 }
 
 // ActionArgumentChoice represents a predefined choice for an argument.

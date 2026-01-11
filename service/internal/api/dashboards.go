@@ -128,7 +128,7 @@ func buildDefaultDashboard(rr *DashboardRenderRequest) *apiv1.Dashboard {
 		Contents: make([]*apiv1.DashboardComponent, 0),
 	}
 
-	for _, binding := range rr.ex.MapActionIdToBinding {
+	for _, binding := range rr.ex.MapActionBindings {
 		if binding.Action.Hidden {
 			continue
 		}

@@ -22,17 +22,18 @@ const (
 )
 
 type Action struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	BindingId     string                 `protobuf:"bytes,1,opt,name=binding_id,json=bindingId,proto3" json:"binding_id,omitempty"`
-	Title         string                 `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
-	Icon          string                 `protobuf:"bytes,3,opt,name=icon,proto3" json:"icon,omitempty"`
-	CanExec       bool                   `protobuf:"varint,4,opt,name=can_exec,json=canExec,proto3" json:"can_exec,omitempty"`
-	Arguments     []*ActionArgument      `protobuf:"bytes,5,rep,name=arguments,proto3" json:"arguments,omitempty"`
-	PopupOnStart  string                 `protobuf:"bytes,6,opt,name=popup_on_start,json=popupOnStart,proto3" json:"popup_on_start,omitempty"`
-	Order         int32                  `protobuf:"varint,7,opt,name=order,proto3" json:"order,omitempty"`
-	Timeout       int32                  `protobuf:"varint,8,opt,name=timeout,proto3" json:"timeout,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state                    protoimpl.MessageState `protogen:"open.v1"`
+	BindingId                string                 `protobuf:"bytes,1,opt,name=binding_id,json=bindingId,proto3" json:"binding_id,omitempty"`
+	Title                    string                 `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
+	Icon                     string                 `protobuf:"bytes,3,opt,name=icon,proto3" json:"icon,omitempty"`
+	CanExec                  bool                   `protobuf:"varint,4,opt,name=can_exec,json=canExec,proto3" json:"can_exec,omitempty"`
+	Arguments                []*ActionArgument      `protobuf:"bytes,5,rep,name=arguments,proto3" json:"arguments,omitempty"`
+	PopupOnStart             string                 `protobuf:"bytes,6,opt,name=popup_on_start,json=popupOnStart,proto3" json:"popup_on_start,omitempty"`
+	Order                    int32                  `protobuf:"varint,7,opt,name=order,proto3" json:"order,omitempty"`
+	Timeout                  int32                  `protobuf:"varint,8,opt,name=timeout,proto3" json:"timeout,omitempty"`
+	DatetimeRateLimitExpires string                 `protobuf:"bytes,9,opt,name=datetime_rate_limit_expires,json=datetimeRateLimitExpires,proto3" json:"datetime_rate_limit_expires,omitempty"` // Datetime when rate limit expires (empty string if not rate limited), format: "2006-01-02 15:04:05"
+	unknownFields            protoimpl.UnknownFields
+	sizeCache                protoimpl.SizeCache
 }
 
 func (x *Action) Reset() {
@@ -121,17 +122,25 @@ func (x *Action) GetTimeout() int32 {
 	return 0
 }
 
+func (x *Action) GetDatetimeRateLimitExpires() string {
+	if x != nil {
+		return x.DatetimeRateLimitExpires
+	}
+	return ""
+}
+
 type ActionArgument struct {
-	state         protoimpl.MessageState  `protogen:"open.v1"`
-	Name          string                  `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Title         string                  `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
-	Type          string                  `protobuf:"bytes,3,opt,name=type,proto3" json:"type,omitempty"`
-	DefaultValue  string                  `protobuf:"bytes,4,opt,name=default_value,json=defaultValue,proto3" json:"default_value,omitempty"`
-	Choices       []*ActionArgumentChoice `protobuf:"bytes,5,rep,name=choices,proto3" json:"choices,omitempty"`
-	Description   string                  `protobuf:"bytes,6,opt,name=description,proto3" json:"description,omitempty"`
-	Suggestions   map[string]string       `protobuf:"bytes,7,rep,name=suggestions,proto3" json:"suggestions,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state                 protoimpl.MessageState  `protogen:"open.v1"`
+	Name                  string                  `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Title                 string                  `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
+	Type                  string                  `protobuf:"bytes,3,opt,name=type,proto3" json:"type,omitempty"`
+	DefaultValue          string                  `protobuf:"bytes,4,opt,name=default_value,json=defaultValue,proto3" json:"default_value,omitempty"`
+	Choices               []*ActionArgumentChoice `protobuf:"bytes,5,rep,name=choices,proto3" json:"choices,omitempty"`
+	Description           string                  `protobuf:"bytes,6,opt,name=description,proto3" json:"description,omitempty"`
+	Suggestions           map[string]string       `protobuf:"bytes,7,rep,name=suggestions,proto3" json:"suggestions,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	SuggestionsBrowserKey string                  `protobuf:"bytes,8,opt,name=suggestions_browser_key,json=suggestionsBrowserKey,proto3" json:"suggestions_browser_key,omitempty"`
+	unknownFields         protoimpl.UnknownFields
+	sizeCache             protoimpl.SizeCache
 }
 
 func (x *ActionArgument) Reset() {
@@ -211,6 +220,13 @@ func (x *ActionArgument) GetSuggestions() map[string]string {
 		return x.Suggestions
 	}
 	return nil
+}
+
+func (x *ActionArgument) GetSuggestionsBrowserKey() string {
+	if x != nil {
+		return x.SuggestionsBrowserKey
+	}
+	return ""
 }
 
 type ActionArgumentChoice struct {
@@ -1130,26 +1146,27 @@ func (x *GetLogsRequest) GetStartOffset() int64 {
 }
 
 type LogEntry struct {
-	state               protoimpl.MessageState `protogen:"open.v1"`
-	DatetimeStarted     string                 `protobuf:"bytes,1,opt,name=datetime_started,json=datetimeStarted,proto3" json:"datetime_started,omitempty"`
-	ActionTitle         string                 `protobuf:"bytes,2,opt,name=action_title,json=actionTitle,proto3" json:"action_title,omitempty"`
-	Output              string                 `protobuf:"bytes,3,opt,name=output,proto3" json:"output,omitempty"`
-	TimedOut            bool                   `protobuf:"varint,5,opt,name=timed_out,json=timedOut,proto3" json:"timed_out,omitempty"`
-	ExitCode            int32                  `protobuf:"varint,6,opt,name=exit_code,json=exitCode,proto3" json:"exit_code,omitempty"`
-	User                string                 `protobuf:"bytes,7,opt,name=user,proto3" json:"user,omitempty"`
-	UserClass           string                 `protobuf:"bytes,8,opt,name=user_class,json=userClass,proto3" json:"user_class,omitempty"`
-	ActionIcon          string                 `protobuf:"bytes,9,opt,name=action_icon,json=actionIcon,proto3" json:"action_icon,omitempty"`
-	Tags                []string               `protobuf:"bytes,10,rep,name=tags,proto3" json:"tags,omitempty"`
-	ExecutionTrackingId string                 `protobuf:"bytes,11,opt,name=execution_tracking_id,json=executionTrackingId,proto3" json:"execution_tracking_id,omitempty"`
-	DatetimeFinished    string                 `protobuf:"bytes,12,opt,name=datetime_finished,json=datetimeFinished,proto3" json:"datetime_finished,omitempty"`
-	ActionId            string                 `protobuf:"bytes,13,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty"`
-	ExecutionStarted    bool                   `protobuf:"varint,14,opt,name=execution_started,json=executionStarted,proto3" json:"execution_started,omitempty"`
-	ExecutionFinished   bool                   `protobuf:"varint,15,opt,name=execution_finished,json=executionFinished,proto3" json:"execution_finished,omitempty"`
-	Blocked             bool                   `protobuf:"varint,16,opt,name=blocked,proto3" json:"blocked,omitempty"`
-	DatetimeIndex       int64                  `protobuf:"varint,17,opt,name=datetime_index,json=datetimeIndex,proto3" json:"datetime_index,omitempty"`
-	CanKill             bool                   `protobuf:"varint,18,opt,name=can_kill,json=canKill,proto3" json:"can_kill,omitempty"`
-	unknownFields       protoimpl.UnknownFields
-	sizeCache           protoimpl.SizeCache
+	state                    protoimpl.MessageState `protogen:"open.v1"`
+	DatetimeStarted          string                 `protobuf:"bytes,1,opt,name=datetime_started,json=datetimeStarted,proto3" json:"datetime_started,omitempty"`
+	ActionTitle              string                 `protobuf:"bytes,2,opt,name=action_title,json=actionTitle,proto3" json:"action_title,omitempty"`
+	Output                   string                 `protobuf:"bytes,3,opt,name=output,proto3" json:"output,omitempty"`
+	TimedOut                 bool                   `protobuf:"varint,5,opt,name=timed_out,json=timedOut,proto3" json:"timed_out,omitempty"`
+	ExitCode                 int32                  `protobuf:"varint,6,opt,name=exit_code,json=exitCode,proto3" json:"exit_code,omitempty"`
+	User                     string                 `protobuf:"bytes,7,opt,name=user,proto3" json:"user,omitempty"`
+	UserClass                string                 `protobuf:"bytes,8,opt,name=user_class,json=userClass,proto3" json:"user_class,omitempty"`
+	ActionIcon               string                 `protobuf:"bytes,9,opt,name=action_icon,json=actionIcon,proto3" json:"action_icon,omitempty"`
+	Tags                     []string               `protobuf:"bytes,10,rep,name=tags,proto3" json:"tags,omitempty"`
+	ExecutionTrackingId      string                 `protobuf:"bytes,11,opt,name=execution_tracking_id,json=executionTrackingId,proto3" json:"execution_tracking_id,omitempty"`
+	DatetimeFinished         string                 `protobuf:"bytes,12,opt,name=datetime_finished,json=datetimeFinished,proto3" json:"datetime_finished,omitempty"`
+	ExecutionStarted         bool                   `protobuf:"varint,14,opt,name=execution_started,json=executionStarted,proto3" json:"execution_started,omitempty"`
+	ExecutionFinished        bool                   `protobuf:"varint,15,opt,name=execution_finished,json=executionFinished,proto3" json:"execution_finished,omitempty"`
+	Blocked                  bool                   `protobuf:"varint,16,opt,name=blocked,proto3" json:"blocked,omitempty"`
+	DatetimeIndex            int64                  `protobuf:"varint,17,opt,name=datetime_index,json=datetimeIndex,proto3" json:"datetime_index,omitempty"`
+	CanKill                  bool                   `protobuf:"varint,18,opt,name=can_kill,json=canKill,proto3" json:"can_kill,omitempty"`
+	DatetimeRateLimitExpires string                 `protobuf:"bytes,19,opt,name=datetime_rate_limit_expires,json=datetimeRateLimitExpires,proto3" json:"datetime_rate_limit_expires,omitempty"` // Datetime when rate limit expires (empty string if not rate limited), format: "2006-01-02 15:04:05"
+	BindingId                string                 `protobuf:"bytes,20,opt,name=binding_id,json=bindingId,proto3" json:"binding_id,omitempty"`                                                  // Binding ID for matching rate limits to action buttons
+	unknownFields            protoimpl.UnknownFields
+	sizeCache                protoimpl.SizeCache
 }
 
 func (x *LogEntry) Reset() {
@@ -1259,13 +1276,6 @@ func (x *LogEntry) GetDatetimeFinished() string {
 	return ""
 }
 
-func (x *LogEntry) GetActionId() string {
-	if x != nil {
-		return x.ActionId
-	}
-	return ""
-}
-
 func (x *LogEntry) GetExecutionStarted() bool {
 	if x != nil {
 		return x.ExecutionStarted
@@ -1299,6 +1309,20 @@ func (x *LogEntry) GetCanKill() bool {
 		return x.CanKill
 	}
 	return false
+}
+
+func (x *LogEntry) GetDatetimeRateLimitExpires() string {
+	if x != nil {
+		return x.DatetimeRateLimitExpires
+	}
+	return ""
+}
+
+func (x *LogEntry) GetBindingId() string {
+	if x != nil {
+		return x.BindingId
+	}
+	return ""
 }
 
 type GetLogsResponse struct {
@@ -2089,7 +2113,7 @@ func (x *DumpVarsResponse) GetContents() map[string]string {
 	return nil
 }
 
-type ActionEntityPair struct {
+type DebugBinding struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ActionTitle   string                 `protobuf:"bytes,1,opt,name=action_title,json=actionTitle,proto3" json:"action_title,omitempty"`
 	EntityPrefix  string                 `protobuf:"bytes,2,opt,name=entity_prefix,json=entityPrefix,proto3" json:"entity_prefix,omitempty"`
@@ -2097,20 +2121,20 @@ type ActionEntityPair struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ActionEntityPair) Reset() {
-	*x = ActionEntityPair{}
+func (x *DebugBinding) Reset() {
+	*x = DebugBinding{}
 	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[35]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ActionEntityPair) String() string {
+func (x *DebugBinding) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ActionEntityPair) ProtoMessage() {}
+func (*DebugBinding) ProtoMessage() {}
 
-func (x *ActionEntityPair) ProtoReflect() protoreflect.Message {
+func (x *DebugBinding) ProtoReflect() protoreflect.Message {
 	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[35]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2122,19 +2146,19 @@ func (x *ActionEntityPair) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ActionEntityPair.ProtoReflect.Descriptor instead.
-func (*ActionEntityPair) Descriptor() ([]byte, []int) {
+// Deprecated: Use DebugBinding.ProtoReflect.Descriptor instead.
+func (*DebugBinding) Descriptor() ([]byte, []int) {
 	return file_olivetin_api_v1_olivetin_proto_rawDescGZIP(), []int{35}
 }
 
-func (x *ActionEntityPair) GetActionTitle() string {
+func (x *DebugBinding) GetActionTitle() string {
 	if x != nil {
 		return x.ActionTitle
 	}
 	return ""
 }
 
-func (x *ActionEntityPair) GetEntityPrefix() string {
+func (x *DebugBinding) GetEntityPrefix() string {
 	if x != nil {
 		return x.EntityPrefix
 	}
@@ -2178,9 +2202,9 @@ func (*DumpPublicIdActionMapRequest) Descriptor() ([]byte, []int) {
 }
 
 type DumpPublicIdActionMapResponse struct {
-	state         protoimpl.MessageState       `protogen:"open.v1"`
-	Alert         string                       `protobuf:"bytes,1,opt,name=alert,proto3" json:"alert,omitempty"`
-	Contents      map[string]*ActionEntityPair `protobuf:"bytes,2,rep,name=contents,proto3" json:"contents,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	state         protoimpl.MessageState   `protogen:"open.v1"`
+	Alert         string                   `protobuf:"bytes,1,opt,name=alert,proto3" json:"alert,omitempty"`
+	Contents      map[string]*DebugBinding `protobuf:"bytes,2,rep,name=contents,proto3" json:"contents,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2222,7 +2246,7 @@ func (x *DumpPublicIdActionMapResponse) GetAlert() string {
 	return ""
 }
 
-func (x *DumpPublicIdActionMapResponse) GetContents() map[string]*ActionEntityPair {
+func (x *DumpPublicIdActionMapResponse) GetContents() map[string]*DebugBinding {
 	if x != nil {
 		return x.Contents
 	}
@@ -3839,7 +3863,7 @@ var File_olivetin_api_v1_olivetin_proto protoreflect.FileDescriptor
 
 const file_olivetin_api_v1_olivetin_proto_rawDesc = "" +
 	"\n" +
-	"\x1eolivetin/api/v1/olivetin.proto\x12\x0folivetin.api.v1\"\x81\x02\n" +
+	"\x1eolivetin/api/v1/olivetin.proto\x12\x0folivetin.api.v1\"\xc0\x02\n" +
 	"\x06Action\x12\x1d\n" +
 	"\n" +
 	"binding_id\x18\x01 \x01(\tR\tbindingId\x12\x14\n" +
@@ -3849,7 +3873,8 @@ const file_olivetin_api_v1_olivetin_proto_rawDesc = "" +
 	"\targuments\x18\x05 \x03(\v2\x1f.olivetin.api.v1.ActionArgumentR\targuments\x12$\n" +
 	"\x0epopup_on_start\x18\x06 \x01(\tR\fpopupOnStart\x12\x14\n" +
 	"\x05order\x18\a \x01(\x05R\x05order\x12\x18\n" +
-	"\atimeout\x18\b \x01(\x05R\atimeout\"\xea\x02\n" +
+	"\atimeout\x18\b \x01(\x05R\atimeout\x12=\n" +
+	"\x1bdatetime_rate_limit_expires\x18\t \x01(\tR\x18datetimeRateLimitExpires\"\xa2\x03\n" +
 	"\x0eActionArgument\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\x12\x12\n" +
@@ -3857,7 +3882,8 @@ const file_olivetin_api_v1_olivetin_proto_rawDesc = "" +
 	"\rdefault_value\x18\x04 \x01(\tR\fdefaultValue\x12?\n" +
 	"\achoices\x18\x05 \x03(\v2%.olivetin.api.v1.ActionArgumentChoiceR\achoices\x12 \n" +
 	"\vdescription\x18\x06 \x01(\tR\vdescription\x12R\n" +
-	"\vsuggestions\x18\a \x03(\v20.olivetin.api.v1.ActionArgument.SuggestionsEntryR\vsuggestions\x1a>\n" +
+	"\vsuggestions\x18\a \x03(\v20.olivetin.api.v1.ActionArgument.SuggestionsEntryR\vsuggestions\x126\n" +
+	"\x17suggestions_browser_key\x18\b \x01(\tR\x15suggestionsBrowserKey\x1a>\n" +
 	"\x10SuggestionsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"B\n" +
@@ -3924,7 +3950,7 @@ const file_olivetin_api_v1_olivetin_proto_rawDesc = "" +
 	"\x1fStartActionByGetAndWaitResponse\x126\n" +
 	"\tlog_entry\x18\x01 \x01(\v2\x19.olivetin.api.v1.LogEntryR\blogEntry\"3\n" +
 	"\x0eGetLogsRequest\x12!\n" +
-	"\fstart_offset\x18\x01 \x01(\x03R\vstartOffset\"\xc8\x04\n" +
+	"\fstart_offset\x18\x01 \x01(\x03R\vstartOffset\"\x89\x05\n" +
 	"\bLogEntry\x12)\n" +
 	"\x10datetime_started\x18\x01 \x01(\tR\x0fdatetimeStarted\x12!\n" +
 	"\faction_title\x18\x02 \x01(\tR\vactionTitle\x12\x16\n" +
@@ -3939,13 +3965,15 @@ const file_olivetin_api_v1_olivetin_proto_rawDesc = "" +
 	"\x04tags\x18\n" +
 	" \x03(\tR\x04tags\x122\n" +
 	"\x15execution_tracking_id\x18\v \x01(\tR\x13executionTrackingId\x12+\n" +
-	"\x11datetime_finished\x18\f \x01(\tR\x10datetimeFinished\x12\x1b\n" +
-	"\taction_id\x18\r \x01(\tR\bactionId\x12+\n" +
+	"\x11datetime_finished\x18\f \x01(\tR\x10datetimeFinished\x12+\n" +
 	"\x11execution_started\x18\x0e \x01(\bR\x10executionStarted\x12-\n" +
 	"\x12execution_finished\x18\x0f \x01(\bR\x11executionFinished\x12\x18\n" +
 	"\ablocked\x18\x10 \x01(\bR\ablocked\x12%\n" +
 	"\x0edatetime_index\x18\x11 \x01(\x03R\rdatetimeIndex\x12\x19\n" +
-	"\bcan_kill\x18\x12 \x01(\bR\acanKill\"\xca\x01\n" +
+	"\bcan_kill\x18\x12 \x01(\bR\acanKill\x12=\n" +
+	"\x1bdatetime_rate_limit_expires\x18\x13 \x01(\tR\x18datetimeRateLimitExpires\x12\x1d\n" +
+	"\n" +
+	"binding_id\x18\x14 \x01(\tR\tbindingId\"\xca\x01\n" +
 	"\x0fGetLogsResponse\x12-\n" +
 	"\x04logs\x18\x01 \x03(\v2\x19.olivetin.api.v1.LogEntryR\x04logs\x12'\n" +
 	"\x0fcount_remaining\x18\x02 \x01(\x03R\x0ecountRemaining\x12\x1b\n" +
@@ -3997,17 +4025,17 @@ const file_olivetin_api_v1_olivetin_proto_rawDesc = "" +
 	"\bcontents\x18\x02 \x03(\v2/.olivetin.api.v1.DumpVarsResponse.ContentsEntryR\bcontents\x1a;\n" +
 	"\rContentsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"Z\n" +
-	"\x10ActionEntityPair\x12!\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"V\n" +
+	"\fDebugBinding\x12!\n" +
 	"\faction_title\x18\x01 \x01(\tR\vactionTitle\x12#\n" +
 	"\rentity_prefix\x18\x02 \x01(\tR\fentityPrefix\"\x1e\n" +
-	"\x1cDumpPublicIdActionMapRequest\"\xef\x01\n" +
+	"\x1cDumpPublicIdActionMapRequest\"\xeb\x01\n" +
 	"\x1dDumpPublicIdActionMapResponse\x12\x14\n" +
 	"\x05alert\x18\x01 \x01(\tR\x05alert\x12X\n" +
-	"\bcontents\x18\x02 \x03(\v2<.olivetin.api.v1.DumpPublicIdActionMapResponse.ContentsEntryR\bcontents\x1a^\n" +
+	"\bcontents\x18\x02 \x03(\v2<.olivetin.api.v1.DumpPublicIdActionMapResponse.ContentsEntryR\bcontents\x1aZ\n" +
 	"\rContentsEntry\x12\x10\n" +
-	"\x03key\x18\x01 \x01(\tR\x03key\x127\n" +
-	"\x05value\x18\x02 \x01(\v2!.olivetin.api.v1.ActionEntityPairR\x05value:\x028\x01\"\x12\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x123\n" +
+	"\x05value\x18\x02 \x01(\v2\x1d.olivetin.api.v1.DebugBindingR\x05value:\x028\x01\"\x12\n" +
 	"\x10GetReadyzRequest\"+\n" +
 	"\x11GetReadyzResponse\x12\x16\n" +
 	"\x06status\x18\x01 \x01(\tR\x06status\"\x14\n" +
@@ -4181,7 +4209,7 @@ var file_olivetin_api_v1_olivetin_proto_goTypes = []any{
 	(*SosReportResponse)(nil),               // 32: olivetin.api.v1.SosReportResponse
 	(*DumpVarsRequest)(nil),                 // 33: olivetin.api.v1.DumpVarsRequest
 	(*DumpVarsResponse)(nil),                // 34: olivetin.api.v1.DumpVarsResponse
-	(*ActionEntityPair)(nil),                // 35: olivetin.api.v1.ActionEntityPair
+	(*DebugBinding)(nil),                    // 35: olivetin.api.v1.DebugBinding
 	(*DumpPublicIdActionMapRequest)(nil),    // 36: olivetin.api.v1.DumpPublicIdActionMapRequest
 	(*DumpPublicIdActionMapResponse)(nil),   // 37: olivetin.api.v1.DumpPublicIdActionMapResponse
 	(*GetReadyzRequest)(nil),                // 38: olivetin.api.v1.GetReadyzRequest
@@ -4250,7 +4278,7 @@ var file_olivetin_api_v1_olivetin_proto_depIdxs = []int32{
 	0,  // 27: olivetin.api.v1.GetActionBindingResponse.action:type_name -> olivetin.api.v1.Action
 	65, // 28: olivetin.api.v1.GetEntitiesResponse.entity_definitions:type_name -> olivetin.api.v1.EntityDefinition
 	3,  // 29: olivetin.api.v1.EntityDefinition.instances:type_name -> olivetin.api.v1.Entity
-	35, // 30: olivetin.api.v1.DumpPublicIdActionMapResponse.ContentsEntry.value:type_name -> olivetin.api.v1.ActionEntityPair
+	35, // 30: olivetin.api.v1.DumpPublicIdActionMapResponse.ContentsEntry.value:type_name -> olivetin.api.v1.DebugBinding
 	6,  // 31: olivetin.api.v1.OliveTinApiService.GetDashboard:input_type -> olivetin.api.v1.GetDashboardRequest
 	9,  // 32: olivetin.api.v1.OliveTinApiService.StartAction:input_type -> olivetin.api.v1.StartActionRequest
 	12, // 33: olivetin.api.v1.OliveTinApiService.StartActionAndWait:input_type -> olivetin.api.v1.StartActionAndWaitRequest

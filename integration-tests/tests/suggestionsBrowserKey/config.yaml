@@ -1,0 +1,19 @@
+---
+listenAddressSingleHTTPFrontend: 0.0.0.0:1337
+
+logLevel: "DEBUG"
+checkForUpdates: false
+
+actions:
+  - title: Test suggestionsBrowserKey
+    shell: "echo 'Input value: {{ testInput }}, Second input: {{ testInput2 }}'"
+    icon: ping
+    arguments:
+      - name: testInput
+        title: Test Input
+        description: "This input uses suggestionsBrowserKey"
+        suggestionsBrowserKey: test-suggestions-key
+      - name: testInput2
+        title: Test Input 2
+        description: "This input shares the same suggestionsBrowserKey"
+        suggestionsBrowserKey: test-suggestions-key

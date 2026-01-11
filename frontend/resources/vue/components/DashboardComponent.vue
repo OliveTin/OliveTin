@@ -1,5 +1,5 @@
 <template>
-    <ActionButton v-if="component.type == 'link'" :actionData="component.action" :key="component.title" />
+    <ActionButton v-if="component.type == 'link'" :actionData="component.action" :cssClass="component.cssClass" :key="component.title" />
 
     <DashboardComponentDirectory v-else-if="component.type == 'directory'" :component="component" />
 
