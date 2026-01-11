@@ -913,8 +913,13 @@ func (api *oliveTinAPI) Init(ctx ctx.Context, req *connect.Request[apiv1.InitReq
 // discoverAvailableThemes finds all available themes in the custom-webui/themes directory.
 // A theme is considered available if it has a theme.css file.
 func discoverAvailableThemes(cfg *config.Config) []string {
-	themesDir := path.Join(cfg.GetDir(), "custom-webui", "themes")
-	
+	configDir := cfg.GetDir()
+	if configDir == "" {
+		return []string{}
+	}
+
+	themesDir := path.Join(configDir, "custom-webui", "themes")
+
 	entries, err := os.ReadDir(themesDir)
 	if err != nil {
 		log.WithFields(log.Fields{
@@ -932,7 +937,7 @@ func discoverAvailableThemes(cfg *config.Config) []string {
 
 		themeName := entry.Name()
 		themeCssPath := path.Join(themesDir, themeName, "theme.css")
-		
+
 		if _, err := os.Stat(themeCssPath); err == nil {
 			themes = append(themes, themeName)
 		}
