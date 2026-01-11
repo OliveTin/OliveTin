@@ -16,6 +16,7 @@ import (
 	"fmt"
 	"net/http"
 	"sync"
+	"time"
 
 	acl "github.com/OliveTin/OliveTin/internal/acl"
 	auth "github.com/OliveTin/OliveTin/internal/auth"
@@ -275,23 +276,37 @@ func (api *oliveTinAPI) StartActionByGetAndWait(ctx ctx.Context, req *connect.Re
 	}
 }
 
+func calculateRateLimitExpires(api *oliveTinAPI, logEntry *executor.InternalLogEntry) string {
+	if logEntry.Binding == nil || logEntry.Binding.Action == nil {
+		return ""
+	}
+
+	expiryUnix := api.executor.GetTimeUntilAvailable(logEntry.Binding)
+	if expiryUnix <= 0 {
+		return ""
+	}
+
+	return time.Unix(expiryUnix, 0).Format("2006-01-02 15:04:05")
+}
+
 func (api *oliveTinAPI) internalLogEntryToPb(logEntry *executor.InternalLogEntry, authenticatedUser *authpublic.AuthenticatedUser) *apiv1.LogEntry {
 	pble := &apiv1.LogEntry{
-		ActionTitle:         logEntry.ActionTitle,
-		ActionIcon:          logEntry.ActionIcon,
-		ActionId:            logEntry.ActionId,
-		DatetimeStarted:     logEntry.DatetimeStarted.Format("2006-01-02 15:04:05"),
-		DatetimeFinished:    logEntry.DatetimeFinished.Format("2006-01-02 15:04:05"),
-		DatetimeIndex:       logEntry.Index,
-		Output:              logEntry.Output,
-		TimedOut:            logEntry.TimedOut,
-		Blocked:             logEntry.Blocked,
-		ExitCode:            logEntry.ExitCode,
-		Tags:                logEntry.Tags,
-		ExecutionTrackingId: logEntry.ExecutionTrackingID,
-		ExecutionStarted:    logEntry.ExecutionStarted,
-		ExecutionFinished:   logEntry.ExecutionFinished,
-		User:                logEntry.Username,
+		ActionTitle:              logEntry.ActionTitle,
+		ActionIcon:               logEntry.ActionIcon,
+		DatetimeStarted:          logEntry.DatetimeStarted.Format("2006-01-02 15:04:05"),
+		DatetimeFinished:         logEntry.DatetimeFinished.Format("2006-01-02 15:04:05"),
+		DatetimeIndex:            logEntry.Index,
+		Output:                   logEntry.Output,
+		TimedOut:                 logEntry.TimedOut,
+		Blocked:                  logEntry.Blocked,
+		ExitCode:                 logEntry.ExitCode,
+		Tags:                     logEntry.Tags,
+		ExecutionTrackingId:      logEntry.ExecutionTrackingID,
+		ExecutionStarted:         logEntry.ExecutionStarted,
+		ExecutionFinished:        logEntry.ExecutionFinished,
+		User:                     logEntry.Username,
+		BindingId:                logEntry.Binding.ID,
+		DatetimeRateLimitExpires: calculateRateLimitExpires(api, logEntry),
 	}
 
 	if !pble.ExecutionFinished {
@@ -311,10 +326,20 @@ func getExecutionStatusByTrackingID(api *oliveTinAPI, executionTrackingId string
 	return logEntry
 }
 
-func getMostRecentExecutionStatusById(api *oliveTinAPI, actionId string) *executor.InternalLogEntry {
+// This is the actual action ID, not the binding ID.
+func getMostRecentExecutionStatusByActionId(api *oliveTinAPI, actionId string) *executor.InternalLogEntry {
 	var ile *executor.InternalLogEntry
 
-	logs := api.executor.GetLogsByActionId(actionId)
+	binding := api.executor.FindBindingByID(actionId)
+	if binding == nil {
+		return nil
+	}
+
+	logs := api.executor.GetLogsByBindingId(binding.ID)
+
+	if len(logs) == 0 {
+		return nil
+	}
 
 	if len(logs) == 0 {
 		return nil
@@ -341,7 +366,7 @@ func (api *oliveTinAPI) ExecutionStatus(ctx ctx.Context, req *connect.Request[ap
 		ile = getExecutionStatusByTrackingID(api, req.Msg.ExecutionTrackingId)
 
 	} else {
-		ile = getMostRecentExecutionStatusById(api, req.Msg.ActionId)
+		ile = getMostRecentExecutionStatusByActionId(api, req.Msg.ActionId)
 	}
 
 	if ile == nil {
@@ -474,7 +499,11 @@ func (api *oliveTinAPI) GetLogs(ctx ctx.Context, req *connect.Request[apiv1.GetL
 	}
 
 	ret := &apiv1.GetLogsResponse{}
-	logEntries, paging := api.executor.GetLogTrackingIdsACL(api.cfg, user, req.Msg.StartOffset, api.cfg.LogHistoryPageSize)
+	dateFilter := ""
+	if req.Msg.DateFilter != "" {
+		dateFilter = req.Msg.DateFilter
+	}
+	logEntries, paging := api.executor.GetLogTrackingIdsACL(api.cfg, user, req.Msg.StartOffset, api.cfg.LogHistoryPageSize, dateFilter)
 	for _, le := range logEntries {
 		ret.Logs = append(ret.Logs, api.internalLogEntryToPb(le, user))
 	}
@@ -539,7 +568,7 @@ func (api *oliveTinAPI) GetActionLogs(ctx ctx.Context, req *connect.Request[apiv
 		return nil, err
 	}
 
-	filtered := api.filterLogsByACL(api.executor.GetLogsByActionId(req.Msg.ActionId), user)
+	filtered := api.filterLogsByACL(api.executor.GetLogsByBindingId(req.Msg.ActionId), user)
 	page := paginate(int64(len(filtered)), api.cfg.LogHistoryPageSize, req.Msg.StartOffset)
 	if page.empty {
 		return connect.NewResponse(buildEmptyPageResponse(page)), nil
@@ -688,7 +717,7 @@ func (api *oliveTinAPI) DumpVars(ctx ctx.Context, req *connect.Request[apiv1.Dum
 
 func (api *oliveTinAPI) DumpPublicIdActionMap(ctx ctx.Context, req *connect.Request[apiv1.DumpPublicIdActionMapRequest]) (*connect.Response[apiv1.DumpPublicIdActionMapResponse], error) {
 	res := &apiv1.DumpPublicIdActionMapResponse{}
-	res.Contents = make(map[string]*apiv1.ActionEntityPair)
+	res.Contents = make(map[string]*apiv1.DebugBinding)
 
 	if !api.cfg.InsecureAllowDumpActionMap {
 		res.Alert = "Dumping Public IDs is disallowed."
@@ -696,16 +725,15 @@ func (api *oliveTinAPI) DumpPublicIdActionMap(ctx ctx.Context, req *connect.Requ
 		return connect.NewResponse(res), nil
 	}
 
-	api.executor.MapActionIdToBindingLock.RLock()
+	api.executor.MapActionBindingsLock.RLock()
 
-	for k, v := range api.executor.MapActionIdToBinding {
-		res.Contents[k] = &apiv1.ActionEntityPair{
-			ActionTitle:  v.Action.Title,
-			EntityPrefix: "?",
+	for k, v := range api.executor.MapActionBindings {
+		res.Contents[k] = &apiv1.DebugBinding{
+			ActionTitle: v.Action.Title,
 		}
 	}
 
-	api.executor.MapActionIdToBindingLock.RUnlock()
+	api.executor.MapActionBindingsLock.RUnlock()
 
 	res.Alert = "Dumping variables has been enabled in the configuration. Please set InsecureAllowDumpActionMap = false again after you don't need it anymore"
 
@@ -722,6 +750,10 @@ func (api *oliveTinAPI) GetReadyz(ctx ctx.Context, req *connect.Request[apiv1.Ge
 
 func (api *oliveTinAPI) EventStream(ctx ctx.Context, req *connect.Request[apiv1.EventStreamRequest], srv *connect.ServerStream[apiv1.EventStreamResponse]) error {
 	log.Debugf("EventStream: %v", req.Msg)
+
+	// Set X-Accel-Buffering header to disable nginx buffering for this stream
+	// https://github.com/OliveTin/OliveTin/issues/765
+	srv.ResponseHeader().Set("X-Accel-Buffering", "no")
 
 	user := auth.UserFromApiCall(ctx, req, api.cfg)
 
@@ -809,7 +841,7 @@ func (api *oliveTinAPI) OnExecutionStarted(ex *executor.InternalLogEntry) {
 	}
 }
 
-func (api *oliveTinAPI) OnExecutionFinished(ex *executor.InternalLogEntry) {
+func (api *oliveTinAPI) OnExecutionFinished(ile *executor.InternalLogEntry) {
 	toRemove := []*streamingClient{}
 
 	for _, client := range api.copyOfStreamingClients() {
@@ -817,7 +849,7 @@ func (api *oliveTinAPI) OnExecutionFinished(ex *executor.InternalLogEntry) {
 		case client.channel <- &apiv1.EventStreamResponse{
 			Event: &apiv1.EventStreamResponse_ExecutionFinished{
 				ExecutionFinished: &apiv1.EventExecutionFinished{
-					LogEntry: api.internalLogEntryToPb(ex, client.AuthenticatedUser),
+					LogEntry: api.internalLogEntryToPb(ile, client.AuthenticatedUser),
 				},
 			},
 		}:

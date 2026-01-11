@@ -93,7 +93,7 @@ function setupVue (i18nSettings) {
 
 function setupErrorDisplay (errorMessage) {
   const ErrorApp = {
-    render() {
+    render () {
       return h('section', { class: 'bad', style: 'padding: 2em; text-align: center; margin: 2em auto;' }, [
         h('h2', 'OliveTin Init Failed'),
         h('p', errorMessage),

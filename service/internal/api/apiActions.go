@@ -1,6 +1,12 @@
 package api
 
 import (
+	"strconv"
+	"strings"
+	"time"
+
+	log "github.com/sirupsen/logrus"
+
 	apiv1 "github.com/OliveTin/OliveTin/gen/olivetin/api/v1"
 	acl "github.com/OliveTin/OliveTin/internal/acl"
 	authpublic "github.com/OliveTin/OliveTin/internal/auth/authpublic"
@@ -22,10 +28,10 @@ func (rr *DashboardRenderRequest) findAction(title string) *apiv1.Action {
 }
 
 func (rr *DashboardRenderRequest) findActionForEntity(title string, entity *entities.Entity) *apiv1.Action {
-	rr.ex.MapActionIdToBindingLock.RLock()
-	defer rr.ex.MapActionIdToBindingLock.RUnlock()
+	rr.ex.MapActionBindingsLock.RLock()
+	defer rr.ex.MapActionBindingsLock.RUnlock()
 
-	for _, binding := range rr.ex.MapActionIdToBinding {
+	for _, binding := range rr.ex.MapActionBindings {
 		if binding.Action.Title != title {
 			continue
 		}
@@ -55,28 +61,84 @@ func buildEffectivePolicy(policy *config.ConfigurationPolicy) *apiv1.EffectivePo
 	return ret
 }
 
+func evaluateEnabledExpression(action *config.Action, entity *entities.Entity) bool {
+	if action.EnabledExpression == "" {
+		return true
+	}
+
+	result := entities.ParseTemplateWith(action.EnabledExpression, entity)
+	result = strings.TrimSpace(result)
+
+	if result == "" {
+		return false
+	}
+
+	if isTemplateError(result, action) {
+		return false
+	}
+
+	return evaluateResultValue(result)
+}
+
+func isTemplateError(result string, action *config.Action) bool {
+	if !strings.HasPrefix(result, "tpl ") || !strings.Contains(result, "error") {
+		return false
+	}
+
+	log.WithFields(log.Fields{
+		"actionTitle":       action.Title,
+		"enabledExpression": action.EnabledExpression,
+		"result":            result,
+	}).Warn("enabledExpression template evaluation failed, treating as disabled")
+	return true
+}
+
+func evaluateResultValue(result string) bool {
+	if strings.EqualFold(result, "true") {
+		return true
+	}
+
+	if num, err := strconv.Atoi(result); err == nil {
+		return num != 0
+	}
+
+	return false
+}
+
 func buildAction(actionBinding *executor.ActionBinding, rr *DashboardRenderRequest) *apiv1.Action {
 	action := actionBinding.Action
 
+	aclCanExec := acl.IsAllowedExec(rr.cfg, rr.AuthenticatedUser, action)
+	enabledExprCanExec := evaluateEnabledExpression(action, actionBinding.Entity)
+
+	// Calculate rate limit expiry time
+	expiryUnix := rr.ex.GetTimeUntilAvailable(actionBinding)
+	datetimeRateLimitExpires := ""
+	if expiryUnix > 0 {
+		datetimeRateLimitExpires = time.Unix(expiryUnix, 0).Format("2006-01-02 15:04:05")
+	}
+
 	btn := apiv1.Action{
-		BindingId:    actionBinding.ID,
-		Title:        entities.ParseTemplateWith(action.Title, actionBinding.Entity),
-		Icon:         entities.ParseTemplateWith(action.Icon, actionBinding.Entity),
-		CanExec:      acl.IsAllowedExec(rr.cfg, rr.AuthenticatedUser, action),
-		PopupOnStart: action.PopupOnStart,
-		Order:        int32(actionBinding.ConfigOrder),
-		Timeout:      int32(action.Timeout),
+		BindingId:                actionBinding.ID,
+		Title:                    entities.ParseTemplateWith(action.Title, actionBinding.Entity),
+		Icon:                     entities.ParseTemplateWith(action.Icon, actionBinding.Entity),
+		CanExec:                  aclCanExec && enabledExprCanExec,
+		PopupOnStart:             action.PopupOnStart,
+		Order:                    int32(actionBinding.ConfigOrder),
+		Timeout:                  int32(action.Timeout),
+		DatetimeRateLimitExpires: datetimeRateLimitExpires,
 	}
 
 	for _, cfgArg := range action.Arguments {
 		pbArg := apiv1.ActionArgument{
-			Name:         cfgArg.Name,
-			Title:        cfgArg.Title,
-			Type:         cfgArg.Type,
-			Description:  cfgArg.Description,
-			DefaultValue: cfgArg.Default,
-			Choices:      buildChoices(cfgArg),
-			Suggestions:  cfgArg.Suggestions,
+			Name:                  cfgArg.Name,
+			Title:                 cfgArg.Title,
+			Type:                  cfgArg.Type,
+			Description:           cfgArg.Description,
+			DefaultValue:          cfgArg.Default,
+			Choices:               buildChoices(cfgArg),
+			Suggestions:           cfgArg.Suggestions,
+			SuggestionsBrowserKey: cfgArg.SuggestionsBrowserKey,
 		}
 
 		btn.Arguments = append(btn.Arguments, &pbArg)

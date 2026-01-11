@@ -49,12 +49,12 @@ type ActionBinding struct {
 type Executor struct {
 	logs                  map[string]*InternalLogEntry
 	logsTrackingIdsByDate []string
-	LogsByActionId        map[string][]*InternalLogEntry
+	LogsByBindingId       map[string][]*InternalLogEntry
 
 	logmutex sync.RWMutex
 
-	MapActionIdToBinding     map[string]*ActionBinding
-	MapActionIdToBindingLock sync.RWMutex
+	MapActionBindings     map[string]*ActionBinding
+	MapActionBindingsLock sync.RWMutex
 
 	Cfg *config.Config
 
@@ -86,7 +86,6 @@ type ExecutionRequest struct {
 // easily serializable.
 type InternalLogEntry struct {
 	Binding             *ActionBinding
-	BindingID           string
 	DatetimeStarted     time.Time
 	DatetimeFinished    time.Time
 	Output              string
@@ -110,7 +109,6 @@ type InternalLogEntry struct {
 	*/
 	ActionTitle string
 	ActionIcon  string
-	ActionId    string
 }
 
 type executorStepFunc func(*ExecutionRequest) bool
@@ -122,8 +120,8 @@ func DefaultExecutor(cfg *config.Config) *Executor {
 	e.Cfg = cfg
 	e.logs = make(map[string]*InternalLogEntry)
 	e.logsTrackingIdsByDate = make([]string, 0)
-	e.LogsByActionId = make(map[string][]*InternalLogEntry)
-	e.MapActionIdToBinding = make(map[string]*ActionBinding)
+	e.LogsByBindingId = make(map[string][]*InternalLogEntry)
+	e.MapActionBindings = make(map[string]*ActionBinding)
 
 	e.chainOfCommand = []executorStepFunc{
 		stepRequestAction,
@@ -236,11 +234,26 @@ func isLogEntryAllowedByACL(cfg *config.Config, user *authpublic.AuthenticatedUs
 	return acl.IsAllowedLogs(cfg, user, entry.Binding.Action)
 }
 
-func (e *Executor) filterLogsByACL(cfg *config.Config, user *authpublic.AuthenticatedUser) []*InternalLogEntry {
+func (e *Executor) filterLogsByACL(cfg *config.Config, user *authpublic.AuthenticatedUser, dateFilter string) []*InternalLogEntry {
 	e.logmutex.RLock()
 	defer e.logmutex.RUnlock()
 
 	filtered := make([]*InternalLogEntry, 0, len(e.logsTrackingIdsByDate))
+
+	var filterDate time.Time
+	var hasDateFilter bool
+	if dateFilter != "" {
+		parsedDate, err := time.Parse("2006-01-02", dateFilter)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"dateFilter": dateFilter,
+				"error":      err,
+			}).Errorf("Failed to parse date filter, expected format YYYY-MM-DD")
+		} else {
+			filterDate = parsedDate
+			hasDateFilter = true
+		}
+	}
 
 	for _, trackingId := range e.logsTrackingIdsByDate {
 		entry := e.logs[trackingId]
@@ -249,6 +262,13 @@ func (e *Executor) filterLogsByACL(cfg *config.Config, user *authpublic.Authenti
 			continue
 		}
 		if isLogEntryAllowedByACL(cfg, user, entry) {
+			if hasDateFilter {
+				entryDate := entry.DatetimeStarted.UTC().Truncate(24 * time.Hour)
+				filterDateUTC := filterDate.UTC().Truncate(24 * time.Hour)
+				if !entryDate.Equal(filterDateUTC) {
+					continue
+				}
+			}
 			filtered = append(filtered, entry)
 		}
 	}
@@ -282,8 +302,9 @@ func paginateFilteredLogs(filtered []*InternalLogEntry, startOffset int64, pageC
 
 // GetLogTrackingIdsACL returns logs filtered by ACL visibility for the user and
 // paginated correctly based on the filtered set.
-func (e *Executor) GetLogTrackingIdsACL(cfg *config.Config, user *authpublic.AuthenticatedUser, startOffset int64, pageCount int64) ([]*InternalLogEntry, *PagingResult) {
-	filtered := e.filterLogsByACL(cfg, user)
+// dateFilter is optional and should be in YYYY-MM-DD format. If empty, no date filtering is applied.
+func (e *Executor) GetLogTrackingIdsACL(cfg *config.Config, user *authpublic.AuthenticatedUser, startOffset int64, pageCount int64, dateFilter string) ([]*InternalLogEntry, *PagingResult) {
+	filtered := e.filterLogsByACL(cfg, user, dateFilter)
 	return paginateFilteredLogs(filtered, startOffset, pageCount)
 }
 
@@ -297,10 +318,10 @@ func (e *Executor) GetLog(trackingID string) (*InternalLogEntry, bool) {
 	return entry, found
 }
 
-func (e *Executor) GetLogsByActionId(actionId string) []*InternalLogEntry {
+func (e *Executor) GetLogsByBindingId(bindingId string) []*InternalLogEntry {
 	e.logmutex.RLock()
 
-	logs, found := e.LogsByActionId[actionId]
+	logs, found := e.LogsByBindingId[bindingId]
 
 	e.logmutex.RUnlock()
 
@@ -309,6 +330,122 @@ func (e *Executor) GetLogsByActionId(actionId string) []*InternalLogEntry {
 	}
 
 	return logs
+}
+
+// shouldCountExecution checks if a log entry should be counted for rate limiting.
+func shouldCountExecution(logEntry *InternalLogEntry, windowStart time.Time) bool {
+	return !logEntry.Blocked && logEntry.DatetimeStarted.After(windowStart)
+}
+
+// updateOldestExecution updates the oldest execution time if this entry is older.
+func updateOldestExecution(oldestExecutionTime **time.Time, logEntry *InternalLogEntry) {
+	if *oldestExecutionTime == nil {
+		*oldestExecutionTime = &logEntry.DatetimeStarted
+	} else if logEntry.DatetimeStarted.Before(**oldestExecutionTime) {
+		*oldestExecutionTime = &logEntry.DatetimeStarted
+	}
+}
+
+// findOldestExecutionInWindow finds the oldest execution within the time window and counts executions.
+// Returns the count of executions and the oldest execution time, or nil if none found.
+func findOldestExecutionInWindow(logs []*InternalLogEntry, windowStart time.Time) (int, *time.Time) {
+	executions := 0
+	var oldestExecutionTime *time.Time
+
+	for _, logEntry := range logs {
+		if !shouldCountExecution(logEntry, windowStart) {
+			continue
+		}
+
+		executions++
+		updateOldestExecution(&oldestExecutionTime, logEntry)
+	}
+
+	return executions, oldestExecutionTime
+}
+
+// calculateExpiryTime calculates when the oldest execution will fall outside the rate limit window.
+func calculateExpiryTime(oldestExecutionTime time.Time, duration time.Duration, now time.Time) time.Time {
+	expiryTime := oldestExecutionTime.Add(duration)
+	if !expiryTime.After(now) {
+		return time.Time{}
+	}
+	return expiryTime
+}
+
+// updateMaxExpiryTime updates maxExpiryTime if expiryTime is later.
+func updateMaxExpiryTime(maxExpiryTime *time.Time, expiryTime time.Time) {
+	if expiryTime.IsZero() {
+		return
+	}
+
+	if maxExpiryTime.IsZero() || expiryTime.After(*maxExpiryTime) {
+		*maxExpiryTime = expiryTime
+	}
+}
+
+// calculateExpiryForRate calculates the expiry time for a single rate limit rule.
+// Returns the expiry time if the rate limit is exceeded, or zero time if not.
+func calculateExpiryForRate(rate config.RateSpec, logs []*InternalLogEntry, now time.Time) time.Time {
+	duration := parseDuration(rate)
+	if duration <= 0 {
+		return time.Time{}
+	}
+
+	windowStart := now.Add(-duration)
+	executions, oldestExecutionTime := findOldestExecutionInWindow(logs, windowStart)
+
+	if executions < rate.Limit || oldestExecutionTime == nil {
+		return time.Time{}
+	}
+
+	return calculateExpiryTime(*oldestExecutionTime, duration, now)
+}
+
+// getLogsForBinding retrieves logs for a binding ID.
+func (e *Executor) getLogsForBinding(bindingId string) []*InternalLogEntry {
+	e.logmutex.RLock()
+	logs, found := e.LogsByBindingId[bindingId]
+	e.logmutex.RUnlock()
+
+	if !found || len(logs) == 0 {
+		return nil
+	}
+
+	return logs
+}
+
+// calculateMaxExpiryTimeFromRates calculates the maximum expiry time across all rate limit rules.
+func calculateMaxExpiryTimeFromRates(rates []config.RateSpec, logs []*InternalLogEntry, now time.Time) time.Time {
+	var maxExpiryTime time.Time
+
+	for _, rate := range rates {
+		expiryTime := calculateExpiryForRate(rate, logs, now)
+		updateMaxExpiryTime(&maxExpiryTime, expiryTime)
+	}
+
+	return maxExpiryTime
+}
+
+// GetTimeUntilAvailable calculates when an action will be available again based on rate limits.
+// Returns the Unix timestamp in seconds when the rate limit expires, or 0 if the action is available now.
+func (e *Executor) GetTimeUntilAvailable(binding *ActionBinding) int64 {
+	if len(binding.Action.MaxRate) == 0 {
+		return 0
+	}
+
+	logs := e.getLogsForBinding(binding.ID)
+	if logs == nil {
+		return 0
+	}
+
+	maxExpiryTime := calculateMaxExpiryTimeFromRates(binding.Action.MaxRate, logs, time.Now())
+
+	if maxExpiryTime.IsZero() {
+		return 0
+	}
+
+	return maxExpiryTime.Unix()
 }
 
 func (e *Executor) SetLog(trackingID string, entry *InternalLogEntry) {
@@ -337,7 +474,6 @@ func (e *Executor) ExecRequest(req *ExecutionRequest) (*sync.WaitGroup, string) 
 		ExitCode:            DefaultExitCodeNotExecuted,
 		ExecutionStarted:    false,
 		ExecutionFinished:   false,
-		ActionId:            "",
 		ActionTitle:         "notfound",
 		ActionIcon:          "&#x1f4a9;",
 		Username:            req.AuthenticatedUser.Username,
@@ -374,6 +510,11 @@ func (e *Executor) execChain(req *ExecutionRequest) {
 		}
 	}
 
+	// Ensure DatetimeFinished is set even if execution was blocked early
+	if req.logEntry.DatetimeFinished.IsZero() {
+		req.logEntry.DatetimeFinished = time.Now()
+	}
+
 	req.logEntry.ExecutionFinished = true
 
 	// This isn't a step, because we want to notify all listeners, irrespective
@@ -386,7 +527,7 @@ func getConcurrentCount(req *ExecutionRequest) int {
 
 	req.executor.logmutex.RLock()
 
-	for _, log := range req.executor.GetLogsByActionId(req.Binding.Action.ID) {
+	for _, log := range req.executor.GetLogsByBindingId(req.Binding.ID) {
 		if !log.ExecutionFinished {
 			concurrentCount += 1
 		}
@@ -436,7 +577,7 @@ func getExecutionsCount(rate config.RateSpec, req *ExecutionRequest) int {
 
 	then := time.Now().Add(-duration)
 
-	for _, logEntry := range req.executor.GetLogsByActionId(req.Binding.Action.ID) {
+	for _, logEntry := range req.executor.GetLogsByBindingId(req.Binding.ID) {
 		// FIXME
 		/*
 			if logEntry.EntityPrefix != req.EntityPrefix {
@@ -573,16 +714,15 @@ func stepRequestAction(req *ExecutionRequest) bool {
 	req.logEntry.ActionConfigTitle = req.Binding.Action.Title
 	req.logEntry.ActionTitle = entities.ParseTemplateWith(req.Binding.Action.Title, req.Binding.Entity)
 	req.logEntry.ActionIcon = req.Binding.Action.Icon
-	req.logEntry.ActionId = req.Binding.Action.ID
 	req.logEntry.Tags = req.Tags
 
 	req.executor.logmutex.Lock()
 
-	if _, containsKey := req.executor.LogsByActionId[req.Binding.Action.ID]; !containsKey {
-		req.executor.LogsByActionId[req.Binding.Action.ID] = make([]*InternalLogEntry, 0)
+	if _, containsKey := req.executor.LogsByBindingId[req.Binding.ID]; !containsKey {
+		req.executor.LogsByBindingId[req.Binding.ID] = make([]*InternalLogEntry, 0)
 	}
 
-	req.executor.LogsByActionId[req.Binding.Action.ID] = append(req.executor.LogsByActionId[req.Binding.Action.ID], req.logEntry)
+	req.executor.LogsByBindingId[req.Binding.ID] = append(req.executor.LogsByBindingId[req.Binding.ID], req.logEntry)
 
 	req.executor.logmutex.Unlock()
 

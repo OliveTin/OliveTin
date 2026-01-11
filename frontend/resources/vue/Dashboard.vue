@@ -45,7 +45,7 @@
                     <span v-else>{{ component.title }}</span>
                 </h2>
 
-                <fieldset>
+                <fieldset :class="component.cssClass">
                     <template v-for="subcomponent in component.contents">
                         <DashboardComponent :component="subcomponent" />
                     </template>
