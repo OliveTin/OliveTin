@@ -309,6 +309,101 @@ func (e *Executor) GetLogsByBindingId(bindingId string) []*InternalLogEntry {
 	return logs
 }
 
+// shouldCountExecution checks if a log entry should be counted for rate limiting.
+func shouldCountExecution(logEntry *InternalLogEntry, windowStart time.Time) bool {
+	return !logEntry.Blocked && logEntry.DatetimeStarted.After(windowStart)
+}
+
+// updateOldestExecution updates the oldest execution time if this entry is older.
+func updateOldestExecution(oldestExecutionTime **time.Time, logEntry *InternalLogEntry) {
+	if *oldestExecutionTime == nil {
+		*oldestExecutionTime = &logEntry.DatetimeStarted
+	} else if logEntry.DatetimeStarted.Before(**oldestExecutionTime) {
+		*oldestExecutionTime = &logEntry.DatetimeStarted
+	}
+}
+
+// findOldestExecutionInWindow finds the oldest execution within the time window and counts executions.
+// Returns the count of executions and the oldest execution time, or nil if none found.
+func findOldestExecutionInWindow(logs []*InternalLogEntry, windowStart time.Time) (int, *time.Time) {
+	executions := 0
+	var oldestExecutionTime *time.Time
+
+	for _, logEntry := range logs {
+		if !shouldCountExecution(logEntry, windowStart) {
+			continue
+		}
+
+		executions++
+		updateOldestExecution(&oldestExecutionTime, logEntry)
+	}
+
+	return executions, oldestExecutionTime
+}
+
+// calculateExpiryTime calculates when the oldest execution will fall outside the rate limit window.
+func calculateExpiryTime(oldestExecutionTime time.Time, duration time.Duration, now time.Time) time.Time {
+	expiryTime := oldestExecutionTime.Add(duration)
+	if !expiryTime.After(now) {
+		return time.Time{}
+	}
+	return expiryTime
+}
+
+// updateMaxExpiryTime updates maxExpiryTime if expiryTime is later.
+func updateMaxExpiryTime(maxExpiryTime *time.Time, expiryTime time.Time) {
+	if expiryTime.IsZero() {
+		return
+	}
+
+	if maxExpiryTime.IsZero() || expiryTime.After(*maxExpiryTime) {
+		*maxExpiryTime = expiryTime
+	}
+}
+
+// calculateExpiryForRate calculates the expiry time for a single rate limit rule.
+// Returns the expiry time if the rate limit is exceeded, or zero time if not.
+func calculateExpiryForRate(rate config.RateSpec, logs []*InternalLogEntry, now time.Time) time.Time {
+	duration := parseDuration(rate)
+	if duration <= 0 {
+		return time.Time{}
+	}
+
+	windowStart := now.Add(-duration)
+	executions, oldestExecutionTime := findOldestExecutionInWindow(logs, windowStart)
+
+	if executions < rate.Limit || oldestExecutionTime == nil {
+		return time.Time{}
+	}
+
+	return calculateExpiryTime(*oldestExecutionTime, duration, now)
+}
+
+// getLogsForBinding retrieves logs for a binding ID.
+func (e *Executor) getLogsForBinding(bindingId string) []*InternalLogEntry {
+	e.logmutex.RLock()
+	logs, found := e.LogsByBindingId[bindingId]
+	e.logmutex.RUnlock()
+
+	if !found || len(logs) == 0 {
+		return nil
+	}
+
+	return logs
+}
+
+// calculateMaxExpiryTimeFromRates calculates the maximum expiry time across all rate limit rules.
+func calculateMaxExpiryTimeFromRates(rates []config.RateSpec, logs []*InternalLogEntry, now time.Time) time.Time {
+	var maxExpiryTime time.Time
+
+	for _, rate := range rates {
+		expiryTime := calculateExpiryForRate(rate, logs, now)
+		updateMaxExpiryTime(&maxExpiryTime, expiryTime)
+	}
+
+	return maxExpiryTime
+}
+
 // GetTimeUntilAvailable calculates when an action will be available again based on rate limits.
 // Returns the Unix timestamp in seconds when the rate limit expires, or 0 if the action is available now.
 func (e *Executor) GetTimeUntilAvailable(binding *ActionBinding) int64 {
@@ -316,51 +411,12 @@ func (e *Executor) GetTimeUntilAvailable(binding *ActionBinding) int64 {
 		return 0
 	}
 
-	e.logmutex.RLock()
-	defer e.logmutex.RUnlock()
-
-	logs, found := e.LogsByBindingId[binding.ID]
-	if !found || len(logs) == 0 {
+	logs := e.getLogsForBinding(binding.ID)
+	if logs == nil {
 		return 0
 	}
 
-	now := time.Now()
-	var maxExpiryTime time.Time
-
-	for _, rate := range binding.Action.MaxRate {
-		duration := parseDuration(rate)
-		if duration <= 0 {
-			continue
-		}
-
-		then := now.Add(-duration)
-		executions := 0
-		var oldestExecutionTime *time.Time
-
-		for _, logEntry := range logs {
-			if logEntry.Blocked {
-				continue
-			}
-
-			if logEntry.DatetimeStarted.After(then) {
-				executions++
-				if oldestExecutionTime == nil || logEntry.DatetimeStarted.Before(*oldestExecutionTime) {
-					oldestExecutionTime = &logEntry.DatetimeStarted
-				}
-			}
-		}
-
-		// If we're at or over the limit, calculate when the oldest execution will fall outside the window
-		// Note: getExecutionsCount uses -1 because it counts the current execution, but we're checking
-		// availability before execution, so we compare directly to rate.Limit
-		if executions >= rate.Limit && oldestExecutionTime != nil {
-			// The oldest execution will fall outside the window at: oldestExecutionTime + duration
-			expiryTime := oldestExecutionTime.Add(duration)
-			if expiryTime.After(now) && (maxExpiryTime.IsZero() || expiryTime.After(maxExpiryTime)) {
-				maxExpiryTime = expiryTime
-			}
-		}
-	}
+	maxExpiryTime := calculateMaxExpiryTimeFromRates(binding.Action.MaxRate, logs, time.Now())
 
 	if maxExpiryTime.IsZero() {
 		return 0

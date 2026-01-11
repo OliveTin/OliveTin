@@ -276,39 +276,41 @@ func (api *oliveTinAPI) StartActionByGetAndWait(ctx ctx.Context, req *connect.Re
 	}
 }
 
+func calculateRateLimitExpires(api *oliveTinAPI, logEntry *executor.InternalLogEntry) string {
+	if logEntry.Binding == nil || logEntry.Binding.Action == nil {
+		return ""
+	}
+
+	expiryUnix := api.executor.GetTimeUntilAvailable(logEntry.Binding)
+	if expiryUnix <= 0 {
+		return ""
+	}
+
+	return time.Unix(expiryUnix, 0).Format("2006-01-02 15:04:05")
+}
+
 func (api *oliveTinAPI) internalLogEntryToPb(logEntry *executor.InternalLogEntry, authenticatedUser *authpublic.AuthenticatedUser) *apiv1.LogEntry {
 	pble := &apiv1.LogEntry{
-		ActionTitle:         logEntry.ActionTitle,
-		ActionIcon:          logEntry.ActionIcon,
-		DatetimeStarted:     logEntry.DatetimeStarted.Format("2006-01-02 15:04:05"),
-		DatetimeFinished:    logEntry.DatetimeFinished.Format("2006-01-02 15:04:05"),
-		DatetimeIndex:       logEntry.Index,
-		Output:              logEntry.Output,
-		TimedOut:            logEntry.TimedOut,
-		Blocked:             logEntry.Blocked,
-		ExitCode:            logEntry.ExitCode,
-		Tags:                logEntry.Tags,
-		ExecutionTrackingId: logEntry.ExecutionTrackingID,
-		ExecutionStarted:    logEntry.ExecutionStarted,
-		ExecutionFinished:   logEntry.ExecutionFinished,
-		User:                logEntry.Username,
+		ActionTitle:              logEntry.ActionTitle,
+		ActionIcon:               logEntry.ActionIcon,
+		DatetimeStarted:          logEntry.DatetimeStarted.Format("2006-01-02 15:04:05"),
+		DatetimeFinished:         logEntry.DatetimeFinished.Format("2006-01-02 15:04:05"),
+		DatetimeIndex:            logEntry.Index,
+		Output:                   logEntry.Output,
+		TimedOut:                 logEntry.TimedOut,
+		Blocked:                  logEntry.Blocked,
+		ExitCode:                 logEntry.ExitCode,
+		Tags:                     logEntry.Tags,
+		ExecutionTrackingId:      logEntry.ExecutionTrackingID,
+		ExecutionStarted:         logEntry.ExecutionStarted,
+		ExecutionFinished:        logEntry.ExecutionFinished,
+		User:                     logEntry.Username,
+		BindingId:                logEntry.Binding.ID,
+		DatetimeRateLimitExpires: calculateRateLimitExpires(api, logEntry),
 	}
 
 	if !pble.ExecutionFinished {
 		pble.CanKill = acl.IsAllowedKill(api.cfg, authenticatedUser, logEntry.Binding.Action)
-	}
-
-	// Calculate rate limit expiry for the action
-	if logEntry.Binding != nil && logEntry.Binding.Action != nil {
-		pble.BindingId = logEntry.Binding.ID
-
-		expiryUnix := api.executor.GetTimeUntilAvailable(logEntry.Binding)
-
-		if expiryUnix > 0 {
-			pble.DatetimeRateLimitExpires = time.Unix(expiryUnix, 0).Format("2006-01-02 15:04:05")
-		} else {
-			pble.DatetimeRateLimitExpires = ""
-		}
 	}
 
 	return pble
