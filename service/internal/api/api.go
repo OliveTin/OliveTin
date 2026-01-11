@@ -919,7 +919,6 @@ func discoverAvailableThemes(cfg *config.Config) []string {
 	}
 
 	themesDir := path.Join(configDir, "custom-webui", "themes")
-
 	entries, err := os.ReadDir(themesDir)
 	if err != nil {
 		log.WithFields(log.Fields{
@@ -929,22 +928,36 @@ func discoverAvailableThemes(cfg *config.Config) []string {
 		return []string{}
 	}
 
+	themes := collectValidThemes(themesDir, entries)
+	sort.Strings(themes)
+	return themes
+}
+
+// collectValidThemes collects theme names from directory entries that have a theme.css file.
+func collectValidThemes(themesDir string, entries []os.DirEntry) []string {
 	var themes []string
 	for _, entry := range entries {
-		if !entry.IsDir() {
-			continue
-		}
-
-		themeName := entry.Name()
-		themeCssPath := path.Join(themesDir, themeName, "theme.css")
-
-		if _, err := os.Stat(themeCssPath); err == nil {
+		if themeName := getValidThemeName(themesDir, entry); themeName != "" {
 			themes = append(themes, themeName)
 		}
 	}
-
-	sort.Strings(themes)
 	return themes
+}
+
+// getValidThemeName returns the theme name if the entry is a valid theme directory with theme.css, otherwise returns empty string.
+func getValidThemeName(themesDir string, entry os.DirEntry) string {
+	if !entry.IsDir() {
+		return ""
+	}
+
+	themeName := entry.Name()
+	themeCssPath := path.Join(themesDir, themeName, "theme.css")
+
+	if _, err := os.Stat(themeCssPath); err != nil {
+		return ""
+	}
+
+	return themeName
 }
 
 func (api *oliveTinAPI) buildRootDashboards(user *authpublic.AuthenticatedUser, dashboards []*config.DashboardComponent) []string {
