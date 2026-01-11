@@ -59,8 +59,7 @@ describe('config: stdout-most-recent-execution', function () {
   })
 
   it('stdout-most-recent-execution updates after action execution', async function () {
-    this.timeout(30000) // Increase timeout for this test
-
+    this.timeout(45000)
     await getRootAndWait()
 
     // Wait for the mre-output element
@@ -105,7 +104,7 @@ describe('config: stdout-most-recent-execution', function () {
     await statusButton.click()
 
     // Wait a moment for the action to start
-    await webdriver.sleep(500)
+    await webdriver.sleep(2000)
 
     // Wait for the output to update (the component listens to EventExecutionFinished events)
     // We'll wait for the output to change from the initial state

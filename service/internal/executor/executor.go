@@ -49,12 +49,12 @@ type ActionBinding struct {
 type Executor struct {
 	logs                  map[string]*InternalLogEntry
 	logsTrackingIdsByDate []string
-	LogsByActionId        map[string][]*InternalLogEntry
+	LogsByBindingId       map[string][]*InternalLogEntry
 
 	logmutex sync.RWMutex
 
-	MapActionIdToBinding     map[string]*ActionBinding
-	MapActionIdToBindingLock sync.RWMutex
+	MapActionBindings     map[string]*ActionBinding
+	MapActionBindingsLock sync.RWMutex
 
 	Cfg *config.Config
 
@@ -86,7 +86,6 @@ type ExecutionRequest struct {
 // easily serializable.
 type InternalLogEntry struct {
 	Binding             *ActionBinding
-	BindingID           string
 	DatetimeStarted     time.Time
 	DatetimeFinished    time.Time
 	Output              string
@@ -110,7 +109,6 @@ type InternalLogEntry struct {
 	*/
 	ActionTitle string
 	ActionIcon  string
-	ActionId    string
 }
 
 type executorStepFunc func(*ExecutionRequest) bool
@@ -122,8 +120,8 @@ func DefaultExecutor(cfg *config.Config) *Executor {
 	e.Cfg = cfg
 	e.logs = make(map[string]*InternalLogEntry)
 	e.logsTrackingIdsByDate = make([]string, 0)
-	e.LogsByActionId = make(map[string][]*InternalLogEntry)
-	e.MapActionIdToBinding = make(map[string]*ActionBinding)
+	e.LogsByBindingId = make(map[string][]*InternalLogEntry)
+	e.MapActionBindings = make(map[string]*ActionBinding)
 
 	e.chainOfCommand = []executorStepFunc{
 		stepRequestAction,
@@ -297,10 +295,10 @@ func (e *Executor) GetLog(trackingID string) (*InternalLogEntry, bool) {
 	return entry, found
 }
 
-func (e *Executor) GetLogsByActionId(actionId string) []*InternalLogEntry {
+func (e *Executor) GetLogsByBindingId(bindingId string) []*InternalLogEntry {
 	e.logmutex.RLock()
 
-	logs, found := e.LogsByActionId[actionId]
+	logs, found := e.LogsByBindingId[bindingId]
 
 	e.logmutex.RUnlock()
 
@@ -309,6 +307,66 @@ func (e *Executor) GetLogsByActionId(actionId string) []*InternalLogEntry {
 	}
 
 	return logs
+}
+
+// GetTimeUntilAvailable calculates when an action will be available again based on rate limits.
+// Returns the Unix timestamp in seconds when the rate limit expires, or 0 if the action is available now.
+func (e *Executor) GetTimeUntilAvailable(binding *ActionBinding) int64 {
+	if len(binding.Action.MaxRate) == 0 {
+		return 0
+	}
+
+	e.logmutex.RLock()
+	defer e.logmutex.RUnlock()
+
+	logs, found := e.LogsByBindingId[binding.ID]
+	if !found || len(logs) == 0 {
+		return 0
+	}
+
+	now := time.Now()
+	var maxExpiryTime time.Time
+
+	for _, rate := range binding.Action.MaxRate {
+		duration := parseDuration(rate)
+		if duration <= 0 {
+			continue
+		}
+
+		then := now.Add(-duration)
+		executions := 0
+		var oldestExecutionTime *time.Time
+
+		for _, logEntry := range logs {
+			if logEntry.Blocked {
+				continue
+			}
+
+			if logEntry.DatetimeStarted.After(then) {
+				executions++
+				if oldestExecutionTime == nil || logEntry.DatetimeStarted.Before(*oldestExecutionTime) {
+					oldestExecutionTime = &logEntry.DatetimeStarted
+				}
+			}
+		}
+
+		// If we're at or over the limit, calculate when the oldest execution will fall outside the window
+		// Note: getExecutionsCount uses -1 because it counts the current execution, but we're checking
+		// availability before execution, so we compare directly to rate.Limit
+		if executions >= rate.Limit && oldestExecutionTime != nil {
+			// The oldest execution will fall outside the window at: oldestExecutionTime + duration
+			expiryTime := oldestExecutionTime.Add(duration)
+			if expiryTime.After(now) && (maxExpiryTime.IsZero() || expiryTime.After(maxExpiryTime)) {
+				maxExpiryTime = expiryTime
+			}
+		}
+	}
+
+	if maxExpiryTime.IsZero() {
+		return 0
+	}
+
+	return maxExpiryTime.Unix()
 }
 
 func (e *Executor) SetLog(trackingID string, entry *InternalLogEntry) {
@@ -337,7 +395,6 @@ func (e *Executor) ExecRequest(req *ExecutionRequest) (*sync.WaitGroup, string) 
 		ExitCode:            DefaultExitCodeNotExecuted,
 		ExecutionStarted:    false,
 		ExecutionFinished:   false,
-		ActionId:            "",
 		ActionTitle:         "notfound",
 		ActionIcon:          "&#x1f4a9;",
 		Username:            req.AuthenticatedUser.Username,
@@ -374,6 +431,11 @@ func (e *Executor) execChain(req *ExecutionRequest) {
 		}
 	}
 
+	// Ensure DatetimeFinished is set even if execution was blocked early
+	if req.logEntry.DatetimeFinished.IsZero() {
+		req.logEntry.DatetimeFinished = time.Now()
+	}
+
 	req.logEntry.ExecutionFinished = true
 
 	// This isn't a step, because we want to notify all listeners, irrespective
@@ -386,7 +448,7 @@ func getConcurrentCount(req *ExecutionRequest) int {
 
 	req.executor.logmutex.RLock()
 
-	for _, log := range req.executor.GetLogsByActionId(req.Binding.Action.ID) {
+	for _, log := range req.executor.GetLogsByBindingId(req.Binding.ID) {
 		if !log.ExecutionFinished {
 			concurrentCount += 1
 		}
@@ -436,7 +498,7 @@ func getExecutionsCount(rate config.RateSpec, req *ExecutionRequest) int {
 
 	then := time.Now().Add(-duration)
 
-	for _, logEntry := range req.executor.GetLogsByActionId(req.Binding.Action.ID) {
+	for _, logEntry := range req.executor.GetLogsByBindingId(req.Binding.ID) {
 		// FIXME
 		/*
 			if logEntry.EntityPrefix != req.EntityPrefix {
@@ -573,16 +635,15 @@ func stepRequestAction(req *ExecutionRequest) bool {
 	req.logEntry.ActionConfigTitle = req.Binding.Action.Title
 	req.logEntry.ActionTitle = entities.ParseTemplateWith(req.Binding.Action.Title, req.Binding.Entity)
 	req.logEntry.ActionIcon = req.Binding.Action.Icon
-	req.logEntry.ActionId = req.Binding.Action.ID
 	req.logEntry.Tags = req.Tags
 
 	req.executor.logmutex.Lock()
 
-	if _, containsKey := req.executor.LogsByActionId[req.Binding.Action.ID]; !containsKey {
-		req.executor.LogsByActionId[req.Binding.Action.ID] = make([]*InternalLogEntry, 0)
+	if _, containsKey := req.executor.LogsByBindingId[req.Binding.ID]; !containsKey {
+		req.executor.LogsByBindingId[req.Binding.ID] = make([]*InternalLogEntry, 0)
 	}
 
-	req.executor.LogsByActionId[req.Binding.Action.ID] = append(req.executor.LogsByActionId[req.Binding.Action.ID], req.logEntry)
+	req.executor.LogsByBindingId[req.Binding.ID] = append(req.executor.LogsByBindingId[req.Binding.ID], req.logEntry)
 
 	req.executor.logmutex.Unlock()
 

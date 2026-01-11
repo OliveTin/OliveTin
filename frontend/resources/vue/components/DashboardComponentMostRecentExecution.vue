@@ -12,7 +12,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
+import { buttonResults } from '../stores/buttonResults'
 
 const props = defineProps({
   component: {
@@ -23,7 +24,20 @@ const props = defineProps({
 
 const output = ref('Waiting...')
 const executionTrackingId = ref(null)
-let eventListener = null
+let unwatchButtonResults = null
+
+function updateFromLogEntry(logEntry) {
+  if (logEntry) {
+    if (logEntry.output !== undefined) {
+      output.value = logEntry.output
+    } else {
+      output.value = 'No output available'
+    }
+    if (logEntry.executionTrackingId) {
+      executionTrackingId.value = logEntry.executionTrackingId
+    }
+  }
+}
 
 async function fetchMostRecentExecution() {
   if (!props.component.title) {
@@ -46,14 +60,7 @@ async function fetchMostRecentExecution() {
     const result = await window.client.executionStatus(executionStatusArgs)
     
     if (result.logEntry) {
-      if (result.logEntry.output !== undefined) {
-        output.value = result.logEntry.output
-      } else {
-        output.value = 'No output available'
-      }
-      if (result.logEntry.executionTrackingId) {
-        executionTrackingId.value = result.logEntry.executionTrackingId
-      }
+      updateFromLogEntry(result.logEntry)
     } else {
       output.value = 'No output available'
       executionTrackingId.value = null
@@ -70,32 +77,39 @@ async function fetchMostRecentExecution() {
   }
 }
 
-function handleExecutionFinished(event) {
-  // The dashboard component "title" field is used for lots of things
-  // and in this context for MreOutput it's just to refer to an actionId.
-  //
-  // So this is not a typo.
-  const logEntry = event.payload.logEntry
-  if (logEntry && logEntry.actionId === props.component.title) {
-    if (logEntry.output !== undefined) {
-      output.value = logEntry.output
-    }
-    if (logEntry.executionTrackingId) {
-      executionTrackingId.value = logEntry.executionTrackingId
-    }
-  }
-}
-
 onMounted(() => {
   fetchMostRecentExecution()
   
-  eventListener = (event) => handleExecutionFinished(event)
-  window.addEventListener('EventExecutionFinished', eventListener)
+  unwatchButtonResults = watch(
+    buttonResults,
+    () => {
+      // Find the most recent finished execution for this bindingId
+      const bindingId = props.component.title
+      let mostRecent = null
+      let mostRecentTime = null
+      
+      for (const trackingId in buttonResults) {
+        const logEntry = buttonResults[trackingId]
+        if (logEntry && logEntry.bindingId === bindingId && logEntry.executionFinished) {
+          const finishedTime = new Date(logEntry.datetimeFinished)
+          if (!mostRecent || finishedTime > mostRecentTime) {
+            mostRecent = logEntry
+            mostRecentTime = finishedTime
+          }
+        }
+      }
+      
+      if (mostRecent) {
+        updateFromLogEntry(mostRecent)
+      }
+    },
+    { deep: true }
+  )
 })
 
 onBeforeUnmount(() => {
-  if (eventListener) {
-    window.removeEventListener('EventExecutionFinished', eventListener)
+  if (unwatchButtonResults) {
+    unwatchButtonResults()
   }
 })
 </script>
