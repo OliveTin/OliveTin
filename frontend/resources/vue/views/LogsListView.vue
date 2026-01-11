@@ -115,6 +115,8 @@ function updateDateFromRoute() {
   } else {
     selectedDate.value = null
   }
+  // Re-fetch logs when date changes
+  fetchLogs()
 }
 
 // Watch for route changes to update date filter
@@ -125,17 +127,7 @@ watch(() => route.query.date, () => {
 const filteredLogs = computed(() => {
   let result = logs.value
   
-  // Filter by selected date if present
-  if (selectedDate.value) {
-    result = result.filter(log => {
-      if (!log.datetimeStarted) return false
-      const logDate = new Date(log.datetimeStarted)
-      // Normalize to UTC ISO date string (YYYY-MM-DD) for comparison
-      const logDateString = logDate.toISOString().split('T')[0]
-      return logDateString === selectedDate.value
-    })
-  }
-  
+  // Date filtering is now done server-side, so we only need to filter by search text
   if (searchText.value) {
     const searchLower = searchText.value.toLowerCase()
     result = result.filter(log =>
@@ -158,6 +150,11 @@ async function fetchLogs() {
 
     const args = {
       "startOffset": BigInt(startOffset),
+    }
+
+    // Add date filter if selected
+    if (selectedDate.value) {
+      args.dateFilter = selectedDate.value
     }
 
     const response = await window.client.getLogs(args)
@@ -213,6 +210,7 @@ function handlePageChange(page) {
 function handlePageSizeChange(newPageSize) {
   pageSize.value = newPageSize
   currentPage.value = 1 // Reset to first page
+  fetchLogs()
 }
 
 onMounted(() => {
