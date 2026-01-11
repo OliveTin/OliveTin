@@ -53,6 +53,13 @@ export declare type Action = Message<"olivetin.api.v1.Action"> & {
    * @generated from field: int32 timeout = 8;
    */
   timeout: number;
+
+  /**
+   * Datetime when rate limit expires (empty string if not rate limited), format: "2006-01-02 15:04:05"
+   *
+   * @generated from field: string datetime_rate_limit_expires = 9;
+   */
+  datetimeRateLimitExpires: string;
 };
 
 /**
@@ -99,6 +106,11 @@ export declare type ActionArgument = Message<"olivetin.api.v1.ActionArgument"> &
    * @generated from field: map<string, string> suggestions = 7;
    */
   suggestions: { [key: string]: string };
+
+  /**
+   * @generated from field: string suggestions_browser_key = 8;
+   */
+  suggestionsBrowserKey: string;
 };
 
 /**
@@ -476,6 +488,13 @@ export declare type GetLogsRequest = Message<"olivetin.api.v1.GetLogsRequest"> &
    * @generated from field: int64 start_offset = 1;
    */
   startOffset: bigint;
+
+  /**
+   * Optional date filter in YYYY-MM-DD format
+   *
+   * @generated from field: string date_filter = 2;
+   */
+  dateFilter: string;
 };
 
 /**
@@ -544,11 +563,6 @@ export declare type LogEntry = Message<"olivetin.api.v1.LogEntry"> & {
   datetimeFinished: string;
 
   /**
-   * @generated from field: string action_id = 13;
-   */
-  actionId: string;
-
-  /**
    * @generated from field: bool execution_started = 14;
    */
   executionStarted: boolean;
@@ -572,6 +586,20 @@ export declare type LogEntry = Message<"olivetin.api.v1.LogEntry"> & {
    * @generated from field: bool can_kill = 18;
    */
   canKill: boolean;
+
+  /**
+   * Datetime when rate limit expires (empty string if not rate limited), format: "2006-01-02 15:04:05"
+   *
+   * @generated from field: string datetime_rate_limit_expires = 19;
+   */
+  datetimeRateLimitExpires: string;
+
+  /**
+   * Binding ID for matching rate limits to action buttons
+   *
+   * @generated from field: string binding_id = 20;
+   */
+  bindingId: string;
 };
 
 /**
@@ -904,9 +932,9 @@ export declare type DumpVarsResponse = Message<"olivetin.api.v1.DumpVarsResponse
 export declare const DumpVarsResponseSchema: GenMessage<DumpVarsResponse>;
 
 /**
- * @generated from message olivetin.api.v1.ActionEntityPair
+ * @generated from message olivetin.api.v1.DebugBinding
  */
-export declare type ActionEntityPair = Message<"olivetin.api.v1.ActionEntityPair"> & {
+export declare type DebugBinding = Message<"olivetin.api.v1.DebugBinding"> & {
   /**
    * @generated from field: string action_title = 1;
    */
@@ -919,10 +947,10 @@ export declare type ActionEntityPair = Message<"olivetin.api.v1.ActionEntityPair
 };
 
 /**
- * Describes the message olivetin.api.v1.ActionEntityPair.
- * Use `create(ActionEntityPairSchema)` to create a new message.
+ * Describes the message olivetin.api.v1.DebugBinding.
+ * Use `create(DebugBindingSchema)` to create a new message.
  */
-export declare const ActionEntityPairSchema: GenMessage<ActionEntityPair>;
+export declare const DebugBindingSchema: GenMessage<DebugBinding>;
 
 /**
  * @generated from message olivetin.api.v1.DumpPublicIdActionMapRequest
@@ -946,9 +974,9 @@ export declare type DumpPublicIdActionMapResponse = Message<"olivetin.api.v1.Dum
   alert: string;
 
   /**
-   * @generated from field: map<string, olivetin.api.v1.ActionEntityPair> contents = 2;
+   * @generated from field: map<string, olivetin.api.v1.DebugBinding> contents = 2;
    */
-  contents: { [key: string]: ActionEntityPair };
+  contents: { [key: string]: DebugBinding };
 };
 
 /**
