@@ -46,6 +46,10 @@
                         <a href="#" @click.prevent="openLanguageDialog">{{ currentLanguageName }}</a>
                     </span>
 
+                    <span v-if="availableThemes.length > 1">
+                        <a href="#" @click.prevent="openThemeDialog">{{ currentThemeName }}</a>
+                    </span>
+
                     <span>{{ t('connected') }}</span>
                 </p>
                 <p>
@@ -55,7 +59,7 @@
         </div>
     </div>
 
-    <dialog ref="languageDialog" class="language-dialog" @click="handleDialogClick">
+    <dialog ref="languageDialog" class="language-dialog" @click="handleLanguageDialogClick">
         <div class="dialog-content" @click.stop>
             <h2>{{ t('language-dialog.title') }}</h2>
             <select v-model="selectedLanguage" @change="changeLanguage" class="language-select">
@@ -70,6 +74,21 @@
             </p>
             <div class="dialog-buttons">
                 <button @click="closeLanguageDialog">{{ t('language-dialog.close') }}</button>
+            </div>
+        </div>
+    </dialog>
+
+    <dialog ref="themeDialog" class="theme-dialog" @click="handleThemeDialogClick">
+        <div class="dialog-content" @click.stop>
+            <h2>{{ t('theme-dialog.title') }}</h2>
+            <select v-model="selectedTheme" @change="changeTheme" class="language-select">
+                <option value="">{{ t('theme-dialog.default') }}</option>
+                <option v-for="theme in availableThemes" :key="theme" :value="theme">
+                    {{ theme }}
+                </option>
+            </select>
+            <div class="dialog-buttons">
+                <button @click="closeThemeDialog">{{ t('theme-dialog.close') }}</button>
             </div>
         </div>
     </dialog>
@@ -117,6 +136,12 @@ const initialLanguagePreference = typeof window !== 'undefined' ? localStorage.g
 const languagePreference = ref(initialLanguagePreference || 'auto')
 const selectedLanguage = ref(languagePreference.value)
 
+const themeDialog = ref(null)
+const availableThemes = ref([])
+const initialThemePreference = typeof window !== 'undefined' ? localStorage.getItem('olivetin-theme') : null
+const themePreference = ref(initialThemePreference || '')
+const selectedTheme = ref(themePreference.value)
+
 // Available languages with display names
 const availableLanguages = {
     'auto': 'Browser Language',
@@ -134,6 +159,14 @@ const currentLanguageName = computed(() => {
     }
 
     return availableLanguages[languagePreference.value] || languagePreference.value
+})
+
+// Computed property to get current theme display name
+const currentThemeName = computed(() => {
+    if (!themePreference.value || themePreference.value === '') {
+        return t('theme-dialog.default')
+    }
+    return themePreference.value
 })
 
 // Computed properties for navigation style
@@ -191,12 +224,14 @@ function updateHeaderFromInit() {
     showLogs.value = window.initResponse.showLogList
     showDiagnostics.value = window.initResponse.showDiagnostics
     sectionNavigationStyle.value = window.initResponse.sectionNavigationStyle || 'sidebar'
+    availableThemes.value = window.initResponse.availableThemes || []
 
     if (!window.initResponse.authLocalLogin && window.initResponse.oAuth2Providers.length === 0) {
         showLoginLink.value = false
     }
 
     renderNavigation()
+    applyTheme()
 
     if (window.initResponse.loginRequired) {
         router.push('/login')
@@ -280,10 +315,60 @@ function changeLanguage() {
     closeLanguageDialog()
 }
 
-function handleDialogClick(event) {
+function handleLanguageDialogClick(event) {
     // Close dialog when clicking on the backdrop
     if (event.target === languageDialog.value) {
         closeLanguageDialog()
+    }
+}
+
+function openThemeDialog() {
+    selectedTheme.value = themePreference.value || ''
+    
+    if (themeDialog.value) {
+        themeDialog.value.showModal()
+    }
+}
+
+function closeThemeDialog() {
+    if (themeDialog.value) {
+        themeDialog.value.close()
+    }
+}
+
+function changeTheme() {
+    if (!selectedTheme.value || selectedTheme.value === '') {
+        localStorage.removeItem('olivetin-theme')
+        themePreference.value = ''
+    } else {
+        localStorage.setItem('olivetin-theme', selectedTheme.value)
+        themePreference.value = selectedTheme.value
+    }
+
+    applyTheme()
+    closeThemeDialog()
+}
+
+function applyTheme() {
+    let themeStyle = document.getElementById('theme-style')
+    
+    if (!themeStyle) {
+        themeStyle = document.createElement('style')
+        themeStyle.id = 'theme-style'
+        themeStyle.type = 'text/css'
+        document.head.appendChild(themeStyle)
+    }
+
+    if (themePreference.value && themePreference.value !== '') {
+        themeStyle.textContent = `@import url('/custom-webui/themes/${themePreference.value}/theme.css') layer(theme);`
+    } else {
+        themeStyle.textContent = ''
+    }
+}
+
+function handleThemeDialogClick(event) {
+    if (event.target === themeDialog.value) {
+        closeThemeDialog()
     }
 }
 
@@ -295,6 +380,9 @@ onMounted(() => {
     
     // Initialize selected language from stored preference
     selectedLanguage.value = languagePreference.value
+    
+    // Initialize selected theme from stored preference
+    selectedTheme.value = themePreference.value || ''
 
     if (typeof navigator !== 'undefined' && Array.isArray(navigator.languages)) {
         browserLanguages.value = navigator.languages
@@ -316,7 +404,8 @@ onMounted(() => {
     text-decoration: underline;
 }
 
-.language-dialog {
+.language-dialog,
+.theme-dialog {
     border: 1px solid var(--border-color, #ccc);
     border-radius: 0.5rem;
     padding: 0;
@@ -324,7 +413,8 @@ onMounted(() => {
     width: 90%;
 }
 
-.language-dialog::backdrop {
+.language-dialog::backdrop,
+.theme-dialog::backdrop {
     background-color: rgba(0, 0, 0, 0.5);
 }
 

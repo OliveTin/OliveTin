@@ -3236,6 +3236,7 @@ type InitResponse struct {
 	ShowDiagnostics           bool                   `protobuf:"varint,21,opt,name=show_diagnostics,json=showDiagnostics,proto3" json:"show_diagnostics,omitempty"`
 	ShowLogList               bool                   `protobuf:"varint,22,opt,name=show_log_list,json=showLogList,proto3" json:"show_log_list,omitempty"`
 	LoginRequired             bool                   `protobuf:"varint,23,opt,name=login_required,json=loginRequired,proto3" json:"login_required,omitempty"`
+	AvailableThemes           []string               `protobuf:"bytes,24,rep,name=available_themes,json=availableThemes,proto3" json:"available_themes,omitempty"` // List of available theme names
 	unknownFields             protoimpl.UnknownFields
 	sizeCache                 protoimpl.SizeCache
 }
@@ -3429,6 +3430,13 @@ func (x *InitResponse) GetLoginRequired() bool {
 		return x.LoginRequired
 	}
 	return false
+}
+
+func (x *InitResponse) GetAvailableThemes() []string {
+	if x != nil {
+		return x.AvailableThemes
+	}
+	return nil
 }
 
 type AdditionalLink struct {
@@ -4088,7 +4096,7 @@ const file_olivetin_api_v1_olivetin_proto_rawDesc = "" +
 	"\x16GetDiagnosticsResponse\x12 \n" +
 	"\vSshFoundKey\x18\x01 \x01(\tR\vSshFoundKey\x12&\n" +
 	"\x0eSshFoundConfig\x18\x02 \x01(\tR\x0eSshFoundConfig\"\r\n" +
-	"\vInitRequest\"\xa2\b\n" +
+	"\vInitRequest\"\xcd\b\n" +
 	"\fInitResponse\x12\x1e\n" +
 	"\n" +
 	"showFooter\x18\x01 \x01(\bR\n" +
@@ -4116,7 +4124,8 @@ const file_olivetin_api_v1_olivetin_proto_rawDesc = "" +
 	"banner_css\x18\x14 \x01(\tR\tbannerCss\x12)\n" +
 	"\x10show_diagnostics\x18\x15 \x01(\bR\x0fshowDiagnostics\x12\"\n" +
 	"\rshow_log_list\x18\x16 \x01(\bR\vshowLogList\x12%\n" +
-	"\x0elogin_required\x18\x17 \x01(\bR\rloginRequired\"8\n" +
+	"\x0elogin_required\x18\x17 \x01(\bR\rloginRequired\x12)\n" +
+	"\x10available_themes\x18\x18 \x03(\tR\x0favailableThemes\"8\n" +
 	"\x0eAdditionalLink\x12\x14\n" +
 	"\x05title\x18\x01 \x01(\tR\x05title\x12\x10\n" +
 	"\x03url\x18\x02 \x01(\tR\x03url\"L\n" +

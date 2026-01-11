@@ -18,6 +18,15 @@ export default defineConfig({
         target: 'http://localhost:1337',
         changeOrigin: true,
         secure: false,
+      },
+      '/theme.css': {
+        target: 'http://localhost:1337',
+        changeOrigin: true,
+        secure: false,
+      },
+      "/custom-webui": {
+        target: "http://localhost:1337",
+        changeOrigin: true,
       }
     },
   },
