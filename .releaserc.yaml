@@ -1,6 +1,6 @@
 ---
-branches:
-  - name: main
+#branches:
+#  - name: main
 #    range: '3000.x.x'
 
 #  - name: release/2k
