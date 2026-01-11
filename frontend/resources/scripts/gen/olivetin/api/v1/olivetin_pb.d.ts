@@ -488,6 +488,13 @@ export declare type GetLogsRequest = Message<"olivetin.api.v1.GetLogsRequest"> &
    * @generated from field: int64 start_offset = 1;
    */
   startOffset: bigint;
+
+  /**
+   * Optional date filter in YYYY-MM-DD format
+   *
+   * @generated from field: string date_filter = 2;
+   */
+  dateFilter: string;
 };
 
 /**

@@ -120,6 +120,7 @@ message StartActionByGetAndWaitResponse {
 
 message GetLogsRequest{
   int64 start_offset = 1;
+  string date_filter = 2; // Optional date filter in YYYY-MM-DD format
 };
 
 message LogEntry {
