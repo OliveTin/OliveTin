@@ -236,11 +236,21 @@ func isLogEntryAllowedByACL(cfg *config.Config, user *authpublic.AuthenticatedUs
 	return acl.IsAllowedLogs(cfg, user, entry.Binding.Action)
 }
 
-func (e *Executor) filterLogsByACL(cfg *config.Config, user *authpublic.AuthenticatedUser) []*InternalLogEntry {
+func (e *Executor) filterLogsByACL(cfg *config.Config, user *authpublic.AuthenticatedUser, dateFilter string) []*InternalLogEntry {
 	e.logmutex.RLock()
 	defer e.logmutex.RUnlock()
 
 	filtered := make([]*InternalLogEntry, 0, len(e.logsTrackingIdsByDate))
+
+	var filterDate time.Time
+	var hasDateFilter bool
+	if dateFilter != "" {
+		parsedDate, err := time.Parse("2006-01-02", dateFilter)
+		if err == nil {
+			filterDate = parsedDate
+			hasDateFilter = true
+		}
+	}
 
 	for _, trackingId := range e.logsTrackingIdsByDate {
 		entry := e.logs[trackingId]
@@ -249,6 +259,13 @@ func (e *Executor) filterLogsByACL(cfg *config.Config, user *authpublic.Authenti
 			continue
 		}
 		if isLogEntryAllowedByACL(cfg, user, entry) {
+			if hasDateFilter {
+				entryDate := entry.DatetimeStarted.UTC().Truncate(24 * time.Hour)
+				filterDateUTC := filterDate.UTC().Truncate(24 * time.Hour)
+				if !entryDate.Equal(filterDateUTC) {
+					continue
+				}
+			}
 			filtered = append(filtered, entry)
 		}
 	}
@@ -282,8 +299,9 @@ func paginateFilteredLogs(filtered []*InternalLogEntry, startOffset int64, pageC
 
 // GetLogTrackingIdsACL returns logs filtered by ACL visibility for the user and
 // paginated correctly based on the filtered set.
-func (e *Executor) GetLogTrackingIdsACL(cfg *config.Config, user *authpublic.AuthenticatedUser, startOffset int64, pageCount int64) ([]*InternalLogEntry, *PagingResult) {
-	filtered := e.filterLogsByACL(cfg, user)
+// dateFilter is optional and should be in YYYY-MM-DD format. If empty, no date filtering is applied.
+func (e *Executor) GetLogTrackingIdsACL(cfg *config.Config, user *authpublic.AuthenticatedUser, startOffset int64, pageCount int64, dateFilter string) ([]*InternalLogEntry, *PagingResult) {
+	filtered := e.filterLogsByACL(cfg, user, dateFilter)
 	return paginateFilteredLogs(filtered, startOffset, pageCount)
 }
 

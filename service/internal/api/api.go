@@ -474,7 +474,11 @@ func (api *oliveTinAPI) GetLogs(ctx ctx.Context, req *connect.Request[apiv1.GetL
 	}
 
 	ret := &apiv1.GetLogsResponse{}
-	logEntries, paging := api.executor.GetLogTrackingIdsACL(api.cfg, user, req.Msg.StartOffset, api.cfg.LogHistoryPageSize)
+	dateFilter := ""
+	if req.Msg.DateFilter != "" {
+		dateFilter = req.Msg.DateFilter
+	}
+	logEntries, paging := api.executor.GetLogTrackingIdsACL(api.cfg, user, req.Msg.StartOffset, api.cfg.LogHistoryPageSize, dateFilter)
 	for _, le := range logEntries {
 		ret.Logs = append(ret.Logs, api.internalLogEntryToPb(le, user))
 	}
