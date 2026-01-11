@@ -244,7 +244,12 @@ func (e *Executor) filterLogsByACL(cfg *config.Config, user *authpublic.Authenti
 	var hasDateFilter bool
 	if dateFilter != "" {
 		parsedDate, err := time.Parse("2006-01-02", dateFilter)
-		if err == nil {
+		if err != nil {
+			log.WithFields(log.Fields{
+				"dateFilter": dateFilter,
+				"error":      err,
+			}).Errorf("Failed to parse date filter, expected format YYYY-MM-DD")
+		} else {
 			filterDate = parsedDate
 			hasDateFilter = true
 		}
