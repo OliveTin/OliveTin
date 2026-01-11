@@ -1,5 +1,5 @@
 <template>
-    <div class="display">
+    <div class="display" :class="component.cssClass">
         <div v-html="component.title" />
     </div>
 </template>

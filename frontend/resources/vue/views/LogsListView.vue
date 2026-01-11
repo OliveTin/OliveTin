@@ -1,6 +1,9 @@
 <template>
   <Section :title="t('logs.title')" :padding="false">
       <template #toolbar>
+        <router-link to="/logs/calendar" class="button neutral">
+          {{ t('logs.calendar') }}
+        </router-link>
         <label class="input-with-icons">
           <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
             <path fill="currentColor"
@@ -21,7 +24,20 @@
         <table class="logs-table">
           <thead>
             <tr>
-              <th>{{ t('logs.timestamp') }}</th>
+              <th>
+                <div class="timestamp-header">
+                  <span>{{ t('logs.timestamp') }}</span>
+                  <span v-if="selectedDate" class="date-filter-indicator">
+                    <span class="date-filter-text">{{ formatDateFilter(selectedDate) }}</span>
+                    <button :title="t('logs.clear-date-filter')" @click="clearDateFilter" class="clear-date-button">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+                        <path fill="currentColor"
+                          d="M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12z" />
+                      </svg>
+                    </button>
+                  </span>
+                </div>
+              </th>
               <th>{{ t('logs.action') }}</th>
               <th>{{ t('logs.metadata') }}</th>
               <th>{{ t('logs.status') }}</th>
@@ -56,7 +72,14 @@
           @page-size-change="handlePageSizeChange" itemTitle="execution logs" />
       </div>
 
-      <div v-show="logs.length === 0" class="empty-state">
+      <div v-show="selectedDate && filteredLogs.length === 0" class="empty-state">
+        <p>{{ t('logs.no-logs-to-display') }} {{ formatDateFilter(selectedDate) }}.</p>
+        <button @click="clearDateFilter" class="button neutral">
+          {{ t('logs.clear-date-filter') }}
+        </button>
+      </div>
+
+      <div v-show="logs.length === 0 && !selectedDate" class="empty-state">
         <p>{{ t('logs.no-logs-to-display') }}</p>
         <router-link to="/">{{ t('return-to-index') }}</router-link>
       </div>
@@ -64,11 +87,15 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import Pagination from 'picocrank/vue/components/Pagination.vue'
 import Section from 'picocrank/vue/components/Section.vue'
 import { useI18n } from 'vue-i18n'
 import ActionStatusDisplay from '../components/ActionStatusDisplay.vue'
+
+const route = useRoute()
+const router = useRouter()
 
 const logs = ref([])
 const searchText = ref('')
@@ -76,15 +103,34 @@ const pageSize = ref(10)
 const currentPage = ref(1)
 const loading = ref(false)
 const totalCount = ref(0)
+const selectedDate = ref(null)
 
 const { t } = useI18n()
+
+// Read date query parameter from route
+function updateDateFromRoute() {
+  const dateParam = route.query.date
+  if (dateParam) {
+    selectedDate.value = dateParam
+  } else {
+    selectedDate.value = null
+  }
+  // Re-fetch logs when date changes
+  fetchLogs()
+}
+
+// Watch for route changes to update date filter
+watch(() => route.query.date, () => {
+  updateDateFromRoute()
+})
 
 const filteredLogs = computed(() => {
   let result = logs.value
   
+  // Date filtering is now done server-side, so we only need to filter by search text
   if (searchText.value) {
     const searchLower = searchText.value.toLowerCase()
-    result = logs.value.filter(log =>
+    result = result.filter(log =>
       log.actionTitle.toLowerCase().includes(searchLower)
     )
   }
@@ -106,6 +152,11 @@ async function fetchLogs() {
       "startOffset": BigInt(startOffset),
     }
 
+    // Add date filter if selected
+    if (selectedDate.value) {
+      args.dateFilter = selectedDate.value
+    }
+
     const response = await window.client.getLogs(args)
 
     logs.value = response.logs
@@ -121,6 +172,24 @@ async function fetchLogs() {
 
 function clearSearch() {
   searchText.value = ''
+}
+
+function clearDateFilter() {
+  selectedDate.value = null
+  // Remove date query parameter from URL
+  const query = { ...route.query }
+  delete query.date
+  router.push({ path: route.path, query })
+}
+
+function formatDateFilter(dateString) {
+  // Format YYYY-MM-DD to a short format (e.g., "Jan 15, 2024")
+  try {
+    const date = new Date(dateString + 'T00:00:00')
+    return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
+  } catch (err) {
+    return dateString
+  }
 }
 
 function formatTimestamp(timestamp) {
@@ -141,9 +210,11 @@ function handlePageChange(page) {
 function handlePageSizeChange(newPageSize) {
   pageSize.value = newPageSize
   currentPage.value = 1 // Reset to first page
+  fetchLogs()
 }
 
 onMounted(() => {
+  updateDateFromRoute()
   fetchLogs()
 })
 </script>
@@ -225,6 +296,49 @@ onMounted(() => {
 
 .empty-state a:hover {
   text-decoration: underline;
+}
+
+.timestamp-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.date-filter-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: normal;
+  color: var(--text-secondary, #666);
+  white-space: nowrap;
+}
+
+.date-filter-text {
+  font-style: italic;
+}
+
+.timestamp-header .clear-date-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.125rem;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.timestamp-header .clear-date-button:hover {
+  opacity: 1;
+  background: var(--hover-background, rgba(0, 0, 0, 0.05));
+}
+
+.timestamp-header .clear-date-button svg {
+  width: 0.75rem;
+  height: 0.75rem;
 }
 
 </style>

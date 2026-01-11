@@ -1,5 +1,5 @@
 <template>
-    <button @click="navigateToDirectory">
+    <button @click="navigateToDirectory" :class="component.cssClass">
         <span class="icon" v-html="unicodeIcon"></span>
         <span class="title">{{ component.title }}</span>
     </button>
