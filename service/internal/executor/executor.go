@@ -234,6 +234,48 @@ func isLogEntryAllowedByACL(cfg *config.Config, user *authpublic.AuthenticatedUs
 	return acl.IsAllowedLogs(cfg, user, entry.Binding.Action)
 }
 
+// parseDateFilter parses a date filter string and returns the parsed date and validity.
+func parseDateFilter(dateFilter string) (time.Time, bool) {
+	if dateFilter == "" {
+		return time.Time{}, false
+	}
+
+	parsedDate, err := time.Parse("2006-01-02", dateFilter)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"dateFilter": dateFilter,
+			"error":      err,
+		}).Errorf("Failed to parse date filter, expected format YYYY-MM-DD")
+		return time.Time{}, false
+	}
+
+	return parsedDate, true
+}
+
+// matchesDateFilter checks if an entry matches the date filter criteria.
+func matchesDateFilter(entry *InternalLogEntry, filterDate time.Time, hasDateFilter bool) bool {
+	if !hasDateFilter {
+		return true
+	}
+
+	entryDate := entry.DatetimeStarted.UTC().Truncate(24 * time.Hour)
+	filterDateUTC := filterDate.UTC().Truncate(24 * time.Hour)
+	return entryDate.Equal(filterDateUTC)
+}
+
+// shouldIncludeLogEntry determines if a log entry should be included in filtered results.
+func shouldIncludeLogEntry(cfg *config.Config, user *authpublic.AuthenticatedUser, entry *InternalLogEntry, filterDate time.Time, hasDateFilter bool) bool {
+	if !isValidLogEntryForACL(entry) {
+		return false
+	}
+
+	if !isLogEntryAllowedByACL(cfg, user, entry) {
+		return false
+	}
+
+	return matchesDateFilter(entry, filterDate, hasDateFilter)
+}
+
 func (e *Executor) filterLogsByACL(cfg *config.Config, user *authpublic.AuthenticatedUser, dateFilter string) []*InternalLogEntry {
 	e.logmutex.RLock()
 	defer e.logmutex.RUnlock()
