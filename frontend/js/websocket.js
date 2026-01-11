@@ -1,7 +1,10 @@
 import { buttonResults } from '../resources/vue/stores/buttonResults.js'
+import { rateLimits } from '../resources/vue/stores/rateLimits.js'
 
 export function initWebsocket () {
   window.addEventListener('EventOutputChunk', onOutputChunk)
+  window.addEventListener('EventExecutionStarted', onExecutionChanged)
+  window.addEventListener('EventExecutionFinished', onExecutionChanged)
 
   reconnectWebsocket()
 }
@@ -40,7 +43,6 @@ function handleEvent (msg) {
       break
     case 'EventExecutionFinished':
     case 'EventExecutionStarted':
-      buttonResults[msg.event.value.logEntry.executionTrackingId] = msg.event.value.logEntry
       window.dispatchEvent(j)
       break
     default:
@@ -57,5 +59,21 @@ function onOutputChunk (evt) {
     if (chunk.executionTrackingId === window.terminal.executionTrackingId) {
       window.terminal.write(chunk.output)
     }
+  }
+}
+
+function onExecutionChanged (evt) {
+  buttonResults[evt.payload.logEntry.executionTrackingId] = evt.payload.logEntry
+
+  const logEntry = evt.payload.logEntry
+
+  // Update rate limit store from logEntry if rate limit expiry datetime is provided
+  if (logEntry && logEntry.datetimeRateLimitExpires && logEntry.bindingId) {
+    // Parse datetime string "2006-01-02 15:04:05" and convert to Unix timestamp
+    const date = new Date(logEntry.datetimeRateLimitExpires.replace(' ', 'T'))
+    rateLimits[logEntry.bindingId] = date.getTime() / 1000
+  } else if (logEntry && logEntry.bindingId) {
+    // Clear rate limit if not set
+    rateLimits[logEntry.bindingId] = 0
   }
 }

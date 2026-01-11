@@ -1,6 +1,6 @@
 <template>
-	<div :id="`actionButton-${actionId}`" role="none" class="action-button">
-		<button :id="`actionButtonInner-${actionId}`" :title="title" :disabled="!canExec || isDisabled"
+	<div :id="`actionButton-${bindingId}`" role="none" class="action-button">
+		<button :id="`actionButtonInner-${bindingId}`" :title="title" :disabled="!canExec || isDisabled"
 													  :class="combinedClasses" @click="handleClick">
 
 			<div class="navigate-on-start-container">
@@ -18,18 +18,19 @@
 			<span class="icon" v-html="unicodeIcon"></span>
 			<span class="title" aria-live="polite">{{ displayTitle }}
 			</span>
+			<span v-if="rateLimitMessage" class="rate-limit-message">{{ rateLimitMessage }}</span>
 		</button>
 	</div>
 </template>
 
 <script setup>
-import ArgumentForm from './views/ArgumentForm.vue'
 import { buttonResults } from './stores/buttonResults'
+import { rateLimits } from './stores/rateLimits'
 import { useRouter } from 'vue-router'
 import { HugeiconsIcon } from '@hugeicons/vue'
 import { WorkoutRunIcon, TypeCursorIcon, ComputerTerminal01Icon } from '@hugeicons/core-free-icons'
 
-import { ref, watch, onMounted, inject, computed } from 'vue'
+import { ref, watch, onMounted, onUnmounted, inject, computed } from 'vue'
 
 const router = useRouter()
 const navigateOnStart = ref('')
@@ -46,7 +47,7 @@ const props = defineProps({
   }
 })
 
-const actionId = ref('')
+const bindingId = ref('')
 const title = ref('')
 const canExec = ref(true)
 const popupOnStart = ref('')
@@ -58,6 +59,12 @@ const displayTitle = ref('')
 // State
 const isDisabled = ref(false)
 const showArgumentForm = ref(false)
+
+// Rate limiting
+const rateLimitExpires = ref(0)
+const isRateLimited = ref(false)
+const rateLimitMessage = ref('')
+let rateLimitInterval = null
 
 // Animation classes
 const buttonClasses = ref([])
@@ -89,7 +96,7 @@ function constructFromJson(json) {
 
   updateFromJson(json)
 
-  actionId.value = json.bindingId
+  bindingId.value = json.bindingId
   title.value = json.title
   canExec.value = json.canExec
   popupOnStart.value = json.popupOnStart
@@ -103,6 +110,19 @@ function constructFromJson(json) {
   isDisabled.value = !json.canExec
   displayTitle.value = title.value
   unicodeIcon.value = getUnicodeIcon(json.icon)
+  
+  // Initialize rate limit from action data (parse datetime string)
+  if (json.datetimeRateLimitExpires) {
+	const date = new Date(json.datetimeRateLimitExpires.replace(' ', 'T'))
+	rateLimitExpires.value = date.getTime() / 1000
+  } else {
+	rateLimitExpires.value = 0
+  }
+  // Also initialize the store so the watch picks it up
+  if (bindingId.value) {
+	rateLimits[bindingId.value] = rateLimitExpires.value
+  }
+  updateRateLimitStatus()
 }
 
 function updateFromJson(json) {
@@ -110,6 +130,55 @@ function updateFromJson(json) {
   // title - as the callback URL relies on it
 
   unicodeIcon.value = getUnicodeIcon(json.icon)
+  
+  // Update rate limiting if changed (parse datetime string)
+  if (json.datetimeRateLimitExpires) {
+	const date = new Date(json.datetimeRateLimitExpires.replace(' ', 'T'))
+	rateLimitExpires.value = date.getTime() / 1000
+	updateRateLimitStatus()
+  } else if (json.datetimeRateLimitExpires === '') {
+	// Explicitly clear if empty string
+	rateLimitExpires.value = 0
+	updateRateLimitStatus()
+  }
+}
+
+function updateRateLimitStatus() {
+  if (rateLimitExpires.value === 0) {
+	isRateLimited.value = false
+	rateLimitMessage.value = ''
+	if (rateLimitInterval) {
+	  clearInterval(rateLimitInterval)
+	  rateLimitInterval = null
+	}
+	return
+  }
+
+  const now = Math.floor(Date.now() / 1000)
+  const expires = rateLimitExpires.value
+
+  if (now >= expires) {
+	// Rate limit has expired
+	isRateLimited.value = false
+	rateLimitMessage.value = ''
+	rateLimitExpires.value = 0
+	if (rateLimitInterval) {
+	  clearInterval(rateLimitInterval)
+	  rateLimitInterval = null
+	}
+  } else {
+	// Still rate limited
+	isRateLimited.value = true
+	const secondsRemaining = expires - now
+	rateLimitMessage.value = `Rate limited, available in ${secondsRemaining} second${secondsRemaining !== 1 ? 's' : ''}`
+	
+	// Set up interval to update every second
+	if (!rateLimitInterval) {
+	  rateLimitInterval = setInterval(() => {
+		updateRateLimitStatus()
+	  }, 1000)
+	}
+  }
 }
 
 async function handleClick() {
@@ -213,6 +282,30 @@ function onExecStatusChanged() {
 
 onMounted(() => {
   constructFromJson(props.actionData)
+  
+  // Watch the central rate limit store for updates to this button's bindingId
+  // Watch the entire rateLimits object to ensure reactivity with dynamic keys
+  watch(
+	rateLimits,
+	() => {
+	  const id = bindingId.value
+	  if (id && rateLimits[id] !== undefined) {
+		const newExpires = rateLimits[id]
+		if (newExpires !== rateLimitExpires.value) {
+		  rateLimitExpires.value = newExpires
+		  updateRateLimitStatus()
+		}
+	  }
+	},
+	{ deep: true }
+  )
+})
+
+onUnmounted(() => {
+  if (rateLimitInterval) {
+	clearInterval(rateLimitInterval)
+	rateLimitInterval = null
+  }
 })
 
 watch(
@@ -268,6 +361,13 @@ watch(
 	font-weight: 500;
 
 	padding: 0.2em;
+}
+
+.action-button button .rate-limit-message {
+	font-size: 0.75em;
+	color: #856404;
+	padding: 0.2em;
+	font-weight: normal;
 }
 
 /* Animation classes */

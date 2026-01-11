@@ -13,6 +13,7 @@ message Action {
 	string popup_on_start = 6;
 	int32 order = 7;
 	int32 timeout = 8;
+	string datetime_rate_limit_expires = 9; // Datetime when rate limit expires (empty string if not rate limited), format: "2006-01-02 15:04:05"
 }
 
 message ActionArgument {
@@ -133,12 +134,13 @@ message LogEntry {
 	repeated string tags = 10;
 	string execution_tracking_id = 11;
 	string datetime_finished = 12;
-	string action_id = 13;
 	bool execution_started = 14;
 	bool execution_finished = 15;
 	bool blocked = 16;
 	int64 datetime_index = 17;
 	bool can_kill = 18;
+	string datetime_rate_limit_expires = 19; // Datetime when rate limit expires (empty string if not rate limited), format: "2006-01-02 15:04:05"
+	string binding_id = 20; // Binding ID for matching rate limits to action buttons
 }
 
 message GetLogsResponse {
@@ -216,7 +218,7 @@ message DumpVarsResponse {
 	map<string, string> contents = 2;
 }
 
-message ActionEntityPair {
+message DebugBinding {
 	string action_title = 1;
 	string entity_prefix = 2;
 }
@@ -224,7 +226,7 @@ message ActionEntityPair {
 message DumpPublicIdActionMapRequest {}
 message DumpPublicIdActionMapResponse {
 	string alert = 1;
-	map<string, ActionEntityPair> contents = 2;
+	map<string, DebugBinding> contents = 2;
 }
 
 message GetReadyzRequest {}

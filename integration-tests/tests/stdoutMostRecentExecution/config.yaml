@@ -1,5 +1,7 @@
 logLevel: debug
 
+insecureAllowDumpActionMap: true
+
 actions:
   - title: Check status
     id: status_command
