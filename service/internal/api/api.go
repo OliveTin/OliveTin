@@ -3,6 +3,8 @@ package api
 import (
 	ctx "context"
 	"encoding/json"
+	"os"
+	"path"
 	"sort"
 
 	"connectrpc.com/connect"
@@ -902,9 +904,60 @@ func (api *oliveTinAPI) Init(ctx ctx.Context, req *connect.Request[apiv1.InitReq
 		ShowDiagnostics:           user.EffectivePolicy.ShowDiagnostics,
 		ShowLogList:               user.EffectivePolicy.ShowLogList,
 		LoginRequired:             loginRequired,
+		AvailableThemes:           discoverAvailableThemes(api.cfg),
 	}
 
 	return connect.NewResponse(res), nil
+}
+
+// discoverAvailableThemes finds all available themes in the custom-webui/themes directory.
+// A theme is considered available if it has a theme.css file.
+func discoverAvailableThemes(cfg *config.Config) []string {
+	configDir := cfg.GetDir()
+	if configDir == "" {
+		return []string{}
+	}
+
+	themesDir := path.Join(configDir, "custom-webui", "themes")
+	entries, err := os.ReadDir(themesDir)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"themesDir": themesDir,
+			"error":     err,
+		}).Tracef("Could not read themes directory")
+		return []string{}
+	}
+
+	themes := collectValidThemes(themesDir, entries)
+	sort.Strings(themes)
+	return themes
+}
+
+// collectValidThemes collects theme names from directory entries that have a theme.css file.
+func collectValidThemes(themesDir string, entries []os.DirEntry) []string {
+	var themes []string
+	for _, entry := range entries {
+		if themeName := getValidThemeName(themesDir, entry); themeName != "" {
+			themes = append(themes, themeName)
+		}
+	}
+	return themes
+}
+
+// getValidThemeName returns the theme name if the entry is a valid theme directory with theme.css, otherwise returns empty string.
+func getValidThemeName(themesDir string, entry os.DirEntry) string {
+	if !entry.IsDir() {
+		return ""
+	}
+
+	themeName := entry.Name()
+	themeCssPath := path.Join(themesDir, themeName, "theme.css")
+
+	if _, err := os.Stat(themeCssPath); err != nil {
+		return ""
+	}
+
+	return themeName
 }
 
 func (api *oliveTinAPI) buildRootDashboards(user *authpublic.AuthenticatedUser, dashboards []*config.DashboardComponent) []string {

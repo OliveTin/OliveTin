@@ -48,3 +48,6 @@ translations:
   language-dialog.browser-languages: Browser languages
   language-dialog.not-available: Not available
   language-dialog.close: Close
+  theme-dialog.title: Select Theme
+  theme-dialog.default: Default Theme
+  theme-dialog.close: Close

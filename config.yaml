@@ -124,7 +124,10 @@ actions:
   #
   # Docs: https://docs.olivetin.app/reference/reference_themes_for_users.html
   - title: Get OliveTin Theme
-    shell: olivetin-get-theme {{ themeGitRepo }} {{ themeFolderName }}
+    exec: 
+      - "olivetin-get-theme"
+      - "{{ themeGitRepo }}"
+      - "{{ themeFolderName }}"
     icon: theme
     arguments:
       - name: themeGitRepo

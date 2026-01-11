@@ -1451,6 +1451,13 @@ export declare type InitResponse = Message<"olivetin.api.v1.InitResponse"> & {
    * @generated from field: bool login_required = 23;
    */
   loginRequired: boolean;
+
+  /**
+   * List of available theme names
+   *
+   * @generated from field: repeated string available_themes = 24;
+   */
+  availableThemes: string[];
 };
 
 /**

@@ -224,56 +224,12 @@ func (e *Executor) GetLogTrackingIds(startOffset int64, pageCount int64) ([]*Int
 	return trackingIds, pagingResult
 }
 
-// isValidLogEntryForACL checks if a log entry has all required fields for ACL checking.
 func isValidLogEntryForACL(entry *InternalLogEntry) bool {
 	return entry != nil && entry.Binding != nil && entry.Binding.Action != nil
 }
 
-// isLogEntryAllowedByACL checks if a log entry is allowed to be viewed by the user.
 func isLogEntryAllowedByACL(cfg *config.Config, user *authpublic.AuthenticatedUser, entry *InternalLogEntry) bool {
 	return acl.IsAllowedLogs(cfg, user, entry.Binding.Action)
-}
-
-// parseDateFilter parses a date filter string and returns the parsed date and validity.
-func parseDateFilter(dateFilter string) (time.Time, bool) {
-	if dateFilter == "" {
-		return time.Time{}, false
-	}
-
-	parsedDate, err := time.Parse("2006-01-02", dateFilter)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"dateFilter": dateFilter,
-			"error":      err,
-		}).Errorf("Failed to parse date filter, expected format YYYY-MM-DD")
-		return time.Time{}, false
-	}
-
-	return parsedDate, true
-}
-
-// matchesDateFilter checks if an entry matches the date filter criteria.
-func matchesDateFilter(entry *InternalLogEntry, filterDate time.Time, hasDateFilter bool) bool {
-	if !hasDateFilter {
-		return true
-	}
-
-	entryDate := entry.DatetimeStarted.UTC().Truncate(24 * time.Hour)
-	filterDateUTC := filterDate.UTC().Truncate(24 * time.Hour)
-	return entryDate.Equal(filterDateUTC)
-}
-
-// shouldIncludeLogEntry determines if a log entry should be included in filtered results.
-func shouldIncludeLogEntry(cfg *config.Config, user *authpublic.AuthenticatedUser, entry *InternalLogEntry, filterDate time.Time, hasDateFilter bool) bool {
-	if !isValidLogEntryForACL(entry) {
-		return false
-	}
-
-	if !isLogEntryAllowedByACL(cfg, user, entry) {
-		return false
-	}
-
-	return matchesDateFilter(entry, filterDate, hasDateFilter)
 }
 
 func (e *Executor) filterLogsByACL(cfg *config.Config, user *authpublic.AuthenticatedUser, dateFilter string) []*InternalLogEntry {
@@ -292,6 +248,48 @@ func (e *Executor) filterLogsByACL(cfg *config.Config, user *authpublic.Authenti
 	}
 
 	return filtered
+}
+
+// parseDateFilter parses the date filter string and returns filter information.
+func parseDateFilter(dateFilter string) (filterDate time.Time, hasDateFilter bool) {
+	if dateFilter == "" {
+		return time.Time{}, false
+	}
+
+	parsedDate, err := time.Parse("2006-01-02", dateFilter)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"dateFilter": dateFilter,
+			"error":      err,
+		}).Errorf("Failed to parse date filter, expected format YYYY-MM-DD")
+		return time.Time{}, false
+	}
+
+	return parsedDate, true
+}
+
+// shouldIncludeLogEntry determines if a log entry should be included based on ACL and date filter.
+func shouldIncludeLogEntry(cfg *config.Config, user *authpublic.AuthenticatedUser, entry *InternalLogEntry, filterDate time.Time, hasDateFilter bool) bool {
+	if !isValidLogEntryForACL(entry) {
+		return false
+	}
+
+	if !isLogEntryAllowedByACL(cfg, user, entry) {
+		return false
+	}
+
+	return matchesDateFilter(entry, filterDate, hasDateFilter)
+}
+
+// matchesDateFilter checks if the log entry matches the date filter.
+func matchesDateFilter(entry *InternalLogEntry, filterDate time.Time, hasDateFilter bool) bool {
+	if !hasDateFilter {
+		return true
+	}
+
+	entryDate := entry.DatetimeStarted.UTC().Truncate(24 * time.Hour)
+	filterDateUTC := filterDate.UTC().Truncate(24 * time.Hour)
+	return entryDate.Equal(filterDateUTC)
 }
 
 // paginateFilteredLogs applies pagination to a filtered list of logs and returns

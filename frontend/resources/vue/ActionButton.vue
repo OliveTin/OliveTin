@@ -318,109 +318,111 @@ watch(
 
 </script>
 
-<style scoped>
-.action-button {
-	display: flex;
-	flex-direction: column;
-	flex-grow: 1;
-}
+<style>
 
-.action-button button {
-	display: flex;
-	flex-direction: column;
-	flex-grow: 1;
-	justify-content: center;
-	padding: 0.5em;
-	border: 1px solid #ccc;
-	border-radius: 4px;
-	background: #fff;
-	cursor: pointer;
-	transition: all 0.2s ease;
-	box-shadow: 0 0 .6em #aaa;
-	font-size: .85em;
-	border-radius: .7em;
-}
+@layer components {
+	.action-button {
+		display: flex;
+		flex-direction: column;
+		flex-grow: 1;
+	}
 
-.action-button button:hover:not(:disabled) {
-	background: #f5f5f5;
-	border-color: #999;
-}
-
-.action-button button:disabled {
-	opacity: 0.6;
-	cursor: not-allowed;
-}
-
-.action-button button .icon {
-	font-size: 3em;
-	flex-grow: 1;
-	align-content: center;
-}
-
-.action-button button .title {
-	font-weight: 500;
-
-	padding: 0.2em;
-}
-
-.action-button button .rate-limit-message {
-	font-size: 0.75em;
-	color: #856404;
-	padding: 0.2em;
-	font-weight: normal;
-}
-
-/* Animation classes */
-.action-button button.action-timeout {
-	background: #fff3cd;
-	border-color: #ffeaa7;
-	color: #856404;
-}
-
-.action-button button.action-blocked {
-	background: #f8d7da !important;
-	border-color: #f5c6cb;
-	color: #721c24;
-}
-
-.action-button button.action-nonzero-exit {
-	background: #f8d7da !important;
-	border-color: #f5c6cb;
-	color: #721c24;
-}
-
-.action-button button.action-success {
-	background: #d4edda !important;
-	border-color: #c3e6cb;
-	color: #155724;
-}
-
-.action-button-footer {
-	margin-top: 0.5em;
-}
-
-.navigate-on-start-container {
-	position: relative;
-	margin-left: auto;
-	height: 0;
-	right: 0;
-	top: 0;
-}
-
-@media (prefers-color-scheme: dark) {
 	.action-button button {
-		background: #111;
-		border-color: #000;
-		box-shadow: 0 0 6px #000;
-		color: #fff;
+		display: flex;
+		flex-direction: column;
+		flex-grow: 1;
+		justify-content: center;
+		padding: 0.5em;
+		border: 1px solid #ccc;
+		border-radius: 4px;
+		background: #fff;
+		cursor: pointer;
+		transition: all 0.2s ease;
+		box-shadow: 0 0 .6em #aaa;
+		font-size: .85em;
+		border-radius: .7em;
 	}
 
 	.action-button button:hover:not(:disabled) {
-		background: #222;
-		border-color: #000;
-		box-shadow: 0 0 6px #444;
-		color: #fff;
+		background: #f5f5f5;
+		border-color: #999;
+	}
+
+	.action-button button:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
+	}
+
+	.action-button button .icon {
+		font-size: 3em;
+		flex-grow: 1;
+		align-content: center;
+	}
+
+	.action-button button .title {
+		font-weight: 500;
+
+		padding: 0.2em;
+	}
+
+	.action-button button .rate-limit-message {
+		font-size: 0.75em;
+		color: #856404;
+		padding: 0.2em;
+		font-weight: normal;
+	}
+
+	/* Animation classes */
+	.action-button button.action-timeout {
+		background: #fff3cd;
+		border-color: #ffeaa7;
+		color: #856404;
+	}
+
+	.action-button button.action-blocked {
+		background: #f8d7da !important;
+		border-color: #f5c6cb;
+		color: #721c24;
+	}
+
+	.action-button button.action-nonzero-exit {
+		background: #f8d7da !important;
+		border-color: #f5c6cb;
+		color: #721c24;
+	}
+
+	.action-button button.action-success {
+		background: #d4edda !important;
+		border-color: #c3e6cb;
+		color: #155724;
+	}
+
+	.action-button-footer {
+		margin-top: 0.5em;
+	}
+
+	.navigate-on-start-container {
+		position: relative;
+		margin-left: auto;
+		height: 0;
+		right: 0;
+		top: 0;
+	}
+
+	@media (prefers-color-scheme: dark) {
+		.action-button button {
+			background: #111;
+			border-color: #000;
+			box-shadow: 0 0 6px #000;
+			color: #fff;
+		}
+
+		.action-button button:hover:not(:disabled) {
+			background: #222;
+			border-color: #000;
+			box-shadow: 0 0 6px #444;
+			color: #fff;
+		}
 	}
 }
-
 </style>
