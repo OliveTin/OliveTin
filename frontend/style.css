@@ -39,3 +39,27 @@ div.buttons button svg {
 section.small {
 	border-radius: .4em;
 }
+
+.sm-side-icons .action-button button {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+}
+
+.sm-imageicons-fullwidth .action-button button .icon img {
+	width: 100%;
+}
+
+.sm-transparent-header header {
+	background-color: transparent;
+	box-shadow: none;
+	border-color: transparent;
+}
+
+.sm-transparent-header #sidebar-button {
+	border-color: transparent;
+}
+
+.sm-transparent-footer footer span {
+	background-color: transparent;
+}

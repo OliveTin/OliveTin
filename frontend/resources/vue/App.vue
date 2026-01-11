@@ -230,6 +230,8 @@ function updateHeaderFromInit() {
         showLoginLink.value = false
     }
 
+    applyStyleMods()
+
     renderNavigation()
     applyTheme()
 
@@ -363,6 +365,18 @@ function applyTheme() {
         themeStyle.textContent = `@import url('/custom-webui/themes/${themePreference.value}/theme.css') layer(theme);`
     } else {
         themeStyle.textContent = ''
+    }
+}
+
+function applyStyleMods() {
+    if (!window.initResponse || !window.initResponse.styleMods) {
+        return
+    }
+
+    for (const styleMod of window.initResponse.styleMods) {
+        if (styleMod) {
+            document.body.classList.add(styleMod)
+        }
     }
 }
 
