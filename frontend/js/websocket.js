@@ -70,7 +70,7 @@ function onExecutionChanged (evt) {
   // Update rate limit store from logEntry if rate limit expiry datetime is provided
   if (logEntry && logEntry.datetimeRateLimitExpires && logEntry.bindingId) {
     // Parse datetime string "2006-01-02 15:04:05" and convert to Unix timestamp
-    const date = new Date(logEntry.datetimeRateLimitExpires.replace(' ', 'T'))
+    const date = new Date(logEntry.datetimeRateLimitExpires.replace(' ', 'T') + 'Z')
     rateLimits[logEntry.bindingId] = date.getTime() / 1000
   } else if (logEntry && logEntry.bindingId) {
     // Clear rate limit if not set
