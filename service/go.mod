@@ -11,7 +11,7 @@ require (
 	github.com/bufbuild/buf v1.63.0
 	github.com/fsnotify/fsnotify v1.9.0
 	github.com/fzipp/gocyclo v0.6.0
-	github.com/go-critic/go-critic v0.14.2
+	github.com/go-critic/go-critic v0.14.3
 	github.com/golang-jwt/jwt/v4 v4.5.2
 	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/google/uuid v1.6.0
