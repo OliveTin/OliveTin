@@ -25,7 +25,12 @@ func (m *JSONMatcher) MatchPath(pathExpr string, expectedValue string) (bool, er
 		return false, err
 	}
 
-	// Marshal to JSON for consistent string representation
+	// For string values, compare directly without marshaling
+	if strValue, ok := value.(string); ok {
+		return strValue == expectedValue, nil
+	}
+
+	// For non-string values, marshal to JSON for consistent string representation
 	jsonBytes, err := json.Marshal(value)
 	if err != nil {
 		return false, fmt.Errorf("failed to marshal extracted value: %w", err)
