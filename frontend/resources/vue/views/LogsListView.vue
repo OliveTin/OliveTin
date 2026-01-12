@@ -215,7 +215,6 @@ function handlePageSizeChange(newPageSize) {
 
 onMounted(() => {
   updateDateFromRoute()
-  fetchLogs()
 })
 </script>
 
