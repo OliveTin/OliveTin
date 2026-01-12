@@ -1,0 +1,5 @@
+- name: "Living Room Light"
+  powered_on: false
+
+- name: "Bedroom Light"
+  powered_on: true

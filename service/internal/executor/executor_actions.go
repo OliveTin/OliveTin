@@ -11,9 +11,9 @@ import (
 )
 
 func (e *Executor) FindBindingByID(id string) *ActionBinding {
-	e.MapActionIdToBindingLock.RLock()
-	pair, found := e.MapActionIdToBinding[id]
-	e.MapActionIdToBindingLock.RUnlock()
+	e.MapActionBindingsLock.RLock()
+	pair, found := e.MapActionBindings[id]
+	e.MapActionBindingsLock.RUnlock()
 
 	if !found {
 		return nil
@@ -23,11 +23,11 @@ func (e *Executor) FindBindingByID(id string) *ActionBinding {
 }
 
 func (e *Executor) FindBindingWithNoEntity(action *config.Action) *ActionBinding {
-	e.MapActionIdToBindingLock.RLock()
+	e.MapActionBindingsLock.RLock()
 
-	defer e.MapActionIdToBindingLock.RUnlock()
+	defer e.MapActionBindingsLock.RUnlock()
 
-	for _, binding := range e.MapActionIdToBinding {
+	for _, binding := range e.MapActionBindings {
 		if binding.Action == action && binding.Entity == nil {
 			return binding
 		}
@@ -42,9 +42,9 @@ type RebuildActionMapRequest struct {
 }
 
 func (e *Executor) RebuildActionMap() {
-	e.MapActionIdToBindingLock.Lock()
+	e.MapActionBindingsLock.Lock()
 
-	clear(e.MapActionIdToBinding)
+	clear(e.MapActionBindings)
 
 	req := &RebuildActionMapRequest{
 		Cfg:                   e.Cfg,
@@ -65,7 +65,7 @@ func (e *Executor) RebuildActionMap() {
 		}
 	}
 
-	e.MapActionIdToBindingLock.Unlock()
+	e.MapActionBindingsLock.Unlock()
 
 	for _, l := range e.listeners {
 		l.OnActionMapRebuilt()
@@ -100,10 +100,10 @@ func recurseDashboardForActionTitles(component *config.DashboardComponent, req *
 }
 
 func registerAction(e *Executor, configOrder int, action *config.Action, req *RebuildActionMapRequest) {
-	actionId := hashActionToID(action, "")
+	bindingId := generateActionBindingId(action, "")
 
-	e.MapActionIdToBinding[actionId] = &ActionBinding{
-		ID:            actionId,
+	e.MapActionBindings[bindingId] = &ActionBinding{
+		ID:            bindingId,
 		Action:        action,
 		Entity:        nil,
 		ConfigOrder:   configOrder,
@@ -118,9 +118,9 @@ func registerActionsFromEntities(e *Executor, configOrder int, entityTitle strin
 }
 
 func registerActionFromEntity(e *Executor, configOrder int, tpl *config.Action, ent *entities.Entity, req *RebuildActionMapRequest) {
-	virtualActionId := hashActionToID(tpl, ent.UniqueKey)
+	virtualActionId := generateActionBindingId(tpl, ent.UniqueKey)
 
-	e.MapActionIdToBinding[virtualActionId] = &ActionBinding{
+	e.MapActionBindings[virtualActionId] = &ActionBinding{
 		ID:            virtualActionId,
 		Action:        tpl,
 		Entity:        ent,
@@ -129,7 +129,7 @@ func registerActionFromEntity(e *Executor, configOrder int, tpl *config.Action, 
 	}
 }
 
-func hashActionToID(action *config.Action, entityPrefix string) string {
+func generateActionBindingId(action *config.Action, entityPrefix string) string {
 	if action.ID != "" && entityPrefix == "" {
 		return action.ID
 	}

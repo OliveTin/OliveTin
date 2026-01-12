@@ -19,6 +19,7 @@ import (
 	"github.com/OliveTin/OliveTin/internal/auth/otoauth2"
 	config "github.com/OliveTin/OliveTin/internal/config"
 	"github.com/OliveTin/OliveTin/internal/executor"
+	"github.com/OliveTin/OliveTin/internal/webhooks"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -71,6 +72,10 @@ func StartFrontendMux(cfg *config.Config, ex *executor.Executor) {
 	mux.HandleFunc("/oauth/callback", oauth2handler.HandleOAuthCallback)
 
 	mux.HandleFunc("/readyz", handleReadyz)
+
+	webhookHandler := webhooks.NewWebhookHandler(cfg, ex)
+	mux.HandleFunc("/webhooks", webhookHandler.HandleWebhook)
+	mux.HandleFunc("/webhooks/", webhookHandler.HandleWebhook)
 
 	webuiServer := NewWebUIServer(cfg)
 

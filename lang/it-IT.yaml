@@ -21,6 +21,10 @@ translations:
   logs.exit-code: Codice di uscita
   logs.completed: Completato
   logs.clear-filter: Cancella filtro di ricerca
+  logs.clear-date-filter: Cancella filtro data
+  logs.calendar: Calendario
+  logs.calendar-title: Calendario dei Registri
+  logs.back-to-list: Torna all'Elenco
   diagnostics.get-support: Ottenere supporto
   diagnostics.get-support-description: Se hai problemi con OliveTin e vuoi presentare una richiesta di supporto, sarebbe molto utile includere un sosreport da questa pagina.
   diagnostics.where-to-find-help: Dove trovare aiuto
@@ -44,3 +48,6 @@ translations:
   language-dialog.browser-languages: Lingue del browser
   language-dialog.not-available: Non disponibile
   language-dialog.close: Chiudi
+  theme-dialog.title: Seleziona tema
+  theme-dialog.default: Tema Predefinito
+  theme-dialog.close: Chiudi

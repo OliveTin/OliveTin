@@ -50,7 +50,7 @@ actions:
     popupOnStart: execution-button
     maxRate:
       - limit: 3
-        duration: 5m
+        duration: 1m
 
   # You are not limited to operating system commands, and of course you can run
   # your own scripts. Here `maxConcurrent` stops the script running multiple
@@ -124,7 +124,10 @@ actions:
   #
   # Docs: https://docs.olivetin.app/reference/reference_themes_for_users.html
   - title: Get OliveTin Theme
-    shell: olivetin-get-theme {{ themeGitRepo }} {{ themeFolderName }}
+    exec: 
+      - "olivetin-get-theme"
+      - "{{ themeGitRepo }}"
+      - "{{ themeFolderName }}"
     icon: theme
     arguments:
       - name: themeGitRepo

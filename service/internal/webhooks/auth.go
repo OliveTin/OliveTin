@@ -1,0 +1,169 @@
+package webhooks
+
+import (
+	"crypto/hmac"
+	"crypto/sha1"
+	"crypto/sha256"
+	"crypto/subtle"
+	"encoding/hex"
+	"net/http"
+	"strings"
+
+	"github.com/OliveTin/OliveTin/internal/config"
+	log "github.com/sirupsen/logrus"
+)
+
+type AuthVerifier struct {
+	config config.WebhookConfig
+}
+
+func NewAuthVerifier(cfg config.WebhookConfig) *AuthVerifier {
+	return &AuthVerifier{config: cfg}
+}
+
+func (v *AuthVerifier) Verify(r *http.Request, payload []byte) bool {
+	verifier := v.getVerifier()
+	if verifier == nil {
+		return v.handleUnknownAuthType()
+	}
+	return verifier(r, payload)
+}
+
+type authVerifierFunc func(*http.Request, []byte) bool
+
+func (v *AuthVerifier) getVerifier() authVerifierFunc {
+	if v.config.AuthType == "" || v.config.AuthType == "none" {
+		return func(_ *http.Request, _ []byte) bool {
+			return true
+		}
+	}
+
+	verifierMap := v.buildVerifierMap()
+	if verifier, ok := verifierMap[v.config.AuthType]; ok {
+		return verifier
+	}
+	return nil
+}
+
+func (v *AuthVerifier) buildVerifierMap() map[string]authVerifierFunc {
+	return map[string]authVerifierFunc{
+		"hmac-sha256": v.verifyHMAC256,
+		"hmac-sha1":   v.verifyHMAC1,
+		"bearer": func(r *http.Request, _ []byte) bool {
+			return v.verifyBearer(r)
+		},
+		"basic": func(r *http.Request, _ []byte) bool {
+			return v.verifyBasic(r)
+		},
+	}
+}
+
+func (v *AuthVerifier) handleUnknownAuthType() bool {
+	log.WithFields(log.Fields{
+		"authType": v.config.AuthType,
+	}).Warnf("Unknown auth type, rejecting")
+	return false
+}
+
+func (v *AuthVerifier) verifyHMAC256(r *http.Request, payload []byte) bool {
+	if v.config.Secret == "" {
+		log.Warnf("HMAC-SHA256 auth requires secret")
+		return false
+	}
+
+	headerName := v.config.AuthHeader
+	if headerName == "" {
+		headerName = "X-Webhook-Signature"
+	}
+
+	signature := r.Header.Get(headerName)
+	if signature == "" {
+		log.Debugf("Missing signature header: %s", headerName)
+		return false
+	}
+
+	expectedSig := strings.TrimPrefix(signature, "sha256=")
+
+	mac := hmac.New(sha256.New, []byte(v.config.Secret))
+	mac.Write(payload)
+	computedSig := hex.EncodeToString(mac.Sum(nil))
+
+	return hmac.Equal([]byte(expectedSig), []byte(computedSig))
+}
+
+func (v *AuthVerifier) verifyHMAC1(r *http.Request, payload []byte) bool {
+	if v.config.Secret == "" {
+		log.Warnf("HMAC-SHA1 auth requires secret")
+		return false
+	}
+
+	headerName := v.config.AuthHeader
+	if headerName == "" {
+		headerName = "X-Webhook-Signature"
+	}
+
+	signature := r.Header.Get(headerName)
+	if signature == "" {
+		log.Debugf("Missing signature header: %s", headerName)
+		return false
+	}
+
+	expectedSig := strings.TrimPrefix(signature, "sha1=")
+
+	mac := hmac.New(sha1.New, []byte(v.config.Secret))
+	mac.Write(payload)
+	computedSig := hex.EncodeToString(mac.Sum(nil))
+
+	return hmac.Equal([]byte(expectedSig), []byte(computedSig))
+}
+
+func (v *AuthVerifier) verifyBearer(r *http.Request) bool {
+	if v.config.Secret == "" {
+		log.Warnf("Bearer auth requires secret")
+		return false
+	}
+
+	authHeader := r.Header.Get("Authorization")
+	if !strings.HasPrefix(authHeader, "Bearer ") {
+		log.Debugf("Missing or invalid Bearer token")
+		return false
+	}
+
+	token := strings.TrimPrefix(authHeader, "Bearer ")
+	tokenBytes := []byte(token)
+	secretBytes := []byte(v.config.Secret)
+	return len(tokenBytes) == len(secretBytes) && subtle.ConstantTimeCompare(tokenBytes, secretBytes) == 1
+}
+
+func (v *AuthVerifier) verifyBasic(r *http.Request) bool {
+	if v.config.Secret == "" {
+		log.Warnf("Basic auth requires secret")
+		return false
+	}
+
+	username, password, ok := r.BasicAuth()
+	if !ok {
+		log.Debugf("Missing Basic auth header")
+		return false
+	}
+
+	return v.verifyBasicCredentials(username, password)
+}
+
+func (v *AuthVerifier) verifyBasicCredentials(username, password string) bool {
+	parts := strings.SplitN(v.config.Secret, ":", 2)
+	if len(parts) == 2 {
+		return v.verifyBasicWithUsername(username, password, parts[0], parts[1])
+	}
+	return v.verifyBasicPasswordOnly(password)
+}
+
+func (v *AuthVerifier) verifyBasicWithUsername(username, password, expectedUsername, expectedPassword string) bool {
+	usernameMatch := subtle.ConstantTimeCompare([]byte(username), []byte(expectedUsername))
+	passwordMatch := subtle.ConstantTimeCompare([]byte(password), []byte(expectedPassword))
+	return usernameMatch == 1 && passwordMatch == 1
+}
+
+func (v *AuthVerifier) verifyBasicPasswordOnly(password string) bool {
+	return subtle.ConstantTimeCompare([]byte(password), []byte(v.config.Secret)) == 1
+}

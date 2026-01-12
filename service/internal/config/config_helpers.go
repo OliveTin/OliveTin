@@ -58,5 +58,8 @@ func (cfg *Config) SetDir(dir string) {
 }
 
 func (cfg *Config) GetDir() string {
+	if len(cfg.sourceFiles) == 0 {
+		return ""
+	}
 	return cfg.sourceFiles[len(cfg.sourceFiles)-1]
 }

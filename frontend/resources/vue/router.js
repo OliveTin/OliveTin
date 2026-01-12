@@ -36,6 +36,18 @@ const routes = [
     }
   },
   {
+    path: '/logs/calendar',
+    name: 'LogsCalendar',
+    component: () => import('./views/LogsCalendarView.vue'),
+    meta: { 
+      title: 'Logs Calendar',
+      breadcrumb: [
+        { name: "Logs", href: "/logs" },
+        { name: "Calendar" },
+      ]
+    }
+  },
+  {
     path: '/entities',
     name: 'Entities',
     component: () => import('./views/EntitiesView.vue'),
