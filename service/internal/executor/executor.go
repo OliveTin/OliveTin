@@ -827,7 +827,7 @@ func buildEnv(args map[string]string) []string {
 }
 
 func stepExec(req *ExecutionRequest) bool {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(req.Binding.Action.Timeout)*time.Second)
+	ctx, cancel := newTimeoutContext(context.Background(), time.Duration(req.Binding.Action.Timeout)*time.Second, req.executor)
 	defer cancel()
 	streamer := &OutputStreamer{Req: req}
 	cmd := buildCommand(ctx, req)
@@ -839,6 +839,7 @@ func stepExec(req *ExecutionRequest) bool {
 	prepareCommand(cmd, streamer, req)
 	runerr := cmd.Start()
 	req.logEntry.Process = cmd.Process
+	ctx.setProcess(cmd.Process)
 	waiterr := cmd.Wait()
 	req.logEntry.ExitCode = int32(cmd.ProcessState.ExitCode())
 	req.logEntry.Output = streamer.String()
@@ -850,15 +851,6 @@ func stepExec(req *ExecutionRequest) bool {
 		log.WithFields(log.Fields{
 			"actionTitle": req.logEntry.ActionTitle,
 		}).Warnf("Action timed out")
-
-		// The context timeout should kill the process, but let's make sure.
-		err := req.executor.Kill(req.logEntry)
-
-		if err != nil {
-			log.WithFields(log.Fields{
-				"actionTitle": req.logEntry.ActionTitle,
-			}).Warnf("could not kill process: %v", err)
-		}
 
 		req.logEntry.TimedOut = true
 		req.logEntry.Output += "OliveTin::timeout - this action timed out after " + fmt.Sprintf("%v", req.Binding.Action.Timeout) + " seconds. If you need more time for this action, set a longer timeout. See https://docs.olivetin.app/action_customization/timeouts.html for more help."
@@ -888,7 +880,7 @@ func stepExecAfter(req *ExecutionRequest) bool {
 		return true
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(req.Binding.Action.Timeout)*time.Second)
+	ctx, cancel := newTimeoutContext(context.Background(), time.Duration(req.Binding.Action.Timeout)*time.Second, req.executor)
 	defer cancel()
 
 	var stdout bytes.Buffer
@@ -917,6 +909,7 @@ func stepExecAfter(req *ExecutionRequest) bool {
 	cmd.Env = buildEnv(args)
 
 	runerr := cmd.Start()
+	ctx.setProcess(cmd.Process)
 
 	waiterr := cmd.Wait()
 
