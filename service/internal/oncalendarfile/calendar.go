@@ -132,7 +132,10 @@ func registerTimer(action *config.Action, instant time.Time, timer *time.Timer, 
 
 func unregisterTimer(action *config.Action, instant time.Time) {
 	scheduleMapMutex.Lock()
-	delete(scheduleMap[action.ID].timers, instant)
+	v := scheduleMap[action.ID]
+	if v.timers != nil {
+		delete(v.timers, instant)
+	}
 	scheduleMapMutex.Unlock()
 }
 
