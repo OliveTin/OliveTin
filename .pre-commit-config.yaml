@@ -17,3 +17,26 @@ repos:
       - id: conventional-pre-commit
         stages: [commit-msg]
         args: [] # optional: list of Conventional Commits types to allow e.g. [feat, fix, ci, chore, test]
+
+  - repo: local
+    hooks:
+      - id: service-codestyle
+        name: service-codestyle
+        entry: make service-codestyle
+        language: system
+        pass_filenames: false
+        always_run: true
+
+      - id: frontend-codestyle
+        name: frontend-codestyle
+        entry: make frontend-codestyle
+        language: system
+        pass_filenames: false
+        always_run: true
+
+      - id: it
+        name: it
+        entry: make service-codestyle frontend-codestyle
+        language: system
+        pass_filenames: false
+        always_run: true
