@@ -94,6 +94,7 @@ func ParseTemplateWithArgs(source string, ent *Entity, args map[string]string) s
 		OliveTin:      GetAll().OliveTin,
 		Arguments:     args,
 		CurrentEntity: entdata,
+		Env:           GetAll().Env,
 	}
 
 	var sb strings.Builder
