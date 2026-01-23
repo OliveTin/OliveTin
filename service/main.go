@@ -257,6 +257,8 @@ func main() {
 	executor.RebuildActionMap()
 	config.AddListener(executor.RebuildActionMap)
 
+	executor.LoadLogsFromDisk()
+
 	go onstartup.Execute(cfg, executor)
 	go oncron.Schedule(cfg, executor)
 	go onfileindir.WatchFilesInDirectory(cfg, executor)
