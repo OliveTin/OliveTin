@@ -1,10 +1,8 @@
 ---
-#branches:
-#  - name: main
-#    range: '3000.x.x'
-
-#  - name: release/2k
-#    range: '>=2000.0.0 <3000.0.0'
+# Only allow releases on the main branch (for 3k)
+# releases for 2k are published manaually.
+branches:
+  - name: main
 
 plugins:
   - '@semantic-release/commit-analyzer'
