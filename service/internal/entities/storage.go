@@ -10,6 +10,7 @@ package entities
  */
 
 import (
+	"os"
 	"strings"
 	"sync"
 
@@ -26,6 +27,7 @@ type variableBase struct {
 
 	CurrentEntity interface{}
 	Arguments     map[string]string
+	Env           map[string]string
 }
 
 type installationInfo struct {
@@ -41,12 +43,21 @@ var (
 func init() {
 	rwmutex.Lock()
 
+	envMap := make(map[string]string)
+	for _, env := range os.Environ() {
+		parts := strings.SplitN(env, "=", 2)
+		if len(parts) == 2 {
+			envMap[parts[0]] = parts[1]
+		}
+	}
+
 	contents = &variableBase{
 		OliveTin: installationInfo{
 			Build:   installationinfo.Build,
 			Runtime: installationinfo.Runtime,
 		},
 		Entities: make(entitiesByClass, 0),
+		Env:      envMap,
 	}
 
 	rwmutex.Unlock()

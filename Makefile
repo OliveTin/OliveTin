@@ -11,6 +11,12 @@ service-prep:
 service-unittests:
 	$(MAKE) -wC service unittests
 
+service-codestyle:
+	$(MAKE) -wC service codestyle
+
+frontend-codestyle:
+	$(MAKE) -wC frontend codestyle
+
 it:
 	$(MAKE) -wC integration-tests
 

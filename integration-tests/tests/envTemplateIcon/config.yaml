@@ -1,0 +1,14 @@
+#
+# Integration Test Config: envTemplateIcon
+# Tests that .Env template variable works in icon field
+#
+
+listenAddressSingleHTTPFrontend: 0.0.0.0:1337
+
+logLevel: "DEBUG"
+checkForUpdates: false
+
+actions:
+- title: Test Action with Env Icon
+  shell: echo "test"
+  icon: "{{ .Env.ADGUARD_ICON }}"
