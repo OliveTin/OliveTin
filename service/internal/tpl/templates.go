@@ -1,18 +1,74 @@
-package entities
+package tpl
 
 import (
 	"fmt"
+	"os"
 	"regexp"
 	"strings"
 	"text/template"
 
+	"github.com/OliveTin/OliveTin/internal/entities"
+	"github.com/OliveTin/OliveTin/internal/installationinfo"
 	log "github.com/sirupsen/logrus"
 )
 
 var tpl = template.New("tpl")
 
+type olivetinInfo struct {
+	Build   *installationinfo.BuildInfo
+	Runtime *installationinfo.RuntimeInfo
+}
+
 var legacyArgumentRegex = regexp.MustCompile(`{{ ([a-zA-Z0-9_]+) }}`)
 var legacyEntityPropertiesRegex = regexp.MustCompile(`{{ ([a-zA-Z0-9_]+)\.([a-zA-Z0-9_\.]+) }}`)
+
+type generalTemplateContext struct {
+	OliveTin olivetinInfo
+	Env      map[string]string
+}
+
+type actionTemplateContext struct {
+	CurrentEntity interface{}
+	Arguments     map[string]string
+
+	// These are deliberately repeated because embedding structs
+	// won't work in text/template.
+	OliveTin olivetinInfo
+	Env      map[string]string
+}
+
+var (
+	cachedOliveTinInfo olivetinInfo
+	cachedEnvMap       map[string]string
+)
+
+func init() {
+	cachedOliveTinInfo = olivetinInfo{
+		Build:   installationinfo.Build,
+		Runtime: installationinfo.Runtime,
+	}
+
+	cachedEnvMap = buildEnvMap()
+}
+
+func GetNewGeneralTemplateContext() *generalTemplateContext {
+	return &generalTemplateContext{
+		OliveTin: cachedOliveTinInfo,
+		Env:      cachedEnvMap,
+	}
+}
+
+func buildEnvMap() map[string]string {
+	envMap := make(map[string]string)
+	for _, env := range os.Environ() {
+		parts := strings.SplitN(env, "=", 2)
+		if len(parts) == 2 {
+			envMap[parts[0]] = parts[1]
+		}
+	}
+
+	return envMap
+}
 
 func migrateLegacyEntityProperties(rawShellCommand string) string {
 	foundArgumentNames := legacyEntityPropertiesRegex.FindAllStringSubmatch(rawShellCommand, -1)
@@ -68,7 +124,7 @@ func migrateLegacyArgumentNames(rawShellCommand string) string {
 	return rawShellCommand
 }
 
-func ParseTemplateWithArgs(source string, ent *Entity, args map[string]string) string {
+func ParseTemplateWithArgs(source string, ent *entities.Entity, args map[string]string) string {
 	source = migrateLegacyArgumentNames(source)
 	source = migrateLegacyEntityProperties(source)
 
@@ -90,11 +146,12 @@ func ParseTemplateWithArgs(source string, ent *Entity, args map[string]string) s
 		entdata = ent.Data
 	}
 
-	templateVariables := &variableBase{
-		OliveTin:      GetAll().OliveTin,
+	templateVariables := &actionTemplateContext{
+		OliveTin: cachedOliveTinInfo,
+		Env:      cachedEnvMap,
+
 		Arguments:     args,
 		CurrentEntity: entdata,
-		Env:           GetAll().Env,
 	}
 
 	var sb strings.Builder
@@ -114,21 +171,14 @@ func ParseTemplateWithArgs(source string, ent *Entity, args map[string]string) s
 	return ret
 }
 
-func ParseTemplateWith(source string, ent *Entity) string {
+func ParseTemplateWith(source string, ent *entities.Entity) string {
 	return ParseTemplateWithArgs(source, ent, nil)
 }
 
-func ParseTemplateBoolWith(source string, ent *Entity) bool {
+func ParseTemplateBoolWith(source string, ent *entities.Entity) bool {
 	source = strings.TrimSpace(source)
 
 	tplBool := ParseTemplateWith(source, ent)
 
 	return tplBool == "true"
-}
-
-func ClearEntities(entityType string) {
-	rwmutex.Lock()
-	defer rwmutex.Unlock()
-
-	delete(contents.Entities, entityType)
 }

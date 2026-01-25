@@ -27,6 +27,7 @@ import (
 	entities "github.com/OliveTin/OliveTin/internal/entities"
 	executor "github.com/OliveTin/OliveTin/internal/executor"
 	installationinfo "github.com/OliveTin/OliveTin/internal/installationinfo"
+	"github.com/OliveTin/OliveTin/internal/tpl"
 	connectproto "go.akshayshah.org/connectproto"
 )
 
@@ -709,7 +710,7 @@ func (api *oliveTinAPI) DumpVars(ctx ctx.Context, req *connect.Request[apiv1.Dum
 		return connect.NewResponse(res), nil
 	}
 
-	jsonstring, _ := json.MarshalIndent(entities.GetAll(), "", "  ")
+	jsonstring, _ := json.MarshalIndent(tpl.GetNewGeneralTemplateContext(), "", "  ")
 	fmt.Printf("%s", &jsonstring)
 
 	res.Alert = "Dumping variables has been enabled in the configuration. Please set InsecureAllowDumpVars = false again after you don't need it anymore"

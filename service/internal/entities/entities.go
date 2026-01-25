@@ -135,7 +135,7 @@ func loadEntityFileYaml(filename string, entityname string) {
 }
 
 func updateSvFromFile(entityname string, data []map[string]any) {
-	ClearEntities(entityname)
+	ClearEntitiesOfType(entityname)
 
 	for i, mapp := range data {
 		AddEntity(entityname, fmt.Sprintf("%d", i), mapp)

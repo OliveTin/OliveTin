@@ -10,72 +10,31 @@ package entities
  */
 
 import (
-	"os"
 	"strings"
 	"sync"
-
-	"github.com/OliveTin/OliveTin/internal/installationinfo"
 )
 
 type entityInstancesByKey map[string]*Entity
 
-type entitiesByClass map[string]entityInstancesByKey
-
-type variableBase struct {
-	OliveTin installationInfo
-	Entities entitiesByClass
-
-	CurrentEntity interface{}
-	Arguments     map[string]string
-	Env           map[string]string
-}
-
-type installationInfo struct {
-	Build   *installationinfo.BuildInfo
-	Runtime *installationinfo.RuntimeInfo
-}
+type EntitiesByClass map[string]entityInstancesByKey
 
 var (
-	contents *variableBase
 	rwmutex  = sync.RWMutex{}
+	Entities EntitiesByClass
 )
 
 func init() {
 	rwmutex.Lock()
-
-	envMap := make(map[string]string)
-	for _, env := range os.Environ() {
-		parts := strings.SplitN(env, "=", 2)
-		if len(parts) == 2 {
-			envMap[parts[0]] = parts[1]
-		}
-	}
-
-	contents = &variableBase{
-		OliveTin: installationInfo{
-			Build:   installationinfo.Build,
-			Runtime: installationinfo.Runtime,
-		},
-		Entities: make(entitiesByClass, 0),
-		Env:      envMap,
-	}
-
+	Entities = make(EntitiesByClass, 0)
 	rwmutex.Unlock()
 }
 
-func GetAll() *variableBase {
-	rwmutex.RLock()
-	defer rwmutex.RUnlock()
-
-	return contents
-}
-
-func GetEntities() entitiesByClass {
+func GetEntities() EntitiesByClass {
 	rwmutex.RLock()
 
-	copiedEntities := make(entitiesByClass, len(contents.Entities))
+	copiedEntities := make(EntitiesByClass, len(Entities))
 
-	for entityName, entityInstances := range contents.Entities {
+	for entityName, entityInstances := range Entities {
 		copiedInstances := make(entityInstancesByKey, len(entityInstances))
 
 		for key, entity := range entityInstances {
@@ -93,7 +52,7 @@ func GetEntityInstances(entityName string) entityInstancesByKey {
 	rwmutex.RLock()
 	defer rwmutex.RUnlock()
 
-	if entities, ok := contents.Entities[entityName]; ok {
+	if entities, ok := Entities[entityName]; ok {
 		copiedInstances := make(entityInstancesByKey, len(entities))
 
 		for key, entity := range entities {
@@ -108,11 +67,11 @@ func GetEntityInstances(entityName string) entityInstancesByKey {
 func AddEntity(entityName string, entityKey string, data any) {
 	rwmutex.Lock()
 
-	if _, ok := contents.Entities[entityName]; !ok {
-		contents.Entities[entityName] = make(entityInstancesByKey, 0)
+	if _, ok := Entities[entityName]; !ok {
+		Entities[entityName] = make(entityInstancesByKey, 0)
 	}
 
-	contents.Entities[entityName][entityKey] = &Entity{
+	Entities[entityName][entityKey] = &Entity{
 		Data:      data,
 		UniqueKey: entityKey,
 		Title:     findEntityTitle(data),
@@ -143,4 +102,11 @@ func findEntityTitle(data any) string {
 	}
 
 	return "Untitled Entity"
+}
+
+func ClearEntitiesOfType(entityType string) {
+	rwmutex.Lock()
+	defer rwmutex.Unlock()
+
+	delete(Entities, entityType)
 }
