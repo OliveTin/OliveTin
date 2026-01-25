@@ -3,7 +3,7 @@
 		<button :id="`actionButtonInner-${bindingId}`" :title="title" :disabled="!canExec || isDisabled"
 													  :class="combinedClasses" @click="handleClick">
 
-			<div class="navigate-on-start-container">
+			<div v-if="showNavigateOnStartIcons" class="navigate-on-start-container">
 				<div v-if="navigateOnStart == 'pop'" class="navigate-on-start" title="Opens a popup dialog on start">
 					<HugeiconsIcon :icon="ComputerTerminal01Icon" />
 				</div>
@@ -69,6 +69,11 @@ let rateLimitInterval = null
 // Animation classes
 const buttonClasses = ref([])
 
+// Show navigate on start icons - defaults to true if not set
+const showNavigateOnStartIcons = computed(() => {
+	return window.initResponse?.showNavigateOnStartIcons ?? true
+})
+
 // Combined classes including custom cssClass
 const combinedClasses = computed(() => {
 	const classes = [...buttonClasses.value]
@@ -110,7 +115,7 @@ function constructFromJson(json) {
   isDisabled.value = !json.canExec
   displayTitle.value = title.value
   unicodeIcon.value = getUnicodeIcon(json.icon)
-  
+
   // Initialize rate limit from action data (parse datetime string)
   if (json.datetimeRateLimitExpires) {
 	const date = new Date(json.datetimeRateLimitExpires.replace(' ', 'T'))
@@ -130,7 +135,7 @@ function updateFromJson(json) {
   // title - as the callback URL relies on it
 
   unicodeIcon.value = getUnicodeIcon(json.icon)
-  
+
   // Update rate limiting if changed (parse datetime string)
   if (json.datetimeRateLimitExpires) {
 	const date = new Date(json.datetimeRateLimitExpires.replace(' ', 'T'))
@@ -171,7 +176,7 @@ function updateRateLimitStatus() {
 	isRateLimited.value = true
 	const secondsRemaining = expires - now
 	rateLimitMessage.value = `Rate limited, available in ${secondsRemaining} second${secondsRemaining !== 1 ? 's' : ''}`
-	
+
 	// Set up interval to update every second
 	if (!rateLimitInterval) {
 	  rateLimitInterval = setInterval(() => {
@@ -282,7 +287,7 @@ function onExecStatusChanged() {
 
 onMounted(() => {
   constructFromJson(props.actionData)
-  
+
   // Watch the central rate limit store for updates to this button's bindingId
   // Watch the entire rateLimits object to ensure reactivity with dynamic keys
   watch(

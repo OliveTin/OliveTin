@@ -333,6 +333,7 @@ message InitResponse {
 	bool show_log_list = 22;
 	bool login_required = 23;
 	repeated string available_themes = 24; // List of available theme names
+	bool show_navigate_on_start_icons = 25;
 }
 
 message AdditionalLink {
@@ -394,7 +395,7 @@ service OliveTinApiService {
 	rpc ExecutionStatus(ExecutionStatusRequest) returns (ExecutionStatusResponse) {}
 
 	rpc GetLogs(GetLogsRequest) returns (GetLogsResponse) {}
-	
+
 	rpc GetActionLogs(GetActionLogsRequest) returns (GetActionLogsResponse) {}
 
 	rpc ValidateArgumentType(ValidateArgumentTypeRequest) returns (ValidateArgumentTypeResponse) {}

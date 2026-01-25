@@ -128,6 +128,7 @@ type Config struct {
 	ShowFooter                      bool                       `koanf:"showFooter"`
 	ShowNavigation                  bool                       `koanf:"showNavigation"`
 	ShowNewVersions                 bool                       `koanf:"showNewVersions"`
+	ShowNavigateOnStartIcons        bool                       `koanf:"showNavigateOnStartIcons"`
 	EnableCustomJs                  bool                       `koanf:"enableCustomJs"`
 	AuthJwtCookieName               string                     `koanf:"authJwtCookieName"`
 	AuthJwtHeader                   string                     `koanf:"authJwtHeader"`
@@ -244,6 +245,7 @@ func DefaultConfigWithBasePort(basePort int) *Config {
 	config.ShowFooter = true
 	config.ShowNavigation = true
 	config.ShowNewVersions = true
+	config.ShowNavigateOnStartIcons = true
 	config.EnableCustomJs = false
 	config.ExternalRestAddress = "."
 	config.LogLevel = "INFO"
