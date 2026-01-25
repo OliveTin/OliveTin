@@ -905,6 +905,7 @@ func (api *oliveTinAPI) Init(ctx ctx.Context, req *connect.Request[apiv1.InitReq
 		ShowLogList:               user.EffectivePolicy.ShowLogList,
 		LoginRequired:             loginRequired,
 		AvailableThemes:           discoverAvailableThemes(api.cfg),
+		ShowNavigateOnStartIcons:  api.cfg.ShowNavigateOnStartIcons,
 	}
 
 	return connect.NewResponse(res), nil
