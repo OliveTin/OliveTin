@@ -1,6 +1,6 @@
 ---
 # Only allow releases on the main branch (for 3k)
-# releases for 2k are published manaually.
+# releases for 2k are published manually.
 branches:
   - name: main
 

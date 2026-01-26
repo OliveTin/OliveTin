@@ -20,21 +20,21 @@ type EntitiesByClass map[string]entityInstancesByKey
 
 var (
 	rwmutex  = sync.RWMutex{}
-	Entities EntitiesByClass
+	entities EntitiesByClass
 )
 
 func init() {
 	rwmutex.Lock()
-	Entities = make(EntitiesByClass, 0)
+	entities = make(EntitiesByClass, 0)
 	rwmutex.Unlock()
 }
 
 func GetEntities() EntitiesByClass {
 	rwmutex.RLock()
 
-	copiedEntities := make(EntitiesByClass, len(Entities))
+	copiedEntities := make(EntitiesByClass, len(entities))
 
-	for entityName, entityInstances := range Entities {
+	for entityName, entityInstances := range entities {
 		copiedInstances := make(entityInstancesByKey, len(entityInstances))
 
 		for key, entity := range entityInstances {
@@ -52,7 +52,7 @@ func GetEntityInstances(entityName string) entityInstancesByKey {
 	rwmutex.RLock()
 	defer rwmutex.RUnlock()
 
-	if entities, ok := Entities[entityName]; ok {
+	if entities, ok := entities[entityName]; ok {
 		copiedInstances := make(entityInstancesByKey, len(entities))
 
 		for key, entity := range entities {
@@ -67,11 +67,11 @@ func GetEntityInstances(entityName string) entityInstancesByKey {
 func AddEntity(entityName string, entityKey string, data any) {
 	rwmutex.Lock()
 
-	if _, ok := Entities[entityName]; !ok {
-		Entities[entityName] = make(entityInstancesByKey, 0)
+	if _, ok := entities[entityName]; !ok {
+		entities[entityName] = make(entityInstancesByKey, 0)
 	}
 
-	Entities[entityName][entityKey] = &Entity{
+	entities[entityName][entityKey] = &Entity{
 		Data:      data,
 		UniqueKey: entityKey,
 		Title:     findEntityTitle(data),
@@ -108,5 +108,5 @@ func ClearEntitiesOfType(entityType string) {
 	rwmutex.Lock()
 	defer rwmutex.Unlock()
 
-	delete(Entities, entityType)
+	delete(entities, entityType)
 }

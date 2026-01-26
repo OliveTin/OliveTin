@@ -711,7 +711,7 @@ func (api *oliveTinAPI) DumpVars(ctx ctx.Context, req *connect.Request[apiv1.Dum
 	}
 
 	jsonstring, _ := json.MarshalIndent(tpl.GetNewGeneralTemplateContext(), "", "  ")
-	fmt.Printf("%s", &jsonstring)
+	fmt.Printf("%s", jsonstring)
 
 	res.Alert = "Dumping variables has been enabled in the configuration. Please set InsecureAllowDumpVars = false again after you don't need it anymore"
 
