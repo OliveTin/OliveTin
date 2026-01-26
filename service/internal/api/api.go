@@ -307,11 +307,11 @@ func (api *oliveTinAPI) internalLogEntryToPb(logEntry *executor.InternalLogEntry
 		ExecutionStarted:         logEntry.ExecutionStarted,
 		ExecutionFinished:        logEntry.ExecutionFinished,
 		User:                     logEntry.Username,
-		BindingId:                logEntry.Binding.ID,
+		BindingId:                logEntry.GetBindingId(),
 		DatetimeRateLimitExpires: calculateRateLimitExpires(api, logEntry),
 	}
 
-	if !pble.ExecutionFinished {
+	if !pble.ExecutionFinished && logEntry.Binding != nil && logEntry.Binding.Action != nil {
 		pble.CanKill = acl.IsAllowedKill(api.cfg, authenticatedUser, logEntry.Binding.Action)
 	}
 

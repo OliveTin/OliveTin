@@ -111,6 +111,15 @@ type InternalLogEntry struct {
 	ActionIcon  string
 }
 
+// .Binding can be nil, so we need to handle that.
+func (e *InternalLogEntry) GetBindingId() string {
+	if e.Binding == nil {
+		return ""
+	}
+
+	return e.Binding.ID
+}
+
 type executorStepFunc func(*ExecutionRequest) bool
 
 // DefaultExecutor returns an Executor, with a sensible "chain of command" for
