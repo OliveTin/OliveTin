@@ -13,6 +13,7 @@ func (cfg *Config) Sanitize() {
 	cfg.sanitizeLogLevel()
 	cfg.sanitizeAuthRequireGuestsToLogin()
 	cfg.sanitizeLogHistoryPageSize()
+	cfg.sanitizeLocalUserPasswords()
 
 	// log.Infof("cfg %p", cfg)
 
@@ -169,6 +170,26 @@ func (cfg *Config) sanitizeLogHistoryPageSize() {
 		cfg.LogHistoryPageSize = 10
 	} else if cfg.LogHistoryPageSize > 100 {
 		log.Warnf("LogsHistoryLimit is high, you can do this, but expect browser lag.")
+	}
+}
+
+// SetPasswordTemplateParser sets the function to use for parsing password templates.
+// This is called from main.go to avoid import cycles (config can't import entities).
+func (cfg *Config) SetPasswordTemplateParser(parser func(string, interface{}) string) {
+	cfg.passwordTemplateParser = parser
+}
+
+func (cfg *Config) sanitizeLocalUserPasswords() {
+	if cfg.passwordTemplateParser == nil {
+		return
+	}
+
+	for _, user := range cfg.AuthLocalUsers.Users {
+		if user.Password != "" {
+			// Parse password as template to support environment variables and other template values
+			// Note: .CurrentEntity is nil in this context as local users are not entity-bound
+			user.Password = cfg.passwordTemplateParser(user.Password, nil)
+		}
 	}
 }
 

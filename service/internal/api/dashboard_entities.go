@@ -4,6 +4,7 @@ import (
 	apiv1 "github.com/OliveTin/OliveTin/gen/olivetin/api/v1"
 	config "github.com/OliveTin/OliveTin/internal/config"
 	entities "github.com/OliveTin/OliveTin/internal/entities"
+	"github.com/OliveTin/OliveTin/internal/tpl"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -23,14 +24,14 @@ func buildEntityFieldsets(entityTitle string, tpl *config.DashboardComponent, rr
 	return ret
 }
 
-func buildEntityFieldset(tpl *config.DashboardComponent, ent *entities.Entity, rr *DashboardRenderRequest) *apiv1.DashboardComponent {
+func buildEntityFieldset(component *config.DashboardComponent, ent *entities.Entity, rr *DashboardRenderRequest) *apiv1.DashboardComponent {
 	return &apiv1.DashboardComponent{
-		Title:      entities.ParseTemplateWith(tpl.Title, ent),
+		Title:      tpl.ParseTemplateWith(component.Title, ent),
 		Type:       "fieldset",
-		Contents:   removeFieldsetIfHasNoLinks(buildEntityFieldsetContents(tpl.Contents, ent, tpl.Entity, rr)),
-		CssClass:   entities.ParseTemplateWith(tpl.CssClass, ent),
-		Action:     rr.findAction(tpl.Title),
-		EntityType: tpl.Entity,
+		Contents:   removeFieldsetIfHasNoLinks(buildEntityFieldsetContents(component.Contents, ent, component.Entity, rr)),
+		CssClass:   tpl.ParseTemplateWith(component.CssClass, ent),
+		Action:     rr.findAction(component.Title),
+		EntityType: component.Entity,
 		EntityKey:  ent.UniqueKey,
 	}
 }
@@ -68,7 +69,7 @@ func buildEntityFieldsetContents(contents []*config.DashboardComponent, ent *ent
 
 func cloneItem(subitem *config.DashboardComponent, ent *entities.Entity, entityType string, rr *DashboardRenderRequest) *apiv1.DashboardComponent {
 	clone := &apiv1.DashboardComponent{}
-	clone.CssClass = entities.ParseTemplateWith(subitem.CssClass, ent)
+	clone.CssClass = tpl.ParseTemplateWith(subitem.CssClass, ent)
 
 	if isLinkType(subitem.Type) {
 		return cloneLinkItem(subitem, ent, clone, rr)
@@ -83,7 +84,7 @@ func isLinkType(itemType string) bool {
 
 func cloneLinkItem(subitem *config.DashboardComponent, ent *entities.Entity, clone *apiv1.DashboardComponent, rr *DashboardRenderRequest) *apiv1.DashboardComponent {
 	clone.Type = "link"
-	clone.Title = entities.ParseTemplateWith(subitem.Title, ent)
+	clone.Title = tpl.ParseTemplateWith(subitem.Title, ent)
 	// Prefer an entity-specific action when available, but fall back to a
 	// non-entity-scoped action with the same title. This allows inline actions
 	// defined inside entity dashboards to work without requiring an explicit
@@ -98,7 +99,7 @@ func cloneLinkItem(subitem *config.DashboardComponent, ent *entities.Entity, clo
 }
 
 func cloneNonLinkItem(subitem *config.DashboardComponent, ent *entities.Entity, entityType string, clone *apiv1.DashboardComponent, rr *DashboardRenderRequest) *apiv1.DashboardComponent {
-	clone.Title = entities.ParseTemplateWith(subitem.Title, ent)
+	clone.Title = tpl.ParseTemplateWith(subitem.Title, ent)
 	clone.Type = subitem.Type
 
 	if isDirectoryWithEntity(clone.Type, ent, entityType) {

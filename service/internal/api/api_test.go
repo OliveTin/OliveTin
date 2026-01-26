@@ -119,9 +119,9 @@ func TestGetEntities(t *testing.T) {
 }
 
 func setupTestEntities() {
-	entities.ClearEntities("server")
-	entities.ClearEntities("database")
-	entities.ClearEntities("application")
+	entities.ClearEntitiesOfType("server")
+	entities.ClearEntitiesOfType("database")
+	entities.ClearEntitiesOfType("application")
 
 	entities.AddEntity("server", "zebra", map[string]any{"title": "Server Zebra", "hostname": "zebra.example.com"})
 	entities.AddEntity("server", "alpha", map[string]any{"title": "Server Alpha", "hostname": "alpha.example.com"})

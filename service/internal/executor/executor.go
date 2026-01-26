@@ -6,6 +6,7 @@ import (
 	authpublic "github.com/OliveTin/OliveTin/internal/auth/authpublic"
 	config "github.com/OliveTin/OliveTin/internal/config"
 	"github.com/OliveTin/OliveTin/internal/entities"
+	"github.com/OliveTin/OliveTin/internal/tpl"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 
@@ -737,7 +738,7 @@ func stepRequestAction(req *ExecutionRequest) bool {
 
 	req.logEntry.Binding = req.Binding
 	req.logEntry.ActionConfigTitle = req.Binding.Action.Title
-	req.logEntry.ActionTitle = entities.ParseTemplateWith(req.Binding.Action.Title, req.Binding.Entity)
+	req.logEntry.ActionTitle = tpl.ParseTemplateWith(req.Binding.Action.Title, req.Binding.Entity)
 	req.logEntry.ActionIcon = req.Binding.Action.Icon
 	req.logEntry.Tags = req.Tags
 

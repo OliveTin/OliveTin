@@ -3,6 +3,7 @@ package executor
 import (
 	config "github.com/OliveTin/OliveTin/internal/config"
 	"github.com/OliveTin/OliveTin/internal/entities"
+	"github.com/OliveTin/OliveTin/internal/tpl"
 	log "github.com/sirupsen/logrus"
 
 	"fmt"
@@ -75,7 +76,7 @@ func parseSingleExec(a string, values map[string]string, entity *entities.Entity
 	if err != nil {
 		return "", err
 	}
-	return entities.ParseTemplateWithArgs(arg, entity, values), nil
+	return tpl.ParseTemplateWithArgs(arg, entity, values), nil
 }
 
 func validateArguments(values map[string]string, action *config.Action) error {
@@ -117,7 +118,7 @@ func parseActionArguments(values map[string]string, action *config.Action, entit
 		}).Debugf("Arg assigned")
 	}
 
-	parsedShellCommand := entities.ParseTemplateWithArgs(rawShellCommand, entity, values)
+	parsedShellCommand := tpl.ParseTemplateWithArgs(rawShellCommand, entity, values)
 	redactedShellCommand := redactShellCommand(parsedShellCommand, action.Arguments, values)
 
 	if err != nil {
@@ -256,7 +257,7 @@ func typecheckChoiceEntity(value string, arg *config.ActionArgument) error {
 	templateChoice := arg.Choices[0].Value
 
 	for _, ent := range entities.GetEntityInstances(arg.Entity) {
-		choice := entities.ParseTemplateWith(templateChoice, ent)
+		choice := tpl.ParseTemplateWith(templateChoice, ent)
 
 		if value == choice {
 			return nil

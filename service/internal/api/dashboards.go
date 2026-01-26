@@ -6,6 +6,7 @@ import (
 	apiv1 "github.com/OliveTin/OliveTin/gen/olivetin/api/v1"
 	config "github.com/OliveTin/OliveTin/internal/config"
 	entities "github.com/OliveTin/OliveTin/internal/entities"
+	"github.com/OliveTin/OliveTin/internal/tpl"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/exp/slices"
 )
@@ -236,7 +237,7 @@ func buildDashboardComponentSimpleWithEntity(subitem *config.DashboardComponent,
 
 	title := subitem.Title
 	if entity != nil {
-		title = entities.ParseTemplateWith(subitem.Title, entity)
+		title = tpl.ParseTemplateWith(subitem.Title, entity)
 	}
 
 	newitem := &apiv1.DashboardComponent{
