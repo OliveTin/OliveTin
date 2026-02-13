@@ -6,7 +6,7 @@
 	"source": "index.html",
 	"devDependencies": {
 		"process": "^0.11.10",
-		"stylelint": "^17.0.0",
+		"stylelint": "^17.3.0",
 		"stylelint-config-standard": "^40.0.0"
 	},
 	"scripts": {
@@ -26,16 +26,16 @@
 		"@connectrpc/connect-web": "^2.1.1",
 		"@hugeicons/core-free-icons": "^3.1.1",
 		"@hugeicons/vue": "^1.0.4",
-		"@vitejs/plugin-vue": "^6.0.3",
+		"@vitejs/plugin-vue": "^6.0.4",
 		"@xterm/addon-fit": "^0.11.0",
 		"@xterm/xterm": "^6.0.0",
 		"iconify-icon": "^3.0.2",
-		"picocrank": "^1.13.1",
+		"picocrank": "^1.14.0",
 		"standard": "^17.1.2",
 		"unplugin-vue-components": "^31.0.0",
 		"vite": "^7.3.1",
-    "vue": "^3.5.27",
+    "vue": "^3.5.28",
 		"vue-i18n": "^11.2.8",
-		"vue-router": "^5.0.1"
+		"vue-router": "^5.0.2"
 	}
 }
