@@ -99,7 +99,10 @@ func TestEnvInConfig(t *testing.T) {
 			t.Errorf("Error loading YAML: %v", err)
 			continue
 		}
-		unmarshalRoot(k, cfg)
+		if !unmarshalRoot(k, cfg) {
+			t.Errorf("Error unmarshalling config for env=%q", tt.input)
+			continue
+		}
 		field := tt.selector(cfg)
 		assert.Equal(t, tt.output, field,
 			"Unmarshaled config field doesn't match expected value: env=%q", tt.input)
