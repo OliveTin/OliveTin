@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/go-viper/mapstructure/v2"
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/knadh/koanf/providers/file"
 	"github.com/knadh/koanf/v2"
@@ -51,6 +52,14 @@ func AppendSource(cfg *Config, k *koanf.Koanf, configPath string) {
 func unmarshalRoot(k *koanf.Koanf, cfg *Config) bool {
 	err := k.UnmarshalWithConf("", cfg, koanf.UnmarshalConf{
 		Tag: "koanf",
+		DecoderConfig: &mapstructure.DecoderConfig{
+			DecodeHook: mapstructure.ComposeDecodeHookFunc(
+				envDecodeHookFunc,
+				mapstructure.StringToTimeDurationHookFunc(),
+				mapstructure.TextUnmarshallerHookFunc(),
+			),
+			WeaklyTypedInput: true,
+		},
 	})
 
 	if err != nil {

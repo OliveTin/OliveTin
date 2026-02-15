@@ -90,26 +90,19 @@ var envConfigTests = []struct {
 }
 
 func TestEnvInConfig(t *testing.T) {
-	t.Skip("Skipping test in 3k")
-
 	for _, tt := range envConfigTests {
 		cfg := DefaultConfig()
 		setIfNotEmpty("INPUT", tt.input)
-		processed := processYamlWithEnv(tt.yaml)
-		k, err := loadKoanf(processed)
+		k := koanf.New(".")
+		err := k.Load(rawbytes.Provider([]byte(tt.yaml)), yaml.Parser())
 		if err != nil {
 			t.Errorf("Error loading YAML: %v", err)
 			continue
 		}
-
-		if err := k.UnmarshalWithConf("", cfg, koanf.UnmarshalConf{
-			Tag: "koanf",
-		}); err != nil {
-			t.Errorf("Error unmarshalling config: %v", err)
-			continue
-		}
+		unmarshalRoot(k, cfg)
 		field := tt.selector(cfg)
-		assert.Equal(t, tt.output, field, "Unmarshaled config field doesn't match expected value: env=\"%s\"", tt.input)
+		assert.Equal(t, tt.output, field,
+			"Unmarshaled config field doesn't match expected value: env=%q", tt.input)
 		os.Unsetenv("INPUT")
 	}
 }
@@ -118,21 +111,4 @@ func setIfNotEmpty(key, val string) {
 	if val != "" {
 		os.Setenv(key, val)
 	}
-}
-
-func processYamlWithEnv(content string) string {
-	return envRegex.ReplaceAllStringFunc(content, func(match string) string {
-		submatches := envRegex.FindStringSubmatch(match)
-		key := submatches[1]
-		val, _ := os.LookupEnv(key)
-		return val
-	})
-}
-
-func loadKoanf(processed string) (*koanf.Koanf, error) {
-	k := koanf.New(".")
-	if err := k.Load(rawbytes.Provider([]byte(processed)), yaml.Parser()); err != nil {
-		return nil, err
-	}
-	return k, nil
 }
