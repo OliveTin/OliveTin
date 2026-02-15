@@ -710,7 +710,11 @@ func (api *oliveTinAPI) DumpVars(ctx ctx.Context, req *connect.Request[apiv1.Dum
 		return connect.NewResponse(res), nil
 	}
 
-	jsonstring, _ := json.MarshalIndent(tpl.GetNewGeneralTemplateContext(), "", "  ")
+	jsonstring, err := json.MarshalIndent(tpl.GetNewGeneralTemplateContext(), "", "  ")
+	if err != nil {
+		log.WithError(err).Error("DumpVars: failed to marshal template context from GetNewGeneralTemplateContext")
+		return nil, connect.NewError(connect.CodeInternal, fmt.Errorf("dump vars: marshal template context: %w", err))
+	}
 	fmt.Printf("%s", jsonstring)
 
 	res.Alert = "Dumping variables has been enabled in the configuration. Please set InsecureAllowDumpVars = false again after you don't need it anymore"

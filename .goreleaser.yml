@@ -74,7 +74,8 @@ archives:
       - config.yaml
       - LICENSE
       - README.md
-      - Dockerfile
+      - src: Dockerfile.singlearch
+        dst: Dockerfile
       - webui
       - ./var/
     name_template: "{{ .ProjectName }}-{{ .Os }}-{{ .Arch }}{{ .Arm }}"
@@ -83,73 +84,29 @@ archives:
       - goos: windows
         formats: zip
 
-dockers:
-  - image_templates:
-      - "docker.io/jamesread/olivetin:{{ .Tag }}-amd64"
-      - "ghcr.io/olivetin/olivetin:{{ .Tag }}-amd64"
-    dockerfile: Dockerfile
-    goos: linux
-    goarch: amd64
-    skip_push: false
-    build_flag_templates:
-      - "--platform=linux/amd64"
-      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
-      - "--label=org.opencontainers.image.version={{.Tag}}"
+# dockers_v2: single multi-platform build with buildx; keeps default provenance + SBOM.
+# Replaces legacy dockers + docker_manifests (avoids "is a manifest list" when attestations are on).
+dockers_v2:
+  - dockerfile: Dockerfile.multiarches
+    images:
+      - docker.io/jamesread/olivetin
+      - ghcr.io/olivetin/olivetin
+    tags:
+      - "{{ .Tag }}"
+      - latest
+      - latest-3k
+    platforms:
+      - linux/amd64
+      - linux/arm64
     extra_files:
       - webui/
       - var/entities/
       - config.yaml
       - var/helper-actions/
-
-  - image_templates:
-      - "docker.io/jamesread/olivetin:{{ .Tag }}-arm64"
-      - "ghcr.io/olivetin/olivetin:{{ .Tag }}-arm64"
-    dockerfile: Dockerfile.arm64
-    goos: linux
-    goarch: arm64
-    skip_push: false
-    build_flag_templates:
-      - "--platform=linux/arm64"
-      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
-      - "--label=org.opencontainers.image.version={{.Tag}}"
-    extra_files:
-      - webui/
-      - var/entities/
-      - config.yaml
-      - var/helper-actions/
-
-docker_manifests:
-  - name_template: docker.io/jamesread/olivetin:{{ .Version }}
-    image_templates:
-      - docker.io/jamesread/olivetin:{{ .Version }}-amd64
-      - docker.io/jamesread/olivetin:{{ .Version }}-arm64
-
-  - name_template: docker.io/jamesread/olivetin:latest
-    image_templates:
-      - docker.io/jamesread/olivetin:{{ .Version }}-amd64
-      - docker.io/jamesread/olivetin:{{ .Version }}-arm64
-
-  - name_template: docker.io/jamesread/olivetin:latest-3k
-    image_templates:
-      - docker.io/jamesread/olivetin:{{ .Version }}-amd64
-      - docker.io/jamesread/olivetin:{{ .Version }}-arm64
-
-
-  - name_template: ghcr.io/olivetin/olivetin:{{ .Version }}
-    image_templates:
-      - ghcr.io/olivetin/olivetin:{{ .Version }}-amd64
-      - ghcr.io/olivetin/olivetin:{{ .Version }}-arm64
-
-  - name_template: ghcr.io/olivetin/olivetin:latest
-    image_templates:
-      - ghcr.io/olivetin/olivetin:{{ .Version }}-amd64
-      - ghcr.io/olivetin/olivetin:{{ .Version }}-arm64
-
-  - name_template: ghcr.io/olivetin/olivetin:latest-3k
-    image_templates:
-      - ghcr.io/olivetin/olivetin:{{ .Version }}-amd64
-      - ghcr.io/olivetin/olivetin:{{ .Version }}-arm64
-
+    labels:
+      org.opencontainers.image.revision: "{{ .FullCommit }}"
+      org.opencontainers.image.version: "{{ .Tag }}"
+    sbom: true
 
 nfpms:
   - id: default

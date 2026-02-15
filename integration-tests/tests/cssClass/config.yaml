@@ -1,0 +1,27 @@
+#
+# Integration Test Config: cssClass on dashboard components (#804)
+#
+
+listenAddressSingleHTTPFrontend: 0.0.0.0:1337
+
+logLevel: "DEBUG"
+checkForUpdates: false
+
+# Custom theme used to verify theme CSS applies to cssClass (e.g. action button background)
+themeName: cssclass-theme
+
+actions: []
+
+dashboards:
+  - title: CssClass Dashboard
+    contents:
+      - title: Button with custom class
+        type: link
+        cssClass: test-custom-class
+        inlineAction:
+          shell: echo ok
+          icon: ping
+      - title: Display with custom class
+        type: display
+        cssClass: test-display-class
+        contents: []

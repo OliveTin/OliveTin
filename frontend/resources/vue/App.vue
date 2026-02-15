@@ -231,6 +231,7 @@ function updateHeaderFromInit() {
     }
 
     applyStyleMods()
+    loadCustomJsIfEnabled()
 
     renderNavigation()
     applyTheme()
@@ -361,11 +362,23 @@ function applyTheme() {
         document.head.appendChild(themeStyle)
     }
 
+    // Load theme into @layer theme so it takes precedence over @layer components
     if (themePreference.value && themePreference.value !== '') {
         themeStyle.textContent = `@import url('/custom-webui/themes/${themePreference.value}/theme.css') layer(theme);`
     } else {
         themeStyle.textContent = `@import url('/theme.css') layer(theme);`
     }
+}
+
+function loadCustomJsIfEnabled() {
+    if (!window.initResponse?.enableCustomJs || document.getElementById('olivetin-custom-js')) {
+        return
+    }
+    const script = document.createElement('script')
+    script.src = '/custom-webui/custom.js'
+    script.async = true
+    script.id = 'olivetin-custom-js'
+    document.head.appendChild(script)
 }
 
 function applyStyleMods() {

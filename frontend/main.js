@@ -61,6 +61,14 @@ async function initClient () {
   window.client = createClient(OliveTinApiService, transport)
   window.initResponse = await window.client.init({})
 
+  if (window.initResponse.enableCustomJs) {
+    const script = document.createElement('script')
+    script.src = '/custom-webui/custom.js'
+    script.async = true
+    script.id = 'olivetin-custom-js'
+    document.head.appendChild(script)
+  }
+
   const i18nSettings = createI18n({
     legacy: false,
     locale: getSelectedLanguage(),

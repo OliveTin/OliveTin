@@ -1,10 +1,17 @@
-FROM --platform=linux/arm64 registry.fedoraproject.org/fedora-minimal:42-aarch64 AS olivetin-tmputils
+# Multi-arch Dockerfile for GoReleaser (dockers_v2).
+# Base image :43 is used without arch suffix so the registry can supply the right
+# platform (manifest list). TARGETPLATFORM is set by BuildKit for COPY.
+# For custom/local single-arch builds, use Dockerfile.singlearch instead.
+
+ARG TARGETPLATFORM
+
+FROM registry.fedoraproject.org/fedora-minimal:43 AS olivetin-tmputils
 
 RUN microdnf -y install dnf-plugins-core && \
 	dnf-3 config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo && \
 	microdnf install -y docker-ce-cli docker-compose-plugin && microdnf clean all
 
-FROM --platform=linux/arm64 registry.fedoraproject.org/fedora-minimal:42-aarch64
+FROM registry.fedoraproject.org/fedora-minimal:43
 
 LABEL org.opencontainers.image.source https://github.com/OliveTin/OliveTin
 LABEL org.opencontainers.image.title OliveTin
@@ -37,7 +44,8 @@ COPY config.yaml /config
 COPY var/entities/* /config/entities/
 VOLUME /config
 
-COPY OliveTin /usr/bin/OliveTin
+ARG TARGETPLATFORM
+COPY $TARGETPLATFORM/OliveTin /usr/bin/OliveTin
 COPY webui /var/www/olivetin/
 COPY var/helper-actions/* /usr/bin/
 

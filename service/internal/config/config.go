@@ -171,8 +171,7 @@ type Config struct {
 	BannerCSS                       string                     `koanf:"bannerCss"`
 	Include                         string                     `koanf:"include"`
 
-	sourceFiles            []string
-	passwordTemplateParser func(string, interface{}) string
+	sourceFiles []string
 }
 
 type AuthLocalUsersConfig struct {

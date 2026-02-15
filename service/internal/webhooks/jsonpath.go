@@ -46,7 +46,12 @@ func (m *JSONMatcher) ExtractValue(pathExpr string) (string, error) {
 		return "", err
 	}
 
-	// Marshal to JSON for consistent string representation
+	// For string values, return directly without marshaling to avoid adding JSON quotes
+	if strValue, ok := value.(string); ok {
+		return strValue, nil
+	}
+
+	// For non-string values, marshal to JSON for consistent string representation
 	jsonBytes, err := json.Marshal(value)
 	if err != nil {
 		return "", fmt.Errorf("failed to marshal extracted value: %w", err)

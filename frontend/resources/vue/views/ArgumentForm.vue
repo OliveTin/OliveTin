@@ -73,6 +73,7 @@ const confirmationChecked = ref(false)
 const hasConfirmation = ref(false)
 const formErrors = ref({})
 const actionArguments = ref([])
+const popupOnStart = ref('')
 
 // Computed properties
 
@@ -93,6 +94,7 @@ async function setup() {
 
   title.value = action.title
   icon.value = action.icon
+  popupOnStart.value = action.popupOnStart || ''
   actionArguments.value = action.arguments || []
   argValues.value = {}
   formErrors.value = {}
@@ -418,7 +420,11 @@ async function handleSubmit(event) {
   
   try {
     const response = await startAction(argvs)
-    router.push(`/logs/${response.executionTrackingId}`)
+    if (popupOnStart.value && popupOnStart.value.includes('execution-dialog')) {
+      router.push(`/logs/${response.executionTrackingId}`)
+    } else {
+      router.back()
+    }
   } catch (err) {
     console.error('Failed to start action:', err)
   }

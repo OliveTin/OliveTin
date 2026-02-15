@@ -2,7 +2,9 @@ package config
 
 import (
 	"strings"
+	"text/template"
 
+	"github.com/OliveTin/OliveTin/internal/env"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 )
@@ -173,24 +175,27 @@ func (cfg *Config) sanitizeLogHistoryPageSize() {
 	}
 }
 
-// SetPasswordTemplateParser sets the function to use for parsing password templates.
-// This is called from main.go to avoid import cycles (config can't import entities).
-func (cfg *Config) SetPasswordTemplateParser(parser func(string, interface{}) string) {
-	cfg.passwordTemplateParser = parser
-}
-
 func (cfg *Config) sanitizeLocalUserPasswords() {
-	if cfg.passwordTemplateParser == nil {
-		return
-	}
-
 	for _, user := range cfg.AuthLocalUsers.Users {
 		if user.Password != "" {
-			// Parse password as template to support environment variables and other template values
-			// Note: .CurrentEntity is nil in this context as local users are not entity-bound
-			user.Password = cfg.passwordTemplateParser(user.Password, nil)
+			user.Password = parsePasswordTemplate(user.Password)
 		}
 	}
+}
+
+// parsePasswordTemplate expands {{ .Env.VAR }} in local user password fields using the process environment.
+func parsePasswordTemplate(source string) string {
+	t, err := template.New("password").Option("missingkey=error").Parse(source)
+	if err != nil {
+		log.WithFields(log.Fields{"error": err}).Debug("Password template parse failed, using literal")
+		return source
+	}
+	var b strings.Builder
+	if err := t.Execute(&b, map[string]interface{}{"Env": env.BuildEnvMap()}); err != nil {
+		log.WithFields(log.Fields{"error": err}).Debug("Password template execute failed, using literal")
+		return source
+	}
+	return b.String()
 }
 
 func getActionID(action *Action) string {

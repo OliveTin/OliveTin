@@ -1,0 +1,4 @@
+/* Theme for cssClass integration test: set a distinct background on the action button */
+.action-button button.test-custom-class {
+  background-color: rgb(32, 64, 128);
+}

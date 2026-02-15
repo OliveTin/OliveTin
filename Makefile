@@ -31,7 +31,7 @@ dist:
 
 
 podman-image:
-	buildah bud -t olivetin
+	buildah bud -f Dockerfile.singlearch -t olivetin
 
 podman-container:
 	podman kill olivetin || true
@@ -41,7 +41,7 @@ podman-container:
 
 integration-tests-docker-image:
 	docker rm -f olivetin && docker rmi -f olivetin
-	docker build -t olivetin:latest .
+	docker build -f Dockerfile.singlearch -t olivetin:latest .
 	docker create --name olivetin -p 1337:1337 -v `pwd`/integration-tests/configs/:/config/ olivetin
 
 devrun: compile
