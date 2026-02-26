@@ -5,19 +5,22 @@
 	"repository": "https://github.com/OliveTin/OliveTin",
 	"source": "index.html",
 	"devDependencies": {
-		"eslint": "^7.25.0",
-		"eslint-config-standard": "^16.0.2",
-		"eslint-plugin-import": "^2.22.1",
-		"eslint-plugin-node": "^11.1.0",
-		"eslint-plugin-promise": "^4.3.1",
-		"parcel": "^2.11.0",
-		"parcel-resolver-ignore": "^2.2.0",
+		"parcel": "^2.16.4",
+		"parcel-resolver-ignore": "^2.2.1",
 		"process": "^0.11.10",
-		"stylelint": "^15.6.0",
-		"stylelint-config-standard": "^33.0.0"
+		"standard": "^17.1.2",
+		"stylelint": "^17.4.0",
+		"stylelint-config-standard": "^40.0.0"
 	},
 	"scripts": {
+		"lint": "standard",
+		"lint:fix": "standard --fix",
 		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"standard": {
+		"envs": [
+			"browser"
+		]
 	},
 	"author": "",
 	"parcelIgnore": [
@@ -29,7 +32,7 @@
 	],
 	"license": "AGPL-3.0-only",
 	"dependencies": {
-		"@xterm/xterm": "^5.5.0",
-		"@xterm/addon-fit": "^0.10.0"
+		"@xterm/addon-fit": "^0.11.0",
+		"@xterm/xterm": "^6.0.0"
 	}
 }

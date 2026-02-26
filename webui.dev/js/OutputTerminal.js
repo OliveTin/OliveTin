@@ -2,15 +2,15 @@ import { Terminal } from '@xterm/xterm'
 import { FitAddon } from '@xterm/addon-fit'
 import { Mutex } from './Mutex.js'
 
-/** 
+/**
  * xterm.js based terminal output for the execution dialog.
  *
  * the xterm.js methods for write(), reset() and clear() appear to be async,
  * but they do not return a Promise and instead use a callback. When calling
- * these methods in quick succession, the output can get garbled due to race 
- * conditions. 
+ * these methods in quick succession, the output can get garbled due to race
+ * conditions.
  *
- * To avoid this, this class uses Mutex around those methods to ensure that 
+ * To avoid this, this class uses Mutex around those methods to ensure that
  * only one write OR reset is executed at a time, is completed, and the calls
  * occour in sequential order.
  */
