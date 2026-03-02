@@ -1059,7 +1059,7 @@ func saveLogResults(req *ExecutionRequest, filename string) {
 		}
 
 		filepath := path.Join(dir, filename+".yaml")
-		err = os.WriteFile(filepath, data, 0644)
+		err = os.WriteFile(filepath, data, 0600)
 
 		if err != nil {
 			log.Warnf("%v", err)
@@ -1073,7 +1073,7 @@ func saveLogOutput(req *ExecutionRequest, filename string) {
 	if dir != "" {
 		data := req.logEntry.Output
 		filepath := path.Join(dir, filename+".log")
-		err := os.WriteFile(filepath, []byte(data), 0644)
+		err := os.WriteFile(filepath, []byte(data), 0600)
 
 		if err != nil {
 			log.Warnf("%v", err)
