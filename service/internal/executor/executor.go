@@ -1015,8 +1015,15 @@ func stepTrigger(req *ExecutionRequest) bool {
 }
 
 func triggerLoop(req *ExecutionRequest) {
-	for _, triggerReq := range req.Binding.Action.Triggers {
-		binding := req.executor.FindBindingByID(triggerReq)
+	for _, triggerTitle := range req.Binding.Action.Triggers {
+		binding := req.executor.findBindingByActionTitle(triggerTitle, "")
+		if binding == nil {
+			log.WithFields(log.Fields{
+				"triggerTitle": triggerTitle,
+				"fromAction":   req.logEntry.ActionTitle,
+			}).Warnf("Trigger references unknown action title; skipping")
+			continue
+		}
 		trigger := &ExecutionRequest{
 			Binding:           binding,
 			TrackingID:        uuid.NewString(),
