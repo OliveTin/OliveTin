@@ -392,6 +392,8 @@ func (api *oliveTinAPI) ExecutionStatus(ctx ctx.Context, req *connect.Request[ap
 func (api *oliveTinAPI) Logout(ctx ctx.Context, req *connect.Request[apiv1.LogoutRequest]) (*connect.Response[apiv1.LogoutResponse], error) {
 	user := auth.UserFromApiCall(ctx, req, api.cfg)
 
+	auth.RevokeSessionForProvider(api.cfg, user.Provider, user.SID)
+
 	log.WithFields(log.Fields{
 		"username": user.Username,
 		"provider": user.Provider,
