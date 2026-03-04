@@ -391,6 +391,12 @@ func (h *OAuth2Handler) lookupOAuth2UserByState(state string) (*authTypes.Authen
 	return user, true
 }
 
+func (h *OAuth2Handler) RevokeSession(sid string) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	delete(h.registeredStates, sid)
+}
+
 func (h *OAuth2Handler) CheckUserFromOAuth2Cookie(context *authTypes.AuthCheckingContext) *authTypes.AuthenticatedUser {
 	cookie, err := context.Request.Cookie("olivetin-sid-oauth")
 	if err != nil || cookie.Value == "" {
