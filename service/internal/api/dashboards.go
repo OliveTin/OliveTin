@@ -4,6 +4,7 @@ import (
 	"sort"
 
 	apiv1 "github.com/OliveTin/OliveTin/gen/olivetin/api/v1"
+	acl "github.com/OliveTin/OliveTin/internal/acl"
 	config "github.com/OliveTin/OliveTin/internal/config"
 	entities "github.com/OliveTin/OliveTin/internal/entities"
 	"github.com/OliveTin/OliveTin/internal/tpl"
@@ -135,6 +136,10 @@ func buildDefaultDashboard(rr *DashboardRenderRequest) *apiv1.Dashboard {
 		}
 
 		if binding.IsOnDashboard {
+			continue
+		}
+
+		if !acl.IsAllowedView(rr.cfg, rr.AuthenticatedUser, binding.Action) {
 			continue
 		}
 

@@ -40,6 +40,9 @@ func (rr *DashboardRenderRequest) findActionForEntity(title string, entity *enti
 		if !bindingMatchesTitleAndEntity(binding, title, entity) {
 			continue
 		}
+		if !acl.IsAllowedView(rr.cfg, rr.AuthenticatedUser, binding.Action) {
+			return nil
+		}
 		return buildAction(binding, rr)
 	}
 

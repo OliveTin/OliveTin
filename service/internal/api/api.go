@@ -457,19 +457,38 @@ func (api *oliveTinAPI) GetActionBinding(ctx ctx.Context, req *connect.Request[a
 		return nil, err
 	}
 
-	binding := api.executor.FindBindingByID(req.Msg.BindingId)
-
-	if binding == nil || binding.Action == nil {
-		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("action with ID %s not found", req.Msg.BindingId))
+	resp, err := api.getActionBindingResponse(user, req.Msg.BindingId)
+	if err != nil {
+		return nil, err
 	}
+	return connect.NewResponse(resp), nil
+}
 
-	return connect.NewResponse(&apiv1.GetActionBindingResponse{
+func (api *oliveTinAPI) getActionBindingResponse(user *authpublic.AuthenticatedUser, bindingId string) (*apiv1.GetActionBindingResponse, error) {
+	binding := api.executor.FindBindingByID(bindingId)
+  
+	if binding == nil || binding.Action == nil {
+		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("action with ID %s not found", bindingId))
+	}
+  
+	if !api.userCanViewAction(user, binding.Action) {
+		return nil, connect.NewError(connect.CodePermissionDenied, fmt.Errorf("permission denied"))
+	}
+  
+	return &apiv1.GetActionBindingResponse{
 		Action: buildAction(binding, &DashboardRenderRequest{
 			cfg:               api.cfg,
 			AuthenticatedUser: user,
 			ex:                api.executor,
 		}),
-	}), nil
+	}, nil
+}
+
+func (api *oliveTinAPI) userCanViewAction(user *authpublic.AuthenticatedUser, action *config.Action) bool {
+	if user == nil {
+		return true
+	}
+	return acl.IsAllowedView(api.cfg, user, action)
 }
 
 func (api *oliveTinAPI) GetDashboard(ctx ctx.Context, req *connect.Request[apiv1.GetDashboardRequest]) (*connect.Response[apiv1.GetDashboardResponse], error) {

@@ -6,6 +6,7 @@ import (
 
 	"connectrpc.com/connect"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	log "github.com/sirupsen/logrus"
 
@@ -334,4 +335,118 @@ func testWithEntity(t *testing.T, binding *executor.ActionBinding, rr *Dashboard
 
 	actionResult := buildAction(binding, rr)
 	assert.Equal(t, expectedCanExec, actionResult.CanExec, message)
+}
+
+// buildViewPermissionTestConfig returns config and users for GHSA view-permission tests:
+// one action "secret_action", ACL "restricted" (view:false) for user "low", ACL "full" (view:true) for user "admin".
+func buildViewPermissionTestConfig(t *testing.T) (*config.Config, *authpublic.AuthenticatedUser, *authpublic.AuthenticatedUser) {
+	t.Helper()
+	cfg := config.DefaultConfig()
+	cfg.DefaultPermissions.View = false
+	cfg.DefaultPermissions.Exec = false
+
+	cfg.Actions = append(cfg.Actions, &config.Action{
+		ID:    "secret_action",
+		Title: "Secret Action",
+		Shell: "echo sensitive",
+		Icon:  "🔒",
+	})
+
+	cfg.AccessControlLists = append(cfg.AccessControlLists,
+		&config.AccessControlList{
+			Name:             "restricted",
+			MatchUsernames:   []string{"low"},
+			AddToEveryAction: true,
+			Permissions:      config.PermissionsList{View: false, Exec: false, Logs: false, Kill: false},
+		},
+		&config.AccessControlList{
+			Name:             "full",
+			MatchUsernames:   []string{"admin"},
+			AddToEveryAction: true,
+			Permissions:      config.PermissionsList{View: true, Exec: true, Logs: true, Kill: true},
+		},
+	)
+
+	lowUser := &authpublic.AuthenticatedUser{Username: "low"}
+	lowUser.BuildUserAcls(cfg)
+	adminUser := &authpublic.AuthenticatedUser{Username: "admin"}
+	adminUser.BuildUserAcls(cfg)
+	return cfg, lowUser, adminUser
+}
+
+// TestViewPermissionExcludedFromDashboard (GHSA: view permission) asserts that when a user has view: false,
+// the default dashboard must not include that action. Covers GetDashboard not leaking action metadata.
+func TestViewPermissionExcludedFromDashboard(t *testing.T) {
+	cfg, lowUser, _ := buildViewPermissionTestConfig(t)
+	ex := executor.DefaultExecutor(cfg)
+	ex.RebuildActionMap()
+
+	rr := &DashboardRenderRequest{
+		AuthenticatedUser: lowUser,
+		cfg:               cfg,
+		ex:                ex,
+	}
+	db := buildDefaultDashboard(rr)
+
+	bindingIdsInDashboard := bindingIdsInDashboardContents(db.Contents)
+	assert.NotContains(t, bindingIdsInDashboard, "secret_action",
+		"user with view:false must not see action in dashboard; got bindingIds: %v", bindingIdsInDashboard)
+}
+
+// TestGetActionBindingDeniedWhenNoViewPermission (GHSA: view permission) asserts that GetActionBinding
+// returns permission denied for a user with view: false. Covers GetActionBinding not exposing action details.
+func TestGetActionBindingDeniedWhenNoViewPermission(t *testing.T) {
+	cfg, lowUser, _ := buildViewPermissionTestConfig(t)
+	ex := executor.DefaultExecutor(cfg)
+	ex.RebuildActionMap()
+	api := newServer(ex)
+
+	_, err := api.getActionBindingResponse(lowUser, "secret_action")
+	require.Error(t, err)
+	assert.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err),
+		"user with view:false must get permission denied from GetActionBinding")
+}
+
+// TestViewPermissionAllowedSeesAction (GHSA: view permission) asserts that a user with view: true
+// still sees the action in the dashboard and can fetch it via GetActionBinding.
+func TestViewPermissionAllowedSeesAction(t *testing.T) {
+	cfg, _, adminUser := buildViewPermissionTestConfig(t)
+	ex := executor.DefaultExecutor(cfg)
+	ex.RebuildActionMap()
+	api := newServer(ex)
+
+	rr := &DashboardRenderRequest{
+		AuthenticatedUser: adminUser,
+		cfg:               cfg,
+		ex:                ex,
+	}
+	db := buildDefaultDashboard(rr)
+	bindingIdsInDashboard := bindingIdsInDashboardContents(db.Contents)
+	assert.Contains(t, bindingIdsInDashboard, "secret_action",
+		"user with view:true must see action in dashboard; got bindingIds: %v", bindingIdsInDashboard)
+
+	resp, err := api.getActionBindingResponse(adminUser, "secret_action")
+	require.NoError(t, err)
+	require.NotNil(t, resp)
+	require.NotNil(t, resp.Action)
+	assert.Equal(t, "secret_action", resp.Action.BindingId)
+}
+
+func bindingIdsInDashboardContents(contents []*apiv1.DashboardComponent) []string {
+	var ids []string
+	for _, c := range contents {
+		ids = append(ids, bindingIdsFromComponent(c)...)
+	}
+	return ids
+}
+
+func bindingIdsFromComponent(c *apiv1.DashboardComponent) []string {
+	if c == nil {
+		return nil
+	}
+	var ids []string
+	if c.Action != nil && c.Action.BindingId != "" {
+		ids = append(ids, c.Action.BindingId)
+	}
+	return append(ids, bindingIdsInDashboardContents(c.Contents)...)
 }
