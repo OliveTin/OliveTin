@@ -70,19 +70,20 @@ func (api *oliveTinAPI) KillAction(ctx ctx.Context, req *connect.Request[apiv1.K
 	execReqLogEntry, ret.Found = api.executor.GetLog(req.Msg.ExecutionTrackingId)
 
 	if !ret.Found {
-		log.Warnf("Killing execution request not possible - not found by tracking ID: %v", req.Msg.ExecutionTrackingId)
-		return connect.NewResponse(ret), nil
+		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("execution not found for tracking ID %s", req.Msg.ExecutionTrackingId))
 	}
 
-	log.Warnf("Killing execution request by tracking ID: %v", req.Msg.ExecutionTrackingId)
+	if execReqLogEntry.Binding == nil {
+		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("log entry has no binding for tracking ID %s", req.Msg.ExecutionTrackingId))
+	}
 
 	action := execReqLogEntry.Binding.Action
 
 	if action == nil {
-		log.Warnf("Killing execution request not possible - action not found: %v", execReqLogEntry.ActionTitle)
-		ret.Killed = false
-		return connect.NewResponse(ret), nil
+		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("action not found for tracking ID %s", req.Msg.ExecutionTrackingId))
 	}
+
+	log.Warnf("Killing execution request by tracking ID: %v", req.Msg.ExecutionTrackingId)
 
 	user := auth.UserFromApiCall(ctx, req, api.cfg)
 
@@ -205,42 +206,58 @@ func (api *oliveTinAPI) LocalUserLogin(ctx ctx.Context, req *connect.Request[api
 	return response, nil
 }
 
-func (api *oliveTinAPI) StartActionAndWait(ctx ctx.Context, req *connect.Request[apiv1.StartActionAndWaitRequest]) (*connect.Response[apiv1.StartActionAndWaitResponse], error) {
-	args := make(map[string]string)
-
-	for _, arg := range req.Msg.Arguments {
-		args[arg.Name] = arg.Value
-	}
-
-	user := auth.UserFromApiCall(ctx, req, api.cfg)
-
+func (api *oliveTinAPI) startActionAndWaitRun(binding *executor.ActionBinding, args map[string]string, user *authpublic.AuthenticatedUser) (*executor.InternalLogEntry, bool) {
 	execReq := executor.ExecutionRequest{
-		Binding:           api.executor.FindBindingByID(req.Msg.ActionId),
+		Binding:           binding,
 		TrackingID:        uuid.NewString(),
 		Arguments:         args,
 		AuthenticatedUser: user,
 		Cfg:               api.cfg,
 	}
-
 	wg, _ := api.executor.ExecRequest(&execReq)
 	wg.Wait()
+	return api.executor.GetLog(execReq.TrackingID)
+}
 
-	internalLogEntry, ok := api.executor.GetLog(execReq.TrackingID)
-
-	if ok {
-		return connect.NewResponse(&apiv1.StartActionAndWaitResponse{
-			LogEntry: api.internalLogEntryToPb(internalLogEntry, user),
-		}), nil
-	} else {
-		return nil, fmt.Errorf("execution not found")
+func (api *oliveTinAPI) findBindingOrNotFound(actionId string) (*executor.ActionBinding, error) {
+	binding := api.executor.FindBindingByID(actionId)
+	if binding == nil || binding.Action == nil {
+		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("action with ID %s not found", actionId))
 	}
+	return binding, nil
+}
+
+func (api *oliveTinAPI) StartActionAndWait(ctx ctx.Context, req *connect.Request[apiv1.StartActionAndWaitRequest]) (*connect.Response[apiv1.StartActionAndWaitResponse], error) {
+	binding, err := api.findBindingOrNotFound(req.Msg.ActionId)
+	if err != nil {
+		return nil, err
+	}
+
+	args := make(map[string]string)
+	for _, arg := range req.Msg.Arguments {
+		args[arg.Name] = arg.Value
+	}
+	user := auth.UserFromApiCall(ctx, req, api.cfg)
+
+	internalLogEntry, ok := api.startActionAndWaitRun(binding, args, user)
+	if !ok {
+		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("execution not found"))
+	}
+	return connect.NewResponse(&apiv1.StartActionAndWaitResponse{
+		LogEntry: api.internalLogEntryToPb(internalLogEntry, user),
+	}), nil
 }
 
 func (api *oliveTinAPI) StartActionByGet(ctx ctx.Context, req *connect.Request[apiv1.StartActionByGetRequest]) (*connect.Response[apiv1.StartActionByGetResponse], error) {
+	binding := api.executor.FindBindingByID(req.Msg.ActionId)
+	if binding == nil || binding.Action == nil {
+		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("action with ID %s not found", req.Msg.ActionId))
+	}
+
 	args := make(map[string]string)
 
 	execReq := executor.ExecutionRequest{
-		Binding:           api.executor.FindBindingByID(req.Msg.ActionId),
+		Binding:           binding,
 		TrackingID:        uuid.NewString(),
 		Arguments:         args,
 		AuthenticatedUser: auth.UserFromApiCall(ctx, req, api.cfg),
@@ -255,12 +272,17 @@ func (api *oliveTinAPI) StartActionByGet(ctx ctx.Context, req *connect.Request[a
 }
 
 func (api *oliveTinAPI) StartActionByGetAndWait(ctx ctx.Context, req *connect.Request[apiv1.StartActionByGetAndWaitRequest]) (*connect.Response[apiv1.StartActionByGetAndWaitResponse], error) {
+	binding := api.executor.FindBindingByID(req.Msg.ActionId)
+	if binding == nil || binding.Action == nil {
+		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("action with ID %s not found", req.Msg.ActionId))
+	}
+
 	args := make(map[string]string)
 
 	user := auth.UserFromApiCall(ctx, req, api.cfg)
 
 	execReq := executor.ExecutionRequest{
-		Binding:           api.executor.FindBindingByID(req.Msg.ActionId),
+		Binding:           binding,
 		TrackingID:        uuid.NewString(),
 		Arguments:         args,
 		AuthenticatedUser: user,
@@ -276,9 +298,8 @@ func (api *oliveTinAPI) StartActionByGetAndWait(ctx ctx.Context, req *connect.Re
 		return connect.NewResponse(&apiv1.StartActionByGetAndWaitResponse{
 			LogEntry: api.internalLogEntryToPb(internalLogEntry, user),
 		}), nil
-	} else {
-		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("execution not found"))
 	}
+	return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("execution not found"))
 }
 
 func calculateRateLimitExpires(api *oliveTinAPI, logEntry *executor.InternalLogEntry) string {
@@ -438,7 +459,7 @@ func (api *oliveTinAPI) GetActionBinding(ctx ctx.Context, req *connect.Request[a
 
 	binding := api.executor.FindBindingByID(req.Msg.BindingId)
 
-	if binding == nil {
+	if binding == nil || binding.Action == nil {
 		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("action with ID %s not found", req.Msg.BindingId))
 	}
 
@@ -648,7 +669,16 @@ error messages more quickly before starting the action.
 It uses the same validation logic as the executor, including mangling argument
 values (e.g., datetime formatting, checkbox title-to-value conversion).
 */
+func (api *oliveTinAPI) argumentNotFoundForValidation(msg *apiv1.ValidateArgumentTypeRequest) bool {
+	arg, _ := api.findArgumentForValidation(msg.BindingId, msg.ArgumentName)
+	return arg == nil && (msg.BindingId != "" || msg.ArgumentName != "")
+}
+
 func (api *oliveTinAPI) ValidateArgumentType(ctx ctx.Context, req *connect.Request[apiv1.ValidateArgumentTypeRequest]) (*connect.Response[apiv1.ValidateArgumentTypeResponse], error) {
+	if api.argumentNotFoundForValidation(req.Msg) {
+		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("action or argument not found for binding ID %s", req.Msg.BindingId))
+	}
+
 	err := api.validateArgumentTypeInternal(req.Msg)
 	desc := ""
 	if err != nil {
@@ -749,6 +779,13 @@ func (api *oliveTinAPI) DumpVars(ctx ctx.Context, req *connect.Request[apiv1.Dum
 	return connect.NewResponse(res), nil
 }
 
+func debugBindingActionTitle(binding *executor.ActionBinding) string {
+	if binding == nil || binding.Action == nil {
+		return ""
+	}
+	return binding.Action.Title
+}
+
 func (api *oliveTinAPI) DumpPublicIdActionMap(ctx ctx.Context, req *connect.Request[apiv1.DumpPublicIdActionMapRequest]) (*connect.Response[apiv1.DumpPublicIdActionMapResponse], error) {
 	res := &apiv1.DumpPublicIdActionMapResponse{}
 	res.Contents = make(map[string]*apiv1.DebugBinding)
@@ -763,7 +800,7 @@ func (api *oliveTinAPI) DumpPublicIdActionMap(ctx ctx.Context, req *connect.Requ
 
 	for k, v := range api.executor.MapActionBindings {
 		res.Contents[k] = &apiv1.DebugBinding{
-			ActionTitle: v.Action.Title,
+			ActionTitle: debugBindingActionTitle(v),
 		}
 	}
 
@@ -1276,17 +1313,17 @@ func (api *oliveTinAPI) RestartAction(ctx ctx.Context, req *connect.Request[apiv
 	execReqLogEntry, found := api.executor.GetLog(req.Msg.ExecutionTrackingId)
 
 	if !found {
-		log.Warnf("Restarting execution request not possible - not found by tracking ID: %v", req.Msg.ExecutionTrackingId)
-		return connect.NewResponse(ret), nil
+		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("execution not found for tracking ID %s", req.Msg.ExecutionTrackingId))
 	}
 
-	log.Warnf("Restarting execution request by tracking ID: %v", req.Msg.ExecutionTrackingId)
+	if execReqLogEntry.Binding == nil {
+		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("log entry has no binding for tracking ID %s", req.Msg.ExecutionTrackingId))
+	}
 
 	action := execReqLogEntry.Binding.Action
 
 	if action == nil {
-		log.Warnf("Restarting execution request not possible - action not found: %v", execReqLogEntry.ActionTitle)
-		return connect.NewResponse(ret), nil
+		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("action not found for tracking ID %s", req.Msg.ExecutionTrackingId))
 	}
 
 	authenticatedUser := auth.UserFromApiCall(ctx, req, api.cfg)

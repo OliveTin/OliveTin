@@ -130,7 +130,7 @@ func buildDefaultDashboard(rr *DashboardRenderRequest) *apiv1.Dashboard {
 	}
 
 	for _, binding := range rr.ex.MapActionBindings {
-		if binding.Action.Hidden {
+		if binding == nil || binding.Action == nil || binding.Action.Hidden {
 			continue
 		}
 
@@ -139,6 +139,9 @@ func buildDefaultDashboard(rr *DashboardRenderRequest) *apiv1.Dashboard {
 		}
 
 		action := buildAction(binding, rr)
+		if action == nil {
+			continue
+		}
 
 		fieldset.Contents = append(fieldset.Contents, &apiv1.DashboardComponent{
 			Type:   "link",
