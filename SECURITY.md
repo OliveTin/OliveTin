@@ -6,8 +6,8 @@ The following branches are currently being supported with security updates:
 
 | Version | Supported          |
 | ------- | ------------------ |
-| `main` (3k release branch)  | :white_check_mark: |
-| `release/2k` (2k release branch) | :white_check_mark: |
+| `main` (3k release branch)  | :white_check_mark: - advisories will be published when patched in this branch |
+| `release/2k` (2k release branch) | :white_check_mark: - receives security updates, but much slower |
 
 To understand more about 2k vs 3k, see the following docs; https://docs.olivetin.app/upgrade/2k3k.html
 
