@@ -47,9 +47,9 @@ Once a vulnerability is reported, the process is;
 
 * Accept or reject the report, and communicate with the reporter about next steps.
 * If accepted, patch using a temporary branch, and code review will be requested from the original reporter if they are interested.
-* The severity of the vulnerability will be assessed using CVSS, and the patch will be prioritized accordingly.
+* The severity of the vulnerability will be assessed using CVSS, and the patch will be prioritised accordingly.
 * Once the patch is ready, it will be queued for a release onto the `next` branch (3k) or `release/2k` branch (2k)
-* The reporter will be credited in the advistory and the release notes, but not the commit message.
+* The reporter will be credited in the advisory and the release notes, but not the commit message.
 * The commit message will contain a reference to the CVSS score (eg: MED) and the advisory ID. 
 
 
