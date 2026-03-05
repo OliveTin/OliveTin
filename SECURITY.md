@@ -6,8 +6,8 @@ The following branches are currently being supported with security updates:
 
 | Version | Supported          |
 | ------- | ------------------ |
-| `main` (3k release branch)  | :white_check_mark: |
-| `release/2k` (2k release branch) | :white_check_mark: |
+| `main` (3k release branch)  | :white_check_mark: - advisories will be published when patched in this branch |
+| `release/2k` (2k release branch) | :white_check_mark: - receives security updates, but much slower |
 
 To understand more about 2k vs 3k, see the following docs; https://docs.olivetin.app/upgrade/2k3k.html
 
@@ -40,3 +40,16 @@ The following notes might be helpful when reporting a vulnerability:
 ## Disclosure of how vulnerabilities were found
 
 It is incredibly useful to not just patch security vulnerabilities, but also to understand how they were found. If you are able to share this information, it can help us and the community to better understand potential attack vectors and improve the overall security of the project.
+
+## Process
+
+Once a vulnerability is reported, the process is;
+
+* Accept or reject the report, and communicate with the reporter about next steps.
+* If accepted, patch using a temporary branch, and code review will be requested from the original reporter if they are interested.
+* The severity of the vulnerability will be assessed using CVSS, and the patch will be prioritised accordingly.
+* Once the patch is ready, it will be queued for a release onto the `next` branch (3k) or `release/2k` branch (2k)
+* The reporter will be credited in the advisory and the release notes, but not the commit message.
+* The commit message will contain a reference to the CVSS score (eg: MED) and the advisory ID. 
+
+

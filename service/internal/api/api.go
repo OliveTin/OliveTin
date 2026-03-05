@@ -466,15 +466,15 @@ func (api *oliveTinAPI) GetActionBinding(ctx ctx.Context, req *connect.Request[a
 
 func (api *oliveTinAPI) getActionBindingResponse(user *authpublic.AuthenticatedUser, bindingId string) (*apiv1.GetActionBindingResponse, error) {
 	binding := api.executor.FindBindingByID(bindingId)
-	if binding == nil {
+  
+	if binding == nil || binding.Action == nil {
 		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("action with ID %s not found", bindingId))
 	}
-	if binding.Action == nil {
-		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("action with ID %s not found", bindingId))
-	}
+  
 	if !api.userCanViewAction(user, binding.Action) {
 		return nil, connect.NewError(connect.CodePermissionDenied, fmt.Errorf("permission denied"))
 	}
+  
 	return &apiv1.GetActionBindingResponse{
 		Action: buildAction(binding, &DashboardRenderRequest{
 			cfg:               api.cfg,
