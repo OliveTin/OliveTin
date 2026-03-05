@@ -466,15 +466,15 @@ func (api *oliveTinAPI) GetActionBinding(ctx ctx.Context, req *connect.Request[a
 
 func (api *oliveTinAPI) getActionBindingResponse(user *authpublic.AuthenticatedUser, bindingId string) (*apiv1.GetActionBindingResponse, error) {
 	binding := api.executor.FindBindingByID(bindingId)
-  
+
 	if binding == nil || binding.Action == nil {
 		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("action with ID %s not found", bindingId))
 	}
-  
+
 	if !api.userCanViewAction(user, binding.Action) {
 		return nil, connect.NewError(connect.CodePermissionDenied, fmt.Errorf("permission denied"))
 	}
-  
+
 	return &apiv1.GetActionBindingResponse{
 		Action: buildAction(binding, &DashboardRenderRequest{
 			cfg:               api.cfg,
@@ -689,8 +689,13 @@ It uses the same validation logic as the executor, including mangling argument
 values (e.g., datetime formatting, checkbox title-to-value conversion).
 */
 func (api *oliveTinAPI) argumentNotFoundForValidation(msg *apiv1.ValidateArgumentTypeRequest) bool {
+	if msg.BindingId == "" || msg.ArgumentName == "" {
+		return false
+	}
+
 	arg, _ := api.findArgumentForValidation(msg.BindingId, msg.ArgumentName)
-	return arg == nil && (msg.BindingId != "" || msg.ArgumentName != "")
+
+	return arg == nil
 }
 
 func (api *oliveTinAPI) ValidateArgumentType(ctx ctx.Context, req *connect.Request[apiv1.ValidateArgumentTypeRequest]) (*connect.Response[apiv1.ValidateArgumentTypeResponse], error) {
