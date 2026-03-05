@@ -2,6 +2,7 @@ package executor
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 
@@ -395,3 +396,95 @@ func TestFilterToDefinedArgumentsPreservesSystemArgs(t *testing.T) {
 	assert.Equal(t, "track-123", req.Arguments["ot_executionTrackingId"])
 	assert.Equal(t, "webhook", req.Arguments["ot_username"])
 }
+
+func TestTriggerExecutesTriggeredAction(t *testing.T) {
+	cfg := config.DefaultConfig()
+	e := DefaultExecutor(cfg)
+	helloAction := &config.Action{
+		Title: "Hello world",
+		Shell: "echo 'Hello World!'",
+	}
+	triggerAction := &config.Action{
+		Title:    "Simple action that triggers another action",
+		Shell:    "echo 'Hi'",
+		Triggers: []string{"Hello world"},
+	}
+	cfg.Actions = append(cfg.Actions, helloAction, triggerAction)
+	cfg.Sanitize()
+	e.RebuildActionMap()
+
+	finishedTitles := make(chan string, 4)
+	collector := &executionFinishedCollector{ch: finishedTitles}
+	e.AddListener(collector)
+
+	req := &ExecutionRequest{
+		AuthenticatedUser: auth.UserFromSystem(cfg, "testuser"),
+		Cfg:               cfg,
+		Binding:           e.FindBindingWithNoEntity(triggerAction),
+	}
+	wg, _ := e.ExecRequest(req)
+	wg.Wait()
+
+	var got []string
+	for i := 0; i < 2; i++ {
+		select {
+		case title := <-finishedTitles:
+			got = append(got, title)
+		case <-time.After(2 * time.Second):
+			t.Fatalf("timed out waiting for execution %d; got %v", i+1, got)
+		}
+	}
+	assert.Contains(t, got, "Hello world", "triggered action must run")
+	assert.Contains(t, got, "Simple action that triggers another action", "triggering action must run")
+}
+
+func TestTriggerUnknownActionTitleSkipsWithoutPanic(t *testing.T) {
+	cfg := config.DefaultConfig()
+	e := DefaultExecutor(cfg)
+	triggerAction := &config.Action{
+		Title:    "Action with bad trigger",
+		Shell:    "echo 'ok'",
+		Triggers: []string{"Nonexistent action"},
+	}
+	cfg.Actions = append(cfg.Actions, triggerAction)
+	cfg.Sanitize()
+	e.RebuildActionMap()
+
+	finishedTitles := make(chan string, 4)
+	collector := &executionFinishedCollector{ch: finishedTitles}
+	e.AddListener(collector)
+
+	req := &ExecutionRequest{
+		AuthenticatedUser: auth.UserFromSystem(cfg, "testuser"),
+		Cfg:               cfg,
+		Binding:           e.FindBindingWithNoEntity(triggerAction),
+	}
+	wg, _ := e.ExecRequest(req)
+	wg.Wait()
+
+	var got []string
+	select {
+	case title := <-finishedTitles:
+		got = append(got, title)
+	case <-time.After(500 * time.Millisecond):
+	}
+	assert.Len(t, got, 1, "only the triggering action runs; unknown trigger is skipped")
+
+	if len(got) > 0 {
+		assert.Equal(t, "Action with bad trigger", got[0])
+	}
+}
+
+type executionFinishedCollector struct {
+	ch chan string
+}
+
+func (c *executionFinishedCollector) OnExecutionStarted(_ *InternalLogEntry) {}
+
+func (c *executionFinishedCollector) OnExecutionFinished(entry *InternalLogEntry) {
+	c.ch <- entry.ActionTitle
+}
+
+func (c *executionFinishedCollector) OnOutputChunk(_ []byte, _ string) {}
+
+func (c *executionFinishedCollector) OnActionMapRebuilt() {}

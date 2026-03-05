@@ -4,6 +4,7 @@ import (
 	"sort"
 
 	apiv1 "github.com/OliveTin/OliveTin/gen/olivetin/api/v1"
+	acl "github.com/OliveTin/OliveTin/internal/acl"
 	config "github.com/OliveTin/OliveTin/internal/config"
 	entities "github.com/OliveTin/OliveTin/internal/entities"
 	"github.com/OliveTin/OliveTin/internal/tpl"
@@ -130,7 +131,7 @@ func buildDefaultDashboard(rr *DashboardRenderRequest) *apiv1.Dashboard {
 	}
 
 	for _, binding := range rr.ex.MapActionBindings {
-		if binding.Action.Hidden {
+		if binding == nil || binding.Action == nil || binding.Action.Hidden {
 			continue
 		}
 
@@ -138,7 +139,14 @@ func buildDefaultDashboard(rr *DashboardRenderRequest) *apiv1.Dashboard {
 			continue
 		}
 
+		if !acl.IsAllowedView(rr.cfg, rr.AuthenticatedUser, binding.Action) {
+			continue
+		}
+
 		action := buildAction(binding, rr)
+		if action == nil {
+			continue
+		}
 
 		fieldset.Contents = append(fieldset.Contents, &apiv1.DashboardComponent{
 			Type:   "link",
