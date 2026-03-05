@@ -469,7 +469,10 @@ func TestTriggerUnknownActionTitleSkipsWithoutPanic(t *testing.T) {
 	case <-time.After(500 * time.Millisecond):
 	}
 	assert.Len(t, got, 1, "only the triggering action runs; unknown trigger is skipped")
-	assert.Equal(t, "Action with bad trigger", got[0])
+
+	if len(got) > 0 {
+		assert.Equal(t, "Action with bad trigger", got[0])
+	}
 }
 
 type executionFinishedCollector struct {
