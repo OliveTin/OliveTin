@@ -101,6 +101,7 @@ func StartFrontendMux(cfg *config.Config, ex *executor.Executor) {
 
 	oauth2handler := otoauth2.NewOAuth2Handler(cfg)
 	auth.AddAuthChainFunction(oauth2handler.CheckUserFromOAuth2Cookie)
+	auth.RegisterOAuth2SessionRevoker(oauth2handler.RevokeSession)
 
 	mux.HandleFunc("/oauth/login", oauth2handler.HandleOAuthLogin)
 	mux.HandleFunc("/oauth/callback", oauth2handler.HandleOAuthCallback)
