@@ -1273,8 +1273,6 @@ func (api *oliveTinAPI) RestartAction(ctx ctx.Context, req *connect.Request[apiv
 		ExecutionTrackingId: req.Msg.ExecutionTrackingId,
 	}
 
-	var execReqLogEntry *executor.InternalLogEntry
-
 	execReqLogEntry, found := api.executor.GetLog(req.Msg.ExecutionTrackingId)
 
 	if !found {
@@ -1291,12 +1289,21 @@ func (api *oliveTinAPI) RestartAction(ctx ctx.Context, req *connect.Request[apiv
 		return connect.NewResponse(ret), nil
 	}
 
-	return api.StartAction(ctx, &connect.Request[apiv1.StartActionRequest]{
-		Msg: &apiv1.StartActionRequest{
-			BindingId:        execReqLogEntry.GetBindingId(),
-			UniqueTrackingId: req.Msg.ExecutionTrackingId,
-		},
-	})
+	authenticatedUser := auth.UserFromApiCall(ctx, req, api.cfg)
+
+	// TrackingID is deliberately not passed to the executor, so that it generates a new one for the restarted execution.
+	// This is because the old execution (identified by the old TrackingID) is already used.
+	execReq := executor.ExecutionRequest{
+		Binding:           execReqLogEntry.Binding,
+		Arguments:         make(map[string]string),
+		AuthenticatedUser: authenticatedUser,
+		Cfg:               api.cfg,
+	}
+
+	api.executor.ExecRequest(&execReq)
+
+	ret.ExecutionTrackingId = execReq.TrackingID
+	return connect.NewResponse(ret), nil
 }
 
 func newServer(ex *executor.Executor) *oliveTinAPI {
