@@ -28,18 +28,22 @@ func (rr *DashboardRenderRequest) findAction(title string) *apiv1.Action {
 	return rr.findActionForEntity(title, nil)
 }
 
+func bindingMatchesTitleAndEntity(binding *executor.ActionBinding, title string, entity *entities.Entity) bool {
+	return binding != nil && binding.Action != nil && binding.Action.Title == title && matchesEntity(binding, entity)
+}
+
 func (rr *DashboardRenderRequest) findActionForEntity(title string, entity *entities.Entity) *apiv1.Action {
 	rr.ex.MapActionBindingsLock.RLock()
 	defer rr.ex.MapActionBindingsLock.RUnlock()
 
 	for _, binding := range rr.ex.MapActionBindings {
-		if binding.Action.Title != title {
+		if !bindingMatchesTitleAndEntity(binding, title, entity) {
 			continue
 		}
-
-		if matchesEntity(binding, entity) {
-			return buildAction(binding, rr)
+		if !acl.IsAllowedView(rr.cfg, rr.AuthenticatedUser, binding.Action) {
+			return nil
 		}
+		return buildAction(binding, rr)
 	}
 
 	return nil
@@ -117,26 +121,37 @@ func getDefaultArgumentValue(cfgArg config.ActionArgument, entity *entities.Enti
 	return defaultValue
 }
 
+func formatRateLimitExpiry(expiryUnix int64) string {
+	if expiryUnix <= 0 {
+		return ""
+	}
+	return time.Unix(expiryUnix, 0).Format("2006-01-02 15:04:05")
+}
+
+func actionFromBinding(actionBinding *executor.ActionBinding) (*executor.ActionBinding, *config.Action) {
+	if actionBinding == nil || actionBinding.Action == nil {
+		return nil, nil
+	}
+	return actionBinding, actionBinding.Action
+}
+
 func buildAction(actionBinding *executor.ActionBinding, rr *DashboardRenderRequest) *apiv1.Action {
-	action := actionBinding.Action
-
-	aclCanExec := acl.IsAllowedExec(rr.cfg, rr.AuthenticatedUser, action)
-	enabledExprCanExec := evaluateEnabledExpression(action, actionBinding.Entity)
-
-	// Calculate rate limit expiry time
-	expiryUnix := rr.ex.GetTimeUntilAvailable(actionBinding)
-	datetimeRateLimitExpires := ""
-	if expiryUnix > 0 {
-		datetimeRateLimitExpires = time.Unix(expiryUnix, 0).Format("2006-01-02 15:04:05")
+	binding, action := actionFromBinding(actionBinding)
+	if binding == nil {
+		return nil
 	}
 
+	aclCanExec := acl.IsAllowedExec(rr.cfg, rr.AuthenticatedUser, action)
+	enabledExprCanExec := evaluateEnabledExpression(action, binding.Entity)
+	datetimeRateLimitExpires := formatRateLimitExpiry(rr.ex.GetTimeUntilAvailable(binding))
+
 	btn := apiv1.Action{
-		BindingId:                actionBinding.ID,
-		Title:                    tpl.ParseTemplateOfActionBeforeExec(action.Title, actionBinding.Entity),
-		Icon:                     tpl.ParseTemplateOfActionBeforeExec(action.Icon, actionBinding.Entity),
+		BindingId:                binding.ID,
+		Title:                    tpl.ParseTemplateOfActionBeforeExec(action.Title, binding.Entity),
+		Icon:                     tpl.ParseTemplateOfActionBeforeExec(action.Icon, binding.Entity),
 		CanExec:                  aclCanExec && enabledExprCanExec,
 		PopupOnStart:             action.PopupOnStart,
-		Order:                    int32(actionBinding.ConfigOrder),
+		Order:                    int32(binding.ConfigOrder),
 		Timeout:                  int32(action.Timeout),
 		DatetimeRateLimitExpires: datetimeRateLimitExpires,
 	}
@@ -147,7 +162,7 @@ func buildAction(actionBinding *executor.ActionBinding, rr *DashboardRenderReque
 			Title:                 cfgArg.Title,
 			Type:                  cfgArg.Type,
 			Description:           cfgArg.Description,
-			DefaultValue:          getDefaultArgumentValue(cfgArg, actionBinding.Entity),
+			DefaultValue:          getDefaultArgumentValue(cfgArg, binding.Entity),
 			Choices:               buildChoices(cfgArg),
 			Suggestions:           cfgArg.Suggestions,
 			SuggestionsBrowserKey: cfgArg.SuggestionsBrowserKey,
