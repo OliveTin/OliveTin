@@ -413,6 +413,8 @@ func (api *oliveTinAPI) ExecutionStatus(ctx ctx.Context, req *connect.Request[ap
 func (api *oliveTinAPI) Logout(ctx ctx.Context, req *connect.Request[apiv1.LogoutRequest]) (*connect.Response[apiv1.LogoutResponse], error) {
 	user := auth.UserFromApiCall(ctx, req, api.cfg)
 
+	auth.RevokeSessionForProvider(api.cfg, user.Provider, user.SID)
+
 	log.WithFields(log.Fields{
 		"username": user.Username,
 		"provider": user.Provider,
@@ -1304,7 +1306,9 @@ func serializeEntityFields(data any) map[string]string {
 }
 
 func (api *oliveTinAPI) RestartAction(ctx ctx.Context, req *connect.Request[apiv1.RestartActionRequest]) (*connect.Response[apiv1.StartActionResponse], error) {
-	var execReqLogEntry *executor.InternalLogEntry
+	ret := &apiv1.StartActionResponse{
+		ExecutionTrackingId: req.Msg.ExecutionTrackingId,
+	}
 
 	execReqLogEntry, found := api.executor.GetLog(req.Msg.ExecutionTrackingId)
 
@@ -1322,14 +1326,21 @@ func (api *oliveTinAPI) RestartAction(ctx ctx.Context, req *connect.Request[apiv
 		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("action not found for tracking ID %s", req.Msg.ExecutionTrackingId))
 	}
 
-	log.Warnf("Restarting execution request by tracking ID: %v", req.Msg.ExecutionTrackingId)
+	authenticatedUser := auth.UserFromApiCall(ctx, req, api.cfg)
 
-	return api.StartAction(ctx, &connect.Request[apiv1.StartActionRequest]{
-		Msg: &apiv1.StartActionRequest{
-			BindingId:        execReqLogEntry.GetBindingId(),
-			UniqueTrackingId: req.Msg.ExecutionTrackingId,
-		},
-	})
+	// TrackingID is deliberately not passed to the executor, so that it generates a new one for the restarted execution.
+	// This is because the old execution (identified by the old TrackingID) is already used.
+	execReq := executor.ExecutionRequest{
+		Binding:           execReqLogEntry.Binding,
+		Arguments:         make(map[string]string),
+		AuthenticatedUser: authenticatedUser,
+		Cfg:               api.cfg,
+	}
+
+	api.executor.ExecRequest(&execReq)
+
+	ret.ExecutionTrackingId = execReq.TrackingID
+	return connect.NewResponse(ret), nil
 }
 
 func newServer(ex *executor.Executor) *oliveTinAPI {

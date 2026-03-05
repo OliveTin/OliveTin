@@ -1015,8 +1015,15 @@ func stepTrigger(req *ExecutionRequest) bool {
 }
 
 func triggerLoop(req *ExecutionRequest) {
-	for _, triggerReq := range req.Binding.Action.Triggers {
-		binding := req.executor.FindBindingByID(triggerReq)
+	for _, triggerTitle := range req.Binding.Action.Triggers {
+		binding := req.executor.findBindingByActionTitle(triggerTitle, "")
+		if binding == nil {
+			log.WithFields(log.Fields{
+				"triggerTitle": triggerTitle,
+				"fromAction":   req.logEntry.ActionTitle,
+			}).Warnf("Trigger references unknown action title; skipping")
+			continue
+		}
 		trigger := &ExecutionRequest{
 			Binding:           binding,
 			TrackingID:        uuid.NewString(),
@@ -1059,7 +1066,7 @@ func saveLogResults(req *ExecutionRequest, filename string) {
 		}
 
 		filepath := path.Join(dir, filename+".yaml")
-		err = os.WriteFile(filepath, data, 0644)
+		err = os.WriteFile(filepath, data, 0600)
 
 		if err != nil {
 			log.Warnf("%v", err)
@@ -1073,7 +1080,7 @@ func saveLogOutput(req *ExecutionRequest, filename string) {
 	if dir != "" {
 		data := req.logEntry.Output
 		filepath := path.Join(dir, filename+".log")
-		err := os.WriteFile(filepath, []byte(data), 0644)
+		err := os.WriteFile(filepath, []byte(data), 0600)
 
 		if err != nil {
 			log.Warnf("%v", err)
