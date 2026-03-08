@@ -432,6 +432,73 @@ func TestViewPermissionAllowedSeesAction(t *testing.T) {
 	assert.Equal(t, "secret_action", resp.Action.BindingId)
 }
 
+// TestViewPermissionExcludedFromCustomDashboard (issue #921) asserts that when a custom dashboard
+// lists an action by title, users without view permission do not see that action (title or icon).
+func TestViewPermissionExcludedFromCustomDashboard(t *testing.T) {
+	cfg, lowUser, _ := buildViewPermissionTestConfig(t)
+	cfg.Dashboards = []*config.DashboardComponent{
+		{
+			Title: "Custom",
+			Contents: []*config.DashboardComponent{
+				{Title: "Secret Action"},
+			},
+		},
+	}
+	ex := executor.DefaultExecutor(cfg)
+	ex.RebuildActionMap()
+
+	rr := &DashboardRenderRequest{
+		AuthenticatedUser: lowUser,
+		cfg:               cfg,
+		ex:                ex,
+	}
+	dashboard := findDashboardByTitle(rr, "Custom")
+	require.NotNil(t, dashboard)
+	db := buildDashboardFromConfig(dashboard, rr)
+	require.NotNil(t, db)
+
+	bindingIdsInDashboard := bindingIdsInDashboardContents(db.Contents)
+	assert.NotContains(t, bindingIdsInDashboard, "secret_action",
+		"user with view:false must not see action on custom dashboard; got bindingIds: %v", bindingIdsInDashboard)
+}
+
+// TestViewPermissionExcludedFromEntityDashboard (GHSA: view permission) asserts that when a dashboard
+// has an entity fieldset listing an action, users without view permission do not see that action.
+func TestViewPermissionExcludedFromEntityDashboard(t *testing.T) {
+	entities.ClearEntitiesOfType("vp_entity_test")
+	defer entities.ClearEntitiesOfType("vp_entity_test")
+	entities.AddEntity("vp_entity_test", "1", map[string]any{"title": "Test Entity"})
+
+	cfg, lowUser, _ := buildViewPermissionTestConfig(t)
+	cfg.Dashboards = []*config.DashboardComponent{
+		{
+			Title: "WithEntity",
+			Contents: []*config.DashboardComponent{
+				{
+					Title: "Servers", Type: "fieldset", Entity: "vp_entity_test",
+					Contents: []*config.DashboardComponent{{Title: "Secret Action"}},
+				},
+			},
+		},
+	}
+	ex := executor.DefaultExecutor(cfg)
+	ex.RebuildActionMap()
+
+	rr := &DashboardRenderRequest{
+		AuthenticatedUser: lowUser,
+		cfg:               cfg,
+		ex:                ex,
+	}
+	dashboard := findDashboardByTitle(rr, "WithEntity")
+	require.NotNil(t, dashboard)
+	db := buildDashboardFromConfig(dashboard, rr)
+	require.NotNil(t, db)
+
+	bindingIdsInDashboard := bindingIdsInDashboardContents(db.Contents)
+	assert.NotContains(t, bindingIdsInDashboard, "secret_action",
+		"user with view:false must not see action in entity fieldset; got bindingIds: %v", bindingIdsInDashboard)
+}
+
 func bindingIdsInDashboardContents(contents []*apiv1.DashboardComponent) []string {
 	var ids []string
 	for _, c := range contents {

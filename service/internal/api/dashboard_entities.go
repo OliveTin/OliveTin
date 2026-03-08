@@ -82,8 +82,6 @@ func isLinkType(itemType string) bool {
 }
 
 func cloneLinkItem(subitem *config.DashboardComponent, ent *entities.Entity, clone *apiv1.DashboardComponent, rr *DashboardRenderRequest) *apiv1.DashboardComponent {
-	clone.Type = "link"
-	clone.Title = tpl.ParseTemplateOfActionBeforeExec(subitem.Title, ent)
 	// Prefer an entity-specific action when available, but fall back to a
 	// non-entity-scoped action with the same title. This allows inline actions
 	// defined inside entity dashboards to work without requiring an explicit
@@ -92,7 +90,11 @@ func cloneLinkItem(subitem *config.DashboardComponent, ent *entities.Entity, clo
 	if action == nil {
 		action = rr.findAction(subitem.Title)
 	}
-
+	if action == nil {
+		return nil
+	}
+	clone.Type = "link"
+	clone.Title = tpl.ParseTemplateOfActionBeforeExec(subitem.Title, ent)
 	clone.Action = action
 	return clone
 }

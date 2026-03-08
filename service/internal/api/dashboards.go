@@ -277,16 +277,31 @@ func createRootFieldset() *apiv1.DashboardComponent {
 	}
 }
 
+func appendComponentIfNotNil(components *[]*apiv1.DashboardComponent, comp *apiv1.DashboardComponent) {
+	if comp != nil {
+		*components = append(*components, comp)
+	}
+}
+
+func getDashboardComponentOrNil(subitem *config.DashboardComponent, rr *DashboardRenderRequest, entity *entities.Entity) *apiv1.DashboardComponent {
+	if len(subitem.Contents) == 0 && rr.findActionForEntity(subitem.Title, entity) == nil {
+		if !isAllowedType(subitem.Type) {
+			return nil
+		}
+	}
+	return buildDashboardComponentSimpleWithEntity(subitem, rr, entity)
+}
+
 func processDashboardSubitemWithEntity(subitem *config.DashboardComponent, rr *DashboardRenderRequest, ret *[]*apiv1.DashboardComponent, rootFieldset *apiv1.DashboardComponent, entity *entities.Entity) {
 	if subitem.Type != "fieldset" {
-		rootFieldset.Contents = append(rootFieldset.Contents, buildDashboardComponentSimpleWithEntity(subitem, rr, entity))
+		appendComponentIfNotNil(&rootFieldset.Contents, getDashboardComponentOrNil(subitem, rr, entity))
 		return
 	}
 
 	if subitem.Entity != "" {
 		*ret = append(*ret, buildEntityFieldsets(subitem.Entity, subitem, rr)...)
 	} else {
-		*ret = append(*ret, buildDashboardComponentSimpleWithEntity(subitem, rr, entity))
+		appendComponentIfNotNil(ret, getDashboardComponentOrNil(subitem, rr, entity))
 	}
 }
 
