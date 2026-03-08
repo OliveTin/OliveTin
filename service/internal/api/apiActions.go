@@ -185,9 +185,7 @@ func buildChoices(arg config.ActionArgument) []*apiv1.ActionArgumentChoice {
 func buildChoicesEntity(firstChoice config.ActionArgumentChoice, entityTitle string) []*apiv1.ActionArgumentChoice {
 	ret := []*apiv1.ActionArgumentChoice{}
 
-	entList := entities.GetEntityInstances(entityTitle)
-
-	for _, ent := range entList {
+	for _, ent := range entities.GetEntityInstancesOrdered(entityTitle) {
 		ret = append(ret, &apiv1.ActionArgumentChoice{
 			Value: tpl.ParseTemplateOfActionBeforeExec(firstChoice.Value, ent),
 			Title: tpl.ParseTemplateOfActionBeforeExec(firstChoice.Title, ent),

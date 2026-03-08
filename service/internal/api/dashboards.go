@@ -2,6 +2,7 @@ package api
 
 import (
 	"sort"
+	"strconv"
 
 	apiv1 "github.com/OliveTin/OliveTin/gen/olivetin/api/v1"
 	acl "github.com/OliveTin/OliveTin/internal/acl"
@@ -113,7 +114,7 @@ func buildDashboardFromConfig(dashboard *config.DashboardComponent, rr *Dashboar
 func buildDashboardFromConfigWithEntity(dashboard *config.DashboardComponent, rr *DashboardRenderRequest, entity *entities.Entity) *apiv1.Dashboard {
 	return &apiv1.Dashboard{
 		Title:    dashboard.Title,
-		Contents: sortActions(removeNulls(getDashboardComponentContentsWithEntity(dashboard, rr, entity))),
+		Contents: orderTopLevelDashboardComponents(removeNulls(getDashboardComponentContentsWithEntity(dashboard, rr, entity))),
 	}
 }
 
@@ -148,33 +149,49 @@ func buildDefaultDashboard(rr *DashboardRenderRequest) *apiv1.Dashboard {
 			continue
 		}
 
-		fieldset.Contents = append(fieldset.Contents, &apiv1.DashboardComponent{
+		comp := &apiv1.DashboardComponent{
 			Type:   "link",
 			Title:  action.Title,
 			Icon:   action.Icon,
 			Action: action,
-		})
+		}
+		if binding.Entity != nil {
+			comp.EntityKey = binding.Entity.UniqueKey
+		}
+		fieldset.Contents = append(fieldset.Contents, comp)
 	}
 
 	if len(fieldset.Contents) > 0 {
-		fieldset.Contents = sortActions(fieldset.Contents)
+		fieldset.Contents = sortDashboardComponents(fieldset.Contents)
 		db.Contents = append(db.Contents, fieldset)
 	}
 
 	return db
 }
 
-func sortActions(components []*apiv1.DashboardComponent) []*apiv1.DashboardComponent {
+func entityKeyLess(a, b string) bool {
+	ai, errA := strconv.ParseInt(a, 10, 64)
+	bi, errB := strconv.ParseInt(b, 10, 64)
+	if errA == nil && errB == nil {
+		return ai < bi
+	}
+	return a < b
+}
+
+//gocyclo:ignore
+func sortDashboardComponents(components []*apiv1.DashboardComponent) []*apiv1.DashboardComponent {
 	sort.Slice(components, func(i, j int) bool {
 		if components[i].Action == nil || components[j].Action == nil {
 			return components[i].Title < components[j].Title
 		}
 
-		if components[i].Action.Order == components[j].Action.Order {
-			return components[i].Action.Title < components[j].Action.Title
-		} else {
+		if components[i].Action.Order != components[j].Action.Order {
 			return components[i].Action.Order < components[j].Action.Order
 		}
+		if components[i].EntityKey != components[j].EntityKey {
+			return entityKeyLess(components[i].EntityKey, components[j].EntityKey)
+		}
+		return components[i].Action.Title < components[j].Action.Title
 	})
 
 	return components
@@ -192,6 +209,53 @@ func removeNulls(components []*apiv1.DashboardComponent) []*apiv1.DashboardCompo
 	}
 
 	return ret
+}
+
+func isRegularFieldset(component *apiv1.DashboardComponent, index int, totalLen int) bool {
+	if component == nil || component.Type != "fieldset" || component.EntityType != "" {
+		return false
+	}
+	return index != totalLen-1
+}
+
+func partitionTopLevelComponents(components []*apiv1.DashboardComponent) (regular, sortables []*apiv1.DashboardComponent, isRegular []bool) {
+	regular = make([]*apiv1.DashboardComponent, 0)
+	sortables = make([]*apiv1.DashboardComponent, 0)
+	isRegular = make([]bool, len(components))
+	for i, c := range components {
+		anchor := isRegularFieldset(c, i, len(components))
+		isRegular[i] = anchor
+		if anchor {
+			regular = append(regular, c)
+		} else {
+			sortables = append(sortables, c)
+		}
+	}
+	return regular, sortables, isRegular
+}
+
+func mergeOrderedTopLevelComponents(regular, sortables []*apiv1.DashboardComponent, isRegular []bool) []*apiv1.DashboardComponent {
+	out := make([]*apiv1.DashboardComponent, 0, len(isRegular))
+	regIdx, sortIdx := 0, 0
+	for _, anchor := range isRegular {
+		if anchor {
+			out = append(out, regular[regIdx])
+			regIdx++
+		} else {
+			out = append(out, sortables[sortIdx])
+			sortIdx++
+		}
+	}
+	return out
+}
+
+func orderTopLevelDashboardComponents(components []*apiv1.DashboardComponent) []*apiv1.DashboardComponent {
+	if len(components) == 0 {
+		return components
+	}
+	regular, sortables, isRegular := partitionTopLevelComponents(components)
+	sortDashboardComponents(sortables)
+	return mergeOrderedTopLevelComponents(regular, sortables, isRegular)
 }
 
 func getDashboardComponentContentsWithEntity(dashboard *config.DashboardComponent, rr *DashboardRenderRequest, entity *entities.Entity) []*apiv1.DashboardComponent {

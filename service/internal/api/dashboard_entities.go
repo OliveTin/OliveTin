@@ -11,9 +11,8 @@ import (
 func buildEntityFieldsets(entityTitle string, tpl *config.DashboardComponent, rr *DashboardRenderRequest) []*apiv1.DashboardComponent {
 	ret := make([]*apiv1.DashboardComponent, 0)
 
-	entities := entities.GetEntityInstances(entityTitle)
-
-	for _, ent := range entities {
+	orderedEntities := entities.GetEntityInstancesOrdered(entityTitle)
+	for _, ent := range orderedEntities {
 		fs := buildEntityFieldset(tpl, ent, rr)
 
 		if len(fs.Contents) > 0 {
@@ -30,7 +29,7 @@ func buildEntityFieldset(component *config.DashboardComponent, ent *entities.Ent
 		Type:       "fieldset",
 		Contents:   removeFieldsetIfHasNoLinks(buildEntityFieldsetContents(component.Contents, ent, component.Entity, rr)),
 		CssClass:   tpl.ParseTemplateOfActionBeforeExec(component.CssClass, ent),
-		Action:     rr.findAction(component.Title),
+		Action:     rr.findActionForEntity(component.Title, ent),
 		EntityType: component.Entity,
 		EntityKey:  ent.UniqueKey,
 	}

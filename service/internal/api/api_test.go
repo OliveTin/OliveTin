@@ -450,3 +450,29 @@ func bindingIdsFromComponent(c *apiv1.DashboardComponent) []string {
 	}
 	return append(ids, bindingIdsInDashboardContents(c.Contents)...)
 }
+
+func TestOrderTopLevelDashboardComponents_RegularFieldsetsPreserveConfigOrder(t *testing.T) {
+	zebra := &apiv1.DashboardComponent{Title: "Zebra", Type: "fieldset", EntityType: ""}
+	alpha := &apiv1.DashboardComponent{Title: "Alpha", Type: "fieldset", EntityType: ""}
+	root := &apiv1.DashboardComponent{Title: "Actions", Type: "fieldset", EntityType: ""}
+	components := []*apiv1.DashboardComponent{zebra, alpha, root}
+
+	out := orderTopLevelDashboardComponents(components)
+
+	require.Len(t, out, 3)
+	assert.Same(t, zebra, out[0], "first must be Zebra (config order)")
+	assert.Same(t, alpha, out[1], "second must be Alpha (config order)")
+	assert.Same(t, root, out[2], "third must be root Actions fieldset")
+}
+
+func TestOrderTopLevelDashboardComponents_SortablesSorted(t *testing.T) {
+	entityBeta := &apiv1.DashboardComponent{Title: "Beta", Type: "fieldset", EntityType: "server"}
+	entityAlpha := &apiv1.DashboardComponent{Title: "Alpha", Type: "fieldset", EntityType: "server"}
+	components := []*apiv1.DashboardComponent{entityBeta, entityAlpha}
+
+	out := orderTopLevelDashboardComponents(components)
+
+	require.Len(t, out, 2)
+	assert.Equal(t, "Alpha", out[0].Title, "sortables ordered by title")
+	assert.Equal(t, "Beta", out[1].Title)
+}
