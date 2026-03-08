@@ -194,7 +194,7 @@ func (cfg *Config) sanitizeSecurityHeadersCSP() {
 	if !cfg.Security.HeaderContentSecurityPolicy || cfg.Security.ContentSecurityPolicy != "" {
 		return
 	}
-	cfg.Security.ContentSecurityPolicy = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; frame-ancestors 'none'; base-uri 'self'"
+	cfg.Security.ContentSecurityPolicy = "default-src 'self'; script-src 'self' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https:; frame-ancestors 'none'; base-uri 'self'"
 }
 
 func (cfg *Config) sanitizeSecurityHeadersXFrameOptions() {
