@@ -169,14 +169,15 @@ function show(actionButton) {
 }
 
 async function rerunAction() {
-  if (!logEntry.value || !logEntry.value.actionId) {
+  const bindingId = logEntry.value?.bindingId
+  if (!logEntry.value || !bindingId) {
     console.error('Cannot rerun: no action ID available')
     return
   }
 
   try {
     const startActionArgs = {
-      "bindingId": logEntry.value.actionId,
+      "bindingId": bindingId,
       "arguments": []
     }
 
@@ -281,13 +282,13 @@ async function renderExecutionResult(res) {
   }
 
   executionTrackingId.value = res.logEntry.executionTrackingId
-  canRerun.value = res.logEntry.executionFinished
+  canRerun.value = res.logEntry.executionFinished && !!res.logEntry.bindingId
   canKill.value = res.logEntry.canKill
 
   icon.value = res.logEntry.actionIcon
   title.value = res.logEntry.actionTitle
-  titleTooltip.value = 'Action ID: ' + res.logEntry.actionId + '\nExecution ID: ' + res.logEntry.executionTrackingId
-  actionId.value = res.logEntry.actionId
+  titleTooltip.value = 'Action ID: ' + res.logEntry.bindingId + '\nExecution ID: ' + res.logEntry.executionTrackingId
+  actionId.value = res.logEntry.bindingId
 
   updateDuration(res.logEntry)
 
