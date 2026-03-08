@@ -1,5 +1,8 @@
 import { buttonResults } from '../resources/vue/stores/buttonResults.js'
 import { rateLimits } from '../resources/vue/stores/rateLimits.js'
+import { connectionState } from '../resources/vue/stores/connectionState.js'
+
+const RECONNECT_DELAY_MS = 3000
 
 export function initWebsocket () {
   window.addEventListener('EventOutputChunk', onOutputChunk)
@@ -16,9 +19,14 @@ async function reconnectWebsocket () {
     return
   }
 
+  connectionState.reconnecting = true
+  connectionState.connected = false
+
   try {
     window.websocketAvailable = true
     for await (const e of window.client.eventStream()) {
+      connectionState.connected = true
+      connectionState.reconnecting = false
       handleEvent(e)
     }
   } catch (err) {
@@ -26,7 +34,11 @@ async function reconnectWebsocket () {
   }
 
   window.websocketAvailable = false
-  console.log('Reconnecting websocket...')
+  connectionState.connected = false
+  console.log('Reconnecting websocket in ' + RECONNECT_DELAY_MS + 'ms...')
+  setTimeout(() => {
+    reconnectWebsocket()
+  }, RECONNECT_DELAY_MS)
 }
 
 function handleEvent (msg) {

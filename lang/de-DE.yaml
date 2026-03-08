@@ -6,6 +6,8 @@ translations:
   nav.entities: Entitäten
   nav.diagnostics: Diagnostik
   connected: Verbunden
+  disconnected: Getrennt
+  reconnecting: Verbinde erneut…
   login-button: Login
   raise-issue: Ein Problem melden auf GitHub
   docs: Dokumentation

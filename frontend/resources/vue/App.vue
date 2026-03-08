@@ -50,7 +50,7 @@
                         <a href="#" @click.prevent="openThemeDialog">{{ currentThemeName }}</a>
                     </span>
 
-                    <span>{{ t('connected') }}</span>
+                    <span :title="connectionStatusTitle">{{ connectionStatusLabel }}</span>
                 </p>
                 <p v-if="showVersionNumber">
                     <a id="available-version" href="http://olivetin.app" target="_blank" hidden>?</a>
@@ -107,6 +107,7 @@ import { DashboardSquare01Icon } from '@hugeicons/core-free-icons'
 import logoUrl from '../../OliveTinLogo.png';
 import { useI18n } from 'vue-i18n';
 import combinedTranslations from '../../../lang/combined_output.json';
+import { connectionState } from './stores/connectionState.js';
 
 const { t, locale } = useI18n();
 
@@ -116,7 +117,6 @@ const sidebar = ref(null);
 const navigation = ref(null);
 const username = ref('notset');
 const isLoggedIn = ref(false);
-const serverConnection = ref(true);
 const currentVersion = ref('?');
 const pageTitle = ref('OliveTin');
 const bannerMessage = ref('');
@@ -129,6 +129,18 @@ const showDiagnostics = ref(true)
 const showVersionNumber = ref(true)
 const showLoginLink = ref(true)
 const sectionNavigationStyle = ref('sidebar')
+
+const connectionStatusLabel = computed(() => {
+  if (connectionState.connected) {
+    return t('connected')
+  }
+  if (connectionState.reconnecting) {
+    return t('reconnecting')
+  }
+  return t('disconnected')
+})
+
+const connectionStatusTitle = computed(() => connectionStatusLabel.value)
 
 const languageDialog = ref(null)
 const browserLanguages = ref([])
@@ -404,7 +416,6 @@ function handleThemeDialogClick(event) {
 window.updateHeaderFromInit = updateHeaderFromInit
 
 onMounted(() => {
-    serverConnection.value = true;
     updateHeaderFromInit()
 
     // Initialize selected language from stored preference
