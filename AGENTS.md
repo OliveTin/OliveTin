@@ -13,6 +13,7 @@ If you are looking for OliveTin's AI policy, you can find it in `AI.md`.
 - **Frontend (Vue 3)**: `frontend/` (served by the service)
 - **Integration tests**: `integration-tests/`
 - **Protos/Generated**: `proto/`, `service/gen/...`
+- **Specs**: `specs/` — Markdown specs that define how code should behave in human-readable form. When changing behavior in a spec-covered area, keep implementation and tests aligned with the spec; do not reference code or symbols in specs (English only).
 
 ### How to Run
 - Run the server (dev):
@@ -62,11 +63,10 @@ If you are looking for OliveTin's AI policy, you can find it in `AI.md`.
 ### Contributing Checklist
 - Review the contributing guidelines at `CONTRIBUTING.adoc`.
 - Review the AI guidance in `AI.md`.
-- Review the pull request template at `.github/PULL_REQUEST_TEMPLATE.md`. 
+- Review the pull request template at `.github/PULL_REQUEST_TEMPLATE.md`.
+- When changing behaviour covered by a spec in `specs/`, ensure implementation and tests match the spec.
 
 ### Troubleshooting
 - API tests failing with content-type errors: ensure Connect handler is served under `/api/` and the client targets that base URL.
 - Executor panics: check for nil `Binding/Action` and add guards in step functions.
 - Integration timeouts: wait for `loaded-dashboard` and use selectors matching the Vue UI.
-
-

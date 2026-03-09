@@ -11,9 +11,8 @@ import (
 func buildEntityFieldsets(entityTitle string, tpl *config.DashboardComponent, rr *DashboardRenderRequest) []*apiv1.DashboardComponent {
 	ret := make([]*apiv1.DashboardComponent, 0)
 
-	entities := entities.GetEntityInstances(entityTitle)
-
-	for _, ent := range entities {
+	orderedEntities := entities.GetEntityInstancesOrdered(entityTitle)
+	for _, ent := range orderedEntities {
 		fs := buildEntityFieldset(tpl, ent, rr)
 
 		if len(fs.Contents) > 0 {
@@ -30,7 +29,7 @@ func buildEntityFieldset(component *config.DashboardComponent, ent *entities.Ent
 		Type:       "fieldset",
 		Contents:   removeFieldsetIfHasNoLinks(buildEntityFieldsetContents(component.Contents, ent, component.Entity, rr)),
 		CssClass:   tpl.ParseTemplateOfActionBeforeExec(component.CssClass, ent),
-		Action:     rr.findAction(component.Title),
+		Action:     rr.findActionForEntity(component.Title, ent),
 		EntityType: component.Entity,
 		EntityKey:  ent.UniqueKey,
 	}
@@ -83,8 +82,6 @@ func isLinkType(itemType string) bool {
 }
 
 func cloneLinkItem(subitem *config.DashboardComponent, ent *entities.Entity, clone *apiv1.DashboardComponent, rr *DashboardRenderRequest) *apiv1.DashboardComponent {
-	clone.Type = "link"
-	clone.Title = tpl.ParseTemplateOfActionBeforeExec(subitem.Title, ent)
 	// Prefer an entity-specific action when available, but fall back to a
 	// non-entity-scoped action with the same title. This allows inline actions
 	// defined inside entity dashboards to work without requiring an explicit
@@ -93,7 +90,11 @@ func cloneLinkItem(subitem *config.DashboardComponent, ent *entities.Entity, clo
 	if action == nil {
 		action = rr.findAction(subitem.Title)
 	}
-
+	if action == nil {
+		return nil
+	}
+	clone.Type = "link"
+	clone.Title = tpl.ParseTemplateOfActionBeforeExec(subitem.Title, ent)
 	clone.Action = action
 	return clone
 }

@@ -146,7 +146,7 @@ func registerAction(e *Executor, configOrder int, action *config.Action, req *Re
 }
 
 func registerActionsFromEntities(e *Executor, configOrder int, entityTitle string, tpl *config.Action, req *RebuildActionMapRequest) {
-	for _, ent := range entities.GetEntityInstances(entityTitle) {
+	for _, ent := range entities.GetEntityInstancesOrdered(entityTitle) {
 		registerActionFromEntity(e, configOrder, tpl, ent, req)
 	}
 }

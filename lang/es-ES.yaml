@@ -6,6 +6,11 @@ translations:
   nav.entities: Entidades
   nav.diagnostics: Diagnósticos
   connected: Conectado
+  disconnected: Desconectado
+  reconnecting: Reconectando…
+  disconnected-banner: "Websocket de eventos desconectado desde {disconnectedSince}. Reintentando conexión en {reconnectIn}."
+  disconnected-banner-reconnecting: "Websocket de eventos desconectado desde {disconnectedSince}. Reintentando conexión…"
+  disconnected-banner-announcement: Websocket de eventos desconectado.
   login-button: Iniciar sesión
   raise-issue: Reportar un problema en GitHub
   docs: Documentación

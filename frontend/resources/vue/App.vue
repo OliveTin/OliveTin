@@ -7,6 +7,7 @@
         </template>
 
         <template #user-info>
+            <ConnectionBanner />
             <div class="flex-row user-info" style="gap: .5em;">
                 <span id="link-login" v-if="!isLoggedIn && showLoginLink"><router-link to="/login">{{ t('login-button') }}</router-link></span>
                 <router-link v-else to="/user" class="user-link" v-if="isLoggedIn">
@@ -49,8 +50,6 @@
                     <span v-if="availableThemes.length > 1">
                         <a href="#" @click.prevent="openThemeDialog">{{ currentThemeName }}</a>
                     </span>
-
-                    <span>{{ t('connected') }}</span>
                 </p>
                 <p v-if="showVersionNumber">
                     <a id="available-version" href="http://olivetin.app" target="_blank" hidden>?</a>
@@ -100,6 +99,7 @@ import { useRouter } from 'vue-router';
 import Sidebar from 'picocrank/vue/components/Sidebar.vue';
 import Navigation from 'picocrank/vue/components/Navigation.vue';
 import Header from 'picocrank/vue/components/Header.vue';
+import ConnectionBanner from './components/ConnectionBanner.vue';
 import { HugeiconsIcon } from '@hugeicons/vue'
 import { Menu01Icon } from '@hugeicons/core-free-icons'
 import { UserCircle02Icon } from '@hugeicons/core-free-icons'
@@ -107,7 +107,6 @@ import { DashboardSquare01Icon } from '@hugeicons/core-free-icons'
 import logoUrl from '../../OliveTinLogo.png';
 import { useI18n } from 'vue-i18n';
 import combinedTranslations from '../../../lang/combined_output.json';
-
 const { t, locale } = useI18n();
 
 const router = useRouter();
@@ -116,7 +115,6 @@ const sidebar = ref(null);
 const navigation = ref(null);
 const username = ref('notset');
 const isLoggedIn = ref(false);
-const serverConnection = ref(true);
 const currentVersion = ref('?');
 const pageTitle = ref('OliveTin');
 const bannerMessage = ref('');
@@ -404,7 +402,6 @@ function handleThemeDialogClick(event) {
 window.updateHeaderFromInit = updateHeaderFromInit
 
 onMounted(() => {
-    serverConnection.value = true;
     updateHeaderFromInit()
 
     // Initialize selected language from stored preference

@@ -432,6 +432,77 @@ func TestViewPermissionAllowedSeesAction(t *testing.T) {
 	assert.Equal(t, "secret_action", resp.Action.BindingId)
 }
 
+// TestViewPermissionExcludedFromCustomDashboard (issue #921) asserts that when a custom dashboard
+// lists an action by title, users without view permission do not see that action (title or icon).
+func TestViewPermissionExcludedFromCustomDashboard(t *testing.T) {
+	cfg, lowUser, _ := buildViewPermissionTestConfig(t)
+	cfg.Dashboards = []*config.DashboardComponent{
+		{
+			Title: "Custom",
+			Contents: []*config.DashboardComponent{
+				{Title: "Secret Action"},
+			},
+		},
+	}
+	ex := executor.DefaultExecutor(cfg)
+	ex.RebuildActionMap()
+
+	rr := &DashboardRenderRequest{
+		AuthenticatedUser: lowUser,
+		cfg:               cfg,
+		ex:                ex,
+	}
+	dashboard := findDashboardByTitle(rr, "Custom")
+	require.NotNil(t, dashboard)
+	db := buildDashboardFromConfig(dashboard, rr)
+	require.NotNil(t, db)
+
+	bindingIdsInDashboard := bindingIdsInDashboardContents(db.Contents)
+	assert.NotContains(t, bindingIdsInDashboard, "secret_action",
+		"user with view:false must not see action on custom dashboard; got bindingIds: %v", bindingIdsInDashboard)
+	assert.False(t, dashboardContentsContainForbiddenComponent(db.Contents, "Secret Action", "🔒"),
+		"user with view:false must not see Secret Action title or lock icon in custom dashboard")
+}
+
+// TestViewPermissionExcludedFromEntityDashboard (GHSA: view permission) asserts that when a dashboard
+// has an entity fieldset listing an action, users without view permission do not see that action.
+func TestViewPermissionExcludedFromEntityDashboard(t *testing.T) {
+	entities.ClearEntitiesOfType("vp_entity_test")
+	defer entities.ClearEntitiesOfType("vp_entity_test")
+	entities.AddEntity("vp_entity_test", "1", map[string]any{"title": "Test Entity"})
+
+	cfg, lowUser, _ := buildViewPermissionTestConfig(t)
+	cfg.Dashboards = []*config.DashboardComponent{
+		{
+			Title: "WithEntity",
+			Contents: []*config.DashboardComponent{
+				{
+					Title: "Servers", Type: "fieldset", Entity: "vp_entity_test",
+					Contents: []*config.DashboardComponent{{Title: "Secret Action"}},
+				},
+			},
+		},
+	}
+	ex := executor.DefaultExecutor(cfg)
+	ex.RebuildActionMap()
+
+	rr := &DashboardRenderRequest{
+		AuthenticatedUser: lowUser,
+		cfg:               cfg,
+		ex:                ex,
+	}
+	dashboard := findDashboardByTitle(rr, "WithEntity")
+	require.NotNil(t, dashboard)
+	db := buildDashboardFromConfig(dashboard, rr)
+	require.NotNil(t, db)
+
+	bindingIdsInDashboard := bindingIdsInDashboardContents(db.Contents)
+	assert.NotContains(t, bindingIdsInDashboard, "secret_action",
+		"user with view:false must not see action in entity fieldset; got bindingIds: %v", bindingIdsInDashboard)
+	assert.False(t, dashboardContentsContainForbiddenComponent(db.Contents, "Secret Action", "🔒"),
+		"user with view:false must not see Secret Action title or lock icon in entity dashboard")
+}
+
 func bindingIdsInDashboardContents(contents []*apiv1.DashboardComponent) []string {
 	var ids []string
 	for _, c := range contents {
@@ -449,4 +520,55 @@ func bindingIdsFromComponent(c *apiv1.DashboardComponent) []string {
 		ids = append(ids, c.Action.BindingId)
 	}
 	return append(ids, bindingIdsInDashboardContents(c.Contents)...)
+}
+
+func componentHasForbiddenTitleOrIcon(c *apiv1.DashboardComponent, forbiddenTitle, forbiddenIcon string) bool {
+	return c != nil && (c.Title == forbiddenTitle || c.Icon == forbiddenIcon)
+}
+
+func componentOrDescendantsContainForbidden(c *apiv1.DashboardComponent, forbiddenTitle, forbiddenIcon string) bool {
+	if c == nil {
+		return false
+	}
+	if componentHasForbiddenTitleOrIcon(c, forbiddenTitle, forbiddenIcon) {
+		return true
+	}
+	return dashboardContentsContainForbiddenComponent(c.Contents, forbiddenTitle, forbiddenIcon)
+}
+
+// dashboardContentsContainForbiddenComponent recursively walks contents and returns true if any
+// component has Title == forbiddenTitle or Icon == forbiddenIcon.
+func dashboardContentsContainForbiddenComponent(contents []*apiv1.DashboardComponent, forbiddenTitle, forbiddenIcon string) bool {
+	for _, c := range contents {
+		if componentOrDescendantsContainForbidden(c, forbiddenTitle, forbiddenIcon) {
+			return true
+		}
+	}
+	return false
+}
+
+func TestOrderTopLevelDashboardComponents_RegularFieldsetsPreserveConfigOrder(t *testing.T) {
+	zebra := &apiv1.DashboardComponent{Title: "Zebra", Type: "fieldset", EntityType: ""}
+	alpha := &apiv1.DashboardComponent{Title: "Alpha", Type: "fieldset", EntityType: ""}
+	root := &apiv1.DashboardComponent{Title: "Actions", Type: "fieldset", EntityType: ""}
+	components := []*apiv1.DashboardComponent{zebra, alpha, root}
+
+	out := orderTopLevelDashboardComponents(components, root)
+
+	require.Len(t, out, 3)
+	assert.Same(t, zebra, out[0], "first must be Zebra (config order)")
+	assert.Same(t, alpha, out[1], "second must be Alpha (config order)")
+	assert.Same(t, root, out[2], "third must be root Actions fieldset")
+}
+
+func TestOrderTopLevelDashboardComponents_SortablesSorted(t *testing.T) {
+	entityBeta := &apiv1.DashboardComponent{Title: "Beta", Type: "fieldset", EntityType: "server"}
+	entityAlpha := &apiv1.DashboardComponent{Title: "Alpha", Type: "fieldset", EntityType: "server"}
+	components := []*apiv1.DashboardComponent{entityBeta, entityAlpha}
+
+	out := orderTopLevelDashboardComponents(components, nil)
+
+	require.Len(t, out, 2)
+	assert.Equal(t, "Alpha", out[0].Title, "sortables ordered by title")
+	assert.Equal(t, "Beta", out[1].Title)
 }
