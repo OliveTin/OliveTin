@@ -1,5 +1,8 @@
 <template>
-    <span id="connection-banner" v-if="!connectionState.connected" class="inline-notification critical user-info-connection" role="status">{{ bannerText }}</span>
+    <span id="connection-banner" v-if="!connectionState.connected" class="inline-notification critical user-info-connection">
+        <span class="connection-banner-sr-only" role="status">{{ staticAnnouncement }}</span>
+        <span aria-hidden="true">{{ bannerText }}</span>
+    </span>
 </template>
 
 <script setup>
@@ -44,6 +47,8 @@ onUnmounted(() => {
   }
 })
 
+const staticAnnouncement = computed(() => t('disconnected-banner-announcement'))
+
 const bannerText = computed(() => {
   const at = connectionState.disconnectedAt
   const next = connectionState.nextReconnectAt
@@ -64,5 +69,16 @@ const bannerText = computed(() => {
 .inline-notification {
     border: 0;
     margin: 0;
+}
+.connection-banner-sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
 }
 </style>

@@ -10,6 +10,7 @@ translations:
   reconnecting: Verbinde erneut…
   disconnected-banner: "Events-Websocket getrennt seit {disconnectedSince}. Erneuter Verbindungsversuch in {reconnectIn}."
   disconnected-banner-reconnecting: "Events-Websocket getrennt seit {disconnectedSince}. Verbindungsversuch…"
+  disconnected-banner-announcement: Events-Websocket getrennt.
   login-button: Login
   raise-issue: Ein Problem melden auf GitHub
   docs: Dokumentation

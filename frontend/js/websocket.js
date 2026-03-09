@@ -21,7 +21,9 @@ async function reconnectWebsocket () {
 
   connectionState.reconnecting = true
   connectionState.connected = false
-  connectionState.disconnectedAt = Date.now()
+  if (connectionState.disconnectedAt == null) {
+    connectionState.disconnectedAt = Date.now()
+  }
   connectionState.nextReconnectAt = null
 
   try {
@@ -29,9 +31,9 @@ async function reconnectWebsocket () {
     const stream = window.client.eventStream()
     connectionState.connected = true
     connectionState.reconnecting = false
-    connectionState.disconnectedAt = null
     connectionState.nextReconnectAt = null
     for await (const e of stream) {
+      connectionState.disconnectedAt = null
       handleEvent(e)
     }
   } catch (err) {
