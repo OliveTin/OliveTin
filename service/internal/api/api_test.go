@@ -460,6 +460,8 @@ func TestViewPermissionExcludedFromCustomDashboard(t *testing.T) {
 	bindingIdsInDashboard := bindingIdsInDashboardContents(db.Contents)
 	assert.NotContains(t, bindingIdsInDashboard, "secret_action",
 		"user with view:false must not see action on custom dashboard; got bindingIds: %v", bindingIdsInDashboard)
+	assert.False(t, dashboardContentsContainForbiddenComponent(db.Contents, "Secret Action", "🔒"),
+		"user with view:false must not see Secret Action title or lock icon in custom dashboard")
 }
 
 // TestViewPermissionExcludedFromEntityDashboard (GHSA: view permission) asserts that when a dashboard
@@ -497,6 +499,8 @@ func TestViewPermissionExcludedFromEntityDashboard(t *testing.T) {
 	bindingIdsInDashboard := bindingIdsInDashboardContents(db.Contents)
 	assert.NotContains(t, bindingIdsInDashboard, "secret_action",
 		"user with view:false must not see action in entity fieldset; got bindingIds: %v", bindingIdsInDashboard)
+	assert.False(t, dashboardContentsContainForbiddenComponent(db.Contents, "Secret Action", "🔒"),
+		"user with view:false must not see Secret Action title or lock icon in entity dashboard")
 }
 
 func bindingIdsInDashboardContents(contents []*apiv1.DashboardComponent) []string {
@@ -516,6 +520,31 @@ func bindingIdsFromComponent(c *apiv1.DashboardComponent) []string {
 		ids = append(ids, c.Action.BindingId)
 	}
 	return append(ids, bindingIdsInDashboardContents(c.Contents)...)
+}
+
+func componentHasForbiddenTitleOrIcon(c *apiv1.DashboardComponent, forbiddenTitle, forbiddenIcon string) bool {
+	return c != nil && (c.Title == forbiddenTitle || c.Icon == forbiddenIcon)
+}
+
+func componentOrDescendantsContainForbidden(c *apiv1.DashboardComponent, forbiddenTitle, forbiddenIcon string) bool {
+	if c == nil {
+		return false
+	}
+	if componentHasForbiddenTitleOrIcon(c, forbiddenTitle, forbiddenIcon) {
+		return true
+	}
+	return dashboardContentsContainForbiddenComponent(c.Contents, forbiddenTitle, forbiddenIcon)
+}
+
+// dashboardContentsContainForbiddenComponent recursively walks contents and returns true if any
+// component has Title == forbiddenTitle or Icon == forbiddenIcon.
+func dashboardContentsContainForbiddenComponent(contents []*apiv1.DashboardComponent, forbiddenTitle, forbiddenIcon string) bool {
+	for _, c := range contents {
+		if componentOrDescendantsContainForbidden(c, forbiddenTitle, forbiddenIcon) {
+			return true
+		}
+	}
+	return false
 }
 
 func TestOrderTopLevelDashboardComponents_RegularFieldsetsPreserveConfigOrder(t *testing.T) {
