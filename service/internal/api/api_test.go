@@ -553,7 +553,7 @@ func TestOrderTopLevelDashboardComponents_RegularFieldsetsPreserveConfigOrder(t 
 	root := &apiv1.DashboardComponent{Title: "Actions", Type: "fieldset", EntityType: ""}
 	components := []*apiv1.DashboardComponent{zebra, alpha, root}
 
-	out := orderTopLevelDashboardComponents(components)
+	out := orderTopLevelDashboardComponents(components, root)
 
 	require.Len(t, out, 3)
 	assert.Same(t, zebra, out[0], "first must be Zebra (config order)")
@@ -566,7 +566,7 @@ func TestOrderTopLevelDashboardComponents_SortablesSorted(t *testing.T) {
 	entityAlpha := &apiv1.DashboardComponent{Title: "Alpha", Type: "fieldset", EntityType: "server"}
 	components := []*apiv1.DashboardComponent{entityBeta, entityAlpha}
 
-	out := orderTopLevelDashboardComponents(components)
+	out := orderTopLevelDashboardComponents(components, nil)
 
 	require.Len(t, out, 2)
 	assert.Equal(t, "Alpha", out[0].Title, "sortables ordered by title")

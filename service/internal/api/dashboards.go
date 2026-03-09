@@ -112,9 +112,10 @@ func buildDashboardFromConfig(dashboard *config.DashboardComponent, rr *Dashboar
 }
 
 func buildDashboardFromConfigWithEntity(dashboard *config.DashboardComponent, rr *DashboardRenderRequest, entity *entities.Entity) *apiv1.Dashboard {
+	contents, root := getDashboardComponentContentsWithEntity(dashboard, rr, entity)
 	return &apiv1.Dashboard{
 		Title:    dashboard.Title,
-		Contents: orderTopLevelDashboardComponents(removeNulls(getDashboardComponentContentsWithEntity(dashboard, rr, entity))),
+		Contents: orderTopLevelDashboardComponents(removeNulls(contents), root),
 	}
 }
 
@@ -216,19 +217,23 @@ func removeNulls(components []*apiv1.DashboardComponent) []*apiv1.DashboardCompo
 	return ret
 }
 
-func isRegularFieldset(component *apiv1.DashboardComponent, index int, totalLen int) bool {
-	if component == nil || component.Type != "fieldset" || component.EntityType != "" {
-		return false
-	}
-	return index != totalLen-1
+func isNonEntityFieldset(component *apiv1.DashboardComponent) bool {
+	return component != nil && component.Type == "fieldset" && component.EntityType == ""
 }
 
-func partitionTopLevelComponents(components []*apiv1.DashboardComponent) (regular, sortables []*apiv1.DashboardComponent, isRegular []bool) {
+func isRegularFieldset(component *apiv1.DashboardComponent, root *apiv1.DashboardComponent) bool {
+	if !isNonEntityFieldset(component) {
+		return false
+	}
+	return root == nil || component != root
+}
+
+func partitionTopLevelComponents(components []*apiv1.DashboardComponent, root *apiv1.DashboardComponent) (regular, sortables []*apiv1.DashboardComponent, isRegular []bool) {
 	regular = make([]*apiv1.DashboardComponent, 0)
 	sortables = make([]*apiv1.DashboardComponent, 0)
 	isRegular = make([]bool, len(components))
 	for i, c := range components {
-		anchor := isRegularFieldset(c, i, len(components))
+		anchor := isRegularFieldset(c, root)
 		isRegular[i] = anchor
 		if anchor {
 			regular = append(regular, c)
@@ -254,16 +259,16 @@ func mergeOrderedTopLevelComponents(regular, sortables []*apiv1.DashboardCompone
 	return out
 }
 
-func orderTopLevelDashboardComponents(components []*apiv1.DashboardComponent) []*apiv1.DashboardComponent {
+func orderTopLevelDashboardComponents(components []*apiv1.DashboardComponent, root *apiv1.DashboardComponent) []*apiv1.DashboardComponent {
 	if len(components) == 0 {
 		return components
 	}
-	regular, sortables, isRegular := partitionTopLevelComponents(components)
+	regular, sortables, isRegular := partitionTopLevelComponents(components, root)
 	sortDashboardComponents(sortables)
 	return mergeOrderedTopLevelComponents(regular, sortables, isRegular)
 }
 
-func getDashboardComponentContentsWithEntity(dashboard *config.DashboardComponent, rr *DashboardRenderRequest, entity *entities.Entity) []*apiv1.DashboardComponent {
+func getDashboardComponentContentsWithEntity(dashboard *config.DashboardComponent, rr *DashboardRenderRequest, entity *entities.Entity) ([]*apiv1.DashboardComponent, *apiv1.DashboardComponent) {
 	ret := make([]*apiv1.DashboardComponent, 0)
 	rootFieldset := createRootFieldset()
 
@@ -271,7 +276,11 @@ func getDashboardComponentContentsWithEntity(dashboard *config.DashboardComponen
 		processDashboardSubitemWithEntity(subitem, rr, &ret, rootFieldset, entity)
 	}
 
-	return appendRootFieldsetIfNeeded(ret, rootFieldset)
+	if len(rootFieldset.Contents) > 0 {
+		ret = append(ret, rootFieldset)
+		return ret, rootFieldset
+	}
+	return ret, nil
 }
 
 func createRootFieldset() *apiv1.DashboardComponent {
@@ -310,18 +319,11 @@ func processDashboardSubitemWithEntity(subitem *config.DashboardComponent, rr *D
 	}
 }
 
-func appendRootFieldsetIfNeeded(ret []*apiv1.DashboardComponent, rootFieldset *apiv1.DashboardComponent) []*apiv1.DashboardComponent {
-	if len(rootFieldset.Contents) > 0 {
-		ret = append(ret, rootFieldset)
-	}
-	return ret
-}
-
 func buildDashboardComponentSimpleWithEntity(subitem *config.DashboardComponent, rr *DashboardRenderRequest, entity *entities.Entity) *apiv1.DashboardComponent {
 	var contents []*apiv1.DashboardComponent
 
 	if len(subitem.Contents) > 0 {
-		contents = getDashboardComponentContentsWithEntity(subitem, rr, entity)
+		contents, _ = getDashboardComponentContentsWithEntity(subitem, rr, entity)
 	}
 
 	action := rr.findActionForEntity(subitem.Title, entity)
