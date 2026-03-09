@@ -182,6 +182,11 @@ func entityKeyLess(a, b string) bool {
 func sortDashboardComponents(components []*apiv1.DashboardComponent) []*apiv1.DashboardComponent {
 	sort.Slice(components, func(i, j int) bool {
 		if components[i].Action == nil || components[j].Action == nil {
+			if components[i].EntityKey != "" && components[j].EntityKey != "" &&
+				components[i].EntityKey != components[j].EntityKey {
+				return entityKeyLess(components[i].EntityKey, components[j].EntityKey)
+			}
+
 			return components[i].Title < components[j].Title
 		}
 
