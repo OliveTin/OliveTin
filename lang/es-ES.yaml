@@ -8,6 +8,8 @@ translations:
   connected: Conectado
   disconnected: Desconectado
   reconnecting: Reconectando…
+  disconnected-banner: "Websocket de eventos desconectado desde {disconnectedSince}. Reintentando conexión en {reconnectIn}."
+  disconnected-banner-reconnecting: "Websocket de eventos desconectado desde {disconnectedSince}. Reintentando conexión…"
   login-button: Iniciar sesión
   raise-issue: Reportar un problema en GitHub
   docs: Documentación

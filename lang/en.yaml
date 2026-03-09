@@ -10,6 +10,8 @@ translations:
   connected: Connected
   disconnected: Disconnected
   reconnecting: Reconnecting…
+  disconnected-banner: "Events websocket disconnected since {disconnectedSince}. Trying reconnect in {reconnectIn}."
+  disconnected-banner-reconnecting: "Events websocket disconnected since {disconnectedSince}. Trying reconnect…"
   login-button: Login
   logs.title: Logs
   logs.page-description: This is a list of logs from actions that have been executed. You can filter the list by action title.
