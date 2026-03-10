@@ -1,7 +1,9 @@
 <template>
     <span id="connection-banner" v-if="!connectionState.connected" class="inline-notification critical user-info-connection">
         <span class="connection-banner-sr-only" role="status">{{ staticAnnouncement }}</span>
-        <span aria-hidden="true">{{ bannerText }}</span>
+        <span aria-hidden="true">
+            <a :href="websocketDocsUrl" target="_blank" rel="noopener noreferrer" class="connection-banner-link">{{ linkText }}</a>{{ bannerSuffix }}
+        </span>
     </span>
 </template>
 
@@ -11,6 +13,10 @@ import { useI18n } from 'vue-i18n'
 import { connectionState } from '../stores/connectionState.js'
 
 const { t } = useI18n()
+
+const websocketDocsUrl = 'https://docs.olivetin.app/troubleshooting/err-websocket-connection.html'
+
+const linkText = computed(() => t('disconnected-banner-link-text'))
 
 function formatShortRelative(ms) {
   if (ms < 0) return '0s'
@@ -49,16 +55,16 @@ onUnmounted(() => {
 
 const staticAnnouncement = computed(() => t('disconnected-banner-announcement'))
 
-const bannerText = computed(() => {
+const bannerSuffix = computed(() => {
   const at = connectionState.disconnectedAt
   const next = connectionState.nextReconnectAt
   const n = now.value
   const disconnectedSince = formatShortTime(at)
   if (next != null && next > n) {
     const reconnectIn = formatShortRelative(next - n)
-    return t('disconnected-banner', { disconnectedSince, reconnectIn })
+    return t('disconnected-banner-suffix', { disconnectedSince, reconnectIn })
   }
-  return t('disconnected-banner-reconnecting', { disconnectedSince })
+  return t('disconnected-banner-suffix-reconnecting', { disconnectedSince })
 })
 </script>
 
@@ -69,6 +75,10 @@ const bannerText = computed(() => {
 .inline-notification {
     border: 0;
     margin: 0;
+}
+.connection-banner-link {
+    color: inherit;
+    text-decoration: underline;
 }
 .connection-banner-sr-only {
     position: absolute;
