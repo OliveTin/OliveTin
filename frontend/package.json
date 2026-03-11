@@ -24,19 +24,19 @@
 	"dependencies": {
 		"@connectrpc/connect": "^2.1.1",
 		"@connectrpc/connect-web": "^2.1.1",
-		"@hugeicons/core-free-icons": "^3.3.0",
-		"@hugeicons/vue": "^1.0.4",
+		"@hugeicons/core-free-icons": "^4.0.0",
+		"@hugeicons/vue": "^1.0.5",
 		"@vitejs/plugin-vue": "^6.0.4",
 		"@xterm/addon-fit": "^0.11.0",
 		"@xterm/addon-web-links": "^0.12.0",
 		"@xterm/xterm": "^6.0.0",
 		"iconify-icon": "^3.0.2",
-		"picocrank": "^1.14.0",
+		"picocrank": "^1.14.1",
 		"standard": "^17.1.2",
 		"unplugin-vue-components": "^31.0.0",
 		"vite": "^7.3.1",
-		"vue": "^3.5.29",
-		"vue-i18n": "^11.2.8",
+		"vue": "^3.5.30",
+		"vue-i18n": "^11.3.0",
 		"vue-router": "^5.0.3"
 	}
 }

@@ -2,13 +2,17 @@ package api
 
 import (
 	"context"
+	"net/http"
+	"net/http/httptest"
+	"path"
 	"testing"
+	"time"
 
 	"connectrpc.com/connect"
+	"github.com/google/uuid"
+	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	log "github.com/sirupsen/logrus"
 
 	apiv1 "github.com/OliveTin/OliveTin/gen/olivetin/api/v1"
 	apiv1connect "github.com/OliveTin/OliveTin/gen/olivetin/api/v1/apiv1connect"
@@ -16,10 +20,6 @@ import (
 	config "github.com/OliveTin/OliveTin/internal/config"
 	"github.com/OliveTin/OliveTin/internal/entities"
 	"github.com/OliveTin/OliveTin/internal/executor"
-
-	"net/http"
-	"net/http/httptest"
-	"path"
 )
 
 func getNewTestServerAndClient(injectedConfig *config.Config) (*httptest.Server, apiv1connect.OliveTinApiServiceClient) {
@@ -338,12 +338,13 @@ func testWithEntity(t *testing.T, binding *executor.ActionBinding, rr *Dashboard
 }
 
 // buildViewPermissionTestConfig returns config and users for GHSA view-permission tests:
-// one action "secret_action", ACL "restricted" (view:false) for user "low", ACL "full" (view:true) for user "admin".
+// one action "secret_action", ACL "restricted" (view:false, logs:false) for user "low", ACL "full" (view:true, logs:true) for user "admin".
 func buildViewPermissionTestConfig(t *testing.T) (*config.Config, *authpublic.AuthenticatedUser, *authpublic.AuthenticatedUser) {
 	t.Helper()
 	cfg := config.DefaultConfig()
 	cfg.DefaultPermissions.View = false
 	cfg.DefaultPermissions.Exec = false
+	cfg.DefaultPermissions.Logs = false
 
 	cfg.Actions = append(cfg.Actions, &config.Action{
 		ID:    "secret_action",
@@ -571,4 +572,134 @@ func TestOrderTopLevelDashboardComponents_SortablesSorted(t *testing.T) {
 	require.Len(t, out, 2)
 	assert.Equal(t, "Alpha", out[0].Title, "sortables ordered by title")
 	assert.Equal(t, "Beta", out[1].Title)
+}
+
+// TestEventStreamACLNoLeakToUnauthorizedUser (GHSA-228v-wc5r-j8m7) asserts that EventStream
+// does not send execution events or output chunks to users who are not allowed to view that action's logs.
+func TestEventStreamACLNoLeakToUnauthorizedUser(t *testing.T) {
+	cfg, lowUser, adminUser := buildViewPermissionTestConfig(t)
+	ex := executor.DefaultExecutor(cfg)
+	ex.RebuildActionMap()
+	api := newServer(ex)
+
+	binding := ex.FindBindingByID("secret_action")
+	require.NotNil(t, binding, "secret_action binding must exist")
+
+	clientLow, clientAdmin := addEventStreamTestClients(t, api, lowUser, adminUser)
+	defer removeEventStreamTestClients(api, clientLow, clientAdmin)
+
+	runEventStreamTestExecution(t, ex, cfg, binding, adminUser)
+	adminEvents := drainEventStreamUntilFinished(clientAdmin.channel, 2*time.Second)
+	lowEvents := drainEventStreamWithTimeout(clientLow.channel, 50*time.Millisecond)
+
+	assertEventStreamLowUserReceivesNothing(t, lowEvents)
+	assertEventStreamAdminReceivesSecretActionEvents(t, adminEvents)
+}
+
+func addEventStreamTestClients(t *testing.T, api *oliveTinAPI, lowUser, adminUser *authpublic.AuthenticatedUser) (*streamingClient, *streamingClient) {
+	t.Helper()
+	clientLow := &streamingClient{
+		channel:           make(chan *apiv1.EventStreamResponse, 20),
+		AuthenticatedUser: lowUser,
+	}
+	clientAdmin := &streamingClient{
+		channel:           make(chan *apiv1.EventStreamResponse, 20),
+		AuthenticatedUser: adminUser,
+	}
+	api.streamingClientsMutex.Lock()
+	api.streamingClients[clientLow] = struct{}{}
+	api.streamingClients[clientAdmin] = struct{}{}
+	api.streamingClientsMutex.Unlock()
+	return clientLow, clientAdmin
+}
+
+func removeEventStreamTestClients(api *oliveTinAPI, clientLow, clientAdmin *streamingClient) {
+	api.streamingClientsMutex.Lock()
+	delete(api.streamingClients, clientLow)
+	delete(api.streamingClients, clientAdmin)
+	api.streamingClientsMutex.Unlock()
+	close(clientLow.channel)
+	close(clientAdmin.channel)
+}
+
+func runEventStreamTestExecution(t *testing.T, ex *executor.Executor, cfg *config.Config, binding *executor.ActionBinding, adminUser *authpublic.AuthenticatedUser) {
+	t.Helper()
+	execReq := &executor.ExecutionRequest{
+		Binding:           binding,
+		Arguments:         map[string]string{},
+		TrackingID:        uuid.NewString(),
+		Cfg:               cfg,
+		AuthenticatedUser: adminUser,
+	}
+	wg, _ := ex.ExecRequest(execReq)
+	wg.Wait()
+}
+
+func drainEventStreamUntilFinished(ch <-chan *apiv1.EventStreamResponse, timeout time.Duration) []*apiv1.EventStreamResponse {
+	var out []*apiv1.EventStreamResponse
+	deadline := time.Now().Add(timeout)
+	for time.Now().Before(deadline) {
+		ev, finished := recvEventStreamOne(ch, 50*time.Millisecond)
+		if ev != nil {
+			out = append(out, ev)
+		}
+		if finished {
+			return out
+		}
+	}
+	return out
+}
+
+func recvEventStreamOne(ch <-chan *apiv1.EventStreamResponse, timeout time.Duration) (*apiv1.EventStreamResponse, bool) {
+	select {
+	case ev, ok := <-ch:
+		if !ok {
+			return nil, true
+		}
+		return ev, ev.GetExecutionFinished() != nil
+	case <-time.After(timeout):
+		return nil, true
+	}
+}
+
+func drainEventStreamWithTimeout(ch <-chan *apiv1.EventStreamResponse, timeout time.Duration) []*apiv1.EventStreamResponse {
+	var out []*apiv1.EventStreamResponse
+	for {
+		select {
+		case ev, ok := <-ch:
+			if !ok {
+				return out
+			}
+			out = append(out, ev)
+		case <-time.After(timeout):
+			return out
+		}
+	}
+}
+
+func assertEventStreamLowUserReceivesNothing(t *testing.T, lowEvents []*apiv1.EventStreamResponse) {
+	t.Helper()
+	for _, ev := range lowEvents {
+		assert.Nil(t, ev.GetExecutionStarted(), "low-privilege user must not receive ExecutionStarted")
+		assert.Nil(t, ev.GetExecutionFinished(), "low-privilege user must not receive ExecutionFinished")
+		assert.Nil(t, ev.GetOutputChunk(), "low-privilege user must not receive OutputChunk")
+	}
+	assert.Empty(t, lowEvents, "low-privilege user with Logs:false must not receive any execution events")
+}
+
+func assertEventStreamAdminReceivesSecretActionEvents(t *testing.T, adminEvents []*apiv1.EventStreamResponse) {
+	t.Helper()
+	var gotStarted, gotFinished bool
+	for _, ev := range adminEvents {
+		if ev.GetExecutionStarted() != nil {
+			gotStarted = true
+			assert.Equal(t, "secret_action", ev.GetExecutionStarted().LogEntry.GetBindingId())
+		}
+		if ev.GetExecutionFinished() != nil {
+			gotFinished = true
+			assert.Equal(t, "secret_action", ev.GetExecutionFinished().LogEntry.GetBindingId())
+		}
+	}
+	assert.True(t, gotStarted, "admin must receive ExecutionStarted for secret_action")
+	assert.True(t, gotFinished, "admin must receive ExecutionFinished for secret_action")
 }

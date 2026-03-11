@@ -281,7 +281,7 @@ func DefaultConfigWithBasePort(basePort int) *Config {
 	config.Prometheus.Enabled = false
 	config.Prometheus.DefaultGoMetrics = false
 	config.Security.HeaderContentSecurityPolicy = true
-	config.Security.ContentSecurityPolicy = "default-src 'self'; script-src 'self' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https:; frame-ancestors 'none'; base-uri 'self'"
+	config.Security.ContentSecurityPolicy = ContentSecurityPolicyDefault
 	config.Security.HeaderXContentTypeOptions = true
 	config.Security.HeaderXFrameOptions = true
 	config.Security.XFrameOptions = "DENY"

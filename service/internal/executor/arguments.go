@@ -250,13 +250,10 @@ func typecheckChoiceEntity(value string, arg *config.ActionArgument) error {
 
 func typeSafetyCheckEmail(value string) error {
 	_, err := mail.ParseAddress(value)
-
-	log.Errorf("Email check: %v, %v", err, value)
-
 	if err != nil {
+		log.WithField("type", "email").Debugf("Email argument type check failed")
 		return err
 	}
-
 	return nil
 }
 

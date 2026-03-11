@@ -8,9 +8,10 @@ translations:
   connected: 已连接
   disconnected: 已断开连接
   reconnecting: 正在重新连接…
-  disconnected-banner: "事件 WebSocket 自 {disconnectedSince} 已断开。{reconnectIn} 后尝试重连。"
-  disconnected-banner-reconnecting: "事件 WebSocket 自 {disconnectedSince} 已断开。正在尝试重连…"
   disconnected-banner-announcement: 事件 WebSocket 已断开。
+  disconnected-banner-link-text: "事件 WebSocket 已断开"
+  disconnected-banner-suffix: "自 {disconnectedSince}。{reconnectIn} 后尝试重连。"
+  disconnected-banner-suffix-reconnecting: "自 {disconnectedSince}。正在尝试重连…"
   login-button: 登录
   raise-issue: 在 GitHub 上报告问题
   docs: 文档

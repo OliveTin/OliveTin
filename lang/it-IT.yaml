@@ -9,9 +9,10 @@ translations:
   connected: Connesso
   disconnected: Disconnesso
   reconnecting: Riconnessione…
-  disconnected-banner: "Websocket eventi disconnesso dalle {disconnectedSince}. Nuovo tentativo tra {reconnectIn}."
-  disconnected-banner-reconnecting: "Websocket eventi disconnesso dalle {disconnectedSince}. Tentativo di connessione…"
   disconnected-banner-announcement: Websocket eventi disconnesso.
+  disconnected-banner-link-text: "Websocket eventi disconnesso"
+  disconnected-banner-suffix: " dalle {disconnectedSince}. Nuovo tentativo tra {reconnectIn}."
+  disconnected-banner-suffix-reconnecting: " dalle {disconnectedSince}. Tentativo di connessione…"
   login-button: Login
   raise-issue: Segnala un problema su GitHub
   logs.title: Registri
