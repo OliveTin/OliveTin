@@ -640,11 +640,11 @@ func drainEventStreamUntilFinished(ch <-chan *apiv1.EventStreamResponse, timeout
 	deadline := time.Now().Add(timeout)
 	for time.Now().Before(deadline) {
 		ev, finished := recvEventStreamOne(ch, 50*time.Millisecond)
+		if finished {
+			return out
+		}
 		if ev != nil {
 			out = append(out, ev)
-			if finished {
-				return out
-			}
 		}
 	}
 	return out
@@ -652,7 +652,10 @@ func drainEventStreamUntilFinished(ch <-chan *apiv1.EventStreamResponse, timeout
 
 func recvEventStreamOne(ch <-chan *apiv1.EventStreamResponse, timeout time.Duration) (*apiv1.EventStreamResponse, bool) {
 	select {
-	case ev := <-ch:
+	case ev, ok := <-ch:
+		if !ok {
+			return nil, true
+		}
 		return ev, ev.GetExecutionFinished() != nil
 	case <-time.After(timeout):
 		return nil, true
@@ -663,7 +666,10 @@ func drainEventStreamWithTimeout(ch <-chan *apiv1.EventStreamResponse, timeout t
 	var out []*apiv1.EventStreamResponse
 	for {
 		select {
-		case ev := <-ch:
+		case ev, ok := <-ch:
+			if !ok {
+				return out
+			}
 			out = append(out, ev)
 		case <-time.After(timeout):
 			return out
