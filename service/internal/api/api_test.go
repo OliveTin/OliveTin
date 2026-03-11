@@ -640,11 +640,11 @@ func drainEventStreamUntilFinished(ch <-chan *apiv1.EventStreamResponse, timeout
 	deadline := time.Now().Add(timeout)
 	for time.Now().Before(deadline) {
 		ev, finished := recvEventStreamOne(ch, 50*time.Millisecond)
-		if finished {
-			return out
-		}
 		if ev != nil {
 			out = append(out, ev)
+		}
+		if finished {
+			return out
 		}
 	}
 	return out
