@@ -79,12 +79,19 @@ func parseExecSegment(arg string, templateArgs map[string]any, entity *entities.
 	return tpl.ParseTemplateWithActionContext(arg, entity, templateArgs)
 }
 
-func validateArguments(req *ExecutionRequest) error {
-	action := req.Binding.Action
-	if action == nil {
-		return fmt.Errorf("action is nil")
+func uploadRegistryFromExecutor(req *ExecutionRequest) *fileupload.Registry {
+	if req == nil || req.executor == nil {
+		return nil
 	}
-	reg := req.executor.UploadRegistry
+	return req.executor.UploadRegistry
+}
+
+func validateArguments(req *ExecutionRequest) error {
+	action, err := execRequestAction(req)
+	if err != nil {
+		return err
+	}
+	reg := uploadRegistryFromExecutor(req)
 	bindingID := req.Binding.ID
 	for _, arg := range action.Arguments {
 		if err := typecheckActionArgument(&arg, req.Arguments[arg.Name], action, reg, bindingID); err != nil {

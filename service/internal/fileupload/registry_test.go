@@ -2,6 +2,7 @@ package fileupload
 
 import (
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -60,5 +61,32 @@ func assertPendingGone(t *testing.T, r *Registry) {
 	defer r.mu.Unlock()
 	if _, ok := r.pending["testtoken"]; ok {
 		t.Fatal("expected pending entry deleted")
+	}
+}
+
+func TestSanitizeUploadFilenameShellSafe(t *testing.T) {
+	t.Parallel()
+	cases := []struct {
+		in   string
+		want string
+	}{
+		{"normal.txt", "normal.txt"},
+		{"My-Document_2.pdf", "My-Document_2.pdf"},
+		{"", "upload"},
+		{".", "upload"},
+		{"../../../etc/passwd", "passwd"},
+		{"foo;rm -rf /", "foo_rm_-rf_"},
+		{"a$b`x$(y)", "a_b_x__y_"},
+		{"x\ny\tz", "x_y_z"},
+		{"a|b&c>d<e", "a_b_c_d_e"},
+		{`a\b`, "a_b"},
+		{`'quote"`, "_quote_"},
+		{strings.Repeat("n", 300), strings.Repeat("n", 255)},
+	}
+	for _, tc := range cases {
+		got := SanitizeUploadFilename(tc.in)
+		if got != tc.want {
+			t.Errorf("SanitizeUploadFilename(%q) = %q, want %q", tc.in, got, tc.want)
+		}
 	}
 }

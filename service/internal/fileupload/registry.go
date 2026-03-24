@@ -1,6 +1,7 @@
 package fileupload
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
@@ -29,6 +30,9 @@ type Registry struct {
 	pending map[string]*pendingEntry
 	cfg     *config.Config
 	baseDir string
+
+	pruneMu     sync.Mutex
+	pruneCancel context.CancelFunc
 }
 
 type pendingEntry struct {
@@ -59,15 +63,39 @@ func NewRegistry(cfg *config.Config) (*Registry, error) {
 
 // StartPeriodicPrune runs a background loop that removes pending uploads past their TTL.
 // Without this, staged files are only deleted when some other registry operation runs prune.
+// Call Stop to end the loop. Starting again replaces any previous loop.
 func (r *Registry) StartPeriodicPrune() {
-	go r.periodicPruneLoop()
+	ctx, cancel := context.WithCancel(context.Background())
+	r.pruneMu.Lock()
+	if r.pruneCancel != nil {
+		r.pruneCancel()
+	}
+	r.pruneCancel = cancel
+	r.pruneMu.Unlock()
+	go r.periodicPruneLoop(ctx)
 }
 
-func (r *Registry) periodicPruneLoop() {
+// Stop cancels the periodic prune goroutine started by StartPeriodicPrune. It is safe to call
+// multiple times or when pruning was never started.
+func (r *Registry) Stop() {
+	r.pruneMu.Lock()
+	defer r.pruneMu.Unlock()
+	if r.pruneCancel != nil {
+		r.pruneCancel()
+		r.pruneCancel = nil
+	}
+}
+
+func (r *Registry) periodicPruneLoop(ctx context.Context) {
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
-	for range ticker.C {
-		r.pruneExpired()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			r.pruneExpired()
+		}
 	}
 }
 
@@ -289,13 +317,35 @@ func newUploadToken() (string, error) {
 	return hex.EncodeToString(b), nil
 }
 
-func sanitizeFilename(name string) string {
-	base := filepath.Base(name)
-	if base == "." || base == string(filepath.Separator) {
+const uploadFilenameSafeRunes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.-_"
+
+func finalizeSanitizedUploadFilename(out string) string {
+	if out == "" || out == "." {
 		return "upload"
 	}
-	if len(base) > 255 {
-		base = base[:255]
+	if len(out) > 255 {
+		return out[:255]
 	}
-	return base
+	return out
+}
+
+func sanitizeFilename(name string) string {
+	base := filepath.Base(name)
+	var b strings.Builder
+	b.Grow(len(base))
+	for _, r := range base {
+		if r < 128 && strings.ContainsRune(uploadFilenameSafeRunes, r) {
+			b.WriteByte(byte(r))
+		} else {
+			b.WriteByte('_')
+		}
+	}
+	return finalizeSanitizedUploadFilename(b.String())
+}
+
+// SanitizeUploadFilename normalizes a client file name for safe use in shell commands and action templates.
+// It is applied when staging uploads; call again when building template context if the value may not
+// have passed through staging.
+func SanitizeUploadFilename(name string) string {
+	return sanitizeFilename(name)
 }

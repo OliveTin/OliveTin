@@ -81,7 +81,7 @@ func applyConsumedStagedFile(req *ExecutionRequest, arg *config.ActionArgument, 
 	req.Arguments[arg.Name] = staged.Path
 	req.FileArgData[arg.Name] = &tpl.FileUpload{
 		TmpName:  staged.Path,
-		Name:     staged.OriginalName,
+		Name:     fileupload.SanitizeUploadFilename(staged.OriginalName),
 		MimeType: staged.MimeType,
 		Size:     staged.Size,
 	}

@@ -43,6 +43,7 @@ type generalTemplateContext struct {
 
 // FileUpload is exposed in action templates as .Arguments.<name> for type file_upload.
 // TmpName is the absolute path of the staged file on the server (similar to PHP's tmp_name).
+// Name is normalized to shell-safe ASCII (see fileupload.SanitizeUploadFilename) before template rendering.
 type FileUpload struct {
 	TmpName  string
 	Name     string
