@@ -6,6 +6,7 @@ import (
 	authpublic "github.com/OliveTin/OliveTin/internal/auth/authpublic"
 	config "github.com/OliveTin/OliveTin/internal/config"
 	"github.com/OliveTin/OliveTin/internal/entities"
+	"github.com/OliveTin/OliveTin/internal/fileupload"
 	"github.com/OliveTin/OliveTin/internal/tpl"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
@@ -68,6 +69,8 @@ type Executor struct {
 
 	Cfg *config.Config
 
+	UploadRegistry *fileupload.Registry
+
 	listeners []listener
 
 	chainOfCommand []executorStepFunc
@@ -83,6 +86,9 @@ type ExecutionRequest struct {
 	Cfg               *config.Config
 	AuthenticatedUser *authpublic.AuthenticatedUser
 	TriggerDepth      int
+
+	FileArgData     map[string]*tpl.FileUpload
+	UploadTempPaths []string
 
 	logEntry           *InternalLogEntry
 	finalParsedCommand string
@@ -154,6 +160,15 @@ func DefaultExecutor(cfg *config.Config) *Executor {
 		stepLogFinish,
 		stepSaveLog,
 		stepTrigger,
+		stepCleanupUploadTemps,
+	}
+
+	reg, err := fileupload.NewRegistry(cfg)
+	if err != nil {
+		log.WithError(err).Warn("File uploads are disabled (could not initialize staging directory)")
+	} else {
+		e.UploadRegistry = reg
+		reg.StartPeriodicPrune()
 	}
 
 	return &e
@@ -683,7 +698,7 @@ func stepParseArgs(req *ExecutionRequest) bool {
 }
 
 func handleExecBranch(req *ExecutionRequest) bool {
-	args, err := parseActionExec(req.Arguments, req.Binding.Action, req.Binding.Entity)
+	args, err := parseActionExec(req)
 
 	if err != nil {
 		return fail(req, err)
@@ -753,6 +768,9 @@ func injectSystemArgs(req *ExecutionRequest) {
 }
 
 func hasBindingAndAction(req *ExecutionRequest) bool {
+	if req == nil {
+		return false
+	}
 	return !(req.Binding == nil || req.Binding.Action == nil)
 }
 
@@ -763,7 +781,31 @@ func hasExec(req *ExecutionRequest) bool {
 func fail(req *ExecutionRequest, err error) bool {
 	req.logEntry.Output = err.Error()
 	log.Warn(err.Error())
+	removeUploadTempFiles(req)
 	return false
+}
+
+func stepCleanupUploadTemps(req *ExecutionRequest) bool {
+	removeUploadTempFiles(req)
+	return true
+}
+
+func removeUploadTempFiles(req *ExecutionRequest) {
+	reg := registryForUploadCleanup(req)
+	if reg == nil {
+		return
+	}
+	for _, p := range req.UploadTempPaths {
+		reg.DeleteTempFile(p)
+	}
+	req.UploadTempPaths = nil
+}
+
+func registryForUploadCleanup(req *ExecutionRequest) *fileupload.Registry {
+	if req == nil || req.executor == nil || req.executor.UploadRegistry == nil {
+		return nil
+	}
+	return req.executor.UploadRegistry
 }
 
 func stepRequestAction(req *ExecutionRequest) bool {
@@ -949,14 +991,13 @@ func stepExecAfter(req *ExecutionRequest) bool {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
-	args := map[string]string{
-		"output":                 req.logEntry.Output,
-		"exitCode":               fmt.Sprintf("%v", req.logEntry.ExitCode),
-		"ot_executionTrackingId": req.TrackingID,
-		"ot_username":            req.AuthenticatedUser.Username,
-	}
+	merged := buildTemplateArgumentMap(req)
+	merged["output"] = req.logEntry.Output
+	merged["exitCode"] = fmt.Sprintf("%v", req.logEntry.ExitCode)
+	merged["ot_executionTrackingId"] = req.TrackingID
+	merged["ot_username"] = req.AuthenticatedUser.Username
 
-	finalParsedCommand, err := tpl.ParseTemplateWithActionContext(req.Binding.Action.ShellAfterCompleted, req.Binding.Entity, args)
+	finalParsedCommand, err := tpl.ParseTemplateWithActionContext(req.Binding.Action.ShellAfterCompleted, req.Binding.Entity, merged)
 
 	if err != nil {
 		msg := "Could not prepare shellAfterCompleted command: " + err.Error() + "\n"
@@ -969,7 +1010,7 @@ func stepExecAfter(req *ExecutionRequest) bool {
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 
-	cmd.Env = buildEnv(args)
+	cmd.Env = buildEnv(req.Arguments)
 
 	runerr := cmd.Start()
 	ctx.setProcess(cmd.Process)
@@ -1037,7 +1078,7 @@ func triggerLoop(req *ExecutionRequest) {
 			TrackingID:        uuid.NewString(),
 			Tags:              []string{"trigger"},
 			AuthenticatedUser: req.AuthenticatedUser,
-			Arguments:         req.Arguments,
+			Arguments:         triggerArgumentsWithoutUploads(req),
 			Cfg:               req.Cfg,
 			TriggerDepth:      req.TriggerDepth + 1,
 		}

@@ -78,6 +78,8 @@ func StartFrontendMux(cfg *config.Config, ex *executor.Executor) {
 
 	mux := http.NewServeMux()
 
+	mux.HandleFunc("/api/upload/action-argument", api.GetActionArgumentUploadHandler(ex))
+
 	apiPath, apiHandler := api.GetNewHandler(ex)
 
 	log.Infof("API path is %s", apiPath)

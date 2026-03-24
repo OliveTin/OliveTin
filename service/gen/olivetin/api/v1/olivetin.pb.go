@@ -139,6 +139,8 @@ type ActionArgument struct {
 	Description           string                  `protobuf:"bytes,6,opt,name=description,proto3" json:"description,omitempty"`
 	Suggestions           map[string]string       `protobuf:"bytes,7,rep,name=suggestions,proto3" json:"suggestions,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	SuggestionsBrowserKey string                  `protobuf:"bytes,8,opt,name=suggestions_browser_key,json=suggestionsBrowserKey,proto3" json:"suggestions_browser_key,omitempty"`
+	MaxUploadBytes        int64                   `protobuf:"varint,9,opt,name=max_upload_bytes,json=maxUploadBytes,proto3" json:"max_upload_bytes,omitempty"`
+	AllowedMimeTypes      []string                `protobuf:"bytes,10,rep,name=allowed_mime_types,json=allowedMimeTypes,proto3" json:"allowed_mime_types,omitempty"`
 	unknownFields         protoimpl.UnknownFields
 	sizeCache             protoimpl.SizeCache
 }
@@ -227,6 +229,20 @@ func (x *ActionArgument) GetSuggestionsBrowserKey() string {
 		return x.SuggestionsBrowserKey
 	}
 	return ""
+}
+
+func (x *ActionArgument) GetMaxUploadBytes() int64 {
+	if x != nil {
+		return x.MaxUploadBytes
+	}
+	return 0
+}
+
+func (x *ActionArgument) GetAllowedMimeTypes() []string {
+	if x != nil {
+		return x.AllowedMimeTypes
+	}
+	return nil
 }
 
 type ActionArgumentChoice struct {
@@ -3914,7 +3930,7 @@ const file_olivetin_api_v1_olivetin_proto_rawDesc = "" +
 	"\x0epopup_on_start\x18\x06 \x01(\tR\fpopupOnStart\x12\x14\n" +
 	"\x05order\x18\a \x01(\x05R\x05order\x12\x18\n" +
 	"\atimeout\x18\b \x01(\x05R\atimeout\x12=\n" +
-	"\x1bdatetime_rate_limit_expires\x18\t \x01(\tR\x18datetimeRateLimitExpires\"\xa2\x03\n" +
+	"\x1bdatetime_rate_limit_expires\x18\t \x01(\tR\x18datetimeRateLimitExpires\"\xfa\x03\n" +
 	"\x0eActionArgument\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\x12\x12\n" +
@@ -3923,7 +3939,10 @@ const file_olivetin_api_v1_olivetin_proto_rawDesc = "" +
 	"\achoices\x18\x05 \x03(\v2%.olivetin.api.v1.ActionArgumentChoiceR\achoices\x12 \n" +
 	"\vdescription\x18\x06 \x01(\tR\vdescription\x12R\n" +
 	"\vsuggestions\x18\a \x03(\v20.olivetin.api.v1.ActionArgument.SuggestionsEntryR\vsuggestions\x126\n" +
-	"\x17suggestions_browser_key\x18\b \x01(\tR\x15suggestionsBrowserKey\x1a>\n" +
+	"\x17suggestions_browser_key\x18\b \x01(\tR\x15suggestionsBrowserKey\x12(\n" +
+	"\x10max_upload_bytes\x18\t \x01(\x03R\x0emaxUploadBytes\x12,\n" +
+	"\x12allowed_mime_types\x18\n" +
+	" \x03(\tR\x10allowedMimeTypes\x1a>\n" +
 	"\x10SuggestionsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"B\n" +

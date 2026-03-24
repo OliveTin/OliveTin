@@ -50,7 +50,8 @@ func AppendSource(cfg *Config, k *koanf.Koanf, configPath string) {
 
 func unmarshalRoot(k *koanf.Koanf, cfg *Config) bool {
 	err := k.UnmarshalWithConf("", cfg, koanf.UnmarshalConf{
-		Tag: "koanf",
+		Tag:           "koanf",
+		DecoderConfig: newDefaultUnmarshalDecoderConfig(),
 	})
 
 	if err != nil {

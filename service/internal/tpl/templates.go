@@ -41,14 +41,32 @@ type generalTemplateContext struct {
 	Env      map[string]string
 }
 
+// FileUpload is exposed in action templates as .Arguments.<name> for type file_upload.
+// TmpName is the absolute path of the staged file on the server (similar to PHP's tmp_name).
+type FileUpload struct {
+	TmpName  string
+	Name     string
+	MimeType string
+	Size     int64
+}
+
 type actionTemplateContext struct {
 	CurrentEntity interface{}
-	Arguments     map[string]string
+	Arguments     map[string]any
 
 	// These are deliberately repeated because embedding structs
 	// won't work in text/template.
 	OliveTin olivetinInfo
 	Env      map[string]string
+}
+
+func newActionTemplateContext(entdata any, args map[string]any) *actionTemplateContext {
+	return &actionTemplateContext{
+		OliveTin:      cachedOliveTinInfo,
+		Env:           cachedEnvMap,
+		Arguments:     args,
+		CurrentEntity: entdata,
+	}
 }
 
 var (
@@ -131,34 +149,36 @@ func migrateLegacyArgumentNames(rawShellCommand string) string {
 	return rawShellCommand
 }
 
-func ParseTemplateWithActionContext(source string, ent *entities.Entity, args map[string]string) (string, error) {
+func ParseTemplateWithActionContext(source string, ent *entities.Entity, args map[string]any) (string, error) {
 	source = migrateLegacyArgumentNames(source)
 	source = migrateLegacyEntityProperties(source)
+	return parseTemplateWithEntityAndArgs(source, ent, args)
+}
 
+func parseTemplateWithEntityAndArgs(source string, ent *entities.Entity, args map[string]any) (string, error) {
+	result, err := execActionTemplateParse(source, ent, args)
+	return finishActionTemplateParse(result, err)
+}
+
+func execActionTemplateParse(source string, ent *entities.Entity, args map[string]any) (string, error) {
 	var entdata any
-
 	if ent != nil {
 		entdata = ent.Data
 	}
-
-	templateVariables := &actionTemplateContext{
-		OliveTin: cachedOliveTinInfo,
-		Env:      cachedEnvMap,
-
-		Arguments:     args,
-		CurrentEntity: entdata,
+	if args == nil {
+		args = map[string]any{}
 	}
+	templateVariables := newActionTemplateContext(entdata, args)
+	return parseTemplate(source, templateVariables)
+}
 
-	result, err := parseTemplate(source, templateVariables)
-
+func finishActionTemplateParse(result string, err error) (string, error) {
 	if isMissingArgumentError, argName := checkMissingArgumentError(err); isMissingArgumentError {
 		return "", fmt.Errorf("required arg not provided: %s", argName)
 	}
-
 	if err != nil {
 		return "", err
 	}
-
 	return result, nil
 }
 

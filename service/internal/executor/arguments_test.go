@@ -34,10 +34,10 @@ func TestValidateArgumentCheckboxDefaultValues(t *testing.T) {
 	}
 
 	// Default checkbox values without choices should accept "1" and "0"
-	err := ValidateArgument(&arg, "1", &action)
+	err := ValidateArgument(&arg, "1", &action, nil, "")
 	assert.Nil(t, err, "Expected checkbox value \"1\" to be accepted without choices")
 
-	err = ValidateArgument(&arg, "0", &action)
+	err = ValidateArgument(&arg, "0", &action, nil, "")
 	assert.Nil(t, err, "Expected checkbox value \"0\" to be accepted without choices")
 }
 
@@ -104,23 +104,26 @@ func TestValidateArgumentCheckboxWithChoices(t *testing.T) {
 	}
 
 	// Titles should be accepted once mangled to their values
-	err := ValidateArgument(&arg, "Enabled", &action)
+	err := ValidateArgument(&arg, "Enabled", &action, nil, "")
 	assert.Nil(t, err, "Expected checkbox title \"Enabled\" to be accepted after mangling to choice value")
 
-	err = ValidateArgument(&arg, "Disabled", &action)
+	err = ValidateArgument(&arg, "Disabled", &action, nil, "")
 	assert.Nil(t, err, "Expected checkbox title \"Disabled\" to be accepted after mangling to choice value")
 
 	// Unknown titles should be rejected because they do not match any choice value
-	err = ValidateArgument(&arg, "Maybe", &action)
+	err = ValidateArgument(&arg, "Maybe", &action, nil, "")
 	assert.NotNil(t, err, "Expected unknown checkbox title to be rejected against choices")
 }
 
 func newExecRequest() *ExecutionRequest {
+	ex := &Executor{}
 	return &ExecutionRequest{
 		Arguments: make(map[string]string),
 		Binding: &ActionBinding{
+			ID:     "test-binding",
 			Action: &config.Action{},
 		},
+		executor: ex,
 	}
 }
 
@@ -207,7 +210,7 @@ func TestExecArrayParsing(t *testing.T) {
 
 	req.Arguments = map[string]string{}
 
-	out, err := parseActionExec(req.Arguments, req.Binding.Action, req.Binding.Entity)
+	out, err := parseActionExec(req)
 
 	assert.Nil(t, err)
 	assert.Equal(t, []string{"ls", "-alh"}, out)
@@ -225,11 +228,13 @@ func TestExecArrayWithTemplateReplacement(t *testing.T) {
 		},
 	}
 
-	values := map[string]string{
+	req := newExecRequest()
+	req.Binding.Action = &a1
+	req.Arguments = map[string]string{
 		"path": "tmp",
 	}
 
-	out, err := parseActionExec(values, &a1, nil)
+	out, err := parseActionExec(req)
 
 	assert.Nil(t, err)
 	assert.Equal(t, []string{"ls", "-alh", "tmp"}, out)
@@ -612,7 +617,7 @@ func TestTypecheckActionArgumentEmptyName(t *testing.T) {
 	}
 	action := config.Action{Title: "Test"}
 
-	err := typecheckActionArgument(&arg, "test", &action)
+	err := typecheckActionArgument(&arg, "test", &action, nil, "")
 	assert.NotNil(t, err)
 	assert.Contains(t, err.Error(), "argument name cannot be empty")
 }
@@ -624,19 +629,39 @@ func TestTypecheckActionArgumentConfirmation(t *testing.T) {
 	}
 	action := config.Action{Title: "Test"}
 
-	err := typecheckActionArgument(&arg, "any_value", &action)
+	err := typecheckActionArgument(&arg, "any_value", &action, nil, "")
 	assert.Nil(t, err, "Confirmation type should always pass validation")
 }
 
+type parseReplacementCase struct {
+	name           string
+	shellCommand   string
+	values         map[string]string
+	expectedOutput string
+	expectError    bool
+	errorContains  string
+}
+
+func (tt parseReplacementCase) run(t *testing.T) {
+	t.Helper()
+	anyVals := make(map[string]any)
+	for k, v := range tt.values {
+		anyVals[k] = v
+	}
+	output, err := tpl.ParseTemplateWithActionContext(tt.shellCommand, nil, anyVals)
+	if tt.expectError {
+		assert.NotNil(t, err, "Expected error but got none")
+		if tt.errorContains != "" {
+			assert.Contains(t, err.Error(), tt.errorContains)
+		}
+		return
+	}
+	assert.Nil(t, err, "Expected no error but got: %v", err)
+	assert.Equal(t, tt.expectedOutput, output)
+}
+
 func TestParseCommandForReplacements(t *testing.T) {
-	tests := []struct {
-		name           string
-		shellCommand   string
-		values         map[string]string
-		expectedOutput string
-		expectError    bool
-		errorContains  string
-	}{
+	tests := []parseReplacementCase{
 		{
 			name:           "Simple replacement",
 			shellCommand:   "echo {{ name }}",
@@ -683,19 +708,7 @@ func TestParseCommandForReplacements(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			output, err := tpl.ParseTemplateWithActionContext(tt.shellCommand, nil, tt.values)
-
-			if tt.expectError {
-				assert.NotNil(t, err, "Expected error but got none")
-				if tt.errorContains != "" {
-					assert.Contains(t, err.Error(), tt.errorContains)
-				}
-			} else {
-				assert.Nil(t, err, "Expected no error but got: %v", err)
-				assert.Equal(t, tt.expectedOutput, output)
-			}
-		})
+		t.Run(tt.name, tt.run)
 	}
 }
 
@@ -709,7 +722,9 @@ func TestArgumentChoicesValidation(t *testing.T) {
 		{
 			name: "Valid choice",
 			req: &ExecutionRequest{
+				executor: &Executor{},
 				Binding: &ActionBinding{
+					ID: "test-binding",
 					Action: &config.Action{
 						Title: "Test choices",
 						Shell: "echo {{ option }}",
@@ -733,7 +748,9 @@ func TestArgumentChoicesValidation(t *testing.T) {
 		{
 			name: "Invalid choice",
 			req: &ExecutionRequest{
+				executor: &Executor{},
 				Binding: &ActionBinding{
+					ID: "test-binding",
 					Action: &config.Action{
 						Title: "Test choices",
 						Shell: "echo {{ option }}",
@@ -757,7 +774,9 @@ func TestArgumentChoicesValidation(t *testing.T) {
 		{
 			name: "Invalid choice",
 			req: &ExecutionRequest{
+				executor: &Executor{},
 				Binding: &ActionBinding{
+					ID: "test-binding",
 					Action: &config.Action{
 						Title: "Test choices",
 						Shell: "echo {{ option }}",

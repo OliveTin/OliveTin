@@ -6,7 +6,7 @@
 listenAddressSingleHTTPFrontend: 0.0.0.0:1337
 
 # Choose from INFO (default), WARN and DEBUG
-# Docs: https://docs.olivetin.app/advanced_configuration/logs.html 
+# Docs: https://docs.olivetin.app/advanced_configuration/logs.html
 logLevel: "INFO"
 
 # Actions are commands that are executed by OliveTin, and normally show up as
@@ -87,6 +87,31 @@ actions:
         default: 3
         description: How many times to do you want to ping?
 
+  # Upload a file from the browser; OliveTin stages it on the server and passes
+  # the temp path into the command (.Arguments.<name>.TmpName). Original name,
+  # size, and MIME type are available on the same object.
+  - title: Log file analysis
+    id: log_file_analysis
+    exec:
+      - echo
+      - "File: {{ .Arguments.logfile.Name }} {{ .Arguments.logfile.TmpName }} ({{ .Arguments.logfile.Size }} bytes)"
+    icon: logs
+    popupOnStart: execution-dialog-stdout-only
+    arguments:
+      - name: Test name
+        title: Test name
+        type: ascii_identifier
+        default: example
+
+      - name: logfile
+        title: Log file
+        type: file_upload
+        description: Upload a log file to preview line count and the first lines.
+        rejectNull: true
+        maxUploadBytes: "10 MB"
+        allowedMimeTypes:
+          - text/plain
+
   # OliveTin can control containers - docker is just a command line app.
   #
   # However, if you are running in a container you will need to do some setup,
@@ -124,7 +149,7 @@ actions:
   #
   # Docs: https://docs.olivetin.app/reference/reference_themes_for_users.html
   - title: Get OliveTin Theme
-    exec: 
+    exec:
       - "olivetin-get-theme"
       - "{{ themeGitRepo }}"
       - "{{ themeFolderName }}"
@@ -341,7 +366,7 @@ dashboards:
 
 # Security - Authentication
 
-# This setting effectively enables or disables guests. 
+# This setting effectively enables or disables guests.
 # If set to "true", then users will have to login to do anything.
 authRequireGuestsToLogin: false
 
@@ -350,7 +375,7 @@ authRequireGuestsToLogin: false
 # and JWT authentication which are documented separately.
 #
 # Docs: https://docs.olivetin.app/security/local.html
-# 
+#
 # How to get a hashed password:
 # Docs: https://docs.olivetin.app/security/local.html#_get_a_argon2id_hashed_password
 authLocalUsers:

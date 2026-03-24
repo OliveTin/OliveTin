@@ -111,6 +111,16 @@ export declare type ActionArgument = Message<"olivetin.api.v1.ActionArgument"> &
    * @generated from field: string suggestions_browser_key = 8;
    */
   suggestionsBrowserKey: string;
+
+  /**
+   * @generated from field: int64 max_upload_bytes = 9;
+   */
+  maxUploadBytes: bigint;
+
+  /**
+   * @generated from field: repeated string allowed_mime_types = 10;
+   */
+  allowedMimeTypes: string[];
 };
 
 /**

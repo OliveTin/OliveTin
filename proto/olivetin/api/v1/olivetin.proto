@@ -27,6 +27,8 @@ message ActionArgument {
 	string description = 6;
 	map<string, string> suggestions = 7;
 	string suggestions_browser_key = 8;
+	int64 max_upload_bytes = 9;
+	repeated string allowed_mime_types = 10;
 }
 
 message ActionArgumentChoice {

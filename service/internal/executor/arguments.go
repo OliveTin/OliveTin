@@ -3,6 +3,7 @@ package executor
 import (
 	config "github.com/OliveTin/OliveTin/internal/config"
 	"github.com/OliveTin/OliveTin/internal/entities"
+	"github.com/OliveTin/OliveTin/internal/fileupload"
 	"github.com/OliveTin/OliveTin/internal/tpl"
 	log "github.com/sirupsen/logrus"
 
@@ -26,11 +27,11 @@ var (
 )
 
 // parseExecArray parses all exec arguments in the action.
-func parseExecArray(action *config.Action, values map[string]string, entity *entities.Entity) ([]string, error) {
+func parseExecArray(action *config.Action, templateArgs map[string]any, entity *entities.Entity) ([]string, error) {
 	parsed := make([]string, len(action.Exec))
 
 	for i, segment := range action.Exec {
-		out, err := parseExecSegment(segment, values, entity)
+		out, err := parseExecSegment(segment, templateArgs, entity)
 		if err != nil {
 			return nil, err
 		}
@@ -39,34 +40,57 @@ func parseExecArray(action *config.Action, values map[string]string, entity *ent
 	return parsed, nil
 }
 
-func parseActionExec(values map[string]string, action *config.Action, entity *entities.Entity) ([]string, error) {
-	if action == nil {
+func prepareExecArguments(req *ExecutionRequest) error {
+	if err := validateArguments(req); err != nil {
+		return err
+	}
+	return finalizeFileUploadArguments(req)
+}
+
+func execRequestAction(req *ExecutionRequest) (*config.Action, error) {
+	if req == nil || req.Binding == nil {
+		return nil, fmt.Errorf("request or binding is nil")
+	}
+	if req.Binding.Action == nil {
 		return nil, fmt.Errorf("action is nil")
 	}
-	if err := validateArguments(values, action); err != nil {
+	return req.Binding.Action, nil
+}
+
+func parseActionExec(req *ExecutionRequest) ([]string, error) {
+	action, err := execRequestAction(req)
+	if err != nil {
 		return nil, err
 	}
-
-	parsed, err := parseExecArray(action, values, entity)
-
+	if err := prepareExecArguments(req); err != nil {
+		return nil, err
+	}
+	tmpl := buildTemplateArgumentMap(req)
+	parsed, err := parseExecArray(action, tmpl, req.Binding.Entity)
 	if err != nil {
 		return nil, err
 	}
 
-	logParsedExec(action, parsed, values)
+	logParsedExec(action, parsed, req.Arguments)
 	return parsed, nil
 }
 
-func parseExecSegment(arg string, values map[string]string, entity *entities.Entity) (string, error) {
-	return tpl.ParseTemplateWithActionContext(arg, entity, values)
+func parseExecSegment(arg string, templateArgs map[string]any, entity *entities.Entity) (string, error) {
+	return tpl.ParseTemplateWithActionContext(arg, entity, templateArgs)
 }
 
-func validateArguments(values map[string]string, action *config.Action) error {
+func validateArguments(req *ExecutionRequest) error {
+	action := req.Binding.Action
+	if action == nil {
+		return fmt.Errorf("action is nil")
+	}
+	reg := req.executor.UploadRegistry
+	bindingID := req.Binding.ID
 	for _, arg := range action.Arguments {
-		if err := typecheckActionArgument(&arg, values[arg.Name], action); err != nil {
+		if err := typecheckActionArgument(&arg, req.Arguments[arg.Name], action, reg, bindingID); err != nil {
 			return err
 		}
-		log.WithFields(log.Fields{"name": arg.Name, "value": values[arg.Name]}).Debugf("Arg assigned")
+		log.WithFields(log.Fields{"name": arg.Name, "value": req.Arguments[arg.Name]}).Debugf("Arg assigned")
 	}
 	return nil
 }
@@ -82,23 +106,12 @@ func parseActionArguments(req *ExecutionRequest) (string, error) {
 		"cmd":         req.Binding.Action.Shell,
 	}).Infof("Action parse args - Before")
 
-	for _, arg := range req.Binding.Action.Arguments {
-		argName := arg.Name
-		argValue := req.Arguments[argName]
-
-		err := typecheckActionArgument(&arg, argValue, req.Binding.Action)
-
-		if err != nil {
-			return "", err
-		}
-
-		log.WithFields(log.Fields{
-			"name":  argName,
-			"value": argValue,
-		}).Debugf("Arg assigned")
+	if err := prepareExecArguments(req); err != nil {
+		return "", err
 	}
+	tmpl := buildTemplateArgumentMap(req)
 
-	parsedShellCommand, err := tpl.ParseTemplateWithActionContext(req.Binding.Action.Shell, req.Binding.Entity, req.Arguments)
+	parsedShellCommand, err := tpl.ParseTemplateWithActionContext(req.Binding.Action.Shell, req.Binding.Entity, tmpl)
 
 	if err != nil {
 		return "", err
@@ -117,7 +130,7 @@ func parseActionArguments(req *ExecutionRequest) (string, error) {
 //gocyclo:ignore
 func redactShellCommand(shellCommand string, arguments []config.ActionArgument, argumentValues map[string]string) string {
 	for _, arg := range arguments {
-		if arg.Type == "password" {
+		if arg.Type == "password" || arg.Type == "file_upload" {
 			argValue, exists := argumentValues[arg.Name]
 
 			if !exists {
@@ -145,7 +158,7 @@ func redactExecArgs(execArgs []string, arguments []config.ActionArgument, argume
 	return redacted
 }
 
-func typecheckActionArgument(arg *config.ActionArgument, value string, action *config.Action) error {
+func typecheckActionArgument(arg *config.ActionArgument, value string, action *config.Action, reg *fileupload.Registry, bindingID string) error {
 	if arg.Type == "confirmation" {
 		return nil
 	}
@@ -154,13 +167,17 @@ func typecheckActionArgument(arg *config.ActionArgument, value string, action *c
 		return fmt.Errorf("argument name cannot be empty")
 	}
 
+	if arg.Type == "file_upload" {
+		return validateFileUploadArg(value, arg, reg, bindingID)
+	}
+
 	return typecheckActionArgumentFound(value, arg)
 }
 
 // ValidateArgument validates a single argument value using the same logic as the executor.
 // It applies mangling transformations and performs full validation including null checks,
 // choice validation, and type safety checks.
-func ValidateArgument(arg *config.ActionArgument, value string, action *config.Action) error {
+func ValidateArgument(arg *config.ActionArgument, value string, action *config.Action, uploadRegistry *fileupload.Registry, bindingID string) error {
 	if arg == nil {
 		return fmt.Errorf("ValidateArgument: arg is nil")
 	}
@@ -173,7 +190,7 @@ func ValidateArgument(arg *config.ActionArgument, value string, action *config.A
 	mangledValue := MangleArgumentValue(arg, value, action.Title)
 
 	// Use the same validation path as the executor
-	return typecheckActionArgument(arg, mangledValue, action)
+	return typecheckActionArgument(arg, mangledValue, action, uploadRegistry, bindingID)
 }
 
 func typecheckActionArgumentFound(value string, arg *config.ActionArgument) error {
@@ -196,6 +213,8 @@ func typecheckActionArgumentFound(value string, arg *config.ActionArgument) erro
 func TypeSafetyCheck(name string, value string, argumentType string) error {
 	switch argumentType {
 	case "password":
+		return nil
+	case "file_upload":
 		return nil
 	case "raw_string_multiline":
 		return nil
@@ -307,7 +326,9 @@ func checkShellArgumentSafety(action *config.Action) error {
 	if action.Shell == "" {
 		return nil
 	}
-	unsafe := map[string]struct{}{"url": {}, "email": {}, "raw_string_multiline": {}, "very_dangerous_raw_string": {}, "password": {}}
+	unsafe := map[string]struct{}{
+		"url": {}, "email": {}, "raw_string_multiline": {}, "very_dangerous_raw_string": {}, "password": {}, "file_upload": {},
+	}
 	for _, arg := range action.Arguments {
 		if _, bad := unsafe[arg.Type]; bad {
 			return fmt.Errorf("unsafe argument type '%s' cannot be used with Shell execution. Use 'exec' instead. See https://docs.olivetin.app/action_execution/shellvsexec.html", arg.Type)
@@ -378,16 +399,20 @@ func MangleArgumentValue(arg *config.ActionArgument, value string, actionTitle s
 		log.Debugf("MangleArgumentValue called with nil arg, returning value unchanged")
 		return value
 	}
+	return mangleArgumentValueByType(arg, value, actionTitle)
+}
 
-	if arg.Type == "datetime" {
+func mangleArgumentValueByType(arg *config.ActionArgument, value string, actionTitle string) string {
+	switch arg.Type {
+	case "file_upload":
+		return value
+	case "datetime":
 		return mangleDatetimeValue(arg, value, actionTitle)
-	}
-
-	if arg.Type == "checkbox" {
+	case "checkbox":
 		return mangleCheckboxValue(arg, value, actionTitle)
+	default:
+		return value
 	}
-
-	return value
 }
 
 func mangleDatetimeValue(arg *config.ActionArgument, value string, actionTitle string) string {
