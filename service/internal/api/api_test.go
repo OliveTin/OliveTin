@@ -662,18 +662,30 @@ func recvEventStreamOne(ch <-chan *apiv1.EventStreamResponse, timeout time.Durat
 	}
 }
 
+func eventStreamRecvResult(ev *apiv1.EventStreamResponse, ok bool) (*apiv1.EventStreamResponse, bool) {
+	if !ok {
+		return nil, true
+	}
+	return ev, false
+}
+
+func recvEventStreamWithTimeoutOne(ch <-chan *apiv1.EventStreamResponse, timeout time.Duration) (*apiv1.EventStreamResponse, bool) {
+	select {
+	case ev, ok := <-ch:
+		return eventStreamRecvResult(ev, ok)
+	case <-time.After(timeout):
+		return nil, true
+	}
+}
+
 func drainEventStreamWithTimeout(ch <-chan *apiv1.EventStreamResponse, timeout time.Duration) []*apiv1.EventStreamResponse {
 	var out []*apiv1.EventStreamResponse
 	for {
-		select {
-		case ev, ok := <-ch:
-			if !ok {
-				return out
-			}
-			out = append(out, ev)
-		case <-time.After(timeout):
+		ev, done := recvEventStreamWithTimeoutOne(ch, timeout)
+		if done {
 			return out
 		}
+		out = append(out, ev)
 	}
 }
 
