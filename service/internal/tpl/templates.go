@@ -200,6 +200,63 @@ func parseTemplate(source string, data any) (string, error) {
 	}
 }
 
+const maxExecToolConfigDepth = 64
+
+// ApplyTemplatesToExecToolConfig recursively applies action templates to all string values in config.
+// Depth-first over maps and slices; only string values are templated. Returns an error if any template fails.
+func ApplyTemplatesToExecToolConfig(config map[string]any, ent *entities.Entity, args map[string]string) (map[string]any, error) {
+	out, err := applyTemplatesToValue(config, ent, args, 0)
+	if err != nil {
+		return nil, err
+	}
+	if out == nil {
+		return nil, nil
+	}
+	return out.(map[string]any), nil
+}
+
+func applyTemplatesToValue(v any, ent *entities.Entity, args map[string]string, depth int) (any, error) {
+	if depth > maxExecToolConfigDepth {
+		return nil, fmt.Errorf("execTool config nested too deeply")
+	}
+	switch val := v.(type) {
+	case string:
+		return ParseTemplateWithActionContext(val, ent, args)
+	case map[string]any:
+		result := make(map[string]any, len(val))
+		for k, elem := range val {
+			transformed, err := applyTemplatesToValue(elem, ent, args, depth+1)
+			if err != nil {
+				return nil, err
+			}
+			result[k] = transformed
+		}
+		return result, nil
+	case []any:
+		result := make([]any, len(val))
+		for i, elem := range val {
+			transformed, err := applyTemplatesToValue(elem, ent, args, depth+1)
+			if err != nil {
+				return nil, err
+			}
+			result[i] = transformed
+		}
+		return result, nil
+	case []string:
+		result := make([]any, len(val))
+		for i, elem := range val {
+			transformed, err := applyTemplatesToValue(elem, ent, args, depth+1)
+			if err != nil {
+				return nil, err
+			}
+			result[i] = transformed
+		}
+		return result, nil
+	default:
+		return v, nil
+	}
+}
+
 func ParseTemplateOfActionBeforeExec(source string, ent *entities.Entity) string {
 	result, err := ParseTemplateWithActionContext(source, ent, nil)
 	if err != nil {
