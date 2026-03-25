@@ -72,3 +72,24 @@ func TestSanitizeConfigInlineDashboardActions(t *testing.T) {
 		assert.NotEmpty(t, found.ID, "Inline action should have a generated ID")
 	}
 }
+
+func TestSanitizeActionExecutionMode(t *testing.T) {
+	t.Run("execTool with shell clears shell and exec", func(t *testing.T) {
+		a := &Action{Title: "Mixed", Shell: "echo hi", ExecTool: &ExecToolConfig{Name: "k8s", Config: map[string]any{"image": "busybox"}}}
+		sanitizeActionExecutionMode(a)
+		assert.Empty(t, a.Shell)
+		assert.Nil(t, a.Exec)
+		assert.NotNil(t, a.ExecTool)
+	})
+	t.Run("shell and exec keeps exec only", func(t *testing.T) {
+		a := &Action{Title: "Both", Shell: "echo hi", Exec: []string{"echo", "hi"}}
+		sanitizeActionExecutionMode(a)
+		assert.Empty(t, a.Shell)
+		assert.NotEmpty(t, a.Exec)
+	})
+	t.Run("execTool with empty name cleared", func(t *testing.T) {
+		a := &Action{Title: "Bad", ExecTool: &ExecToolConfig{Name: "", Config: map[string]any{}}}
+		sanitizeActionExecutionMode(a)
+		assert.Nil(t, a.ExecTool)
+	})
+}

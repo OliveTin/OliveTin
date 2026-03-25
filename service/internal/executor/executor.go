@@ -16,7 +16,9 @@ import (
 
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path"
@@ -79,6 +81,9 @@ type ExecutionRequest struct {
 	finalParsedCommand string
 	execArgs           []string
 	useDirectExec      bool
+	useExecTool        bool
+	execToolName       string
+	execToolConfig     []byte
 	executor           *Executor
 }
 
@@ -110,6 +115,8 @@ type InternalLogEntry struct {
 	*/
 	ActionTitle string
 	ActionIcon  string
+
+	Attributes map[string]string
 }
 
 // .Binding can be nil, so we need to handle that.
@@ -668,9 +675,11 @@ func stepParseArgs(req *ExecutionRequest) bool {
 
 	if hasExec(req) {
 		return handleExecBranch(req)
-	} else {
-		return handleShellBranch(req)
 	}
+	if hasExecTool(req) {
+		return handleExecToolBranch(req)
+	}
+	return handleShellBranch(req)
 }
 
 func handleExecBranch(req *ExecutionRequest) bool {
@@ -718,6 +727,36 @@ func hasBindingAndAction(req *ExecutionRequest) bool {
 
 func hasExec(req *ExecutionRequest) bool {
 	return len(req.Binding.Action.Exec) > 0
+}
+
+func hasExecTool(req *ExecutionRequest) bool {
+	return req.Binding.Action.ExecTool != nil
+}
+
+func handleExecToolBranch(req *ExecutionRequest) bool {
+	if err := validateArguments(req.Arguments, req.Binding.Action); err != nil {
+		return fail(req, err)
+	}
+
+	cfg := req.Binding.Action.ExecTool.Config
+	if cfg == nil {
+		return fail(req, fmt.Errorf("execTool config is nil"))
+	}
+
+	applied, err := tpl.ApplyTemplatesToExecToolConfig(cfg, req.Binding.Entity, req.Arguments)
+	if err != nil {
+		return fail(req, err)
+	}
+
+	configJSON, err := json.Marshal(applied)
+	if err != nil {
+		return fail(req, err)
+	}
+
+	req.useExecTool = true
+	req.execToolName = req.Binding.Action.ExecTool.Name
+	req.execToolConfig = configJSON
+	return true
 }
 
 func fail(req *ExecutionRequest, err error) bool {
@@ -819,6 +858,55 @@ func (ost *OutputStreamer) String() string {
 	return ost.output.String()
 }
 
+const metadataMaxFirstLineLen = 64 * 1024
+
+type MetadataStreamFilter struct {
+	w        io.Writer
+	logEntry *InternalLogEntry
+	buf      []byte
+	done     bool
+}
+
+func (m *MetadataStreamFilter) Write(p []byte) (n int, err error) {
+	if m.done {
+		return m.w.Write(p)
+	}
+	m.buf = append(m.buf, p...)
+	if len(m.buf) > metadataMaxFirstLineLen {
+		m.done = true
+		_, _ = m.w.Write(m.buf)
+		m.buf = nil
+		return len(p), nil
+	}
+	idx := bytes.IndexByte(m.buf, '\n')
+	if idx < 0 {
+		return len(p), nil
+	}
+	line := m.buf[:idx]
+	m.buf = m.buf[idx+1:]
+	m.done = true
+	if bytes.HasPrefix(line, []byte("OLIVETIN_METADATA ")) {
+		jsonPart := line[len("OLIVETIN_METADATA "):]
+		var attrs map[string]string
+		if json.Unmarshal(jsonPart, &attrs) == nil && attrs != nil {
+			if m.logEntry.Attributes == nil {
+				m.logEntry.Attributes = make(map[string]string)
+			}
+			for k, v := range attrs {
+				m.logEntry.Attributes[k] = v
+			}
+		}
+	} else {
+		_, _ = m.w.Write(line)
+		_, _ = m.w.Write([]byte{'\n'})
+	}
+	if len(m.buf) > 0 {
+		_, _ = m.w.Write(m.buf)
+		m.buf = nil
+	}
+	return len(p), nil
+}
+
 func buildEnv(args map[string]string) []string {
 	ret := append(os.Environ(), "OLIVETIN=1")
 
@@ -837,9 +925,12 @@ func buildEnv(args map[string]string) []string {
 }
 
 func stepExec(req *ExecutionRequest) bool {
-	ctx, cancel := newTimeoutContext(context.Background(), time.Duration(req.Binding.Action.Timeout)*time.Second, req.executor)
+	ctx, cancel := newTimeoutContext(context.Background(), time.Duration(req.Binding.Action.Timeout)*time.Second, req.executor, req.logEntry)
 	defer cancel()
 	streamer := &OutputStreamer{Req: req}
+	if req.useExecTool {
+		return stepExecTool(req, ctx, streamer)
+	}
 	cmd := buildCommand(ctx, req)
 	if cmd == nil {
 		req.logEntry.Output = "Cannot execute: no command arguments provided"
@@ -871,6 +962,80 @@ func stepExec(req *ExecutionRequest) bool {
 	return true
 }
 
+func stepExecTool(req *ExecutionRequest, ctx *timeoutContext, streamer *OutputStreamer) bool {
+	toolName := "olivetin-" + req.execToolName
+	if _, err := exec.LookPath(toolName); err != nil {
+		req.logEntry.Output = fmt.Sprintf("exec tool %s not found in PATH", toolName)
+		log.Warnf("exec tool %s not found in PATH", toolName)
+		return false
+	}
+	cmd := wrapCommandExecTool(ctx.Context, req.execToolName)
+	if cmd == nil {
+		return false
+	}
+	stdinPayload := buildExecToolStdinPayload(req)
+	filter := &MetadataStreamFilter{w: streamer, logEntry: req.logEntry}
+	cmd.Stdout = filter
+	cmd.Stderr = streamer
+	cmd.Env = buildExecToolEnv(req)
+	stdinPipe, err := cmd.StdinPipe()
+	if err != nil {
+		req.logEntry.Output = "Failed to create stdin pipe: " + err.Error()
+		return false
+	}
+	req.logEntry.ExecutionStarted = true
+	runerr := cmd.Start()
+	req.logEntry.Process = cmd.Process
+	ctx.setProcess(cmd.Process)
+	_, _ = stdinPipe.Write(stdinPayload)
+	_ = stdinPipe.Close()
+	waiterr := cmd.Wait()
+	req.logEntry.ExitCode = int32(cmd.ProcessState.ExitCode())
+	req.logEntry.Output = streamer.String()
+
+	appendErrorToStderr(runerr, req.logEntry)
+	appendErrorToStderr(waiterr, req.logEntry)
+
+	if ctx.Err() == context.DeadlineExceeded {
+		log.WithFields(log.Fields{
+			"actionTitle": req.logEntry.ActionTitle,
+		}).Warnf("Action timed out")
+		req.logEntry.TimedOut = true
+		req.logEntry.Output += "OliveTin::timeout - this action timed out after " + fmt.Sprintf("%v", req.Binding.Action.Timeout) + " seconds. If you need more time for this action, set a longer timeout. See https://docs.olivetin.app/action_customization/timeouts.html for more help."
+	}
+
+	req.logEntry.DatetimeFinished = time.Now()
+	return true
+}
+
+func buildExecToolStdinPayload(req *ExecutionRequest) []byte {
+	var configAny any
+	_ = json.Unmarshal(req.execToolConfig, &configAny)
+	payload := map[string]any{
+		"config":      configAny,
+		"arguments":   req.Arguments,
+		"timeout":     req.Binding.Action.Timeout,
+		"tracking_id": req.TrackingID,
+	}
+	data, _ := json.Marshal(payload)
+	return data
+}
+
+func buildExecToolEnv(req *ExecutionRequest) []string {
+	env := append(os.Environ(), "OLIVETIN=1")
+	env = append(env, "OLIVETIN_TRACKING_ID="+req.TrackingID)
+	env = append(env, "OLIVETIN_ACTION_TITLE="+req.logEntry.ActionTitle)
+	env = append(env, fmt.Sprintf("OLIVETIN_TIMEOUT=%d", req.Binding.Action.Timeout))
+	for k, v := range req.Arguments {
+		varName := fmt.Sprintf("%v", strings.TrimSpace(strings.ToUpper(k)))
+		if varName == "" {
+			continue
+		}
+		env = append(env, fmt.Sprintf("%v=%v", varName, v))
+	}
+	return env
+}
+
 func buildCommand(ctx context.Context, req *ExecutionRequest) *exec.Cmd {
 	if req.useDirectExec {
 		return wrapCommandDirect(ctx, req.execArgs)
@@ -890,7 +1055,7 @@ func stepExecAfter(req *ExecutionRequest) bool {
 		return true
 	}
 
-	ctx, cancel := newTimeoutContext(context.Background(), time.Duration(req.Binding.Action.Timeout)*time.Second, req.executor)
+	ctx, cancel := newTimeoutContext(context.Background(), time.Duration(req.Binding.Action.Timeout)*time.Second, req.executor, nil)
 	defer cancel()
 
 	var stdout bytes.Buffer

@@ -12,6 +12,7 @@ type Action struct {
 	Icon                   string           `koanf:"icon"`
 	Shell                  string           `koanf:"shell"`
 	Exec                   []string         `koanf:"exec"`
+	ExecTool               *ExecToolConfig  `koanf:"execTool"`
 	ShellAfterCompleted    string           `koanf:"shellAfterCompleted"`
 	Timeout                int              `koanf:"timeout"`
 	Acls                   []string         `koanf:"acls"`
@@ -231,6 +232,11 @@ type DashboardComponent struct {
 	CssClass     string                `koanf:"cssClass"`
 	InlineAction *Action               `koanf:"inlineAction"`
 	Contents     []*DashboardComponent `koanf:"contents"`
+}
+
+type ExecToolConfig struct {
+	Name   string         `koanf:"name"`
+	Config map[string]any `koanf:"config"`
 }
 
 func DefaultConfig() *Config {
