@@ -166,6 +166,8 @@ func buildAction(actionBinding *executor.ActionBinding, rr *DashboardRenderReque
 			Choices:               buildChoices(cfgArg),
 			Suggestions:           cfgArg.Suggestions,
 			SuggestionsBrowserKey: cfgArg.SuggestionsBrowserKey,
+			MaxUploadBytes:        cfgArg.EffectiveFileUploadMaxBytes(rr.cfg),
+			AllowedMimeTypes:      cfgArg.EffectiveFileUploadAllowedMimeTypes(rr.cfg),
 		}
 
 		btn.Arguments = append(btn.Arguments, &pbArg)

@@ -63,7 +63,7 @@ func validateArgumentDefault(action *config.Action, arg *config.ActionArgument) 
 	if arg.Default == "" {
 		return
 	}
-	if err := ValidateArgument(arg, arg.Default, action); err != nil {
+	if err := ValidateArgument(arg, arg.Default, action, nil, ""); err != nil {
 		log.WithFields(log.Fields{
 			"actionTitle": action.Title,
 			"argName":     arg.Name,

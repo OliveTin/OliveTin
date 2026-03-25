@@ -665,15 +665,23 @@ func recvEventStreamOne(ch <-chan *apiv1.EventStreamResponse, timeout time.Durat
 func drainEventStreamWithTimeout(ch <-chan *apiv1.EventStreamResponse, timeout time.Duration) []*apiv1.EventStreamResponse {
 	var out []*apiv1.EventStreamResponse
 	for {
-		select {
-		case ev, ok := <-ch:
-			if !ok {
-				return out
-			}
-			out = append(out, ev)
-		case <-time.After(timeout):
+		ev, stop := recvOneEventOrTimeout(ch, timeout)
+		if stop {
 			return out
 		}
+		out = append(out, ev)
+	}
+}
+
+func recvOneEventOrTimeout(ch <-chan *apiv1.EventStreamResponse, timeout time.Duration) (*apiv1.EventStreamResponse, bool) {
+	select {
+	case ev, ok := <-ch:
+		if !ok {
+			return nil, true
+		}
+		return ev, false
+	case <-time.After(timeout):
+		return nil, true
 	}
 }
 

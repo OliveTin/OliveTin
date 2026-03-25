@@ -2,6 +2,7 @@ package tpl
 
 import (
 	"encoding/json"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -9,21 +10,41 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type templateJsonCase struct {
+	name           string
+	source         string
+	ent            *entities.Entity
+	args           map[string]any
+	expectedOutput string
+	expectError    bool
+	checkJsonOnly  bool
+}
+
+func (tt templateJsonCase) run(t *testing.T) {
+	output, err := ParseTemplateWithActionContext(tt.source, tt.ent, tt.args)
+	if tt.expectError {
+		assert.Error(t, err)
+		return
+	}
+	assert.NoError(t, err)
+	if tt.checkJsonOnly {
+		strArgs := make(map[string]string)
+		for k, v := range tt.args {
+			strArgs[k] = fmt.Sprintf("%v", v)
+		}
+		assertJsonOutput(t, output, tt.expectedOutput, strArgs)
+		return
+	}
+	assert.Equal(t, tt.expectedOutput, output)
+}
+
 func TestParseTemplateWithActionContext_Json(t *testing.T) {
-	tests := []struct {
-		name           string
-		source         string
-		ent            *entities.Entity
-		args           map[string]string
-		expectedOutput string
-		expectError    bool
-		checkJsonOnly  bool
-	}{
+	tests := []templateJsonCase{
 		{
 			name:           "Arguments piped to Json",
 			source:         `echo {{ .Arguments | Json }}`,
 			ent:            nil,
-			args:           map[string]string{"value": "true", "ot_username": "alice"},
+			args:           map[string]any{"value": "true", "ot_username": "alice"},
 			expectedOutput: `echo `,
 			expectError:    false,
 			checkJsonOnly:  true,
@@ -48,25 +69,13 @@ func TestParseTemplateWithActionContext_Json(t *testing.T) {
 			name:           "Single argument value as Json",
 			source:         `echo {{ .Arguments.value | Json }}`,
 			ent:            nil,
-			args:           map[string]string{"value": "hello"},
+			args:           map[string]any{"value": "hello"},
 			expectedOutput: `echo "hello"`,
 			expectError:    false,
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			output, err := ParseTemplateWithActionContext(tt.source, tt.ent, tt.args)
-			if tt.expectError {
-				assert.Error(t, err)
-				return
-			}
-			assert.NoError(t, err)
-			if tt.checkJsonOnly {
-				assertJsonOutput(t, output, tt.expectedOutput, tt.args)
-			} else {
-				assert.Equal(t, tt.expectedOutput, output)
-			}
-		})
+		t.Run(tt.name, tt.run)
 	}
 }
 

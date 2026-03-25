@@ -750,7 +750,7 @@ func (api *oliveTinAPI) validateArgumentTypeInternal(msg *apiv1.ValidateArgument
 		return fmt.Errorf("argument not found")
 	}
 
-	return executor.ValidateArgument(arg, msg.Value, action)
+	return executor.ValidateArgument(arg, msg.Value, action, api.executor.UploadRegistry, msg.BindingId)
 }
 
 func (api *oliveTinAPI) findArgumentForValidation(bindingId string, argumentName string) (*config.ActionArgument, *config.Action) {

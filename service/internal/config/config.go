@@ -44,6 +44,8 @@ type ActionArgument struct {
 	RejectNull            bool                   `koanf:"rejectNull"`
 	Suggestions           map[string]string      `koanf:"suggestions"`
 	SuggestionsBrowserKey string                 `koanf:"suggestionsBrowserKey"`
+	MaxUploadBytes        HumanReadableBytes     `koanf:"maxUploadBytes"`
+	AllowedMimeTypes      []string               `koanf:"allowedMimeTypes"`
 }
 
 // ActionArgumentChoice represents a predefined choice for an argument.
@@ -182,8 +184,17 @@ type Config struct {
 	BannerMessage                   string                     `koanf:"bannerMessage"`
 	BannerCSS                       string                     `koanf:"bannerCss"`
 	Include                         string                     `koanf:"include"`
+	FileUploads                     FileUploadsConfig          `koanf:"fileUploads"`
 
 	sourceFiles []string
+}
+
+// FileUploadsConfig controls server-side staging of uploaded action argument files.
+type FileUploadsConfig struct {
+	TempDirectory           string             `koanf:"tempDirectory"`
+	MaxBytes                HumanReadableBytes `koanf:"maxBytes"`
+	TokenTTLSeconds         int                `koanf:"tokenTTLSeconds"`
+	DefaultAllowedMimeTypes []string           `koanf:"defaultAllowedMimeTypes"`
 }
 
 type AuthLocalUsersConfig struct {
@@ -300,5 +311,36 @@ func DefaultConfigWithBasePort(basePort int) *Config {
 	config.DefaultPolicy.ShowLogList = true
 	config.DefaultPolicy.ShowVersionNumber = true
 
+	config.FileUploads.MaxBytes = DefaultFileUploadMaxBytes
+	config.FileUploads.TokenTTLSeconds = DefaultFileUploadTokenTTLSeconds
+
 	return &config
+}
+
+const (
+	// DefaultFileUploadMaxBytes is 10 MB (SI), matching humanize.ParseBytes("10 MB").
+	DefaultFileUploadMaxBytes        HumanReadableBytes = 10_000_000
+	DefaultFileUploadTokenTTLSeconds                    = 300
+)
+
+// EffectiveFileUploadMaxBytes returns the maximum upload size for an action argument.
+func (a *ActionArgument) EffectiveFileUploadMaxBytes(cfg *Config) int64 {
+	if a.MaxUploadBytes > 0 {
+		return int64(a.MaxUploadBytes)
+	}
+	if cfg != nil && cfg.FileUploads.MaxBytes > 0 {
+		return int64(cfg.FileUploads.MaxBytes)
+	}
+	return int64(DefaultFileUploadMaxBytes)
+}
+
+// EffectiveFileUploadAllowedMimeTypes returns allowed MIME types (empty means none allowed).
+func (a *ActionArgument) EffectiveFileUploadAllowedMimeTypes(cfg *Config) []string {
+	if len(a.AllowedMimeTypes) > 0 {
+		return a.AllowedMimeTypes
+	}
+	if cfg != nil && len(cfg.FileUploads.DefaultAllowedMimeTypes) > 0 {
+		return cfg.FileUploads.DefaultAllowedMimeTypes
+	}
+	return nil
 }

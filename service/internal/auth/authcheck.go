@@ -68,3 +68,20 @@ func UserFromApiCall[T any](ctx context.Context, req *connect.Request[T], cfg *c
 
 	return user
 }
+
+// UserFromHTTPRequest resolves the authenticated user from a plain HTTP request (same chain as Connect RPC).
+func UserFromHTTPRequest(r *http.Request, cfg *config.Config) *types.AuthenticatedUser {
+	authCtx := &types.AuthCheckingContext{
+		Request: r,
+		Config:  cfg,
+	}
+	var user *types.AuthenticatedUser
+	for _, check := range authChain {
+		user = check(authCtx)
+		if user != nil && user.Username != "" {
+			user.BuildUserAcls(cfg)
+			return user
+		}
+	}
+	return UserGuest(cfg)
+}

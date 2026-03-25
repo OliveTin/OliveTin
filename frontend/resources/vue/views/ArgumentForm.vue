@@ -12,32 +12,65 @@
                 {{ formatLabel(arg.title) }}
               </label>
 
-              <datalist v-if="(arg.suggestions && Object.keys(arg.suggestions).length > 0) || getBrowserSuggestions(arg).length > 0" :id="`${arg.name}-choices`">
-                <option v-for="(suggestion, key) in arg.suggestions" :key="key" :value="key">
-                  {{ suggestion }}
-                </option>
-                <option v-for="(suggestion, index) in getBrowserSuggestions(arg)" :key="`browser-${index}`" :value="suggestion">
-                  {{ suggestion }}
-                </option>
-              </datalist>
+              <template v-if="arg.type === 'file_upload'">
+                <div class="file-upload-field">
+                  <div
+                    class="file-upload-dropzone"
+                    :class="{ 'file-upload-dropzone--active': (fileUploadDragDepth[arg.name] || 0) > 0 }"
+                    @dragenter.prevent="onFileDragEnter(arg)"
+                    @dragover.prevent="onFileDragOver"
+                    @dragleave="onFileDragLeave(arg)"
+                    @drop.prevent="onFileDrop(arg, $event)"
+                  >
+                    <input
+                      :id="arg.name"
+                      :name="arg.name"
+                      type="file"
+                      class="file-upload-input-overlay"
+                      :accept="getFileAccept(arg)"
+                      @change="handleChange(arg, $event)"
+                    />
+                    <div class="file-upload-dropzone-inner">
+                      <span class="file-upload-prompt">{{ fileUploadPrompt(arg) }}</span>
+                      <span v-if="formErrors[arg.name]" class="file-upload-error">{{ formErrors[arg.name] }}</span>
+                    </div>
+                    </div>
+                </div>
+              <span class="argument-description">
+                <p v-html="arg.description"></p>
+                <p v-if="maxUploadSizeSummary(arg)" class="file-upload-mime-types">{{ maxUploadSizeSummary(arg) }}</p>
+                <p v-if="mimeTypesSummary(arg)" class="file-upload-mime-types">{{ mimeTypesSummary(arg) }}</p>
+              </span>
+          </template>
 
-              <select v-if="getInputComponent(arg) === 'select'" :id="arg.name" :name="arg.name" :value="getArgumentValue(arg)"
-                :required="arg.required" @input="handleInput(arg, $event)" @change="handleChange(arg, $event)">
-                <option v-for="choice in arg.choices" :key="choice.value" :value="choice.value">
-                  {{ choice.title || choice.value }}
-                </option>
-              </select>
-              
-              <component v-else :is="getInputComponent(arg)" :id="arg.name" :name="arg.name" 
-                :value="(arg.type === 'checkbox' || arg.type === 'confirmation') ? undefined : getArgumentValue(arg)"
-                :checked="(arg.type === 'checkbox' || arg.type === 'confirmation') ? getArgumentValue(arg) : undefined"
-                :list="(arg.suggestions || getBrowserSuggestions(arg).length > 0) ? `${arg.name}-choices` : undefined" 
-                :type="getInputComponent(arg) !== 'select' ? getInputType(arg) : undefined"
-                :rows="arg.type === 'raw_string_multiline' ? 5 : undefined"
-                :step="arg.type === 'datetime' ? 1 : undefined" :pattern="getPattern(arg)"
-                @input="handleInput(arg, $event)" @change="handleChange(arg, $event)" />
+              <template v-else>
+                <datalist v-if="(arg.suggestions && Object.keys(arg.suggestions).length > 0) || getBrowserSuggestions(arg).length > 0" :id="`${arg.name}-choices`">
+                  <option v-for="(suggestion, key) in arg.suggestions" :key="key" :value="key">
+                    {{ suggestion }}
+                  </option>
+                  <option v-for="(suggestion, index) in getBrowserSuggestions(arg)" :key="`browser-${index}`" :value="suggestion">
+                    {{ suggestion }}
+                  </option>
+                </datalist>
 
-            <span class="argument-description" v-html="arg.description"></span>
+                <select v-if="getInputComponent(arg) === 'select'" :id="arg.name" :name="arg.name" :value="getArgumentValue(arg)"
+                  :required="arg.required" @input="handleInput(arg, $event)" @change="handleChange(arg, $event)">
+                  <option v-for="choice in arg.choices" :key="choice.value" :value="choice.value">
+                    {{ choice.title || choice.value }}
+                  </option>
+                </select>
+
+                <component v-else :is="getInputComponent(arg)" :id="arg.name" :name="arg.name"
+                  :value="(arg.type === 'checkbox' || arg.type === 'confirmation') ? undefined : getArgumentValue(arg)"
+                  :checked="(arg.type === 'checkbox' || arg.type === 'confirmation') ? getArgumentValue(arg) : undefined"
+                  :list="(arg.suggestions || getBrowserSuggestions(arg).length > 0) ? `${arg.name}-choices` : undefined"
+                  :type="getInputComponent(arg) !== 'select' ? getInputType(arg) : undefined"
+                  :rows="arg.type === 'raw_string_multiline' ? 5 : undefined"
+                  :step="arg.type === 'datetime' ? 1 : undefined" :pattern="getPattern(arg)"
+                  @input="handleInput(arg, $event)" @change="handleChange(arg, $event)" />
+
+                <span class="argument-description" v-html="arg.description"></span>
+              </template>
           </template>
         </template>
         <div v-else>
@@ -58,7 +91,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, reactive, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
@@ -74,6 +107,8 @@ const hasConfirmation = ref(false)
 const formErrors = ref({})
 const actionArguments = ref([])
 const popupOnStart = ref('')
+const fileUploadDragDepth = reactive({})
+const fileUploadDisplayName = reactive({})
 
 // Computed properties
 
@@ -98,6 +133,12 @@ async function setup() {
   actionArguments.value = action.arguments || []
   argValues.value = {}
   formErrors.value = {}
+  for (const key of Object.keys(fileUploadDragDepth)) {
+    delete fileUploadDragDepth[key]
+  }
+  for (const key of Object.keys(fileUploadDisplayName)) {
+    delete fileUploadDisplayName[key]
+  }
   confirmationChecked.value = false
   hasConfirmation.value = false
 
@@ -134,7 +175,7 @@ async function setup() {
   // Run initial validation on all fields after DOM is updated
   await nextTick()
   for (const arg of actionArguments.value) {
-    if (arg.type && !arg.type.startsWith('regex:') && arg.type !== 'select' && arg.type !== '' && arg.type !== 'confirmation' && arg.type !== 'checkbox') {
+    if (arg.type && !arg.type.startsWith('regex:') && arg.type !== 'select' && arg.type !== '' && arg.type !== 'confirmation' && arg.type !== 'checkbox' && arg.type !== 'file_upload') {
       await validateArgument(arg, argValues.value[arg.name] || '')
     }
   }
@@ -165,6 +206,91 @@ function getInputComponent(arg) {
   }
 }
 
+function getFileAccept(arg) {
+  if (arg.type !== 'file_upload' || !arg.allowedMimeTypes || arg.allowedMimeTypes.length === 0) {
+    return undefined
+  }
+  return arg.allowedMimeTypes.join(',')
+}
+
+function mimeTypesSummary(arg) {
+  if (arg.type !== 'file_upload' || !arg.allowedMimeTypes || arg.allowedMimeTypes.length === 0) {
+    return ''
+  }
+  return 'Supported MIME types: ' + arg.allowedMimeTypes.join(', ')
+}
+
+/** SI byte formatting (matches server-side humanize-style defaults such as "10 MB"). */
+function formatBytesDecimal(numBytes) {
+  if (!Number.isFinite(numBytes) || numBytes < 0) {
+    return ''
+  }
+  const n = Math.floor(numBytes)
+  if (n < 1000) {
+    return `${n} B`
+  }
+  const units = ['kB', 'MB', 'GB', 'TB']
+  let v = n
+  let i = 0
+  while (v >= 1000 && i < units.length) {
+    v /= 1000
+    i++
+  }
+  const unit = units[i - 1]
+  const rounded = v < 10 ? Math.round(v * 10) / 10 : Math.round(v)
+  return `${rounded} ${unit}`
+}
+
+function maxUploadSizeSummary(arg) {
+  if (arg.type !== 'file_upload') {
+    return ''
+  }
+  const max = maxUploadBytesNumber(arg)
+  if (max <= 0) {
+    return ''
+  }
+  return `Max file size: ${formatBytesDecimal(max)}`
+}
+
+function fileUploadPrompt(arg) {
+  if (fileUploadDisplayName[arg.name]) {
+    return fileUploadDisplayName[arg.name]
+  }
+  return 'Drop a file here or click to browse'
+}
+
+function onFileDragEnter(arg) {
+  fileUploadDragDepth[arg.name] = (fileUploadDragDepth[arg.name] || 0) + 1
+}
+
+function onFileDragLeave(arg) {
+  const next = Math.max(0, (fileUploadDragDepth[arg.name] || 0) - 1)
+  if (next === 0) {
+    delete fileUploadDragDepth[arg.name]
+  } else {
+    fileUploadDragDepth[arg.name] = next
+  }
+}
+
+function onFileDragOver(event) {
+  event.dataTransfer.dropEffect = 'copy'
+}
+
+function onFileDrop(arg, event) {
+  delete fileUploadDragDepth[arg.name]
+  const file = event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files[0]
+  if (file) {
+    processStagedFileUpload(arg, file)
+  }
+}
+
+function maxUploadBytesNumber(arg) {
+  if (arg.maxUploadBytes === undefined || arg.maxUploadBytes === null) {
+    return 0
+  }
+  return typeof arg.maxUploadBytes === 'bigint' ? Number(arg.maxUploadBytes) : Number(arg.maxUploadBytes)
+}
+
 function getInputType(arg) {
   if (arg.type === 'html' || arg.type === 'raw_string_multiline' || arg.type === 'select') {
     return undefined
@@ -172,6 +298,10 @@ function getInputType(arg) {
 
   if (arg.type === 'confirmation') {
     return 'checkbox'
+  }
+
+  if (arg.type === 'file_upload') {
+    return 'file'
   }
 
   if (arg.type === 'ascii_identifier' || arg.type === 'ascii') {
@@ -205,14 +335,92 @@ function handleInput(arg, event) {
   updateUrlWithArg(arg.name, value)
 }
 
+async function uploadStagedFile(arg, file) {
+  const formData = new FormData()
+  formData.append('binding_id', props.bindingId)
+  formData.append('argument_name', arg.name)
+  formData.append('file', file)
+
+  const res = await fetch('/api/upload/action-argument', {
+    method: 'POST',
+    body: formData,
+    credentials: 'same-origin'
+  })
+  const text = await res.text()
+  if (!res.ok) {
+    throw new Error(text || `Upload failed (${res.status})`)
+  }
+  let data
+  try {
+    data = JSON.parse(text)
+  } catch (e) {
+    throw new Error('Invalid upload response')
+  }
+  if (!data.uploadToken) {
+    throw new Error('Upload response missing token')
+  }
+  return data.uploadToken
+}
+
 function handleChange(arg, event) {
   if (arg.type === 'confirmation') {
     confirmationChecked.value = event.target.checked
     return
   }
 
+  if (arg.type === 'file_upload') {
+    handleFileUploadChange(arg, event)
+    return
+  }
+
   // Validate the input
   validateArgument(arg, event.target.value)
+}
+
+async function processStagedFileUpload(arg, file) {
+  const inputEl = document.getElementById(arg.name)
+  if (!file) {
+    argValues.value[arg.name] = ''
+    delete fileUploadDisplayName[arg.name]
+    if (inputEl) {
+      inputEl.setCustomValidity('')
+    }
+    return
+  }
+  const maxBytes = maxUploadBytesNumber(arg)
+  if (maxBytes > 0 && file.size > maxBytes) {
+    const msg = `File is too large (max ${formatBytesDecimal(maxBytes)})`
+    if (inputEl) {
+      inputEl.setCustomValidity(msg)
+    }
+    formErrors.value[arg.name] = msg
+    delete fileUploadDisplayName[arg.name]
+    return
+  }
+  try {
+    const token = await uploadStagedFile(arg, file)
+    argValues.value[arg.name] = token
+    fileUploadDisplayName[arg.name] = file.name
+    if (inputEl) {
+      inputEl.setCustomValidity('')
+    }
+    delete formErrors.value[arg.name]
+    await validateArgument(arg, token)
+  } catch (err) {
+    console.warn('Upload failed:', err)
+    const msg = err.message || 'Upload failed'
+    formErrors.value[arg.name] = msg
+    if (inputEl) {
+      inputEl.setCustomValidity(msg)
+    }
+    argValues.value[arg.name] = ''
+    delete fileUploadDisplayName[arg.name]
+  }
+}
+
+async function handleFileUploadChange(arg, event) {
+  const file = event.target.files && event.target.files[0]
+  await processStagedFileUpload(arg, file)
 }
 
 async function validateArgument(arg, value) {
@@ -252,7 +460,7 @@ async function validateArgument(arg, value) {
 
     // Get the input element to set custom validity
     const inputElement = document.getElementById(arg.name)
-    
+
     if (validation.valid) {
       delete formErrors.value[arg.name]
       // Clear custom validity message
@@ -268,9 +476,14 @@ async function validateArgument(arg, value) {
     }
   } catch (err) {
     console.warn('Validation failed:', err)
-    // On error, clear any custom validity
     const inputElement = document.getElementById(arg.name)
-    if (inputElement) {
+    if (arg.type === 'file_upload') {
+      const msg = 'Could not validate upload; try again or check your connection'
+      formErrors.value[arg.name] = msg
+      if (inputElement) {
+        inputElement.setCustomValidity(msg)
+      }
+    } else if (inputElement) {
       inputElement.setCustomValidity('')
     }
   }
@@ -282,7 +495,7 @@ function updateUrlWithArg(name, value) {
 
     // Don't add passwords to URL
     const arg = actionArguments.value.find(a => a.name === name)
-    if (arg && arg.type === 'password') {
+    if (arg && (arg.type === 'password' || arg.type === 'file_upload')) {
       return
     }
 
@@ -322,7 +535,7 @@ function getBrowserSuggestions(arg) {
   if (!arg.suggestionsBrowserKey) {
     return []
   }
-  
+
   try {
     const stored = localStorage.getItem(`olivetin-suggestions-${arg.suggestionsBrowserKey}`)
     if (stored) {
@@ -332,7 +545,7 @@ function getBrowserSuggestions(arg) {
   } catch (err) {
     console.warn('Failed to load browser suggestions:', err)
   }
-  
+
   return []
 }
 
@@ -340,21 +553,21 @@ function saveBrowserSuggestions() {
   for (const arg of actionArguments.value) {
     if (arg.suggestionsBrowserKey) {
       const value = argValues.value[arg.name]
-      
+
       // Only save non-empty values for non-checkbox/confirmation/password types
-      if (value && value !== '' && arg.type !== 'checkbox' && arg.type !== 'confirmation' && arg.type !== 'password') {
+      if (value && value !== '' && arg.type !== 'checkbox' && arg.type !== 'confirmation' && arg.type !== 'password' && arg.type !== 'file_upload') {
         try {
           const key = `olivetin-suggestions-${arg.suggestionsBrowserKey}`
           const stored = localStorage.getItem(key)
           let suggestions = []
-          
+
           if (stored) {
             suggestions = JSON.parse(stored)
             if (!Array.isArray(suggestions)) {
               suggestions = []
             }
           }
-          
+
           // Add value if not already present
           if (!suggestions.includes(value)) {
             suggestions.unshift(value) // Add to beginning
@@ -394,7 +607,7 @@ async function handleSubmit(event) {
   for (const arg of actionArguments.value) {
     const value = argValues.value[arg.name]
     const inputElement = document.getElementById(arg.name)
-    
+
     if (arg.required && (!value || value === '')) {
       formErrors.value[arg.name] = 'This field is required'
       // Set custom validity for required field validation
@@ -411,13 +624,13 @@ async function handleSubmit(event) {
   }
 
   event.preventDefault()
-  
+
   const argvs = getArgumentValues()
   console.log('argument form has elements that passed validation')
-  
+
   // Save values to localStorage for arguments with suggestionsBrowserKey
   saveBrowserSuggestions()
-  
+
   try {
     const response = await startAction(argvs)
     if (popupOnStart.value && popupOnStart.value.includes('execution-dialog')) {
@@ -471,6 +684,94 @@ form {
   grid-template-columns: max-content auto auto;
 }
 
+.file-upload-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.file-upload-dropzone {
+  position: relative;
+  min-height: 5.5rem;
+  border: 2px dashed #bbb;
+  border-radius: 0.5rem;
+  background: #fafafa;
+  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.file-upload-dropzone:hover:not(.file-upload-dropzone--active) {
+  border-color: #7a9bbb;
+  background: #f3f7fb;
+  box-shadow: 0 2px 8px rgba(68, 136, 204, 0.12);
+}
+
+.file-upload-dropzone--active {
+  border-color: #4488cc;
+  background: #f0f6fc;
+}
+
+@media (prefers-color-scheme: dark) {
+  .file-upload-dropzone {
+    border-color: #555;
+    background: #222;
+  }
+  .file-upload-dropzone:hover:not(.file-upload-dropzone--active) {
+    border-color: #7a9bbb;
+    background: #222;
+    box-shadow: 0 2px 8px rgba(68, 136, 204, 0.12);
+  }
+  .file-upload-dropzone--active {
+    border-color: #4488cc;
+    background: #2a3b4c;
+  }
+}
+
+
+
+.file-upload-input-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  opacity: 0;
+  cursor: pointer;
+  z-index: 2;
+  font-size: 0;
+}
+
+.file-upload-dropzone-inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: 5.5rem;
+  padding: 0.75rem 1rem;
+  text-align: center;
+  pointer-events: none;
+}
+
+.file-upload-prompt {
+  font-size: 0.9375rem;
+  word-break: break-word;
+}
+
+.file-upload-error {
+  font-size: 0.8125rem;
+  color: #b00020;
+}
+
+.file-upload-mime-types {
+  font-size: 0.8125rem;
+  color: #555;
+  margin: 0;
+  margin-top: 0.15rem;
+}
 
 .argument-description {
   font-size: 0.875rem;
