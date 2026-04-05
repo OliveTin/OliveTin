@@ -24,7 +24,7 @@
 	"dependencies": {
 		"@connectrpc/connect": "^2.1.1",
 		"@connectrpc/connect-web": "^2.1.1",
-		"@hugeicons/core-free-icons": "^4.0.0",
+		"@hugeicons/core-free-icons": "^4.1.1",
 		"@hugeicons/vue": "^1.0.5",
 		"@vitejs/plugin-vue": "^6.0.5",
 		"@xterm/addon-fit": "^0.11.0",
