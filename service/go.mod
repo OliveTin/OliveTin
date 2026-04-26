@@ -5,7 +5,7 @@ go 1.25.7
 exclude google.golang.org/genproto v0.0.0-20200513103714-09dca8ec2884
 
 require (
-	connectrpc.com/connect v1.19.1
+	connectrpc.com/connect v1.19.2
 	github.com/Masterminds/semver v1.5.0
 	github.com/MicahParks/keyfunc/v3 v3.8.0
 	github.com/PaesslerAG/jsonpath v0.1.1
