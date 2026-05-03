@@ -11,7 +11,7 @@ require (
 	github.com/PaesslerAG/jsonpath v0.1.1
 	github.com/alexedwards/argon2id v1.0.0
 	github.com/bufbuild/buf v1.66.1
-	github.com/fsnotify/fsnotify v1.9.0
+	github.com/fsnotify/fsnotify v1.10.0
 	github.com/fzipp/gocyclo v0.6.0
 	github.com/go-critic/go-critic v0.14.3
 	github.com/golang-jwt/jwt/v5 v5.3.1
