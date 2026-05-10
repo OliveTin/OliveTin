@@ -1,0 +1,61 @@
+[#example-login-required]
+= Example: Force Login
+
+A common use case for OliveTin with security is to expose some dashboards that require login to be able to use. This page brings together the configuration options that are needed to achieve this. The most important configuration option is setting `authRequireGuestsToLogin` to `true`.
+
+== Full example configuration
+
+```yaml
+logLevel: "INFO"
+
+authRequireGuestsToLogin: true
+
+accessControlLists:
+  - name: "admins"
+    permissions:
+      view: true
+      exec: true
+      logs: true
+    matchUsergroups:
+      - "admins"
+    addToEveryAction: true
+
+
+authLocalUsers:
+  enabled: true
+  users:
+    - username: "admin"
+      usergroup: admins
+      password: -- your password hash here --
+
+actions:
+  - title: "Restart"
+    shell: echo "Restart"
+
+dashboards:
+  - title: "Admin Dashboard"
+    contents:
+      - title: "Restart"
+```
+
+Note, to use this configuration, you will need to replace `-- your password hash here --` with a password hash. You can generate a password hash by looking at the options in the xref:security/local.adoc[local-users] configuration section.
+
+== Important configuration option: `AuthRequireGuestsToLogin`
+
+The `AuthRequireGuestsToLogin` option is a helpful shortcut that sets all `defaultPermissions` to false, and makes it so that all guests are prompted to login before they can do anything with OliveTin.
+
+Technically, you could achieve the same effect by setting `defaultPermissions` to `false` and setting up an ACL that allows access to the login page, but `AuthRequireGuestsToLogin` is a more convenient way to achieve the same effect.
+
+== Per-action ACLs, vs `addToEveryAction`
+
+It is possible to specify one or more ACL per action, like so;
+
+```yaml
+actions:
+  - title: "Restart"
+    shell: echo "Restart"
+    acl:
+      - name: "admins"
+```
+
+However, this configuration is also a bit more verbose, and if you just have one main ACL, can save yourself some typing by using the `addToEveryAction` option in the ACL configuration.

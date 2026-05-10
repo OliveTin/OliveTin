@@ -20,6 +20,8 @@
 
 All documentation can be found at [docs.olivetin.app](https://docs.olivetin.app). This includes installation and usage guide, etc.
 
+The AsciiDoc sources for that site live in this repository under [`docs/`](docs/) (Antora component). The [docs.olivetin.app](https://github.com/OliveTin/docs.olivetin.app) repository contains the Antora playbook, theme supplemental files, and the workflow that publishes GitHub Pages.
+
 ## Use cases
 
 **Safely** give access to commands, for less technical people;

@@ -1,0 +1,18 @@
+[#install-alpine]
+= Alpine Linux
+
+Alpine Linux is supported by an upstream .apk package, or a manual .tar.gz install, or by xref:install/container.adoc[a container].
+
+These instructions on this page are quite basic, because not many people have tried to use OliveTin on Alpine, or other OpenRC distributions. If you can help suggest improvements to these docs, or Alpine Linux support, it would be great to xref:troubleshooting/wheretofindhelp.adoc[hear from you]!
+
+== Installing the upstream `.apk`
+
+----
+user@host: wget https://github.com/OliveTin/OliveTin/releases/latest/download/OliveTin_linux_amd64.apk
+user@host: apk add --allow-untrusted OliveTin_linux_amd64.apk
+----
+
+== Installing the `.tar.gz`
+
+The standard xref:install/targz.adoc[.tar.gz instructions] should work just fine, replacing systemd for the OpenRC file.
+

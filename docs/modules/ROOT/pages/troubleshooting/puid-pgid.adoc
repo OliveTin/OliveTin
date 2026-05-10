@@ -1,0 +1,16 @@
+[#no-puid-pgid]
+= PUID and PGID support
+
+The OliveTin container image does not use the PUID and PGID convention to specify which user the container should run as - this is a convention that was popularized by linuxserver.io, because their container images use supervisord. Instead, simply use the `--user` argument when defining the container, to change the user OliveTin runs as.
+
+* link:https://docs.linuxserver.io/general/understanding-puid-and-pgid[LSIO documentation for PUID and PGID, that says that `--user` is the same thing]
+
+An example is shown below;
+
+[source,shell]
+.Using --user
+----
+user@host: docker create --name olivetin -p 1337:1337 -v /etc/OliveTin/:/config:ro docker.io/jamesread/olivetin --user container:container
+user@host: docker start olivetin
+----
+

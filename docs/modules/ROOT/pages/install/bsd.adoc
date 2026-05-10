@@ -1,0 +1,7 @@
+= BSD
+
+Using BSD? Good for you! :-)
+
+binary tar.gz: https://github.com/OliveTin/OliveTin/releases/latest/OliveTin-freebsd-amd64.tar.gz
+
+include::partial$install/post_generic.adoc[]

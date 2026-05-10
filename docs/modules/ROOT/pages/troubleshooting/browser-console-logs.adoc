@@ -1,0 +1,55 @@
+[#browser-console-logs]
+= Browser console logs (WebUI troubleshooting)
+:experimental:
+
+The **developer console** (or **browser console**) is a panel built into your web browser. It records technical messages from the OliveTin WebUI—errors, warnings, and network failures—that do not always appear on the page itself.
+
+When something looks wrong in the WebUI (for example a blank area, buttons that never load, or errors after clicking), sharing **console output** helps others see what the browser reported and narrow down the cause. You do **not** need to be a web developer to open it or share it.
+
+**A screenshot of the console is often enough.** If you can copy text instead, that is helpful too. Either way, include what you were doing right before the problem (for example “opened the dashboard”, “clicked Start on action X”).
+
+TIP: Before posting publicly, glance at the console for anything that looks like a password, token, or private URL. Crop or redact those lines if needed.
+
+[#open-the-console]
+== Open the console
+
+Use OliveTin in the browser where you see the problem, then open the console *before* or *right after* reproducing the issue so the messages are still visible.
+
+[#desktop-chromium]
+=== Google Chrome, Microsoft Edge, Brave, and other Chromium-based browsers
+
+. Open the OliveTin page.
+. Open the developer tools:
+** *Windows / Linux:* press kbd:[F12], or kbd:[Ctrl+Shift+J] to go straight to the *Console*.
+** *macOS:* press kbd:[Cmd+Option+J] for the *Console*, or kbd:[Cmd+Option+I] for developer tools (then click the *Console* tab).
+. If you do not see a *Console* tab, click *»* or *+* in the developer tools toolbar and choose *Console*.
+
+[#desktop-firefox]
+=== Mozilla Firefox
+
+. Open the OliveTin page.
+. Open developer tools: kbd:[F12], or kbd:[Ctrl+Shift+I] on Windows/Linux, or kbd:[Cmd+Option+I] on macOS.
+. Select the *Console* tab. (On Windows/Linux you can also use kbd:[Ctrl+Shift+K] to open the console directly.)
+
+[#desktop-safari]
+=== Safari (macOS)
+
+Safari hides the console until you turn on the Develop menu:
+
+. *Safari* → *Settings* (or *Preferences*) → *Advanced* → enable *Show features for web developers* (wording may vary slightly by Safari version).
+. In the menu bar, open *Develop* → *Show JavaScript Console*, or press kbd:[Cmd+Option+C].
+
+[#what-to-capture]
+== What to capture
+
+. Stay on the *Console* tab.
+. If there are many old messages, use the console’s *Clear* control so only new messages appear, then reload the page or repeat the steps that trigger the problem.
+. Note any lines in **red** (errors) or **yellow** (warnings)—those are usually the most useful.
+. Use your system's screenshot tool to capture the console window, *or* right-click in the console → *Save as…* / *Copy all messages* if your browser offers it.
+
+[#share-the-logs]
+== Share the logs
+
+Attach the screenshot or pasted text to a xref:troubleshooting/wheretofindhelp.adoc[Discord or GitHub support] message, along with your OliveTin version and how you access it (direct URL, reverse proxy, etc.). That combination helps diagnose WebUI issues much faster than a description of the screen alone.
+
+If the problem might be on the server (OliveTin not starting, actions failing, API errors), also collect xref:troubleshooting/service-logs.adoc[service logs] from Docker, Podman, or systemd.

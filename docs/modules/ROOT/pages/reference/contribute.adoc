@@ -1,0 +1,14 @@
+[#contribute]
+= Contribute 
+
+First of all, a huge, huge thanks for reading this page, and considering some form of contribution. Here are some suggestions below. 
+
+NOTE: OliveTin does not accept xref:reference/donations_and_sponsorship.adoc[Donations and Sponsorship].
+
+. If you have 2 Minutes to contribute: **Share how you are using OliveTin**, on Reddit, Twitter/X, LinkedIn, Mastodon, or whatever - use the hashtag #OliveTin.  Show a screenshot or blog about it. Tell people how OliveTin helped you. There is also #screenshot-showcase in the OliveTin Discord community. If you want to ping me directly, I really like getting email or PMs; jump on Discord and just say it, or contact me via one of the methods found at http://jread.com .
+. If you have 10 minutes to contribute: **Answer a call for support**: look for support issues in #support on discord, or tagged om GitHub issues, and help someone out! You don't have to solve the problem, just point someone in the right direction. 
+. If you have 15 minutes to contribute: 
+.. **Write up a feature request** on GitHub issues
+.. **Improve the docs** - I make a LOT of typos! https://github.com/OliveTin/docs.olivetin.app
+. **If you have lots of time:** contribute code! https://github.com/OliveTin/OliveTin/blob/main/CONTRIBUTING.adoc
+. **If you have spare compute** - spare server capacity where I can have a virtual machine with root access, then having more VMs to test OliveTin on is always very welcome indeed. I have a lot of sever capacity already though personally, so I'm probably just being greedy for CPU and RAM :-)

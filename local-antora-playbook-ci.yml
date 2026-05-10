@@ -1,0 +1,21 @@
+# CI-only Antora playbook: faster and fewer network calls than local-antora-playbook.yml.
+# Skips Lunr; disables Kroki diagram fetching so diagram pages still parse without kroki.io.
+---
+site:
+  title: OliveTin docs
+  start_page: ROOT::index.adoc
+content:
+  sources:
+    - url: .
+      branches: HEAD
+      start_path: docs
+ui:
+  bundle:
+    url: https://gitlab.com/antora/antora-ui-default/-/jobs/artifacts/HEAD/raw/build/ui-bundle.zip?job=bundle-stable
+    snapshot: true
+asciidoc:
+  attributes:
+    kroki-fetch-diagram: false
+  extensions:
+    - '@asciidoctor/tabs'
+    - 'asciidoctor-kroki'

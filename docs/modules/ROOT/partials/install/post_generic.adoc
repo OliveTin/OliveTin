@@ -1,0 +1,25 @@
+== Post installation
+
+You will need to write a basic configuration file before OliveTin will startup.
+
+Edit the basic config file at `config.yaml` with the following contents;
+
+.The most simple `config.yaml` file.
+[source,yaml]
+----
+actions:
+  - title: "Hello world!"
+    shell: echo 'Hello World!'
+----
+
+Start OliveTin, preferably via a terminal. On Unix based systems (eg MacOS, BSD, Linux, etc) you can just run `./OliveTin`. On Windows you would run `OliveTin.exe` in windows terminal. 
+
+include::partial$install/to_config.adoc[]
+
+== Troubleshooting installations
+
+If you are having problems, OliveTin will log it's status on startup. Check the log messages in the terminal.
+
+For tips on capturing and sharing that output, see xref:troubleshooting/service-logs.adoc[Service logs (troubleshooting)].
+
+If you cannot understand the logs, or otherwise need help, see the xref:troubleshooting/wheretofindhelp.adoc[support page].

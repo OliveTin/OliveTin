@@ -1,0 +1,20 @@
+[#update-checks]
+
+= Update Checks
+
+NOTE: This page is for OliveTin versions **2024.06.02** and afterwards. Previous versions of OliveTin used to have a form of tracking. To learn about how that worked, see xref:reference/updateTracking.adoc[update tracking].
+
+OliveTin has the ability to check for updates, which is now turned OFF if nothing is specified in your configuration file. To enable this feature, set the following in your `config.yaml` file;
+
+[source,yaml]
+.`config.yaml`
+----
+checkForUpdates: true
+----
+
+By enabling this feature, OliveTin will;
+
+* Do a HTTP GET in plaintext (not HTTPS) to http://update-check.olivetin.app/versions.json and download the contents of that file. While the server will see your IP address in it's webserver logs, this information isn't actively used, and the OliveTin project has no intention of actively parsing the logs to use that. 
+* Once OliveTin has that json file, it will compare the "latestVersion" attribute against the version it is running.
+* If there is a later version, it is displayed in the page OliveTin footer.
+

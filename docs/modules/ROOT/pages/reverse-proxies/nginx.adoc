@@ -1,0 +1,42 @@
+[#nginx-dns]
+= Nginx
+
+include::partial$reverse-proxies/diagram.adoc[]
+
+This is an example of DNS based proxying with Nginx.
+
+./etc/nginx/cond.d/OliveTin.conf
+[source,nginx]
+----
+include::example$reverse-proxies/etc/reverse_proxy_nginx_dns.conf[]
+----
+
+Increase the proxy timeout for the websocket location so the reverse proxy does not close long-lived connections; see xref:troubleshooting/err-websocket-connection.adoc#reverse-proxies-will-close-websockets[Reverse proxies will close websockets] if you see disconnects.
+
+
+[#nginx-path]
+== Custom paths
+
+These "custom path" instructions are for when you want to use OliveTin with a custom path like "apps.example.com/olivetin" instead of the root path + DNS name - eg: "olivetin.example.com". Generally it is **not recommended** to use a custom path for OliveTin. Instructions are provided below though, and it mostly-works.
+
+.nginx.conf
+[source,nginx]
+----
+....
+        location /OliveTin/ {
+            proxy_pass http://localhost:1337/;
+            proxy_redirect http://localhost:1337/ http://localhost/OliveTin/;
+        }
+
+        location /OliveTin/websocket {
+            proxy_set_header Upgrade "websocket";
+            proxy_set_header Connection "upgrade";
+            proxy_pass http://localhost:1337/websocket;
+            proxy_read_timeout 600s;
+            proxy_send_timeout 600s;
+        }
+....
+----
+
+include::partial$reverse-proxies/external-rest.adoc[]
+

@@ -1,0 +1,30 @@
+There are 4 main methods to start an action in OliveTin, which can be used in scripts or other applications. These methods allow you to trigger actions either immediately or wait for them to complete, and they can be accessed via HTTP requests.
+
+.Webhook/API reference table
+[%header]
+|======================================================
+| Function                     | HTTP Method | Request Type (How to select an action)             | Response Type
+
+| xref:api/method_StartAction.adoc[StartAction]                
+| POST        
+| xref:api/start_action.adoc#api-request-obj[OliveTin request object]        
+| xref:api/start_action.adoc#api-response-trackingid[Execution Tracking ID]
+
+| xref:api/method_StartActionByGet.adoc[StartActionByGet]           
+| GET         
+| xref:api/start_action.adoc#api-request-idurl[Action ID in the URL]
+| xref:api/start_action.adoc#api-response-trackingid[Execution Tracking ID]
+
+| xref:api/method_StartActionAndWait.adoc[StartActionAndWait]         
+| POST        
+| xref:api/start_action.adoc#api-request-obj[OliveTin request object]
+| xref:api/start_action.adoc#api-response-logentry[Log Entry (waits for the action to finish)]
+
+| xref:api/method_StartActionByGetAndWait.adoc[StartActionByGetAndWait]    
+| GET         
+| xref:api/start_action.adoc#api-request-idurl[Action ID in the URL]         
+| xref:api/start_action.adoc#api-response-logentry[Log Entry (waits for the action to finish)]
+
+|======================================================
+
+You can also browse these methods in the link:htts://docs.olivetin.app/api/swagger/[OpenAPI/Swagger] docs if you prefer.

@@ -1,0 +1,26 @@
+= Includes
+
+OliveTin 3k supports including configuration files from other files. This is useful for organizing large configurations or reusing common settings across multiple actions.
+
+== Include Syntax
+
+To include another configuration file, use the following syntax in your main configuration file:
+
+[source,yaml]
+----	
+include: config.d
+----
+
+This will include all config files in the <config dir>/config.d/ directory.
+
+== Include Logic
+
+Files are included in alphabetical order based on their filenames. This allows you to control the order of inclusion by naming your files accordingly. For example;
+
+* `01-setup.yaml` contains `logLevel: debug`
+* `02-actions.yaml` contains `logLevel: info`
+* Final `logLevel` will be `info` since `02-actions.yaml` is included after `01-setup.yaml`.
+
+Everything under `actions` is merged into a single `actions` list after all files are included. This means you can define actions in multiple files and they will be combined into one list.
+
+WARNING: All other "lists" are overwritten by later files. For example, if you define `dashboards`, `entities`, `accessControlLists` or similar in multiple files, only the last definition will be used.

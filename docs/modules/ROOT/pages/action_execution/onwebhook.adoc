@@ -1,0 +1,320 @@
+[#exec-webhook]
+= Execute on webhook
+
+Webhooks allow external services to trigger OliveTin actions by sending HTTP POST requests. This is useful for integrating OliveTin with CI/CD pipelines, monitoring systems, IoT devices, or any service that can send HTTP requests.
+
+OliveTin provides a dedicated webhook endpoint at `/webhooks` that can receive webhook payloads and match them to configured actions.
+
+== Basic Configuration
+
+To configure an action to run on a webhook, add the `execOnWebhook` property to your action:
+
+[source,yaml]
+.`config.yaml`
+----
+actions:
+  - title: Deploy Application
+    id: deploy
+    shell: /opt/scripts/deploy.sh
+    execOnWebhook:
+      - matchHeaders:
+          X-Event-Type: deploy
+----
+
+This action will be triggered when a POST request is sent to `/webhooks` with the header `X-Event-Type: deploy`.
+
+== Webhook Endpoint
+
+All webhooks are received at:
+
+----
+http://your-olivetin-server:1337/webhooks
+----
+
+or
+
+----
+http://your-olivetin-server:1337/webhooks/
+----
+
+Both paths work identically. All webhook requests must use the HTTP POST method.
+
+== Matching Webhooks
+
+OliveTin can match incoming webhooks based on several criteria:
+
+=== Match by Headers
+
+Match webhooks based on HTTP header values:
+
+[source,yaml]
+----
+actions:
+  - title: Process Event
+    shell: echo "Processing event"
+    execOnWebhook:
+      - matchHeaders:
+          X-Event-Type: my-event
+          X-Source: my-service
+----
+
+All specified headers must match for the webhook to trigger the action.
+
+=== Match by Query Parameters
+
+Match webhooks based on URL query parameters:
+
+[source,yaml]
+----
+actions:
+  - title: Process Request
+    shell: echo "Processing request for {{ service }}"
+    arguments:
+      - name: service
+        type: ascii
+    execOnWebhook:
+      - matchQuery:
+          action: deploy
+          env: production
+----
+
+A request to `/webhooks?action=deploy&env=production` would match this action.
+
+=== Match by JSON Body Path
+
+Match webhooks based on values in the JSON request body using JSONPath expressions:
+
+[source,yaml]
+----
+actions:
+  - title: Handle Push Event
+    shell: echo "Push to {{ branch }}"
+    arguments:
+      - name: branch
+        type: ascii
+    execOnWebhook:
+      - matchPath: "$.event_type=push"
+----
+
+The `matchPath` format is `jsonpath=value`. You can also just specify a JSONPath without a value to match if the path exists:
+
+[source,yaml]
+----
+execOnWebhook:
+  - matchPath: "$.repository.name"  # Matches if this path exists in the JSON
+----
+
+=== Using Regex for Matching
+
+Header and query parameter values can use regex patterns by prefixing with `regex:`:
+
+[source,yaml]
+----
+actions:
+  - title: Handle Multiple Events
+    shell: echo "Handling event"
+    execOnWebhook:
+      - matchHeaders:
+          X-Event-Type: "regex:^(push|pull_request|release)$"
+----
+
+=== Combining Match Criteria
+
+You can combine multiple match criteria. All criteria must match for the webhook to trigger:
+
+[source,yaml]
+----
+actions:
+  - title: Production Deploy
+    shell: /opt/scripts/deploy.sh production
+    execOnWebhook:
+      - matchHeaders:
+          X-Event-Type: deploy
+        matchQuery:
+          environment: production
+        matchPath: "$.status=approved"
+----
+
+== Extracting Arguments from Webhooks
+
+You can extract values from the webhook payload and pass them as arguments to your action using JSONPath expressions:
+
+[source,yaml]
+----
+actions:
+  - title: Deploy Version
+    shell: |
+      echo "Deploying version {{ version }} to {{ environment }}"
+      /opt/scripts/deploy.sh "{{ version }}" "{{ environment }}"
+    arguments:
+      - name: version
+        type: ascii
+      - name: environment
+        type: ascii
+    execOnWebhook:
+      - matchHeaders:
+          X-Event-Type: deploy
+        extract:
+          version: "$.release.tag_name"
+          environment: "$.target.environment"
+----
+
+The `extract` map defines which action arguments to populate from the webhook payload. The key is the argument name, and the value is the JSONPath expression to extract the value.
+
+=== Automatic Webhook Metadata
+
+OliveTin automatically adds several metadata arguments from each webhook request:
+
+* `webhook_method` - The HTTP method (always POST for webhooks)
+* `webhook_path` - The request URL path
+* `webhook_query` - The raw query string
+* `webhook_header_<name>` - Each HTTP header (lowercase name)
+
+For example, to access the `X-Request-Id` header in your action:
+
+[source,yaml]
+----
+actions:
+  - title: Log Request
+    shell: echo "Request ID: {{ webhook_header_x-request-id }}"
+    arguments:
+      - name: webhook_header_x-request-id
+        type: ascii
+    execOnWebhook:
+      - matchHeaders:
+          X-Event-Type: log
+----
+
+== Webhook Authentication
+
+OliveTin supports several authentication methods to verify webhook requests:
+
+=== No Authentication
+
+By default, webhooks have no authentication. Any request matching the criteria will trigger the action:
+
+[source,yaml]
+----
+execOnWebhook:
+  - authType: none
+    matchHeaders:
+      X-Event-Type: my-event
+----
+
+=== HMAC-SHA256 Signature
+
+Verify webhooks using HMAC-SHA256 signatures (commonly used by GitHub, GitLab, etc.):
+
+[source,yaml]
+----
+execOnWebhook:
+  - authType: hmac-sha256
+    authHeader: X-Hub-Signature-256
+    secret: your-webhook-secret
+    matchHeaders:
+      X-Event-Type: push
+----
+
+The `authHeader` specifies which header contains the signature. The signature should be in the format `sha256=<hex-encoded-signature>`.
+
+=== HMAC-SHA1 Signature
+
+For services using HMAC-SHA1 (legacy GitHub webhooks):
+
+[source,yaml]
+----
+execOnWebhook:
+  - authType: hmac-sha1
+    authHeader: X-Hub-Signature
+    secret: your-webhook-secret
+    matchHeaders:
+      X-Event-Type: push
+----
+
+=== Bearer Token
+
+Verify webhooks using a Bearer token in the Authorization header:
+
+[source,yaml]
+----
+execOnWebhook:
+  - authType: bearer
+    secret: your-bearer-token
+    matchHeaders:
+      X-Event-Type: deploy
+----
+
+The webhook sender must include `Authorization: Bearer your-bearer-token` in the request.
+
+=== Basic Authentication
+
+Verify webhooks using HTTP Basic authentication:
+
+[source,yaml]
+----
+execOnWebhook:
+  - authType: basic
+    secret: "username:password"
+    matchHeaders:
+      X-Event-Type: deploy
+----
+
+Or with password only:
+
+[source,yaml]
+----
+execOnWebhook:
+  - authType: basic
+    secret: "mypassword"
+    matchHeaders:
+      X-Event-Type: deploy
+----
+
+== Multiple Webhook Triggers
+
+An action can have multiple webhook configurations. The action will be triggered if any of them match:
+
+[source,yaml]
+----
+actions:
+  - title: Deploy
+    shell: /opt/scripts/deploy.sh
+    execOnWebhook:
+      - matchHeaders:
+          X-Event-Type: deploy-manual
+      - matchHeaders:
+          X-Event-Type: deploy-auto
+        matchPath: "$.status=success"
+----
+
+== Testing Webhooks
+
+You can test your webhook configuration using `curl`:
+
+[source,bash]
+----
+# Simple webhook with headers
+curl -X POST \
+  -H "Content-Type: application/json" \
+  -H "X-Event-Type: deploy" \
+  -d '{"version": "1.2.3"}' \
+  http://localhost:1337/webhooks
+
+# Webhook with HMAC-SHA256 authentication
+SECRET="your-secret"
+PAYLOAD='{"event": "push", "branch": "main"}'
+SIGNATURE=$(echo -n "$PAYLOAD" | openssl dgst -sha256 -hmac "$SECRET" | cut -d' ' -f2)
+
+curl -X POST \
+  -H "Content-Type: application/json" \
+  -H "X-Event-Type: push" \
+  -H "X-Hub-Signature-256: sha256=$SIGNATURE" \
+  -d "$PAYLOAD" \
+  http://localhost:1337/webhooks
+----
+
+== See Also
+
+* xref:action_execution/onwebhook_github.adoc[GitHub Webhooks] - Specific configuration for GitHub webhook events
+* xref:solutions/on-git-push/index.adoc[GitOps Solution] - Running actions on Git push using hooks
+* xref:api/start_action.adoc[Start Action API] - Alternative method for triggering actions via API

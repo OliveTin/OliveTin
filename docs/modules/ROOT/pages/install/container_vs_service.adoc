@@ -1,0 +1,21 @@
+[#install-container-vs-service]
+= Containers vs Services
+
+Linux Containers have become an incredibly popular method for running software. OliveTin supports every way of running Linux containers - spanning from homelabs up to enterprise environments. As a container, it can be used xref:install/container.adoc[standalone using Podman/Docker], through to xref:install/docker_compose.adoc[using docker-compose] or even on xref:install/k8s.adoc[Kubernetes].
+
+**However**, a lot of OliveTin use cases, such as providing an interface to run scripts, rely on files on their local Linux filesystem - containers, by definition, have their own separate filesystem. It is of course possible to "bind mount" parts of your local filesystem into OliveTin, but sometimes this requires more effort, or introduces subtle problems that are more complicated to solve. If you have a good amount of experience with Linux containers, then this approach is absolutely fine - but if you are new to these types of problems - not seeing files you expect, file permissions errors, etc, then it might just be easier to xref:install/choose_package.adoc[install using a Linux package] instead.
+
+== Don't overcomplicate your containers - use SSH!
+
+Sometimes you just want to (or have to) use containers, but also want to use these local resources as well. Instead of bind-mounting lots of stuff into the Linux container and creating a really complicated container definition (which is hard to scale), consider a simple alternative: xref:action_examples/ssh-easy.adoc[SSH with OliveTin]. This allows you to easily SSH back into the container host and keep your container definition really simple. This approach works great and is popular for a lot of users.
+
+== Which should I choose?
+
+|===
+| Use Case                                                                     | Recommended Option
+
+| You're experienced with Linux containers, and know how to bind mount volumes | xref:install/container.adoc[Linux Container]
+| You're new to Linux containers, or not very comfortable with them            | xref:install/choose_package.adoc[Linux service], or xref:install/container.adoc[Linux container] with xref:action_examples/ssh-easy.adoc[SSH action]
+| Needs to use lots of different file paths on the host filesystem             | Run as a systemd service, or bind-mount the filesystem into the container.
+| Needs to control processes, like systemd services                            | Run as a systemd service.
+|===

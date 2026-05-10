@@ -1,0 +1,33 @@
+= OliveTin Stream Deck Plugin
+
+[NOTE]
+Plugin has been developed, and is waiting for approval on the Marketplace.
+
+== Get the plugin on the Marketplace
+
+Head over to the link:https://marketplace.elgato.com/stream-deck/plugins[Elegato Marketplace], and search for "OliveTin".
+
+image::stream-deck/marketplace.png[]
+
+Click "Get" on the plugin to install it onto your Stream-Deck.
+
+== Configure a button
+
+Here are some screenshots, and later documentation will follow when the plugin gets approved.
+
+Add the OliveTin button;
+
+image::stream-deck/panel.png[]
+
+Set the OliveTin API URL to;
+
+http://yourserver:1337/api/
+
+image::stream-deck/config.png[]
+
+Switch to the **Input** tab, and the enter an action ID: 
+
+image::stream-deck/inputs.png[]
+
+If you don't have IDs set on your action, then read xref:action_customization/ids.adoc[how to set action IDs].
+

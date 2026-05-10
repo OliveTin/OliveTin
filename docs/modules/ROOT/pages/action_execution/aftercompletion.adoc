@@ -1,0 +1,39 @@
+[#after-completion]
+= Execute after completion
+
+Sometimes you want to execute another command after the main command executes, this is often the case when you want to check the status of the main command, or if you want to send a notification.
+
+[source,yaml]
+.`config.yaml`
+----
+actions:
+  - title: Check date and send notification via apprise
+    icon: date
+    shell: date
+    shellAfterCompleted: "apprise -c /config/apprise.yml -t 'Notification: Backup script completed' -b 'The backup script completed with code {{ exitCode}}. The log is: \n {{ output }} '"
+----
+
+When running shellAfterCompleted, you *cannot* use argument values - they are not passed to the command. However the following special arguments are defined; 
+
+* `{{ exitCode }}` - The exit code of the previous shell command
+* `{{ output }}` - The standard output of the previous shell command
+* `{{ .Arguments.ot_executionTrackingId }}` - The unique execution tracking id for this execution (version 3k; in 2k use `{{ ot_executionTrackingId }}`)
+* `{{ .Arguments.ot_username }}` - The username of the user who started the execution (version 3k; in 2k use `{{ ot_username }}`). May be `guest` or `cron` for unauthenticated or automated runs.
+
+You can only use a single `shellAfterCompleted`, so use it for notifications, or similar. It would be an antipattern to use this do run 2 commands making up a mini script.
+
+The official OliveTin container images from version 2024.03.24 onwards include the fantastic apprise tool, which makes chat notifications on many protocols very easy.
+
+* https://github.com/caronc/apprise
+* https://github.com/caronc/apprise/wiki/config
+
+[source,yaml]
+.`/config/apprise.yaml`
+----
+urls:
+  - tgram://bottoken/ChatID
+----
+
+== See Also
+
+* xref:./triggers.adoc[Triggers] - Executing full actions after this one (with separate arguments, etc).

@@ -1,0 +1,36 @@
+actions:
+  - title: Stop {{ systemd_unit.unit }}
+    shell: systemctl stop {{ systemd_unit.unit }}
+    icon: <iconify-icon icon="zondicons:hand-stop"></iconify-icon>
+    entity: systemd_unit
+    triggers:
+      - Update services file
+
+  - title: Start {{ systemd_unit.unit }}
+    shell: systemctl start {{ systemd_unit.unit }}
+    icon: <iconify-icon icon="ic:round-directions-run"></iconify-icon>
+    entity: systemd_unit
+    triggers:
+      - Update services file
+
+  - title: Update services file
+    shell: systemctl list-units -a -o json --no-pager | jq -c 'map(select (.unit | contains ("upsilon", "podman", "boot.mount"))) | .[]'  > /etc/OliveTin/entities/systemd_units.json
+    hidden: true
+    execOnStartup: true
+
+entities:
+  - file: /etc/OliveTin/entities/systemd_units.json
+    name: systemd_unit
+
+dashboards:
+  - title: My Services
+    contents:
+      - title: '{{ systemd_unit.description }}'
+        type: fieldset
+        entity: systemd_unit
+        contents:
+          - title: 'Status: {{ systemd_unit.sub }}'
+            type: display
+
+          - title: Start {{ systemd_unit.unit }}
+          - title: Stop {{ systemd_unit.unit }}

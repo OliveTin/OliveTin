@@ -1,0 +1,87 @@
+[#install-helm]
+= Installation on Kubernetes with Helm
+
+Helm makes installing OliveTin on Kubernetes very easy, the official chart is hosted on Artifact Hub. 
+
+https://artifacthub.io/packages/search?repo=olivetin[image:https://img.shields.io/endpoint?url=https://artifacthub.io/badge/repository/olivetin[Artifact Hub]]
+
+== Requirements
+
+=== Prerequisites
+
+* [x] A Kubernetes cluster setup and running
+* [x] Kubernetes client installed and authenticated
+* [x] An ingress controller configure for web traffic
+* [x] Helm installed and authenticated to the cluster
+
+== Installation
+
+[source,shell]
+----
+user@host: helm repo add olivetin https://olivetin.github.io/OliveTin-HelmChart/
+user@host: helm install olivetin olivetin/olivetin
+NAME: olivetin
+LAST DEPLOYED: Tue Apr  1 23:19:09 2025
+NAMESPACE: default
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
+----
+
+== Configure
+
+After a minute or two, check the pod status;
+
+[source,shell]
+----
+user@host: kubectl get pods
+NAME                       READY   STATUS    RESTARTS   AGE
+olivetin-578b79766-4b8lg   1/1     Running   0          87s
+----
+
+Hopefully the pod is not crashlooping or anything like that. If it is, check the logs.
+
+The helm chart should have created a basic ConfigMap for you;
+
+[source,shell]
+----
+user@host: kubectl describe cm/olivetin-config
+Name:         olivetin-config
+Namespace:    default
+Labels:       app.kubernetes.io/managed-by=Helm
+Annotations:  meta.helm.sh/release-name: olivetin
+              meta.helm.sh/release-namespace: default
+
+Data
+====
+config.yaml:
+--
+actions:
+  - title: "Hello world!"
+    shell: echo 'Hello World!'
+
+----
+
+You should edit this ConfigMap to match your needs for OliveTin. Remember to restart the OliveTin deployment if you want the config changes to be picked up more quickly; 
+
+[source,shell]
+----
+user@host: kubectl rollout restart deploy/olivetin
+deployment.apps/olivetin restarted
+----
+
+
+include::partial$install/to_config.adoc[]
+
+== Included templates
+
+You can view the raw templates here: https://github.com/OliveTin/OliveTin-HelmChart/tree/main/charts/olivetin/templates
+
+* Deployment
+* ConfigMap
+* Service
+* Ingress (optional)
+
+== See Also
+
+* xref:solutions/k8s-control-panel-hosted/index.adoc[Solution: Kubernetes Control Panel (Hosted)]

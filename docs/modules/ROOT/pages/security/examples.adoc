@@ -1,0 +1,10 @@
+= Security Examples
+
+The following examples show you how to combine several security configuration options to setup common scenarios that people often ask for.
+
+* xref:security/example_login_required.adoc[Example: Login Required]
+* xref:security/example_some_admin_actions.adoc[Example: Some actions required admin]
+
+== Security Solutions
+
+* xref:solutions/cloudflare_access_tunnel/index.adoc[]

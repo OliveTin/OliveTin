@@ -1,0 +1,69 @@
+[#server-diagnostics]
+= Server diagnostics
+
+OliveTin has a useful feature to gather information about your installation when you have a support request. If you are able to provide **server diagnostics**, this generally helps others help you a lot. **Server diagnostics** does NOT send any information to the developers or anybody else—it's simply text—**copy and paste it** to where someone is trying to help you!
+
+[source,yaml]
+.Example server diagnostics output
+----
+### SOSREPORT START (copy all text to SOSREPORT END)
+# Build:
+commit: nocommit
+version: dev
+date: nodate
+
+# Runtime:
+os: linux
+osreleaseprettyname: PRETTY_NAME="Fedora Linux 37 (Workstation Edition)"
+arch: amd64
+incontainer: false
+lastbrowseruseragent: ""
+
+# Config:
+countofactions: 7
+loglevel: INFO
+
+### SOSREPORT END  (copy all text from SOSREPORT START)
+----
+
+The markers and field names above reflect what OliveTin prints; copy everything from the start marker through the end marker.
+
+You can then copy and paste this text into a GitHub issue, discussion, Discord chat, or wherever else someone might be helping you.
+
+
+== How do I generate server diagnostics?
+
+OliveTin needs to be able to start and its API needs to be functional. Once OliveTin is started, open this URL in a browser (replace the host and port with yours):
+
+`http://myserver:1337/api/sosreport`
+
+The `/api/sosreport` path is the HTTP endpoint OliveTin uses for server diagnostics.
+
+== Optional: Allow insecure (but easy) dumping to the browser
+
+There is a configuration option you can set in your `config.yaml` that allows you to easily dump server diagnostics to your browser when visiting the API. This is turned off by default, as you should not allow anybody to request diagnostics at any time they like, but you can enable this option temporarily to easily get access to the text in your browser.
+
+[source,yaml]
+.`config.yaml`
+----
+InsecureAllowDumpSos: true
+----
+
+== Default: Diagnostics dump to logs
+
+You should get a simple JSON message saying something like;
+
+----
+alert: "Your SOS Report has been logged to OliveTin logs."
+----
+
+The exact wording may match your OliveTin version.
+
+If you see this, great! The actual contents of the server diagnostics are not returned to your browser for security reasons (guests could get info about your installation, etc).
+
+To find the diagnostics text depends on how you are running OliveTin. If you are running in a container, then try `docker logs olivetin` (where `olivetin` is your container name). If you are running using systemd, then try `journalctl -eu OliveTin`.
+
+== What if I cannot even get to the OliveTin API?
+
+OliveTin's web interface doesn't need to be working to get server diagnostics (the web interface and the API are separate). However, if OliveTin won't even start, or you cannot reach the API, then server diagnostics cannot be generated. Please specify that when you ask for help.
+

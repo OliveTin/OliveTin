@@ -1,0 +1,29 @@
+[#nginx-proxy-manager]
+= Nginx Proxy Manager
+
+include::partial$reverse-proxies/diagram.adoc[]
+
+This is an example of DNS based proxying with Nginx Proxy Manager.
+
+This example assumes that you are trying to access OliveTin at **olivetin.npm.teratan.lan** and already have a DNS record pointing to the IP address of the Nginx Proxy Manager. This also assumes you are running Nginx Proxy Manager and OliveTin using Docker Compose.
+
+.docker-compose.yml
+[source,yaml]
+----
+include::example$reverse-proxies/etc/npm-docker-compose.yml[]
+----
+
+Note that OliveTin needs a configuration file to run, see the xref:install/docker_compose.adoc[docker compose install instructions] for a bit more detail.
+
+Assuming you have Nginx Proxy Manager running, start by adding a new proxy host.
+
+* **Domain Names**: olivetin.npm.teratan.lan (again, assume this is the domain you have set up in your DNS)
+* **Scheme**: http (OliveTin does support HTTPS if you create your own certificates, but it is more normal to speak HTTP between Nginx and OliveTin, and just use HTTPS to the proxy).
+* **Forward Hostname/IP**: 192.168.66.168 (change this to be the IP address of your docker host)
+* **Forward Port**: 1337 (this is the default port for OliveTin)
+* **Websockets Support**: Yes (OliveTin uses websockets for the Web UI). If you see websocket disconnects, try increasing the proxy timeout in Nginx Proxy Manager's advanced config; see xref:troubleshooting/err-websocket-connection.adoc#reverse-proxies-will-close-websockets[Reverse proxies will close websockets].
+
+That really should be all that you need to get OliveTin working with Nginx Proxy Manager. If you have any issues, please check the logs of both OliveTin and Nginx Proxy Manager for any errors, and look for ways of getting xref:troubleshooting/wheretofindhelp.adoc[support].
+
+image::npm.png[]
+

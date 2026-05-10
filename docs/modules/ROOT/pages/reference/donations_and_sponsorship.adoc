@@ -1,0 +1,11 @@
+[#donations-and-sponsorship]
+= Donations & Sponsorship
+
+Sometimes I (James Read) get asked if people can donate money, or sponsor me for OliveTin. If you are reading this page, maybe you are thinking the same.
+
+**I do not accept donations or sponsorship** for OliveTin, but I want to **thank you very much indeed** for thinking about the potential.
+
+I have a job that pays me, where I don't write code as part of my day job (very often) - I enjoy coding as a hobby in my spare time. If I get money for that, it somehow takes the pleasure or fun out of it, or makes it feel like a job. There are concerns that I might "prefer" to work on one user's feature request if I am sponsored, or even feel compelled that I have to work on something because someone gave me money. I don't want OliveTin development to go that way. There are also other little considerations, like being paid on the side out of my job then affects my job, and tax, and so on and so on. This is why I don't take any form of money, donations or sponsorship. 
+
+Another way that you can show your appreciation for OliveTin, that actually means a lot more than money, is to xref:reference/contribute.adoc[contribute to OliveTin]. There are little ways and big ways to contribute - depends on if you have 2 minutes or 2 weeks to give! 
+

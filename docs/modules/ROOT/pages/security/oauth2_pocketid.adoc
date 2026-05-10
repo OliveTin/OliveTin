@@ -1,0 +1,55 @@
+[#oauth2-pocketid]
+= OAuth2 - Pocket ID
+
+OliveTin has been tested with Pocket ID. This documentation page describes how to configure Pocket ID for use with OliveTin and assumes you already have Pocket ID installed and running.
+
+== Configuration
+
+.config.yaml
+[source,yaml]
+----
+authRequireGuestsToLogin: true
+
+accessControlLists:
+  - name: admin
+    permissions:
+      view: true
+      exec: true
+      logs: true
+    matchUsergroups:
+      # Since you can't map properties in userinfo response from Pocket ID I am kind of cheating here:
+      # only I will be able to log in and so I return the "preferred_username" as the group, and I configure my
+      # own username as the "Usergroup" to mean "admin"
+      - myusername
+    addToEveryAction: true
+
+authLocalUsers:
+  enabled: false
+
+authOAuth2RedirectUrl: https://olivetin.example.com/oauth/callback
+
+authOAuth2Providers:
+  pocket-id:
+    name: pocket-id
+    title: Pocket ID
+    icon: '<img src="https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/pocket-id-light.svg"/>'
+    authUrl: https://id.example.com/authorize
+    tokenUrl: https://id.example.com/api/oidc/token
+    whoamiUrl: https://id.example.com/api/oidc/userinfo
+    clientId: "[REDACTED]"
+    clientSecret: "[REDACTED]"
+    scopes:
+      - profile
+      - email
+    usernameField: preferred_username
+    userGroupField: preferred_username
+    insecureSkipVerify: true
+
+actions:
+  - title: "Hello world!"
+    shell: echo 'Hello World!'
+----
+
+== Pocket ID config
+
+image::pocketid.png[]

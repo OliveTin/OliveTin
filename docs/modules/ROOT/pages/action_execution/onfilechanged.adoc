@@ -1,0 +1,27 @@
+[#exec-file-changed]
+= Execute on file changed
+
+You can execute an action when a file is changed in a directory. The argument `filename` is pre-populated for you.
+
+[source,yaml]
+----
+actions:
+  - title: Print names of new files
+    shell: "echo Filename: {{ filename }}  Filedir: {{ filedir }}  Filext: {{ fileext }}"
+    arguments:
+      - name: filename
+        type: unicode_identifier
+
+      - name: filedir
+        type: unicode_identifier
+
+      - name: fileext
+        type: unicode_identifier
+
+    execOnFileChangedInDir:
+      - /home/user/Downloads/
+----
+
+include::partial$action_execution/onfileindir_arguments.adoc[]
+
+

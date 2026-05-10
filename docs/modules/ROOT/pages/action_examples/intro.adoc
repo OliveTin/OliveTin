@@ -1,0 +1,24 @@
+= Action Examples
+
+This section provides practical examples of how to configure actions in OliveTin for common use cases. These examples demonstrate real-world scenarios and can serve as starting points for your own configurations.
+
+The examples cover:
+
+* Container management (starting, stopping, and managing containers)
+* Systemd service control
+* Network utilities like ping
+* Remote execution via SSH
+* PowerShell commands for Windows environments
+* Integration with automation tools like Ansible
+
+Each example includes a complete configuration snippet that you can adapt for your environment. Browse through the examples to find scenarios that match your needs, or use them as inspiration for creating your own custom actions.
+
+== What's Next?
+
+After reviewing the examples, you can:
+
+* xref:action_execution/create_your_first.adoc[Create your own action] - Build a custom action for your needs
+* xref:action_customization/intro.adoc[Customize your actions] - Learn how to configure action properties
+* xref:args/intro.adoc[Add arguments] - Make your actions interactive with user input
+* xref:solutions/intro.adoc[Explore complete solutions] - See full configurations for common use cases
+* xref:action_execution/shellvsexec.adoc[Understand shell vs exec] - Learn about execution methods for security

@@ -1,0 +1,25 @@
+= Primitive password protection
+
+[WARNING]
+This solution was requested before OliveTin supported propper password protection. This is not secure and should not be used unless only very primitive protection is needed. Otherwise, please use xref:security/local.adoc[Local Users].
+
+It is possible to add extremely primitive password protection to OliveTin. This is not at all secure to someone that knows the absolute basics of "view source", but if you just want to keep family members away or add a very primitive layer of "security", there are some members of the community that have found this useful.
+
+This assumes you are running OliveTin as a systemd service, if you are running in a container, jump on the discord server for help how to do this.
+
+. Open `/var/www/olivetin/index.html` in a text editor
+. This will be a very long line of code all in one line. Scroll all the way to the end and find that code that says `</body>`. Just before that code statement, add this code, save and close the file.
++
+[source,html]
+----
+<script src = "custom-webui/password.js"></script>
+----
+You will need to this every time you upgrade OliveTin.
++
+. Create the `password.js` using the code below, at `/etc/OliveTin/custom-webui/password.js`.
+
+[source,javascript]
+.`password.js`
+----
+include::example$solutions/primitive-password/password.js[]
+----

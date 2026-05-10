@@ -1,0 +1,9 @@
+[#err-fetch-webui-settings]
+= Error Fetching WebUI Settings
+
+This is a less common issue, but it means that the main web HTML has loaded, but it could not get http://yourserver:1337/webUiSettings.json - most likely because of a 404 (Not Found) or JSON parse issue. You can see the exact reason if your browser as Web Developer Tools - look in the console. Firefox and Chrome both have great web developer tools, that can normally be opened with the F12 key, or from the developer tools menu.
+
+The most common cause of this issue is a broken reverse proxy configuration. To debug this, browse to http://yourserver:1337/webUiSettings.json and adjust your reverse proxy configuration until the file loads properly. See xref:reverse-proxies/intro.adoc[Reverse Proxies] for common configuration instructions.
+
+An uncommon cause of this issue is if you are self-hosting the HTML outside of OliveTin. This is supported, but it means you will need to write the webUiSettings.json file manually. This is currently not documented as very very few people really need or want to do this. It's very uncommon at the moment to self host the HTML outside of the OliveTin main server. Jump on the discord to discuss this if you want to do this, see xref:troubleshooting/wheretofindhelp.adoc[support].
+

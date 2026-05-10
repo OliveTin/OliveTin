@@ -1,0 +1,12 @@
+
+When something is wrong with the **WebUI** in the browser, capturing xref:troubleshooting/browser-console-logs.adoc[browser console logs] (even as a screenshot) helps diagnose the issue.
+
+When something is wrong with the **OliveTin process** (startup failures, actions, API, or auth), capturing xref:troubleshooting/service-logs.adoc[service logs] from Docker, Podman, or `journalctl` helps diagnose the issue.
+
+To get relatively quick access to help, **Discord** is where the chat community for OliveTin is. Note that this project is a free community open source project, and it relies on volenteers to spare their free time to help you. Please be patient and polite.
+
+image:icons/Discord.png[inline] link:https://discord.gg/jhYWWpNJ3v[Chat on Discord]
+
+If nobody is online, or you're not getting the right level of support, you can raise a ticket with the project's developers on GitHub. Again, please be patient and polite.
+
+image:icons/GitHub.png[inline] link:https://github.com/OliveTin/OliveTin/issues/new?assignees=&labels=support&template=support_request.md&title=[Open a support request on GitHub]

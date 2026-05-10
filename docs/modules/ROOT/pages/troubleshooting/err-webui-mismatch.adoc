@@ -1,0 +1,12 @@
+= Error: WebUI Version Mismatch
+
+This is most often caused by the WebUI Version not matching the server version. 
+
+Every release of OliveTin will change the version number for the server, and for the webui client - these versions should match. For example, version 2024.4.1 of the server should be paired with version 2024.4.1 of the webui client. It is unlikely that the release of the server and webui client will be out of sync, but it is possible if you are using a custom build of the webui client, but the most likely cause is **aggressive caching** of the webui client files in your browser, or proxy server.
+
+There are cache-busting mechanisms built into OliveTin to try and avoid this error, but they don't always work in every environment.
+
+* Try forcing a refresh with "Ctrl+F5" in your browser. 
+* If that doesn't work, try clearing your browser cache.
+* If that doesn't work, try using a different browser.
+

@@ -1,0 +1,28 @@
+logLevel: "INFO"
+
+actions:
+  - title: Turn heating up
+    icon: '&#128316;'
+    shell: /opt/heating.sh up
+
+  - title: Turn heating down
+    icon: '&#128317;'
+    shell: /opt/heating.sh down
+
+entities:
+  - file: /etc/OliveTin/entities/heating.yaml
+    name: heating
+
+dashboards:
+  - title: Heating Control Panel
+    contents:
+      - title: "{{ heater.title }}"
+        entity: heating
+        type: fieldset
+        contents:
+          - type: display
+            title: |
+              <span class = "icon">&#127777;</span> <br />{{ heating.temperature }}
+
+          - title: Turn heating up
+          - title: Turn heating down

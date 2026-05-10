@@ -1,0 +1,40 @@
+[#traefik-docker-compose]
+= Traefik + Docker Compose
+
+include::partial$reverse-proxies/diagram.adoc[]
+
+The following example is known to work well with Traefik and docker-compose. If you see websocket disconnects, increase the proxy timeout in Traefik; see xref:troubleshooting/err-websocket-connection.adoc#reverse-proxies-will-close-websockets[Reverse proxies will close websockets].
+
+[source,yaml]
+----
+services:
+  olivetin:
+    container_name: olivetin
+    image: jamesread/olivetin
+    volumes:
+      - /docker/olivetin:/config # replace host path or volume as needed
+    ports:
+      - "1337:1337"
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.olivetin.entrypoints=web"
+      - "traefik.http.routers.olivetin.rule=Host(`olivetin.example.com`)"
+
+  traefik:
+    image: "traefik:v2.9"
+    container_name: "traefik"
+    command:
+      #- "--log.level=DEBUG"
+      - "--api.insecure=true"
+      - "--api.dashboard=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+----
+

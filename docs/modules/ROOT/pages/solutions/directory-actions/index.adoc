@@ -1,0 +1,17 @@
+[#directory-actions]
+= Directory Actions
+
+Sometimes people want to use OliveTin to run standard commands on a directory, such a cleaning out a directory of logs.
+
+image::directory-actions-screenshot.png[]
+
+== Config file
+
+This is a quick and simple way to build actions based on directories.
+
+[source,yaml]
+.`/etc/OliveTin/config.yaml`
+----
+include::example$solutions/directory-actions/config.yaml[]
+----
+

@@ -1,0 +1,28 @@
+= Local User Login via API
+
+OliveTin supports serveral different ways to login, and most installations will probably login via reverse proxy, or via local user login.
+
+To login via local user login, you can use the following API call: `/LocalUserLogin`. This is documented in the API documentation which can be found here; https://docs.olivetin.app/api/ 
+
+The API call is a POST request, and you need to provide a `username` and `password` as a JSON object in the body of the request. Here is an example of how you can login via a cURL request;
+
+```bash
+user@host: curl -X POST "http://olivetin-server:1337/api/LocalUserLogin" -H "accept: application/json" -H "Content-Type: application/json" -d '{"username":"admin","password":"toomanysecrets"}' -v
+...
+< Set-Cookie: olivetin-sid-local=c6c5b2b3-a58b-4dbc-b070-ed7bdd3f1956; Path=/; Max-Age=31556952; HttpOnly
+...
+{"success":true}
+```
+
+You can see from the above example that the header response sets a cookie called "olivetin-sid-local" to a UUID which is your session ID. You must include this cookie with future requests to authenticate yourself.
+
+You can also that the body of the response is a JSON object with a simple `success` key, which will be `true` if the login was successful, and `false` if it was not.
+
+== Check login with `WhoAmI`
+
+You can check your current login status by using the `/WhoAmI` API call. This is a GET request, and you need to provide the `olivetin-sid-local` cookie in the request. Here is an example of how you can check your login status via a cURL request;
+
+```bash
+user@host: curl -X GET http://localhost:1337/api/WhoAmI -H "accept: application/json" -H 'Content-Type: application/json' -b "olivetin-sid-local=cd33aa9c-c613-473e-8581-2b742716ab8e"
+{"authenticatedUser":"admin", "usergroup":"", "provider":"local", "acls":[], "sid":""}
+```
