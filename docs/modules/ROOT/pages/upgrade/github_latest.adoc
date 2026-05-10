@@ -1,0 +1,28 @@
+= Warning - GitHub Latest
+
+GitHub has a handy feature where releases can be marked as "latest". However, it does not understand that some projects, like OliveTin, have **two** active release streams, xref::upgrade/2k3k.adoc[2k and 3k]. Both of those individual streams can have a "latest" - the latest 2k version and the latest 3k version. Unfortunately, GitHub does not provide a way to mark a release at "latest-2k" or "latest-3k" - it only has "latest".
+
+It often happens that a 2k release will come out AFTER a 3k release, and if we left GitHub to do what it does by default, the "latest" URL would be the 2k version - and then when a 3k release goes out, the "latest" URL would be point to a 3k version. This is probably not what you want - "latest" flipping between the "last release that went out". You want it to point to the latest 3k version.
+
+Therefore, the OliveTin project has disabled "latest" releases for all the 2k versions, so that the GitHub "latest" URL will always be the latest 3k version.
+
+This means that **GitHub "latest" URLs will now always point to a 3k version** (eg: `https://github.com/OliveTin/OliveTin/releases/latest/download/OliveTin_linux_amd64.rpm` = 3k version).
+
+[WARNING]
+If you have been using a script to download the latest version of OliveTin, **you will need to accept 3k, OR update your script to use the new workaround described below.**
+
+== Container Tags are unaffected
+
+Container registries allow any number of arbitary tags, so containers DO have a "latest-2k" and "latest-3k" tags. The breaking change described above is only for GitHub release URLs. So, you can still pull the latest 2k or 3k version of the container if you want to. Learn more about available tags in the xref::install/container.adoc[Container Installation Guide].
+
+== What if I want to use the "latest 2k" download URL in my scripts?
+
+It is understood that some users will want to hard-code a "wget URL" for the latest 2k version into their scripts. Unfortunately the GitHub "latest" URL is now no longer a reliable way to do this. However, the OliveTin project has provided you with a workaround. 
+
+In the repository OliveTin/update-check.olivetin.app, there is a Python script that will return the latest 2k version number. You can use this to construct a URL for the latest 2k version. The file `versions.json` also contains the latest 3k versions, and provides download URLs and checksums for each package.
+
+* link:https://raw.githubusercontent.com/OliveTin/update-check.olivetin.app/refs/heads/main/versions.json[versions.json in the update-check.olivetin.app repository]
+
+This repository is updated automatically whenever a new 2k or 3k version is released, so you can be sure that the URL you use will always point to the latest version. Please check this repository README for details on how to use this file in your scripts to get the relevant download URLs;
+
+* link:https://github.com/OliveTin/update-check.olivetin.app/tree/main[update-check.olivetin.app README]

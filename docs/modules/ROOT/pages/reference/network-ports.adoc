@@ -1,0 +1,56 @@
+[#network-ports]
+= Network ports
+
+OliveTin might surprise some people when they see it is listening on several
+ports when it starts up. Most of these ports are internal and localhost-only by
+default. It keeps the architecture of OliveTin clean and simple, and allows for
+a lot of flexibility if needed. 
+
+== Network flow diagram
+
+Here is the default flow of traffic in OliveTin without any config changes.
+
+[mermaid,png]
+.Flow of an inbound network request
+....
+%%{init: {'theme': 'neutral'}}%%
+graph LR
+	A[Your Browser] -->|HTTPS 443/tcp| C
+	C["Single HTTP frontend"]
+	H["Prometheus"]
+	B["gRPC API"]
+
+	subgraph "OliveTin service"
+	C -->|/api/| D[REST API] --> B
+	C -->|/| E[webui]
+    C -->|/metrics/| H
+	end
+....
+
+1. Traffic comes into OliveTin over your network and hits the only port
+listening - 1337, which listens on all interfaces. This is a micro HTTP reverse
+proxy.
+2. Traffic for `/` gets proxied to `localhost:1340` for the static web
+server.
+3. Traffic for `/api/` gets proxied to `localhost:1338` for REST actions.
+4. The REST API actually makes gRPC API calls internally, to port
+`localhost:1339`.
+
+Below is a detailed reference table.
+
+== Port Reference Table  
+
+.Port reference table
+[%header,cols="1,2"]
+|===
+| Config file reference (and Default Address:Port) | Purpose                   
+| `listenAddressSingleHTTPFrontend: 0.0.0.0:1337` (listen on all available addresses) | This is a "micro reverse proxy" built into OliveTin. It's only purpose is to serve /ui and / (the web interface) from a single endpoint. This means that problems like CORSs and setting "external addresses" is not necessary. It does not do any caching or anything else. It can be disabled, but it makes life a lot easier for you. It's common to put your own reverse proxy like haproxy, traefik, etc in front of this single micro reverse proxy.
+| `listenAddressRestActions: localhost:1338`       | REST - the protocol used by web pages to talk to web APIs. In the case of OliveTin, the API is used to get actions, and start actions.
+| `listenAddressGrpcActions:localhost:1339`        | gRPC - a very popular method of service-to-service API communication. This provides the "real" API for OliveTin.
+| `listenAddressWebUI: localhost:1340`             | Hosts a simple static web server with some HTML, stylesheets, Javascript etc for the web interface.
+| `listenAddressPrometheus: localhost:1341`        | Hosts a prometheus endpoint, which is disabled by default. See xref:advanced_configuration/prometheus.adoc[Prometheus] to learn more.
+|=== 
+
+== See also
+
+* xref:reference/multiple_instances[Running Multiple instances of OliveTin on the same server]

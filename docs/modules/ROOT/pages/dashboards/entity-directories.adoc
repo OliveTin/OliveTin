@@ -1,0 +1,35 @@
+= Entity Directories
+
+NOTE: Entity directories were added in 3000.6.0.
+
+Entity directories are a way of grouping actions together based on a single entity instance.
+
+For example, if you have a `server` entity, you can create a directory called `servers` and then add all the actions that you want to apply to all servers to that directory.
+
+In the default config, **More Options** is an **entity directory** because it's parent is a fieldset that is defined with an `entity` property.
+
+[source,yaml]
+----
+      - type: fieldset
+        entity: server
+        title: 'Server: {{ .CurrentEntity.hostname }}'
+        contents:
+          # By default OliveTin will look for an action with a matching title
+          # and put it on the dashboard.
+          #
+          # Fieldsets  also support `type: display`, which can display arbitary
+          # text. This is useful for displaying things like a container's state.
+          - type: display
+            title: |
+              Hostname: <strong>{{ server.name }}</strong>
+              IP Address: <strong>{{ server.ip }}</strong>
+
+          # These are the actions (defined above) that we want on the dashboard.
+          - title: '{{ server.name }} Wake on Lan'
+          - title: '{{ server.name }} Power Off'
+
+          - title: More Options
+            type: directory
+            contents:
+              - title: '{{ server.name }} Print server name'
+----

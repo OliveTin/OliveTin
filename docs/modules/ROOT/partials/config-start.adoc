@@ -1,0 +1,2 @@
+[source,yaml]
+.`config.yaml`

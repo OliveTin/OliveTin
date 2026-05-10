@@ -1,0 +1,22 @@
+[#jwt]
+= JWT Authorization
+
+One of the best ways to do authorization with OliveTin is to pass it a **JSON Web token (JWT)**, after first authenticating with a popular single sign on system, like Keycloak, CloudFlare Tunnels, Authentik or Organizr.
+
+Two types of JWT mechanisms are supported;
+
+* xref:security/jwt_keys.adoc[JWT with Keys] (eg: CloudFlare Tunnels, Authentik)
+** X509 Certs/Keys on disk are supported
+** **JWKS** is also supported
+* xref:security/jwt_hmac.adoc[JWT with HMAC] (eg: Organizr)
+
+== JWT Flow
+
+The flow generally goes like this;
+
+1. User browses to a website like Organizr and logs in, which sets a JWT Cookie for apps.example.com.
+2. User browses to OliveTin.apps.example.com, and the cookie is sent to OliveTin.
+3. OliveTin verifies the JWT token given the signing secret, and picks up on the `name` and `group` fields from the JWT claim.
+4. OliveTin matches any relevant ACLs based on the claims.
+5. If any ACLs are not matched, then the defaultPermissions are used.
+

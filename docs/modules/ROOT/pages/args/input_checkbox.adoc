@@ -1,0 +1,21 @@
+[#confirmation]
+= Input: Checkbox/Boolean
+
+The `checkbox` type argument is a simple checkbox that can be used to toggle a boolean value. It can be especially useful to pass flags to your actions.
+
+[source,yaml]
+----
+actions:
+  - title: remove files
+    shell: rm {{ useTheForce }} /tmp/Downloads/
+    arguments:
+      - title: Use rm -rf?
+        name: useTheForce
+        type: checkbox
+        choices:
+          - title: 1
+            value: "-rf"
+
+          - title: 0
+            value: ""
+----

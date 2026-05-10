@@ -1,0 +1,12 @@
+= Windows install
+
+Yes, OliveTin is supported on Windows, too!
+
+You can instal install OliveTin as a Windows service, follow the instructions to xref:install/windows_service.adoc[install OliveTin as a Windows service].
+
+== Download and run
+
+1. You can download the latest version of OliveTin here: link:https://github.com/OliveTin/OliveTin/releases/latest/download/OliveTin-windows-amd64.zip[`OliveTin-windows-amd64.zip`]
+2. Unzip and run "OliveTin.exe"
+
+include::partial$install/post_generic.adoc[]

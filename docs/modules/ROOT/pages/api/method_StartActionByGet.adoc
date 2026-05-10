@@ -1,0 +1,29 @@
+= API Method: StartActionByGet
+
+This is the method that allows you to specify the action ID in the URL, and is probably the best to do quick integrations - QR Codes, streamdeck, etc. You cannot pass arguments using this method. 
+
+* **HTTP Method**: `GET`
+* **Request Type**: Action ID in the URL
+* **Response Type**: Execution Tracking ID
+
+include::partial$api/start_action_methods.adoc[]
+
+== Example API call; Start an action by ID in the URL
+
+.curl
+----
+user@host: curl http://olivetin.example.com/api/StartActionByGet/pingGithub
+----
+
+The corresponding config.yaml would look like this;
+
+[source,yaml]
+----
+actions:
+  - title: Ping GitHub.com
+    id: pingGithub
+    shell: ping github.com -c 1
+----
+
+IDs are used by these API calls, as you probably want the interface to display a human-readable title, whereas the API call doesn't want to have spaces or punctuation.
+

@@ -1,0 +1,25 @@
+[#args-custom-regex]
+= Custom regex
+
+OliveTin version 2024.02.081 and above support custom regex patterns for argument types. Here is an example to validate against any 3 letter word;
+
+NOTE: The regex pattern should be enclosed in single quotes, otherwise you will probably get a YAML error when starting OliveTin.
+
+[source,yaml]
+.`config.yaml`
+----
+actions:
+  - title: echo a message
+    icon: smile
+    shell: echo "{{ message }}"
+    arguments:
+      - name: message
+        type: 'regex:^\w\w\w$'
+----
+
+The site http://regex101.com is a good place to test your regex patterns. OliveTin checks your regex 2 times;
+
+. **Regex in the browser** (which probably uses PCRE or Perl Compatible Regular Expressions) - this is so that the browser can give you a nice validation message. This is ignored when it reaches the server though, or if you are using the API directly. Select "PCRE" on the regex101 site when testing.
+. **Regex on the server** (which uses Golang's regex engine) - this is the one that actually validates the input. Select "Golang" on the regex101 site when testing.
+
+You cannot specify different regex patterns for the browser and server. The regex pattern you create will need to be compatible with both types of regex engine.

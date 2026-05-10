@@ -1,0 +1,55 @@
+[#logs-calendar]
+= Logs Calendar View
+
+The logs calendar view provides a visual way to browse your action execution history. Instead of scrolling through a list of logs, you can see executions displayed on a calendar, making it easy to identify patterns, busy periods, or specific dates when actions were run.
+
+== Accessing the Calendar View
+
+To access the calendar view, navigate to the **Logs** page and click the **Calendar** button in the toolbar. This will switch from the list view to the calendar view.
+
+You can return to the list view at any time by clicking the **Back to list** button.
+
+== Features
+
+=== View Executions on a Calendar
+
+Each action execution is displayed as an event on the calendar. Events show:
+
+* The action title
+* The action icon (if configured)
+
+This gives you a quick visual overview of when actions were executed throughout the month.
+
+=== Navigate Between Months
+
+Use the navigation controls at the top of the calendar to move between months. The calendar will display all logged executions for the visible month.
+
+=== Click on an Event
+
+Click on any event (execution) on the calendar to view the full execution details, including:
+
+* The complete output of the action
+* Execution timing information
+* Exit code and status
+* User who triggered the action
+
+=== Click on a Date
+
+Click on any date on the calendar to filter the logs list view by that specific day. This is useful when you want to see all executions from a particular date in the traditional list format.
+
+After clicking a date, you'll be redirected to the logs list view with a date filter applied. You can clear this filter using the clear button next to the timestamp header.
+
+== Use Cases
+
+The calendar view is particularly useful for:
+
+* **Auditing** - Quickly identify when specific actions were run
+* **Troubleshooting** - Find executions around a specific date when issues occurred
+* **Pattern recognition** - Visualize how often scheduled actions run
+* **Historical review** - Get an overview of system activity over time
+
+== See Also
+
+* xref:advanced_configuration/logs-actions.adoc[Logging - Actions]
+* xref:advanced_configuration/logs.adoc[Logging - Application]
+* xref:action_customization/savelogs.adoc[Saving Action Logs]

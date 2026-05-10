@@ -1,0 +1,35 @@
+[#entities]
+= Entities
+
+An entity is something that exists - a "thing", like a VM, or a Container is an entity. OliveTin allows you to then dynamically generate actions based around these entities.
+
+This is really useful if you want to generate wake on lan or poweroff actions for `server` entities, for example.
+
+A very popular use case that entities were designed for was for `container` entities - in a similar way you could generate `start`, `stop`, and `restart` container actions.
+
+Entities are just loaded from files on disk, OliveTin will also watch these files for updates while OliveTin is running, and update entities.
+
+Entities can have properties defined in those files, and those can be used in your configuration as variables. For example; `container.status`, or `vm.hostname`.
+
+[source,yaml]
+----
+entities:
+  - file: /etc/OliveTin/containers.json
+    name: container
+
+  - file: /etc/OliveTin/servers.yaml
+    name: server
+----
+
+Entity Actions can only be used on xref:dashboards/intro.adoc[Dashboards].
+
+== What's Next?
+
+Now that you understand entities, here's how to use them effectively:
+
+* xref:entities/yaml.adoc[Create YAML entity files] - Learn the YAML format for entity files
+* xref:entities/json.adoc[Create JSON entity files] - Learn the JSON format for entity files
+* xref:entities/examples.adoc[View entity examples] - See complete examples of entity configurations
+* xref:dashboards/intro.adoc[Use entities in dashboards] - Combine entities with dashboards for dynamic action generation
+* xref:solutions/container-control-panel/index.adoc[Container control panel solution] - See a complete example using container entities
+* xref:solutions/systemd-control-panel/index.adoc[Systemd control panel solution] - See a complete example using systemd entities

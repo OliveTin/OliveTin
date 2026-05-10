@@ -1,0 +1,40 @@
+[#prometheus]
+= Prometheus
+
+OliveTin supports basic Prometheus metrics, and the project is interested to hear about what more metrics people would find useful, as well!
+
+To enable Prometheus support;
+
+.`config.yaml`
+[source,yaml]
+----
+logLevel: INFO
+
+prometheus:
+    enabled: true
+    defaultGoMetrics: false
+----
+
+It is required to restart OliveTin after changing the `prometheus` configuration.
+
+The `defaultGoMetrics` option will enable the default Go metrics, which expose metrics like go_memstats_alloc_bytes, or go_memstats_heap_alloc_bytes,
+and generally most people don't need these.
+
+This will give you metrics available at http://yourserver:1337/metrics. The page should look something like this;
+
+[source]
+----
+# HELP olivetin_actions_requested_count The actions requested count
+# TYPE olivetin_actions_requested_count gauge
+olivetin_actions_requested_count 0
+# HELP olivetin_config_action_count Then number of actions in the config file
+# TYPE olivetin_config_action_count gauge
+olivetin_config_action_count 18
+# HELP olivetin_config_reloaded_count The number of times the config has been reloaded
+# TYPE olivetin_config_reloaded_count counter
+olivetin_config_reloaded_count 1
+# HELP olivetin_sv_count The number entries in the sv map
+# TYPE olivetin_sv_count gauge
+olivetin_sv_count 49
+----
+

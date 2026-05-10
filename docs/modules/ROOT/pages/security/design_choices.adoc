@@ -1,0 +1,21 @@
+= Security Design & Hardening Recommendations
+
+[WARNING]
+OliveTin has not *yet* had a remote code execution vulnerability found in it. However, given what OliveTin does, it is possible, and likely that a security vulnerability will be found in the future. This document explains how OliveTin is designed so that you can make an informed decision about how to use OliveTin in your environment. It also provides hardening recommendations to help you secure OliveTin.
+
+== Security Design
+
+OliveTin has a few design choices that should help it's general security posture.
+
+* OliveTin does deliberate not have any web based control panel where commands can be typed in. This is try to avoid arbitary command execution vulnerabilities caused by authentication bypass attacks.
+* Control over what commands are run is determined via the `config.yaml` alone. OliveTin does NOT write to the config.yaml in any way. This is to avoid any of arbitary command execution vulnerabilities caused by writing to the config.yaml.
+* OliveTin listens on just 1 open public port by default (1337). The rest of the ports only listen on `localhost` so you don't have to worry about them in your firewall.
+* Standard Linux controls can be used to run OliveTin as non-root, with `sudo` permissions if needed. See the action customization section of these docs for more details.
+* Robust code-scanning, code review, and dependency analysis at build-time. OliveTin uses many linters and code checkers, especially on new pull requests. Out dated dependencies are addressed quickly.
+
+== Hardening Recommendations
+
+* Implement authentication on the OliveTin API using one of the many methods provided.
+* Run OliveTin as a non-root user, or even better, run OliveTin in a container (as non-root).
+* Use normal `sudo` permissions to elevate OliveTin to run privileged commands, and restrict the commands that OliveTin can run with `sudo` to only the ones you need.
+* Place a reverse proxy in front of OliveTin, or better, a web application firewall.

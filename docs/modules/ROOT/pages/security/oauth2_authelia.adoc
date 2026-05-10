@@ -1,0 +1,79 @@
+= OAuth2 - Authelia
+
+Notes contributed by a member of the OliveTin community - many thanks Phampyk! 
+
+[source,yaml]
+.Authelia code
+----
+identity_providers:
+  oidc:
+    hmac_secret: "xxxxxx"
+
+    jwks:
+      - key_id: "primary"
+        algorithm: "RS256"
+        use: "sig"
+        key: |
+          -----BEGIN PRIVATE KEY-----
+          xxxxxxxxxxxxxxxxxxxxxxxxxx
+          -----END PRIVATE KEY-----
+
+    clients:
+      - client_id: "olivetin"
+        client_name: "OliveTin"
+        client_secret: "xxxxxxxxxxxxxxxxx"
+        redirect_uris:
+          - "https://olivetin.hostname.com/oauth/callback"
+        scopes:
+          - openid
+          - profile
+        consent_mode: implicit
+----
+
+* hmac_secret generated with `openssl rand -hex 64 or can be authelia crypto rand --length 64 --charset alphanumeric` link:https://www.authelia.com/reference/guides/generating-secure-values/#generating-a-random-alphanumeric-string[Source]
+* Private key generated with `openssl genrsa -out oidc.key 2048 and openssl rsa -in oidc.key -pubout -out oidc.pub` but only used the oidc.key here
+* client_id olivetin is for the example, as per authelia docs the recomendation is a random string generated with `authelia authelia crypto rand --length 72 --charset rfc3986` link:https://www.authelia.com/integration/openid-connect/frequently-asked-questions/#client-id--identifier[Source]
+* consent_mode I had to set this one up as implicit or every time I loged in it was an extra step where you had to authorize OliveTin to access profile and openid. link:https://www.authelia.com/configuration/identity-providers/openid-connect/clients/#consent_mode[Source]
+* client_secret is recommended in the docs to be generated with `authelia crypto hash generate pbkdf2 --variant sha512 --random --random.length 72 --random.charset rfc3986` and it gives you the password (Random password on the example) and the hash (Digest on the example). Olivetin needs the password and Authelia the hash link:https://www.authelia.com/integration/openid-connect/frequently-asked-questions/#client-secret[Source]
+
+----
+Random Password: JxMbHrQgmykaVm2n0p_5q6P_YoZG_YdRWvHxHbVJ5Alv.Ni3OJPVPHEJ6Tfw_AklrwayFl39
+Digest: $pbkdf2-sha512$310000$yQogpMZvkHoAmOBGiIHVJQ$hxKuvar6Q6pOlkdzQBMWq1i5WjXcBA3rvuXxeylvLeTuKI/hLVeZsM43R5TWejZ6gBp/OH8yy1hWytiohLQh5w
+----
+
+== OliveTin config
+
+[source,yaml]
+----
+authRequireGuestsToLogin: true
+authOAuth2RedirectURL: https://olivetin.hostname.com/oauth/callback
+authOAuth2Providers:
+  authelia: 
+    name: authelia
+    title: Authelia
+    clientID: olivetin  #same as authelia
+    clientSecret: xxxxxxx    #same as authelia but not hashed
+    authURL: https://authelia.hostname.com/api/oidc/authorization
+    tokenURL: https://authelia.hostname.com/api/oidc/token
+    whoamiUrl: https://authelia.hostname.com/api/oidc/userinfo
+    scopes:
+      - openid
+      - profile
+    usernameField: preferred_username
+    icon: <iconify-icon icon="simple-icons:authelia"></iconify-icon>
+	
+accessControlLists:
+  - name: john #same as authelia
+    matchUserNames:
+      - john
+    permissions:
+      view: true
+      exec: true
+      logs: true
+    addToEveryAction: true
+----
+
+== Next steps
+
+Once you have OAuth2 working, you will probably want to configure access control lists in OliveTin. This is described in the xref:security/acl.adoc[Access Control Lists] documentation page.
+

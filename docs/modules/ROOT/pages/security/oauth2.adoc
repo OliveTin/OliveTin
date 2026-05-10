@@ -1,0 +1,106 @@
+[#oauth2]
+= OAuth2
+
+include::partial$earlydoc.adoc[]
+
+OliveTin supports OAuth2 for login with any OAuth2 compliant provider.
+
+At the moment, username fetching is only supported on GitHub. More will be added soon, probably with the addition of OpenID Connect support.
+
+```yaml
+authOAuth2RedirectUrl: http://localhost:1337/oauth/callback
+authOAuth2Providers:
+  github:
+    clientId: 1234567890
+    clientSecret: 1234567890
+```
+
+== Provider configuration
+
+* `name` - a "simple name" for the provider, used in the login redirect and internally in OliveTin, e.g. `github`
+* `title` - the human-readable name of the provider, e.g. `GitHub`
+* `clientId` - the client ID provided by the OAuth2 provider
+* `clientSecret` - the client secret provided by the OAuth2 provider
+* `icon` - the icon to use for the provider. Accepts any HTML, e.g. `<iconify-icon icon="simple-icons:authentik"></iconify-icon>`
+* `scopes` - a list of scopes to request.
+* `authUrl` - the URL to redirect to for authentication
+* `tokenUrl` - the URL to exchange the code for a token
+* `whoamiUrl` - the URL to fetch user information from
+* `usernameField` - the field in the user information response to use as the username
+* `userGroupField` - the field in the user information response to use as the group. This is a string containing one group name, e.g. `olivetin_group`
+* `addToUsergroup` - a group name to add to every user who logs in via this provider. If the user already has a usergroup (e.g. from `userGroupField`), this value is appended to it; otherwise it becomes the user's usergroup. Useful for giving all users from this provider a common group for ACLs, e.g. `addToUsergroup: github`
+* `certBundlePath` - the path to a certificate to add to the truststore for authentication requests, e.g. `/certs/internal.crt`
+* `insecureSkipVerify` - a boolean to disable certificate verfication
+* `connectTimeout` - an integer for seconds until the request will timeout, e.g. `10`
+
+== Built-in providers (`name`)
+
+OliveTin comes with a few built-in providers for convenience. If you are using one of these with a `name`, then you don't need to specify the various URLs, scopes, icon, usernameField, etc. It will be automatically configured for you. You will still need to provide the client ID and client secret.
+
+* `github` - GitHub
+* `google` - Google
+
+== AddToUsergroup examples
+
+The `addToUsergroup` option assigns a group to every user who signs in through that OAuth2 provider. You can use it alone, or together with `userGroupField`, so that all users from the provider share a common group for ACLs (e.g. "everyone from GitHub") while still keeping provider-specific groups when available.
+
+=== When the provider does not return a group
+
+Some providers (e.g. Google with standard Gmail accounts) do not return a group claim. Users logging in through them get no group, so they do not match any ACLs and end up with no permissions or visible actions. Use `addToUsergroup` to give every user from that provider a default group such as `guest`:
+
+```yaml
+authOAuth2Providers:
+  google:
+    clientId: your-client-id
+    clientSecret: your-client-secret
+    addToUsergroup: guest
+```
+
+Then ensure an ACL matches that group, for example `matchUsergroups: ["guest"]`, so those users get the intended access.
+
+=== All users from a provider in one group
+
+Give every user who logs in via GitHub the group `github` so you can target them in ACLs:
+
+```yaml
+authOAuth2Providers:
+  github:
+    clientId: your-client-id
+    clientSecret: your-client-secret
+    addToUsergroup: github
+```
+
+Then in your actions you can restrict access with `allowedUserGroups: ["github"]`.
+
+=== Combining with userGroupField
+
+If your provider returns a group (e.g. from GitHub org/team or an IdP), use both `userGroupField` and `addToUsergroup`. The provider group is used as the user's group, and `addToUsergroup` is appended so the user belongs to both:
+
+```yaml
+authOAuth2Providers:
+  github:
+    clientId: your-client-id
+    clientSecret: your-client-secret
+    userGroupField: olivetin_group
+    addToUsergroup: github
+```
+
+A user with `olivetin_group: admins` will end up in groups `admins` and `github`; a user with no group will get only `github`.
+
+=== Multiple providers, shared and per-provider groups
+
+Use different `addToUsergroup` values per provider so you can allow "all OAuth users" or "only GitHub" / "only Google":
+
+```yaml
+authOAuth2Providers:
+  github:
+    clientId: github-client-id
+    clientSecret: github-client-secret
+    addToUsergroup: github
+  google:
+    clientId: google-client-id
+    clientSecret: google-client-secret
+    addToUsergroup: google
+```
+
+Then use ACLs such as `allowedUserGroups: ["github"]` for GitHub-only actions or `allowedUserGroups: ["github", "google"]` for any OAuth user.

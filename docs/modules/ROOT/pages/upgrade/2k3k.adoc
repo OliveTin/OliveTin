@@ -1,0 +1,106 @@
+= Understanding OliveTin 2k vs 3k
+
+NOTE: OliveTin 3k is basically "rebuilding OliveTin for the future" - and aims to have high compatibility with OliveTin 2k while people migrate. However, as we all know, stuff will break when 3k is new - so please be patient, and report issues as you find them! OliveTin 2k isn't going anywhere anytime soon!
+
+== Quick summary of key points
+
+|===
+| Release Series | Versioning Scheme | Supported Until
+
+| **OliveTin 2k** 
+
+eg: 2022.11.11
+
+eg: 2023.04.15
+| Calendar Versioning (calver)
+| At least 31st December 2028 (bug fixes and security updates only)
+
+| **OliveTin 3k**
+
+eg: 3000.0.0
+
+eg: 3000.1.0
+| Semantic Versioning (semver)
+| Ongoing - new features and updates
+|===
+
+Users who are upgrading are encouraged to try OliveTin 3k, but understand that it represents several major technology changes, so subtle things might change or break in the first few releases. The objective is to maintain as much compatibility as is pragmatically possible, and highlight any breaking changes clearly.
+
+The main reason for OliveTin 3k is to allow for major technology changes inside the project that enable new features at a later date.
+
+== Understanding why a change was necessary - from calver to semver
+
+The original version of OliveTin was released in May 2021, and it used a versioning system called link:https://calver.org[calver] (Calendar Versioning). For those of you unfamiliar with the calver standard, it means that instead of using 1.0.0 as the first version, the first version was actually called **2021-05-19**. One of the benefits of this approach is that you can determine how old the version is just by looking at the version number alone. Unfortunately this is the only real benefit. 
+
+However, this worked just fine for a while, but as OliveTin grew, it became clearer that most packaging systems and users were more accustomed to the more traditional link:https://semver.org[semver] (Semantic Versioning) system. As a stopgap measure, OliveTin switched the format of it's versioning to use dots (".") instead of dashes ("-") in an attempt to make it look more like a traditional semver version. This resulted in a change with version **2022.11.11** (November 11th, 2022 - what a cool  date!).
+
+As OliveTin continued to mature, and more features were added, it became clear that there were some major architecture and library choices that were no longer ideal. Switching these out (like the configuration library, Viper), is a really major change, and isn't something that is good to do without a lot of users being very aware of it. In May 2025, a proposal was launched to switch OliveTin to a more traditional semver versioning system. You can view the detail of that proposal here: https://github.com/OliveTin/OliveTin/discussions/591
+
+In short, the benefits of switching to semver are;
+
+- Easier to understand versioning for most users
+- Allows for major technology changes without confusing users (like the Viper change)
+- Better compatibility with packaging systems
+- Better reflects the maturity of versions, and allows people to opt out of minor patches for example
+
+This proposal seemed to be positively received by the community, and so the James (founder) decided to move forward with the change.
+
+== What were the major reasons for the technology changes in OliveTin 3k?
+
+OliveTin 2k has the following technology choices which limited it's potential for stability, maintainability and growth;
+
+- The communication between the client and the server uses gRPC, which is then fronted by a REST API and messages are very hackily wrapped in JSON. This has worked remarkably well, but the web has moved on to offer websockets and streaming in a far better way, and connectrpc solves many of these challenges neatly and elegantly. 
+- The configuration library, Viper, is a defacto standard in Go several years ago - big projects like kubectl and others use it. However the library is extremely heavyweight (lots of dependencies), it has lots of open issues, and doesn't support some commonly requested features like configuration file splitting and inclusion - which would really help user's manage large configurations.
+- The entity management inside OliveTin was written in a weekend, and is just a large map of strings inside OliveTin2k, again this has worked surprisingly well, but there are lots of interesting use cases with entities that would be much easier to implement with a proper typed backend - and far better mapping between actions and entities (which is extremely horrible in OliveTin 2k).
+- The javascript in OliveTin 2k is raw web components, based on the "new" (at the time) specs from 2011. It's fast and standards compliant, but it's also resulted in a LOT of spaghetti code that is very hard to test and maintain.
+
+== Why version 3000.0.0 (and not 3.0.0)?
+
+If you look through the original proposal, it was to create a new package called "OliveTin-semver", and start the versioning at 1.0.0. However, after some more thought, it was decided that this would actually create a lot of confusion, as users would have to figure out if they were using "OliveTin" or "OliveTin-semver" - and it duplicates the package in in places like Linux distributions, which is not a good idea.
+
+However, starting with version "2.0.0" after versions like "2022.11.11" would break the logic of lots of update tools and scripts that people use. This is because major version "2" is below "2022", and so the version ordering, and logic would always think that version 2022.x.x is newer than 2.x.x. This would be very confusing for users, and would likely lead to people not updating, or even downgrading by mistake.
+
+To avoid this confusion, it was decided to jump straight to version "3000.0.0" - which is clearly above "2022.11.11" and any other 2k version. This way, users can easily see that 3000.x.x is newer than any 2k version, and it avoids any confusion with version ordering.
+
+- OliveTin versions like 2022.11.11 and 2023.04.15 are part of "**OliveTin 2k**" (2000 series) and use a **calendar versioning** (calver) scheme. These versions are stable and will continue to receive updates and support but will not receive new features.
+  - There is no plan to stop supporting OliveTin 2k versions until **at least 31st December 2028** (and I'll probably keep extending that date, but it's good to have a cutoff somewhere).
+- OliveTin versions starting from 3000.0.0 and onwards are part of "**OliveTin 3k**" (3000 series) and also use a **semantic versioning scheme**. These versions will receive new features, improvements, and updates.
+
+== Should I automatically update to OliveTin 3k?
+
+Users are encouraged to try OliveTin 3k, but understand that it represents several major technology changes, so subtle things might change or break in the first few releases. Please remember that OliveTin 2k will continue to be supported and receive updates until at least 31st December 2028, so there is no rush to upgrade.
+
+The developers of this project have quite a lot of test infrastructure around OliveTin 3k (more than was possible with 2k), and would like to **strongly urge problems with updates to be reported, so that they can be fixed when possible**. 
+
+=== How do I stop my OliveTin 2k containers from upgrading to OliveTin 3k automatically?
+
+Change your `latest` tag to `latest-2k` in your container definitions. 
+
+3 tags now exist for container images and container registries;
+
+- `olivetin/olivetin:latest-2k` - This tag will always point to the latest OliveTin 2k version (eg 2025.11.11)
+- `olivetin/olivetin:latest-3k` - This tag will always point to the latest OliveTin 3k version (eg 3000.2.0)
+- `olivetin/olivetin:latest` - This tag will always point to the latest OliveTin version (currently 3k)
+
+xref:install/container.adoc[More information about installing OliveTin in containers]
+
+=== What does GitHub "latest" point to?
+
+GitHub's "latest" release tag isn't super helpful. It currently points to the "release that was pushed last". So sometimes this will be 2k, and sometimes this will be 3k. We're trying to find a way to fix this.
+
+== What are the changes I need to make to upgrade from OliveTin 2k to 3k?
+
+=== OliveTin Configuration files
+
+To date, no changes are required to the configuration file (and configs are being automatically migrated internally to OliveTin 3k - without rewriting the original config file).
+
+However, it is possible that some configuration changes will be necessary as we learn more about people's setups with OliveTin 2k.
+
+=== Reverse Proxy configurations
+
+If you are using a reverse proxy (like Nginx, Apache, Caddy, Traefik etc), then you will need to make some changes to your configuration. This is because OliveTin 3k uses websockets for communication between the client and the server, instead of gRPC over HTTP/2. Many proxies use short default timeouts and will close websocket connections; increase the websocket or proxy timeout in your proxy config to avoid disconnects (OliveTin will reconnect automatically). See xref:troubleshooting/err-websocket-connection.adoc#reverse-proxies-will-close-websockets[Reverse proxies will close websockets] for more.
+
+Please refer to the [Reverse Proxies](reverse-proxies/intro.adoc) section of the documentation for updated configuration examples for various reverse proxies.
+
+- xref:reverse-proxies/nginx.adoc#upgrade3k[Nginx: Updating your configuration from OliveTin 2k to OliveTin 3k]
+

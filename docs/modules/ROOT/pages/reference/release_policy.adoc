@@ -1,0 +1,29 @@
+= Release Policy 
+
+This page is a collection of notes around the policy for releases.
+
+== Package and tag deletions
+
+The OliveTin project *WILL* delete packages and tags in the following situations;
+
+* A release went out accidently, or the package is broken in a way that prevents installation or use (something critical).
+* A release went out with the wrong tag, or wrong tag format (eg 2025-11-06 instead of 2025.11.06) for OliveTin 2k.
+  * This is because registries that contain bag tag formats that do not match smever will cause issues for users trying to install or upgrade in the future.
+
+It is understood that this can break some users workflows, but deleting packages occours rarely, and is only done to prevent further issues.
+
+If this is really a concern that you want to guard against, it is recommended to run your own private registry/mirror of OliveTin packages.
+
+Deleted packages will not be supported in any way;
+
+== History of deleted packages;
+
+* **OliveTin 2025-11-06** - deleted due to wrong tag format (2025-11-06 instead of 2025.11.06)
+** GitHub releases page
+** GHCR
+** Docker Hub
+
+* **OliveTin 2025-10-30** - deleted due to wrong tag format (2025-10-30 instead of 2025.10.30)
+** GitHub releases page
+** GHCR
+** Docker Hub

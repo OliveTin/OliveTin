@@ -1,0 +1,32 @@
+= Advanced Configuration
+
+This section covers advanced configuration options that provide additional control and customization for OliveTin. These options are typically used by users who need fine-grained control over logging, diagnostics, networking, UI customization, and other advanced features.
+
+Topics covered in this section include:
+
+* Application and action logging configuration
+* Diagnostics and troubleshooting tools
+* Environment variable configuration
+* Network port configuration
+* Style modifications for UI customization
+* Prometheus metrics integration
+* Timezone configuration
+* Web UI customization options
+* Version display in the footer (show or hide the application version)
+
+Most users will not need to modify these settings for basic OliveTin usage, but they become important when you need to integrate OliveTin into complex environments or customize its behavior to match specific requirements.
+
+== What's Next?
+
+Explore the advanced configuration options:
+
+* xref:advanced_configuration/logs.adoc[Configure logging] - Set up application and action logging
+* xref:advanced_configuration/logs-calendar.adoc[Use the logs calendar] - Browse execution history visually
+* xref:advanced_configuration/diagnostics.adoc[Use diagnostics] - Access troubleshooting and diagnostic tools
+* xref:advanced_configuration/webui.adoc[Customize the web UI] - Modify the appearance and behavior of the interface
+* xref:advanced_configuration/stylemods.adoc[Apply style mods] - Use style modifications for UI customization
+* xref:advanced_configuration/prometheus.adoc[Set up Prometheus] - Configure metrics collection
+* xref:advanced_configuration/timezones.adoc[Configure timezones] - Set timezone handling for actions
+* xref:advanced_configuration/config_envs.adoc[Use environment variables] - Configure environment variable handling
+* xref:reference/network-ports.adoc[Understand network ports] - Learn about OliveTin's port configuration
+* xref:reference/version_display.adoc[Version display] - Show or hide the application version in the footer

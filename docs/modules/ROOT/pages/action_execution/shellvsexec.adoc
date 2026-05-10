@@ -1,0 +1,44 @@
+= Shell vs Exec
+
+OliveTin supports two different methods to run commands: `shell` and `exec`. The difference between these two is that "shell" accepts strings, and will wrap that whole command in a shell with "bash -c". Exec uses a syscall directly to execute commands.
+
+* **Shell** is more flexible, because it allows you to chain commands (eg, using &&) and redirect or pipe output (eg: ">" or "|").
+* **Exec** is more secure, because it does not invoke a shell, and thus avoids shell injection attacks.
+
+Shell can be safe and secure with simple argument types (like ascii_identifier), but some argument types like URL can contain basically any character - /, :, ?, &, etc - which can lead to shell injection vulnerabilities while still being a valid URL. 
+
+OliveTin will try and prevent you from using dangerous characters in shell commands (eg, URL is no longer permitted with Shell).
+
+The way that you specify these two types of execution is different - `shell` expects a single string, while `exec` expects a list of strings (the first being the command, the rest being the arguments).
+
+[source,yaml]
+.Using Shell
+----
+actions:
+  - title: List files
+	shell: ls -l /some/directory
+----
+
+[source,yaml]
+.Using Exec
+----
+actions:
+  - title: List files
+	exec:
+	  - ls
+	  - -l
+	  - /some/directory
+----
+
+When in doubt, prefer `exec` over `shell` for better security. Shell was added in both OliveTin 3k and OliveTin 2k in October 2025.
+
+== What's Next?
+
+Now that you understand execution methods, continue building your actions:
+
+* xref:action_execution/create_your_first.adoc[Create your first action] - Build a simple action to get started
+* xref:args/intro.adoc[Add arguments to actions] - Make actions interactive with user input
+* xref:action_execution/oncron.adoc[Schedule actions] - Set up automated execution
+* xref:action_execution/onwebhook.adoc[Trigger via webhooks] - Integrate with external systems
+* xref:security/concepts.adoc[Configure security] - Secure your actions with authentication and authorization
+* xref:action_examples/intro.adoc[Browse examples] - See real-world action configurations

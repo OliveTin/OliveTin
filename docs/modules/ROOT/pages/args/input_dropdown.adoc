@@ -1,0 +1,83 @@
+[#arg-dropdowns]
+= Input: Dropdowns
+
+Predefined choices are normally the safest type of arguments, because users are limited to only enter values that you specify. 
+
+[source,yaml]
+----
+actions:
+  - title: Print a message
+    icon: smile
+    shell: echo "{{ message }}"
+    arguments:
+      - name: message
+        description: The message you want to print out.
+        choices:
+          - title: Hello
+            value: Hello there!
+
+          - title: Goodbye
+            value: Aww, goodbye. :-( 
+----
+
+Note that when predefined choices are used, the argument type is ignored.
+
+This is what it looks like in the web interface;
+
+image::args4.png[]
+
+Then finally, when you execute this command, it would look something like this (remember that this is just a basic "echo" command). 
+
+image::args-choices-exec.png[]
+
+In the logs, you can then click on the log entry link to open the results;
+
+image::args3.png[]
+
+[#args-dropdown-entities]
+== Using Entities in Dropdowns
+
+Dropdowns can also be populated with a list of entities, like this;
+
+[source,yaml]
+.`config.yaml`
+----
+actions:
+  - title: restart container
+    shell: 'docker restart {{ containerToRestart }}'
+    arguments:
+      - name: containerToRestart
+        entity: container
+        title: 'Select Container'
+        choices:
+          - value: '{{ container.Names }}'
+            title: '{{ container.Names }}'
+
+entities:
+  - file: entities/containers.json
+    name: container
+----
+
+This is what it looks like in the web interface;
+
+image::args-choices-entities.png[]
+
+include::partial$args/reject-null.adoc[]
+
+== Default values
+
+Dropdown arguments can also have default values. This is done by adding a `default` key to the argument definition.
+
+include::partial$config-start.adoc[]
+----
+actions:
+  - title: "Print your favorite movie"
+    shell: echo '{{ movie }} is amazing'
+    arguments:
+      - name: movie
+        choices:
+          - value: "Star Wars"
+          - value: "Star Trek"
+          - value: "The Matrix"
+        default: "Star Trek"
+----

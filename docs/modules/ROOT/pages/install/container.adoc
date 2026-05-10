@@ -1,0 +1,28 @@
+= Linux Container
+
+== Repositories
+
+The OliveTin container images are hosted on both Docker Hub and the GitHub Container Registry.
+
+The main OliveTin image is available at;
+
+* **Docker Hub**: `docker.io/jamesread/olivetin`
+  link:https://hub.docker.com/r/jamesread/olivetin/tags?page=1&ordering=last_updated[View on Docker Hub]
+* **GitHub**: `ghcr.io/olivetin/olivetin`
+  link:https://github.com/OliveTin/OliveTin/pkgs/container/olivetin[View on GitHub]
+
+== Tags
+
+* `latest-2k` - This tag will always point to the latest OliveTin 2k version (eg 2025.11.11)
+* `latest-3k` - This tag will always point to the latest OliveTin 3k version (eg 3000.2.0)
+* `latest` - This tag will always point to the latest OliveTin version (currently 3k)
+
+Read more about 2k vs 3k here: xref:../upgrade/2k3k.adoc[OliveTin 2k vs OliveTin 3k]
+
+== Container installation options
+
+* xref:install/podmandocker.adoc[Docker or Podman]
+* xref:install/docker_compose.adoc[Docker Compose]
+* xref:install/helm.adoc[Kubernetes with Helm]
+* xref:install/k8s.adoc[Kubernetes with Manifests]
+

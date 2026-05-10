@@ -1,0 +1,11 @@
+= API Method: StartActionByGetAndWait
+
+This method is also a very easy way to quickly start an action, but it waits for the action to finish before returning the result. This is useful if you want to get the output of the action or check its result without having to poll for it.
+
+* **HTTP Method**: `GET`
+* **Request Type**: Action ID in the URL
+* **Response Type**: Log Entry (waits for the action to finish)
+
+There are several variants of this API call available which might be easier for scripts (or humans) to work with:
+
+include::partial$api/start_action_methods.adoc[]

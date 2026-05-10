@@ -1,0 +1,18 @@
+= Actions Inline in Dashboards
+
+NOTE: This feature is available in OliveTin version 3000.7.0 and later. If you are using OliveTin 2k, you can only used xref:dashboards/actions.adoc[Linked Actions in Dashboards].
+
+[source,yaml]
+----
+dashboards:
+  - name: Main Dashboard
+	contents:
+	  - inlineAction:
+	      title: Date
+		  shell: date
+		  icon: date
+----
+
+== See Also
+
+* xref:dashboards/actions.adoc[Actions (Linked)]]

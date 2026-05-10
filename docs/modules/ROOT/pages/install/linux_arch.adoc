@@ -1,0 +1,23 @@
+[#install-archbtw]
+= Arch Linux (AUR)
+
+There are 3 packages available for Arch Linux;
+
+. link:https://aur.archlinux.org/packages/olivetin[`olivetin` in AUR] - This builds from source, using a release Git tag.This is officially maintained by the authors of the OliveTin project.
+. link:https://aur.archlinux.org/packages/olivetin-bin[`olivetin-bin` in AUR] - This re-packages the binaries built by the official binaries. This is not officially maintained by the authors of the OliveTin project, and might be a bit older - but it should work just fine.
+. link:https://github.com/OliveTin/OliveTin/releases/latest/download/OliveTin_linux_amd64.apk[`olivetin` .apk built by the project] - This may be useful to have a package outside of AUR.
+
+== Installation (AUR)
+
+Install using `yay`; 
+
+----
+user@host: yay -Syu olivetin
+----
+
+[WARNING]
+One does not simply just do something with Arch without telling someone about it. Therefore, after you successfully install OliveTin on Arch, that you tell at least two people "I'm using OliveTin on Arch, btw". :-)
+
+include::partial$install/post_systemd.adoc[]
+
+

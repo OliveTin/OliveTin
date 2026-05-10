@@ -1,0 +1,52 @@
+= Example: Some actions require admin
+
+A common use case for OliveTin with security is to expose some actions to guests, and have some actions that require login to be able to use. This page brings together the configuration options that are needed to achieve this. The most important configuration option is setting `authRequireGuestsToLogin` to `true`.
+
+== Full example configuration
+
+```yaml
+logLevel: "INFO"
+
+accessControlLists:
+  - name: "noguests"
+    permissions: 
+      view: false
+      exec: false
+      logs: false
+    matchUsernames: [ "guest" ]
+
+  - name: "admins"
+    permissions:
+      view: true
+      exec: true
+      logs: true
+    matchUsergroups: [ "admins" ]
+
+authLocalUsers:
+  enabled: true
+  users:
+    - username: "admin"
+      usergroup: admins
+      password: -- your password hash here --
+
+actions:
+  - title: "Date"
+    shell: date
+
+  - title: "Reboot"
+    shell: reboot" # Note that this won't work inside a container
+    acls:
+      - "noguests"
+      - "admins"
+
+dashboards:
+  - title: "Guest Dashboard"
+    contents:
+      - title: "Date"
+
+  - title: "Admin Dashboard"
+    contents:
+      - title: "Reboot"
+```
+
+Note, to use this configuration, you will need to replace `-- your password hash here --` with a password hash. You can generate a password hash by looking at the options in the xref:security/local.adoc[local-users] configuration section.

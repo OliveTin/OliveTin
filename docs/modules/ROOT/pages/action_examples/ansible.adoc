@@ -1,0 +1,21 @@
+[#ansible-playbook]
+= Ansible Playbooks
+
+:systemd: Easy
+:container: Install the `ansible` package in your xref:reference/containerInstallPackages.adoc[OliveTin container].
+include::partial$action_examples/actionHeader.adoc[]
+
+Many users use OliveTin to easily execute Ansible playbooks, somtimes as a simple alternative to AWX.
+
+.Run an Ansible Playbook
+[source,yaml]
+----
+actions:
+  - title: Run Ansible Playbook
+    icon: "&#x1F1E6;"
+    shell: ansible-playbook -i /etc/hosts /root/myRepo/myPlaybook.yaml
+    timeout: 120
+----
+
+You probably want to set the xref:action_customization/timeouts.adoc[timeout] to more than the default 3 seconds.
+

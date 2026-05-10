@@ -1,0 +1,44 @@
+[#install-k8s]
+= Kubernetes with Manifest files
+
+OliveTin works just fine on Kubernetes. The easiest way to deploy it is with a
+Kubernetes `ConfigMap`, `Deployment`, `Service` and finally `Ingress`. Like so; 
+
+== ConfigMap
+[source,yaml]
+----
+include::example$k8s_configmap.yml[]
+----
+
+The main application config.yml for OliveTin is specified in the `ConfigMap`
+above. You will want to edit this later - see the "Configuration" section. 
+
+Next, we need a deployment;
+
+== Deployment
+[source,yaml]
+----
+include::example$k8s_deployment.yml[]
+----
+
+That should deploy OliveTin. 
+
+== Service
+
+Now that OliveTin is deployed, expose it's port as a service;
+
+[source]
+----
+user@host: kubectl expose deployment/olivetin
+----
+
+Lastly, create a Ingress rule for for that service;
+
+== Ingress
+[source,yaml]
+----
+include::example$k8s_ingress.yml[]
+----
+
+include::partial$install/to_config.adoc[]
+

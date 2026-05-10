@@ -1,0 +1,53 @@
+== Post installation
+
+You will need to write a basic configuration file before OliveTin will startup.
+
+Create the following basic config file at `/etc/OliveTin/config.yaml` with the
+following contents;
+
+.The most simple `config.yaml` file.
+[source,yaml]
+----
+actions:
+  - title: "Hello world!"
+    shell: echo 'Hello World!'
+----
+
+Now that you have a configuration file, and OliveTin is installed, start it;
+
+.Start the service (only needed once)
+[source,shell]
+----
+user@host: systemctl enable --now OliveTin 
+----
+
+If you are running a firewall on your server, like firewalld, you will need to
+open port 1337;
+
+[source,shell]
+----
+user@host: firewall-cmd --add-port 1337/tcp --permanent
+user@host: firewall-cmd --reload
+----
+
+include::partial$install/to_config.adoc[]
+
+== Troubleshooting systemd installations
+
+If you are having problems, you can check if OliveTin is running like this; 
+
+[source,shell]
+----
+user@host: systemctl status OliveTin
+----
+
+If the service has failed, scroll through the logs;
+
+[source,shell]
+----
+user@host: journalctl -eu OliveTin
+----
+
+If you cannot understand the logs, or otherwise need help, see the xref:troubleshooting/wheretofindhelp.adoc[support page].
+
+For more detail on what to capture and how to share logs when asking for help, see xref:troubleshooting/service-logs.adoc[Service logs (troubleshooting)].

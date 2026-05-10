@@ -1,0 +1,77 @@
+[#install-compose]
+= Docker Compose install
+
+Docker compose is a popular way to define multi-container applications using a 
+infrastructure as code approach. 
+
+If you personally prefer to use `docker compose`, then here is a sample to get
+you started;
+
+[source,yaml]
+.`docker-compose.yml`
+----
+services:
+  olivetin:
+    container_name: olivetin
+    image: jamesread/olivetin
+    volumes:
+      - OliveTin-config:/config # replace host path or volume as needed
+    ports: 
+      - "1337:1337"
+    restart: unless-stopped
+
+
+volumes:
+  OliveTin-config:
+    external: false
+----
+
+include::partial$install/post_container.adoc[]
+
+== Controlling other docker containers from a Docker Compose install of OliveTin
+
+If you want to use OliveTin running in a container to control other Docker containers, you will need to pass through the Docker sock in your compose file. 
+
+You will need to adjust your docker-compose file to include the docker socket, like this;
+
+ `docker-compose.yml` including docker socket
+[source,yaml]
+.docker-compose.yml
+----
+services:
+  olivetin:
+    container_name: olivetin
+    image: jamesread/olivetin
+    volumes:
+      - /docker/OliveTin:/config # replace host path or volume as needed
+      - /var/run/docker.sock:/var/run/docker.sock 
+    ...
+----
+
+You will probably need to tell this container to run as root as well, to control docker (see below).
+
+== Controlling the docker user with Docker Compose
+
+This is the correct way to tell the OliveTin container to run as root (or any other user);
+
+----
+services:
+  olivetin:
+    container_name: olivetin
+    image: jamesread/olivetin
+    user: root 
+    ...
+----
+
+See xref:action_examples/containers.adoc[containers] for alternatives to running as root.
+
+
+NOTE: xref:troubleshooting/puid-pgid.adoc[PUID and PGID are not used] by the official OliveTin container image.
+
+[#docker-compose-traefik]
+== Using Traefik with Docker Compose 
+
+Traefik is a popular reverse proxy that seems to be used a lot in people's
+Docker compose setups. See the xref:reverse-proxies/traefik.adoc[Traefik + Docker Compose] page for more details.
+
+

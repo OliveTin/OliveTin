@@ -1,0 +1,50 @@
+[#arg-textbox]
+= Input: Textbox
+
+Many times you need to customize how an action/shell command is run, with arguments. For example;
+
+----
+echo "Hello world"
+----
+
+In the example above, `Hello world` is an argument passed to the `echo` command. OliveTin allows you to add pre-defined, and free-text arguments to commands in this way. Below is the OliveTin version of the `echo` command shown above;
+
+[source,yaml]
+.`config.yaml`
+----
+actions:
+  - title: echo a message
+    icon: smile
+    shell: echo {{ message }}
+    arguments:
+      - name: message
+        default: Hello World
+        type: ascii_sentence
+
+actions:
+  - title: Print a message
+    shell: echo {{ message }}
+    arguments:
+      - name: message
+        description: The message you want to print out on the shell.
+        title: Your Message
+        default: Hello World
+        type: ascii_sentence
+----
+
+This will give you a normal button, like this;
+
+image::args1.png[]
+
+However, when you click on it, you'll get a prompt to enter arguments, like this;
+
+image::args2.png[]
+
+You'll see that the type is set to `ascii_sentence`. This applies fairly safe
+input validation to arguments, so that only a-z, 0-9, spaces and .'s are allowed. 
+
+When you start the action, and it's finished, go to the "logs" view to view the output of the command we've just run.
+
+image::args3.png[]
+
+

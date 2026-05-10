@@ -1,0 +1,9 @@
+[#entity-examples]
+= Example Entity Usage
+
+Check out the following xref:solutions/intro.adoc[Solutions] which make good use of entities.
+
+* xref:solutions/container-control-panel/index.adoc[Container Control Panel]
+* xref:solutions/systemd-control-panel/index.adoc[Systemd Control Panel]
+
+

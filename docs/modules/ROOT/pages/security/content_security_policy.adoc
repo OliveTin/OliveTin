@@ -1,0 +1,54 @@
+[#content-security-policy]
+= Content Security Policy (CSP)
+
+When xref:reference/network-ports.adoc[the single HTTP frontend] is enabled (the default), OliveTin adds several browser security headers to every response, including `Content-Security-Policy`. This page explains how to turn that header off or replace it with a less strict policy when you need to (for example, custom scripts, different API hosts, or embedding in an iframe).
+
+[WARNING]
+Relaxing or removing CSP weakens protection against cross-site scripting and related attacks. Prefer the smallest change that fixes your issue, and keep the rest of the policy as tight as you can.
+
+== Default behavior
+
+With default settings, OliveTin sends a `Content-Security-Policy` header similar to the following (single line in the actual response):
+
+[source,text]
+----
+default-src 'self'; script-src 'self' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https:; frame-ancestors 'none'; base-uri 'self'
+----
+
+If `security.headerContentSecurityPolicy` is `true` but `security.contentSecurityPolicy` is left empty, OliveTin fills in this default on startup.
+
+== Disable the CSP header entirely
+
+Set `security.headerContentSecurityPolicy` to `false`. OliveTin will not send `Content-Security-Policy` on responses from the single HTTP frontend.
+
+include::partial$config-start.adoc[]
+----
+security:
+  headerContentSecurityPolicy: false
+----
+
+== Use a custom (relaxed) policy
+
+Keep `security.headerContentSecurityPolicy` `true` and set `security.contentSecurityPolicy` to the full header value you want. For example, to allow WebSocket connections to the same host when you serve the UI over plain HTTP in a lab (not recommended for production), you might widen `connect-src`:
+
+include::partial$config-start.adoc[]
+----
+security:
+  headerContentSecurityPolicy: true
+  contentSecurityPolicy: "default-src 'self'; script-src 'self' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' http: https: ws: wss:; frame-ancestors 'none'; base-uri 'self'"
+----
+
+Build your policy from the https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP[MDN documentation on CSP] and test in the browser developer tools (Console will report CSP violations).
+
+Typical reasons people adjust this setting:
+
+* **Custom JavaScript or third-party scripts** — You may need to extend `script-src` (and sometimes `connect-src` for XHR/fetch). See xref:advanced_configuration/webui.adoc#custom-js[Custom JavaScript].
+* **Embedding OliveTin in another site** — The default includes `frame-ancestors 'none'`, which blocks iframes. You must change that directive (and may need to relax `X-Frame-Options` using `security.headerXFrameOptions` and `security.xFrameOptions`) if embedding is required.
+* **API or auth on another origin** — Extend `connect-src` (and possibly `form-action` or others) to include those URLs.
+* **Reverse proxy also sets CSP** — Your proxy might add a second policy; browsers combine them. Align OliveTin and the proxy so you do not get conflicting or unexpectedly strict effective policies.
+
+== Related settings
+
+Other keys under `security` in `config.yaml` control additional headers (for example `headerXContentTypeOptions`, `headerXFrameOptions`, and `xFrameOptions`). This page focuses on CSP; see the OliveTin `SecurityConfig` in the application source if you need the full list of fields.
+
+Configuration reload: if you use OliveTin's live config reload, changes to `security` are picked up without restarting the process in typical setups.

@@ -1,0 +1,6 @@
+  - title: WakeOnLan Server1
+    # The r0gger/docker-wake-on-lan is a minimal container for WOL
+    # that can be run on the host network.
+    # It is not required to run the OliveTin container on the host network.
+    shell: |
+     docker run --rm --name wake-on-lan --net=host -e MAC='A8:5E:45:E4:FF:2A' r0gger/docker-wake-on-lan

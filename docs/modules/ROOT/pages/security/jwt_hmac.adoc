@@ -1,0 +1,100 @@
+[#jwt-hmac]
+= JWT with HMAC
+
+You need to know your JWT **Cookie Name** and **Hash Secret**. Whatever tool you are using to authenticate users will probably have instructions on how to find this.
+
+* link:https://docs.organizr.app/features/server-authentication#validating-the-token[Organizr - Under "Validating the token"]
+
+ Adding JWT details to OliveTin config.yaml
+
+Setup your config file so it has something like this;
+
+[source,yaml]
+.`config.yaml`
+----
+# It's often useful to turn logging to DEBUG when trying to work out authentication problems
+logLevel: "INFO"
+
+authJwtCookieName: "Organizr_token_1234..."
+authJwtHmacSecret: "3l4jh23v_123!"
+authJwtClaimUsername: "username"
+authJwtClaimUsergroup: "usergroup"
+----
+
+Note that your `authJwtCookieName` and `authJwtSecret` will need to be set exactly as they appear in your Authentication software.
+
+== Usable claims
+
+OliveTin currently can match Access Control Lists based on a **username** or **user group(s)**. You can see if these are being used properly turning on `DEBUG` logging and looking at the jwt claims.
+
+If `authJwtClaimUsergroup` is any array, ACL groups will match any of the user groups in the array.
+
+== Setup default permissions
+
+OliveTin will assume that guests are able to View and Execute every action by default. When you are setting up authorization you probably want to limit this. You can do that by setting `defaultPermissions` like this;
+
+[source,yaml]
+.`config.yaml`
+----
+logLevel: "INFO"
+
+defaultPermissions:
+    view: false
+    exec: false
+----
+
+== Setup OliveTin Access Control Lists 
+
+Access Control Lists are a way to override the default permissions.
+
+[source,yaml]
+.`config.yaml`
+----
+logLevel: "INFO"
+
+defaultPermissions:
+    view: false
+    exec: false
+    logs: true
+
+accessControlLists:
+    - name: Admins
+      addToEveryAction: true
+      matchUsergroups: 
+      - Admins
+      permissions:
+        view: true
+        exec: true
+        logs: true
+
+    - name: "Developers"
+      matchUsergroups:
+      - "developer"
+      permissions:
+        view: true
+        exec: false
+        logs: false
+
+actions:
+    - name: Only visible to admins
+      shell: echo "I am a secret command only visible to admins"
+
+    - name: Restart database
+      shell: systemctl restart mariadb
+      acls:
+        - "developer"
+----
+
+In the example above, the `admins` ACL is automatically added to every action, because `addToEveryAction` is true. 
+
+ Customizing field names
+
+You may need to customize the field names for your JWT authentication. 
+
+[source,yaml]
+.`config.yaml`
+----
+authJwtClaimUsername: "username"
+authJwtClaimUsergroup: "usergroup"
+----
+

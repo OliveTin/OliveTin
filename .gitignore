@@ -20,3 +20,5 @@ integration-tests/configs/authRequireGuestsToLogin/sessions.yaml
 webui
 webui.dev
 sessions.yaml
+docs/build/
+build/

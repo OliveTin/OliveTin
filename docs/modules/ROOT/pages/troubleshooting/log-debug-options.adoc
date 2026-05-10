@@ -1,0 +1,12 @@
+[#log-debug-options]
+= Debug Log Options
+
+[source,yaml]
+----
+logDebugOptions:
+    singleFrontendRequests: true
+    singleFrontendRequestHeaders: true
+    aclMatched: true
+    aclNotMatched: true
+----
+

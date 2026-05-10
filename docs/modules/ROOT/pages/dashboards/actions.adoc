@@ -1,0 +1,9 @@
+= The "actions" section
+
+To make Olivetin easy to use, it generates a default "Actions" section for you, as many 
+people don't want the hassle of having to configure dashboards. This is fine, you absolutely
+do not need a `dashboards:` section in your `config.yaml` at all if you don't want it.
+
+However, some people prefer to put every action onto a Dashboard. If you so this, OliveTin
+will hide the `Actions` view for you on the sidebar.
+

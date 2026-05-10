@@ -1,0 +1,8 @@
+= MacOS
+
+Sorry that these instructions are so primitive, the main developer of OliveTin's MacOS machine died :-( If you can help with instructions and screenshots that would be great.
+
+. There is a .tar.gz that you can download, extract. Link: link:https://github.com/OliveTin/OliveTin/releases/latest/download/OliveTin-darwin-amd64.tar.gz[`OliveTin-darwin-amd64.tar.gz`]
+. Start a terminal and CD into the OliveTin directory.
+
+include::partial$install/post_generic.adoc[]
