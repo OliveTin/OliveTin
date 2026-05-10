@@ -21,7 +21,7 @@ The link:https://www.olivetin.app[OliveTin Homepage is here]. This site that you
 **Simplify** complex commands, make them accessible and repeatable;
 
 * eg: Expose complex commands on touchscreen tablets stuck on walls around your house. `wake-on-lan aa:bb:cc:11:22:33`
-* eg: Run long running on your servers from your cell phone. `dnf update -y`
+* eg: Run long running commands on your servers from your cell phone. `dnf update -y`
 * eg: Define complex commands with lots of preset arguments, and turn a few arguments into dropdown select boxes. `docker rm {{ container }} && docker create {{ container }} && docker start {{ container }}`
 
 == Demo
