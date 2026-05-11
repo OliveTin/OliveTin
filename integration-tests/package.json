@@ -17,6 +17,6 @@
     "selenium-webdriver": "^4.43.0"
   },
   "dependencies": {
-    "wait-on": "^9.0.5"
+    "wait-on": "^9.0.6"
   }
 }
