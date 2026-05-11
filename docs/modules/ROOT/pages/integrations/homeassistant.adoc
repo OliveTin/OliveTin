@@ -14,7 +14,7 @@ First, you need to give your actions an ID. This is done by adding an `id` field
 ----
 actions:
   - id: "server_sleep"
-    title: "Server Sleep
+    title: "Server Sleep"
     icon: ping
     shell: ssh user@server "sudo systemctl suspend"
 ----
