@@ -9,16 +9,40 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type parseTemplateJsonTestCase struct {
+	name           string
+	source         string
+	ent            *entities.Entity
+	args           map[string]string
+	expectedOutput string
+	expectError    bool
+	checkJsonOnly  bool
+}
+
+func assertParseTemplateJsonCase(t *testing.T, tt parseTemplateJsonTestCase, output string, err error) {
+	if tt.expectError {
+		assert.Error(t, err)
+		return
+	}
+	assert.NoError(t, err)
+	if tt.checkJsonOnly {
+		prefix := strings.TrimSuffix(tt.expectedOutput, " ")
+		assert.True(t, strings.HasPrefix(output, prefix), "output %q should start with %q", output, prefix)
+		jsonPart := strings.TrimSpace(strings.TrimPrefix(output, prefix))
+		var decoded map[string]string
+		err := json.Unmarshal([]byte(jsonPart), &decoded)
+		assert.NoError(t, err)
+		for k, v := range tt.args {
+			assert.Equal(t, v, decoded[k], "decoded JSON should contain %s=%s", k, v)
+		}
+		assert.Len(t, decoded, len(tt.args))
+		return
+	}
+	assert.Equal(t, tt.expectedOutput, output)
+}
+
 func TestParseTemplateWithActionContext_Json(t *testing.T) {
-	tests := []struct {
-		name           string
-		source         string
-		ent            *entities.Entity
-		args           map[string]string
-		expectedOutput string
-		expectError    bool
-		checkJsonOnly  bool
-	}{
+	tests := []parseTemplateJsonTestCase{
 		{
 			name:           "Arguments piped to Json",
 			source:         `echo {{ .Arguments | Json }}`,
@@ -56,26 +80,7 @@ func TestParseTemplateWithActionContext_Json(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			output, err := ParseTemplateWithActionContext(tt.source, tt.ent, tt.args)
-			if tt.expectError {
-				assert.Error(t, err)
-				return
-			}
-			assert.NoError(t, err)
-			if tt.checkJsonOnly {
-				prefix := strings.TrimSuffix(tt.expectedOutput, " ")
-				assert.True(t, strings.HasPrefix(output, prefix), "output %q should start with %q", output, prefix)
-				jsonPart := strings.TrimPrefix(output, prefix)
-				jsonPart = strings.TrimSpace(jsonPart)
-				var decoded map[string]string
-				err := json.Unmarshal([]byte(jsonPart), &decoded)
-				assert.NoError(t, err)
-				for k, v := range tt.args {
-					assert.Equal(t, v, decoded[k], "decoded JSON should contain %s=%s", k, v)
-				}
-				assert.Len(t, decoded, len(tt.args))
-			} else {
-				assert.Equal(t, tt.expectedOutput, output)
-			}
+			assertParseTemplateJsonCase(t, tt, output, err)
 		})
 	}
 }

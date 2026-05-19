@@ -13,16 +13,7 @@ func (e *Executor) Kill(execReq *InternalLogEntry) error {
 	if execReq == nil {
 		return nil
 	}
-	helper := ""
-	killID := ""
-	if execReq.Attributes != nil {
-		helper = execReq.Attributes["helper"]
-		killID = execReq.Attributes["kill_id"]
-	}
-	if helper != "" && killID != "" {
-		killCmd := exec.CommandContext(context.Background(), "olivetin-"+helper, "kill", killID)
-		_ = killCmd.Run()
-	}
+	runExecToolHelperKillCommand(execReq.Attributes)
 	if execReq.Process != nil {
 		return execReq.Process.Kill()
 	}

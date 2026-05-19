@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"maps"
 	"os"
 	"os/exec"
 	"path"
@@ -734,29 +735,44 @@ func hasExecTool(req *ExecutionRequest) bool {
 }
 
 func handleExecToolBranch(req *ExecutionRequest) bool {
-	if err := validateArguments(req.Arguments, req.Binding.Action); err != nil {
+	if err := setupExecToolFields(req); err != nil {
 		return fail(req, err)
 	}
+	return true
+}
 
-	cfg := req.Binding.Action.ExecTool.Config
-	if cfg == nil {
-		return fail(req, fmt.Errorf("execTool config is nil"))
+func setupExecToolFields(req *ExecutionRequest) error {
+	cfg, err := validatedExecToolConfig(req)
+	if err != nil {
+		return err
 	}
-
 	applied, err := tpl.ApplyTemplatesToExecToolConfig(cfg, req.Binding.Entity, req.Arguments)
 	if err != nil {
-		return fail(req, err)
+		return err
 	}
-
 	configJSON, err := json.Marshal(applied)
 	if err != nil {
-		return fail(req, err)
+		return err
 	}
+	assignExecToolRequest(req, configJSON)
+	return nil
+}
 
+func validatedExecToolConfig(req *ExecutionRequest) (map[string]any, error) {
+	if err := validateArguments(req.Arguments, req.Binding.Action); err != nil {
+		return nil, err
+	}
+	cfg := req.Binding.Action.ExecTool.Config
+	if cfg == nil {
+		return nil, fmt.Errorf("execTool config is nil")
+	}
+	return cfg, nil
+}
+
+func assignExecToolRequest(req *ExecutionRequest, configJSON []byte) {
 	req.useExecTool = true
 	req.execToolName = req.Binding.Action.ExecTool.Name
 	req.execToolConfig = configJSON
-	return true
 }
 
 func fail(req *ExecutionRequest, err error) bool {
@@ -841,6 +857,26 @@ func appendErrorToStderr(err error, logEntry *InternalLogEntry) {
 	}
 }
 
+func finishExecutionLog(req *ExecutionRequest, ctx *timeoutContext, streamer *OutputStreamer, runerr, waiterr error, exitCode int32) {
+	req.logEntry.ExitCode = exitCode
+	req.logEntry.Output = streamer.String()
+	appendErrorToStderr(runerr, req.logEntry)
+	appendErrorToStderr(waiterr, req.logEntry)
+	applyActionTimeoutToLog(req, ctx)
+	req.logEntry.DatetimeFinished = time.Now()
+}
+
+func applyActionTimeoutToLog(req *ExecutionRequest, ctx *timeoutContext) {
+	if ctx.Err() != context.DeadlineExceeded {
+		return
+	}
+	log.WithFields(log.Fields{
+		"actionTitle": req.logEntry.ActionTitle,
+	}).Warnf("Action timed out")
+	req.logEntry.TimedOut = true
+	req.logEntry.Output += "OliveTin::timeout - this action timed out after " + fmt.Sprintf("%v", req.Binding.Action.Timeout) + " seconds. If you need more time for this action, set a longer timeout. See https://docs.olivetin.app/action_customization/timeouts.html for more help."
+}
+
 type OutputStreamer struct {
 	Req    *ExecutionRequest
 	output bytes.Buffer
@@ -873,38 +909,63 @@ func (m *MetadataStreamFilter) Write(p []byte) (n int, err error) {
 	}
 	m.buf = append(m.buf, p...)
 	if len(m.buf) > metadataMaxFirstLineLen {
-		m.done = true
-		_, _ = m.w.Write(m.buf)
-		m.buf = nil
-		return len(p), nil
+		return m.finishMetadataScanAsPlaintext(p)
 	}
 	idx := bytes.IndexByte(m.buf, '\n')
 	if idx < 0 {
 		return len(p), nil
 	}
+	return m.finishMetadataScanAtNewline(idx, p)
+}
+
+func (m *MetadataStreamFilter) finishMetadataScanAsPlaintext(p []byte) (n int, err error) {
+	m.done = true
+	_, _ = m.w.Write(m.buf)
+	m.buf = nil
+	return len(p), nil
+}
+
+func (m *MetadataStreamFilter) finishMetadataScanAtNewline(idx int, p []byte) (n int, err error) {
 	line := m.buf[:idx]
 	m.buf = m.buf[idx+1:]
 	m.done = true
-	if bytes.HasPrefix(line, []byte("OLIVETIN_METADATA ")) {
-		jsonPart := line[len("OLIVETIN_METADATA "):]
-		var attrs map[string]string
-		if json.Unmarshal(jsonPart, &attrs) == nil && attrs != nil {
-			if m.logEntry.Attributes == nil {
-				m.logEntry.Attributes = make(map[string]string)
-			}
-			for k, v := range attrs {
-				m.logEntry.Attributes[k] = v
-			}
-		}
-	} else {
-		_, _ = m.w.Write(line)
-		_, _ = m.w.Write([]byte{'\n'})
-	}
+	m.writeFirstLineAndMaybeMetadata(line)
 	if len(m.buf) > 0 {
 		_, _ = m.w.Write(m.buf)
 		m.buf = nil
 	}
 	return len(p), nil
+}
+
+func (m *MetadataStreamFilter) writeFirstLineAndMaybeMetadata(line []byte) {
+	if bytes.HasPrefix(line, []byte("OLIVETIN_METADATA ")) {
+		m.mergeMetadataLine(line[len("OLIVETIN_METADATA "):])
+		return
+	}
+	_, _ = m.w.Write(line)
+	_, _ = m.w.Write([]byte{'\n'})
+}
+
+func (m *MetadataStreamFilter) mergeMetadataLine(jsonPart []byte) {
+	attrs, ok := parseMetadataAttrsJSON(jsonPart)
+	if !ok {
+		return
+	}
+	if m.logEntry.Attributes == nil {
+		m.logEntry.Attributes = make(map[string]string)
+	}
+	maps.Copy(m.logEntry.Attributes, attrs)
+}
+
+func parseMetadataAttrsJSON(jsonPart []byte) (map[string]string, bool) {
+	var attrs map[string]string
+	if err := json.Unmarshal(jsonPart, &attrs); err != nil {
+		return nil, false
+	}
+	if attrs == nil {
+		return nil, false
+	}
+	return attrs, true
 }
 
 func buildEnv(args map[string]string) []string {
@@ -942,22 +1003,7 @@ func stepExec(req *ExecutionRequest) bool {
 	req.logEntry.Process = cmd.Process
 	ctx.setProcess(cmd.Process)
 	waiterr := cmd.Wait()
-	req.logEntry.ExitCode = int32(cmd.ProcessState.ExitCode())
-	req.logEntry.Output = streamer.String()
-
-	appendErrorToStderr(runerr, req.logEntry)
-	appendErrorToStderr(waiterr, req.logEntry)
-
-	if ctx.Err() == context.DeadlineExceeded {
-		log.WithFields(log.Fields{
-			"actionTitle": req.logEntry.ActionTitle,
-		}).Warnf("Action timed out")
-
-		req.logEntry.TimedOut = true
-		req.logEntry.Output += "OliveTin::timeout - this action timed out after " + fmt.Sprintf("%v", req.Binding.Action.Timeout) + " seconds. If you need more time for this action, set a longer timeout. See https://docs.olivetin.app/action_customization/timeouts.html for more help."
-	}
-
-	req.logEntry.DatetimeFinished = time.Now()
+	finishExecutionLog(req, ctx, streamer, runerr, waiterr, int32(cmd.ProcessState.ExitCode()))
 
 	return true
 }
@@ -973,6 +1019,10 @@ func stepExecTool(req *ExecutionRequest, ctx *timeoutContext, streamer *OutputSt
 	if cmd == nil {
 		return false
 	}
+	return runExecToolCommand(req, ctx, streamer, cmd)
+}
+
+func runExecToolCommand(req *ExecutionRequest, ctx *timeoutContext, streamer *OutputStreamer, cmd *exec.Cmd) bool {
 	stdinPayload := buildExecToolStdinPayload(req)
 	filter := &MetadataStreamFilter{w: streamer, logEntry: req.logEntry}
 	cmd.Stdout = filter
@@ -990,21 +1040,7 @@ func stepExecTool(req *ExecutionRequest, ctx *timeoutContext, streamer *OutputSt
 	_, _ = stdinPipe.Write(stdinPayload)
 	_ = stdinPipe.Close()
 	waiterr := cmd.Wait()
-	req.logEntry.ExitCode = int32(cmd.ProcessState.ExitCode())
-	req.logEntry.Output = streamer.String()
-
-	appendErrorToStderr(runerr, req.logEntry)
-	appendErrorToStderr(waiterr, req.logEntry)
-
-	if ctx.Err() == context.DeadlineExceeded {
-		log.WithFields(log.Fields{
-			"actionTitle": req.logEntry.ActionTitle,
-		}).Warnf("Action timed out")
-		req.logEntry.TimedOut = true
-		req.logEntry.Output += "OliveTin::timeout - this action timed out after " + fmt.Sprintf("%v", req.Binding.Action.Timeout) + " seconds. If you need more time for this action, set a longer timeout. See https://docs.olivetin.app/action_customization/timeouts.html for more help."
-	}
-
-	req.logEntry.DatetimeFinished = time.Now()
+	finishExecutionLog(req, ctx, streamer, runerr, waiterr, int32(cmd.ProcessState.ExitCode()))
 	return true
 }
 

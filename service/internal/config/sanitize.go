@@ -159,24 +159,43 @@ func (action *Action) sanitize(cfg *Config) {
 }
 
 func sanitizeActionExecutionMode(action *Action) {
-	hasShell := action.Shell != ""
-	hasExec := len(action.Exec) > 0
-	hasExecTool := action.ExecTool != nil && action.ExecTool.Name != "" && action.ExecTool.Config != nil
-
-	if hasExecTool && (hasShell || hasExec) {
-		log.Warnf("Action %q has both execTool and shell/exec; using execTool only", action.Title)
-		action.Shell = ""
-		action.Exec = nil
-	}
-	if hasExec && hasShell {
+	prioritizeExecToolOverShellAndExec(action)
+	if len(action.Exec) > 0 && action.Shell != "" {
 		log.Warnf("Action %q has both shell and exec; using exec only", action.Title)
 		action.Shell = ""
 	}
+	clearIncompleteExecTool(action)
+}
 
-	if action.ExecTool != nil && (action.ExecTool.Name == "" || action.ExecTool.Config == nil) {
-		log.Warnf("Action %q has execTool with missing name or config; clearing execTool", action.Title)
-		action.ExecTool = nil
+func prioritizeExecToolOverShellAndExec(action *Action) {
+	if !execToolIsFullyConfigured(action) {
+		return
 	}
+	if action.Shell == "" && len(action.Exec) == 0 {
+		return
+	}
+	log.Warnf("Action %q has both execTool and shell/exec; using execTool only", action.Title)
+	action.Shell = ""
+	action.Exec = nil
+}
+
+func execToolIsFullyConfigured(action *Action) bool {
+	t := action.ExecTool
+	if t == nil {
+		return false
+	}
+	if t.Name == "" {
+		return false
+	}
+	return t.Config != nil
+}
+
+func clearIncompleteExecTool(action *Action) {
+	if action.ExecTool == nil || (action.ExecTool.Name != "" && action.ExecTool.Config != nil) {
+		return
+	}
+	log.Warnf("Action %q has execTool with missing name or config; clearing execTool", action.Title)
+	action.ExecTool = nil
 }
 
 func (cfg *Config) sanitizeAuthRequireGuestsToLogin() {

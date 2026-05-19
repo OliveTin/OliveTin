@@ -57,11 +57,16 @@ func (tc *timeoutContext) setProcess(process *os.Process) {
 	}
 	tc.processMu.Unlock()
 
-	if tc.Context.Err() == context.DeadlineExceeded && process != nil {
-		if tc.logEntry != nil {
-			_ = tc.executor.Kill(tc.logEntry)
-		} else {
-			_ = tc.executor.Kill(&InternalLogEntry{Process: process})
-		}
+	tc.killProcessIfAlreadyTimedOut(process)
+}
+
+func (tc *timeoutContext) killProcessIfAlreadyTimedOut(process *os.Process) {
+	if tc.Context.Err() != context.DeadlineExceeded || process == nil {
+		return
 	}
+	if tc.logEntry != nil {
+		_ = tc.executor.Kill(tc.logEntry)
+		return
+	}
+	_ = tc.executor.Kill(&InternalLogEntry{Process: process})
 }

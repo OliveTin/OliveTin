@@ -219,42 +219,55 @@ func applyTemplatesToValue(v any, ent *entities.Entity, args map[string]string, 
 	if depth > maxExecToolConfigDepth {
 		return nil, fmt.Errorf("execTool config nested too deeply")
 	}
-	switch val := v.(type) {
-	case string:
-		return ParseTemplateWithActionContext(val, ent, args)
-	case map[string]any:
-		result := make(map[string]any, len(val))
-		for k, elem := range val {
-			transformed, err := applyTemplatesToValue(elem, ent, args, depth+1)
-			if err != nil {
-				return nil, err
-			}
-			result[k] = transformed
-		}
-		return result, nil
-	case []any:
-		result := make([]any, len(val))
-		for i, elem := range val {
-			transformed, err := applyTemplatesToValue(elem, ent, args, depth+1)
-			if err != nil {
-				return nil, err
-			}
-			result[i] = transformed
-		}
-		return result, nil
-	case []string:
-		result := make([]any, len(val))
-		for i, elem := range val {
-			transformed, err := applyTemplatesToValue(elem, ent, args, depth+1)
-			if err != nil {
-				return nil, err
-			}
-			result[i] = transformed
-		}
-		return result, nil
-	default:
-		return v, nil
+	if s, ok := v.(string); ok {
+		return ParseTemplateWithActionContext(s, ent, args)
 	}
+	return applyTemplatesToComposite(v, ent, args, depth)
+}
+
+func applyTemplatesToComposite(v any, ent *entities.Entity, args map[string]string, depth int) (any, error) {
+	if m, ok := v.(map[string]any); ok {
+		return applyTemplatesToMap(m, ent, args, depth)
+	}
+	if items, ok := v.([]any); ok {
+		return applyTemplatesToSliceAny(items, ent, args, depth)
+	}
+	if strItems, ok := v.([]string); ok {
+		return applyTemplatesToSliceAny(stringSliceAsAnySlice(strItems), ent, args, depth)
+	}
+	return v, nil
+}
+
+func stringSliceAsAnySlice(val []string) []any {
+	out := make([]any, len(val))
+	for i, s := range val {
+		out[i] = s
+	}
+	return out
+}
+
+func applyTemplatesToMap(val map[string]any, ent *entities.Entity, args map[string]string, depth int) (map[string]any, error) {
+	result := make(map[string]any, len(val))
+	for k, elem := range val {
+		transformed, err := applyTemplatesToValue(elem, ent, args, depth+1)
+		if err != nil {
+			return nil, err
+		}
+		result[k] = transformed
+	}
+	return result, nil
+}
+
+func applyTemplatesToSliceAny(val []any, ent *entities.Entity, args map[string]string, depth int) ([]any, error) {
+	result := make([]any, len(val))
+	for i, elem := range val {
+		transformed, err := applyTemplatesToValue(elem, ent, args, depth+1)
+		if err != nil {
+			return nil, err
+		}
+		result[i] = transformed
+	}
+	return result, nil
 }
 
 func ParseTemplateOfActionBeforeExec(source string, ent *entities.Entity) string {
