@@ -28,11 +28,16 @@ jobs:
           image: tonistiigi/binfmt:latest
           platforms: arm64,arm
 
-      - name: Setup node
+      - name: Setup node (npm cache)
+        if: github.event_name != 'pull_request'
         uses: actions/setup-node@v6.4.0
         with:
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
+
+      - name: Setup node
+        if: github.event_name == 'pull_request'
+        uses: actions/setup-node@v6.4.0
 
       - name: Setup Go
         uses: actions/setup-go@v6
