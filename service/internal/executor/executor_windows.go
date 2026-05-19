@@ -10,7 +10,23 @@ import (
 )
 
 func (e *Executor) Kill(execReq *InternalLogEntry) error {
-	return execReq.Process.Kill()
+	if execReq == nil {
+		return nil
+	}
+	helper := ""
+	killID := ""
+	if execReq.Attributes != nil {
+		helper = execReq.Attributes["helper"]
+		killID = execReq.Attributes["kill_id"]
+	}
+	if helper != "" && killID != "" {
+		killCmd := exec.CommandContext(context.Background(), "olivetin-"+helper, "kill", killID)
+		_ = killCmd.Run()
+	}
+	if execReq.Process != nil {
+		return execReq.Process.Kill()
+	}
+	return nil
 }
 
 func wrapCommandInShell(ctx context.Context, finalParsedCommand string) *exec.Cmd {
@@ -29,4 +45,8 @@ func wrapCommandDirect(ctx context.Context, execArgs []string) *exec.Cmd {
 	}
 
 	return exec.CommandContext(ctx, execArgs[0], execArgs[1:]...)
+}
+
+func wrapCommandExecTool(ctx context.Context, name string) *exec.Cmd {
+	return exec.CommandContext(ctx, "olivetin-"+name, "exec")
 }

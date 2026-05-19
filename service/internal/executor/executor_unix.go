@@ -10,8 +10,23 @@ import (
 )
 
 func (e *Executor) Kill(execReq *InternalLogEntry) error {
-	// A negative PID means to kill the whole process group. This is *nix specific behavior.
-	return syscall.Kill(-execReq.Process.Pid, syscall.SIGKILL)
+	if execReq == nil {
+		return nil
+	}
+	helper := ""
+	killID := ""
+	if execReq.Attributes != nil {
+		helper = execReq.Attributes["helper"]
+		killID = execReq.Attributes["kill_id"]
+	}
+	if helper != "" && killID != "" {
+		killCmd := exec.CommandContext(context.Background(), "olivetin-"+helper, "kill", killID)
+		_ = killCmd.Run()
+	}
+	if execReq.Process != nil {
+		return syscall.Kill(-execReq.Process.Pid, syscall.SIGKILL)
+	}
+	return nil
 }
 
 func wrapCommandInShell(ctx context.Context, finalParsedCommand string) *exec.Cmd {
@@ -33,5 +48,11 @@ func wrapCommandDirect(ctx context.Context, execArgs []string) *exec.Cmd {
 	// This is to ensure that the process group is killed when the parent process is killed.
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 
+	return cmd
+}
+
+func wrapCommandExecTool(ctx context.Context, name string) *exec.Cmd {
+	cmd := exec.CommandContext(ctx, "olivetin-"+name, "exec")
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	return cmd
 }
