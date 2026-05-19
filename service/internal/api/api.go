@@ -640,12 +640,13 @@ func calculateReversedIndices(page pageInfo, filteredLen int) (int64, int64) {
 	return startIdx, endIdx
 }
 
-// buildActionLogsResponse builds the response with paginated log entries.
+// buildActionLogsResponse builds the response with paginated log entries (newest first).
 func (api *oliveTinAPI) buildActionLogsResponse(filtered []*executor.InternalLogEntry, page pageInfo, user *authpublic.AuthenticatedUser) *apiv1.GetActionLogsResponse {
 	startIdx, endIdx := calculateReversedIndices(page, len(filtered))
 	ret := &apiv1.GetActionLogsResponse{}
-	for _, le := range filtered[startIdx:endIdx] {
-		ret.Logs = append(ret.Logs, api.internalLogEntryToPb(le, user))
+	chunk := filtered[int(startIdx):int(endIdx)]
+	for i := len(chunk) - 1; i >= 0; i-- {
+		ret.Logs = append(ret.Logs, api.internalLogEntryToPb(chunk[i], user))
 	}
 	ret.CountRemaining = page.start
 	ret.PageSize = page.size
