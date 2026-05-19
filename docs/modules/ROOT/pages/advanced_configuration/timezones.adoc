@@ -1,0 +1,18 @@
+[#timezone]
+= Timezones
+
+OliveTin will obviously use the system time just like all other programs, but when running in a container, time works in a slightly unusual way. 
+
+You may be used to using a TZ or TIMEZONE environment variable in your Linux container inages, but this is not a standard that works for all Linux distributions - it's mostly supported by Debain based containers. OliveTin's base container image is fedora-minimal, which deliberately does not include timezone data, to reduce storage space. 
+
+To change the time in the OliveTin container, simply bind-mount the correct zone file; 
+
+.Same as the container host
+----
+docker create -v /etc/localtime:/etc/localtime -v /etc/OliveTin:/config --name OliveTin docker.io/jamesread/olivetin
+----
+
+.Different timezone to the container host
+----
+docker create -v /usr/share/zoneinfo/Japan:/etc/localtime -v /etc/OliveTin:/config --name OliveTin docker.io/jamesread/olivetin
+----

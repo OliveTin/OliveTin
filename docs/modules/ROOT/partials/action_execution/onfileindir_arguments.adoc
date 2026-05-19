@@ -1,0 +1,17 @@
+== File in dir arguments
+
+|===
+| Predefined Argument   | Example
+
+| `filepath`            | /Downloads/txt1.txt
+| `filedir`             | /Downloads
+| `filename`            | test1.txt
+| `fileext`             | .txt
+| `filesizebytes`       | 100
+| `filemode`            | 0644
+| `filemtime`           | 2024-04-27 20:09:42.465235047 +0100 BST
+| `fileisdir`           | false
+|===
+
+Like all arguments, OliveTin also passes these arguments as <<env-vars,environment variables>> if this is better for your use case.
+

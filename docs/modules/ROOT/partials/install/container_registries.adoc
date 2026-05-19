@@ -1,0 +1,6 @@
+
+The image is pushed to the following registries, pick the one that you prefer - the container images are identical so you only need one;
+
+* Dockerhub container image: link:https://hub.docker.com/r/jamesread/olivetin/[docker.io/jamesread/olivetin]
+* GitHub container image: link:https://ghcr.io/olivetin/olivetin[ghcr.io/jamesread/olivetin]
+

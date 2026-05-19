@@ -1,0 +1,18 @@
+[#install-manjaro]
+= Manjaro (pamac/AUR)
+
+Please see teh xref:install-archbtw[Arch Linux] page for a description of the difference between `olivetin-bin` and `olivetin` in AUR. This page assumes you want to compile from source (`olivetin` package).
+
+[source,bash]
+----
+PATH=$PATH:~/go/bin/
+pamac install buf
+pamac install olivetin
+sudo mkdir -p /etc/OliveTin/custom-webui/themes/
+sudo mkdir -p /etc/OliveTin/entities/
+----
+
+
+include::partial$install/post_systemd.adoc[]
+
+

@@ -1,0 +1,10 @@
+[#err-js-modules-not-supported]
+= Error: JS Modules not supported
+
+This is most likely because you are using a very old browser, or have some Javascript disabled.
+
+This page describes the compatible browsers for Javascript modules; https://caniuse.com/es6-module .
+
+There is no workaround for this apart from updating your browser / using a better browser, as OliveTin wants to be a progressive web app and doesn't intend to support browsers without module support.
+
+

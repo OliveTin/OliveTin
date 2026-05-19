@@ -1,0 +1,48 @@
+# This config has two actions which are applied to all "container" entities 
+# found in the entity file.
+#
+# Docs: http://localhost/docs.olivetin.app/docs/entities.html
+actions:
+  - title: Start {{ container.Names }}
+    icon: box
+    shell: docker start {{ container.Names }}
+    entity: container
+    triggers:
+      - Update container entity file
+
+  - title: Stop {{ container.Names }}
+    icon: box
+    shell: docker stop {{ container.Names }}
+    entity: container
+    triggers:
+      - Update container entity file
+
+  # This is a hidden action, that is run on startup, and every 5 minutes, and 
+  # when the above start/stop commands are run (see the `triggers` property).
+
+  - title: Update container entity file
+    shell: 'docker ps -a --format json > /etc/OliveTin/entities/containers.json'
+    hidden: true
+    execOnStartup: true
+    execOnCron: '*/5 * * * *'
+
+# Docs: http://docs.olivetin.app/entities.html
+entities:
+  - file: /etc/OliveTin/entities/containers.json
+    name: container
+
+# The only way to properly use entities, are to use them with a `fieldset` on
+# a dashboard.
+dashboards:
+  # This is the second dashboard.
+  - title: My Containers
+    contents:
+      - title: 'Container {{ container.Names }} ({{ container.Image }})'
+        entity: container
+        type: fieldset
+        contents:
+          - type: display
+            title: |
+              {{ container.RunningFor }} <br /><br /><strong>{{ container.State }}</strong>
+          - title: 'Start {{ container.Names }}'
+          - title: 'Stop {{ container.Names }}'

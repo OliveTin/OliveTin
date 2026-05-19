@@ -1,0 +1,10 @@
+actions:
+  - title: WakeOnLan Server1
+    shell: ether-wake A8:5E:45:E4:FF:2A
+    icon: ping
+
+  - title: Install ether-wake on startup
+    shell: microdnf install -y net-tools
+    hidden: true
+    execOnStartup: true
+    timeout: 120

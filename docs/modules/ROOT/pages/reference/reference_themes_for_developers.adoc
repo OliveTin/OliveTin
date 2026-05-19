@@ -1,0 +1,53 @@
+[#themes-dev]
+= Themes (for theme developers)
+
+== Step by step theme guide
+
+OliveTin themes are simply a directory of CSS and other assets. OliveTin looks for a directory called `custom-webui/themes/<theme-folder-name>` in the same directory as your `config.yaml` file.
+
+Start by creating a directory called `custom-webui/themes/<theme-folder-name>` in the same directory as your `config.yaml` file. This is where you will put your theme files. A theme must also have a theme.css file, which is the main CSS file for your theme. This file must be called `theme.css` and must be in the same directory as your theme folder.
+
+* OliveTin will by default only read theme.css once on startup. If you are intending to change theme.css while OliveTin is running, set `themeCacheDisabled: true` in your config.yaml. This will make OliveTin read theme.css on every request, and is useful for development.
+* Go to https://github.com/OliveTin/theme-template and use this template repository to create your new theme repository on GitHub. 
+* Install OliveTin somewhere, and clone your new repository using `git clone` into your themes directory.
+* Set `themeName: <theme-folder-name>` in your OliveTin config.yaml and restart OliveTin.
+
+Write beautiful CSS to create your theme as you like it, commit your changes to git.
+
+Note that OliveTin will load `/theme.css` depending on `themeName:` in your config file. Images and any other assets will be served at `/custom-webui/themes/mytheme/`.
+
+== Understanding theme URLs
+
+When you create a theme, OliveTin will serve your theme's CSS at `/theme.css` and any other assets at `/custom-webui/themes/mytheme/`. This might be a little strange at first, as your theme.css file wil be in the `/custom-webui/themes/mytheme/` directory, but OliveTin will still serve it at `/theme.css`. Let's explain why this happens;
+
+OliveTin wants to make it easy for your reverse proxy, cache server, or browser, to cache as much content as possible. This means that if OliveTin had to inject a new CSS file into the HTML every time you changed your theme, then your reverse proxy, cache server, or browser would have to re-download the HTML every time you changed your theme. This is not ideal. 
+
+It is possible that OliveTin's initial webUiSettings.json (that is loaded to setup the page), could include the theme name, and then the JavaScript could then add an extra stylesheet to load, but this is slow, and creates a horrible "page flash" effect as the theme is requested.
+
+To make things fast, OliveTin will copy the content of your `/custom-webui/themes/mytheme/theme.css` file into memory when it starts, and then requests for `/theme.css` will load this file. 
+
+What this means for you, is that to get to files like `backgrond.png` from your CSS, you must write your CSS to point to the file in the `/custom-webui/themes/mytheme/` directory;
+
+.Correct example
+```
+body {
+    background-image: url('/custom-webui/themes/mytheme/background.png');
+}
+```
+
+.Incorrect example
+```
+body {
+    background-image: url('/background.png');
+}
+```
+
+== How to list your theme on the OliveTin themes page
+
+The OliveTin themes page is here; https://olivetin.app/themes
+
+When you are done with your theme, fork https://github.com/OliveTin/themes on GitHub and create a new page under the "content" directory for your new theme. Commit that to GitHub and then raise a pull request.
+
+If you meed more help, please jump on our discord server! 
+
+

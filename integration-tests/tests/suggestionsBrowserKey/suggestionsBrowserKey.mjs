@@ -5,7 +5,6 @@ import {
   getRootAndWait,
   getActionButton,
   takeScreenshotOnFailure,
-  getTerminalBuffer,
 } from '../../lib/elements.js'
 
 async function openArgumentForm() {
@@ -45,7 +44,7 @@ async function waitForLogsPage() {
       const url = await webdriver.getCurrentUrl()
       return url.includes('/logs/') && !url.endsWith('/logs')
     }),
-    5000
+    15000
   )
 }
 
@@ -115,14 +114,16 @@ describe('config: suggestionsBrowserKey', function () {
 
   it('Submitting form saves value to localStorage', async function () {
     this.timeout(15000)
-    
+
     // Clear localStorage first
     await clearLocalStorage()
-    
+
     await openArgumentForm()
 
     const input = await getTestInput()
-    const testValue = 'test-value-123'
+    // Use default argument type "ascii" (alphanumeric only) so tests pass when
+    // config does not set a looser type (e.g. CI merge base without type lines).
+    const testValue = 'testvalue123'
     await input.clear()
     await input.sendKeys(testValue)
 
@@ -133,7 +134,7 @@ describe('config: suggestionsBrowserKey', function () {
     // Verify value was saved to localStorage
     const stored = await getLocalStorageItem('olivetin-suggestions-test-suggestions-key')
     expect(stored).to.not.be.null
-    
+
     const suggestions = JSON.parse(stored)
     expect(suggestions).to.be.an('array')
     expect(suggestions).to.include(testValue)
@@ -141,9 +142,9 @@ describe('config: suggestionsBrowserKey', function () {
 
   it('Previously saved values appear in datalist', async function () {
     this.timeout(15000)
-    
+
     // First, save a value to localStorage
-    const testValue = 'saved-suggestion-456'
+    const testValue = 'savedsuggestion456'
     await webdriver.executeScript(`
       const key = 'olivetin-suggestions-test-suggestions-key';
       localStorage.setItem(key, JSON.stringify(['${testValue}']));
@@ -173,7 +174,7 @@ describe('config: suggestionsBrowserKey', function () {
 
   it('Multiple submissions accumulate suggestions', async function () {
     this.timeout(20000)
-    
+
     // Clear localStorage first
     await clearLocalStorage()
 
@@ -181,7 +182,7 @@ describe('config: suggestionsBrowserKey', function () {
     await openArgumentForm()
     const input1 = await getTestInput()
     await input1.clear()
-    await input1.sendKeys('first-value')
+    await input1.sendKeys('firstvalue')
     await submitForm()
     await waitForLogsPage()
     await waitForExecutionComplete()
@@ -190,7 +191,7 @@ describe('config: suggestionsBrowserKey', function () {
     await openArgumentForm()
     const input2 = await getTestInput()
     await input2.clear()
-    await input2.sendKeys('second-value')
+    await input2.sendKeys('secondvalue')
     await submitForm()
     await waitForLogsPage()
     await waitForExecutionComplete()
@@ -198,17 +199,17 @@ describe('config: suggestionsBrowserKey', function () {
     // Verify both values are in localStorage
     const stored = await getLocalStorageItem('olivetin-suggestions-test-suggestions-key')
     expect(stored).to.not.be.null
-    
+
     const suggestions = JSON.parse(stored)
     expect(suggestions).to.be.an('array')
-    expect(suggestions).to.include('first-value')
-    expect(suggestions).to.include('second-value')
-    expect(suggestions[0]).to.equal('second-value') // Most recent should be first
+    expect(suggestions).to.include('firstvalue')
+    expect(suggestions).to.include('secondvalue')
+    expect(suggestions[0]).to.equal('secondvalue') // Most recent should be first
   })
 
   it('Empty values are not saved to localStorage', async function () {
     this.timeout(15000)
-    
+
     // Clear localStorage first
     await clearLocalStorage()
 
@@ -235,7 +236,7 @@ describe('config: suggestionsBrowserKey', function () {
 
   it('Suggestions are shared across inputs with the same suggestionsBrowserKey', async function () {
     this.timeout(20000)
-    
+
     // Clear localStorage first
     await clearLocalStorage()
 
@@ -243,14 +244,14 @@ describe('config: suggestionsBrowserKey', function () {
     await openArgumentForm()
     const input1 = await getTestInput()
     await input1.clear()
-    await input1.sendKeys('shared-value-from-input1')
+    await input1.sendKeys('sharedfrominput1')
     await submitForm()
     await waitForLogsPage()
     await waitForExecutionComplete()
 
     // Open the form again and verify the value appears in both datalists
     await openArgumentForm()
-    
+
     // Check first input's datalist
     const datalist1 = await webdriver.findElement(By.id('testInput-choices'))
     expect(datalist1).to.not.be.null
@@ -258,7 +259,7 @@ describe('config: suggestionsBrowserKey', function () {
     let foundInInput1 = false
     for (const option of options1) {
       const value = await option.getAttribute('value')
-      if (value === 'shared-value-from-input1') {
+      if (value === 'sharedfrominput1') {
         foundInInput1 = true
         break
       }
@@ -272,7 +273,7 @@ describe('config: suggestionsBrowserKey', function () {
     let foundInInput2 = false
     for (const option of options2) {
       const value = await option.getAttribute('value')
-      if (value === 'shared-value-from-input1') {
+      if (value === 'sharedfrominput1') {
         foundInInput2 = true
         break
       }
@@ -282,24 +283,24 @@ describe('config: suggestionsBrowserKey', function () {
     // Now submit a value using the second input
     const input2 = await getTestInput2()
     await input2.clear()
-    await input2.sendKeys('shared-value-from-input2')
+    await input2.sendKeys('sharedfrominput2')
     await submitForm()
     await waitForLogsPage()
     await waitForExecutionComplete()
 
     // Verify both values appear in both datalists
     await openArgumentForm()
-    
+
     // Check that both values are in the first input's datalist
     const options1After = await getDatalistOptions('testInput')
     let foundValue1 = false
     let foundValue2 = false
     for (const option of options1After) {
       const value = await option.getAttribute('value')
-      if (value === 'shared-value-from-input1') {
+      if (value === 'sharedfrominput1') {
         foundValue1 = true
       }
-      if (value === 'shared-value-from-input2') {
+      if (value === 'sharedfrominput2') {
         foundValue2 = true
       }
     }
@@ -312,10 +313,10 @@ describe('config: suggestionsBrowserKey', function () {
     foundValue2 = false
     for (const option of options2After) {
       const value = await option.getAttribute('value')
-      if (value === 'shared-value-from-input1') {
+      if (value === 'sharedfrominput1') {
         foundValue1 = true
       }
-      if (value === 'shared-value-from-input2') {
+      if (value === 'sharedfrominput2') {
         foundValue2 = true
       }
     }

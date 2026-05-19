@@ -1,0 +1,34 @@
+[#auth-concepts]
+= Security Concepts
+
+OliveTin implements a security model that covers **Authentication**, **Authorization** (via xref:security/acl.adoc[ACLs]) and **Accounting**.
+
+== Authentication
+
+To allow users to be Authenticated to OliveTin, there are several options to choose from;
+
+- xref:security/local.adoc[Local Users] (ie: Login with Username and Password)
+- xref:security/oauth2.adoc[OAuth2] (eg: Google, GitHub, etc)
+- xref:security/trusted_header.adoc[Trusted Header] (eg: Nginx, Apache, etc)
+- xref:security/jwt.adoc[JWT] (eg: Traefik, Organizr, etc)
+
+== Authorization
+
+OliveTin's authorization system, or permissions, is built on xref:security/acl.adoc[Access Control Lists]. This is a powerful mechanism that allows you to implement very fine grained access control, or your own role based access control (RBAC).
+
+== Accounting
+
+OliveTin's accounting is via it's logs. This aspect of OliveTin's security model is poorly documented at the moment.
+
+== What's Next?
+
+Now that you understand OliveTin's security model, implement it for your use case:
+
+* xref:security/local.adoc[Set up local users] - Configure username/password authentication
+* xref:security/oauth2.adoc[Configure OAuth2] - Integrate with OAuth2 providers (Google, GitHub, etc.)
+* xref:security/trusted_header.adoc[Use trusted headers] - Authenticate via reverse proxy headers
+* xref:security/jwt.adoc[Configure JWT] - Use JWT tokens for authentication
+* xref:security/acl.adoc[Set up Access Control Lists] - Implement fine-grained permissions
+* xref:security/examples.adoc[View security examples] - See complete security configurations
+* xref:security/design_choices.adoc[Security design recommendations] - Learn best practices for securing OliveTin
+

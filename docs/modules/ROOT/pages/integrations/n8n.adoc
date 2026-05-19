@@ -1,0 +1,15 @@
+= OliveTin n8n Integration
+
+The OliveTin n8n node is a community node for link:https://n8n.io[n8n] that lets you trigger OliveTin actions from your n8n workflows.
+
+* **npm package**: `n8n-nodes-olivetin`
+* **Repository**: link:https://github.com/OliveTin/OliveTin-n8n-node[OliveTin-n8n-node]
+
+== Installation
+
+Install the node in n8n via the Community nodes panel, or install the package in your n8n environment.
+
+[NOTE]
+====
+Detailed installation steps and usage documentation will be added here in a future update.
+====

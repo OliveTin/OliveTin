@@ -1,0 +1,15 @@
+actions:
+  - title: Unicode (emoji) alias icon
+    shell: echo "Hello!"
+    icon: smile
+
+  - title: Unicode (emoji) icon
+    shell: echo "Hello!"
+    icon: "&#128526;"
+
+  - title: Iconify Icon
+    icon: <iconify-icon icon="ant-design:bug-filled"></iconify-icon>
+
+  - title: HTML Image (jpg/png/gif/etc) icon
+    shell: echo "Hello!"
+    icon: '<img src = "custom-webui/icons/mrgreen.gif" style = "width: 1em;" />'

@@ -1,0 +1,5 @@
+= Exit code 127
+
+Exit code 127 on Linux typically means "command not found". This can be the
+case when you need to install command in a container image for example.
+

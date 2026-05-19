@@ -1,0 +1,19 @@
+[mermaid,png]
+.Flow of an inbound network request
+....
+%%{init: {'theme': 'neutral'}}%%
+graph LR
+	A[Your Browser] -->|HTTPS 443/tcp| Z
+	Z["Proxy"] -->|HTTP 80/tcp| C
+	C["Single HTTP frontend"]
+	H["Prometheus"]
+	B["gRPC API"]
+
+	subgraph "OliveTin service"
+	C -->|/api/| D[REST API] --> B
+	C -->|/| E[webui]
+    C -->|/metrics/| H
+	end
+....
+
+:proxy!:

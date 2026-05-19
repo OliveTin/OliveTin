@@ -1,0 +1,30 @@
+[#arg-datetime]
+= Input: DateTime
+
+OliveTin supports datetime pickers - note that these do NOT add your timezone, so it up to your scripts / commands to interpret which timezone is being used.
+
+[source,yaml]
+.`config.yaml`
+----
+actions:
+  - title: Print your favourite datetime!
+    shell: echo {{ my_favourite_time }}
+    arguments:
+      - type: datetime
+        title: My Favourite DateTime
+----
+
+image::arg-datetime.png[]
+
+== Format & Validation
+
+[NOTE]
+====
+The OliveTin server does try to parse and validate the date on the server side to prevent dangerous input, but there is no validation in the browser, beyond what your browser might do to prevent you from picking an invalid date. +
+
+**This is safe**, as what really matters is what the server allows to be passed to be executed - and that is checked.
+====
+
+At the time of writing, it is not yet possible to specify only a date, or only a time, or change the date / time format.
+
+include::partial$args/reject-null.adoc[]

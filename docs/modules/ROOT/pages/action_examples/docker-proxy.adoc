@@ -1,0 +1,40 @@
+[#action-container-proxy]
+= Using the Docker socket proxy
+
+The OliveTin container comes with the official docker CLI pre-installed, as well as the compose plugin. This is because OliveTin is very often used to start and stop containers.
+
+You can choose to directly bind-mount the docker control socket into OliveTin, or optionally use a docker socket proxy host if you feel you need more security. You can use a docker socket proxy as an additional security measure and as an alternative to mounting the docker socket directly. 
+
+Most people will want to add the docker socket proxy into the same compose file that they are running OliveTin from;
+
+[source,yaml]
+.docker-compose.yaml
+....
+services:
+  olivetin:
+    container_name: olivetin
+    image: jamesread/olivetin
+	...
+  socket-proxy:
+    image: lscr.io/linuxserver/socket-proxy:latest
+    container_name: socket-proxy
+    environment:
+      - ALLOW_START=1 #optional
+      - ALLOW_STOP=1 #optional
+	  ...
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+....
+
+You can find all the documentation for all the socket-proxy options here on the link:https://github.com/linuxserver/docker-socket-proxy[LinuxServer.io socket-proxy page].
+
+Assuming your docker socket proxy is running as `socket-proxy` running on port 1028;
+
+[source,yaml]
+.OliveTin config.yaml
+----
+actions:
+  - title: Stop container
+    shell: DOCKER_HOST=socket-proxy:1028 docker stop mycontainer
+----
+

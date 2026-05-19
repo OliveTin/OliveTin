@@ -1,0 +1,66 @@
+[#cloudflare-access-tunnels]
+= Cloudflare Access & Tunnels
+
+include::partial$earlydoc.adoc[]
+
+Several uses use Cloudflare Access & Tunnels to grant access to OliveTin. There is no special configuration needed for OliveTin to work in this way, simply setup your Cloudflare tunnel to connect to OliveTin on port 1337.
+
+== Trusting the Cloudflare JWT Token
+
+. Get your **AUD** Tag (`authJwtAud`)
+.. Login to your CloudFlare dashboard and go to link:https://one.dash.cloudflare.com/[**Zero Trust**]
+.. Go to **Access > Applications.**
+.. Select **Configure** for your application.
+.. On the Overview tab, copy the **Application Audience (AUD) Tag**.
+. Get your **Team Domain** (`authJwtDomain`)
+.. Login to your CloudFlare dashboard and go to link:https://one.dash.cloudflare.com/[**Zero Trust**]
+.. Go to **Settings**
+.. Go to **Custom Pages**
+.. Your **Team Domain** is shown here
+. Get your Certs URL (`authJwtCertsURL`)
+.. Simply add `cdn-cgi/access/certs` to your **Team Domain** for CloudFlare
+. CloudFlare gives you an `email` in the claim (`authJwtClaimUsername`) and the Cookie is always called `CF_Authorization` (`authJwtCookieName`)
+. Setup your OliveTin config.yaml like follows;
+
+[source,yaml]
+.`config.yaml`
+----
+authJwtAud: "asdf1234"
+authJwtDomain: "https://mydomain.cloudflareaccess.com"
+authJwtCertsURL: "https://mydomain.cloudflareaccess.com/cdn-cgi/access/certs"
+authJwtClaimUsername: email
+authJwtCookieName: "CF_Authorization"
+----
+
+You may well want to set `logLevel: DEBUG` and `insecureAllowDumpJwtClaims: true` in your config when testing JWT for the first time.
+
+== Trusting the authentication header (not recommended)
+
+If you are using Cloudflare Access, and want to use the username given by Cloudflare in OliveTin ACLs, then you can use the Cloudflare cookie like this;
+
+[source,yaml]
+.`config.yaml`
+----
+authHttpHeaderUsername: "Cf-Access-Authenticated-User-Email"
+
+defaultPermissions:
+    view: false
+    exec: false
+
+accessControlLists:
+    - name: Admins
+      addToEveryAction: true
+      matchUsernames:
+        - contact@jread.com
+      permissions:
+        view: true
+        exec: true
+
+actions:
+  - title: test apprise
+    shell: date
+    shellAfterCompleted: "apprise -c /config/apprise.yml -t 'notification: test' -b 'date is {{ stdout }}'"
+----
+
+NOTE: OliveTin does support JWT cookies that Cloudflare uses, which is arguably more secure. It's just that nobody in the Discord has worked out how to get the keys needed from Cloudflare to decrypt this cookie yet! See the xref::security/jwt.adoc[JWT] documentation for some starter points. If you figure this out, it would be most welcome to share your solution with the community.
+

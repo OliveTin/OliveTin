@@ -1,0 +1,25 @@
+[#install-targz]
+= .tar.gz Install (manual)
+
+Installing OliveTin from a .tar.gz file is considered advanced setup, and is provided for users who cannot use the .deb or .rpm packages, or who don't want to use the Linux container.
+
+== Manual setup (.tar.gz)
+
+. Copy the `OliveTin` binary to `/usr/local/bin/OliveTin`
+.. Make sure it is executable: `chmod +x /usr/local/bin/OliveTin`
+. Make a directory for the configuration files: `mkdir -p /etc/OliveTin`
+.. Copy the `config.yaml` file to `/etc/OliveTin/`
+. Copy the `webui` directory contents to `/var/www/olivetin/` (eg, `/var/www/olivetin/index.html`)
+. Copy the `OliveTin.service` file to `/etc/systemd/system/`
+. Files in the `var` directory are all considered optional.
+.. `var/entities/` contains some example entity files used by the default config.yaml. You can copy these to `/etc/OliveTin/entities/` if you want to use them.
+.. `var/helper-actions/` contains some helpers that are mostly useful for containers. These should be copied to somewhere on your path if you want to use them, such as `/usr/local/bin/`.
+.. `var/initscript/OliveTin` is provided for init-based systems. You can copy this to `/etc/init.d/OliveTin` and make it executable if you want to use it.
+.. `var/manpage/OliveTin.1.gz` contains the manpage for OliveTin. You can copy this to `/usr/share/man/man1/` if you want to use it.
+.. `var/marketing` contains some marketing materials used by the repository. You can probably ignore these unless you're writing a blog article or something.
+.. `var/openrc/OliveTin` is provided for OpenRC-based systems. You can copy this to `/etc/init.d/OliveTin` and make it executable if you want to use it.
+.. `var/tekton` is a directory that contains an experimental Tekton base image builder. You don't need this.
+
+include::partial$install/post_systemd.adoc[]
+
+

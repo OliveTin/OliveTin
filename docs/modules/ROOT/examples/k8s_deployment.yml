@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: 
+    name: olivetin
+spec: 
+  replicas: 1
+  selector: 
+    matchLabels:
+      app: olivetin
+  template:
+    metadata:
+      labels:
+        app: olivetin
+    spec:
+      containers: 
+        - name: olivetin
+          image: docker.io/jamesread/olivetin:latest
+          ports:
+            - containerPort: 1337
+          volumeMounts:
+            - name: olivetin-config
+              mountPath: "/config"
+              readOnly: true
+
+          livenessProbe:
+            exec:
+              command: 
+                - curl 
+                - localhost:1337
+            initialDelaySeconds: 5
+            periodSeconds: 30
+
+      volumes:
+        - name: olivetin-config
+          configMap: 
+            name: olivetin-config
+

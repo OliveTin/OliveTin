@@ -1,0 +1,26 @@
+# Local / CI Antora playbook: AsciiDoc component under docs/.
+# Must live at repository root so content.sources url "." resolves to this git repo.
+# The published site is built from github.com/OliveTin/docs.olivetin.app.
+---
+site:
+  title: OliveTin docs
+  start_page: ROOT::index.adoc
+content:
+  sources:
+    - url: .
+      branches: HEAD
+      start_path: docs
+ui:
+  bundle:
+    url: https://gitlab.com/antora/antora-ui-default/-/jobs/artifacts/HEAD/raw/build/ui-bundle.zip?job=bundle-stable
+    snapshot: true
+antora:
+  extensions:
+    - '@antora/lunr-extension'
+asciidoc:
+  attributes:
+    kroki-fetch-diagram: true
+    kroki-default-format: png
+  extensions:
+    - '@asciidoctor/tabs'
+    - 'asciidoctor-kroki'

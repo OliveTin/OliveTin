@@ -1,0 +1,42 @@
+= Installation guide
+
+== Preparation
+
+You will need approximately **10 minutes** to install OliveTin on almost every platform, with root/system administrator access in most cases.
+
+You probably will need about **10-20 minutes** to understand how OliveTin configuration works, and to be able to write your first action to make it do something useful.
+
+== Where to find help 
+
+include::partial$support.adoc[]
+
+== First step: where are you installing?
+
+* Linux
+** xref:install/container_vs_service.adoc[Containers or Service?]
+** Linux Service
+*** xref:install/linux_fedora.adoc[Fedora Linux]
+*** xref:install/linux_alpine.adoc[Alpine Linux]
+*** xref:install/linux_manjaro.adoc[Manjaro Linux]
+*** xref:install/linux_arch.adoc[Arch Linux]
+*** xref:install/linux_rpm.adoc[Generic .rpm based Linux]
+*** xref:install/linux_deb.adoc[Generic .deb based Linux]
+*** xref:install/targz.adoc[.tar.gz Install (manual)]
+** xref:install/container.adoc[Linux Container]
+*** xref:install/podmandocker.adoc[Docker or Podman]
+*** xref:install/docker_compose.adoc[Docker Compose]
+*** xref:install/helm.adoc[Kubernetes with Helm]
+*** xref:install/k8s.adoc[Kubernetes with Manifests]
+* xref:install/bsd.adoc[FreeBSD]
+* xref:install/windows.adoc[Windows]
+* xref:install/macos.adoc[MacOS]
+
+== What's Next?
+
+After installing OliveTin, follow these steps to get started:
+
+* xref:config.adoc[Learn about configuration] - Understand how OliveTin's configuration works
+* xref:action_execution/create_your_first.adoc[Create your first action] - Build a simple action to test your installation
+* xref:action_examples/intro.adoc[Explore action examples] - See what OliveTin can do with real-world examples
+* xref:solutions/intro.adoc[Check out solutions] - Find complete configurations for common use cases
+* xref:reverse-proxies/intro.adoc[Set up a reverse proxy] - Configure secure access through a reverse proxy

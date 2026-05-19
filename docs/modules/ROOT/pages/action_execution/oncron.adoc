@@ -1,0 +1,62 @@
+[#exec-cron]
+= Execute on schedule (cron)
+
+OliveTin can execute actions on a schedule, and uses a cron format for configuration.
+
+[source,yaml]
+.`config.yaml`
+----
+actions:
+  - title: Say hello
+    shell: echo "Hello!"
+    execOnCron:
+      - "@hourly"
+
+  - title: Say goodbye
+    shell: echo "Say Goodbye"
+    execOnCron:
+      - "*/5 * * * *" # Every 5 minutes
+----
+
+This is a fantastic website: https://cron.help/
+
+== Support for seconds in cron
+
+The default cron format for OliveTin supports the Unix/Linux format - 5 fields, with no support for seconds. This is by far the most popular format that most people are used to.
+
+If you need per-second resolution for your actions, this can be enabled in your config - meaning that your cronlines will support 6 columns. The first "new" column is seconds. For example, to execute `date` every 5 seconds;
+
+[source,yaml]
+.`config.yaml`
+----
+cronSupportForSeconds: true
+
+actions:
+  title: Execute every 5 seconds
+  shell: date
+  execOnCron:
+    - "*/5 * * * * *"
+----
+
+
+== Cron and ACLs
+
+If you have enabled ACL, cron tasks are run as the user `cron`, which means that your ACL needs to allow the cron user to execute the action. This is one possibilty:
+
+[source,yaml]
+.`config.yaml`
+----
+accessControlLists:
+  - name: "cron"
+    matchUsernames:
+      - cron
+    permissions:
+      exec: true
+actions:
+  - title: Say hello
+    shell: echo "Hello!"
+    execOnCron:
+      - "@hourly"
+    acls:
+        - "cron"
+----

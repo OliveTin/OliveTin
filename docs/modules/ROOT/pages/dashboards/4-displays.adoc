@@ -1,0 +1,63 @@
+[#displays]
+= Displays
+
+Displays are a way of displaying text, values, variables and similar on a dashboard.
+
+They are rendered as just a simple box, that shown alongside actions. You can add arbitary HTML to a display, which makes it useful for showing links, etc.
+
+image::dashboard-display.png[]
+
+[source,yaml]
+.`config.yaml`
+----
+dashboards:
+  # This the second dashboard.
+  - title: My Containers
+    contents:
+        # This is a fieldset, which is a way of dashboard items together actions together.
+      - title: Container {{ container.Names }}
+        entity: container
+        type: fieldset
+        contents:
+            # This is a display
+          - type: display
+            title: |
+              {{ container.Names }} <br /><br /><strong>{{ container.State }}</strong>
+
+            # These are the actions that we want on the dashboard.
+          - title: 'Start {{ container.Names }}'
+          - title: 'Stop {{ container.Names }}'
+----
+
+== CSS Classes
+
+You can also add CSS classes to the display, which can be useful for styling.
+
+[source,yaml]
+----
+dashboards:
+  - title: My Containers
+    contents:
+      - title: 'Container {{ container.Names.0 }} ({{ container.Image }})'
+        entity: container
+        type: fieldset
+        contents:
+          - type: display
+            cssClass: '{{ container.State }}'
+            title: |
+              {{ container.Status }} <br /><br /><strong>{{ container.State }}</strong>
+          - title: 'Start {{ container.Names.0 }}'
+          - title: 'Stop {{ container.Names.0 }}'
+          - title: 'Remove {{ container.Names.0 }}'
+----
+
+You can then use the following CSS to style the display;
+
+[source,css]
+----
+div.display.running {
+  color: green;
+}
+----
+
+

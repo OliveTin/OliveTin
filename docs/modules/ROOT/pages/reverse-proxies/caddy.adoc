@@ -1,0 +1,35 @@
+[#caddy-dns]
+= Caddy
+
+include::partial$reverse-proxies/diagram.adoc[]
+
+Caddy seems to work without any special configuration for websockets. If you see websocket disconnects, you may need to increase timeouts; see xref:troubleshooting/err-websocket-connection.adoc#reverse-proxies-will-close-websockets[Reverse proxies will close websockets]. A simple `Caddyfile` works like this;
+
+.Caddyfile
+[source,nginx]
+----
+http://olivetin.example.com {
+        reverse_proxy * http://localhost:1337
+}
+----
+
+
+[#caddy-path]
+== Custom paths
+
+.Caddyfile
+----
+....
+	handle {$GLOBAL_PORTAL_PATH}/olivetin* {
+			redir {$GLOBAL_PORTAL_PATH}/olivetin {$GLOBAL_PORTAL_PATH}/olivetin/
+			uri strip_prefix {$GLOBAL_PORTAL_PATH}/olivetin       
+			basicauth {              
+					{$GLOBAL_USER} HASH
+			}     
+			reverse_proxy * localhost:1337
+	}
+....
+----
+
+include::partial$reverse-proxies/external-rest.adoc[]
+

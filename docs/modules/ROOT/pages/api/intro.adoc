@@ -1,0 +1,27 @@
+[#api]
+
+= API Overview 
+This section of the documentation is intended for developers, and those who want to hack around with OliveTin and extend it. This page provides a few pointers to get started. 
+
+**Short version**: 
+
+* http://olivetinServer:1337/api on your OliveTin server to get the REST API. 
+* link:http://docs.olivetin.app/api/swagger/[Swagger] documents the API.
+
+**Longer version**: The OliveTin API is formally defined using the Protobuf IDL, which generates gRPC stubs, as well as a REST Gateway. 
+
+The REST API gateway is used by the WebUI, and you can use it too by default - it is exposed at "/api" by default.
+
+The gRPC API only listens on localhost default, but it can be set to listen publicly. See xref:reference/network-ports.adoc[the network ports documentation] for a better description of how the APIs are exposed. Most people do not need to use the gRPC API. 
+
+== Links
+
+* link:http://docs.olivetin.app/api/swagger/[OliveTin 2k API: Swagger UI]
+* link:http://docs.olivetin.app/api/swagger/OliveTin.openapi.json[OliveTin 2k API: OpenAPI JSON Definition]
+* link:http://docs.olivetin.app/api/swagger/3k/[OliveTin 3k API: Swagger UI]
+* link:http://docs.olivetin.app/api/swagger/3k/OliveTin.openapi.json[OliveTin 3k API: OpenAPI JSON Definition]
+* link:https://github.com/OliveTin/OliveTin/blob/main/proto/olivetin/api/v1/olivetin.proto[The OliveTin Protobuf file]. 
+
+Please do talk to the developers on Discord if you'd like help using the API, or you're thinking about building something interesting using the API!
+
+

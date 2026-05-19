@@ -1,0 +1,34 @@
+[#output-views]
+= Most recent action output
+
+This is considered an advanced and experimental feature at the moment.
+
+The `stdout-most-recent-execution` view is a way to display the most recent output of an action on a dashboard. This is useful for actions that are run on a schedule, or actions that are run on startup. This is a picture of what it looks like:
+
+image::mre.png[]
+
+To set this up, here is the configuration you need to add to your `config.yaml` file;
+
+[source,yaml]
+----
+actions:
+  - title: Get status
+    id: status_command
+    shell: date
+    execOnStartup: true
+    execOnCron:
+      - "*/1 * * * *"
+
+dashboards:
+  - title: Control Panel
+    contents:
+      - title: Status
+        type: fieldset
+        contents:
+          - type: stdout-most-recent-execution
+            title: status_command
+----
+
+Note that the output only refreshes with the browser, not when the button is clicked. 
+
+As this is an experimental feature, please look at options for xref:troubleshooting/wheretofindhelp.adoc[support] if you need help getting it to work.

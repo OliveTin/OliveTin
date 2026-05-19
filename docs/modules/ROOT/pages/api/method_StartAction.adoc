@@ -1,0 +1,35 @@
+= API Method: StartAction
+
+This is the method the OliveTin web UI uses to start actions, and is probably the best method to use if you are writing scripts.
+
+* **HTTP Method**: `POST`
+* **Request Type**: OliveTin request object
+* **Response Type**: Execution Tracking ID
+
+There are several variants of this API call available which might be easier for scripts (or humans) to work with:
+
+include::partial$api/start_action_methods.adoc[]
+
+== Example API call: Start an action using `StartAction`
+
+[source,bash]
+.curl
+----
+user@host: curl "http://olivetin.webapps.teratan.lan/api/StartAction" --json '{"bindingId": "nuclear_reactor_shutdown"}'
+----
+
+[source,powershell]
+.Powershell
+----
+PS C:\Users\xcons> $json = '{"bindingId": "deploy_attack_gnomes"}'
+PS C:\Users\xcons> Invoke-RestMethod -Method "Post" -Uri "http://olivetinServer:1337/api/StartAction" -Body $json 
+----
+
+== Example API call: Start an action using `StartAction` with arguments
+
+[source,bash]
+.curl
+----
+user:host: curl 'http://olivetin.example.com/api/StartAction' --json '{"bindingId": "Ping_host", "arguments": [{"name": "host", "value": "example.com"},{"name": "count", "value": "1"}]}'
+----
+

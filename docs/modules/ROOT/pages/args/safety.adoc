@@ -1,0 +1,12 @@
+= Important Safety Warning
+
+Before you continue, it's important to read through this safety warning. 
+
+OliveTin supports customization of command line arguments, but there is a element of risk. For example, if your command is `echo {{ message }}`, and you allow your users to set `{{ message }}` to the value `"" && rm -rf /` , then you've got real problems. For this reason, OliveTin tries to give you useful ways to restrict what users are allowed to enter - with **argument types**. 
+
+However, here are some important rules to try and follow with argument types;
+
+* Use the most restrictive argument types when possible - `ascii` and `int`. This will stop users entering argument values that might be used dangerously, but it's not foolproof. For example, if you have a command like `createSnapshot.sh --count {{ snapshotCount }}`, and set `snapshotCount` to `int`, then at least users will only be able to enter integer numbers. However, nothing stops them entering crazy values like 9999. 
+* Don't give access to actions with arguments to people you don't trust. Please don't ever put your OliveTin install on the public internet! 
+
+

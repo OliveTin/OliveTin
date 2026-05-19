@@ -1,0 +1,13 @@
+
+[%header, cols="1,4"]
+|===
+| Installation type | Difficulty to do this
+| Running as a **Systemd service** | {systemd}
+| Running in a **container**   | {container}
+|===
+
+== Example config.yaml 
+
+// Unset variables 
+:container!:
+:systemd!:

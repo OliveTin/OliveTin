@@ -50,6 +50,27 @@ async function reconnectWebsocket () {
   }, RECONNECT_DELAY_MS)
 }
 
+async function refreshInitAfterConfigChange () {
+  if (!window.client) {
+    return
+  }
+
+  try {
+    window.initResponse = await window.client.init({})
+
+    if (typeof window.updateHeaderFromInit === 'function') {
+      window.updateHeaderFromInit()
+    }
+  } catch (err) {
+    console.error('Failed to refresh config from server after EventConfigChanged:', err)
+  }
+}
+
+async function handleConfigChangedEvent (j) {
+  await refreshInitAfterConfigChange()
+  window.dispatchEvent(j)
+}
+
 function handleEvent (msg) {
   const typeName = msg.event.value.$typeName.replace('olivetin.api.v1.', '')
 
@@ -57,8 +78,12 @@ function handleEvent (msg) {
   j.payload = msg.event.value
 
   switch (typeName) {
-    case 'EventOutputChunk':
     case 'EventConfigChanged':
+      handleConfigChangedEvent(j).catch((err) => {
+        console.error('EventConfigChanged handler failed:', err)
+      })
+      break
+    case 'EventOutputChunk':
     case 'EventEntityChanged':
       window.dispatchEvent(j)
       break

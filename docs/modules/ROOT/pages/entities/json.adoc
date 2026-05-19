@@ -1,0 +1,12 @@
+[#entities-json]
+= JSON entity files
+
+JSON files are parsed as if each line is a single JSON object. This can be super helpful for getting a list of containers, for example; `docker ps -a --format=json > /etc/OliveTin/containers.json`.
+
+[source,json]
+.`/etc/OliveTin/containers.json`
+----
+{"Command":"\"/opt/entrypoint.sh\"","CreatedAt":"2024-02-08 15:27:42 +0000 GMT","ID":"4bafe6f9f956","Image":"fedora","Labels":"?","LocalVolumes":"0","Mounts":"","Names":"media-indexing-container","Networks":"bridge","Ports":"","RunningFor":"13 days ago","Size":"0B","State":"exited","Status":"Exited (128) 13 days ago"}
+{"Command":"\"/opt/entrypoint.sh\"","CreatedAt":"2023-12-17 20:58:03 +0000 GMT","ID":"d25f37c49c35","Image":"fedora","Labels":"?","LocalVolumes":"0","Mounts":"","Names":"media-playback-container","Networks":"bridge","Ports":"","RunningFor":"27 days ago","Size":"0B","State":"exited","Status":"Exited (137) 27 days ago"}
+----
+

@@ -1,0 +1,23 @@
+[#args]
+= Introduction to Arguments
+
+Actions and commands that OliveTin runs, without arguments, are generally quite safe - only that command can be run, without modifications. However, many users need the flexibility to set options on that command - normally called command line arguments. In OliveTin, arguments are defined in a shell commands like `echo {{ message }}`, with a bit of extra configuration.
+
+Examples of valid argument names are `{{ personName }}`, `{{ customer_number }}` and `{{ ISBN11_code }}`. 
+
+* a-z (case insensitive)
+* _ is allowed
+* numbers are allowed (argument names can also start with numbers)
+* all other characters are invalid for argument names.
+
+== What's Next?
+
+Now that you understand how arguments work, explore the different argument types and features:
+
+* xref:args/types.adoc[Argument types] - Learn about different input types (text, dropdown, checkbox, etc.)
+* xref:args/safety.adoc[Argument safety] - Understand how OliveTin keeps arguments safe
+* xref:args/suggestions.adoc[Argument suggestions] - Add dynamic suggestions to help users
+* xref:args/regex.adoc[Input validation with regex] - Validate user input with regular expressions
+* xref:args/env.adoc[Environment variables] - Use arguments to set environment variables
+* xref:action_examples/intro.adoc[See examples] - View real-world examples using arguments
+

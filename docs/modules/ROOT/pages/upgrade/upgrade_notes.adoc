@@ -1,0 +1,67 @@
+[#upgrade-notes]
+= Upgrade Notes
+
+OliveTin releases are published to GitHub, and the release notes are contained there. This page includes a summary of "Upgrade Notes" for breaking changes between releases.
+
+== 2024.08.14
+
+=== Navigation change - Subpaths no longer supported
+
+In the past, OliveTin supported subpaths in the URL, for example, `http://yourServer:1337/olivetin/` would load the OliveTin web interface. This was convenient for people who wanted to run OliveTin on a subpath of their domain for some reason, but it actually creates a lot of complexity in the code, and makes it harder to maintain. One particular change that was wanted was to be able to link to specific pages in OliveTin, for example, `http://yourServer:1337/logs` or `http://yourServer:1337/myDashboard/myFolder` - this became incredibly difficult to implement with the subpath support.
+
+Therefore, OliveTin no longer supports subpaths in the URL. If you have been using OliveTin with a subpath, you will need to change your configuration to use a subdomain or a different port.
+
+== 2024.04.09
+
+=== Themes Directory (for theme users)
+
+==== Background
+
+Until now, OliveTin has served the themes directory from the "webui" directory, normally `/var/www/olivetin/themes` on most installations. If you wanted to install a theme, you would put the theme in to that directory.
+
+This was a bit cumbersome, because OliveTin treats the content of the "webui" directory as disposable / part of the system, whereas themes are much more like "user data" and "configuration". It also meant that people using Linux Containers had to bind-mount a separate directory for themes.
+
+==== Upgrade
+
+Now themes are stored in the "configdir" (wherever OliveTin finds it's config file, eg `/config` in containers), under the subdirectory `custom-webui/themes`. OliveTin will try to create the `custom-webui` folder in your configdir if it doesn't find it.
+
+The advantage of this change is that themes are stored with your config, as part of your data. 
+
+To upgrade, simply move any themes you might have into your configdir, under `custom-webui/themes/`. eg:
+
+[source,yaml]
+----
+.
+├── config.yaml
+├── custom-webui
+│   └── themes
+│       └── custom-icons
+│           ├── icon.png
+│           └── theme.css
+├── entities
+│   ├── containers.json
+│   ├── heating.yaml
+│   ├── servers2.yml
+│   ├── servers.yaml
+│   └── systemd_units.json
+└── installation-id.txt
+----
+
+=== Theme Asset Paths (for theme developers)
+
+==== Background
+
+OliveTin had to send the theme name to the browser, so that some javascript could then request `http://yourServer:1337/themes/myTheme/theme.css`, and load it as a stylesheet. This had the following problems;
+
+. This was slow (could take up to a second)
+. This creates a "flash" in the browser, as the new theme.css is loaded over the top of the existing stylesheet.
+. Browsers could not cache this theme.css with the page load.
+
+==== Upgrade
+
+The new behavior is that OliveTin will always try to load `http://yourServer:1337/theme.css` as part of the static HTML that is sent to the browser. This means that regular caching can cache the theme.css, and this effectively elliminates the slowness and "flashing" when the browser renders the page.
+
+Internally, OliveTin maps `http://yourServer:1337/theme.css` to the `theme.css` of whatever the theme is set to with `themeName`, for example, it could map to `themes/myTheme/theme.css`.
+
+As a theme developer, normally you would reference a background image, or similar using `./background.png`, but OliveTin is loading the theme.css as the directory root, and the themes' assets from the custom-webui theme directory. Therefore you need to update paths to be like; `background-image: "/custom-webui/themes/myTheme/background.png`.
+

@@ -1,0 +1,30 @@
+[#haproxy-dns]
+= HAProxy
+
+:proxy: HAProxy
+include::partial$reverse-proxies/diagram.adoc[]
+
+This is a straightforward example of how to setup a DNS name based HAProxy setup for OliveTin.
+
+./etc/haproxy/haproxy.conf
+[source,python]
+----
+frontend cleartext_frontend
+    bind 0.0.0.0:80
+
+    option httplog
+
+    use_backend be_olivetin_webs if { hdr(Host) -i olivetin.example.com && path_beg /websocket }
+    use_backend be_olivetin_http if { hdr(Host) -i olivetin.example.com }
+
+backend be_olivetin_http
+    server olivetinServer 127.0.0.1:1337 check
+
+backend be_olivetin_webs
+    timeout tunnel 1h
+    option http-server-close
+    server olivetinServer 127.0.0.1:1337
+----
+
+The `timeout tunnel 1h` is important: without it, HAProxy's default timeouts will close long-lived websocket connections. See xref:troubleshooting/err-websocket-connection.adoc#reverse-proxies-will-close-websockets[Reverse proxies will close websockets] if you see disconnects.
+

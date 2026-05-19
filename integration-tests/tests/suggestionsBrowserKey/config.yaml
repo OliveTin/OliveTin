@@ -13,8 +13,10 @@ actions:
       - name: testInput
         title: Test Input
         description: "This input uses suggestionsBrowserKey"
+        type: ascii_sentence
         suggestionsBrowserKey: test-suggestions-key
       - name: testInput2
         title: Test Input 2
         description: "This input shares the same suggestionsBrowserKey"
+        type: ascii_sentence
         suggestionsBrowserKey: test-suggestions-key

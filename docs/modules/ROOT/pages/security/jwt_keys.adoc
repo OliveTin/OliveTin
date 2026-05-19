@@ -1,0 +1,51 @@
+[#jwt-keys]
+= JWT with Keys
+
+include::partial$earlydoc.adoc[]
+
+== Using Public Keys via JWKS
+
+OliveTin Supports **JSON Web Key Sets (JWKS)**. This approach is often used with services like CloudFlare.
+
+[source,yaml]
+.`config.yaml`
+----
+authJwtAud: "asdf1234"
+authJwtCertsURL: "https://mydomain.cloudflareaccess.com/cdn-cgi/access/certs"
+authJwtClaimUsername: email
+authJwtCookieName: "CF_Authorization"
+----
+
+You may well want to set `logLevel: DEBUG` and `insecureAllowDumpJwtClaims: true` in your config when testing JWT for the first time.
+
+== Using with Teleport/Headers
+
+If you are using Teleport, you can use the `authJwtCertsURL` to point to the Teleport JWKS.
+
+Teleport can only https://goteleport.com/docs/enroll-resources/application-access/jwt/introduction/#inject-jwt[inject the JWT into a header], so you will need to set `authJwtHeader` to the header name that you have configured Teleport to use, e.g., `Authorization`.
+
+
+[source,yaml]
+.`config.yaml`
+----
+authJwtCertsURL: "https://teleport.mydomain/.well-known/jwks.json"
+authJwtHeader: Authorization
+----
+
+Replace teleport.mydomain with the domain of your Teleport instance.
+
+== Using Public Keys on Disk
+
+This approach can be useful if your Authentication service does not support JWKS, or if you don't want to use it. Public Keys should be available on disk in a file - which can have any filename or extension you like. The files need to be RSA keys in PEM format to be used by OliveTin, though. P12 is not supported.
+[source,yaml]
+.`config.yaml`
+----
+authJwtAud: "asdf1234"
+authJwtPubKeyPath: "/opt/mykey.crt"
+authJwtClaimUsername: email
+authJwtCookieName: "CF_Authorization"
+----
+
+== See Also
+
+* xref:solutions/cloudflare_access_tunnel/index.adoc[Cloudflare Access & Tunnels Solution]

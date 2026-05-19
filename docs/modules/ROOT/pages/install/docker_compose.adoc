@@ -1,0 +1,97 @@
+[#install-compose]
+= Docker Compose install
+
+Docker compose is a popular way to define multi-container applications using a 
+infrastructure as code approach. 
+
+If you personally prefer to use `docker compose`, then here is a sample to get
+you started;
+
+[source,yaml]
+.`docker-compose.yml`
+----
+services:
+  olivetin:
+    container_name: olivetin
+    image: jamesread/olivetin
+    volumes:
+      - OliveTin-config:/config # replace host path or volume as needed
+    ports: 
+      - "1337:1337"
+    restart: unless-stopped
+
+
+volumes:
+  OliveTin-config:
+    external: false
+----
+
+include::partial$install/post_container.adoc[]
+
+[#compose-docker-socket]
+== Controlling other docker containers from a Docker Compose install of OliveTin
+
+If you want OliveTin running in a container to control other Docker containers, pass the Docker socket into the service and give the container process membership in the same numeric `docker` group that owns the socket on the host.
+
+On many Linux installs, Docker Engine creates a `docker` group automatically; see https://docs.docker.com/engine/install/linux-postinstall/#manage-docker-as-a-non-root-user[Manage Docker as a non-root user] in the Docker documentation.
+
+=== Find the `docker` group GID on the host
+
+On the Docker host, read the `docker` group numeric ID (third field of the output):
+
+[source,bash]
+----
+getent group docker
+----
+
+If that command prints nothing, create the group or finish Docker post-install steps first, then retry.
+
+=== Add the socket mount and `group_add` in Compose
+
+In `docker-compose.yml`, bind-mount the socket and add `group_add` with that GID (as a string is fine). Replace the example GID with the value from your host:
+
+[source,yaml]
+.`docker-compose.yml` including Docker socket access without running as root
+----
+services:
+  olivetin:
+    container_name: olivetin
+    image: jamesread/olivetin
+    volumes:
+      - /docker/OliveTin:/config # replace host path or volume as needed
+      - /var/run/docker.sock:/var/run/docker.sock
+    group_add:
+      - "992" # <1>
+----
+<1> Replace `992` with the GID from `getent group docker` on the machine where Compose runs. The number is not portable between hosts.
+
+This keeps the default container user while allowing access to `/var/run/docker.sock`, which is usually tighter than running the whole service as `root`.
+
+See xref:action_examples/containers.adoc[containers] for `docker run`, `--privileged`, and other options if you cannot use a `docker` group on the host.
+
+== Running the OliveTin container as a different user in Compose
+
+If you need the service to run as a specific Unix user in Compose for reasons other than Docker socket access, set `user` explicitly, for example:
+
+[source,yaml]
+----
+services:
+  olivetin:
+    container_name: olivetin
+    image: jamesread/olivetin
+    user: "1000:1000"
+    ...
+----
+
+For Docker socket access from Compose, prefer <<compose-docker-socket,`group_add` with the host `docker` group GID>> instead of `user: root`.
+
+
+NOTE: xref:troubleshooting/puid-pgid.adoc[PUID and PGID are not used] by the official OliveTin container image.
+
+[#docker-compose-traefik]
+== Using Traefik with Docker Compose 
+
+Traefik is a popular reverse proxy that seems to be used a lot in people's
+Docker compose setups. See the xref:reverse-proxies/traefik.adoc[Traefik + Docker Compose] page for more details.
+
+

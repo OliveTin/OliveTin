@@ -1,0 +1,12 @@
+= API Method: StartActionAndWait
+
+This method is useful is you are writing a script, and want to wait for the action to finish so that you can check the result, or get the output.
+
+* **HTTP Method**: `POST`
+* **Request Type**: OliveTin request object
+* **Response Type**: Log Entry (waits for the action to finish)
+
+There are several variants of this API call available which might be easier for scripts (or humans) to work with:
+
+
+include::partial$api/start_action_methods.adoc[]

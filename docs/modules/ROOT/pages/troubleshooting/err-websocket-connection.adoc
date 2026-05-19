@@ -1,0 +1,14 @@
+[#err-websocket-connection]
+= Error Connecting to WebSocket
+
+If OliveTin was working, but this error popped up, it's most likely because your reverse proxy closed the connection due to a timeout.
+
+If OliveTin is always displaying this error, it's probably your reverse proxy not handling the websocket properly. Please check the Reverse Proxy documentation for more information.
+
+== Reverse proxies will close websockets
+
+Many reverse proxies use short default timeouts for connections. Long-lived websocket connections often hit these limits and get closed by the proxy, which triggers this error. OliveTin will attempt to reconnect automatically, but you can avoid the disconnects by increasing the websocket (or proxy) timeout in your reverse proxy configuration.
+
+Check your proxy's documentation for how to raise timeouts—for example, Apache HTTPD uses `ProxyTimeout`, and other proxies have similar settings. See the individual reverse proxy pages (e.g. xref:reverse-proxies/apache.adoc[Apache]) for examples.
+
+

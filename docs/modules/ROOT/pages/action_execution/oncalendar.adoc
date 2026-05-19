@@ -1,0 +1,48 @@
+[#exec-on-calendar]
+= Execute on calendar file
+
+NOTE: The feature is currently experimental. 
+
+Sometimes you want to schedule an action to run at a specific date and time, like at 2024-02-07 at 15:30. This is technically called "an instant", and OliveTin can watch a file that contains a list of instants for new additions. 
+
+[source,yaml]
+.`start-server-calendar.yaml`
+----
+- 2024-03-08T20:11:45+00:00
+- 2024-03-08T20:12:30+00:00
+----
+
+OliveTin will watch this file, and also load it on startup. If an instant is seen that is in the past, it is just ignored. If it is in the future then it is scheduled.
+
+This is how you setup an action to use the calendar file:
+
+[source,yaml]
+.`config.yaml`
+----
+actions: 
+  - title: start server
+    shell: echo "Starting Server!"
+    execOnCalendarFile: start-server-calendar.yaml
+----
+
+You will often want an easy way to schedule actions from the web interface as well, you can do this by creating a separate schedule action that adds an instant to the calendar file.
+
+You can use an argument with `type: datetime` to create a date selector in the web interface, to easily select dates to be added to the calendar file. You will have to add  hardcoded timezone to suit your needs, you can see below that "+00:00" is being added to "{{ when }}" to create an instant in the UTC timezone.
+
+[source,yaml]
+.`config.yaml`
+----
+actions:
+  - title: Schedule server
+    shell: echo '- {{ when }}+00:00' >> start-server-calendar.yaml
+    arguments:
+      - name: when
+        title: When?
+        type: datetime
+
+  - title: start server
+    shell: echo "Starting Server!"
+    execOnCalendarFile: start-server-calendar.yaml
+----
+
+

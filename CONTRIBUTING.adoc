@@ -58,6 +58,7 @@ make
 The project layout is reasonably straightforward;
 
 * See the `Makefile` for common targets. This project was originally created on top of Fedora, but it should be usable on Debian/your faveourite distro with minor changes (if any).
+* End-user documentation (AsciiDoc for link:https://docs.olivetin.app[docs.olivetin.app]) lives in `docs/` as an Antora component; the published site is built from the separate link:https://github.com/OliveTin/docs.olivetin.app[docs.olivetin.app] repository.
 * The API is defined in protobuf+Connect RPC - you will need to `make proto`.
 * The Go daemon is built from the `cmd` and `internal` directories mostly.
 * The webui is just a single page application with a bit of Javascript in the `webui` directory. This can happily be hosted on another webserver.

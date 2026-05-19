@@ -1,0 +1,65 @@
+= Windows Service install
+
+This option is to install OliveTin as a Windows service, which allows it to run in the background and start automatically when the system boots up. This is useful for servers or systems that need to run OliveTin without user intervention. If you want to run OliveTin as a regular application, you can follow the xref:install/windows.adoc[Windows install] instructions instead.
+
+== Download and extract;
+
+[NOTE]
+There is no .msi installer for OliveTin yet, so you will need to download the .zip file and extract it in the desired location.
+
+You can download the latest version of OliveTin here: link:https://github.com/OliveTin/OliveTin/releases/latest/download/OliveTin-windows-amd64.zip[`OliveTin-windows-amd64.zip`]
+
+* Create c:/Program Files/OliveTin/
+** Copy **OliveTin.exe** into this directory.
+** Copy the **webui** directory into this directory.
+
+* Create c:/ProgramData/OliveTin/
+** Copy the **config.yaml** file into this directory.
+
+== Test OliveTin startup
+
+Open a command prompt and make suer you are in the c:/Program Files/OliveTin/ directory, then run:
+
+[shell]
+----
+./OliveTin.exe
+----
+
+If everything is set up correctly, you should see the OliveTin service starting up and listening on port 1337.
+
+== Switch startup mode to a Windows service
+
+Windows services require executables to run a "service host" thread, which is not started by default for OliveTin on windows. To run OliveTin as a service, you will need to set this in your configuration file;
+
+include::partial$config-start.adoc[]
+----
+serviceHostMode: "winsvc-standard"
+
+logLevel: info
+
+actions: 
+  ...
+----
+
+== Register the service
+
+Open a command prompt as Administrator and run the following command;
+
+[WARN]
+Make sure to run `sc.exe` and not just `sc`, as the latter is a PowerShell alias for `Set-Content` and does not display any output, which can be very confusing.
+
+[shell]
+----
+sc.exe create OliveTin binPath= "C:\Program Files\OliveTin\OliveTin.exe" start= auto
+----
+
+== Start the service
+
+Start the service from the Microsoft Management Console (MMC) or by running the following command;
+
+[shell]
+----
+sc.exe start OliveTin
+----
+
+include::partial$install/post_generic.adoc[]

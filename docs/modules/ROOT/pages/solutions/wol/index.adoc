@@ -1,0 +1,54 @@
+[#wol]
+= Wake On LAN from a container
+
+This is a simple solution that provides wake on lan capabilities from inside a container. It uses the simple `ether-wake` command to send the magic packet. This can be incredibly helpful if you just need a simple button to click to wake up a machine on your network.
+
+Docker containers will normally use a docker network, which is a separate network from the host network. This means that the container will not be able to send the magic packet to the host network. Therefore, we need to create the container with the `--network host` option, which will allow the container to send the magic packet to the host network (not the docker network).
+
+
+The container is also created with the `--user root` option, which allows the container to send the magic packet as root. This is necessary because the `ether-wake` command requires root privileges to send the magic packet, and also to install the `ether-wake` command, which is bundled with `net-tools` in the container.
+
+Create the container as follows;
+
+```bash
+user@host: docker create -u root --network=host --name olivetin_wol -v /etc/OliveTin/:/config ghcr.io/olivetin/olivetin:latest
+```
+
+Create your OliveTin `config.yaml` file in the `/etc/OliveTin/` directory on the host, with the following content;
+
+[source,yaml]
+----
+include::example$solutions/wol/config.yaml[]
+----
+
+Obviously adjust the config file with your own MAC addressses, creating new actions to send WOL commands as needed.
+
+Then start the container with the following command;
+
+```
+docker start olivetin_wol
+```
+
+Then visit your OliveTin web interface at http://yourServer:1337 and you should see something that looks like this; 
+
+image::solutions/wol/preview.png[]
+
+== Wake on LAN via docker container
+
+This is an alternative solution that provides WoL capabilities to the OliveTin container,
+
+but has the advantage the OliveTin container does not have to run on the host network ( `--network host` ).
+This may be useful if your networking configuration relies on docker `bridge`
+networks (or other more complex networking configurations).
+
+It requires that OliveTin is configured with permissions that allow it to control docker. 
+
+include::partial$container_socket.adoc[]
+
+Now you can add actions to your OliveTin config file that use a separate
+docker container (on the `host` network) to send the WOL commands.
+
+[source,yaml]
+----
+include::example$solutions/wol/config_docker.yaml[]
+----

@@ -1,0 +1,32 @@
+[#concurrency]
+= Concurrency
+
+By default, OliveTin will allow you to run several instances of an action at the same time. For example, an action might take 20 seconds, and if you click the button 3 times, for a time there will be 3 actions running at the same time.
+
+Sometimes you don't want to allow this - an example case where it would not make sense is in the case of a backup script. To stop this, we can set `maxConcurrent` to `1`. 
+
+[source,yaml]
+----
+actions:
+  - title: Run Backup Script
+    icon: backup
+    shell: /opt/backupScript.sh
+    maxConcurrent: 1
+----
+
+If you try and run a 2nd instance of this action while the first is currently running, you'll get a "blocked" message that looks like this;
+
+image::../blocked.png[]
+
+Additionally, OliveTin will log a message that looks like this;
+
+[source,log]
+.OliveTin log showing an action being blocked rom running.
+----
+INFO Action requested                              actionTitle="Run backup script"
+WARN Blocked from executing. This would mean this action is running 2 times concurrently, but this action has maxExecutions set to 1.  actionTitle="Run backup script"
+----
+
+Naturally, you can set `maxConcurrent` to `3` or some other number, to limit the amount of times the action executes at once.
+
+

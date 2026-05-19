@@ -1,0 +1,118 @@
+[#service-logs]
+= Service logs (OliveTin process troubleshooting)
+:experimental:
+
+**Service logs** are the lines OliveTin prints while it runs—startup messages, configuration load, errors, and action output. They are separate from xref:troubleshooting/browser-console-logs.adoc[browser console logs], which come from the WebUI in your browser.
+
+When something fails on the server (OliveTin will not start, actions error, API or auth problems), sharing **recent service log output** helps others see what the process reported. You do **not** need to be a Linux expert to copy logs from Docker, Podman, or `journalctl`.
+
+TIP: Before posting publicly, scan the log text for passwords, API tokens, cookies, or internal hostnames. Remove or replace those strings if needed. If you enable xref:troubleshooting/log-debug-options.adoc[extra debug logging], output can be more sensitive than usual.
+
+[#where-logs-go]
+== Where logs come from
+
+How you read logs depends on how OliveTin is installed:
+
+* **Container (Docker / Podman):** logs are what the container runtime captured from OliveTin’s standard output.
+* **systemd service:** logs are stored by the system journal for the `OliveTin` unit.
+* **Manual / binary** (for example `./OliveTin` in a terminal): messages print to that terminal—copy them from there, or redirect output to a file when testing.
+
+[#manual-binary]
+== Manual or binary run
+
+If you start OliveTin directly in a terminal window, **scroll back** and copy the text from startup through the error, or run it again and capture output:
+
+[source,shell]
+----
+./OliveTin 2>&1 | tee olivetin-run.log
+----
+
+That writes everything to `olivetin-run.log` while still showing it on screen. Stop OliveTin before sharing, then attach or paste the relevant part of the file.
+
+[#docker-and-podman]
+== Docker and Podman
+
+Use the **same container name** you chose when you created the container (examples below use `olivetin`; yours may differ).
+
+.Show recent log lines (last ~200 lines)
+[source,shell]
+----
+docker logs --tail 200 olivetin
+----
+
+With Podman, use the same pattern:
+
+[source,shell]
+----
+podman logs --tail 200 olivetin
+----
+
+If OliveTin **crashes on startup** or you need the **full story from a restart**, show logs **after** reproducing the problem—either capture enough lines, or use a time window.
+
+.Limit output to the last few minutes (adjust the time as needed)
+[source,shell]
+----
+docker logs --since 10m olivetin
+----
+
+To **watch** logs live while you trigger an issue in another window:
+
+[source,shell]
+----
+docker logs -f olivetin
+----
+
+Press kbd:[Ctrl+C] to stop following; that does not stop OliveTin.
+
+[#docker-compose]
+== Docker Compose
+
+From the directory that contains your `compose.yaml` (or `docker-compose.yml`):
+
+[source,shell]
+----
+docker compose logs --tail 200 olivetin
+----
+
+Use the **service name** from the compose file, not necessarily the container name. Add `-f` to follow logs live, same idea as above.
+
+[#systemd]
+== systemd (native Linux package)
+
+Show whether the service is running and recent status:
+
+[source,shell]
+----
+systemctl status OliveTin
+----
+
+Read the journal for the OliveTin unit (scroll with arrow keys, quit with kbd:[q]):
+
+[source,shell]
+----
+journalctl -eu OliveTin
+----
+
+For a **time-bounded** slice (for example after a restart or failed action):
+
+[source,shell]
+----
+journalctl -eu OliveTin --since "30 minutes ago"
+----
+
+[#what-to-capture]
+== What to capture
+
+. Reproduce the problem if you can (restart OliveTin, click the action, etc.), then collect logs **immediately after**.
+. Include lines from **startup** through the **error**—not only the last one line.
+. If the log is huge, prefer `--since` / `--tail` so the excerpt stays readable.
+. Note your **install type** (Docker, Podman, Compose, systemd) and OliveTin **version** if you know it (from the WebUI footer, xref:troubleshooting/server-diagnostics.adoc[server diagnostics], or startup text).
+
+For deeper server-side detail, you can temporarily enable xref:troubleshooting/log-debug-options.adoc[LogDebugOptions]—then capture logs again with those settings in mind.
+
+[#share-the-logs]
+== Share the logs
+
+Paste the text into a xref:troubleshooting/wheretofindhelp.adoc[Discord or GitHub support] message (or attach a `.txt` file if it is long). Together with **how you run OliveTin** (direct port, reverse proxy, container flags) and **what you did** before the error, service logs make backend issues much easier to diagnose than a screenshot of the WebUI alone.
+
+For WebUI-only behaviour (blank page, buttons not loading), also capture xref:troubleshooting/browser-console-logs.adoc[browser console logs] when relevant.

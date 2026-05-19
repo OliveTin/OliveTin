@@ -1,0 +1,159 @@
+[#action-ssh]
+= SSH (manual setup)
+
+include::partial$action_examples/ssh_intro.adoc[]
+
+NOTE: There is an easy method of setting up SSH with OliveTin, which is described in the <<action-ssh-easy,SSH (easy setup)>> section. This section is for those who want to set up SSH manually.
+
+:systemd: Easy
+:container: Needs some setting up - see the <<ssh-container,SSH Container setup instructions>>
+include::partial$action_examples/actionHeader.adoc[]
+
+.OliveTin `config.yaml`
+[source,yaml]
+....
+actions:
+    # This will SSH into a server an run the command 'service httpd restart'
+   - title: Restart httpd on Server 1
+     shell: ssh root@server-with-olivetin 'service httpd restart'
+     icon: ping
+     timeout: 5
+....
+
+*Note about SSH keys*: You should make sure that the user that OliveTin is running as has access to a SSH key. This applies to container images as well. The setup instructions below briefly explain how to generate a SSH key and make it accessible to OliveTin which is running inside a container.
+
+[#ssh-container]
+ SSH from inside a Container - setup instructions
+
+This is a two step process;
+
+* [red]#<<ssh-step-1,Step 1>># Give OliveTin a SSH key
+* [red]#<<ssh-step-2,Step 2>># Setup actions that use SSH with this key
+
+Visually, this is what it looks like - OliveTin is running in the (orange) container, and then can either connect back to _server-with-olivetin_ or _server2_.
+
+image::../ssh-diagram.png[]
+
+The steps in detail are below;
+
+[#ssh-step-1]
+ [red]#Step 1#: Give OliveTin a SSH key
+
+Open a terminal window on _server-with-olivetin_. 
+
+[loweralpha]
+. Create the `/opt/OliveTinSshKeys` directory, to create a shared directory for your SSH key file.
++
+[source,bash]
+----
+root@server-with-olivetin: mkdir /opt/OliveTinSshKeys
+----
++
+This will later be used as a "volume mount" when you create a docker container. 
+
+. Run `ssh-keygen` to generate a SSH key just for OliveTin.
++
+[source,bash]
+----
+root@server-with-olivetin: ssh-keygen
+----
+[lowerroman]
+.. Enter the file in which to save the key: `/opt/OliveTinSshKeys/id_rsa`
+.. Enter passphrase (empty for no passphrase): `<enter>`
++
+This will create a passwordless SSH key that OliveTin can use. It is safe as long as nobody steals your SSH key file! OliveTin cannot enter passwords into SSH keys, so you have to leave the password blank.
+
+. You should get something that looks like this. If you get a "permission denied" error when creating files, try running `chmod 0777 /opt/OliveTinSshKeys` and try again.
++
+[source]
+----
+root@server-with-olivetin: ssh-keygen
+Generating public/private rsa key pair.
+Enter file in which to save the key (/root/.ssh/id_rsa): /opt/OliveTinSshKeys/id_rsa
+Enter passphrase (empty for no passphrase):
+Enter same passphrase again:
+Your identification has been saved in /opt/OliveTinSshKeys/id_rsa
+Your public key has been saved in /opt/OliveTinSshKeys/id_rsa.pub
+The key fingerprint is:
+SHA256:t+vGUn+MTeOtRDpxKanO3Cg63+gvAHslZCe3YVNnfWU root@server-with-olivetin
+The key's randomart image is:
++---[RSA 3072]----+
+|         .. o.  E|
+|      + *  o  ...|
+|     o = +     . |
+|    . . o    . . |
+|     o oS . + +  |
+|    . o  ..o *o  |
+|     . . oo.o*.o |
+|      . +*o+oo= .|
+|      .=+BX .... |
++----[SHA256------+
+----
++
+This will create two files, `/opt/OliveTinSshKeys/id_rsa` (your private key) and `/opt/OliveTinSshKeys/id_rsa.pub` (your public key). 
+
+. Copy your public key to every server you want to connect to.
++
+Using the `ssh-copy-id` command is a really quick and safe way to do this.
++
+----
+root@server-with-olivetin: ssh-copy-id -i /opt/OliveTinSshKeys/id_rsa.pub root@localhost
+(enter your SSH password)
+
+root@server2: ssh-copy-id ssh-copy-id -i /opt/OliveTinSshKeys/id_rsa.pub root@server2
+(enter your SSH password)
+----
++
+You will be asked to login with a password for each server.
++
+After you have done that, you will then be able to login with the ssh key instead. Here is a quick way that you can test your SSH key manually;
++
+----
+root@server-with-olivetin: ssh -i /opt/OliveTinSshKeys/id_rsa root@server2
+(you should login without a password)
+----
+
+. Give the SSH key to the OliveTin container. 
++
+The way to do this is via a "volume mount". When you create the container, you use "-v" to specify a volume.
++
+You should mount your SSH keys directory into the OliveTin user's home directory by creating the container like this;
++
+.If you want to create the container from the command line
+----
+docker run -v /opt/OliveTinSshKeys/:/home/olivetin/.ssh/ -v /etc/OliveTin/:/config --name OliveTin jamesread/olivetin
+----
++
+.If you are using docker-compose
+[source,yaml]
+----
+services:
+    olivetin:
+        container_name: olivetin
+        image: jamesread/olivetin
+        volumes:
+          - "/etc/OliveTin/:/config"
+          - "/opt/OliveTinSshKeys:/home/olivetin/.ssh"
+        ports:
+          - "1337:1337"
+        restart: unless-stopped
+----
+
+This also works for things like SSH configuration files, if you want to use them. This is step 1 complete from the diagram above.
+
+[#ssh-step-2]
+ [red]#Step 2#: Setup actions that use SSH with this key
+
+Thankfully, step 2 is very simple! `ssh` commands in your OliveTin `config.yaml` should work without a password!, and allow OliveTin to access services, files, and other stuff outside of the OliveTin container.
+
+.OliveTin `config.yaml`
+[source,shell]
+....
+actions:
+    # This will SSH into a server an run the command 'service httpd restart'
+   - title: Restart httpd on Server 1
+     shell: ssh root@server-with-olivetin 'service httpd restart'
+     icon: ping
+     timeout: 5
+....
+

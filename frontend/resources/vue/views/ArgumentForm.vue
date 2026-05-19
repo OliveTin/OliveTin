@@ -27,11 +27,11 @@
                   {{ choice.title || choice.value }}
                 </option>
               </select>
-              
-              <component v-else :is="getInputComponent(arg)" :id="arg.name" :name="arg.name" 
+
+              <component v-else :is="getInputComponent(arg)" :id="arg.name" :name="arg.name"
                 :value="(arg.type === 'checkbox' || arg.type === 'confirmation') ? undefined : getArgumentValue(arg)"
                 :checked="(arg.type === 'checkbox' || arg.type === 'confirmation') ? getArgumentValue(arg) : undefined"
-                :list="(arg.suggestions || getBrowserSuggestions(arg).length > 0) ? `${arg.name}-choices` : undefined" 
+                :list="(arg.suggestions || getBrowserSuggestions(arg).length > 0) ? `${arg.name}-choices` : undefined"
                 :type="getInputComponent(arg) !== 'select' ? getInputType(arg) : undefined"
                 :rows="arg.type === 'raw_string_multiline' ? 5 : undefined"
                 :step="arg.type === 'datetime' ? 1 : undefined" :pattern="getPattern(arg)"
@@ -174,7 +174,7 @@ function getInputType(arg) {
     return 'checkbox'
   }
 
-  if (arg.type === 'ascii_identifier' || arg.type === 'ascii') {
+  if (arg.type === 'ascii_identifier' || arg.type === 'ascii' || arg.type === 'ascii_sentence') {
     return 'text'
   }
 
@@ -252,7 +252,7 @@ async function validateArgument(arg, value) {
 
     // Get the input element to set custom validity
     const inputElement = document.getElementById(arg.name)
-    
+
     if (validation.valid) {
       delete formErrors.value[arg.name]
       // Clear custom validity message
@@ -322,7 +322,7 @@ function getBrowserSuggestions(arg) {
   if (!arg.suggestionsBrowserKey) {
     return []
   }
-  
+
   try {
     const stored = localStorage.getItem(`olivetin-suggestions-${arg.suggestionsBrowserKey}`)
     if (stored) {
@@ -332,7 +332,7 @@ function getBrowserSuggestions(arg) {
   } catch (err) {
     console.warn('Failed to load browser suggestions:', err)
   }
-  
+
   return []
 }
 
@@ -340,21 +340,21 @@ function saveBrowserSuggestions() {
   for (const arg of actionArguments.value) {
     if (arg.suggestionsBrowserKey) {
       const value = argValues.value[arg.name]
-      
+
       // Only save non-empty values for non-checkbox/confirmation/password types
       if (value && value !== '' && arg.type !== 'checkbox' && arg.type !== 'confirmation' && arg.type !== 'password') {
         try {
           const key = `olivetin-suggestions-${arg.suggestionsBrowserKey}`
           const stored = localStorage.getItem(key)
           let suggestions = []
-          
+
           if (stored) {
             suggestions = JSON.parse(stored)
             if (!Array.isArray(suggestions)) {
               suggestions = []
             }
           }
-          
+
           // Add value if not already present
           if (!suggestions.includes(value)) {
             suggestions.unshift(value) // Add to beginning
@@ -390,11 +390,13 @@ async function startAction(actionArgs) {
 }
 
 async function handleSubmit(event) {
+  event.preventDefault()
+
   // Set custom validity for required fields
   for (const arg of actionArguments.value) {
     const value = argValues.value[arg.name]
     const inputElement = document.getElementById(arg.name)
-    
+
     if (arg.required && (!value || value === '')) {
       formErrors.value[arg.name] = 'This field is required'
       // Set custom validity for required field validation
@@ -410,14 +412,12 @@ async function handleSubmit(event) {
     return
   }
 
-  event.preventDefault()
-  
   const argvs = getArgumentValues()
   console.log('argument form has elements that passed validation')
-  
+
   // Save values to localStorage for arguments with suggestionsBrowserKey
   saveBrowserSuggestions()
-  
+
   try {
     const response = await startAction(argvs)
     if (popupOnStart.value && popupOnStart.value.includes('execution-dialog')) {

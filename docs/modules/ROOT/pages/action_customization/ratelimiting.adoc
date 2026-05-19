@@ -1,0 +1,30 @@
+[#ratelimits]
+= Rate limiting
+
+By default, OliveTin allows you to execute actions as fast as you can click the button. This is fine if you are running OliveTin with trusted users in a trusted environment, but otherwise you may want to rate limit actions.
+
+Rate limiting is implemented like this;
+
+[source,yaml]
+.`config.yaml`
+----
+actions:
+  - title: date
+    shell: date
+    icon: clock
+    maxRate:
+      - limit: 3
+        duration: 5m
+----
+
+If you try to execute `date` more than 3 times in 5 minutes, you will get a log message in the UI that looks like this;
+
+image::maxRate.png[]
+
+Additionally, OliveTin will also output this to it's process log;
+
+----
+INFO Blocked from executing. This action has run 3 out of 3 allowed times in the last 5m.  actionTitle="date"
+----
+
+

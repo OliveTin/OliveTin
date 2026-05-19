@@ -1,0 +1,59 @@
+[#multi-inst]
+= Multiple instances on a server
+
+Several users will find themselves wanting to run multiple instances of OliveTin. Depending on how you've setup OliveTin depends on how easy it is to configure that. This page includes instructions for OliveTin installed as a container, and as a package (.tar.gz).
+
+== With Containers
+
+This is the easiest way to run multiple OliveTin instances. Follow the xref:install/container.adoc[Container Installation instructions], or similar for xref:install/docker_compose.adoc[Docker Compose], xref:install/helm.adoc[Helm] or similar to get started.
+
+1. Create a `config.yaml` file for each instance of OliveTin (instances cannot share the same config).
+2. Choose a new external port for OliveTin and set it in the config file (by default that is `1337` is used). For example, set `listenAddressSingleHTTPFrontend: 0.0.0.0:2337` for your 2nd container's config.
+3. When creating the container, pass in the 2nd instance's config, eg; `-v /opt/OliveTin_two/:/config/`
+4. When creating the container, set the external port, eg: `2337:1337` - 2337 is the external port)
+
+You do not need to change the listenAddresses / ports for the other 3 ports that OliveTin uses, when you are running inside a container. 
+
+== Without containers - using a package (.tar.gz)
+
+If you are not using containers, then it is probably best not to use a `.deb/.rpm` installation, as those packages can only be installed for one instance.
+
+Instead, follow the instructions for xref:install/targz.adoc[installing from a .tar.gz] archive. 
+
+When you come to create the config.yaml file, OliveTin will look for this in it's own startup directory. Therefore it is probably best to extract the .tar.gz file like this and change the paths;
+
+* `/opt/OliveTin_one/`
+* `/opt/OliveTin_two/`
+* `/opt/OliveTin_three/`
+
+Because you are running outside of a container, you will also need to change the "internal" ports used by OliveTin so they are separate for all instances. OliveTin listens on 4 addresses (1 external, 3 internal) and needs 4 ports. You can read about these in the xref:reference/network-ports.adoc[network ports documentation].
+
+NOTE: OliveTin also supports reading the PORT environment variable, and will use this as a base port for the simgle frontend, will add 1 to start extra servers. For example of PORT is 2000, then the simgle frontend will start on port 2000, the REST API on 2001, and so on. 
+
+You could end up with a setup that looks like this;
+
+[%header]
+|===
+| Instance Name          | Install path          | Config file path                  | Single frontend point (`listenAddressSingleHTTPFrontend`)   | REST Actions port (`listenAddressRestActions`)  | gRPC Actions port (`listenAddressGrpcActions`)   | WebUI Port (`listenAddressWebUI`)
+| OliveTin_one           | `/opt/OliveTin_one`   | `/opt/OliveTin_one/config.yaml`   | `0.0.0.0:1337`           | `localhost:1338`    | `localhost:1339`      | `localhost:1340`
+| OliveTin_two           | `/opt/OliveTin_two`   | `/opt/OliveTin_two/config.yaml`   | `0.0.0.0:2337`           | `localhost:2338`    | `localhost:2339`      | `localhost:2340`
+| OliveTin_three         | `/opt/OliveTin_three` | `/opt/OliveTin_three/config.yaml` | `0.0.0.0:3337`           | `localhost:3338`    | `localhost:3339`      | `localhost:3340`
+|===
+
+Note that you will also need to adjust the default systemd service file to point to your install directory, if using that. Here is an example for `OliveTin_two`; 
+
+.A modified systemd service file for a 2nd instance
+----
+[Unit]
+Description=OliveTin2
+
+[Service]
+WorkingDirectory=/opt/OliveTin_two/
+ExecStart=/opt/OliveTin_two/OliveTin
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+----
+
+

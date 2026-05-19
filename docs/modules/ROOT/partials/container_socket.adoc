@@ -1,0 +1,74 @@
+== Setup if running inside a container
+
+You can control other containers, when running OliveTin inside a container
+itself, however you need to do some extra setup when creating the OliveTin
+container.
+
+=== Ensure your container has permissions to control docker
+
+You have two alternatives to allow OliveTin (running inside a container) to talk to the Docker daemon through the bind-mounted socket. Pick one:
+
+==== Option 1 — Use `--privileged` (simplest)
+
+NOTE: Simplest for most users. Podman does not have this requirement.
+
+- Run the container with `--privileged` and as `root` (eg `--user root`).
+- This avoids user/group permission issues on `/var/run/docker.sock`.
+
+If you are getting "permission denied" errors it is probably because OliveTin runs as user UID 1000 by default, which is not allowed by your docker host. Running with `--user root` under `--privileged` resolves this quickly. Note that xref:troubleshooting/puid-pgid.adoc[PUID and PGID variables will not work].
+
+==== Option 2 — Run as non-root in the host `docker` group (no `--privileged`)
+
+Use the standard Docker guidance to manage Docker as a non-root user (becoming a member of the `docker` group) and match the group's GID inside the container so the process can access the socket permissions.
+
+- Docs: https://docs.docker.com/engine/install/linux-postinstall/#manage-docker-as-a-non-root-user[Manage Docker as a non-root user]
+- Find the `docker` group GID on the host, for example using `getent group docker`.
+- Run the container with your user UID and the `docker` group GID, and bind-mount the socket. Using Compose:
+
+[source,yaml]
+.docker-compose.yml
+----
+services:
+  olivetin:
+    container_name: olivetin
+    image: jamesread/olivetin
+    user: ${UID}:${docker_group_id}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+----
+
+Where `UID` and `docker_group_id` are provided via your shell environment or a `.env` file next to your Compose file, for example:
+
+[source,bash]
+.env
+----
+UID=1000
+docker_group_id=995
+----
+
+This allows you to run the container as a non-root user, while still allowing access to `/var/run/docker.sock`.
+
+=== Pass the docker socket into the container
+
+. Pass `/var/run/docker.sock` as a bind mount to the container when creating it, eg:
+
++
+----
+docker create --privileged --user root -v /var/run/docker.sock:/var/run/docker.sock ...additional args here...
+----
++
+Or, using the `docker run` syntax;
++
+----
+docker run --privileged --user root -v /var/run/docker.sock:/var/run/docker.sock --name OliveTin jamesread/olivetin
+----
++
+. The official x86_64 docker container comes with the `docker` client pre-installed. If you are using `arm` or and `arm64` container, you will need to add Docker yourself.
++
+xref:reference/containerInstallPackages.adoc[How to install additional packages in the container]
++
+NOTE: The reason that the `arm` and `arm64` containers do not include docker, is that when these images are cross-compiled at build time, it takes FOREVER because we have to emulate arm.
+
+After you have passed the socket into the container (and optionally installed docker), you should be able to setup docker actions like it's shown in the example <<example-control-containers,above>>.
+
+
