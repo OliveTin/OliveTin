@@ -17,7 +17,7 @@
             <dt>Timeout</dt>
             <dd>{{ action.timeout }} seconds</dd>
           </dl>
-          <p v-if="action" class = "fg1">
+          <p class = "fg1">
             Execution history for this action. You can filter by execution tracking ID.
           </p>
         </div>
@@ -47,6 +47,7 @@
           <thead>
             <tr>
               <th>Timestamp</th>
+              <th>Duration</th>
               <th>Execution ID</th>
               <th>Metadata</th>
               <th>Status</th>
@@ -55,6 +56,7 @@
           <tbody>
             <tr v-for="log in filteredLogs" :key="log.executionTrackingId" class="log-row" :title="log.actionTitle">
               <td class="timestamp">{{ formatTimestamp(log.datetimeStarted) }}</td>
+              <td class="duration">{{ formatExecutionDuration(log) }}</td>
               <td>
                 <router-link :to="`/logs/${log.executionTrackingId}`">
                   {{ log.executionTrackingId }}
@@ -70,9 +72,7 @@
                 </span>
               </td>
               <td class="exit-code">
-                <span :class="getStatusClass(log) + ' annotation'">
-                  {{ getStatusText(log) }}
-                </span>
+                <ActionStatusDisplay :logEntry="log" />
               </td>
             </tr>
           </tbody>
@@ -90,10 +90,11 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import Pagination from 'picocrank/vue/components/Pagination.vue'
 import Section from 'picocrank/vue/components/Section.vue'
+import ActionStatusDisplay from '../components/ActionStatusDisplay.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -105,6 +106,8 @@ const pageSize = ref(10)
 const currentPage = ref(1)
 const loading = ref(false)
 const totalCount = ref(0)
+const durationClock = ref(Date.now())
+let durationTicker = null
 
 const filteredLogs = computed(() => {
   if (!searchText.value) {
@@ -137,6 +140,7 @@ async function fetchActionLogs() {
       pageSize.value = serverPageSize
     }
     totalCount.value = Number(response.totalCount) || 0
+    syncDurationTicker()
   } catch (err) {
     console.error('Failed to fetch action logs:', err)
     window.showBigError('fetch-action-logs', 'getting action logs', err, false)
@@ -168,6 +172,7 @@ function resetState() {
   currentPage.value = 1
   searchText.value = ''
   loading.value = true
+  syncDurationTicker()
 }
 
 function clearSearch() {
@@ -184,19 +189,77 @@ function formatTimestamp(timestamp) {
   }
 }
 
-function getStatusClass(log) {
-  if (log.timedOut) return 'status-timeout'
-  if (log.blocked) return 'status-blocked'
-  if (log.exitCode !== 0) return 'status-error'
-  return 'status-success'
+function plural(n, singular, pluralForm) {
+  return n === 1 ? `1 ${singular}` : `${n} ${pluralForm}`
 }
 
-function getStatusText(log) {
-  if (log.timedOut) return 'Timed out'
-  if (log.blocked) return 'Blocked'
-  if (log.exitCode !== 0) return `Exit code ${log.exitCode}`
-  return 'Completed'
+function formatDurationSimple(ms) {
+  if (!Number.isFinite(ms) || ms < 0) {
+    return '—'
+  }
+  const totalSec = Math.round(ms / 1000)
+  if (totalSec === 0) {
+    return '0 seconds'
+  }
+  const days = Math.floor(totalSec / 86400)
+  const hours = Math.floor((totalSec % 86400) / 3600)
+  const minutes = Math.floor((totalSec % 3600) / 60)
+  const seconds = totalSec % 60
+
+  const parts = []
+  if (days > 0) parts.push(plural(days, 'day', 'days'))
+  if (hours > 0) parts.push(plural(hours, 'hour', 'hours'))
+  if (minutes > 0) parts.push(plural(minutes, 'minute', 'minutes'))
+  if (seconds > 0) parts.push(plural(seconds, 'second', 'seconds'))
+  return parts.join(' ')
 }
+
+function formatExecutionDuration(log) {
+  // Reading durationClock keeps this column reactive while executions are in progress.
+  const clock = durationClock.value
+
+  if (!log?.datetimeStarted) {
+    return '—'
+  }
+  const started = new Date(log.datetimeStarted)
+  if (Number.isNaN(started.getTime())) {
+    return '—'
+  }
+
+  let endMs
+  if (log.executionFinished) {
+    const finished = new Date(log.datetimeFinished)
+    if (Number.isNaN(finished.getTime())) {
+      return '—'
+    }
+    endMs = finished.getTime()
+  } else {
+    endMs = clock
+  }
+
+  return formatDurationSimple(endMs - started.getTime())
+}
+
+function syncDurationTicker() {
+  if (durationTicker != null) {
+    clearInterval(durationTicker)
+    durationTicker = null
+  }
+  const hasRunning = logs.value.some(l => !l.executionFinished)
+  if (!hasRunning) {
+    return
+  }
+  durationTicker = window.setInterval(() => {
+    durationClock.value = Date.now()
+  }, 1000)
+}
+
+onUnmounted(() => {
+  if (durationTicker != null) {
+    clearInterval(durationTicker)
+    durationTicker = null
+  }
+})
 
 function handlePageChange(page) {
   currentPage.value = page
@@ -246,16 +309,6 @@ watch(
 </script>
 
 <style scoped>
-.action-header {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.action-header h2 {
-  margin: 0;
-}
-
 .icon {
   font-size: 1.5rem;
 }
@@ -285,6 +338,12 @@ watch(
   font-family: monospace;
   font-size: 0.9rem;
   color: var(--text-secondary);
+}
+
+.duration {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
 }
 
 .empty-state {
@@ -364,22 +423,6 @@ watch(
   padding: 0.1rem 0.5rem;
   border-radius: 0.25rem;
   font-size: 0.85rem;
-}
-
-.exit-code .status-success {
-  color: #28a745;
-}
-
-.exit-code .status-error {
-  color: #dc3545;
-}
-
-.exit-code .status-timeout {
-  color: #ffc107;
-}
-
-.exit-code .status-blocked {
-  color: #6c757d;
 }
 
 .padding {

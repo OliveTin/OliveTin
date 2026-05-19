@@ -37,6 +37,23 @@ func TestSanitizeConfig(t *testing.T) {
 	assert.Equal(t, "Waffle", a2.Arguments[0].Choices[0].Title, "Choice title is set to name")
 }
 
+func TestSanitizePopupOnStartHistory(t *testing.T) {
+	c := DefaultConfig()
+	c.DefaultPopupOnStart = "nothing"
+
+	c.Actions = append(c.Actions, &Action{
+		Title:         "With history",
+		PopupOnStart:  "history",
+		Shell:         "true",
+	})
+	c.Sanitize()
+
+	a := c.findAction("With history")
+	if assert.NotNil(t, a) {
+		assert.Equal(t, "history", a.PopupOnStart, "history must be preserved, not replaced by defaultPopupOnStart")
+	}
+}
+
 func TestSanitizeConfigInlineDashboardActions(t *testing.T) {
 	c := DefaultConfig()
 

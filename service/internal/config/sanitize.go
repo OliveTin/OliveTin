@@ -242,6 +242,8 @@ func sanitizePopupOnStart(raw string, cfg *Config) string {
 		return raw
 	case "execution-button":
 		return raw
+	case "history":
+		return raw
 	default:
 		return cfg.DefaultPopupOnStart
 	}

@@ -68,4 +68,16 @@ actions:
 
 image::../executionButtons.png[]
 
+== Action execution history
+
+The `history` option opens the action details page for that binding when the execution starts, so you can see past runs and status for the same action.
+
+[source,yaml]
+.`config.yaml`
+----
+actions:
+  - title: Long-running job
+    popupOnStart: history
+----
+
 
