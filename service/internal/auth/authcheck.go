@@ -14,6 +14,7 @@ import (
 var authChain = []func(*types.AuthCheckingContext) *types.AuthenticatedUser{
 	checkUserFromHeaders,
 	checkUserFromLocalSession,
+	checkUserFromLocalBearerApiKey,
 	otjwt.CheckUserFromJwtHeader,
 	otjwt.CheckUserFromJwtCookie,
 }

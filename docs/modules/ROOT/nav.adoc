@@ -96,6 +96,7 @@
 * xref:security/concepts.adoc[Security]
 ** xref:security/acl.adoc[Access Control Lists]
 ** xref:security/local.adoc[Local Users Authorization]
+** xref:security/api_keys.adoc[API Keys]
 ** xref:security/trusted_header.adoc[Trusted Header Authorization]
 ** xref:security/jwt.adoc[JWT Authorization]
 *** xref:security/jwt_keys.adoc[JWT with Keys]

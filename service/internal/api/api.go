@@ -204,10 +204,24 @@ func (api *oliveTinAPI) applyLocalLoginResult(req *apiv1.LocalUserLoginRequest, 
 	}
 }
 
-func (api *oliveTinAPI) LocalUserLogin(ctx ctx.Context, req *connect.Request[apiv1.LocalUserLoginRequest]) (*connect.Response[apiv1.LocalUserLoginResponse], error) {
+func (api *oliveTinAPI) localUserLoginEarlyReject(req *connect.Request[apiv1.LocalUserLoginRequest]) *connect.Response[apiv1.LocalUserLoginResponse] {
 	if !api.cfg.AuthLocalUsers.Enabled {
-		return connect.NewResponse(&apiv1.LocalUserLoginResponse{Success: false}), nil
+		return connect.NewResponse(&apiv1.LocalUserLoginResponse{Success: false})
 	}
+
+	if isLocalInteractiveLoginDisabledForUser(api.cfg, req.Msg.Username) {
+		log.WithFields(log.Fields{"username": req.Msg.Username}).Debug("LocalUserLogin: interactive login disabled (no password configured)")
+		return connect.NewResponse(&apiv1.LocalUserLoginResponse{Success: false})
+	}
+
+	return nil
+}
+
+func (api *oliveTinAPI) LocalUserLogin(ctx ctx.Context, req *connect.Request[apiv1.LocalUserLoginRequest]) (*connect.Response[apiv1.LocalUserLoginResponse], error) {
+	if early := api.localUserLoginEarlyReject(req); early != nil {
+		return early, nil
+	}
+
 	match, err := checkUserPassword(api.cfg, req.Msg.Username, req.Msg.Password)
 	if err != nil {
 		if errors.Is(err, ErrArgon2Busy) {
