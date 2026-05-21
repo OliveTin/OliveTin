@@ -738,12 +738,46 @@ func (api *oliveTinAPI) argumentNotFoundForValidation(msg *apiv1.ValidateArgumen
 	return arg == nil
 }
 
+func (api *oliveTinAPI) validateArgumentTypeBindingAccess(user *authpublic.AuthenticatedUser, msg *apiv1.ValidateArgumentTypeRequest) error {
+	if msg == nil || msg.BindingId == "" {
+		return nil
+	}
+
+	return api.errUnlessUserMayValidateArgumentTypeForBinding(user, msg.BindingId)
+}
+
+func (api *oliveTinAPI) errUnlessUserMayValidateArgumentTypeForBinding(user *authpublic.AuthenticatedUser, bindingID string) error {
+	binding := api.executor.FindBindingByID(bindingID)
+	if binding == nil || binding.Action == nil {
+		return connect.NewError(connect.CodeNotFound, fmt.Errorf("action or argument not found for binding ID %s", bindingID))
+	}
+
+	if !api.userCanViewAction(user, binding.Action) {
+		return connect.NewError(connect.CodePermissionDenied, fmt.Errorf("permission denied"))
+	}
+
+	return nil
+}
+
 func (api *oliveTinAPI) ValidateArgumentType(ctx ctx.Context, req *connect.Request[apiv1.ValidateArgumentTypeRequest]) (*connect.Response[apiv1.ValidateArgumentTypeResponse], error) {
+	user := auth.UserFromApiCall(ctx, req, api.cfg)
+	if err := api.checkDashboardAccess(user); err != nil {
+		return nil, err
+	}
+
+	if err := api.validateArgumentTypeBindingAccess(user, req.Msg); err != nil {
+		return nil, err
+	}
+
 	if api.argumentNotFoundForValidation(req.Msg) {
 		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("action or argument not found for binding ID %s", req.Msg.BindingId))
 	}
 
-	err := api.validateArgumentTypeInternal(req.Msg)
+	return api.validateArgumentTypeConnectResponse(req.Msg)
+}
+
+func (api *oliveTinAPI) validateArgumentTypeConnectResponse(msg *apiv1.ValidateArgumentTypeRequest) (*connect.Response[apiv1.ValidateArgumentTypeResponse], error) {
+	err := api.validateArgumentTypeInternal(msg)
 	desc := ""
 	if err != nil {
 		desc = err.Error()
