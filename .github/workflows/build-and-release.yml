@@ -3,6 +3,16 @@ name: "Build & Release pipeline"
 
 on:
   pull_request:
+    paths:
+      - '.github/workflows/build-and-release.yml'
+      - '.goreleaser.yml'
+      - 'Dockerfile.multiarches'
+      - 'Dockerfile.singlearch'
+      - 'Makefile'
+      - 'frontend/**'
+      - 'integration-tests/**'
+      - 'proto/**'
+      - 'service/**'
   workflow_dispatch:
   push:
     tags:
@@ -11,6 +21,16 @@ on:
       - main
       - next
       - beta
+    paths:
+      - '.github/workflows/build-and-release.yml'
+      - '.goreleaser.yml'
+      - 'Dockerfile.multiarches'
+      - 'Dockerfile.singlearch'
+      - 'Makefile'
+      - 'frontend/**'
+      - 'integration-tests/**'
+      - 'proto/**'
+      - 'service/**'
 
 jobs:
   build:
