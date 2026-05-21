@@ -15,13 +15,19 @@ name: "CodeQL"
 on:
   push:
     paths:
-      - 'cmd/**'
-      - 'internal/**'
-      - 'webui.dev/**'
+      - '.github/workflows/codeql-analysis.yml'
+      - 'frontend/**'
       - 'integration-tests/**'
-      - 'OliveTin.proto'
+      - 'proto/**'
+      - 'service/**'
     branches: [main]
   pull_request:
+    paths:
+      - '.github/workflows/codeql-analysis.yml'
+      - 'frontend/**'
+      - 'integration-tests/**'
+      - 'proto/**'
+      - 'service/**'
     branches: [main]
   schedule:
     - cron: '25 10 * * 5'

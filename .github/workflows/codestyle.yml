@@ -4,11 +4,11 @@ name: "Codestyle checks"
 on:
   push:
     paths:
-      - 'cmd/**'
-      - 'internal/**'
-      - 'webui.dev/**'
+      - '.github/workflows/codestyle.yml'
+      - 'frontend/**'
       - 'integration-tests/**'
-      - 'OliveTin.proto'
+      - 'proto/**'
+      - 'service/**'
 
 
 jobs:
