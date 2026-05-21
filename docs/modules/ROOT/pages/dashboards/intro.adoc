@@ -89,6 +89,7 @@ Now that you understand dashboards, explore these related features:
 * xref:dashboards/2-fieldsets.adoc[Learn about fieldsets] - Group actions visually on dashboards
 * xref:dashboards/3-folders.adoc[Organize with folders] - Create folder structures for better organization
 * xref:dashboards/4-displays.adoc[Add displays] - Show information alongside actions
+* xref:dashboards/faq-display-hyperlinks.adoc[FAQ: Hyperlinks in displays] - Clickable links in display components
 * xref:dashboards/5-output-views.adoc[Configure output views] - Customize how action output is displayed
 * xref:entities/intro.adoc[Use entities with dashboards] - Dynamically generate actions from entity files
 * xref:dashboards/examples.adoc[View dashboard examples] - See complete dashboard configurations

@@ -86,6 +86,7 @@
 ** xref:dashboards/2-fieldsets.adoc[Fieldsets]
 ** xref:dashboards/3-folders.adoc[Folders]
 ** xref:dashboards/4-displays.adoc[Displays]
+** xref:dashboards/faq-display-hyperlinks.adoc[Hyperlinks (Displays)]
 ** xref:dashboards/5-output-views.adoc[Output Views]
 ** xref:dashboards/entity-directories.adoc[Entity Directories]
 * xref:entities/intro.adoc[Entities]
