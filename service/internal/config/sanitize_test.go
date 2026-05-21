@@ -1,8 +1,10 @@
 package config
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestSanitizeConfig(t *testing.T) {
@@ -42,9 +44,9 @@ func TestSanitizePopupOnStartHistory(t *testing.T) {
 	c.DefaultPopupOnStart = "nothing"
 
 	c.Actions = append(c.Actions, &Action{
-		Title:         "With history",
-		PopupOnStart:  "history",
-		Shell:         "true",
+		Title:        "With history",
+		PopupOnStart: "history",
+		Shell:        "true",
 	})
 	c.Sanitize()
 
@@ -88,4 +90,20 @@ func TestSanitizeConfigInlineDashboardActions(t *testing.T) {
 		assert.NotEmpty(t, found.Icon, "Inline action should have default icon applied")
 		assert.NotEmpty(t, found.ID, "Inline action should have a generated ID")
 	}
+}
+
+func TestValidateUniqueLocalUserAPIKeys(t *testing.T) {
+	t.Parallel()
+
+	err := validateUniqueLocalUserAPIKeys([]*LocalUser{
+		{Username: "a", ApiKey: "same"},
+		{Username: "b", ApiKey: "same"},
+	})
+	require.Error(t, err)
+
+	err = validateUniqueLocalUserAPIKeys([]*LocalUser{
+		{Username: "a", ApiKey: "one"},
+		{Username: "b", ApiKey: "two"},
+	})
+	require.NoError(t, err)
 }

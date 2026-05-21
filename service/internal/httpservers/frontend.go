@@ -13,6 +13,7 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"path"
+	"strings"
 
 	"github.com/OliveTin/OliveTin/internal/api"
 	"github.com/OliveTin/OliveTin/internal/auth"
@@ -57,13 +58,35 @@ func securityHeadersMiddleware(cfg *config.Config, next http.Handler) http.Handl
 	})
 }
 
+func isSensitiveLogHeaderName(name string) bool {
+	switch strings.ToLower(name) {
+	case "authorization", "cookie", "x-forwarded-access-token":
+		return true
+	default:
+		return false
+	}
+}
+
+func redactHeaderValuesForLog(name string, values []string) []string {
+	if !isSensitiveLogHeaderName(name) {
+		return values
+	}
+
+	out := make([]string, len(values))
+	for i := range values {
+		out[i] = "[redacted]"
+	}
+
+	return out
+}
+
 func logDebugRequest(cfg *config.Config, source string, r *http.Request) {
 	if cfg.LogDebugOptions.SingleFrontendRequests {
 		log.Debugf("SingleFrontend HTTP Req URL %v: %q", source, r.URL)
 
 		if cfg.LogDebugOptions.SingleFrontendRequestHeaders {
 			for name, values := range r.Header {
-				log.Debugf("SingleFrontend HTTP Req Hdr: %v = %v", name, values)
+				log.Debugf("SingleFrontend HTTP Req Hdr: %v = %v", name, redactHeaderValuesForLog(name, values))
 			}
 		}
 	}
