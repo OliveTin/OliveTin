@@ -61,6 +61,15 @@ func comparePasswordAndHash(password, hash string) (bool, error) {
 	return match, nil
 }
 
+func isLocalInteractiveLoginDisabledForUser(cfg *config.Config, username string) bool {
+	user := cfg.FindUserByUsername(username)
+	if user == nil {
+		return false
+	}
+
+	return user.Password == ""
+}
+
 func checkUserPassword(cfg *config.Config, username, password string) (bool, error) {
 	user := cfg.FindUserByUsername(username)
 	if user == nil {

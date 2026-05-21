@@ -408,6 +408,96 @@ func TestGetActionBindingDeniedWhenNoViewPermission(t *testing.T) {
 		"user with view:false must get permission denied from GetActionBinding")
 }
 
+// TestValidateArgumentTypeDeniesGuestsWhenLoginRequired (GHSA-f637-w7p2-m7fx) asserts that when
+// guests must log in, ValidateArgumentType does not bypass dashboard access controls.
+func TestValidateArgumentTypeDeniesGuestsWhenLoginRequired(t *testing.T) {
+	cfg := config.DefaultConfig()
+	cfg.AuthRequireGuestsToLogin = true
+	cfg.Actions = append(cfg.Actions, &config.Action{
+		ID:    "a1",
+		Title: "Probe",
+		Shell: "echo",
+		Arguments: []config.ActionArgument{
+			{Name: "x", Type: "ascii"},
+		},
+	})
+	ex := executor.DefaultExecutor(cfg)
+	ex.RebuildActionMap()
+	ts, client := getNewTestServerAndClient(cfg)
+	defer ts.Close()
+
+	_, err := client.ValidateArgumentType(context.Background(), connect.NewRequest(&apiv1.ValidateArgumentTypeRequest{
+		BindingId:    "a1",
+		ArgumentName: "x",
+		Value:        "v",
+		Type:         "ascii",
+	}))
+	require.Error(t, err)
+	assert.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err),
+		"guest must not call ValidateArgumentType when AuthRequireGuestsToLogin is true")
+}
+
+// TestValidateArgumentTypeDeniedWithoutViewPermission (GHSA-f637-w7p2-m7fx) asserts ValidateArgumentType
+// respects the same view ACL as GetActionBinding so the RPC cannot enumerate restricted actions.
+func TestValidateArgumentTypeDeniedWithoutViewPermission(t *testing.T) {
+	cfg, _, _ := buildViewPermissionTestConfig(t)
+	cfg.AuthHttpHeaderUsername = "X-Ot-User"
+	for i := range cfg.Actions {
+		if cfg.Actions[i].ID == "secret_action" {
+			cfg.Actions[i].Arguments = []config.ActionArgument{{Name: "target", Type: "ascii"}}
+			break
+		}
+	}
+	ex := executor.DefaultExecutor(cfg)
+	ex.RebuildActionMap()
+	ts, client := getNewTestServerAndClient(cfg)
+	defer ts.Close()
+
+	req := connect.NewRequest(&apiv1.ValidateArgumentTypeRequest{
+		BindingId:    "secret_action",
+		ArgumentName: "target",
+		Value:        "ok",
+		Type:         "ascii",
+	})
+	req.Header().Set("X-Ot-User", "low")
+
+	_, err := client.ValidateArgumentType(context.Background(), req)
+	require.Error(t, err)
+	assert.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err),
+		"user with view:false must get permission denied from ValidateArgumentType")
+}
+
+// TestValidateArgumentTypeAllowedWithViewPermission (GHSA-f637-w7p2-m7fx) asserts authenticated users
+// with view access can still use ValidateArgumentType for argument validation.
+func TestValidateArgumentTypeAllowedWithViewPermission(t *testing.T) {
+	cfg, _, _ := buildViewPermissionTestConfig(t)
+	cfg.AuthHttpHeaderUsername = "X-Ot-User"
+	for i := range cfg.Actions {
+		if cfg.Actions[i].ID == "secret_action" {
+			cfg.Actions[i].Arguments = []config.ActionArgument{{Name: "target", Type: "ascii"}}
+			break
+		}
+	}
+	ex := executor.DefaultExecutor(cfg)
+	ex.RebuildActionMap()
+	ts, client := getNewTestServerAndClient(cfg)
+	defer ts.Close()
+
+	req := connect.NewRequest(&apiv1.ValidateArgumentTypeRequest{
+		BindingId:    "secret_action",
+		ArgumentName: "target",
+		Value:        "ok",
+		Type:         "ascii",
+	})
+	req.Header().Set("X-Ot-User", "admin")
+
+	resp, err := client.ValidateArgumentType(context.Background(), req)
+	require.NoError(t, err)
+	require.NotNil(t, resp)
+	require.NotNil(t, resp.Msg)
+	assert.True(t, resp.Msg.Valid, "admin with view:true should get successful validation for a valid ascii value")
+}
+
 // TestViewPermissionAllowedSeesAction (GHSA: view permission) asserts that a user with view: true
 // still sees the action in the dashboard and can fetch it via GetActionBinding.
 func TestViewPermissionAllowedSeesAction(t *testing.T) {
