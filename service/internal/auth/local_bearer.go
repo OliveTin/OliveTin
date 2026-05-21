@@ -9,7 +9,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const localBearerPrefix = "Bearer "
+const localBearerScheme = "Bearer"
 
 func constantTimeEqualString(a, b string) bool {
 	if len(a) != len(b) {
@@ -20,11 +20,16 @@ func constantTimeEqualString(a, b string) bool {
 }
 
 func bearerTokenFromAuthorizationHeader(authz string) (string, bool) {
-	if !strings.HasPrefix(authz, localBearerPrefix) {
+	idx := strings.IndexByte(authz, ' ')
+	if idx <= 0 {
 		return "", false
 	}
 
-	token := strings.TrimSpace(strings.TrimPrefix(authz, localBearerPrefix))
+	if !strings.EqualFold(authz[:idx], localBearerScheme) {
+		return "", false
+	}
+
+	token := strings.TrimSpace(authz[idx+1:])
 	if token == "" {
 		return "", false
 	}
@@ -50,12 +55,19 @@ func findLocalUserByAPIKey(cfg *config.Config, token string) *config.LocalUser {
 	return nil
 }
 
+func localBearerAuthorizationHasEmptyCredential(authz string) bool {
+	idx := strings.IndexByte(authz, ' ')
+	return idx > 0 &&
+		strings.EqualFold(authz[:idx], localBearerScheme) &&
+		strings.TrimSpace(authz[idx+1:]) == ""
+}
+
 func logLocalBearerAPIKeyParseFailure(authz string) {
 	if strings.TrimSpace(authz) == "" {
 		return
 	}
 
-	if strings.HasPrefix(authz, localBearerPrefix) {
+	if localBearerAuthorizationHasEmptyCredential(authz) {
 		log.Debugf("Local bearer API key: rejected (empty credential after Bearer prefix)")
 		return
 	}

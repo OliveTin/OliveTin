@@ -10,6 +10,28 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestCheckUserFromLocalBearerApiKey_Match_LowercaseBearerScheme(t *testing.T) {
+	t.Parallel()
+
+	cfg := config.DefaultConfig()
+	cfg.AuthLocalUsers.Enabled = true
+	cfg.AuthLocalUsers.Users = []*config.LocalUser{{
+		Username:  "bot",
+		Usergroup: "bots",
+		ApiKey:    "secret-api-key",
+	}}
+
+	req := httptest.NewRequest("POST", "/", nil)
+	req.Header.Set("Authorization", "bearer secret-api-key")
+
+	ctx := &authpublic.AuthCheckingContext{Request: req, Config: cfg}
+	user := checkUserFromLocalBearerApiKey(ctx)
+	require.NotNil(t, user)
+	assert.Equal(t, "bot", user.Username)
+	assert.Equal(t, "bots", user.UsergroupLine)
+	assert.Equal(t, "local", user.Provider)
+}
+
 func TestCheckUserFromLocalBearerApiKey_Match(t *testing.T) {
 	t.Parallel()
 
