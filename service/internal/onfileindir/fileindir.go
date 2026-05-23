@@ -13,6 +13,13 @@ import (
 
 func WatchFilesInDirectory(cfg *config.Config, ex *executor.Executor) {
 	for _, action := range cfg.Actions {
+		for _, dirname := range action.ExecOnFileCreatedInDir {
+			go func(act *config.Action, dir string) {
+				filehelper.WatchDirectoryCreate(dir, func(filename string) {
+					scheduleExec(act, cfg, ex, filename)
+				})
+			}(action, dirname)
+		}
 		for _, dirname := range action.ExecOnFileChangedInDir {
 			// Pass values into anonymous function because of this issue
 			// https://github.com/OliveTin/OliveTin/issues/503

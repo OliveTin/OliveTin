@@ -96,6 +96,19 @@ const routes = [
     }
   },
   {
+    path: '/action/:actionId/actionexecconditions',
+    name: 'ActionExecConditions',
+    component: () => import('./views/ActionExecConditionsView.vue'),
+    props: true,
+    meta: {
+      title: 'Execution conditions',
+      breadcrumb: [
+        { name: "Actions", href: "/" },
+        { name: "Execution conditions" },
+      ]
+    }
+  },
+  {
     path: '/diagnostics',
     name: 'Diagnostics',
     component: () => import('./views/DiagnosticsView.vue'),

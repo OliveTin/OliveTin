@@ -1,12 +1,22 @@
 <template>
   <Section :title="'Action Details: ' + actionTitle" :padding="false">
       <template #toolbar>
-        <button v-if="action" @click="startAction" title="Start this action" class="button neutral">
-          <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
-            <path fill="currentColor" d="M8 6v12l8-6z" />
-          </svg>
-          Start
-        </button>
+        <div class="action-details-toolbar">
+          <button v-if="action" @click="startAction" title="Start this action" class="button neutral">
+            <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+              <path fill="currentColor" d="M8 6v12l8-6z" />
+            </svg>
+            Start
+          </button>
+          <router-link
+            v-if="action"
+            :to="{ name: 'ActionExecConditions', params: { actionId: route.params.actionId } }"
+            class="button neutral"
+            title="View configured automatic triggers and on-demand execution"
+          >
+            Execution conditions
+          </router-link>
+        </div>
       </template>
 
       <div class = "flex-row padding" v-if="action">
@@ -427,6 +437,13 @@ watch(
 
 .padding {
   padding: 1rem;
+}
+
+.action-details-toolbar {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
 }
 </style>
 
