@@ -29,12 +29,6 @@ func WatchFilesInDirectory(cfg *config.Config, ex *executor.Executor) {
 					scheduleExec(act, cfg, ex, filename)
 				})
 			}(action, dirname)
-
-			go func(act *config.Action, dir string) {
-				filehelper.WatchDirectoryCreate(dir, func(filename string) {
-					scheduleExec(act, cfg, ex, filename)
-				})
-			}(action, dirname)
 		}
 	}
 }

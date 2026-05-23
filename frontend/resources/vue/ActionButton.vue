@@ -201,7 +201,7 @@ function openActionDetails() {
 
 async function handleClick() {
   if (popupOnStart.value === 'history') {
-	router.push(`/action/${props.actionData.bindingId}`)
+	openActionDetails()
 	return
   }
   if (props.actionData.arguments && props.actionData.arguments.length > 0) {
