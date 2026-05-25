@@ -152,7 +152,7 @@ async function reset() {
 
 function show(actionButton) {
   if (actionButton) {
-	icon.value = actionButton.domIcon.innerText
+	icon.value = actionButton.glyph ?? ''
   }
 
   canKill.value = true

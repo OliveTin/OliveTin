@@ -79,6 +79,7 @@ const showNavigateOnStartIcons = computed(() => {
 })
 
 const actionGlyph = computed(() => props.actionData?.icon ?? '')
+const glyph = ref('')
 
 // Combined classes including custom cssClass
 const combinedClasses = computed(() => {
@@ -112,6 +113,7 @@ function constructFromJson(json) {
 
   isDisabled.value = !json.canExec
   displayTitle.value = title.value
+  glyph.value = json.icon ?? ''
   // Initialize rate limit from action data (parse datetime string)
   if (json.datetimeRateLimitExpires) {
 	const date = new Date(json.datetimeRateLimitExpires.replace(' ', 'T'))
@@ -313,9 +315,16 @@ watch(
   () => props.actionData,
   (newData) => {
 	updateFromJson(newData)
+	if (newData?.icon !== undefined) {
+	  glyph.value = newData.icon ?? ''
+	}
   },
   { deep: true }
 )
+
+defineExpose({
+  glyph
+})
 
 </script>
 
