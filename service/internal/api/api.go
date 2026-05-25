@@ -204,10 +204,24 @@ func (api *oliveTinAPI) applyLocalLoginResult(req *apiv1.LocalUserLoginRequest, 
 	}
 }
 
-func (api *oliveTinAPI) LocalUserLogin(ctx ctx.Context, req *connect.Request[apiv1.LocalUserLoginRequest]) (*connect.Response[apiv1.LocalUserLoginResponse], error) {
+func (api *oliveTinAPI) localUserLoginEarlyReject(req *connect.Request[apiv1.LocalUserLoginRequest]) *connect.Response[apiv1.LocalUserLoginResponse] {
 	if !api.cfg.AuthLocalUsers.Enabled {
-		return connect.NewResponse(&apiv1.LocalUserLoginResponse{Success: false}), nil
+		return connect.NewResponse(&apiv1.LocalUserLoginResponse{Success: false})
 	}
+
+	if isLocalInteractiveLoginDisabledForUser(api.cfg, req.Msg.Username) {
+		log.WithFields(log.Fields{"username": req.Msg.Username}).Debug("LocalUserLogin: interactive login disabled (no password configured)")
+		return connect.NewResponse(&apiv1.LocalUserLoginResponse{Success: false})
+	}
+
+	return nil
+}
+
+func (api *oliveTinAPI) LocalUserLogin(ctx ctx.Context, req *connect.Request[apiv1.LocalUserLoginRequest]) (*connect.Response[apiv1.LocalUserLoginResponse], error) {
+	if early := api.localUserLoginEarlyReject(req); early != nil {
+		return early, nil
+	}
+
 	match, err := checkUserPassword(api.cfg, req.Msg.Username, req.Msg.Password)
 	if err != nil {
 		if errors.Is(err, ErrArgon2Busy) {
@@ -640,12 +654,13 @@ func calculateReversedIndices(page pageInfo, filteredLen int) (int64, int64) {
 	return startIdx, endIdx
 }
 
-// buildActionLogsResponse builds the response with paginated log entries.
+// buildActionLogsResponse builds the response with paginated log entries (newest first).
 func (api *oliveTinAPI) buildActionLogsResponse(filtered []*executor.InternalLogEntry, page pageInfo, user *authpublic.AuthenticatedUser) *apiv1.GetActionLogsResponse {
 	startIdx, endIdx := calculateReversedIndices(page, len(filtered))
 	ret := &apiv1.GetActionLogsResponse{}
-	for _, le := range filtered[startIdx:endIdx] {
-		ret.Logs = append(ret.Logs, api.internalLogEntryToPb(le, user))
+	chunk := filtered[int(startIdx):int(endIdx)]
+	for i := len(chunk) - 1; i >= 0; i-- {
+		ret.Logs = append(ret.Logs, api.internalLogEntryToPb(chunk[i], user))
 	}
 	ret.CountRemaining = page.start
 	ret.PageSize = page.size
@@ -723,12 +738,46 @@ func (api *oliveTinAPI) argumentNotFoundForValidation(msg *apiv1.ValidateArgumen
 	return arg == nil
 }
 
+func (api *oliveTinAPI) validateArgumentTypeBindingAccess(user *authpublic.AuthenticatedUser, msg *apiv1.ValidateArgumentTypeRequest) error {
+	if msg == nil || msg.BindingId == "" {
+		return nil
+	}
+
+	return api.errUnlessUserMayValidateArgumentTypeForBinding(user, msg.BindingId)
+}
+
+func (api *oliveTinAPI) errUnlessUserMayValidateArgumentTypeForBinding(user *authpublic.AuthenticatedUser, bindingID string) error {
+	binding := api.executor.FindBindingByID(bindingID)
+	if binding == nil || binding.Action == nil {
+		return connect.NewError(connect.CodeNotFound, fmt.Errorf("action or argument not found for binding ID %s", bindingID))
+	}
+
+	if !api.userCanViewAction(user, binding.Action) {
+		return connect.NewError(connect.CodePermissionDenied, fmt.Errorf("permission denied"))
+	}
+
+	return nil
+}
+
 func (api *oliveTinAPI) ValidateArgumentType(ctx ctx.Context, req *connect.Request[apiv1.ValidateArgumentTypeRequest]) (*connect.Response[apiv1.ValidateArgumentTypeResponse], error) {
+	user := auth.UserFromApiCall(ctx, req, api.cfg)
+	if err := api.checkDashboardAccess(user); err != nil {
+		return nil, err
+	}
+
+	if err := api.validateArgumentTypeBindingAccess(user, req.Msg); err != nil {
+		return nil, err
+	}
+
 	if api.argumentNotFoundForValidation(req.Msg) {
 		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("action or argument not found for binding ID %s", req.Msg.BindingId))
 	}
 
-	err := api.validateArgumentTypeInternal(req.Msg)
+	return api.validateArgumentTypeConnectResponse(req.Msg)
+}
+
+func (api *oliveTinAPI) validateArgumentTypeConnectResponse(msg *apiv1.ValidateArgumentTypeRequest) (*connect.Response[apiv1.ValidateArgumentTypeResponse], error) {
+	err := api.validateArgumentTypeInternal(msg)
 	desc := ""
 	if err != nil {
 		desc = err.Error()

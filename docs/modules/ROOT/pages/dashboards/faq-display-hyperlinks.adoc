@@ -1,0 +1,43 @@
+[#faq-dashboard-display-hyperlinks]
+= Hyperlinks in dashboards
+
+This page explains how to add clickable links on dashboards using xref:dashboards/4-displays.adoc[display components] (`type: display`).
+
+== How do I add a clickable link on a dashboard?
+
+Use a `type: display` component and put normal HTML in its `title` field. OliveTin renders `title` as HTML, so use an anchor element, for example:
+
+[source,html]
+----
+<a href="https://example.com">Documentation</a>
+----
+
+== Should I open external links in a new tab?
+
+For links that leave OliveTin, `target="_blank"` is convenient. Combine it with `rel="noopener noreferrer"` so the new page cannot access your OliveTin tab and referrer details are limited. Example:
+
+[source,yaml]
+----
+contents:
+  - type: display
+    title: |
+      <a href="https://example.com/docs" target="_blank" rel="noopener noreferrer">Open docs</a>
+----
+
+== Can I mix links with entity variables or plain text?
+
+Yes. `title` can combine literal text, xref:entities/intro.adoc[entity template variables], and HTML (such as `<br />`, `<strong>`, or `<a>`). Use YAML's `|` block scalar when you need several lines.
+
+== Does Markdown link syntax like `[text](url)` work?
+
+No. Display `title` is not run through a Markdown parser; it is treated as HTML. Use `<a href="...">...</a>` (or other tags you need) explicitly.
+
+== What should I avoid when embedding HTML?
+
+Treat anything you put in `title` as trusted markup only you control; do not paste untrusted strings into `href` or other attributes without strict validation.
+
+Some deployments use xref:security/content_security_policy.adoc[Content Security Policy] headers, which may block certain schemes or injected scripts—ordinary `https:` links are usually the safest choice.
+
+== Where else is this documented?
+
+See xref:dashboards/4-displays.adoc[Displays] for full display configuration (including xref:dashboards/css.adoc[CSS classes]).

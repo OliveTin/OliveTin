@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"strings"
 	"text/template"
 
@@ -15,7 +16,7 @@ func (cfg *Config) Sanitize() {
 	cfg.sanitizeLogLevel()
 	cfg.sanitizeAuthRequireGuestsToLogin()
 	cfg.sanitizeLogHistoryPageSize()
-	cfg.sanitizeLocalUserPasswords()
+	cfg.sanitizeLocalUsers()
 	cfg.sanitizeSecurityHeaders()
 
 	// log.Infof("cfg %p", cfg)
@@ -177,12 +178,55 @@ func (cfg *Config) sanitizeLogHistoryPageSize() {
 	}
 }
 
-func (cfg *Config) sanitizeLocalUserPasswords() {
+func (cfg *Config) sanitizeLocalUsers() {
 	for _, user := range cfg.AuthLocalUsers.Users {
-		if user.Password != "" {
-			user.Password = parsePasswordTemplate(user.Password)
+		expandLocalUserEnvTemplates(user)
+	}
+
+	if err := validateUniqueLocalUserAPIKeys(cfg.AuthLocalUsers.Users); err != nil {
+		log.Fatalf("%v", err)
+	}
+}
+
+func expandLocalUserEnvTemplates(user *LocalUser) {
+	if user == nil {
+		return
+	}
+
+	if user.Password != "" {
+		user.Password = expandEnvTemplate(user.Password)
+	}
+
+	if user.ApiKey != "" {
+		user.ApiKey = expandEnvTemplate(user.ApiKey)
+	}
+}
+
+// validateUniqueLocalUserAPIKeys returns an error when two local users share the same non-empty apiKey.
+func validateUniqueLocalUserAPIKeys(users []*LocalUser) error {
+	seen := make(map[string]string)
+
+	for _, user := range users {
+		if err := recordUniqueLocalUserAPIKey(seen, user); err != nil {
+			return err
 		}
 	}
+
+	return nil
+}
+
+func recordUniqueLocalUserAPIKey(seen map[string]string, user *LocalUser) error {
+	if user == nil || user.ApiKey == "" {
+		return nil
+	}
+
+	if prior, ok := seen[user.ApiKey]; ok {
+		return fmt.Errorf("duplicate authLocalUsers apiKey for users %q and %q", prior, user.Username)
+	}
+
+	seen[user.ApiKey] = user.Username
+
+	return nil
 }
 
 func (cfg *Config) sanitizeSecurityHeaders() {
@@ -204,16 +248,16 @@ func (cfg *Config) sanitizeSecurityHeadersXFrameOptions() {
 	cfg.Security.XFrameOptions = "DENY"
 }
 
-// parsePasswordTemplate expands {{ .Env.VAR }} in local user password fields using the process environment.
-func parsePasswordTemplate(source string) string {
-	t, err := template.New("password").Option("missingkey=error").Parse(source)
+// expandEnvTemplate expands {{ .Env.VAR }} in config strings using the process environment.
+func expandEnvTemplate(source string) string {
+	t, err := template.New("envTemplate").Option("missingkey=error").Parse(source)
 	if err != nil {
-		log.WithFields(log.Fields{"error": err}).Debug("Password template parse failed, using literal")
+		log.WithFields(log.Fields{"error": err}).Debug("Env template parse failed, using literal")
 		return source
 	}
 	var b strings.Builder
 	if err := t.Execute(&b, map[string]interface{}{"Env": env.BuildEnvMap()}); err != nil {
-		log.WithFields(log.Fields{"error": err}).Debug("Password template execute failed, using literal")
+		log.WithFields(log.Fields{"error": err}).Debug("Env template execute failed, using literal")
 		return source
 	}
 	return b.String()
@@ -241,6 +285,8 @@ func sanitizePopupOnStart(raw string, cfg *Config) string {
 	case "execution-dialog-stdout-only":
 		return raw
 	case "execution-button":
+		return raw
+	case "history":
 		return raw
 	default:
 		return cfg.DefaultPopupOnStart

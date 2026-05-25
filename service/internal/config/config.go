@@ -195,6 +195,7 @@ type LocalUser struct {
 	Username  string `koanf:"username"`
 	Usergroup string `koanf:"usergroup"`
 	Password  string `koanf:"password"`
+	ApiKey    string `koanf:"apiKey"`
 }
 
 type OAuth2Provider struct {

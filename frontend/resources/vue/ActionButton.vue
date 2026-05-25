@@ -10,6 +10,9 @@
 				<div v-if="navigateOnStart == 'arg'" class="navigate-on-start" title="Opens an argument form on start">
 					<HugeiconsIcon :icon="TypeCursorIcon" />
 				</div>
+				<div v-if="navigateOnStart == 'hist'" class="navigate-on-start" title="Opens action execution history on start">
+					<HugeiconsIcon :icon="WorkHistoryIcon" />
+				</div>
 				<div v-if="navigateOnStart == ''" class="navigate-on-start" title="Run in the background">
 					<HugeiconsIcon :icon="WorkoutRunIcon" />
 				</div>
@@ -28,7 +31,7 @@ import { buttonResults } from './stores/buttonResults'
 import { rateLimits } from './stores/rateLimits'
 import { useRouter } from 'vue-router'
 import { HugeiconsIcon } from '@hugeicons/vue'
-import { WorkoutRunIcon, TypeCursorIcon, ComputerTerminal01Icon } from '@hugeicons/core-free-icons'
+import { WorkoutRunIcon, TypeCursorIcon, ComputerTerminal01Icon, WorkHistoryIcon } from '@hugeicons/core-free-icons'
 
 import ActionIconGlyph from './components/ActionIconGlyph.vue'
 
@@ -101,6 +104,8 @@ function constructFromJson(json) {
 
   if (popupOnStart.value.includes('execution-dialog')) {
 	navigateOnStart.value = 'pop'
+  } else if (popupOnStart.value === 'history') {
+	navigateOnStart.value = 'hist'
   } else if (props.actionData.arguments.length > 0) {
 	navigateOnStart.value = 'arg'
   }
@@ -233,6 +238,8 @@ function onLogEntryChanged(logEntry) {
 function onExecutionStarted(logEntry) {
   if (popupOnStart.value && popupOnStart.value.includes('execution-dialog')) {
 	router.push(`/logs/${logEntry.executionTrackingId}`)
+  } else if (popupOnStart.value === 'history') {
+	router.push(`/action/${bindingId.value}`)
   }
 
   isDisabled.value = true

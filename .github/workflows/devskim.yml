@@ -7,8 +7,28 @@ name: DevSkim
 
 on:
   push:
+    paths:
+      - '.github/workflows/devskim.yml'
+      - '.goreleaser.yml'
+      - 'Dockerfile.multiarches'
+      - 'Dockerfile.singlearch'
+      - 'Makefile'
+      - 'frontend/**'
+      - 'integration-tests/**'
+      - 'proto/**'
+      - 'service/**'
     branches: [ "main" ]
   pull_request:
+    paths:
+      - '.github/workflows/devskim.yml'
+      - '.goreleaser.yml'
+      - 'Dockerfile.multiarches'
+      - 'Dockerfile.singlearch'
+      - 'Makefile'
+      - 'frontend/**'
+      - 'integration-tests/**'
+      - 'proto/**'
+      - 'service/**'
     branches: [ "main" ]
   schedule:
     - cron: '34 21 * * 2'

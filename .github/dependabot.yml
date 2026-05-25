@@ -10,6 +10,8 @@ updates:
     labels:
       - "3k"
       - "dependencies"
+    cooldown:
+      default-days: 7
 
   # npm updates for frontend - targeting "release/2k" branch (security updates only)
   - package-ecosystem: "npm"
@@ -21,6 +23,8 @@ updates:
     labels:
       - "2k"
       - "dependencies"
+    cooldown:
+      default-days: 7
 
   # npm updates for integration-tests - targeting "next" branch
   - package-ecosystem: "npm"
@@ -32,6 +36,8 @@ updates:
     labels:
       - "3k"
       - "dependencies"
+    cooldown:
+      default-days: 7
 
   # npm updates for integration-tests - targeting "release/2k" branch (security updates only)
   - package-ecosystem: "npm"
@@ -43,6 +49,8 @@ updates:
     labels:
       - "2k"
       - "dependencies"
+    cooldown:
+      default-days: 7
 
   # Go modules updates for service - targeting "next" branch
   - package-ecosystem: "gomod"
@@ -54,6 +62,8 @@ updates:
     labels:
       - "3k"
       - "dependencies"
+    cooldown:
+      default-days: 7
 
   # Go modules updates for service - targeting "release/2k" branch (security updates only)
   - package-ecosystem: "gomod"
@@ -65,6 +75,8 @@ updates:
     labels:
       - "2k"
       - "dependencies"
+    cooldown:
+      default-days: 7
 
   # Go modules updates for lang - targeting "next" branch
   - package-ecosystem: "gomod"
@@ -76,6 +88,8 @@ updates:
     labels:
       - "3k"
       - "dependencies"
+    cooldown:
+      default-days: 7
 
   # Go modules updates for lang - targeting "release/2k" branch (security updates only)
   - package-ecosystem: "gomod"
@@ -87,6 +101,8 @@ updates:
     labels:
       - "2k"
       - "dependencies"
+    cooldown:
+      default-days: 7
 
   # Docker updates - targeting "next" branch
   - package-ecosystem: "docker"
@@ -98,6 +114,8 @@ updates:
     labels:
       - "3k"
       - "dependencies"
+    cooldown:
+      default-days: 7
 
   # Docker updates - targeting "release/2k" branch (security updates only)
   - package-ecosystem: "docker"
@@ -109,4 +127,6 @@ updates:
     labels:
       - "2k"
       - "dependencies"
+    cooldown:
+      default-days: 7
 

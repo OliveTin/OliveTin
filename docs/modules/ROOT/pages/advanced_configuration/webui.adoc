@@ -44,6 +44,7 @@ image::defaultUiHideNav.png[]
 When enabled (the default), each action button can show a small icon indicating what happens when the action is started:
 
 * **Popup dialog** — the action opens a popup (e.g. `popupOnStart: execution-dialog`)
+* **Action history** — the action opens the action details page (e.g. `popupOnStart: history`)
 * **Argument form** — the action opens an argument form on start
 * **Run in background** — the action runs without opening a dialog
 

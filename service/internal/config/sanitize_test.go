@@ -1,8 +1,10 @@
 package config
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestSanitizeConfig(t *testing.T) {
@@ -35,6 +37,23 @@ func TestSanitizeConfig(t *testing.T) {
 	assert.Equal(t, "hugeicons:CommandLineIcon", a2.Icon, "Default icon is the neutral CLI glyph")
 	assert.Equal(t, "Carrots", a2.Arguments[0].Title, "Arg title is set to name")
 	assert.Equal(t, "Waffle", a2.Arguments[0].Choices[0].Title, "Choice title is set to name")
+}
+
+func TestSanitizePopupOnStartHistory(t *testing.T) {
+	c := DefaultConfig()
+	c.DefaultPopupOnStart = "nothing"
+
+	c.Actions = append(c.Actions, &Action{
+		Title:        "With history",
+		PopupOnStart: "history",
+		Shell:        "true",
+	})
+	c.Sanitize()
+
+	a := c.findAction("With history")
+	if assert.NotNil(t, a) {
+		assert.Equal(t, "history", a.PopupOnStart, "history must be preserved, not replaced by defaultPopupOnStart")
+	}
 }
 
 func TestSanitizeConfigInlineDashboardActions(t *testing.T) {
@@ -71,4 +90,20 @@ func TestSanitizeConfigInlineDashboardActions(t *testing.T) {
 		assert.NotEmpty(t, found.Icon, "Inline action should have default icon applied")
 		assert.NotEmpty(t, found.ID, "Inline action should have a generated ID")
 	}
+}
+
+func TestValidateUniqueLocalUserAPIKeys(t *testing.T) {
+	t.Parallel()
+
+	err := validateUniqueLocalUserAPIKeys([]*LocalUser{
+		{Username: "a", ApiKey: "same"},
+		{Username: "b", ApiKey: "same"},
+	})
+	require.Error(t, err)
+
+	err = validateUniqueLocalUserAPIKeys([]*LocalUser{
+		{Username: "a", ApiKey: "one"},
+		{Username: "b", ApiKey: "two"},
+	})
+	require.NoError(t, err)
 }
