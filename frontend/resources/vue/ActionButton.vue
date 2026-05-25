@@ -15,7 +15,7 @@
 				</div>
 			</div>
 
-			<span class="icon" v-html="unicodeIcon"></span>
+			<ActionIconGlyph class="icon" :glyph="actionGlyph" />
 			<span class="title" aria-live="polite">{{ displayTitle }}
 			</span>
 			<span v-if="rateLimitMessage" class="rate-limit-message">{{ rateLimitMessage }}</span>
@@ -30,7 +30,9 @@ import { useRouter } from 'vue-router'
 import { HugeiconsIcon } from '@hugeicons/vue'
 import { WorkoutRunIcon, TypeCursorIcon, ComputerTerminal01Icon } from '@hugeicons/core-free-icons'
 
-import { ref, watch, onMounted, onUnmounted, inject, computed } from 'vue'
+import ActionIconGlyph from './components/ActionIconGlyph.vue'
+
+import { ref, watch, onMounted, onUnmounted, computed } from 'vue'
 
 const router = useRouter()
 const navigateOnStart = ref('')
@@ -53,7 +55,6 @@ const canExec = ref(true)
 const popupOnStart = ref('')
 
 // Display properties
-const unicodeIcon = ref('&#x1f4a9;')
 const displayTitle = ref('')
 
 // State
@@ -74,6 +75,8 @@ const showNavigateOnStartIcons = computed(() => {
 	return window.initResponse?.showNavigateOnStartIcons ?? true
 })
 
+const actionGlyph = computed(() => props.actionData?.icon ?? '')
+
 // Combined classes including custom cssClass
 const combinedClasses = computed(() => {
 	const classes = [...buttonClasses.value]
@@ -85,16 +88,6 @@ const combinedClasses = computed(() => {
 
 // Timestamps
 const updateIterationTimestamp = ref(0)
-
-function getUnicodeIcon(icon) {
-  if (icon === '') {
-	console.log('icon not found	', icon)
-
-	return '&#x1f4a9;'
-  } else {
-	return unescape(icon)
-  }
-}
 
 function constructFromJson(json) {
   updateIterationTimestamp.value = 0
@@ -114,8 +107,6 @@ function constructFromJson(json) {
 
   isDisabled.value = !json.canExec
   displayTitle.value = title.value
-  unicodeIcon.value = getUnicodeIcon(json.icon)
-
   // Initialize rate limit from action data (parse datetime string)
   if (json.datetimeRateLimitExpires) {
 	const date = new Date(json.datetimeRateLimitExpires.replace(' ', 'T'))
@@ -133,8 +124,6 @@ function constructFromJson(json) {
 function updateFromJson(json) {
   // Fields that should not be updated
   // title - as the callback URL relies on it
-
-  unicodeIcon.value = getUnicodeIcon(json.icon)
 
   // Update rate limiting if changed (parse datetime string)
   if (json.datetimeRateLimitExpires) {

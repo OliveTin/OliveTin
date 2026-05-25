@@ -25,7 +25,7 @@
 						<ActionStatusDisplay :log-entry="logEntry" id = "execution-dialog-status" />
 					</dd>
 				</dl>
-        <span class="icon" role="img" v-html="icon" style = "align-self: start"></span>
+        <ActionIconGlyph class="icon" role="img" :glyph="icon" style="align-self: start" />
     </div>
 
 		<div v-if="notFound" class="error-message padded-content">
@@ -62,6 +62,7 @@
 
 <script setup>
 	import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
+import ActionIconGlyph from '../components/ActionIconGlyph.vue'
 import ActionStatusDisplay from '../components/ActionStatusDisplay.vue'
 import Section from 'picocrank/vue/components/Section.vue'
 import { OutputTerminal } from '../../../js/OutputTerminal.js'

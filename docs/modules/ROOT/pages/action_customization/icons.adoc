@@ -2,7 +2,7 @@
 = Icons
 
 You can specify any HTML for an icon. It's a popular choice to use Unicode
-icons because they are extremely fast to load and there are a lot of them, 
+icons because they are extremely fast to load and there are a lot of them,
 but OliveTin also support Iconify, and simple PNG, JPG, WEBP and similar images.
 
 .Examples of icons in OliveTin
@@ -39,14 +39,31 @@ And you should get something that looks like this;
 
 image::../action-button-iconify.png[]
 
+== HugeIcons icons (bundled)
+
+The OliveTin web UI ships with curated https://www.hugeicons.com/[HugeIcons] symbols.
+Set `icon:` to `hugeicons:` followed by the icon export name, for example `hugeicons:NeutralIcon`.
+
+This is the neutral glyph OliveTin uses when no icon is configured for an action.
+
+.`config.yaml`
+----
+actions:
+  - title: Action with the bundled CLI HugeIcon
+    icon: hugeicons:CommandLineIcon
+    shell: echo hello
+----
+
+Known `hugeicons:` names are registered in the web UI (`ActionIconGlyph` Vue component).
+
 == Unicode icons ("emoji")
 
-Using simple emoji (unicode) icons from your browser's font is extremely fast, and can look good on some platforms. However, the icons are platform specific, which mean's they'll look different between browsers and between operating systems. 
+Using simple emoji (unicode) icons from your browser's font is extremely fast, and can look good on some platforms. However, the icons are platform specific, which mean's they'll look different between browsers and between operating systems.
 
 There are great sites like link:https://symbl.cc/en/emoji/[symbl.cc - a list of
-"Emoji" in unicode]. 
+"Emoji" in unicode].
 
-For example, if you find "link:https://symbl.cc/en/1F60E/[Smiling face with sunglasses]" you can click 
+For example, if you find "link:https://symbl.cc/en/1F60E/[Smiling face with sunglasses]" you can click
 on it to see it's "HTML-code". In OliveTin, you'd setup the icon like this;
 
 ----
@@ -56,16 +73,16 @@ actions:
     shell: echo "You are awesome"
 ----
 
-=== Unicode alises 
+=== Unicode alises
 
 OliveTin has hard-coded aliases for a few commonly used icons, so you don't have to type out the full unicode codes. A list of those hard coded icons is;
 
 .Alias'd unicode reference table
 [%header]
 |===
-| Alias                       | Rendered as                       
+| Alias                       | Rendered as
 
-| `poop`                      | &#x1f4a9; 
+| `poop`                      | &#x1f4a9;
 | `smile`                     | &#x1F600;
 |	`ping`                      | &#x1f4e1;
 |	`backup`                    | &#128190;
@@ -140,5 +157,3 @@ examples;
       shell: echo "I like purple"
 ----
 ////
-
-

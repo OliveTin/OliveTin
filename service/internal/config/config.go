@@ -285,7 +285,7 @@ func DefaultConfigWithBasePort(basePort int) *Config {
 	config.Security.HeaderXContentTypeOptions = true
 	config.Security.HeaderXFrameOptions = true
 	config.Security.XFrameOptions = "DENY"
-	config.DefaultIconForActions = "&#x1F600;"
+	config.DefaultIconForActions = "hugeicons:CommandLineIcon"
 	config.DefaultIconForDirectories = "&#128193"
 	config.DefaultIconForBack = "&laquo;"
 	config.ThemeCacheDisabled = false
