@@ -47,7 +47,7 @@
             <tr v-for="log in filteredLogs" :key="log.executionTrackingId" class="log-row" :title="log.actionTitle">
               <td class="timestamp">{{ formatTimestamp(log.datetimeStarted) }}</td>
               <td>
-                <span class="icon" v-html="log.actionIcon"></span>
+                <ActionIconGlyph class="icon" :glyph="log.actionIcon" />
                 <router-link :to="`/logs/${log.executionTrackingId}`">
                   {{ log.actionTitle }}
                 </router-link>
@@ -93,6 +93,7 @@ import Pagination from 'picocrank/vue/components/Pagination.vue'
 import Section from 'picocrank/vue/components/Section.vue'
 import { useI18n } from 'vue-i18n'
 import ActionStatusDisplay from '../components/ActionStatusDisplay.vue'
+import ActionIconGlyph from '../components/ActionIconGlyph.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -126,7 +127,7 @@ watch(() => route.query.date, () => {
 
 const filteredLogs = computed(() => {
   let result = logs.value
-  
+
   // Date filtering is now done server-side, so we only need to filter by search text
   if (searchText.value) {
     const searchLower = searchText.value.toLowerCase()
@@ -134,7 +135,7 @@ const filteredLogs = computed(() => {
       log.actionTitle.toLowerCase().includes(searchLower)
     )
   }
-  
+
   // Sort by timestamp with most recent first
   return [...result].sort((a, b) => {
     const dateA = a.datetimeStarted ? new Date(a.datetimeStarted).getTime() : 0

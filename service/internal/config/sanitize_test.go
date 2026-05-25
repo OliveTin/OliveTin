@@ -34,7 +34,7 @@ func TestSanitizeConfig(t *testing.T) {
 
 	assert.NotNil(t, a2, "Found action after adding it")
 	assert.Equal(t, 3, a2.Timeout, "Default timeout is set")
-	assert.Equal(t, "&#x1F600;", a2.Icon, "Default icon is a smiley")
+	assert.Equal(t, "hugeicons:CommandLineIcon", a2.Icon, "Default icon is the neutral CLI glyph")
 	assert.Equal(t, "Carrots", a2.Arguments[0].Title, "Arg title is set to name")
 	assert.Equal(t, "Waffle", a2.Arguments[0].Choices[0].Title, "Choice title is set to name")
 }

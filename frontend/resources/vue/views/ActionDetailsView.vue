@@ -32,7 +32,7 @@
           </p>
         </div>
         <div style = "align-self: start; text-align: right;">
-          <span class="icon" v-html="action.icon"></span>
+          <ActionIconGlyph class="icon" :glyph="action.icon" />
 
           <div class="filter-container">
             <label class="input-with-icons">
@@ -104,6 +104,7 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import Pagination from 'picocrank/vue/components/Pagination.vue'
 import Section from 'picocrank/vue/components/Section.vue'
+import ActionIconGlyph from '../components/ActionIconGlyph.vue'
 import ActionStatusDisplay from '../components/ActionStatusDisplay.vue'
 
 const route = useRoute()
@@ -446,4 +447,3 @@ watch(
   align-items: center;
 }
 </style>
-
