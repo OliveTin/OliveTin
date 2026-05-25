@@ -1,5 +1,5 @@
 <template>
-	<div :id="`actionButton-${bindingId}`" role="none" class="action-button">
+	<div :id="`actionButton-${bindingId}`" role="none" class="action-button" @contextmenu.prevent="openActionDetails">
 		<button :id="`actionButtonInner-${bindingId}`" :title="title" :disabled="!canExec || isDisabled"
 													  :class="combinedClasses" @click="handleClick">
 
@@ -191,7 +191,19 @@ function updateRateLimitStatus() {
   }
 }
 
+function openActionDetails() {
+  const id = props.actionData?.bindingId
+  if (!id) {
+	return
+  }
+  router.push(`/action/${id}`)
+}
+
 async function handleClick() {
+  if (popupOnStart.value === 'history') {
+	openActionDetails()
+	return
+  }
   if (props.actionData.arguments && props.actionData.arguments.length > 0) {
 	router.push(`/actionBinding/${props.actionData.bindingId}/argumentForm`)
   } else {
@@ -249,8 +261,6 @@ function onLogEntryChanged(logEntry) {
 function onExecutionStarted(logEntry) {
   if (popupOnStart.value && popupOnStart.value.includes('execution-dialog')) {
 	router.push(`/logs/${logEntry.executionTrackingId}`)
-  } else if (popupOnStart.value === 'history') {
-	router.push(`/action/${bindingId.value}`)
   }
 
   isDisabled.value = true
