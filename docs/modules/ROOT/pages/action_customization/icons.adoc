@@ -39,12 +39,11 @@ And you should get something that looks like this;
 
 image::../action-button-iconify.png[]
 
-== HugeIcons icons (bundled)
+== Default Icon (bundled HugeIcon)
 
-The OliveTin web UI ships with curated https://www.hugeicons.com/[HugeIcons] symbols.
-Set `icon:` to `hugeicons:` followed by the icon export name, for example `hugeicons:NeutralIcon`.
+OliveTin used to use a default emoji smiley face as the default icon for actions, but that was a bit too "emoji" and not everyone liked it. Now, OliveTin uses a simple "command line" icon from the HugeIcons set as the default icon for actions. This is a simple and neutral icon that should work well for most actions.
 
-This is the neutral glyph OliveTin uses when no icon is configured for an action.
+If you need to reset a default icon for some reason, this is how you can do it;
 
 .`config.yaml`
 ----
@@ -54,7 +53,7 @@ actions:
     shell: echo hello
 ----
 
-Known `hugeicons:` names are registered in the web UI (`ActionIconGlyph` Vue component).
+If you want to use other icons from the HugeIcons set, you need to use the Iconify method described above, not with the "hugeicons:" prefix - that only works for the default icon.
 
 == Unicode icons ("emoji")
 
@@ -73,7 +72,7 @@ actions:
     shell: echo "You are awesome"
 ----
 
-=== Unicode alises
+=== Unicode aliases
 
 OliveTin has hard-coded aliases for a few commonly used icons, so you don't have to type out the full unicode codes. A list of those hard coded icons is;
 

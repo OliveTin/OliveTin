@@ -18,7 +18,7 @@ actions:
     shell: echo 'Hello World!'
 ----
 
-The configuration does not really get more complicated than that. You can of course add more actions, and customize more, but the syntax otherwise extremely simple.
+The configuration does not really get more complicated than that. You can of course add more actions, and customize more, but the syntax is otherwise extremely simple.
 
 For building up from here, look at the following resources;
 

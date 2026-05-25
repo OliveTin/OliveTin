@@ -7,7 +7,7 @@
 			height="1em"
 			class="action-icon-glyph-svg"
 		/>
-		<span v-else v-html="decodedHtmlGlyph"></span>
+		<span v-else v-text="decodedTextGlyph"></span>
 	</span>
 </template>
 
@@ -32,25 +32,36 @@ const props = defineProps({
 })
 
 const hugeiconsModel = computed(() => {
+	if (!props.glyph) {
+		return CommandLineIcon
+	}
+
 	if (!props.glyph.startsWith(hugeiconsPrefix)) {
 		return null
 	}
+
 	const name = props.glyph.slice(hugeiconsPrefix.length)
 	const iconModel = hugeiconsRegistry[name]
 
 	return iconModel ?? CommandLineIcon
 })
 
-const decodedHtmlGlyph = computed(() => {
-	if (props.glyph === '') {
-		return '&#x1f4a9;'
-	}
+function decodeHtmlEntities(text) {
+	return text.replace(/&#x([0-9a-fA-F]+);?/g, (_, hex) => {
+		const codePoint = Number.parseInt(hex, 16)
+		return Number.isFinite(codePoint) ? String.fromCodePoint(codePoint) : ''
+	}).replace(/&#(\d+);?/g, (_, decimal) => {
+		const codePoint = Number.parseInt(decimal, 10)
+		return Number.isFinite(codePoint) ? String.fromCodePoint(codePoint) : ''
+	})
+}
 
+const decodedTextGlyph = computed(() => {
 	if (hugeiconsModel.value) {
 		return ''
 	}
 
-	return unescape(props.glyph)
+	return decodeHtmlEntities(props.glyph)
 })
 </script>
 
