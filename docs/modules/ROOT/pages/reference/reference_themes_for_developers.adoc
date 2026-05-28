@@ -48,4 +48,4 @@ The OliveTin themes page is here; https://olivetin.app/themes
 
 When you are done with your theme, fork https://github.com/OliveTin/themes on GitHub and create a new page under the "content" directory for your new theme. Commit that to GitHub and then raise a pull request.
 
-If you need more help, please jump on our discord server! 
+If you need more help, please jump on our Discord server! 
