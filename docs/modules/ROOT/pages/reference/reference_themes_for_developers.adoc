@@ -18,7 +18,7 @@ Note that OliveTin will load `/theme.css` depending on `themeName:` in your conf
 
 == Understanding theme URLs
 
-When you create a theme, OliveTin will serve your theme's CSS at `/theme.css` and any other assets at `/custom-webui/themes/mytheme/`. This might be a little strange at first, as your theme.css file wil be in the `/custom-webui/themes/mytheme/` directory, but OliveTin will still serve it at `/theme.css`. Let's explain why this happens;
+When you create a theme, OliveTin will serve your theme's CSS at `/theme.css` and any other assets at `/custom-webui/themes/mytheme/`. This might be a little strange at first, as your theme.css file will be in the `/custom-webui/themes/mytheme/` directory, but OliveTin will still serve it at `/theme.css`. Let's explain why this happens;
 
 OliveTin wants to make it easy for your reverse proxy, cache server, or browser, to cache as much content as possible. This means that if OliveTin had to inject a new CSS file into the HTML every time you changed your theme, then your reverse proxy, cache server, or browser would have to re-download the HTML every time you changed your theme. This is not ideal. 
 
@@ -26,7 +26,7 @@ It is possible that OliveTin's initial webUiSettings.json (that is loaded to set
 
 To make things fast, OliveTin will copy the content of your `/custom-webui/themes/mytheme/theme.css` file into memory when it starts, and then requests for `/theme.css` will load this file. 
 
-What this means for you, is that to get to files like `backgrond.png` from your CSS, you must write your CSS to point to the file in the `/custom-webui/themes/mytheme/` directory;
+What this means for you, is that to get to files like `background.png` from your CSS, you must write your CSS to point to the file in the `/custom-webui/themes/mytheme/` directory;
 
 .Correct example
 ```
@@ -48,6 +48,4 @@ The OliveTin themes page is here; https://olivetin.app/themes
 
 When you are done with your theme, fork https://github.com/OliveTin/themes on GitHub and create a new page under the "content" directory for your new theme. Commit that to GitHub and then raise a pull request.
 
-If you meed more help, please jump on our discord server! 
-
-
+If you need more help, please jump on our discord server! 
