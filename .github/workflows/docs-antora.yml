@@ -32,3 +32,13 @@ jobs:
 
       - name: Generate docs site (smoke)
         run: npx antora local-antora-playbook-ci.yml --log-level info
+
+  trigger-docs-publish:
+    needs: antora
+    if: github.event_name == 'push' && github.ref == 'refs/heads/next'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger docs.olivetin.app publish
+        env:
+          GH_TOKEN: ${{ secrets.CONTAINER_TOKEN }}
+        run: gh workflow run asciidoc.yml --repo OliveTin/docs.olivetin.app --ref main
