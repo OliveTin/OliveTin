@@ -21,6 +21,7 @@ var (
 		"unicode_identifier":        `^[\w\-\.\_\d]+$`,
 		"ascii":                     `^[a-zA-Z0-9]+$`,
 		"ascii_identifier":          `^[a-zA-Z0-9\-\._]+$`,
+		"shell_safe_identifier":     `^[a-zA-Z0-9@\.\_\+\-]+$`,
 		"ascii_sentence":            `^[a-zA-Z0-9\-\._, ]+$`,
 	}
 )

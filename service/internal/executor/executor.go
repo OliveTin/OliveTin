@@ -666,13 +666,15 @@ func stepACLCheck(req *ExecutionRequest) bool {
 
 func stepParseArgs(req *ExecutionRequest) bool {
 	ensureArgumentMap(req)
-	injectSystemArgs(req)
 
 	if !hasBindingAndAction(req) {
 		return fail(req, fmt.Errorf("cannot parse arguments: Binding or Action is nil"))
 	}
 
 	filterToDefinedArgumentsOnly(req)
+	if err := injectSystemArgs(req); err != nil {
+		return fail(req, err)
+	}
 	mangleInvalidArgumentValues(req)
 
 	if hasExec(req) {
@@ -735,7 +737,7 @@ func filterToDefinedArgumentsOnly(req *ExecutionRequest) {
 
 func keepArgument(name string, definedNames map[string]struct{}) bool {
 	_, ok := definedNames[name]
-	return ok || strings.HasPrefix(name, "ot_")
+	return ok
 }
 
 func hasWebhookTag(req *ExecutionRequest) bool {
@@ -747,9 +749,38 @@ func hasWebhookTag(req *ExecutionRequest) bool {
 	return false
 }
 
-func injectSystemArgs(req *ExecutionRequest) {
-	req.Arguments["ot_executionTrackingId"] = req.TrackingID
-	req.Arguments["ot_username"] = req.AuthenticatedUser.Username
+var systemArgumentDefinitions = []config.ActionArgument{
+	{Name: "ot_executionTrackingId", Type: "ascii_identifier", RejectNull: true},
+	{Name: "ot_username", Type: "shell_safe_identifier", RejectNull: true},
+}
+
+func injectSystemArgs(req *ExecutionRequest) error {
+	args, err := validatedSystemArgs(req)
+	if err != nil {
+		return err
+	}
+
+	for name, value := range args {
+		req.Arguments[name] = value
+	}
+
+	return nil
+}
+
+func validatedSystemArgs(req *ExecutionRequest) (map[string]string, error) {
+	values := map[string]string{
+		"ot_executionTrackingId": req.TrackingID,
+		"ot_username":            req.AuthenticatedUser.Username,
+	}
+
+	for i := range systemArgumentDefinitions {
+		arg := &systemArgumentDefinitions[i]
+		if err := ValidateArgument(arg, values[arg.Name], req.Binding.Action); err != nil {
+			return nil, fmt.Errorf("system argument %q failed validation: %w", arg.Name, err)
+		}
+	}
+
+	return values, nil
 }
 
 func hasBindingAndAction(req *ExecutionRequest) bool {
@@ -939,35 +970,19 @@ func prepareCommand(cmd *exec.Cmd, streamer *OutputStreamer, req *ExecutionReque
 }
 
 func stepExecAfter(req *ExecutionRequest) bool {
-	if req.Binding.Action.ShellAfterCompleted == "" {
-		return true
-	}
-
 	ctx, cancel := newTimeoutContext(context.Background(), time.Duration(req.Binding.Action.Timeout)*time.Second, req.executor)
 	defer cancel()
 
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
-	args := map[string]string{
-		"output":                 req.logEntry.Output,
-		"exitCode":               fmt.Sprintf("%v", req.logEntry.ExitCode),
-		"ot_executionTrackingId": req.TrackingID,
-		"ot_username":            req.AuthenticatedUser.Username,
-	}
-
-	finalParsedCommand, err := tpl.ParseTemplateWithActionContext(req.Binding.Action.ShellAfterCompleted, req.Binding.Entity, args)
-
+	cmd, args, err := buildShellAfterCommand(ctx, req, &stdout, &stderr)
 	if err != nil {
-		msg := "Could not prepare shellAfterCompleted command: " + err.Error() + "\n"
-		req.logEntry.Output += msg
-		log.Warn(msg)
+		return fail(req, err)
+	}
+	if cmd == nil {
 		return true
 	}
-
-	cmd := wrapCommandInShell(ctx, finalParsedCommand)
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
 
 	cmd.Env = buildEnv(args)
 
@@ -996,6 +1011,43 @@ func stepExecAfter(req *ExecutionRequest) bool {
 	req.logEntry.Output += "OliveTin::shellAfterCompleted output complete\n"
 
 	return true
+}
+
+func buildShellAfterCommand(ctx context.Context, req *ExecutionRequest, stdout, stderr *bytes.Buffer) (*exec.Cmd, map[string]string, error) {
+	if req.Binding.Action.ShellAfterCompleted == "" {
+		return nil, nil, nil
+	}
+
+	args, err := buildShellAfterArgs(req)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	finalParsedCommand, err := tpl.ParseTemplateWithActionContext(req.Binding.Action.ShellAfterCompleted, req.Binding.Entity, args)
+	if err != nil {
+		msg := "Could not prepare shellAfterCompleted command: " + err.Error() + "\n"
+		req.logEntry.Output += msg
+		log.Warn(msg)
+		return nil, nil, nil
+	}
+
+	cmd := wrapCommandInShell(ctx, finalParsedCommand)
+	cmd.Stdout = stdout
+	cmd.Stderr = stderr
+
+	return cmd, args, nil
+}
+
+func buildShellAfterArgs(req *ExecutionRequest) (map[string]string, error) {
+	args, err := validatedSystemArgs(req)
+	if err != nil {
+		return nil, err
+	}
+
+	args["output"] = req.logEntry.Output
+	args["exitCode"] = fmt.Sprintf("%v", req.logEntry.ExitCode)
+
+	return args, nil
 }
 
 //gocyclo:ignore

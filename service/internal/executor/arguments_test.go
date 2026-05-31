@@ -576,6 +576,38 @@ func TestTypeSafetyCheckAsciiIdentifier(t *testing.T) {
 	}
 }
 
+func TestTypeSafetyCheckShellSafeIdentifier(t *testing.T) {
+	tests := []struct {
+		name     string
+		value    string
+		hasError bool
+	}{
+		{"Simple username", "alice123", false},
+		{"Email username", "alice@example.com", false},
+		{"Plus addressing", "alice+test@example.com", false},
+		{"Hyphen underscore dot", "alice-test_user.example", false},
+		{"Invalid space", "alice example", true},
+		{"Invalid shell substitution", "$(whoami)", true},
+		{"Invalid backtick", "`whoami`", true},
+		{"Invalid semicolon", "alice;id", true},
+		{"Invalid ampersand", "alice&id", true},
+		{"Invalid pipe", "alice|id", true},
+		{"Invalid quote", "alice'example", true},
+		{"Invalid slash", "alice/example", true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := TypeSafetyCheck("username", tt.value, "shell_safe_identifier")
+			if tt.hasError {
+				assert.NotNil(t, err, "Expected error for value '%s'", tt.value)
+			} else {
+				assert.Nil(t, err, "Expected no error for value '%s', but got: %v", tt.value, err)
+			}
+		})
+	}
+}
+
 func TestTypeSafetyCheckAsciiSentence(t *testing.T) {
 	tests := []struct {
 		name     string
