@@ -25,6 +25,8 @@ message Action {
 message ActionWebhookExecHint {
 	string template = 1;
 	string match_path = 2;
+	map<string, string> match_headers = 3;
+	map<string, string> match_query = 4;
 }
 
 message ActionArgument {

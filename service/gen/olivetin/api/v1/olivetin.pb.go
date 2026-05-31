@@ -181,6 +181,8 @@ type ActionWebhookExecHint struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Template      string                 `protobuf:"bytes,1,opt,name=template,proto3" json:"template,omitempty"`
 	MatchPath     string                 `protobuf:"bytes,2,opt,name=match_path,json=matchPath,proto3" json:"match_path,omitempty"`
+	MatchHeaders  map[string]string      `protobuf:"bytes,3,rep,name=match_headers,json=matchHeaders,proto3" json:"match_headers,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	MatchQuery    map[string]string      `protobuf:"bytes,4,rep,name=match_query,json=matchQuery,proto3" json:"match_query,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -227,6 +229,20 @@ func (x *ActionWebhookExecHint) GetMatchPath() string {
 		return x.MatchPath
 	}
 	return ""
+}
+
+func (x *ActionWebhookExecHint) GetMatchHeaders() map[string]string {
+	if x != nil {
+		return x.MatchHeaders
+	}
+	return nil
+}
+
+func (x *ActionWebhookExecHint) GetMatchQuery() map[string]string {
+	if x != nil {
+		return x.MatchQuery
+	}
+	return nil
 }
 
 type ActionArgument struct {
@@ -4022,11 +4038,20 @@ const file_olivetin_api_v1_olivetin_proto_rawDesc = "" +
 	"\x1bexec_on_file_created_in_dir\x18\f \x03(\tR\x16execOnFileCreatedInDir\x12;\n" +
 	"\x1bexec_on_file_changed_in_dir\x18\r \x03(\tR\x16execOnFileChangedInDir\x121\n" +
 	"\x15exec_on_calendar_file\x18\x0e \x01(\tR\x12execOnCalendarFile\x12P\n" +
-	"\x10exec_on_webhooks\x18\x0f \x03(\v2&.olivetin.api.v1.ActionWebhookExecHintR\x0eexecOnWebhooks\"R\n" +
+	"\x10exec_on_webhooks\x18\x0f \x03(\v2&.olivetin.api.v1.ActionWebhookExecHintR\x0eexecOnWebhooks\"\x8a\x03\n" +
 	"\x15ActionWebhookExecHint\x12\x1a\n" +
 	"\btemplate\x18\x01 \x01(\tR\btemplate\x12\x1d\n" +
 	"\n" +
-	"match_path\x18\x02 \x01(\tR\tmatchPath\"\xa2\x03\n" +
+	"match_path\x18\x02 \x01(\tR\tmatchPath\x12]\n" +
+	"\rmatch_headers\x18\x03 \x03(\v28.olivetin.api.v1.ActionWebhookExecHint.MatchHeadersEntryR\fmatchHeaders\x12W\n" +
+	"\vmatch_query\x18\x04 \x03(\v26.olivetin.api.v1.ActionWebhookExecHint.MatchQueryEntryR\n" +
+	"matchQuery\x1a?\n" +
+	"\x11MatchHeadersEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a=\n" +
+	"\x0fMatchQueryEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xa2\x03\n" +
 	"\x0eActionArgument\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\x12\x12\n" +
@@ -4330,7 +4355,7 @@ func file_olivetin_api_v1_olivetin_proto_rawDescGZIP() []byte {
 	return file_olivetin_api_v1_olivetin_proto_rawDescData
 }
 
-var file_olivetin_api_v1_olivetin_proto_msgTypes = make([]protoimpl.MessageInfo, 73)
+var file_olivetin_api_v1_olivetin_proto_msgTypes = make([]protoimpl.MessageInfo, 75)
 var file_olivetin_api_v1_olivetin_proto_goTypes = []any{
 	(*Action)(nil),                          // 0: olivetin.api.v1.Action
 	(*ActionWebhookExecHint)(nil),           // 1: olivetin.api.v1.ActionWebhookExecHint
@@ -4401,99 +4426,103 @@ var file_olivetin_api_v1_olivetin_proto_goTypes = []any{
 	(*EntityDefinition)(nil),                // 66: olivetin.api.v1.EntityDefinition
 	(*GetEntityRequest)(nil),                // 67: olivetin.api.v1.GetEntityRequest
 	(*RestartActionRequest)(nil),            // 68: olivetin.api.v1.RestartActionRequest
-	nil,                                     // 69: olivetin.api.v1.ActionArgument.SuggestionsEntry
-	nil,                                     // 70: olivetin.api.v1.Entity.FieldsEntry
-	nil,                                     // 71: olivetin.api.v1.DumpVarsResponse.ContentsEntry
-	nil,                                     // 72: olivetin.api.v1.DumpPublicIdActionMapResponse.ContentsEntry
+	nil,                                     // 69: olivetin.api.v1.ActionWebhookExecHint.MatchHeadersEntry
+	nil,                                     // 70: olivetin.api.v1.ActionWebhookExecHint.MatchQueryEntry
+	nil,                                     // 71: olivetin.api.v1.ActionArgument.SuggestionsEntry
+	nil,                                     // 72: olivetin.api.v1.Entity.FieldsEntry
+	nil,                                     // 73: olivetin.api.v1.DumpVarsResponse.ContentsEntry
+	nil,                                     // 74: olivetin.api.v1.DumpPublicIdActionMapResponse.ContentsEntry
 }
 var file_olivetin_api_v1_olivetin_proto_depIdxs = []int32{
 	2,  // 0: olivetin.api.v1.Action.arguments:type_name -> olivetin.api.v1.ActionArgument
 	1,  // 1: olivetin.api.v1.Action.exec_on_webhooks:type_name -> olivetin.api.v1.ActionWebhookExecHint
-	3,  // 2: olivetin.api.v1.ActionArgument.choices:type_name -> olivetin.api.v1.ActionArgumentChoice
-	69, // 3: olivetin.api.v1.ActionArgument.suggestions:type_name -> olivetin.api.v1.ActionArgument.SuggestionsEntry
-	70, // 4: olivetin.api.v1.Entity.fields:type_name -> olivetin.api.v1.Entity.FieldsEntry
-	8,  // 5: olivetin.api.v1.GetDashboardResponse.dashboard:type_name -> olivetin.api.v1.Dashboard
-	9,  // 6: olivetin.api.v1.Dashboard.contents:type_name -> olivetin.api.v1.DashboardComponent
-	9,  // 7: olivetin.api.v1.DashboardComponent.contents:type_name -> olivetin.api.v1.DashboardComponent
-	0,  // 8: olivetin.api.v1.DashboardComponent.action:type_name -> olivetin.api.v1.Action
-	11, // 9: olivetin.api.v1.StartActionRequest.arguments:type_name -> olivetin.api.v1.StartActionArgument
-	11, // 10: olivetin.api.v1.StartActionAndWaitRequest.arguments:type_name -> olivetin.api.v1.StartActionArgument
-	20, // 11: olivetin.api.v1.StartActionAndWaitResponse.log_entry:type_name -> olivetin.api.v1.LogEntry
-	20, // 12: olivetin.api.v1.StartActionByGetAndWaitResponse.log_entry:type_name -> olivetin.api.v1.LogEntry
-	20, // 13: olivetin.api.v1.GetLogsResponse.logs:type_name -> olivetin.api.v1.LogEntry
-	20, // 14: olivetin.api.v1.GetActionLogsResponse.logs:type_name -> olivetin.api.v1.LogEntry
-	20, // 15: olivetin.api.v1.ExecutionStatusResponse.log_entry:type_name -> olivetin.api.v1.LogEntry
-	71, // 16: olivetin.api.v1.DumpVarsResponse.contents:type_name -> olivetin.api.v1.DumpVarsResponse.ContentsEntry
-	72, // 17: olivetin.api.v1.DumpPublicIdActionMapResponse.contents:type_name -> olivetin.api.v1.DumpPublicIdActionMapResponse.ContentsEntry
-	44, // 18: olivetin.api.v1.EventStreamResponse.entity_changed:type_name -> olivetin.api.v1.EventEntityChanged
-	45, // 19: olivetin.api.v1.EventStreamResponse.config_changed:type_name -> olivetin.api.v1.EventConfigChanged
-	46, // 20: olivetin.api.v1.EventStreamResponse.execution_finished:type_name -> olivetin.api.v1.EventExecutionFinished
-	47, // 21: olivetin.api.v1.EventStreamResponse.execution_started:type_name -> olivetin.api.v1.EventExecutionStarted
-	43, // 22: olivetin.api.v1.EventStreamResponse.output_chunk:type_name -> olivetin.api.v1.EventOutputChunk
-	20, // 23: olivetin.api.v1.EventExecutionFinished.log_entry:type_name -> olivetin.api.v1.LogEntry
-	20, // 24: olivetin.api.v1.EventExecutionStarted.log_entry:type_name -> olivetin.api.v1.LogEntry
-	61, // 25: olivetin.api.v1.InitResponse.oAuth2Providers:type_name -> olivetin.api.v1.OAuth2Provider
-	60, // 26: olivetin.api.v1.InitResponse.additionalLinks:type_name -> olivetin.api.v1.AdditionalLink
-	6,  // 27: olivetin.api.v1.InitResponse.effective_policy:type_name -> olivetin.api.v1.EffectivePolicy
-	0,  // 28: olivetin.api.v1.GetActionBindingResponse.action:type_name -> olivetin.api.v1.Action
-	66, // 29: olivetin.api.v1.GetEntitiesResponse.entity_definitions:type_name -> olivetin.api.v1.EntityDefinition
-	4,  // 30: olivetin.api.v1.EntityDefinition.instances:type_name -> olivetin.api.v1.Entity
-	36, // 31: olivetin.api.v1.DumpPublicIdActionMapResponse.ContentsEntry.value:type_name -> olivetin.api.v1.DebugBinding
-	7,  // 32: olivetin.api.v1.OliveTinApiService.GetDashboard:input_type -> olivetin.api.v1.GetDashboardRequest
-	10, // 33: olivetin.api.v1.OliveTinApiService.StartAction:input_type -> olivetin.api.v1.StartActionRequest
-	13, // 34: olivetin.api.v1.OliveTinApiService.StartActionAndWait:input_type -> olivetin.api.v1.StartActionAndWaitRequest
-	15, // 35: olivetin.api.v1.OliveTinApiService.StartActionByGet:input_type -> olivetin.api.v1.StartActionByGetRequest
-	17, // 36: olivetin.api.v1.OliveTinApiService.StartActionByGetAndWait:input_type -> olivetin.api.v1.StartActionByGetAndWaitRequest
-	68, // 37: olivetin.api.v1.OliveTinApiService.RestartAction:input_type -> olivetin.api.v1.RestartActionRequest
-	48, // 38: olivetin.api.v1.OliveTinApiService.KillAction:input_type -> olivetin.api.v1.KillActionRequest
-	28, // 39: olivetin.api.v1.OliveTinApiService.ExecutionStatus:input_type -> olivetin.api.v1.ExecutionStatusRequest
-	19, // 40: olivetin.api.v1.OliveTinApiService.GetLogs:input_type -> olivetin.api.v1.GetLogsRequest
-	22, // 41: olivetin.api.v1.OliveTinApiService.GetActionLogs:input_type -> olivetin.api.v1.GetActionLogsRequest
-	24, // 42: olivetin.api.v1.OliveTinApiService.ValidateArgumentType:input_type -> olivetin.api.v1.ValidateArgumentTypeRequest
-	30, // 43: olivetin.api.v1.OliveTinApiService.WhoAmI:input_type -> olivetin.api.v1.WhoAmIRequest
-	32, // 44: olivetin.api.v1.OliveTinApiService.SosReport:input_type -> olivetin.api.v1.SosReportRequest
-	34, // 45: olivetin.api.v1.OliveTinApiService.DumpVars:input_type -> olivetin.api.v1.DumpVarsRequest
-	37, // 46: olivetin.api.v1.OliveTinApiService.DumpPublicIdActionMap:input_type -> olivetin.api.v1.DumpPublicIdActionMapRequest
-	39, // 47: olivetin.api.v1.OliveTinApiService.GetReadyz:input_type -> olivetin.api.v1.GetReadyzRequest
-	50, // 48: olivetin.api.v1.OliveTinApiService.LocalUserLogin:input_type -> olivetin.api.v1.LocalUserLoginRequest
-	52, // 49: olivetin.api.v1.OliveTinApiService.PasswordHash:input_type -> olivetin.api.v1.PasswordHashRequest
-	54, // 50: olivetin.api.v1.OliveTinApiService.Logout:input_type -> olivetin.api.v1.LogoutRequest
-	41, // 51: olivetin.api.v1.OliveTinApiService.EventStream:input_type -> olivetin.api.v1.EventStreamRequest
-	56, // 52: olivetin.api.v1.OliveTinApiService.GetDiagnostics:input_type -> olivetin.api.v1.GetDiagnosticsRequest
-	58, // 53: olivetin.api.v1.OliveTinApiService.Init:input_type -> olivetin.api.v1.InitRequest
-	62, // 54: olivetin.api.v1.OliveTinApiService.GetActionBinding:input_type -> olivetin.api.v1.GetActionBindingRequest
-	64, // 55: olivetin.api.v1.OliveTinApiService.GetEntities:input_type -> olivetin.api.v1.GetEntitiesRequest
-	67, // 56: olivetin.api.v1.OliveTinApiService.GetEntity:input_type -> olivetin.api.v1.GetEntityRequest
-	5,  // 57: olivetin.api.v1.OliveTinApiService.GetDashboard:output_type -> olivetin.api.v1.GetDashboardResponse
-	12, // 58: olivetin.api.v1.OliveTinApiService.StartAction:output_type -> olivetin.api.v1.StartActionResponse
-	14, // 59: olivetin.api.v1.OliveTinApiService.StartActionAndWait:output_type -> olivetin.api.v1.StartActionAndWaitResponse
-	16, // 60: olivetin.api.v1.OliveTinApiService.StartActionByGet:output_type -> olivetin.api.v1.StartActionByGetResponse
-	18, // 61: olivetin.api.v1.OliveTinApiService.StartActionByGetAndWait:output_type -> olivetin.api.v1.StartActionByGetAndWaitResponse
-	12, // 62: olivetin.api.v1.OliveTinApiService.RestartAction:output_type -> olivetin.api.v1.StartActionResponse
-	49, // 63: olivetin.api.v1.OliveTinApiService.KillAction:output_type -> olivetin.api.v1.KillActionResponse
-	29, // 64: olivetin.api.v1.OliveTinApiService.ExecutionStatus:output_type -> olivetin.api.v1.ExecutionStatusResponse
-	21, // 65: olivetin.api.v1.OliveTinApiService.GetLogs:output_type -> olivetin.api.v1.GetLogsResponse
-	23, // 66: olivetin.api.v1.OliveTinApiService.GetActionLogs:output_type -> olivetin.api.v1.GetActionLogsResponse
-	25, // 67: olivetin.api.v1.OliveTinApiService.ValidateArgumentType:output_type -> olivetin.api.v1.ValidateArgumentTypeResponse
-	31, // 68: olivetin.api.v1.OliveTinApiService.WhoAmI:output_type -> olivetin.api.v1.WhoAmIResponse
-	33, // 69: olivetin.api.v1.OliveTinApiService.SosReport:output_type -> olivetin.api.v1.SosReportResponse
-	35, // 70: olivetin.api.v1.OliveTinApiService.DumpVars:output_type -> olivetin.api.v1.DumpVarsResponse
-	38, // 71: olivetin.api.v1.OliveTinApiService.DumpPublicIdActionMap:output_type -> olivetin.api.v1.DumpPublicIdActionMapResponse
-	40, // 72: olivetin.api.v1.OliveTinApiService.GetReadyz:output_type -> olivetin.api.v1.GetReadyzResponse
-	51, // 73: olivetin.api.v1.OliveTinApiService.LocalUserLogin:output_type -> olivetin.api.v1.LocalUserLoginResponse
-	53, // 74: olivetin.api.v1.OliveTinApiService.PasswordHash:output_type -> olivetin.api.v1.PasswordHashResponse
-	55, // 75: olivetin.api.v1.OliveTinApiService.Logout:output_type -> olivetin.api.v1.LogoutResponse
-	42, // 76: olivetin.api.v1.OliveTinApiService.EventStream:output_type -> olivetin.api.v1.EventStreamResponse
-	57, // 77: olivetin.api.v1.OliveTinApiService.GetDiagnostics:output_type -> olivetin.api.v1.GetDiagnosticsResponse
-	59, // 78: olivetin.api.v1.OliveTinApiService.Init:output_type -> olivetin.api.v1.InitResponse
-	63, // 79: olivetin.api.v1.OliveTinApiService.GetActionBinding:output_type -> olivetin.api.v1.GetActionBindingResponse
-	65, // 80: olivetin.api.v1.OliveTinApiService.GetEntities:output_type -> olivetin.api.v1.GetEntitiesResponse
-	4,  // 81: olivetin.api.v1.OliveTinApiService.GetEntity:output_type -> olivetin.api.v1.Entity
-	57, // [57:82] is the sub-list for method output_type
-	32, // [32:57] is the sub-list for method input_type
-	32, // [32:32] is the sub-list for extension type_name
-	32, // [32:32] is the sub-list for extension extendee
-	0,  // [0:32] is the sub-list for field type_name
+	69, // 2: olivetin.api.v1.ActionWebhookExecHint.match_headers:type_name -> olivetin.api.v1.ActionWebhookExecHint.MatchHeadersEntry
+	70, // 3: olivetin.api.v1.ActionWebhookExecHint.match_query:type_name -> olivetin.api.v1.ActionWebhookExecHint.MatchQueryEntry
+	3,  // 4: olivetin.api.v1.ActionArgument.choices:type_name -> olivetin.api.v1.ActionArgumentChoice
+	71, // 5: olivetin.api.v1.ActionArgument.suggestions:type_name -> olivetin.api.v1.ActionArgument.SuggestionsEntry
+	72, // 6: olivetin.api.v1.Entity.fields:type_name -> olivetin.api.v1.Entity.FieldsEntry
+	8,  // 7: olivetin.api.v1.GetDashboardResponse.dashboard:type_name -> olivetin.api.v1.Dashboard
+	9,  // 8: olivetin.api.v1.Dashboard.contents:type_name -> olivetin.api.v1.DashboardComponent
+	9,  // 9: olivetin.api.v1.DashboardComponent.contents:type_name -> olivetin.api.v1.DashboardComponent
+	0,  // 10: olivetin.api.v1.DashboardComponent.action:type_name -> olivetin.api.v1.Action
+	11, // 11: olivetin.api.v1.StartActionRequest.arguments:type_name -> olivetin.api.v1.StartActionArgument
+	11, // 12: olivetin.api.v1.StartActionAndWaitRequest.arguments:type_name -> olivetin.api.v1.StartActionArgument
+	20, // 13: olivetin.api.v1.StartActionAndWaitResponse.log_entry:type_name -> olivetin.api.v1.LogEntry
+	20, // 14: olivetin.api.v1.StartActionByGetAndWaitResponse.log_entry:type_name -> olivetin.api.v1.LogEntry
+	20, // 15: olivetin.api.v1.GetLogsResponse.logs:type_name -> olivetin.api.v1.LogEntry
+	20, // 16: olivetin.api.v1.GetActionLogsResponse.logs:type_name -> olivetin.api.v1.LogEntry
+	20, // 17: olivetin.api.v1.ExecutionStatusResponse.log_entry:type_name -> olivetin.api.v1.LogEntry
+	73, // 18: olivetin.api.v1.DumpVarsResponse.contents:type_name -> olivetin.api.v1.DumpVarsResponse.ContentsEntry
+	74, // 19: olivetin.api.v1.DumpPublicIdActionMapResponse.contents:type_name -> olivetin.api.v1.DumpPublicIdActionMapResponse.ContentsEntry
+	44, // 20: olivetin.api.v1.EventStreamResponse.entity_changed:type_name -> olivetin.api.v1.EventEntityChanged
+	45, // 21: olivetin.api.v1.EventStreamResponse.config_changed:type_name -> olivetin.api.v1.EventConfigChanged
+	46, // 22: olivetin.api.v1.EventStreamResponse.execution_finished:type_name -> olivetin.api.v1.EventExecutionFinished
+	47, // 23: olivetin.api.v1.EventStreamResponse.execution_started:type_name -> olivetin.api.v1.EventExecutionStarted
+	43, // 24: olivetin.api.v1.EventStreamResponse.output_chunk:type_name -> olivetin.api.v1.EventOutputChunk
+	20, // 25: olivetin.api.v1.EventExecutionFinished.log_entry:type_name -> olivetin.api.v1.LogEntry
+	20, // 26: olivetin.api.v1.EventExecutionStarted.log_entry:type_name -> olivetin.api.v1.LogEntry
+	61, // 27: olivetin.api.v1.InitResponse.oAuth2Providers:type_name -> olivetin.api.v1.OAuth2Provider
+	60, // 28: olivetin.api.v1.InitResponse.additionalLinks:type_name -> olivetin.api.v1.AdditionalLink
+	6,  // 29: olivetin.api.v1.InitResponse.effective_policy:type_name -> olivetin.api.v1.EffectivePolicy
+	0,  // 30: olivetin.api.v1.GetActionBindingResponse.action:type_name -> olivetin.api.v1.Action
+	66, // 31: olivetin.api.v1.GetEntitiesResponse.entity_definitions:type_name -> olivetin.api.v1.EntityDefinition
+	4,  // 32: olivetin.api.v1.EntityDefinition.instances:type_name -> olivetin.api.v1.Entity
+	36, // 33: olivetin.api.v1.DumpPublicIdActionMapResponse.ContentsEntry.value:type_name -> olivetin.api.v1.DebugBinding
+	7,  // 34: olivetin.api.v1.OliveTinApiService.GetDashboard:input_type -> olivetin.api.v1.GetDashboardRequest
+	10, // 35: olivetin.api.v1.OliveTinApiService.StartAction:input_type -> olivetin.api.v1.StartActionRequest
+	13, // 36: olivetin.api.v1.OliveTinApiService.StartActionAndWait:input_type -> olivetin.api.v1.StartActionAndWaitRequest
+	15, // 37: olivetin.api.v1.OliveTinApiService.StartActionByGet:input_type -> olivetin.api.v1.StartActionByGetRequest
+	17, // 38: olivetin.api.v1.OliveTinApiService.StartActionByGetAndWait:input_type -> olivetin.api.v1.StartActionByGetAndWaitRequest
+	68, // 39: olivetin.api.v1.OliveTinApiService.RestartAction:input_type -> olivetin.api.v1.RestartActionRequest
+	48, // 40: olivetin.api.v1.OliveTinApiService.KillAction:input_type -> olivetin.api.v1.KillActionRequest
+	28, // 41: olivetin.api.v1.OliveTinApiService.ExecutionStatus:input_type -> olivetin.api.v1.ExecutionStatusRequest
+	19, // 42: olivetin.api.v1.OliveTinApiService.GetLogs:input_type -> olivetin.api.v1.GetLogsRequest
+	22, // 43: olivetin.api.v1.OliveTinApiService.GetActionLogs:input_type -> olivetin.api.v1.GetActionLogsRequest
+	24, // 44: olivetin.api.v1.OliveTinApiService.ValidateArgumentType:input_type -> olivetin.api.v1.ValidateArgumentTypeRequest
+	30, // 45: olivetin.api.v1.OliveTinApiService.WhoAmI:input_type -> olivetin.api.v1.WhoAmIRequest
+	32, // 46: olivetin.api.v1.OliveTinApiService.SosReport:input_type -> olivetin.api.v1.SosReportRequest
+	34, // 47: olivetin.api.v1.OliveTinApiService.DumpVars:input_type -> olivetin.api.v1.DumpVarsRequest
+	37, // 48: olivetin.api.v1.OliveTinApiService.DumpPublicIdActionMap:input_type -> olivetin.api.v1.DumpPublicIdActionMapRequest
+	39, // 49: olivetin.api.v1.OliveTinApiService.GetReadyz:input_type -> olivetin.api.v1.GetReadyzRequest
+	50, // 50: olivetin.api.v1.OliveTinApiService.LocalUserLogin:input_type -> olivetin.api.v1.LocalUserLoginRequest
+	52, // 51: olivetin.api.v1.OliveTinApiService.PasswordHash:input_type -> olivetin.api.v1.PasswordHashRequest
+	54, // 52: olivetin.api.v1.OliveTinApiService.Logout:input_type -> olivetin.api.v1.LogoutRequest
+	41, // 53: olivetin.api.v1.OliveTinApiService.EventStream:input_type -> olivetin.api.v1.EventStreamRequest
+	56, // 54: olivetin.api.v1.OliveTinApiService.GetDiagnostics:input_type -> olivetin.api.v1.GetDiagnosticsRequest
+	58, // 55: olivetin.api.v1.OliveTinApiService.Init:input_type -> olivetin.api.v1.InitRequest
+	62, // 56: olivetin.api.v1.OliveTinApiService.GetActionBinding:input_type -> olivetin.api.v1.GetActionBindingRequest
+	64, // 57: olivetin.api.v1.OliveTinApiService.GetEntities:input_type -> olivetin.api.v1.GetEntitiesRequest
+	67, // 58: olivetin.api.v1.OliveTinApiService.GetEntity:input_type -> olivetin.api.v1.GetEntityRequest
+	5,  // 59: olivetin.api.v1.OliveTinApiService.GetDashboard:output_type -> olivetin.api.v1.GetDashboardResponse
+	12, // 60: olivetin.api.v1.OliveTinApiService.StartAction:output_type -> olivetin.api.v1.StartActionResponse
+	14, // 61: olivetin.api.v1.OliveTinApiService.StartActionAndWait:output_type -> olivetin.api.v1.StartActionAndWaitResponse
+	16, // 62: olivetin.api.v1.OliveTinApiService.StartActionByGet:output_type -> olivetin.api.v1.StartActionByGetResponse
+	18, // 63: olivetin.api.v1.OliveTinApiService.StartActionByGetAndWait:output_type -> olivetin.api.v1.StartActionByGetAndWaitResponse
+	12, // 64: olivetin.api.v1.OliveTinApiService.RestartAction:output_type -> olivetin.api.v1.StartActionResponse
+	49, // 65: olivetin.api.v1.OliveTinApiService.KillAction:output_type -> olivetin.api.v1.KillActionResponse
+	29, // 66: olivetin.api.v1.OliveTinApiService.ExecutionStatus:output_type -> olivetin.api.v1.ExecutionStatusResponse
+	21, // 67: olivetin.api.v1.OliveTinApiService.GetLogs:output_type -> olivetin.api.v1.GetLogsResponse
+	23, // 68: olivetin.api.v1.OliveTinApiService.GetActionLogs:output_type -> olivetin.api.v1.GetActionLogsResponse
+	25, // 69: olivetin.api.v1.OliveTinApiService.ValidateArgumentType:output_type -> olivetin.api.v1.ValidateArgumentTypeResponse
+	31, // 70: olivetin.api.v1.OliveTinApiService.WhoAmI:output_type -> olivetin.api.v1.WhoAmIResponse
+	33, // 71: olivetin.api.v1.OliveTinApiService.SosReport:output_type -> olivetin.api.v1.SosReportResponse
+	35, // 72: olivetin.api.v1.OliveTinApiService.DumpVars:output_type -> olivetin.api.v1.DumpVarsResponse
+	38, // 73: olivetin.api.v1.OliveTinApiService.DumpPublicIdActionMap:output_type -> olivetin.api.v1.DumpPublicIdActionMapResponse
+	40, // 74: olivetin.api.v1.OliveTinApiService.GetReadyz:output_type -> olivetin.api.v1.GetReadyzResponse
+	51, // 75: olivetin.api.v1.OliveTinApiService.LocalUserLogin:output_type -> olivetin.api.v1.LocalUserLoginResponse
+	53, // 76: olivetin.api.v1.OliveTinApiService.PasswordHash:output_type -> olivetin.api.v1.PasswordHashResponse
+	55, // 77: olivetin.api.v1.OliveTinApiService.Logout:output_type -> olivetin.api.v1.LogoutResponse
+	42, // 78: olivetin.api.v1.OliveTinApiService.EventStream:output_type -> olivetin.api.v1.EventStreamResponse
+	57, // 79: olivetin.api.v1.OliveTinApiService.GetDiagnostics:output_type -> olivetin.api.v1.GetDiagnosticsResponse
+	59, // 80: olivetin.api.v1.OliveTinApiService.Init:output_type -> olivetin.api.v1.InitResponse
+	63, // 81: olivetin.api.v1.OliveTinApiService.GetActionBinding:output_type -> olivetin.api.v1.GetActionBindingResponse
+	65, // 82: olivetin.api.v1.OliveTinApiService.GetEntities:output_type -> olivetin.api.v1.GetEntitiesResponse
+	4,  // 83: olivetin.api.v1.OliveTinApiService.GetEntity:output_type -> olivetin.api.v1.Entity
+	59, // [59:84] is the sub-list for method output_type
+	34, // [34:59] is the sub-list for method input_type
+	34, // [34:34] is the sub-list for extension type_name
+	34, // [34:34] is the sub-list for extension extendee
+	0,  // [0:34] is the sub-list for field type_name
 }
 
 func init() { file_olivetin_api_v1_olivetin_proto_init() }
@@ -4514,7 +4543,7 @@ func file_olivetin_api_v1_olivetin_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_olivetin_api_v1_olivetin_proto_rawDesc), len(file_olivetin_api_v1_olivetin_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   73,
+			NumMessages:   75,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
