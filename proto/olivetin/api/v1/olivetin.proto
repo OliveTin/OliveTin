@@ -14,6 +14,19 @@ message Action {
 	int32 order = 7;
 	int32 timeout = 8;
 	string datetime_rate_limit_expires = 9; // Datetime when rate limit expires (empty string if not rate limited), format: "2006-01-02 15:04:05"
+	bool exec_on_startup = 10;
+	repeated string exec_on_cron = 11;
+	repeated string exec_on_file_created_in_dir = 12;
+	repeated string exec_on_file_changed_in_dir = 13;
+	string exec_on_calendar_file = 14;
+	repeated ActionWebhookExecHint exec_on_webhooks = 15;
+}
+
+message ActionWebhookExecHint {
+	string template = 1;
+	string match_path = 2;
+	map<string, string> match_headers = 3;
+	map<string, string> match_query = 4;
 }
 
 message ActionArgument {
