@@ -26,6 +26,34 @@ func (cfg *Config) Sanitize() {
 	}
 
 	cfg.sanitizeDashboardsForInlineActions()
+
+	if err := cfg.validateReservedActionArgumentNames(); err != nil {
+		log.Fatalf("%v", err)
+	}
+}
+
+func (cfg *Config) validateReservedActionArgumentNames() error {
+	for _, action := range cfg.Actions {
+		if err := action.validateReservedArgumentNames(); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (action *Action) validateReservedArgumentNames() error {
+	if action == nil {
+		return nil
+	}
+
+	for _, arg := range action.Arguments {
+		if strings.HasPrefix(arg.Name, ReservedArgumentNamePrefix) {
+			return fmt.Errorf("action %q argument %q uses reserved prefix %q", action.Title, arg.Name, ReservedArgumentNamePrefix)
+		}
+	}
+
+	return nil
 }
 
 func (cfg *Config) sanitizeDashboardsForInlineActions() {

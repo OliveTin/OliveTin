@@ -4,6 +4,9 @@ import (
 	"fmt"
 )
 
+// ReservedArgumentNamePrefix is reserved for OliveTin-injected system arguments.
+const ReservedArgumentNamePrefix = "ot_"
+
 // Action represents the core functionality of OliveTin - commands that show up
 // as buttons in the UI.
 type Action struct {

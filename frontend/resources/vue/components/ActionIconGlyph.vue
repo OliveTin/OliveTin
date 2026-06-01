@@ -7,6 +7,7 @@
 			height="1em"
 			class="action-icon-glyph-svg"
 		/>
+		<span v-else-if="decodedTextGlyphIsHtml" v-html="decodedTextGlyph"></span>
 		<span v-else v-text="decodedTextGlyph"></span>
 	</span>
 </template>
@@ -15,6 +16,7 @@
 import { computed } from 'vue'
 import { HugeiconsIcon } from '@hugeicons/vue'
 import { CommandLineIcon } from '@hugeicons/core-free-icons'
+import { decodeHtmlEntities, glyphLooksLikeHtml } from './actionIconGlyphHelpers.mjs'
 
 const hugeiconsPrefix = 'hugeicons:'
 
@@ -46,16 +48,6 @@ const hugeiconsModel = computed(() => {
 	return iconModel ?? CommandLineIcon
 })
 
-function decodeHtmlEntities(text) {
-	return text.replace(/&#x([0-9a-fA-F]+);?/g, (_, hex) => {
-		const codePoint = Number.parseInt(hex, 16)
-		return Number.isFinite(codePoint) ? String.fromCodePoint(codePoint) : ''
-	}).replace(/&#(\d+);?/g, (_, decimal) => {
-		const codePoint = Number.parseInt(decimal, 10)
-		return Number.isFinite(codePoint) ? String.fromCodePoint(codePoint) : ''
-	})
-}
-
 const decodedTextGlyph = computed(() => {
 	if (hugeiconsModel.value) {
 		return ''
@@ -63,6 +55,8 @@ const decodedTextGlyph = computed(() => {
 
 	return decodeHtmlEntities(props.glyph)
 })
+
+const decodedTextGlyphIsHtml = computed(() => glyphLooksLikeHtml(decodedTextGlyph.value))
 </script>
 
 <style scoped>

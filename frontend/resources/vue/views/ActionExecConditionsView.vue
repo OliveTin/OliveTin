@@ -76,7 +76,9 @@
           <li v-for="(wh, idx) in action.execOnWebhooks" :key="'wh-' + idx">
             <span v-if="wh.template">template: <code>{{ wh.template }}</code></span>
             <span v-if="wh.matchPath"> · matchPath: <code>{{ wh.matchPath }}</code></span>
-            <span v-if="!wh.template && !wh.matchPath">Webhook trigger (no template or match path in response)</span>
+            <span v-if="nonEmptyObject(wh.matchHeaders)"> · matchHeaders: <code>{{ wh.matchHeaders }}</code></span>
+            <span v-if="nonEmptyObject(wh.matchQuery)"> · matchQuery: <code>{{ wh.matchQuery }}</code></span>
+            <span v-if="!webhookHasCondition(wh)">Webhook trigger (no conditions in response)</span>
           </li>
         </ul>
       </template>
@@ -115,6 +117,14 @@ const execConditionDocs = {
 
 function nonEmptyList(list) {
   return Array.isArray(list) && list.length > 0
+}
+
+function nonEmptyObject(object) {
+  return object && Object.keys(object).length > 0
+}
+
+function webhookHasCondition(webhook) {
+  return webhook.template || webhook.matchPath || nonEmptyObject(webhook.matchHeaders) || nonEmptyObject(webhook.matchQuery)
 }
 
 const hasConfiguredTriggers = computed(() => {

@@ -18,8 +18,10 @@ func applyActionExecTriggers(pb *apiv1.Action, cfg *config.Action) {
 
 	for _, wh := range cfg.ExecOnWebhook {
 		pb.ExecOnWebhooks = append(pb.ExecOnWebhooks, &apiv1.ActionWebhookExecHint{
-			Template:  wh.Template,
-			MatchPath: wh.MatchPath,
+			Template:     wh.Template,
+			MatchPath:    wh.MatchPath,
+			MatchHeaders: wh.MatchHeaders,
+			MatchQuery:   wh.MatchQuery,
 		})
 	}
 }

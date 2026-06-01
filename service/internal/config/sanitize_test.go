@@ -92,6 +92,59 @@ func TestSanitizeConfigInlineDashboardActions(t *testing.T) {
 	}
 }
 
+func TestValidateReservedActionArgumentNames(t *testing.T) {
+	c := DefaultConfig()
+	c.Actions = append(c.Actions, &Action{
+		Title: "Reserved arg",
+		Arguments: []ActionArgument{
+			{Name: "ot_custom", Type: "ascii"},
+		},
+	})
+
+	err := c.validateReservedActionArgumentNames()
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), `action "Reserved arg" argument "ot_custom" uses reserved prefix "ot_"`)
+}
+
+func TestValidateReservedActionArgumentNamesAllowsNonReserved(t *testing.T) {
+	c := DefaultConfig()
+	c.Actions = append(c.Actions, &Action{
+		Title: "Allowed arg",
+		Arguments: []ActionArgument{
+			{Name: "target", Type: "ascii"},
+		},
+	})
+
+	require.NoError(t, c.validateReservedActionArgumentNames())
+}
+
+func TestValidateReservedActionArgumentNamesChecksInlineActions(t *testing.T) {
+	c := DefaultConfig()
+	c.Dashboards = []*DashboardComponent{
+		{
+			Title: "Dashboard",
+			Contents: []*DashboardComponent{
+				{
+					Title: "Inline reserved arg",
+					InlineAction: &Action{
+						Shell: "echo test",
+						Arguments: []ActionArgument{
+							{Name: "ot_custom", Type: "ascii"},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	c.sanitizeDashboardsForInlineActions()
+	err := c.validateReservedActionArgumentNames()
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), `action "Inline reserved arg" argument "ot_custom" uses reserved prefix "ot_"`)
+}
+
 func TestValidateUniqueLocalUserAPIKeys(t *testing.T) {
 	t.Parallel()
 

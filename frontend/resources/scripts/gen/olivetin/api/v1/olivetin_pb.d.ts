@@ -111,6 +111,16 @@ export declare type ActionWebhookExecHint = Message<"olivetin.api.v1.ActionWebho
    * @generated from field: string match_path = 2;
    */
   matchPath: string;
+
+  /**
+   * @generated from field: map<string, string> match_headers = 3;
+   */
+  matchHeaders: { [key: string]: string };
+
+  /**
+   * @generated from field: map<string, string> match_query = 4;
+   */
+  matchQuery: { [key: string]: string };
 };
 
 /**
