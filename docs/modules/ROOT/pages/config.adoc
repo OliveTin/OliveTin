@@ -2,11 +2,11 @@
 = Configuration
 
 OliveTin is controlled by a `config.yaml` file. On startup, it looks for this
-file in the following locations; 
+file in the following locations;
 
 1. The value specified by the `--configdir` argument, which defaults to the current working directory (`./`)
 2. `/config/` - Mostly used for containers
-3. `/etc/OliveTin/` - this is the recommended directory on Linux for your `config.yaml`. 
+3. `/etc/OliveTin/` - this is the recommended directory on Linux for your `config.yaml`.
 
 The most simple `config.yaml` would be something like this;
 
@@ -18,9 +18,9 @@ actions:
     shell: echo 'Hello World!'
 ----
 
-The configuration does not really get more complicated than that. You can of course add more actions, and customize more, but the syntax otherwise extremely simple. 
+The configuration does not really get more complicated than that. You can of course add more actions, and customize more, but the syntax is otherwise extremely simple.
 
-For building up from here, look at the following resources; 
+For building up from here, look at the following resources;
 
 * See the xref:action_examples/intro.adoc[action examples] section for extra examples of what OliveTin could be configured to do.
 
@@ -54,7 +54,7 @@ All configuration options are covered in the solution sections
 | `showNavigateOnStartIcons` | Show (or hide) the small icons on action buttons that indicate popup/argument/background behavior on start. | `true` | Live reloadable | xref:advanced_configuration/webui.adoc[Customize the web UI].
 | `sectionNavigationStyle` | The style of the section navigation. `sidebar`, `topbar` | `sidebar` | Live reloadable | xref:advanced_configuration/webui.adoc[Customize the web UI].
 | `defaultPopupOnStart` | The default popup to show on start. | `none` | Live reloadable | xref:action_customization/popuponstart.adoc[Popup On Start].
-| `defaultIconForActions` | The default icon to use for actions. | `smile` | Requires Restart | -
+| `defaultIconForActions` | The default icon string for actions (Unicode aliases such as `smile`, `hugeicons:NeutralIcon`, HTML, Iconify snippets, images, etc.). See xref:action_customization/icons.adoc[Icons]. | `hugeicons:CommandLineIcon` | Requires Restart | -
 | `defaultIconForDirectories` | The default icon to use for directories. | `directory` | Requires Restart | -
 | `defaultIconForBack` | The default icon to use for back (from directories). | `&laquo;` | Requires Restart | -
 | `enableCustomJs` | Enable custom JavaScript. | `false` | Live Reloadable, but refreshing the web browser is required. | xref:advanced_configuration/webui.adoc[Custom JS].

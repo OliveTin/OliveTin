@@ -174,7 +174,7 @@ function getInputType(arg) {
     return 'checkbox'
   }
 
-  if (arg.type === 'ascii_identifier' || arg.type === 'ascii' || arg.type === 'ascii_sentence') {
+  if (arg.type === 'ascii_identifier' || arg.type === 'shell_safe_identifier' || arg.type === 'ascii' || arg.type === 'ascii_sentence') {
     return 'text'
   }
 
@@ -392,6 +392,11 @@ async function startAction(actionArgs) {
 async function handleSubmit(event) {
   event.preventDefault()
 
+  if (popupOnStart.value === 'history') {
+    router.push(`/action/${props.bindingId}`)
+    return
+  }
+
   // Set custom validity for required fields
   for (const arg of actionArguments.value) {
     const value = argValues.value[arg.name]
@@ -422,8 +427,6 @@ async function handleSubmit(event) {
     const response = await startAction(argvs)
     if (popupOnStart.value && popupOnStart.value.includes('execution-dialog')) {
       router.push(`/logs/${response.executionTrackingId}`)
-    } else if (popupOnStart.value === 'history') {
-      router.push(`/action/${props.bindingId}`)
     } else {
       router.back()
     }

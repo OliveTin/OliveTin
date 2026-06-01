@@ -10,6 +10,7 @@ A full list of argument types are below;
 | (default)                   | xref:args/input.adoc[Textbox]           | If a `type:` is not set, and `choices:` is empty, then ascii will be used, and a warning will be logged. It is recommended that you set the type explicitly, rather than relying on defaults.
 | ascii                       | xref:args/input.adoc[Textbox]           | a-z (case insensitive), 0-9, but no spaces or punctuation
 | ascii_identifier            | xref:args/input.adoc[Textbox]           | Like a DNS name, a-Z (case insensitive), 0-9, `-`, `.`, and `_`. 
+| shell_safe_identifier       | xref:args/input.adoc[Textbox]           | Like an ascii identifier, but also allows `@` and `+`. Useful for shell-safe usernames and email-style identifiers.
 | ascii_sentence              | xref:args/input.adoc[Textbox]           | a-z (case insensitive), 0-9, with spaces, `.` and `,`. 
 | unicode_identifier          | xref:args/input.adoc[Textbox]           | Like an ascii identifier, but allows unicode characters. This is useful for languages that use non-ascii characters, such as Chinese, Japanese, etc.
 | email                       | xref:args/input.adoc[Textbox]           | An email address.

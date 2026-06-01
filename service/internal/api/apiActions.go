@@ -156,6 +156,8 @@ func buildAction(actionBinding *executor.ActionBinding, rr *DashboardRenderReque
 		DatetimeRateLimitExpires: datetimeRateLimitExpires,
 	}
 
+	applyActionExecTriggers(&btn, action)
+
 	for _, cfgArg := range action.Arguments {
 		pbArg := apiv1.ActionArgument{
 			Name:                  cfgArg.Name,

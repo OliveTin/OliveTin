@@ -1,12 +1,22 @@
 <template>
   <Section :title="'Action Details: ' + actionTitle" :padding="false">
       <template #toolbar>
-        <button v-if="action" @click="startAction" title="Start this action" class="button neutral">
-          <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
-            <path fill="currentColor" d="M8 6v12l8-6z" />
-          </svg>
-          Start
-        </button>
+        <div class="action-details-toolbar">
+          <button v-if="action" @click="startAction" title="Start this action" class="button neutral">
+            <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+              <path fill="currentColor" d="M8 6v12l8-6z" />
+            </svg>
+            Start
+          </button>
+          <router-link
+            v-if="action"
+            :to="{ name: 'ActionExecConditions', params: { actionId: route.params.actionId } }"
+            class="button neutral"
+            title="View configured automatic triggers and on-demand execution"
+          >
+            Execution conditions
+          </router-link>
+        </div>
       </template>
 
       <div class = "flex-row padding" v-if="action">
@@ -22,7 +32,7 @@
           </p>
         </div>
         <div style = "align-self: start; text-align: right;">
-          <span class="icon" v-html="action.icon"></span>
+          <ActionIconGlyph class="icon" :glyph="action.icon" />
 
           <div class="filter-container">
             <label class="input-with-icons">
@@ -94,6 +104,7 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import Pagination from 'picocrank/vue/components/Pagination.vue'
 import Section from 'picocrank/vue/components/Section.vue'
+import ActionIconGlyph from '../components/ActionIconGlyph.vue'
 import ActionStatusDisplay from '../components/ActionStatusDisplay.vue'
 
 const route = useRoute()
@@ -428,5 +439,11 @@ watch(
 .padding {
   padding: 1rem;
 }
-</style>
 
+.action-details-toolbar {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+</style>

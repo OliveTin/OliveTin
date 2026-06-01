@@ -52,6 +52,24 @@ func getNewTestServerAndClient(injectedConfig *config.Config) (*httptest.Server,
 	return ts, client
 }
 
+func TestApplyActionExecTriggersIncludesWebhookHeaderAndQueryMatches(t *testing.T) {
+	cfg := &config.Action{
+		ExecOnWebhook: []config.WebhookConfig{
+			{
+				MatchHeaders: map[string]string{"X-GitHub-Event": "push"},
+				MatchQuery:   map[string]string{"source": "github"},
+			},
+		},
+	}
+	pb := &apiv1.Action{}
+
+	applyActionExecTriggers(pb, cfg)
+
+	require.Len(t, pb.ExecOnWebhooks, 1)
+	assert.Equal(t, cfg.ExecOnWebhook[0].MatchHeaders, pb.ExecOnWebhooks[0].MatchHeaders)
+	assert.Equal(t, cfg.ExecOnWebhook[0].MatchQuery, pb.ExecOnWebhooks[0].MatchQuery)
+}
+
 func TestGetActionsAndStart(t *testing.T) {
 	cfg := config.DefaultConfig()
 

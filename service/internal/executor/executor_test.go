@@ -1,6 +1,7 @@
 package executor
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -37,7 +38,7 @@ func TestCreateExecutorAndExec(t *testing.T) {
 	e, cfg := testingExecutor()
 
 	req := ExecutionRequest{
-		AuthenticatedUser: &authpublic.AuthenticatedUser{Username: "Mr Tickle"},
+		AuthenticatedUser: &authpublic.AuthenticatedUser{Username: "MrTickle"},
 		Cfg:               cfg,
 		Arguments: map[string]string{
 			"person": "yourself",
@@ -379,7 +380,7 @@ func TestFilterToDefinedArgumentsOnly(t *testing.T) {
 	assert.Empty(t, req.Arguments["extra_undefined"])
 }
 
-func TestFilterToDefinedArgumentsPreservesSystemArgs(t *testing.T) {
+func TestFilterToDefinedArgumentsDropsReservedPrefixArgs(t *testing.T) {
 	req := newExecRequest()
 	req.Binding.Action = &config.Action{
 		Title:     "Filter test",
@@ -393,8 +394,209 @@ func TestFilterToDefinedArgumentsPreservesSystemArgs(t *testing.T) {
 
 	filterToDefinedArgumentsOnly(req)
 
-	assert.Equal(t, "track-123", req.Arguments["ot_executionTrackingId"])
-	assert.Equal(t, "webhook", req.Arguments["ot_username"])
+	assert.Empty(t, req.Arguments["ot_executionTrackingId"])
+	assert.Empty(t, req.Arguments["ot_username"])
+}
+
+func TestStepParseArgsInjectsSystemArgsAfterFiltering(t *testing.T) {
+	req := newExecRequest()
+	req.TrackingID = "server-track-456"
+	req.AuthenticatedUser = &authpublic.AuthenticatedUser{Username: "alice"}
+	req.Binding.Action = &config.Action{
+		Title: "Filter then inject",
+		Shell: "echo test",
+		Arguments: []config.ActionArgument{
+			{Name: "name", Type: "ascii"},
+		},
+	}
+	req.Arguments = map[string]string{
+		"name":                   "Alice",
+		"ot_executionTrackingId": "attacker-track",
+		"ot_username":            "mallory",
+		"ot_custom":              "polluted",
+	}
+
+	assert.True(t, stepParseArgs(req))
+	assert.Equal(t, "Alice", req.Arguments["name"])
+	assert.Equal(t, "server-track-456", req.Arguments["ot_executionTrackingId"])
+	assert.Equal(t, "alice", req.Arguments["ot_username"])
+	assert.Empty(t, req.Arguments["ot_custom"])
+}
+
+func TestStepParseArgsDropsReservedPrefixArgsFromEnvironment(t *testing.T) {
+	req := newExecRequest()
+	req.TrackingID = "server-track-456"
+	req.AuthenticatedUser = &authpublic.AuthenticatedUser{Username: "alice@example.com"}
+	req.Binding.Action = &config.Action{
+		Title:     "No reserved prefix pollution",
+		Shell:     "echo test",
+		Arguments: []config.ActionArgument{},
+	}
+	req.Arguments = map[string]string{
+		"ot_custom": "polluted",
+	}
+
+	assert.True(t, stepParseArgs(req))
+	env := buildEnv(req.Arguments)
+
+	assert.False(t, containsEnvPrefix(env, "OT_CUSTOM="))
+	assert.True(t, containsEnvPrefix(env, "OT_USERNAME=alice@example.com"))
+	assert.True(t, containsEnvPrefix(env, "OT_EXECUTIONTRACKINGID=server-track-456"))
+}
+
+func TestSystemArgumentDefinitionsAreReservedAndShellSafe(t *testing.T) {
+	unsafeTypes := map[string]struct{}{
+		"email":                     {},
+		"password":                  {},
+		"raw_string_multiline":      {},
+		"url":                       {},
+		"very_dangerous_raw_string": {},
+	}
+	seen := map[string]struct{}{}
+
+	for _, arg := range systemArgumentDefinitions {
+		assert.True(t, strings.HasPrefix(arg.Name, config.ReservedArgumentNamePrefix))
+		assert.NotEmpty(t, arg.Type)
+		assert.True(t, arg.RejectNull)
+
+		_, duplicate := seen[arg.Name]
+		assert.False(t, duplicate, "duplicate system argument definition %q", arg.Name)
+		seen[arg.Name] = struct{}{}
+
+		_, unsafe := unsafeTypes[arg.Type]
+		assert.False(t, unsafe, "system argument %q uses unsafe type %q", arg.Name, arg.Type)
+	}
+}
+
+func TestValidatedSystemArgsMatchesSystemArgumentDefinitions(t *testing.T) {
+	req := newExecRequest()
+	req.TrackingID = "server-track-456"
+	req.AuthenticatedUser = &authpublic.AuthenticatedUser{Username: "alice@example.com"}
+
+	args, err := validatedSystemArgs(req)
+
+	assert.Nil(t, err)
+	assert.Len(t, args, len(systemArgumentDefinitions))
+	for _, arg := range systemArgumentDefinitions {
+		assert.Contains(t, args, arg.Name)
+	}
+}
+
+func TestBuildShellAfterArgsOnlyAddsExpectedNonSystemArgs(t *testing.T) {
+	req := newExecRequest()
+	req.logEntry = &InternalLogEntry{
+		Output:   "hello",
+		ExitCode: 7,
+	}
+	req.TrackingID = "server-track-456"
+	req.AuthenticatedUser = &authpublic.AuthenticatedUser{Username: "alice@example.com"}
+	req.Binding.Action = &config.Action{ShellAfterCompleted: "echo test"}
+
+	args, err := buildShellAfterArgs(req)
+
+	assert.Nil(t, err)
+	assert.Len(t, args, len(systemArgumentDefinitions)+2)
+	assert.Contains(t, args, "output")
+	assert.Contains(t, args, "exitCode")
+	for _, arg := range systemArgumentDefinitions {
+		assert.Contains(t, args, arg.Name)
+	}
+}
+
+func TestStepParseArgsAllowsEmailUsernameSystemArg(t *testing.T) {
+	req := newExecRequest()
+	req.logEntry = &InternalLogEntry{}
+	req.TrackingID = "server-track-456"
+	req.AuthenticatedUser = &authpublic.AuthenticatedUser{Username: "alice@example.com"}
+	req.Binding.Action = &config.Action{
+		Title:     "Email username",
+		Shell:     "echo test",
+		Arguments: []config.ActionArgument{},
+	}
+
+	assert.True(t, stepParseArgs(req))
+	assert.Equal(t, "alice@example.com", req.Arguments["ot_username"])
+}
+
+func TestStepParseArgsFailsWhenUsernameSystemArgIsInvalid(t *testing.T) {
+	req := newExecRequest()
+	req.logEntry = &InternalLogEntry{}
+	req.TrackingID = "server-track-456"
+	req.AuthenticatedUser = &authpublic.AuthenticatedUser{Username: "alice;id"}
+	req.Binding.Action = &config.Action{
+		Title:     "Invalid system arg",
+		Shell:     "echo test",
+		Arguments: []config.ActionArgument{},
+	}
+
+	assert.False(t, stepParseArgs(req))
+	assert.Contains(t, req.logEntry.Output, `system argument "ot_username" failed validation`)
+	assert.Empty(t, req.Arguments["ot_username"])
+}
+
+func TestStepParseArgsFailsWhenTrackingIDSystemArgIsInvalid(t *testing.T) {
+	req := newExecRequest()
+	req.logEntry = &InternalLogEntry{}
+	req.TrackingID = "track/../../bad"
+	req.AuthenticatedUser = &authpublic.AuthenticatedUser{Username: "alice"}
+	req.Binding.Action = &config.Action{
+		Title:     "Invalid tracking ID",
+		Shell:     "echo test",
+		Arguments: []config.ActionArgument{},
+	}
+
+	assert.False(t, stepParseArgs(req))
+	assert.Contains(t, req.logEntry.Output, `system argument "ot_executionTrackingId" failed validation`)
+	assert.Empty(t, req.Arguments["ot_executionTrackingId"])
+}
+
+func TestBuildShellAfterArgsUsesValidatedSystemArgs(t *testing.T) {
+	req := newExecRequest()
+	req.logEntry = &InternalLogEntry{
+		Output:   "hello",
+		ExitCode: 7,
+	}
+	req.TrackingID = "server-track-456"
+	req.AuthenticatedUser = &authpublic.AuthenticatedUser{Username: "alice@example.com"}
+	req.Binding.Action = &config.Action{
+		Title:               "Shell after",
+		ShellAfterCompleted: "echo test",
+	}
+
+	args, err := buildShellAfterArgs(req)
+
+	assert.Nil(t, err)
+	assert.Equal(t, "alice@example.com", args["ot_username"])
+	assert.Equal(t, "server-track-456", args["ot_executionTrackingId"])
+	assert.Equal(t, "hello", args["output"])
+	assert.Equal(t, "7", args["exitCode"])
+}
+
+func TestBuildShellAfterArgsFailsWhenSystemArgIsInvalid(t *testing.T) {
+	req := newExecRequest()
+	req.logEntry = &InternalLogEntry{}
+	req.TrackingID = "server-track-456"
+	req.AuthenticatedUser = &authpublic.AuthenticatedUser{Username: "alice;id"}
+	req.Binding.Action = &config.Action{
+		Title:               "Shell after invalid username",
+		ShellAfterCompleted: "echo test",
+	}
+
+	args, err := buildShellAfterArgs(req)
+
+	assert.Nil(t, args)
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), `system argument "ot_username" failed validation`)
+}
+
+func containsEnvPrefix(env []string, prefix string) bool {
+	for _, item := range env {
+		if strings.HasPrefix(item, prefix) {
+			return true
+		}
+	}
+
+	return false
 }
 
 func TestTriggerExecutesTriggeredAction(t *testing.T) {
