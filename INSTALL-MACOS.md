@@ -1,9 +1,5 @@
 # Installing OliveTin on macOS
 
-> **Draft** — local Markdown draft intended to replace the current stub at
-> <https://docs.olivetin.app/install/macos.html>. We'll convert this to AsciiDoc
-> for the Antora docs (`docs/` in the OliveTin repo) before opening a PR.
-
 OliveTin runs natively on macOS on both **Apple Silicon (M1/M2/M3/M4)** and
 **Intel** Macs. It is a single self-contained binary written in Go — there is no
 installer and no background dependencies to install.
