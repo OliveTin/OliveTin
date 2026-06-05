@@ -40,7 +40,7 @@
 
     <!-- Where stdout/stderr go; tail these for troubleshooting -->
     <key>StandardOutPath</key>
-    <string>/usr/local/var/log/olivetin.log</string>
+    <string>/Users/YOUR_USER/Library/Logs/olivetin.log</string>
     <key>StandardErrorPath</key>
     <string>/Users/YOUR_USER/Library/Logs/olivetin.log</string>
 </dict>
