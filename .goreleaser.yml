@@ -72,6 +72,7 @@ archives:
   - formats: tar.gz
     files:
       - config.yaml
+      - config.macos.yaml
       - LICENSE
       - README.md
       - src: Dockerfile.singlearch
