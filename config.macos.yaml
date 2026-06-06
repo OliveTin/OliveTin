@@ -1,0 +1,262 @@
+# =============================================================================
+# OliveTin example configuration — macOS (Apple Silicon & Intel)
+# =============================================================================
+#
+# This is a macOS-flavoured version of the stock `example.config.yaml`. Every
+# action that differs from the Linux example carries a `# Linux equivalent:`
+# comment so you can see exactly what was changed and why.
+#
+# All commands here are tested against macOS with /bin/zsh (the default login
+# shell since macOS Catalina) and also work under /bin/bash. OliveTin runs the
+# `shell:` string with `sh -c` by default, so these are written to be portable
+# POSIX/zsh/bash one-liners.
+#
+# To use this file, copy it next to the OliveTin binary as `config.yaml`:
+#   cp macos.config.yaml config.yaml
+#   ./OliveTin
+#
+# Docs: https://docs.olivetin.app/
+# =============================================================================
+
+# The built-in micro proxy hosts the WebUI and REST API on a single port.
+# Listen on all addresses, port 1337. Open http://localhost:1337 after start.
+listenAddressSingleHTTPFrontend: 0.0.0.0:1337
+
+# Choose from INFO (default), WARN and DEBUG.
+# Docs: https://docs.olivetin.app/advanced_configuration/logs.html
+logLevel: "INFO"
+
+# Actions are commands that OliveTin executes, normally shown as buttons.
+# Docs: https://docs.olivetin.app/action_execution/create_your_first.html
+actions:
+  # The simplest possible action: run a command, flash the button for status.
+  # `ping` works identically on macOS and Linux.
+  - title: Ping the Internet
+    shell: ping -c 3 1.1.1.1
+    icon: ping
+    popupOnStart: execution-dialog-stdout-only
+    execOnStartup: true
+
+  # Show just the command output in a popup.
+  #
+  # Linux equivalent: shell: df -h /media
+  # macOS has no /media mountpoint. The root volume is `/`; external/USB disks
+  # mount under /Volumes. `df -h /` shows the boot disk; drop the path to list
+  # every mounted volume.
+  - title: Check disk space
+    icon: disk
+    shell: df -h /
+    popupOnStart: execution-dialog-stdout-only
+
+  # Show a fuller dialog with details about the command that ran.
+  #
+  # Linux equivalent: shell: dmesg | tail
+  # macOS `dmesg` requires root and is rarely useful. The unified logging
+  # system is the macOS way to read kernel/system messages. This shows the
+  # last 2 minutes of high-level system log entries.
+  - title: Recent system log
+    shell: log show --last 2m --style compact | tail -n 40
+    icon: logs
+    popupOnStart: execution-dialog
+
+  # A mini button that links to the logs, with rate limiting and an hourly cron.
+  # `date` is identical across platforms.
+  - title: date
+    shell: date
+    id: date
+    timeout: 6
+    icon: clock
+    popupOnStart: execution-button
+    maxRate:
+      - limit: 3
+        duration: 1m
+    execOnCron:
+      - "@hourly"
+
+  # ---------------------------------------------------------------------------
+  # macOS-native actions (no Linux equivalent — these showcase the platform)
+  # ---------------------------------------------------------------------------
+
+  # Send a real macOS Notification Center banner via AppleScript.
+  - title: Send a notification
+    icon: '&#128276;'   # bell
+    shell: osascript -e 'display notification "Triggered from OliveTin" with title "OliveTin" sound name "Glass"'
+    popupOnStart: execution-button
+
+  # Stop the Mac from sleeping for 1 hour (handy during long jobs/downloads).
+  # `caffeinate` is a built-in macOS utility. `-t` is seconds.
+  - title: Keep awake for 1 hour
+    icon: '&#9749;'     # hot beverage
+    shell: caffeinate -d -i -t 3600 &
+    popupOnStart: execution-button
+
+  # Put the displays to sleep immediately (the Mac stays running).
+  - title: Sleep the displays
+    icon: '&#128164;'   # zzz
+    shell: pmset displaysleepnow
+    popupOnStart: execution-button
+
+  # Battery / power summary using the built-in `pmset`.
+  - title: Power & battery status
+    icon: '&#128267;'   # battery
+    shell: pmset -g batt
+    popupOnStart: execution-dialog-stdout-only
+
+  # ---------------------------------------------------------------------------
+
+  # Prompt the user for input with `arguments`. `ping` again works as-is.
+  # Docs: https://docs.olivetin.app/action_examples/ping.html
+  - title: Ping host
+    id: ping_host
+    shell: ping {{ host }} -c {{ count }}
+    icon: ping
+    timeout: 100
+    popupOnStart: execution-dialog-stdout-only
+    arguments:
+      - name: host
+        title: Host
+        type: ascii_identifier
+        default: example.com
+        description: The host that you want to ping
+
+      - name: count
+        title: Count
+        type: int
+        default: 3
+        description: How many times do you want to ping?
+
+  # OliveTin can control Docker containers — `docker` is just a CLI app.
+  # On macOS this requires Docker Desktop (or colima/podman) to be installed
+  # and running. The command itself is identical to Linux.
+  # Docs: https://docs.olivetin.app/solutions/container-control-panel/index.html
+  - title: Restart Docker Container
+    icon: restart
+    shell: docker restart {{ container }}
+    arguments:
+      - name: container
+        title: Container name
+        choices:
+          - value: plex
+          - value: traefik
+          - value: grafana
+
+  # The special `confirmation` argument guards against accidental clicks.
+  # Docs: https://docs.olivetin.app/args/input_confirmation.html
+  #
+  # Linux equivalent: shell: rm -rf /opt/oldBackups/
+  # Using a path under the user's home is more natural on macOS.
+  - title: Delete old backups
+    icon: ashtonished
+    shell: rm -rf "$HOME/Backups/old/"
+    arguments:
+      - name: confirm
+        type: confirmation
+        title: Are you sure?!
+
+  # Run your own scripts, not just OS commands. `maxConcurrent` prevents
+  # parallel runs; `timeout` kills a command that runs too long.
+  #
+  # Linux equivalent: shell: /opt/backupScript.sh
+  # macOS convention is to keep personal scripts under your home directory.
+  - title: Run backup script
+    shell: "$HOME/bin/backupScript.sh"
+    shellAfterCompleted: "osascript -e 'display notification \"Backup finished with code {{ exitCode }}\" with title \"OliveTin\"'"
+    maxConcurrent: 1
+    timeout: 10
+    icon: backup
+    popupOnStart: execution-dialog
+
+  # Download themes using a script bundled with OliveTin. You still need to set
+  # `themeName` in this config to actually use the theme.
+  # Docs: https://docs.olivetin.app/reference/reference_themes_for_users.html
+  - title: Get OliveTin Theme
+    exec:
+      - "olivetin-get-theme"
+      - "{{ themeGitRepo }}"
+      - "{{ themeFolderName }}"
+    icon: theme
+    arguments:
+      - name: themeGitRepo
+        title: Theme's Git Repository
+        description: Find new themes at https://olivetin.app/themes
+        type: url
+
+      - name: themeFolderName
+        title: Theme's Folder Name
+        type: ascii_identifier
+
+  # Run actions on other servers over SSH. macOS ships with an OpenSSH client,
+  # so this works out of the box. The helper below is optional.
+  # Docs: https://docs.olivetin.app/action_examples/ssh-easy.html
+  - title: "Setup easy SSH"
+    icon: ssh
+    shell: olivetin-setup-easy-ssh
+    popupOnStart: execution-dialog
+
+# Entities let you generate actions dynamically from "things" (servers,
+# containers, VMs) loaded from files on disk.
+# Docs: https://docs.olivetin.app/entities/intro.html
+#
+# entities:
+#   - file: entities/servers.yaml
+#     name: server
+
+# Dashboards organise actions into folders and fieldsets.
+# Docs: https://docs.olivetin.app/dashboards/intro.html
+#
+# dashboards:
+#   - title: My Mac
+#     contents:
+#       - title: Power & battery status
+#       - title: Sleep the displays
+
+# =============================================================================
+# Security - Authentication
+# =============================================================================
+
+# If "true", users must log in before doing anything.
+authRequireGuestsToLogin: false
+
+# The simplest auth: define users/passwords in this config. OliveTin also
+# supports header-based auth, OAuth2 and JWT (documented separately).
+# Docs: https://docs.olivetin.app/security/local.html
+#
+# Generating an argon2id hash on macOS:
+#   brew install argon2
+#   echo -n 'yourPassword' | argon2 "$(openssl rand -base64 16)" -id -e
+# (Linux equivalent typically uses the distro's `argon2` package directly.)
+authLocalUsers:
+  enabled: true
+#  users:
+#    - username: alice
+#      usergroup: admins
+#      password: "$argon2id$v=19$m=65536,t=4,p=2$puyxA0s555TSFx7hnFLCXA$PyhLGpZtvpMMvc2DgMWkM8OJMKO55euwV5gm//1iwx4"
+
+# =============================================================================
+# Security - Access Control
+# =============================================================================
+
+# Policies affect the whole app (eg: ability to view the log list).
+# Docs: https://docs.olivetin.app/security/acl.html
+defaultPolicy:
+  showDiagnostics: true
+  showLogList: true
+
+# Permissions affect individual actions.
+defaultPermissions:
+  view: true
+  exec: true
+  logs: true
+
+# ACLs match policy/permissions to users.
+accessControlLists:
+  - name: admin_acl
+    matchUsergroups: ["admins"]
+    policy:
+      showDiagnostics: true
+    permissions:
+      view: true
+      exec: true
+      logs: true
+
+# OliveTin has many more options not shown here. See docs.olivetin.app.
