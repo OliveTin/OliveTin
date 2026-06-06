@@ -73,6 +73,7 @@ archives:
     files:
       - config.yaml
       - config.macos.yaml
+      - app.olivetin.olivetin.plist
       - LICENSE
       - README.md
       - src: Dockerfile.singlearch
