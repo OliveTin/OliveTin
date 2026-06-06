@@ -27,7 +27,7 @@
     <array>
         <string>/usr/local/bin/OliveTin</string>
         <string>-configdir</string>
-        <string>/usr/local/etc/OliveTin</string>
+        <string>/Users/YOUR_USER/etc/OliveTin</string>
     </array>
 
     <!-- systemd's Restart=always -->
@@ -38,10 +38,8 @@
     <key>RunAtLoad</key>
     <true/>
 
-    <!-- Where stdout/stderr go; tail these for troubleshooting -->
+<!-- For LaunchAgent (per-user): use /Users/YOUR_USER/Library/Logs/olivetin.log
+     For LaunchDaemon (system-wide): use /usr/local/var/log/olivetin.log -->
     <key>StandardOutPath</key>
-    <string>/Users/YOUR_USER/Library/Logs/olivetin.log</string>
-    <key>StandardErrorPath</key>
-    <string>/Users/YOUR_USER/Library/Logs/olivetin.log</string>
-</dict>
+    <string>/Users/YOUR_USER/Library/Logs/olivetin.log</string></dict>
 </plist>
