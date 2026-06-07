@@ -6,8 +6,8 @@
 
   As a per-user LaunchAgent (recommended, no root needed):
       cp app.olivetin.olivetin.plist ~/Library/LaunchAgents/
-      launchctl load   ~/Library/LaunchAgents/app.olivetin.olivetin.plist   # start now + at login
-      launchctl unload ~/Library/LaunchAgents/app.olivetin.olivetin.plist   # stop + disable
+      launchctl bootstrap   ~/Library/LaunchAgents/app.olivetin.olivetin.plist   # start now + at login
+      launchctl bootout ~/Library/LaunchAgents/app.olivetin.olivetin.plist   # stop + disable
 
   As a system-wide LaunchDaemon (starts at boot, before login; needs root):
       sudo cp app.olivetin.olivetin.plist /Library/LaunchDaemons/
