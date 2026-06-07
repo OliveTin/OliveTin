@@ -12,7 +12,7 @@
 # POSIX/zsh/bash one-liners.
 #
 # To use this file, copy it next to the OliveTin binary as `config.yaml`:
-#   cp config.macos.yaml config.yaml
+#   cp ./var/macos/config.yaml config.yaml
 #   ./OliveTin
 #
 # Docs: https://docs.olivetin.app/
