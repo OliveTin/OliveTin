@@ -110,7 +110,7 @@ From the folder that contains both `OliveTin` and `config.yaml`:
 
 Then open the web interface at:
 
-```
+```text
 http://localhost:1337
 ```
 
