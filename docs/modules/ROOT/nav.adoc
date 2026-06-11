@@ -17,7 +17,8 @@
 *** xref:install/bsd.adoc[BSD]
 *** xref:install/windows.adoc[Windows]
 **** xref:install/windows_service.adoc[Windows Service]
-*** xref:install/macos.adoc[MacOS]
+*** xref:install/macos.adoc[macOS Desktop]
+*** xref:install/macos_service.adoc[macOS Service]
 *** xref:install/choose_package.adoc[All download options]
 * Upgrade Guide
 ** xref:upgrade/2k3k.adoc[Understanding 2k vs 3k]

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  launchd service definition for OliveTin on macOS.
+  This is the macOS equivalent of the Linux systemd unit (var/systemd/OliveTin.service).
+
+  As a per-user LaunchAgent (recommended, no root needed):
+      cp app.olivetin.olivetin.plist ~/Library/LaunchAgents/
+      launchctl bootstrap   ~/Library/LaunchAgents/app.olivetin.olivetin.plist   # start now + at login
+      launchctl bootout ~/Library/LaunchAgents/app.olivetin.olivetin.plist   # stop + disable
+
+  As a system-wide LaunchDaemon (starts at boot, before login; needs root):
+      sudo cp app.olivetin.olivetin.plist /Library/LaunchDaemons/
+      sudo chown root:wheel /Library/LaunchDaemons/app.olivetin.olivetin.plist
+      sudo launchctl load /Library/LaunchDaemons/app.olivetin.olivetin.plist
+
+  Edit the two paths below to match where you installed the binary and config.
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>app.olivetin.olivetin</string>
+
+    <!-- Path to the OliveTin binary, then flags. -configdir is the directory
+         that contains your config.yaml. -->
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/local/bin/OliveTin</string>
+        <string>-configdir</string>
+        <string>/usr/local/etc/OliveTin</string>
+    </array>
+
+    <!-- systemd's Restart=always -->
+    <key>KeepAlive</key>
+    <true/>
+
+    <!-- Start at load (login for a LaunchAgent, boot for a LaunchDaemon) -->
+    <key>RunAtLoad</key>
+    <true/>
+
+    <!-- Where stdout/stderr go; tail these for troubleshooting -->
+    <key>StandardOutPath</key>
+    <string>/usr/local/var/log/olivetin.log</string>
+    <key>StandardErrorPath</key>
+    <string>/usr/local/var/log/olivetin.log</string>
+</dict>
+</plist>
