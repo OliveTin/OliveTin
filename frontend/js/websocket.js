@@ -2,23 +2,63 @@ import { buttonResults } from '../resources/vue/stores/buttonResults.js'
 import { rateLimits } from '../resources/vue/stores/rateLimits.js'
 import { connectionState } from '../resources/vue/stores/connectionState.js'
 
-const RECONNECT_DELAYS_MS = [0, 1000, 2000, 4000, 8000, 16000, 32000]
+const RECONNECT_DELAYS_MS = [200, 1000, 2000, 4000, 8000, 16000, 32000]
 const BANNER_DELAY_MS = 2000
 
 let reconnectAttempt = 0
 let reconnectTimer = null
+let listenersInitialized = false
 
-export function initWebsocket () {
-  window.addEventListener('EventOutputChunk', onOutputChunk)
-  window.addEventListener('EventExecutionStarted', onExecutionChanged)
-  window.addEventListener('EventExecutionFinished', onExecutionChanged)
+function shouldConnectEventStream () {
+  return window.initResponse && !window.initResponse.loginRequired
+}
+
+export function stopEventStream () {
+  if (reconnectTimer != null) {
+    clearTimeout(reconnectTimer)
+    reconnectTimer = null
+  }
+
+  reconnectAttempt = 0
+  connectionState.connected = false
+  connectionState.reconnecting = false
+  connectionState.scheduledReconnectDelayMs = 0
+  connectionState.nextReconnectAt = null
+  connectionState.showDisconnectedBanner = false
+  window.websocketAvailable = false
+}
+
+export function connectEventStreamIfNeeded () {
+  if (!shouldConnectEventStream()) {
+    stopEventStream()
+    return
+  }
+
+  if (window.websocketAvailable || reconnectTimer != null) {
+    return
+  }
 
   reconnectWebsocket()
+}
+
+export function initWebsocket () {
+  if (!listenersInitialized) {
+    window.addEventListener('EventOutputChunk', onOutputChunk)
+    window.addEventListener('EventExecutionStarted', onExecutionChanged)
+    window.addEventListener('EventExecutionFinished', onExecutionChanged)
+    listenersInitialized = true
+  }
+
+  connectEventStreamIfNeeded()
 }
 
 window.websocketAvailable = false
 
 export function requestReconnectNow () {
+  if (!shouldConnectEventStream()) {
+    return
+  }
+
   if (window.websocketAvailable) {
     return
   }
@@ -29,7 +69,7 @@ export function requestReconnectNow () {
   }
 
   reconnectAttempt = 0
-  scheduleReconnect(0)
+  scheduleReconnect(RECONNECT_DELAYS_MS[0])
 }
 
 function scheduleReconnect (delayMs) {
@@ -57,6 +97,10 @@ function updateBannerVisibility () {
 }
 
 async function reconnectWebsocket () {
+  if (!shouldConnectEventStream()) {
+    return
+  }
+
   if (window.websocketAvailable) {
     return
   }
@@ -78,8 +122,10 @@ async function reconnectWebsocket () {
     connectionState.nextReconnectAt = null
     connectionState.scheduledReconnectDelayMs = 0
     connectionState.showDisconnectedBanner = false
-    reconnectAttempt = 0
     for await (const e of stream) {
+      if (reconnectAttempt !== 0) {
+        reconnectAttempt = 0
+      }
       handleEvent(e)
     }
   } catch (err) {
@@ -94,6 +140,11 @@ async function reconnectWebsocket () {
   const delay = RECONNECT_DELAYS_MS[Math.min(reconnectAttempt, RECONNECT_DELAYS_MS.length - 1)]
   reconnectAttempt++
   console.log('Reconnecting websocket in ' + delay + 'ms...')
+
+  if (!shouldConnectEventStream()) {
+    return
+  }
+
   scheduleReconnect(delay)
 }
 

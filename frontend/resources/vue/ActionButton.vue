@@ -214,8 +214,10 @@ function getUniqueId() {
 
 async function pollExecutionUntilDone (trackingId) {
   const pollIntervalMs = 500
+  const pollTimeoutMs = 10 * 60 * 1000
+  const deadline = Date.now() + pollTimeoutMs
 
-  while (!connectionState.connected) {
+  while (Date.now() < deadline) {
     try {
       const result = await window.client.executionStatus({ executionTrackingId: trackingId })
       if (result.logEntry) {
