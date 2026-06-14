@@ -79,7 +79,7 @@ archives:
       - src: Dockerfile.singlearch
         dst: Dockerfile
       - webui
-      - ./var/
+      - var
     name_template: "{{ .ProjectName }}-{{ .Os }}-{{ .Arch }}{{ .Arm }}"
     wrap_in_directory: true
     format_overrides:

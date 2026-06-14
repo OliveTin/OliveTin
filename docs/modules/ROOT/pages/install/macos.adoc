@@ -1,4 +1,4 @@
-= macOS
+= macOS Desktop
 
 OliveTin runs natively on macOS, on both Apple Silicon (M-series) and Intel Macs. It is a single, self-contained binary - there is no installer and no dependencies to set up.
 
