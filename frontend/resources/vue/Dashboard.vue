@@ -167,7 +167,15 @@ async function getDashboard() {
 }
 
 function waitForInitAndLoadDashboard() {
-    // Start the loading timer
+    if (loadingTimer) {
+        clearInterval(loadingTimer)
+        loadingTimer = null
+    }
+    if (checkInitInterval) {
+        clearInterval(checkInitInterval)
+        checkInitInterval = null
+    }
+
     loadingTime.value = 0
     loadingTimer = setInterval(() => {
         loadingTime.value++
