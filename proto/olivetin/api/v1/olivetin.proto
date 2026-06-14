@@ -261,6 +261,7 @@ message EventStreamResponse {
     EventExecutionFinished execution_finished = 4;
     EventExecutionStarted execution_started = 5;
     EventOutputChunk output_chunk = 6;
+    EventHeartbeat heartbeat = 7;
   }
 }
 
@@ -272,6 +273,7 @@ message EventOutputChunk {
 
 message EventEntityChanged {}
 message EventConfigChanged {}
+message EventHeartbeat {}
 message EventExecutionFinished {
 	LogEntry log_entry = 1;
 }

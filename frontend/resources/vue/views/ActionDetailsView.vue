@@ -106,6 +106,7 @@ import Pagination from 'picocrank/vue/components/Pagination.vue'
 import Section from 'picocrank/vue/components/Section.vue'
 import ActionIconGlyph from '../components/ActionIconGlyph.vue'
 import ActionStatusDisplay from '../components/ActionStatusDisplay.vue'
+import { requestReconnectNow } from '../../../js/websocket.js'
 
 const route = useRoute()
 const router = useRouter()
@@ -290,6 +291,7 @@ async function startAction() {
   }
 
   try {
+    requestReconnectNow()
     const args = {
       "bindingId": action.value.bindingId,
       "arguments": []

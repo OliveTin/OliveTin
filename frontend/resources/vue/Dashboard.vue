@@ -30,11 +30,11 @@
             </div>
             <div class = "dashboard-row" v-for="component in dashboard.contents" :key="component.title">
                 <h2 v-if = "dashboard.title != 'Default'">
-                    <router-link 
-                        v-if="component.entityType && component.entityKey" 
-                        :to="{ 
-                            name: 'EntityDetails', 
-                            params: { 
+                    <router-link
+                        v-if="component.entityType && component.entityKey"
+                        :to="{
+                            name: 'EntityDetails',
+                            params: {
                                 entityType: component.entityType,
                                 entityKey: component.entityKey
                             }
@@ -57,10 +57,11 @@
 
 <script setup>
 import DashboardComponent from './components/DashboardComponent.vue'
-import { onMounted, onUnmounted, ref, computed } from 'vue'
+import { onMounted, onUnmounted, ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { HugeiconsIcon } from '@hugeicons/vue'
 import { Loading03Icon, ArrowLeftIcon } from '@hugeicons/core-free-icons'
+import { requestReconnectNow } from '../../js/websocket.js'
 
 const props = defineProps({
     title: {
@@ -106,6 +107,8 @@ function goBack() {
 }
 
 async function getDashboard() {
+    requestReconnectNow()
+
     let title = props.title
 
     // If no specific title was provided or it's the placeholder 'default',
@@ -118,31 +121,31 @@ async function getDashboard() {
         const request = {
             title: title,
         }
-        
+
         if (props.entityType && props.entityKey) {
             request.entityType = props.entityType
             request.entityKey = props.entityKey
         }
-        
+
         const ret = await window.client.getDashboard(request)
 
         if (!ret || !ret.dashboard) {
             throw new Error('No dashboard found')
         }
 
-        dashboard.value = ret.dashboard 
+        dashboard.value = ret.dashboard
         const pageTitle = window.initResponse?.pageTitle || 'OliveTin'
         document.title = ret.dashboard.title + ' - ' + pageTitle
-        
+
         // Clear any previous init error since we successfully loaded
         initError.value = null
-        
+
         // Stop the loading timer once dashboard is loaded
         if (loadingTimer) {
             clearInterval(loadingTimer)
             loadingTimer = null
         }
-        
+
         // Set attribute to indicate dashboard is loaded successfully
         document.body.setAttribute('loaded-dashboard', title || 'default')
     } catch (e) {
@@ -151,13 +154,13 @@ async function getDashboard() {
         dashboard.value = { title: title || 'Default', contents: [] }
         const pageTitle = window.initResponse?.pageTitle || 'OliveTin'
         document.title = 'Error - ' + pageTitle
-        
+
         // Stop the loading timer on error
         if (loadingTimer) {
             clearInterval(loadingTimer)
             loadingTimer = null
         }
-        
+
         // Set attribute even on error so tests can proceed
         document.body.setAttribute('loaded-dashboard', title || 'error')
     }
@@ -169,7 +172,7 @@ function waitForInitAndLoadDashboard() {
     loadingTimer = setInterval(() => {
         loadingTime.value++
     }, 1000)
-    
+
     // Check if init has completed successfully
     if (window.initResponse) {
         getDashboard()
@@ -205,6 +208,14 @@ function waitForInitAndLoadDashboard() {
 onMounted(() => {
     waitForInitAndLoadDashboard()
 })
+
+watch(
+    () => [props.title, props.entityType, props.entityKey],
+    () => {
+        dashboard.value = null
+        waitForInitAndLoadDashboard()
+    }
+)
 
 onUnmounted(() => {
     // Clean up the timers when component is unmounted

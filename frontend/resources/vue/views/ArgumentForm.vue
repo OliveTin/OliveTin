@@ -60,6 +60,7 @@
 <script setup>
 import { ref, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
+import { requestReconnectNow } from '../../../js/websocket.js'
 
 const router = useRouter()
 
@@ -380,6 +381,7 @@ async function startAction(actionArgs) {
   }
 
   try {
+    requestReconnectNow()
     const response = await window.client.startAction(startActionArgs)
     console.log('Action started successfully with tracking ID:', response.executionTrackingId)
     return response

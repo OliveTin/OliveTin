@@ -1,5 +1,5 @@
 <template>
-    <span id="connection-banner" v-if="!connectionState.connected" class="inline-notification critical user-info-connection">
+    <span id="connection-banner" v-if="connectionState.showDisconnectedBanner" class="inline-notification critical user-info-connection">
         <span class="connection-banner-sr-only" role="status">{{ staticAnnouncement }}</span>
         <span aria-hidden="true">
             <a :href="websocketDocsUrl" target="_blank" rel="noopener noreferrer" class="connection-banner-link">{{ linkText }}</a>{{ bannerSuffix }}
@@ -35,12 +35,12 @@ function formatShortTime(ts) {
 
 const now = ref(Date.now())
 let ticker = null
-watch(() => connectionState.connected, (connected) => {
+watch(() => connectionState.showDisconnectedBanner, (showBanner) => {
   if (ticker) {
     clearInterval(ticker)
     ticker = null
   }
-  if (!connected) {
+  if (showBanner) {
     now.value = Date.now()
     ticker = setInterval(() => { now.value = Date.now() }, 1000)
   }

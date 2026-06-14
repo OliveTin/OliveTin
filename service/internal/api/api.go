@@ -943,6 +943,10 @@ func (api *oliveTinAPI) EventStream(ctx ctx.Context, req *connect.Request[apiv1.
 	api.streamingClients[client] = struct{}{}
 	api.streamingClientsMutex.Unlock()
 
+	heartbeatDone := make(chan struct{})
+	defer close(heartbeatDone)
+	go api.sendEventStreamHeartbeats(heartbeatDone, client)
+
 	// loop over client channel and send events to connectedClient
 	for msg := range client.channel {
 		log.Debugf("Sending event to client: %v", msg)
@@ -957,6 +961,38 @@ func (api *oliveTinAPI) EventStream(ctx ctx.Context, req *connect.Request[apiv1.
 	log.Infof("EventStream: client disconnected")
 
 	return nil
+}
+
+func (api *oliveTinAPI) sendEventStreamHeartbeats(done <-chan struct{}, client *streamingClient) {
+	ticker := time.NewTicker(10 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		if api.waitEventStreamHeartbeatOrDone(done, ticker) {
+			return
+		}
+		if !api.sendEventStreamHeartbeat(client) {
+			return
+		}
+	}
+}
+
+func (api *oliveTinAPI) waitEventStreamHeartbeatOrDone(done <-chan struct{}, ticker *time.Ticker) bool {
+	select {
+	case <-done:
+		return true
+	case <-ticker.C:
+		return false
+	}
+}
+
+func (api *oliveTinAPI) sendEventStreamHeartbeat(client *streamingClient) bool {
+	msg := &apiv1.EventStreamResponse{
+		Event: &apiv1.EventStreamResponse_Heartbeat{
+			Heartbeat: &apiv1.EventHeartbeat{},
+		},
+	}
+	return api.trySendEventToClient(client, msg)
 }
 
 func (api *oliveTinAPI) removeClient(clientToRemove *streamingClient) {

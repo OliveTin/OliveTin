@@ -29,6 +29,8 @@
 <script setup>
 import { buttonResults } from './stores/buttonResults'
 import { rateLimits } from './stores/rateLimits'
+import { connectionState } from './stores/connectionState'
+import { requestReconnectNow, applyExecutionLogEntry } from '../../js/websocket.js'
 import { useRouter } from 'vue-router'
 import { HugeiconsIcon } from '@hugeicons/vue'
 import { WorkoutRunIcon, TypeCursorIcon, ComputerTerminal01Icon, WorkHistoryIcon } from '@hugeicons/core-free-icons'
@@ -210,6 +212,26 @@ function getUniqueId() {
   }
 }
 
+async function pollExecutionUntilDone (trackingId) {
+  const pollIntervalMs = 500
+
+  while (!connectionState.connected) {
+    try {
+      const result = await window.client.executionStatus({ executionTrackingId: trackingId })
+      if (result.logEntry) {
+        applyExecutionLogEntry(result.logEntry)
+        if (result.logEntry.executionFinished) {
+          return
+        }
+      }
+    } catch (err) {
+      console.error('Failed to poll execution status:', err)
+    }
+
+    await new Promise(resolve => setTimeout(resolve, pollIntervalMs))
+  }
+}
+
 async function startAction(actionArgs) {
   buttonClasses.value = [] // Removes old animation classes
 
@@ -234,8 +256,14 @@ async function startAction(actionArgs) {
 	}
   )
 
+  requestReconnectNow()
+
   try {
 	await window.client.startAction(startActionArgs)
+
+	if (!connectionState.connected) {
+	  await pollExecutionUntilDone(startActionArgs.uniqueTrackingId)
+	}
   } catch (err) {
 	console.error('Failed to start action:', err)
   }

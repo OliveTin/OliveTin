@@ -2518,6 +2518,7 @@ type EventStreamResponse struct {
 	//	*EventStreamResponse_ExecutionFinished
 	//	*EventStreamResponse_ExecutionStarted
 	//	*EventStreamResponse_OutputChunk
+	//	*EventStreamResponse_Heartbeat
 	Event         isEventStreamResponse_Event `protobuf_oneof:"event"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -2605,6 +2606,15 @@ func (x *EventStreamResponse) GetOutputChunk() *EventOutputChunk {
 	return nil
 }
 
+func (x *EventStreamResponse) GetHeartbeat() *EventHeartbeat {
+	if x != nil {
+		if x, ok := x.Event.(*EventStreamResponse_Heartbeat); ok {
+			return x.Heartbeat
+		}
+	}
+	return nil
+}
+
 type isEventStreamResponse_Event interface {
 	isEventStreamResponse_Event()
 }
@@ -2629,6 +2639,10 @@ type EventStreamResponse_OutputChunk struct {
 	OutputChunk *EventOutputChunk `protobuf:"bytes,6,opt,name=output_chunk,json=outputChunk,proto3,oneof"`
 }
 
+type EventStreamResponse_Heartbeat struct {
+	Heartbeat *EventHeartbeat `protobuf:"bytes,7,opt,name=heartbeat,proto3,oneof"`
+}
+
 func (*EventStreamResponse_EntityChanged) isEventStreamResponse_Event() {}
 
 func (*EventStreamResponse_ConfigChanged) isEventStreamResponse_Event() {}
@@ -2638,6 +2652,8 @@ func (*EventStreamResponse_ExecutionFinished) isEventStreamResponse_Event() {}
 func (*EventStreamResponse_ExecutionStarted) isEventStreamResponse_Event() {}
 
 func (*EventStreamResponse_OutputChunk) isEventStreamResponse_Event() {}
+
+func (*EventStreamResponse_Heartbeat) isEventStreamResponse_Event() {}
 
 type EventOutputChunk struct {
 	state               protoimpl.MessageState `protogen:"open.v1"`
@@ -2763,6 +2779,42 @@ func (*EventConfigChanged) Descriptor() ([]byte, []int) {
 	return file_olivetin_api_v1_olivetin_proto_rawDescGZIP(), []int{45}
 }
 
+type EventHeartbeat struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *EventHeartbeat) Reset() {
+	*x = EventHeartbeat{}
+	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[46]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *EventHeartbeat) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EventHeartbeat) ProtoMessage() {}
+
+func (x *EventHeartbeat) ProtoReflect() protoreflect.Message {
+	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[46]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EventHeartbeat.ProtoReflect.Descriptor instead.
+func (*EventHeartbeat) Descriptor() ([]byte, []int) {
+	return file_olivetin_api_v1_olivetin_proto_rawDescGZIP(), []int{46}
+}
+
 type EventExecutionFinished struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	LogEntry      *LogEntry              `protobuf:"bytes,1,opt,name=log_entry,json=logEntry,proto3" json:"log_entry,omitempty"`
@@ -2772,7 +2824,7 @@ type EventExecutionFinished struct {
 
 func (x *EventExecutionFinished) Reset() {
 	*x = EventExecutionFinished{}
-	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[46]
+	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[47]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2784,7 +2836,7 @@ func (x *EventExecutionFinished) String() string {
 func (*EventExecutionFinished) ProtoMessage() {}
 
 func (x *EventExecutionFinished) ProtoReflect() protoreflect.Message {
-	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[46]
+	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[47]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2797,7 +2849,7 @@ func (x *EventExecutionFinished) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EventExecutionFinished.ProtoReflect.Descriptor instead.
 func (*EventExecutionFinished) Descriptor() ([]byte, []int) {
-	return file_olivetin_api_v1_olivetin_proto_rawDescGZIP(), []int{46}
+	return file_olivetin_api_v1_olivetin_proto_rawDescGZIP(), []int{47}
 }
 
 func (x *EventExecutionFinished) GetLogEntry() *LogEntry {
@@ -2816,7 +2868,7 @@ type EventExecutionStarted struct {
 
 func (x *EventExecutionStarted) Reset() {
 	*x = EventExecutionStarted{}
-	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[47]
+	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[48]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2828,7 +2880,7 @@ func (x *EventExecutionStarted) String() string {
 func (*EventExecutionStarted) ProtoMessage() {}
 
 func (x *EventExecutionStarted) ProtoReflect() protoreflect.Message {
-	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[47]
+	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[48]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2841,7 +2893,7 @@ func (x *EventExecutionStarted) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EventExecutionStarted.ProtoReflect.Descriptor instead.
 func (*EventExecutionStarted) Descriptor() ([]byte, []int) {
-	return file_olivetin_api_v1_olivetin_proto_rawDescGZIP(), []int{47}
+	return file_olivetin_api_v1_olivetin_proto_rawDescGZIP(), []int{48}
 }
 
 func (x *EventExecutionStarted) GetLogEntry() *LogEntry {
@@ -2860,7 +2912,7 @@ type KillActionRequest struct {
 
 func (x *KillActionRequest) Reset() {
 	*x = KillActionRequest{}
-	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[48]
+	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[49]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2872,7 +2924,7 @@ func (x *KillActionRequest) String() string {
 func (*KillActionRequest) ProtoMessage() {}
 
 func (x *KillActionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[48]
+	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[49]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2885,7 +2937,7 @@ func (x *KillActionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use KillActionRequest.ProtoReflect.Descriptor instead.
 func (*KillActionRequest) Descriptor() ([]byte, []int) {
-	return file_olivetin_api_v1_olivetin_proto_rawDescGZIP(), []int{48}
+	return file_olivetin_api_v1_olivetin_proto_rawDescGZIP(), []int{49}
 }
 
 func (x *KillActionRequest) GetExecutionTrackingId() string {
@@ -2907,7 +2959,7 @@ type KillActionResponse struct {
 
 func (x *KillActionResponse) Reset() {
 	*x = KillActionResponse{}
-	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[49]
+	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[50]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2919,7 +2971,7 @@ func (x *KillActionResponse) String() string {
 func (*KillActionResponse) ProtoMessage() {}
 
 func (x *KillActionResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[49]
+	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[50]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2932,7 +2984,7 @@ func (x *KillActionResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use KillActionResponse.ProtoReflect.Descriptor instead.
 func (*KillActionResponse) Descriptor() ([]byte, []int) {
-	return file_olivetin_api_v1_olivetin_proto_rawDescGZIP(), []int{49}
+	return file_olivetin_api_v1_olivetin_proto_rawDescGZIP(), []int{50}
 }
 
 func (x *KillActionResponse) GetExecutionTrackingId() string {
@@ -2973,7 +3025,7 @@ type LocalUserLoginRequest struct {
 
 func (x *LocalUserLoginRequest) Reset() {
 	*x = LocalUserLoginRequest{}
-	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[50]
+	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[51]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2985,7 +3037,7 @@ func (x *LocalUserLoginRequest) String() string {
 func (*LocalUserLoginRequest) ProtoMessage() {}
 
 func (x *LocalUserLoginRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[50]
+	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[51]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2998,7 +3050,7 @@ func (x *LocalUserLoginRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LocalUserLoginRequest.ProtoReflect.Descriptor instead.
 func (*LocalUserLoginRequest) Descriptor() ([]byte, []int) {
-	return file_olivetin_api_v1_olivetin_proto_rawDescGZIP(), []int{50}
+	return file_olivetin_api_v1_olivetin_proto_rawDescGZIP(), []int{51}
 }
 
 func (x *LocalUserLoginRequest) GetUsername() string {
@@ -3024,7 +3076,7 @@ type LocalUserLoginResponse struct {
 
 func (x *LocalUserLoginResponse) Reset() {
 	*x = LocalUserLoginResponse{}
-	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[51]
+	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[52]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3036,7 +3088,7 @@ func (x *LocalUserLoginResponse) String() string {
 func (*LocalUserLoginResponse) ProtoMessage() {}
 
 func (x *LocalUserLoginResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[51]
+	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[52]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3049,7 +3101,7 @@ func (x *LocalUserLoginResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LocalUserLoginResponse.ProtoReflect.Descriptor instead.
 func (*LocalUserLoginResponse) Descriptor() ([]byte, []int) {
-	return file_olivetin_api_v1_olivetin_proto_rawDescGZIP(), []int{51}
+	return file_olivetin_api_v1_olivetin_proto_rawDescGZIP(), []int{52}
 }
 
 func (x *LocalUserLoginResponse) GetSuccess() bool {
@@ -3068,7 +3120,7 @@ type PasswordHashRequest struct {
 
 func (x *PasswordHashRequest) Reset() {
 	*x = PasswordHashRequest{}
-	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[52]
+	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[53]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3080,7 +3132,7 @@ func (x *PasswordHashRequest) String() string {
 func (*PasswordHashRequest) ProtoMessage() {}
 
 func (x *PasswordHashRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[52]
+	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[53]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3093,7 +3145,7 @@ func (x *PasswordHashRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PasswordHashRequest.ProtoReflect.Descriptor instead.
 func (*PasswordHashRequest) Descriptor() ([]byte, []int) {
-	return file_olivetin_api_v1_olivetin_proto_rawDescGZIP(), []int{52}
+	return file_olivetin_api_v1_olivetin_proto_rawDescGZIP(), []int{53}
 }
 
 func (x *PasswordHashRequest) GetPassword() string {
@@ -3112,7 +3164,7 @@ type PasswordHashResponse struct {
 
 func (x *PasswordHashResponse) Reset() {
 	*x = PasswordHashResponse{}
-	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[53]
+	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[54]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3124,7 +3176,7 @@ func (x *PasswordHashResponse) String() string {
 func (*PasswordHashResponse) ProtoMessage() {}
 
 func (x *PasswordHashResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[53]
+	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[54]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3137,7 +3189,7 @@ func (x *PasswordHashResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PasswordHashResponse.ProtoReflect.Descriptor instead.
 func (*PasswordHashResponse) Descriptor() ([]byte, []int) {
-	return file_olivetin_api_v1_olivetin_proto_rawDescGZIP(), []int{53}
+	return file_olivetin_api_v1_olivetin_proto_rawDescGZIP(), []int{54}
 }
 
 func (x *PasswordHashResponse) GetHash() string {
@@ -3155,7 +3207,7 @@ type LogoutRequest struct {
 
 func (x *LogoutRequest) Reset() {
 	*x = LogoutRequest{}
-	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[54]
+	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[55]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3167,7 +3219,7 @@ func (x *LogoutRequest) String() string {
 func (*LogoutRequest) ProtoMessage() {}
 
 func (x *LogoutRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[54]
+	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[55]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3180,7 +3232,7 @@ func (x *LogoutRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LogoutRequest.ProtoReflect.Descriptor instead.
 func (*LogoutRequest) Descriptor() ([]byte, []int) {
-	return file_olivetin_api_v1_olivetin_proto_rawDescGZIP(), []int{54}
+	return file_olivetin_api_v1_olivetin_proto_rawDescGZIP(), []int{55}
 }
 
 type LogoutResponse struct {
@@ -3191,7 +3243,7 @@ type LogoutResponse struct {
 
 func (x *LogoutResponse) Reset() {
 	*x = LogoutResponse{}
-	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[55]
+	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[56]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3203,7 +3255,7 @@ func (x *LogoutResponse) String() string {
 func (*LogoutResponse) ProtoMessage() {}
 
 func (x *LogoutResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[55]
+	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[56]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3216,7 +3268,7 @@ func (x *LogoutResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LogoutResponse.ProtoReflect.Descriptor instead.
 func (*LogoutResponse) Descriptor() ([]byte, []int) {
-	return file_olivetin_api_v1_olivetin_proto_rawDescGZIP(), []int{55}
+	return file_olivetin_api_v1_olivetin_proto_rawDescGZIP(), []int{56}
 }
 
 type GetDiagnosticsRequest struct {
@@ -3227,7 +3279,7 @@ type GetDiagnosticsRequest struct {
 
 func (x *GetDiagnosticsRequest) Reset() {
 	*x = GetDiagnosticsRequest{}
-	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[56]
+	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[57]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3239,7 +3291,7 @@ func (x *GetDiagnosticsRequest) String() string {
 func (*GetDiagnosticsRequest) ProtoMessage() {}
 
 func (x *GetDiagnosticsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[56]
+	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[57]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3252,7 +3304,7 @@ func (x *GetDiagnosticsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDiagnosticsRequest.ProtoReflect.Descriptor instead.
 func (*GetDiagnosticsRequest) Descriptor() ([]byte, []int) {
-	return file_olivetin_api_v1_olivetin_proto_rawDescGZIP(), []int{56}
+	return file_olivetin_api_v1_olivetin_proto_rawDescGZIP(), []int{57}
 }
 
 type GetDiagnosticsResponse struct {
@@ -3265,7 +3317,7 @@ type GetDiagnosticsResponse struct {
 
 func (x *GetDiagnosticsResponse) Reset() {
 	*x = GetDiagnosticsResponse{}
-	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[57]
+	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[58]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3277,7 +3329,7 @@ func (x *GetDiagnosticsResponse) String() string {
 func (*GetDiagnosticsResponse) ProtoMessage() {}
 
 func (x *GetDiagnosticsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[57]
+	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[58]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3290,7 +3342,7 @@ func (x *GetDiagnosticsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetDiagnosticsResponse.ProtoReflect.Descriptor instead.
 func (*GetDiagnosticsResponse) Descriptor() ([]byte, []int) {
-	return file_olivetin_api_v1_olivetin_proto_rawDescGZIP(), []int{57}
+	return file_olivetin_api_v1_olivetin_proto_rawDescGZIP(), []int{58}
 }
 
 func (x *GetDiagnosticsResponse) GetSshFoundKey() string {
@@ -3315,7 +3367,7 @@ type InitRequest struct {
 
 func (x *InitRequest) Reset() {
 	*x = InitRequest{}
-	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[58]
+	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[59]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3327,7 +3379,7 @@ func (x *InitRequest) String() string {
 func (*InitRequest) ProtoMessage() {}
 
 func (x *InitRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[58]
+	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[59]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3340,7 +3392,7 @@ func (x *InitRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use InitRequest.ProtoReflect.Descriptor instead.
 func (*InitRequest) Descriptor() ([]byte, []int) {
-	return file_olivetin_api_v1_olivetin_proto_rawDescGZIP(), []int{58}
+	return file_olivetin_api_v1_olivetin_proto_rawDescGZIP(), []int{59}
 }
 
 type InitResponse struct {
@@ -3376,7 +3428,7 @@ type InitResponse struct {
 
 func (x *InitResponse) Reset() {
 	*x = InitResponse{}
-	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[59]
+	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[60]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3388,7 +3440,7 @@ func (x *InitResponse) String() string {
 func (*InitResponse) ProtoMessage() {}
 
 func (x *InitResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[59]
+	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[60]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3401,7 +3453,7 @@ func (x *InitResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use InitResponse.ProtoReflect.Descriptor instead.
 func (*InitResponse) Descriptor() ([]byte, []int) {
-	return file_olivetin_api_v1_olivetin_proto_rawDescGZIP(), []int{59}
+	return file_olivetin_api_v1_olivetin_proto_rawDescGZIP(), []int{60}
 }
 
 func (x *InitResponse) GetShowFooter() bool {
@@ -3589,7 +3641,7 @@ type AdditionalLink struct {
 
 func (x *AdditionalLink) Reset() {
 	*x = AdditionalLink{}
-	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[60]
+	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[61]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3601,7 +3653,7 @@ func (x *AdditionalLink) String() string {
 func (*AdditionalLink) ProtoMessage() {}
 
 func (x *AdditionalLink) ProtoReflect() protoreflect.Message {
-	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[60]
+	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[61]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3614,7 +3666,7 @@ func (x *AdditionalLink) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AdditionalLink.ProtoReflect.Descriptor instead.
 func (*AdditionalLink) Descriptor() ([]byte, []int) {
-	return file_olivetin_api_v1_olivetin_proto_rawDescGZIP(), []int{60}
+	return file_olivetin_api_v1_olivetin_proto_rawDescGZIP(), []int{61}
 }
 
 func (x *AdditionalLink) GetTitle() string {
@@ -3642,7 +3694,7 @@ type OAuth2Provider struct {
 
 func (x *OAuth2Provider) Reset() {
 	*x = OAuth2Provider{}
-	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[61]
+	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[62]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3654,7 +3706,7 @@ func (x *OAuth2Provider) String() string {
 func (*OAuth2Provider) ProtoMessage() {}
 
 func (x *OAuth2Provider) ProtoReflect() protoreflect.Message {
-	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[61]
+	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[62]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3667,7 +3719,7 @@ func (x *OAuth2Provider) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use OAuth2Provider.ProtoReflect.Descriptor instead.
 func (*OAuth2Provider) Descriptor() ([]byte, []int) {
-	return file_olivetin_api_v1_olivetin_proto_rawDescGZIP(), []int{61}
+	return file_olivetin_api_v1_olivetin_proto_rawDescGZIP(), []int{62}
 }
 
 func (x *OAuth2Provider) GetTitle() string {
@@ -3700,7 +3752,7 @@ type GetActionBindingRequest struct {
 
 func (x *GetActionBindingRequest) Reset() {
 	*x = GetActionBindingRequest{}
-	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[62]
+	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[63]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3712,7 +3764,7 @@ func (x *GetActionBindingRequest) String() string {
 func (*GetActionBindingRequest) ProtoMessage() {}
 
 func (x *GetActionBindingRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[62]
+	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[63]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3725,7 +3777,7 @@ func (x *GetActionBindingRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetActionBindingRequest.ProtoReflect.Descriptor instead.
 func (*GetActionBindingRequest) Descriptor() ([]byte, []int) {
-	return file_olivetin_api_v1_olivetin_proto_rawDescGZIP(), []int{62}
+	return file_olivetin_api_v1_olivetin_proto_rawDescGZIP(), []int{63}
 }
 
 func (x *GetActionBindingRequest) GetBindingId() string {
@@ -3744,7 +3796,7 @@ type GetActionBindingResponse struct {
 
 func (x *GetActionBindingResponse) Reset() {
 	*x = GetActionBindingResponse{}
-	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[63]
+	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[64]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3756,7 +3808,7 @@ func (x *GetActionBindingResponse) String() string {
 func (*GetActionBindingResponse) ProtoMessage() {}
 
 func (x *GetActionBindingResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[63]
+	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[64]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3769,7 +3821,7 @@ func (x *GetActionBindingResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetActionBindingResponse.ProtoReflect.Descriptor instead.
 func (*GetActionBindingResponse) Descriptor() ([]byte, []int) {
-	return file_olivetin_api_v1_olivetin_proto_rawDescGZIP(), []int{63}
+	return file_olivetin_api_v1_olivetin_proto_rawDescGZIP(), []int{64}
 }
 
 func (x *GetActionBindingResponse) GetAction() *Action {
@@ -3787,7 +3839,7 @@ type GetEntitiesRequest struct {
 
 func (x *GetEntitiesRequest) Reset() {
 	*x = GetEntitiesRequest{}
-	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[64]
+	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[65]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3799,7 +3851,7 @@ func (x *GetEntitiesRequest) String() string {
 func (*GetEntitiesRequest) ProtoMessage() {}
 
 func (x *GetEntitiesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[64]
+	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[65]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3812,7 +3864,7 @@ func (x *GetEntitiesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetEntitiesRequest.ProtoReflect.Descriptor instead.
 func (*GetEntitiesRequest) Descriptor() ([]byte, []int) {
-	return file_olivetin_api_v1_olivetin_proto_rawDescGZIP(), []int{64}
+	return file_olivetin_api_v1_olivetin_proto_rawDescGZIP(), []int{65}
 }
 
 type GetEntitiesResponse struct {
@@ -3824,7 +3876,7 @@ type GetEntitiesResponse struct {
 
 func (x *GetEntitiesResponse) Reset() {
 	*x = GetEntitiesResponse{}
-	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[65]
+	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[66]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3836,7 +3888,7 @@ func (x *GetEntitiesResponse) String() string {
 func (*GetEntitiesResponse) ProtoMessage() {}
 
 func (x *GetEntitiesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[65]
+	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[66]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3849,7 +3901,7 @@ func (x *GetEntitiesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetEntitiesResponse.ProtoReflect.Descriptor instead.
 func (*GetEntitiesResponse) Descriptor() ([]byte, []int) {
-	return file_olivetin_api_v1_olivetin_proto_rawDescGZIP(), []int{65}
+	return file_olivetin_api_v1_olivetin_proto_rawDescGZIP(), []int{66}
 }
 
 func (x *GetEntitiesResponse) GetEntityDefinitions() []*EntityDefinition {
@@ -3870,7 +3922,7 @@ type EntityDefinition struct {
 
 func (x *EntityDefinition) Reset() {
 	*x = EntityDefinition{}
-	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[66]
+	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[67]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3882,7 +3934,7 @@ func (x *EntityDefinition) String() string {
 func (*EntityDefinition) ProtoMessage() {}
 
 func (x *EntityDefinition) ProtoReflect() protoreflect.Message {
-	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[66]
+	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[67]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3895,7 +3947,7 @@ func (x *EntityDefinition) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EntityDefinition.ProtoReflect.Descriptor instead.
 func (*EntityDefinition) Descriptor() ([]byte, []int) {
-	return file_olivetin_api_v1_olivetin_proto_rawDescGZIP(), []int{66}
+	return file_olivetin_api_v1_olivetin_proto_rawDescGZIP(), []int{67}
 }
 
 func (x *EntityDefinition) GetTitle() string {
@@ -3929,7 +3981,7 @@ type GetEntityRequest struct {
 
 func (x *GetEntityRequest) Reset() {
 	*x = GetEntityRequest{}
-	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[67]
+	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[68]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3941,7 +3993,7 @@ func (x *GetEntityRequest) String() string {
 func (*GetEntityRequest) ProtoMessage() {}
 
 func (x *GetEntityRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[67]
+	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[68]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3954,7 +4006,7 @@ func (x *GetEntityRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetEntityRequest.ProtoReflect.Descriptor instead.
 func (*GetEntityRequest) Descriptor() ([]byte, []int) {
-	return file_olivetin_api_v1_olivetin_proto_rawDescGZIP(), []int{67}
+	return file_olivetin_api_v1_olivetin_proto_rawDescGZIP(), []int{68}
 }
 
 func (x *GetEntityRequest) GetUniqueKey() string {
@@ -3980,7 +4032,7 @@ type RestartActionRequest struct {
 
 func (x *RestartActionRequest) Reset() {
 	*x = RestartActionRequest{}
-	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[68]
+	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[69]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3992,7 +4044,7 @@ func (x *RestartActionRequest) String() string {
 func (*RestartActionRequest) ProtoMessage() {}
 
 func (x *RestartActionRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[68]
+	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[69]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4005,7 +4057,7 @@ func (x *RestartActionRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RestartActionRequest.ProtoReflect.Descriptor instead.
 func (*RestartActionRequest) Descriptor() ([]byte, []int) {
-	return file_olivetin_api_v1_olivetin_proto_rawDescGZIP(), []int{68}
+	return file_olivetin_api_v1_olivetin_proto_rawDescGZIP(), []int{69}
 }
 
 func (x *RestartActionRequest) GetExecutionTrackingId() string {
@@ -4220,19 +4272,21 @@ const file_olivetin_api_v1_olivetin_proto_rawDesc = "" +
 	"\x10GetReadyzRequest\"+\n" +
 	"\x11GetReadyzResponse\x12\x16\n" +
 	"\x06status\x18\x01 \x01(\tR\x06status\"\x14\n" +
-	"\x12EventStreamRequest\"\xb3\x03\n" +
+	"\x12EventStreamRequest\"\xf4\x03\n" +
 	"\x13EventStreamResponse\x12L\n" +
 	"\x0eentity_changed\x18\x02 \x01(\v2#.olivetin.api.v1.EventEntityChangedH\x00R\rentityChanged\x12L\n" +
 	"\x0econfig_changed\x18\x03 \x01(\v2#.olivetin.api.v1.EventConfigChangedH\x00R\rconfigChanged\x12X\n" +
 	"\x12execution_finished\x18\x04 \x01(\v2'.olivetin.api.v1.EventExecutionFinishedH\x00R\x11executionFinished\x12U\n" +
 	"\x11execution_started\x18\x05 \x01(\v2&.olivetin.api.v1.EventExecutionStartedH\x00R\x10executionStarted\x12F\n" +
-	"\foutput_chunk\x18\x06 \x01(\v2!.olivetin.api.v1.EventOutputChunkH\x00R\voutputChunkB\a\n" +
+	"\foutput_chunk\x18\x06 \x01(\v2!.olivetin.api.v1.EventOutputChunkH\x00R\voutputChunk\x12?\n" +
+	"\theartbeat\x18\a \x01(\v2\x1f.olivetin.api.v1.EventHeartbeatH\x00R\theartbeatB\a\n" +
 	"\x05event\"^\n" +
 	"\x10EventOutputChunk\x122\n" +
 	"\x15execution_tracking_id\x18\x01 \x01(\tR\x13executionTrackingId\x12\x16\n" +
 	"\x06output\x18\x02 \x01(\tR\x06output\"\x14\n" +
 	"\x12EventEntityChanged\"\x14\n" +
-	"\x12EventConfigChanged\"P\n" +
+	"\x12EventConfigChanged\"\x10\n" +
+	"\x0eEventHeartbeat\"P\n" +
 	"\x16EventExecutionFinished\x126\n" +
 	"\tlog_entry\x18\x01 \x01(\v2\x19.olivetin.api.v1.LogEntryR\blogEntry\"O\n" +
 	"\x15EventExecutionStarted\x126\n" +
@@ -4355,7 +4409,7 @@ func file_olivetin_api_v1_olivetin_proto_rawDescGZIP() []byte {
 	return file_olivetin_api_v1_olivetin_proto_rawDescData
 }
 
-var file_olivetin_api_v1_olivetin_proto_msgTypes = make([]protoimpl.MessageInfo, 75)
+var file_olivetin_api_v1_olivetin_proto_msgTypes = make([]protoimpl.MessageInfo, 76)
 var file_olivetin_api_v1_olivetin_proto_goTypes = []any{
 	(*Action)(nil),                          // 0: olivetin.api.v1.Action
 	(*ActionWebhookExecHint)(nil),           // 1: olivetin.api.v1.ActionWebhookExecHint
@@ -4403,44 +4457,45 @@ var file_olivetin_api_v1_olivetin_proto_goTypes = []any{
 	(*EventOutputChunk)(nil),                // 43: olivetin.api.v1.EventOutputChunk
 	(*EventEntityChanged)(nil),              // 44: olivetin.api.v1.EventEntityChanged
 	(*EventConfigChanged)(nil),              // 45: olivetin.api.v1.EventConfigChanged
-	(*EventExecutionFinished)(nil),          // 46: olivetin.api.v1.EventExecutionFinished
-	(*EventExecutionStarted)(nil),           // 47: olivetin.api.v1.EventExecutionStarted
-	(*KillActionRequest)(nil),               // 48: olivetin.api.v1.KillActionRequest
-	(*KillActionResponse)(nil),              // 49: olivetin.api.v1.KillActionResponse
-	(*LocalUserLoginRequest)(nil),           // 50: olivetin.api.v1.LocalUserLoginRequest
-	(*LocalUserLoginResponse)(nil),          // 51: olivetin.api.v1.LocalUserLoginResponse
-	(*PasswordHashRequest)(nil),             // 52: olivetin.api.v1.PasswordHashRequest
-	(*PasswordHashResponse)(nil),            // 53: olivetin.api.v1.PasswordHashResponse
-	(*LogoutRequest)(nil),                   // 54: olivetin.api.v1.LogoutRequest
-	(*LogoutResponse)(nil),                  // 55: olivetin.api.v1.LogoutResponse
-	(*GetDiagnosticsRequest)(nil),           // 56: olivetin.api.v1.GetDiagnosticsRequest
-	(*GetDiagnosticsResponse)(nil),          // 57: olivetin.api.v1.GetDiagnosticsResponse
-	(*InitRequest)(nil),                     // 58: olivetin.api.v1.InitRequest
-	(*InitResponse)(nil),                    // 59: olivetin.api.v1.InitResponse
-	(*AdditionalLink)(nil),                  // 60: olivetin.api.v1.AdditionalLink
-	(*OAuth2Provider)(nil),                  // 61: olivetin.api.v1.OAuth2Provider
-	(*GetActionBindingRequest)(nil),         // 62: olivetin.api.v1.GetActionBindingRequest
-	(*GetActionBindingResponse)(nil),        // 63: olivetin.api.v1.GetActionBindingResponse
-	(*GetEntitiesRequest)(nil),              // 64: olivetin.api.v1.GetEntitiesRequest
-	(*GetEntitiesResponse)(nil),             // 65: olivetin.api.v1.GetEntitiesResponse
-	(*EntityDefinition)(nil),                // 66: olivetin.api.v1.EntityDefinition
-	(*GetEntityRequest)(nil),                // 67: olivetin.api.v1.GetEntityRequest
-	(*RestartActionRequest)(nil),            // 68: olivetin.api.v1.RestartActionRequest
-	nil,                                     // 69: olivetin.api.v1.ActionWebhookExecHint.MatchHeadersEntry
-	nil,                                     // 70: olivetin.api.v1.ActionWebhookExecHint.MatchQueryEntry
-	nil,                                     // 71: olivetin.api.v1.ActionArgument.SuggestionsEntry
-	nil,                                     // 72: olivetin.api.v1.Entity.FieldsEntry
-	nil,                                     // 73: olivetin.api.v1.DumpVarsResponse.ContentsEntry
-	nil,                                     // 74: olivetin.api.v1.DumpPublicIdActionMapResponse.ContentsEntry
+	(*EventHeartbeat)(nil),                  // 46: olivetin.api.v1.EventHeartbeat
+	(*EventExecutionFinished)(nil),          // 47: olivetin.api.v1.EventExecutionFinished
+	(*EventExecutionStarted)(nil),           // 48: olivetin.api.v1.EventExecutionStarted
+	(*KillActionRequest)(nil),               // 49: olivetin.api.v1.KillActionRequest
+	(*KillActionResponse)(nil),              // 50: olivetin.api.v1.KillActionResponse
+	(*LocalUserLoginRequest)(nil),           // 51: olivetin.api.v1.LocalUserLoginRequest
+	(*LocalUserLoginResponse)(nil),          // 52: olivetin.api.v1.LocalUserLoginResponse
+	(*PasswordHashRequest)(nil),             // 53: olivetin.api.v1.PasswordHashRequest
+	(*PasswordHashResponse)(nil),            // 54: olivetin.api.v1.PasswordHashResponse
+	(*LogoutRequest)(nil),                   // 55: olivetin.api.v1.LogoutRequest
+	(*LogoutResponse)(nil),                  // 56: olivetin.api.v1.LogoutResponse
+	(*GetDiagnosticsRequest)(nil),           // 57: olivetin.api.v1.GetDiagnosticsRequest
+	(*GetDiagnosticsResponse)(nil),          // 58: olivetin.api.v1.GetDiagnosticsResponse
+	(*InitRequest)(nil),                     // 59: olivetin.api.v1.InitRequest
+	(*InitResponse)(nil),                    // 60: olivetin.api.v1.InitResponse
+	(*AdditionalLink)(nil),                  // 61: olivetin.api.v1.AdditionalLink
+	(*OAuth2Provider)(nil),                  // 62: olivetin.api.v1.OAuth2Provider
+	(*GetActionBindingRequest)(nil),         // 63: olivetin.api.v1.GetActionBindingRequest
+	(*GetActionBindingResponse)(nil),        // 64: olivetin.api.v1.GetActionBindingResponse
+	(*GetEntitiesRequest)(nil),              // 65: olivetin.api.v1.GetEntitiesRequest
+	(*GetEntitiesResponse)(nil),             // 66: olivetin.api.v1.GetEntitiesResponse
+	(*EntityDefinition)(nil),                // 67: olivetin.api.v1.EntityDefinition
+	(*GetEntityRequest)(nil),                // 68: olivetin.api.v1.GetEntityRequest
+	(*RestartActionRequest)(nil),            // 69: olivetin.api.v1.RestartActionRequest
+	nil,                                     // 70: olivetin.api.v1.ActionWebhookExecHint.MatchHeadersEntry
+	nil,                                     // 71: olivetin.api.v1.ActionWebhookExecHint.MatchQueryEntry
+	nil,                                     // 72: olivetin.api.v1.ActionArgument.SuggestionsEntry
+	nil,                                     // 73: olivetin.api.v1.Entity.FieldsEntry
+	nil,                                     // 74: olivetin.api.v1.DumpVarsResponse.ContentsEntry
+	nil,                                     // 75: olivetin.api.v1.DumpPublicIdActionMapResponse.ContentsEntry
 }
 var file_olivetin_api_v1_olivetin_proto_depIdxs = []int32{
 	2,  // 0: olivetin.api.v1.Action.arguments:type_name -> olivetin.api.v1.ActionArgument
 	1,  // 1: olivetin.api.v1.Action.exec_on_webhooks:type_name -> olivetin.api.v1.ActionWebhookExecHint
-	69, // 2: olivetin.api.v1.ActionWebhookExecHint.match_headers:type_name -> olivetin.api.v1.ActionWebhookExecHint.MatchHeadersEntry
-	70, // 3: olivetin.api.v1.ActionWebhookExecHint.match_query:type_name -> olivetin.api.v1.ActionWebhookExecHint.MatchQueryEntry
+	70, // 2: olivetin.api.v1.ActionWebhookExecHint.match_headers:type_name -> olivetin.api.v1.ActionWebhookExecHint.MatchHeadersEntry
+	71, // 3: olivetin.api.v1.ActionWebhookExecHint.match_query:type_name -> olivetin.api.v1.ActionWebhookExecHint.MatchQueryEntry
 	3,  // 4: olivetin.api.v1.ActionArgument.choices:type_name -> olivetin.api.v1.ActionArgumentChoice
-	71, // 5: olivetin.api.v1.ActionArgument.suggestions:type_name -> olivetin.api.v1.ActionArgument.SuggestionsEntry
-	72, // 6: olivetin.api.v1.Entity.fields:type_name -> olivetin.api.v1.Entity.FieldsEntry
+	72, // 5: olivetin.api.v1.ActionArgument.suggestions:type_name -> olivetin.api.v1.ActionArgument.SuggestionsEntry
+	73, // 6: olivetin.api.v1.Entity.fields:type_name -> olivetin.api.v1.Entity.FieldsEntry
 	8,  // 7: olivetin.api.v1.GetDashboardResponse.dashboard:type_name -> olivetin.api.v1.Dashboard
 	9,  // 8: olivetin.api.v1.Dashboard.contents:type_name -> olivetin.api.v1.DashboardComponent
 	9,  // 9: olivetin.api.v1.DashboardComponent.contents:type_name -> olivetin.api.v1.DashboardComponent
@@ -4452,77 +4507,78 @@ var file_olivetin_api_v1_olivetin_proto_depIdxs = []int32{
 	20, // 15: olivetin.api.v1.GetLogsResponse.logs:type_name -> olivetin.api.v1.LogEntry
 	20, // 16: olivetin.api.v1.GetActionLogsResponse.logs:type_name -> olivetin.api.v1.LogEntry
 	20, // 17: olivetin.api.v1.ExecutionStatusResponse.log_entry:type_name -> olivetin.api.v1.LogEntry
-	73, // 18: olivetin.api.v1.DumpVarsResponse.contents:type_name -> olivetin.api.v1.DumpVarsResponse.ContentsEntry
-	74, // 19: olivetin.api.v1.DumpPublicIdActionMapResponse.contents:type_name -> olivetin.api.v1.DumpPublicIdActionMapResponse.ContentsEntry
+	74, // 18: olivetin.api.v1.DumpVarsResponse.contents:type_name -> olivetin.api.v1.DumpVarsResponse.ContentsEntry
+	75, // 19: olivetin.api.v1.DumpPublicIdActionMapResponse.contents:type_name -> olivetin.api.v1.DumpPublicIdActionMapResponse.ContentsEntry
 	44, // 20: olivetin.api.v1.EventStreamResponse.entity_changed:type_name -> olivetin.api.v1.EventEntityChanged
 	45, // 21: olivetin.api.v1.EventStreamResponse.config_changed:type_name -> olivetin.api.v1.EventConfigChanged
-	46, // 22: olivetin.api.v1.EventStreamResponse.execution_finished:type_name -> olivetin.api.v1.EventExecutionFinished
-	47, // 23: olivetin.api.v1.EventStreamResponse.execution_started:type_name -> olivetin.api.v1.EventExecutionStarted
+	47, // 22: olivetin.api.v1.EventStreamResponse.execution_finished:type_name -> olivetin.api.v1.EventExecutionFinished
+	48, // 23: olivetin.api.v1.EventStreamResponse.execution_started:type_name -> olivetin.api.v1.EventExecutionStarted
 	43, // 24: olivetin.api.v1.EventStreamResponse.output_chunk:type_name -> olivetin.api.v1.EventOutputChunk
-	20, // 25: olivetin.api.v1.EventExecutionFinished.log_entry:type_name -> olivetin.api.v1.LogEntry
-	20, // 26: olivetin.api.v1.EventExecutionStarted.log_entry:type_name -> olivetin.api.v1.LogEntry
-	61, // 27: olivetin.api.v1.InitResponse.oAuth2Providers:type_name -> olivetin.api.v1.OAuth2Provider
-	60, // 28: olivetin.api.v1.InitResponse.additionalLinks:type_name -> olivetin.api.v1.AdditionalLink
-	6,  // 29: olivetin.api.v1.InitResponse.effective_policy:type_name -> olivetin.api.v1.EffectivePolicy
-	0,  // 30: olivetin.api.v1.GetActionBindingResponse.action:type_name -> olivetin.api.v1.Action
-	66, // 31: olivetin.api.v1.GetEntitiesResponse.entity_definitions:type_name -> olivetin.api.v1.EntityDefinition
-	4,  // 32: olivetin.api.v1.EntityDefinition.instances:type_name -> olivetin.api.v1.Entity
-	36, // 33: olivetin.api.v1.DumpPublicIdActionMapResponse.ContentsEntry.value:type_name -> olivetin.api.v1.DebugBinding
-	7,  // 34: olivetin.api.v1.OliveTinApiService.GetDashboard:input_type -> olivetin.api.v1.GetDashboardRequest
-	10, // 35: olivetin.api.v1.OliveTinApiService.StartAction:input_type -> olivetin.api.v1.StartActionRequest
-	13, // 36: olivetin.api.v1.OliveTinApiService.StartActionAndWait:input_type -> olivetin.api.v1.StartActionAndWaitRequest
-	15, // 37: olivetin.api.v1.OliveTinApiService.StartActionByGet:input_type -> olivetin.api.v1.StartActionByGetRequest
-	17, // 38: olivetin.api.v1.OliveTinApiService.StartActionByGetAndWait:input_type -> olivetin.api.v1.StartActionByGetAndWaitRequest
-	68, // 39: olivetin.api.v1.OliveTinApiService.RestartAction:input_type -> olivetin.api.v1.RestartActionRequest
-	48, // 40: olivetin.api.v1.OliveTinApiService.KillAction:input_type -> olivetin.api.v1.KillActionRequest
-	28, // 41: olivetin.api.v1.OliveTinApiService.ExecutionStatus:input_type -> olivetin.api.v1.ExecutionStatusRequest
-	19, // 42: olivetin.api.v1.OliveTinApiService.GetLogs:input_type -> olivetin.api.v1.GetLogsRequest
-	22, // 43: olivetin.api.v1.OliveTinApiService.GetActionLogs:input_type -> olivetin.api.v1.GetActionLogsRequest
-	24, // 44: olivetin.api.v1.OliveTinApiService.ValidateArgumentType:input_type -> olivetin.api.v1.ValidateArgumentTypeRequest
-	30, // 45: olivetin.api.v1.OliveTinApiService.WhoAmI:input_type -> olivetin.api.v1.WhoAmIRequest
-	32, // 46: olivetin.api.v1.OliveTinApiService.SosReport:input_type -> olivetin.api.v1.SosReportRequest
-	34, // 47: olivetin.api.v1.OliveTinApiService.DumpVars:input_type -> olivetin.api.v1.DumpVarsRequest
-	37, // 48: olivetin.api.v1.OliveTinApiService.DumpPublicIdActionMap:input_type -> olivetin.api.v1.DumpPublicIdActionMapRequest
-	39, // 49: olivetin.api.v1.OliveTinApiService.GetReadyz:input_type -> olivetin.api.v1.GetReadyzRequest
-	50, // 50: olivetin.api.v1.OliveTinApiService.LocalUserLogin:input_type -> olivetin.api.v1.LocalUserLoginRequest
-	52, // 51: olivetin.api.v1.OliveTinApiService.PasswordHash:input_type -> olivetin.api.v1.PasswordHashRequest
-	54, // 52: olivetin.api.v1.OliveTinApiService.Logout:input_type -> olivetin.api.v1.LogoutRequest
-	41, // 53: olivetin.api.v1.OliveTinApiService.EventStream:input_type -> olivetin.api.v1.EventStreamRequest
-	56, // 54: olivetin.api.v1.OliveTinApiService.GetDiagnostics:input_type -> olivetin.api.v1.GetDiagnosticsRequest
-	58, // 55: olivetin.api.v1.OliveTinApiService.Init:input_type -> olivetin.api.v1.InitRequest
-	62, // 56: olivetin.api.v1.OliveTinApiService.GetActionBinding:input_type -> olivetin.api.v1.GetActionBindingRequest
-	64, // 57: olivetin.api.v1.OliveTinApiService.GetEntities:input_type -> olivetin.api.v1.GetEntitiesRequest
-	67, // 58: olivetin.api.v1.OliveTinApiService.GetEntity:input_type -> olivetin.api.v1.GetEntityRequest
-	5,  // 59: olivetin.api.v1.OliveTinApiService.GetDashboard:output_type -> olivetin.api.v1.GetDashboardResponse
-	12, // 60: olivetin.api.v1.OliveTinApiService.StartAction:output_type -> olivetin.api.v1.StartActionResponse
-	14, // 61: olivetin.api.v1.OliveTinApiService.StartActionAndWait:output_type -> olivetin.api.v1.StartActionAndWaitResponse
-	16, // 62: olivetin.api.v1.OliveTinApiService.StartActionByGet:output_type -> olivetin.api.v1.StartActionByGetResponse
-	18, // 63: olivetin.api.v1.OliveTinApiService.StartActionByGetAndWait:output_type -> olivetin.api.v1.StartActionByGetAndWaitResponse
-	12, // 64: olivetin.api.v1.OliveTinApiService.RestartAction:output_type -> olivetin.api.v1.StartActionResponse
-	49, // 65: olivetin.api.v1.OliveTinApiService.KillAction:output_type -> olivetin.api.v1.KillActionResponse
-	29, // 66: olivetin.api.v1.OliveTinApiService.ExecutionStatus:output_type -> olivetin.api.v1.ExecutionStatusResponse
-	21, // 67: olivetin.api.v1.OliveTinApiService.GetLogs:output_type -> olivetin.api.v1.GetLogsResponse
-	23, // 68: olivetin.api.v1.OliveTinApiService.GetActionLogs:output_type -> olivetin.api.v1.GetActionLogsResponse
-	25, // 69: olivetin.api.v1.OliveTinApiService.ValidateArgumentType:output_type -> olivetin.api.v1.ValidateArgumentTypeResponse
-	31, // 70: olivetin.api.v1.OliveTinApiService.WhoAmI:output_type -> olivetin.api.v1.WhoAmIResponse
-	33, // 71: olivetin.api.v1.OliveTinApiService.SosReport:output_type -> olivetin.api.v1.SosReportResponse
-	35, // 72: olivetin.api.v1.OliveTinApiService.DumpVars:output_type -> olivetin.api.v1.DumpVarsResponse
-	38, // 73: olivetin.api.v1.OliveTinApiService.DumpPublicIdActionMap:output_type -> olivetin.api.v1.DumpPublicIdActionMapResponse
-	40, // 74: olivetin.api.v1.OliveTinApiService.GetReadyz:output_type -> olivetin.api.v1.GetReadyzResponse
-	51, // 75: olivetin.api.v1.OliveTinApiService.LocalUserLogin:output_type -> olivetin.api.v1.LocalUserLoginResponse
-	53, // 76: olivetin.api.v1.OliveTinApiService.PasswordHash:output_type -> olivetin.api.v1.PasswordHashResponse
-	55, // 77: olivetin.api.v1.OliveTinApiService.Logout:output_type -> olivetin.api.v1.LogoutResponse
-	42, // 78: olivetin.api.v1.OliveTinApiService.EventStream:output_type -> olivetin.api.v1.EventStreamResponse
-	57, // 79: olivetin.api.v1.OliveTinApiService.GetDiagnostics:output_type -> olivetin.api.v1.GetDiagnosticsResponse
-	59, // 80: olivetin.api.v1.OliveTinApiService.Init:output_type -> olivetin.api.v1.InitResponse
-	63, // 81: olivetin.api.v1.OliveTinApiService.GetActionBinding:output_type -> olivetin.api.v1.GetActionBindingResponse
-	65, // 82: olivetin.api.v1.OliveTinApiService.GetEntities:output_type -> olivetin.api.v1.GetEntitiesResponse
-	4,  // 83: olivetin.api.v1.OliveTinApiService.GetEntity:output_type -> olivetin.api.v1.Entity
-	59, // [59:84] is the sub-list for method output_type
-	34, // [34:59] is the sub-list for method input_type
-	34, // [34:34] is the sub-list for extension type_name
-	34, // [34:34] is the sub-list for extension extendee
-	0,  // [0:34] is the sub-list for field type_name
+	46, // 25: olivetin.api.v1.EventStreamResponse.heartbeat:type_name -> olivetin.api.v1.EventHeartbeat
+	20, // 26: olivetin.api.v1.EventExecutionFinished.log_entry:type_name -> olivetin.api.v1.LogEntry
+	20, // 27: olivetin.api.v1.EventExecutionStarted.log_entry:type_name -> olivetin.api.v1.LogEntry
+	62, // 28: olivetin.api.v1.InitResponse.oAuth2Providers:type_name -> olivetin.api.v1.OAuth2Provider
+	61, // 29: olivetin.api.v1.InitResponse.additionalLinks:type_name -> olivetin.api.v1.AdditionalLink
+	6,  // 30: olivetin.api.v1.InitResponse.effective_policy:type_name -> olivetin.api.v1.EffectivePolicy
+	0,  // 31: olivetin.api.v1.GetActionBindingResponse.action:type_name -> olivetin.api.v1.Action
+	67, // 32: olivetin.api.v1.GetEntitiesResponse.entity_definitions:type_name -> olivetin.api.v1.EntityDefinition
+	4,  // 33: olivetin.api.v1.EntityDefinition.instances:type_name -> olivetin.api.v1.Entity
+	36, // 34: olivetin.api.v1.DumpPublicIdActionMapResponse.ContentsEntry.value:type_name -> olivetin.api.v1.DebugBinding
+	7,  // 35: olivetin.api.v1.OliveTinApiService.GetDashboard:input_type -> olivetin.api.v1.GetDashboardRequest
+	10, // 36: olivetin.api.v1.OliveTinApiService.StartAction:input_type -> olivetin.api.v1.StartActionRequest
+	13, // 37: olivetin.api.v1.OliveTinApiService.StartActionAndWait:input_type -> olivetin.api.v1.StartActionAndWaitRequest
+	15, // 38: olivetin.api.v1.OliveTinApiService.StartActionByGet:input_type -> olivetin.api.v1.StartActionByGetRequest
+	17, // 39: olivetin.api.v1.OliveTinApiService.StartActionByGetAndWait:input_type -> olivetin.api.v1.StartActionByGetAndWaitRequest
+	69, // 40: olivetin.api.v1.OliveTinApiService.RestartAction:input_type -> olivetin.api.v1.RestartActionRequest
+	49, // 41: olivetin.api.v1.OliveTinApiService.KillAction:input_type -> olivetin.api.v1.KillActionRequest
+	28, // 42: olivetin.api.v1.OliveTinApiService.ExecutionStatus:input_type -> olivetin.api.v1.ExecutionStatusRequest
+	19, // 43: olivetin.api.v1.OliveTinApiService.GetLogs:input_type -> olivetin.api.v1.GetLogsRequest
+	22, // 44: olivetin.api.v1.OliveTinApiService.GetActionLogs:input_type -> olivetin.api.v1.GetActionLogsRequest
+	24, // 45: olivetin.api.v1.OliveTinApiService.ValidateArgumentType:input_type -> olivetin.api.v1.ValidateArgumentTypeRequest
+	30, // 46: olivetin.api.v1.OliveTinApiService.WhoAmI:input_type -> olivetin.api.v1.WhoAmIRequest
+	32, // 47: olivetin.api.v1.OliveTinApiService.SosReport:input_type -> olivetin.api.v1.SosReportRequest
+	34, // 48: olivetin.api.v1.OliveTinApiService.DumpVars:input_type -> olivetin.api.v1.DumpVarsRequest
+	37, // 49: olivetin.api.v1.OliveTinApiService.DumpPublicIdActionMap:input_type -> olivetin.api.v1.DumpPublicIdActionMapRequest
+	39, // 50: olivetin.api.v1.OliveTinApiService.GetReadyz:input_type -> olivetin.api.v1.GetReadyzRequest
+	51, // 51: olivetin.api.v1.OliveTinApiService.LocalUserLogin:input_type -> olivetin.api.v1.LocalUserLoginRequest
+	53, // 52: olivetin.api.v1.OliveTinApiService.PasswordHash:input_type -> olivetin.api.v1.PasswordHashRequest
+	55, // 53: olivetin.api.v1.OliveTinApiService.Logout:input_type -> olivetin.api.v1.LogoutRequest
+	41, // 54: olivetin.api.v1.OliveTinApiService.EventStream:input_type -> olivetin.api.v1.EventStreamRequest
+	57, // 55: olivetin.api.v1.OliveTinApiService.GetDiagnostics:input_type -> olivetin.api.v1.GetDiagnosticsRequest
+	59, // 56: olivetin.api.v1.OliveTinApiService.Init:input_type -> olivetin.api.v1.InitRequest
+	63, // 57: olivetin.api.v1.OliveTinApiService.GetActionBinding:input_type -> olivetin.api.v1.GetActionBindingRequest
+	65, // 58: olivetin.api.v1.OliveTinApiService.GetEntities:input_type -> olivetin.api.v1.GetEntitiesRequest
+	68, // 59: olivetin.api.v1.OliveTinApiService.GetEntity:input_type -> olivetin.api.v1.GetEntityRequest
+	5,  // 60: olivetin.api.v1.OliveTinApiService.GetDashboard:output_type -> olivetin.api.v1.GetDashboardResponse
+	12, // 61: olivetin.api.v1.OliveTinApiService.StartAction:output_type -> olivetin.api.v1.StartActionResponse
+	14, // 62: olivetin.api.v1.OliveTinApiService.StartActionAndWait:output_type -> olivetin.api.v1.StartActionAndWaitResponse
+	16, // 63: olivetin.api.v1.OliveTinApiService.StartActionByGet:output_type -> olivetin.api.v1.StartActionByGetResponse
+	18, // 64: olivetin.api.v1.OliveTinApiService.StartActionByGetAndWait:output_type -> olivetin.api.v1.StartActionByGetAndWaitResponse
+	12, // 65: olivetin.api.v1.OliveTinApiService.RestartAction:output_type -> olivetin.api.v1.StartActionResponse
+	50, // 66: olivetin.api.v1.OliveTinApiService.KillAction:output_type -> olivetin.api.v1.KillActionResponse
+	29, // 67: olivetin.api.v1.OliveTinApiService.ExecutionStatus:output_type -> olivetin.api.v1.ExecutionStatusResponse
+	21, // 68: olivetin.api.v1.OliveTinApiService.GetLogs:output_type -> olivetin.api.v1.GetLogsResponse
+	23, // 69: olivetin.api.v1.OliveTinApiService.GetActionLogs:output_type -> olivetin.api.v1.GetActionLogsResponse
+	25, // 70: olivetin.api.v1.OliveTinApiService.ValidateArgumentType:output_type -> olivetin.api.v1.ValidateArgumentTypeResponse
+	31, // 71: olivetin.api.v1.OliveTinApiService.WhoAmI:output_type -> olivetin.api.v1.WhoAmIResponse
+	33, // 72: olivetin.api.v1.OliveTinApiService.SosReport:output_type -> olivetin.api.v1.SosReportResponse
+	35, // 73: olivetin.api.v1.OliveTinApiService.DumpVars:output_type -> olivetin.api.v1.DumpVarsResponse
+	38, // 74: olivetin.api.v1.OliveTinApiService.DumpPublicIdActionMap:output_type -> olivetin.api.v1.DumpPublicIdActionMapResponse
+	40, // 75: olivetin.api.v1.OliveTinApiService.GetReadyz:output_type -> olivetin.api.v1.GetReadyzResponse
+	52, // 76: olivetin.api.v1.OliveTinApiService.LocalUserLogin:output_type -> olivetin.api.v1.LocalUserLoginResponse
+	54, // 77: olivetin.api.v1.OliveTinApiService.PasswordHash:output_type -> olivetin.api.v1.PasswordHashResponse
+	56, // 78: olivetin.api.v1.OliveTinApiService.Logout:output_type -> olivetin.api.v1.LogoutResponse
+	42, // 79: olivetin.api.v1.OliveTinApiService.EventStream:output_type -> olivetin.api.v1.EventStreamResponse
+	58, // 80: olivetin.api.v1.OliveTinApiService.GetDiagnostics:output_type -> olivetin.api.v1.GetDiagnosticsResponse
+	60, // 81: olivetin.api.v1.OliveTinApiService.Init:output_type -> olivetin.api.v1.InitResponse
+	64, // 82: olivetin.api.v1.OliveTinApiService.GetActionBinding:output_type -> olivetin.api.v1.GetActionBindingResponse
+	66, // 83: olivetin.api.v1.OliveTinApiService.GetEntities:output_type -> olivetin.api.v1.GetEntitiesResponse
+	4,  // 84: olivetin.api.v1.OliveTinApiService.GetEntity:output_type -> olivetin.api.v1.Entity
+	60, // [60:85] is the sub-list for method output_type
+	35, // [35:60] is the sub-list for method input_type
+	35, // [35:35] is the sub-list for extension type_name
+	35, // [35:35] is the sub-list for extension extendee
+	0,  // [0:35] is the sub-list for field type_name
 }
 
 func init() { file_olivetin_api_v1_olivetin_proto_init() }
@@ -4536,6 +4592,7 @@ func file_olivetin_api_v1_olivetin_proto_init() {
 		(*EventStreamResponse_ExecutionFinished)(nil),
 		(*EventStreamResponse_ExecutionStarted)(nil),
 		(*EventStreamResponse_OutputChunk)(nil),
+		(*EventStreamResponse_Heartbeat)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -4543,7 +4600,7 @@ func file_olivetin_api_v1_olivetin_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_olivetin_api_v1_olivetin_proto_rawDesc), len(file_olivetin_api_v1_olivetin_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   75,
+			NumMessages:   76,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

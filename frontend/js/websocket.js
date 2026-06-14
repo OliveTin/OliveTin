@@ -2,7 +2,11 @@ import { buttonResults } from '../resources/vue/stores/buttonResults.js'
 import { rateLimits } from '../resources/vue/stores/rateLimits.js'
 import { connectionState } from '../resources/vue/stores/connectionState.js'
 
-const RECONNECT_DELAY_MS = 10000
+const RECONNECT_DELAYS_MS = [0, 1000, 2000, 4000, 8000, 16000, 32000]
+const BANNER_DELAY_MS = 2000
+
+let reconnectAttempt = 0
+let reconnectTimer = null
 
 export function initWebsocket () {
   window.addEventListener('EventOutputChunk', onOutputChunk)
@@ -13,6 +17,44 @@ export function initWebsocket () {
 }
 
 window.websocketAvailable = false
+
+export function requestReconnectNow () {
+  if (window.websocketAvailable) {
+    return
+  }
+
+  if (reconnectTimer != null) {
+    clearTimeout(reconnectTimer)
+    reconnectTimer = null
+  }
+
+  reconnectAttempt = 0
+  scheduleReconnect(0)
+}
+
+function scheduleReconnect (delayMs) {
+  if (reconnectTimer != null) {
+    clearTimeout(reconnectTimer)
+    reconnectTimer = null
+  }
+
+  connectionState.scheduledReconnectDelayMs = delayMs
+  connectionState.nextReconnectAt = delayMs > 0 ? Date.now() + delayMs : null
+  updateBannerVisibility()
+  reconnectTimer = setTimeout(() => {
+    reconnectTimer = null
+    reconnectWebsocket()
+  }, delayMs)
+}
+
+function updateBannerVisibility () {
+  if (connectionState.connected) {
+    connectionState.showDisconnectedBanner = false
+    return
+  }
+
+  connectionState.showDisconnectedBanner = connectionState.scheduledReconnectDelayMs >= BANNER_DELAY_MS
+}
 
 async function reconnectWebsocket () {
   if (window.websocketAvailable) {
@@ -25,15 +67,19 @@ async function reconnectWebsocket () {
     connectionState.disconnectedAt = Date.now()
   }
   connectionState.nextReconnectAt = null
+  connectionState.scheduledReconnectDelayMs = 0
 
   try {
     window.websocketAvailable = true
     const stream = window.client.eventStream()
     connectionState.connected = true
     connectionState.reconnecting = false
+    connectionState.disconnectedAt = null
     connectionState.nextReconnectAt = null
+    connectionState.scheduledReconnectDelayMs = 0
+    connectionState.showDisconnectedBanner = false
+    reconnectAttempt = 0
     for await (const e of stream) {
-      connectionState.disconnectedAt = null
       handleEvent(e)
     }
   } catch (err) {
@@ -42,12 +88,13 @@ async function reconnectWebsocket () {
 
   window.websocketAvailable = false
   connectionState.connected = false
+  connectionState.reconnecting = false
   connectionState.disconnectedAt = connectionState.disconnectedAt ?? Date.now()
-  connectionState.nextReconnectAt = Date.now() + RECONNECT_DELAY_MS
-  console.log('Reconnecting websocket in ' + RECONNECT_DELAY_MS + 'ms...')
-  setTimeout(() => {
-    reconnectWebsocket()
-  }, RECONNECT_DELAY_MS)
+
+  const delay = RECONNECT_DELAYS_MS[Math.min(reconnectAttempt, RECONNECT_DELAYS_MS.length - 1)]
+  reconnectAttempt++
+  console.log('Reconnecting websocket in ' + delay + 'ms...')
+  scheduleReconnect(delay)
 }
 
 async function refreshInitAfterConfigChange () {
@@ -83,6 +130,8 @@ function handleEvent (msg) {
         console.error('EventConfigChanged handler failed:', err)
       })
       break
+    case 'EventHeartbeat':
+      break
     case 'EventOutputChunk':
     case 'EventEntityChanged':
       window.dispatchEvent(j)
@@ -108,18 +157,21 @@ function onOutputChunk (evt) {
   }
 }
 
-function onExecutionChanged (evt) {
-  buttonResults[evt.payload.logEntry.executionTrackingId] = evt.payload.logEntry
+export function applyExecutionLogEntry (logEntry) {
+  if (!logEntry?.executionTrackingId) {
+    return
+  }
 
-  const logEntry = evt.payload.logEntry
+  buttonResults[logEntry.executionTrackingId] = logEntry
 
-  // Update rate limit store from logEntry if rate limit expiry datetime is provided
-  if (logEntry && logEntry.datetimeRateLimitExpires && logEntry.bindingId) {
-    // Parse datetime string "2006-01-02 15:04:05" and convert to Unix timestamp
+  if (logEntry.datetimeRateLimitExpires && logEntry.bindingId) {
     const date = new Date(logEntry.datetimeRateLimitExpires.replace(' ', 'T') + 'Z')
     rateLimits[logEntry.bindingId] = date.getTime() / 1000
-  } else if (logEntry && logEntry.bindingId) {
-    // Clear rate limit if not set
+  } else if (logEntry.bindingId) {
     rateLimits[logEntry.bindingId] = 0
   }
+}
+
+function onExecutionChanged (evt) {
+  applyExecutionLogEntry(evt.payload.logEntry)
 }
