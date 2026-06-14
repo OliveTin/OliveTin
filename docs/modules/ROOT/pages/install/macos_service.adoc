@@ -1,0 +1,109 @@
+= macOS launchd service install
+
+This option installs OliveTin as a launchd service, so it runs in the background and starts automatically. This is the macOS equivalent of running OliveTin as a Linux systemd service or a xref:install/windows_service.adoc[Windows service]. If you just want to run OliveTin as a regular application, follow the xref:install/macos.adoc[macOS install] instructions instead.
+
+Before continuing, complete the xref:install/macos.adoc[macOS install] steps (download, extract, and clear the Gatekeeper quarantine) and confirm OliveTin starts correctly by running `./OliveTin`.
+
+== Install the files
+
+Copy the binary somewhere on your `PATH`, and put your configuration in a dedicated directory:
+
+[source,shell]
+----
+sudo cp OliveTin /usr/local/bin/OliveTin
+
+sudo mkdir -p /usr/local/etc/OliveTin
+sudo cp config.yaml /usr/local/etc/OliveTin/config.yaml
+----
+
+[NOTE]
+OliveTin looks for `config.yaml` in the directory given by the `-configdir` flag, which defaults to the current directory. The service definition below passes `-configdir /usr/local/etc/OliveTin` explicitly.
+
+== Choose LaunchAgent or LaunchDaemon
+
+launchd offers two ways to run a background service:
+
+* *LaunchAgent* - runs as your user and starts when you log in. No root required. Best for a desktop Mac.
+* *LaunchDaemon* - runs as root and starts at boot, before any user logs in. Best for a headless, always-on Mac.
+
+== Create the service definition
+
+Create a file named `app.olivetin.olivetin.plist` with the following contents. Adjust the two paths if you installed OliveTin elsewhere.
+
+[source,xml]
+----
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>app.olivetin.olivetin</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/local/bin/OliveTin</string>
+        <string>-configdir</string>
+        <string>/usr/local/etc/OliveTin</string>
+    </array>
+
+    <key>KeepAlive</key>
+    <true/>
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>StandardOutPath</key>
+    <string>/usr/local/var/log/olivetin.log</string>
+    <key>StandardErrorPath</key>
+    <string>/usr/local/var/log/olivetin.log</string>
+</dict>
+</plist>
+----
+
+`KeepAlive` restarts OliveTin if it exits (like systemd's `Restart=always`), and `RunAtLoad` starts it as soon as the service is loaded.
+
+== Register and start the service
+
+=== As a LaunchAgent (per-user)
+
+[source,shell]
+----
+mkdir -p /usr/local/var/log
+cp app.olivetin.olivetin.plist ~/Library/LaunchAgents/
+launchctl load ~/Library/LaunchAgents/app.olivetin.olivetin.plist
+----
+
+To stop and disable it:
+
+[source,shell]
+----
+launchctl unload ~/Library/LaunchAgents/app.olivetin.olivetin.plist
+----
+
+=== As a LaunchDaemon (system-wide, at boot)
+
+[source,shell]
+----
+sudo mkdir -p /usr/local/var/log
+sudo cp app.olivetin.olivetin.plist /Library/LaunchDaemons/
+sudo chown root:wheel /Library/LaunchDaemons/app.olivetin.olivetin.plist
+sudo launchctl load /Library/LaunchDaemons/app.olivetin.olivetin.plist
+----
+
+To stop and disable it:
+
+[source,shell]
+----
+sudo launchctl unload /Library/LaunchDaemons/app.olivetin.olivetin.plist
+----
+
+== Verify
+
+Open http://localhost:1337 in a browser. If the page does not load, check the service log:
+
+[source,shell]
+----
+tail -f /usr/local/var/log/olivetin.log
+----
+
+include::partial$install/post_generic.adoc[]
