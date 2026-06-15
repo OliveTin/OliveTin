@@ -8,12 +8,20 @@ const BANNER_DELAY_MS = 2000
 let reconnectAttempt = 0
 let reconnectTimer = null
 let listenersInitialized = false
+let eventStreamGeneration = 0
+let eventStreamAbortController = null
 
 function shouldConnectEventStream () {
   return window.initResponse && !window.initResponse.loginRequired
 }
 
 export function stopEventStream () {
+  eventStreamGeneration++
+  if (eventStreamAbortController != null) {
+    eventStreamAbortController.abort()
+    eventStreamAbortController = null
+  }
+
   if (reconnectTimer != null) {
     clearTimeout(reconnectTimer)
     reconnectTimer = null
@@ -105,6 +113,12 @@ async function reconnectWebsocket () {
     return
   }
 
+  const streamGeneration = ++eventStreamGeneration
+  if (eventStreamAbortController != null) {
+    eventStreamAbortController.abort()
+  }
+  eventStreamAbortController = new AbortController()
+
   connectionState.reconnecting = true
   connectionState.connected = false
   if (connectionState.disconnectedAt == null) {
@@ -115,7 +129,7 @@ async function reconnectWebsocket () {
 
   try {
     window.websocketAvailable = true
-    const stream = window.client.eventStream()
+    const stream = window.client.eventStream({}, { signal: eventStreamAbortController.signal })
     connectionState.connected = true
     connectionState.reconnecting = false
     connectionState.disconnectedAt = null
@@ -123,13 +137,23 @@ async function reconnectWebsocket () {
     connectionState.scheduledReconnectDelayMs = 0
     connectionState.showDisconnectedBanner = false
     for await (const e of stream) {
+      if (streamGeneration !== eventStreamGeneration) {
+        return
+      }
       if (reconnectAttempt !== 0) {
         reconnectAttempt = 0
       }
       handleEvent(e)
     }
   } catch (err) {
+    if (streamGeneration !== eventStreamGeneration) {
+      return
+    }
     console.error('Websocket connection failed: ', err)
+  }
+
+  if (streamGeneration !== eventStreamGeneration) {
+    return
   }
 
   window.websocketAvailable = false

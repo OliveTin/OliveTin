@@ -45,7 +45,7 @@
         </div>
 
         <div class="buttons">
-          <button name="start" type="submit" :disabled="hasConfirmation && !confirmationChecked">
+          <button name="start" type="submit" :disabled="!formReady || (hasConfirmation && !confirmationChecked)">
             Start
           </button>
           <button name="cancel" type="button" @click="handleCancel">
@@ -58,7 +58,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { requestReconnectNow } from '../../../js/websocket.js'
 
@@ -75,6 +75,7 @@ const hasConfirmation = ref(false)
 const formErrors = ref({})
 const actionArguments = ref([])
 const popupOnStart = ref('')
+const formReady = ref(false)
 
 // Computed properties
 
@@ -87,23 +88,27 @@ const props = defineProps({
 
 // Methods
 async function setup() {
-  const ret = await window.client.getActionBinding({
-    bindingId: props.bindingId
-  })
+  formReady.value = false
+  document.body.removeAttribute('loaded-argument-form')
 
-  const action = ret.action
+  try {
+    const ret = await window.client.getActionBinding({
+      bindingId: props.bindingId
+    })
 
-  title.value = action.title
-  icon.value = action.icon
-  popupOnStart.value = action.popupOnStart || ''
-  actionArguments.value = action.arguments || []
-  argValues.value = {}
-  formErrors.value = {}
-  confirmationChecked.value = false
-  hasConfirmation.value = false
+    const action = ret.action
 
-  // Initialize values from query params or defaults
-  actionArguments.value.forEach(arg => {
+    title.value = action.title
+    icon.value = action.icon
+    popupOnStart.value = action.popupOnStart || ''
+    actionArguments.value = action.arguments || []
+    argValues.value = {}
+    formErrors.value = {}
+    confirmationChecked.value = false
+    hasConfirmation.value = false
+
+    // Initialize values from query params or defaults
+    actionArguments.value.forEach(arg => {
     if (arg.type === 'confirmation') {
       hasConfirmation.value = true
       const paramValue = getQueryParamValue(arg.name)
@@ -130,14 +135,20 @@ async function setup() {
         argValues.value[arg.name] = paramValue !== null ? paramValue : arg.defaultValue || ''
       }
     }
-  })
+    })
 
-  // Run initial validation on all fields after DOM is updated
-  await nextTick()
-  for (const arg of actionArguments.value) {
-    if (arg.type && !arg.type.startsWith('regex:') && arg.type !== 'select' && arg.type !== '' && arg.type !== 'confirmation' && arg.type !== 'checkbox') {
-      await validateArgument(arg, argValues.value[arg.name] || '')
+    // Run initial validation on all fields after DOM is updated
+    await nextTick()
+    for (const arg of actionArguments.value) {
+      if (arg.type && !arg.type.startsWith('regex:') && arg.type !== 'select' && arg.type !== '' && arg.type !== 'confirmation' && arg.type !== 'checkbox') {
+        await validateArgument(arg, argValues.value[arg.name] || '')
+      }
     }
+
+    formReady.value = true
+    document.body.setAttribute('loaded-argument-form', props.bindingId)
+  } catch (err) {
+    console.error('Failed to load argument form:', err)
   }
 }
 
@@ -394,6 +405,10 @@ async function startAction(actionArgs) {
 async function handleSubmit(event) {
   event.preventDefault()
 
+  if (!formReady.value) {
+    return
+  }
+
   if (popupOnStart.value === 'history') {
     router.push(`/action/${props.bindingId}`)
     return
@@ -469,6 +484,10 @@ defineExpose({
 // Lifecycle
 onMounted(() => {
   setup()
+})
+
+onUnmounted(() => {
+  document.body.removeAttribute('loaded-argument-form')
 })
 </script>
 

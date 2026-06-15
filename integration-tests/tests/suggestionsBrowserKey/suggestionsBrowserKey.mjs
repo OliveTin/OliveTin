@@ -19,6 +19,15 @@ async function openArgumentForm() {
     }),
     5000
   )
+
+  await webdriver.wait(
+    new Condition('wait for argument form ready', async () => {
+      const body = await webdriver.findElement(By.css('body'))
+      const attr = await body.getAttribute('loaded-argument-form')
+      return attr != null && attr !== ''
+    }),
+    5000
+  )
 }
 
 async function getTestInput() {
@@ -62,7 +71,7 @@ async function waitForExecutionComplete() {
       try {
         const statusElement = await webdriver.findElement(By.id('execution-dialog-status'))
         const statusText = await statusElement.getText()
-        return !statusText.includes('Executing')
+        return !statusText.includes('Still running')
       } catch (e) {
         return false
       }
