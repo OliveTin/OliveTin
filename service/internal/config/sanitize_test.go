@@ -1,8 +1,11 @@
 package config
 
 import (
+	"bytes"
+	"runtime"
 	"testing"
 
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -159,4 +162,23 @@ func TestValidateUniqueLocalUserAPIKeys(t *testing.T) {
 		{Username: "b", ApiKey: "two"},
 	})
 	require.NoError(t, err)
+}
+
+func TestSanitizeServiceLogsUnsupportedPlatform(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("serviceLogs.directory platform check only applies on non-Windows")
+	}
+
+	var logBuffer bytes.Buffer
+	previousOutput := logrus.StandardLogger().Out
+	logrus.SetOutput(&logBuffer)
+	t.Cleanup(func() {
+		logrus.SetOutput(previousOutput)
+	})
+
+	cfg := DefaultConfig()
+	cfg.ServiceLogs.Directory = "/var/log/OliveTin"
+	cfg.Sanitize()
+
+	assert.Contains(t, logBuffer.String(), "serviceLogs.directory is configured but this option is only supported on Windows")
 }

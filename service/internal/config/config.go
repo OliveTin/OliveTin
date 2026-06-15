@@ -176,6 +176,7 @@ type Config struct {
 	Prometheus                      PrometheusConfig           `koanf:"prometheus"`
 	Security                        SecurityConfig             `koanf:"security"`
 	SaveLogs                        SaveLogsConfig             `koanf:"saveLogs"`
+	ServiceLogs                     ServiceLogsConfig          `koanf:"serviceLogs"`
 	DefaultIconForActions           string                     `koanf:"defaultIconForActions"`
 	DefaultIconForDirectories       string                     `koanf:"defaultIconForDirectories"`
 	DefaultIconForBack              string                     `koanf:"defaultIconForBack"`
@@ -228,6 +229,10 @@ type NavigationLink struct {
 type SaveLogsConfig struct {
 	ResultsDirectory string `koanf:"resultsDirectory"`
 	OutputDirectory  string `koanf:"outputDirectory"`
+}
+
+type ServiceLogsConfig struct {
+	Directory string `koanf:"directory"`
 }
 
 type LogDebugOptions struct {

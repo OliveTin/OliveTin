@@ -50,9 +50,20 @@ func (m *otWindowsService) Execute(args []string, r <-chan svc.ChangeRequest, st
 	}
 }
 
-func setupLogging() {
-	logsDir := path.Join(GetConfigFilePath(), "logs")
+func setupLogging(serviceLogDirectory string) {
+	logsDir, err := configuredServiceLogDirectory(serviceLogDirectory)
+	if err != nil {
+		log.Warnf("Failed to resolve serviceLogs.directory relative to executable: %v", err)
+	}
 
+	if logsDir == "" {
+		logsDir = path.Join(GetConfigFilePath(), "logs")
+	}
+
+	openServiceLogFile(logsDir)
+}
+
+func openServiceLogFile(logsDir string) {
 	os.MkdirAll(logsDir, 0755)
 
 	timestamp := time.Now().Format("2006-01-02_15-04-05")
@@ -65,11 +76,12 @@ func setupLogging() {
 
 	if err != nil {
 		log.Infof("Failed to open log file: %v", err)
-	} else {
-		log.Infof("Switching to log file: %v", f.Name())
-		log.SetOutput(f)
-		log.Infof("Opened log file: %v", f.Name())
+		return
 	}
+
+	log.Infof("Switching to log file: %v", f.Name())
+	log.SetOutput(f)
+	log.Infof("Opened log file: %v", f.Name())
 }
 
 func GetConfigFilePath() string {
@@ -132,8 +144,8 @@ func startServiceHandler(mode string) {
 
 }
 
-func Start(mode string) {
-	setupLogging()
+func Start(mode string, serviceLogDirectory string) {
+	setupLogging(serviceLogDirectory)
 
 	go startServiceHandler(mode)
 }

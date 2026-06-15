@@ -16,6 +16,27 @@ How you read logs depends on how OliveTin is installed:
 * **Container (Docker / Podman):** logs are what the container runtime captured from OliveTin’s standard output.
 * **systemd service:** logs are stored by the system journal for the `OliveTin` unit.
 * **Manual / binary** (for example `./OliveTin` in a terminal): messages print to that terminal—copy them from there, or redirect output to a file when testing.
+* **Windows (binary or service):** OliveTin writes process logs to a file under `%ProgramData%\OliveTin\logs\` by default. You can override this with xref:install/windows_service.adoc#windows-service-logs[`serviceLogs.directory`] in `config.yaml`.
+
+[#windows]
+== Windows (binary or service)
+
+By default, OliveTin on Windows writes process logs to:
+
+[source]
+----
+%ProgramData%\OliveTin\logs\OliveTin-service-<timestamp>.log
+----
+
+To use a custom directory (for portable installs), set in `config.yaml`:
+
+[source,yaml]
+----
+serviceLogs:
+  directory: C:\Path\To\Logs\
+----
+
+See xref:install/windows_service.adoc#windows-service-logs[Windows service logs directory] for details. This setting is ignored on non-Windows platforms.
 
 [#manual-binary]
 == Manual or binary run

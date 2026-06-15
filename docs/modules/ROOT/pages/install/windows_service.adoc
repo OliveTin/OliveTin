@@ -16,6 +16,8 @@ You can download the latest version of OliveTin here: link:https://github.com/Ol
 * Create c:/ProgramData/OliveTin/
 ** Copy the **config.yaml** file into this directory.
 
+include::partial$install/windows_service_logs.adoc[]
+
 == Test OliveTin startup
 
 Open a command prompt and make suer you are in the c:/Program Files/OliveTin/ directory, then run:
@@ -37,7 +39,7 @@ serviceHostMode: "winsvc-standard"
 
 logLevel: info
 
-actions: 
+actions:
   ...
 ----
 
