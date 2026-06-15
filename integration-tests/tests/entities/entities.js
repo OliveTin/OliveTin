@@ -1,15 +1,15 @@
 import { describe, it, before, after } from 'mocha'
 import { expect } from 'chai'
-import { By, until } from 'selenium-webdriver'
-import { 
-  getRootAndWait, 
-  takeScreenshot,
+import { By } from 'selenium-webdriver'
+import {
+  getRootAndWait,
   takeScreenshotOnFailure,
 } from '../../lib/elements.js'
 
 describe('config: entities', function () {
   before(async function () {
     await runner.start('entities')
+    await getRootAndWait()
   })
 
   after(async () => {

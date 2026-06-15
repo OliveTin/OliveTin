@@ -261,10 +261,15 @@ async function startAction(actionArgs) {
   requestReconnectNow()
 
   try {
-	await window.client.startAction(startActionArgs)
+	const response = await window.client.startAction(startActionArgs)
+	const trackingId = response.executionTrackingId || startActionArgs.uniqueTrackingId
+
+	if (popupOnStart.value && popupOnStart.value.includes('execution-dialog')) {
+	  router.push(`/logs/${trackingId}`)
+	}
 
 	if (!connectionState.connected) {
-	  await pollExecutionUntilDone(startActionArgs.uniqueTrackingId)
+	  await pollExecutionUntilDone(trackingId)
 	}
   } catch (err) {
 	console.error('Failed to start action:', err)

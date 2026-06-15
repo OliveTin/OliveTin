@@ -61,7 +61,6 @@ import { onMounted, onUnmounted, ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { HugeiconsIcon } from '@hugeicons/vue'
 import { Loading03Icon, ArrowLeftIcon } from '@hugeicons/core-free-icons'
-import { requestReconnectNow } from '../../js/websocket.js'
 
 const props = defineProps({
     title: {
@@ -107,8 +106,6 @@ function goBack() {
 }
 
 async function getDashboard() {
-    requestReconnectNow()
-
     let title = props.title
 
     // If no specific title was provided or it's the placeholder 'default',
@@ -167,6 +164,8 @@ async function getDashboard() {
 }
 
 function waitForInitAndLoadDashboard() {
+    document.body.removeAttribute('loaded-dashboard')
+
     if (loadingTimer) {
         clearInterval(loadingTimer)
         loadingTimer = null
@@ -226,6 +225,8 @@ watch(
 )
 
 onUnmounted(() => {
+    document.body.removeAttribute('loaded-dashboard')
+
     // Clean up the timers when component is unmounted
     if (loadingTimer) {
         clearInterval(loadingTimer)

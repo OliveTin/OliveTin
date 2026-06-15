@@ -2,32 +2,54 @@ import { describe, it, before, after } from 'mocha'
 import { expect } from 'chai'
 import { By, Condition } from 'selenium-webdriver'
 import {
+  DEFAULT_UI_WAIT_MS,
   getRootAndWait,
   getActionButton,
   takeScreenshotOnFailure,
+  waitForDashboardLoaded,
+  waitForLogsPage,
+  waitForArgumentFormPage,
+  waitForArgumentFormReady,
+  waitForExecutionComplete,
 } from '../../lib/elements.js'
 
-async function openArgumentForm() {
+async function ensureOnDashboard() {
+  let url = await webdriver.getCurrentUrl()
+
+  if (url.includes('/logs/')) {
+    const backButton = await webdriver.findElement(By.css('button[title="Go back"]'))
+    await backButton.click()
+    await webdriver.wait(
+      new Condition('wait for argument form after logs back', async () => {
+        const currentUrl = await webdriver.getCurrentUrl()
+        return currentUrl.includes('/argumentForm')
+      }),
+      DEFAULT_UI_WAIT_MS
+    )
+    url = await webdriver.getCurrentUrl()
+  }
+
+  if (url.includes('/argumentForm')) {
+    const cancelButton = await webdriver.findElement(By.css('button[name="cancel"]'))
+    await cancelButton.click()
+    await waitForDashboardLoaded()
+  }
+
+  const actionButtons = await webdriver.findElements(By.css('[title="Test suggestionsBrowserKey"]'))
+  if (actionButtons.length === 1) {
+    return
+  }
+
   await getRootAndWait()
+}
+
+async function openArgumentForm() {
+  await ensureOnDashboard()
   const btn = await getActionButton(webdriver, 'Test suggestionsBrowserKey')
   await btn.click()
 
-  await webdriver.wait(
-    new Condition('wait for argument form page', async () => {
-      const url = await webdriver.getCurrentUrl()
-      return url.includes('/actionBinding/') && url.includes('/argumentForm')
-    }),
-    5000
-  )
-
-  await webdriver.wait(
-    new Condition('wait for argument form ready', async () => {
-      const body = await webdriver.findElement(By.css('body'))
-      const attr = await body.getAttribute('loaded-argument-form')
-      return attr != null && attr !== ''
-    }),
-    5000
-  )
+  await waitForArgumentFormPage()
+  await waitForArgumentFormReady()
 }
 
 async function getTestInput() {
@@ -47,41 +69,6 @@ async function submitForm() {
   await submitButton.click()
 }
 
-async function waitForLogsPage() {
-  await webdriver.wait(
-    new Condition('wait for logs page', async () => {
-      const url = await webdriver.getCurrentUrl()
-      return url.includes('/logs/') && !url.endsWith('/logs')
-    }),
-    15000
-  )
-}
-
-async function waitForExecutionComplete() {
-  await webdriver.wait(
-    new Condition('wait for execution status', async () => {
-      const statusElements = await webdriver.findElements(By.id('execution-dialog-status'))
-      return statusElements.length > 0
-    }),
-    5000
-  )
-
-  await webdriver.wait(
-    new Condition('wait for execution to finish', async () => {
-      try {
-        const statusElement = await webdriver.findElement(By.id('execution-dialog-status'))
-        const statusText = await statusElement.getText()
-        return !statusText.includes('Still running')
-      } catch (e) {
-        return false
-      }
-    }),
-    5000
-  )
-
-  await webdriver.sleep(500)
-}
-
 async function getLocalStorageItem(key) {
   return await webdriver.executeScript(`return localStorage.getItem('${key}')`)
 }
@@ -93,6 +80,7 @@ async function clearLocalStorage() {
 describe('config: suggestionsBrowserKey', function () {
   before(async function () {
     await runner.start('suggestionsBrowserKey')
+    await getRootAndWait()
   })
 
   after(async () => {
@@ -122,11 +110,7 @@ describe('config: suggestionsBrowserKey', function () {
   })
 
   it('Submitting form saves value to localStorage', async function () {
-    this.timeout(15000)
-
-    // Clear localStorage first
     await clearLocalStorage()
-
     await openArgumentForm()
 
     const input = await getTestInput()
@@ -140,7 +124,6 @@ describe('config: suggestionsBrowserKey', function () {
     await waitForLogsPage()
     await waitForExecutionComplete()
 
-    // Verify value was saved to localStorage
     const stored = await getLocalStorageItem('olivetin-suggestions-test-suggestions-key')
     expect(stored).to.not.be.null
 
@@ -150,26 +133,20 @@ describe('config: suggestionsBrowserKey', function () {
   })
 
   it('Previously saved values appear in datalist', async function () {
-    this.timeout(15000)
-
-    // First, save a value to localStorage
     const testValue = 'savedsuggestion456'
     await webdriver.executeScript(`
       const key = 'olivetin-suggestions-test-suggestions-key';
       localStorage.setItem(key, JSON.stringify(['${testValue}']));
     `)
 
-    // Open the form
     await openArgumentForm()
 
-    // Check that datalist exists and contains the saved value
     const datalist = await webdriver.findElement(By.id('testInput-choices'))
     expect(datalist).to.not.be.null
 
     const options = await getDatalistOptions()
     expect(options.length).to.be.greaterThan(0)
 
-    // Check if the saved value appears in the datalist
     let foundValue = false
     for (const option of options) {
       const value = await option.getAttribute('value')
@@ -182,12 +159,8 @@ describe('config: suggestionsBrowserKey', function () {
   })
 
   it('Multiple submissions accumulate suggestions', async function () {
-    this.timeout(20000)
-
-    // Clear localStorage first
     await clearLocalStorage()
 
-    // Submit first value
     await openArgumentForm()
     const input1 = await getTestInput()
     await input1.clear()
@@ -196,7 +169,6 @@ describe('config: suggestionsBrowserKey', function () {
     await waitForLogsPage()
     await waitForExecutionComplete()
 
-    // Submit second value
     await openArgumentForm()
     const input2 = await getTestInput()
     await input2.clear()
@@ -205,7 +177,6 @@ describe('config: suggestionsBrowserKey', function () {
     await waitForLogsPage()
     await waitForExecutionComplete()
 
-    // Verify both values are in localStorage
     const stored = await getLocalStorageItem('olivetin-suggestions-test-suggestions-key')
     expect(stored).to.not.be.null
 
@@ -213,43 +184,33 @@ describe('config: suggestionsBrowserKey', function () {
     expect(suggestions).to.be.an('array')
     expect(suggestions).to.include('firstvalue')
     expect(suggestions).to.include('secondvalue')
-    expect(suggestions[0]).to.equal('secondvalue') // Most recent should be first
+    expect(suggestions[0]).to.equal('secondvalue')
   })
 
   it('Empty values are not saved to localStorage', async function () {
-    this.timeout(15000)
-
-    // Clear localStorage first
     await clearLocalStorage()
-
     await openArgumentForm()
 
     const input = await getTestInput()
-    // Leave input empty (or clear it if it has a default)
     await input.clear()
 
     await submitForm()
     await waitForLogsPage()
     await waitForExecutionComplete()
 
-    // Verify empty value was not saved - localStorage should be null or empty-equivalent
     const stored = await getLocalStorageItem('olivetin-suggestions-test-suggestions-key')
-    // Should be null OR empty JSON array string ("[]") OR parse to empty array
     if (stored !== null) {
       const suggestions = JSON.parse(stored)
       expect(suggestions).to.be.an('array')
       expect(suggestions).to.have.length(0)
     }
-    // If stored is null, that's also acceptable - no assertion needed
   })
 
   it('Suggestions are shared across inputs with the same suggestionsBrowserKey', async function () {
-    this.timeout(20000)
+    this.timeout(12000)
 
-    // Clear localStorage first
     await clearLocalStorage()
 
-    // Submit a value using the first input
     await openArgumentForm()
     const input1 = await getTestInput()
     await input1.clear()
@@ -258,10 +219,8 @@ describe('config: suggestionsBrowserKey', function () {
     await waitForLogsPage()
     await waitForExecutionComplete()
 
-    // Open the form again and verify the value appears in both datalists
     await openArgumentForm()
 
-    // Check first input's datalist
     const datalist1 = await webdriver.findElement(By.id('testInput-choices'))
     expect(datalist1).to.not.be.null
     const options1 = await getDatalistOptions('testInput')
@@ -275,7 +234,6 @@ describe('config: suggestionsBrowserKey', function () {
     }
     expect(foundInInput1).to.be.true
 
-    // Check second input's datalist
     const datalist2 = await webdriver.findElement(By.id('testInput2-choices'))
     expect(datalist2).to.not.be.null
     const options2 = await getDatalistOptions('testInput2')
@@ -289,7 +247,6 @@ describe('config: suggestionsBrowserKey', function () {
     }
     expect(foundInInput2).to.be.true
 
-    // Now submit a value using the second input
     const input2 = await getTestInput2()
     await input2.clear()
     await input2.sendKeys('sharedfrominput2')
@@ -297,10 +254,8 @@ describe('config: suggestionsBrowserKey', function () {
     await waitForLogsPage()
     await waitForExecutionComplete()
 
-    // Verify both values appear in both datalists
     await openArgumentForm()
 
-    // Check that both values are in the first input's datalist
     const options1After = await getDatalistOptions('testInput')
     let foundValue1 = false
     let foundValue2 = false
@@ -316,7 +271,6 @@ describe('config: suggestionsBrowserKey', function () {
     expect(foundValue1).to.be.true
     expect(foundValue2).to.be.true
 
-    // Check that both values are in the second input's datalist
     const options2After = await getDatalistOptions('testInput2')
     foundValue1 = false
     foundValue2 = false

@@ -42,7 +42,7 @@ export function connectEventStreamIfNeeded () {
     return
   }
 
-  if (window.websocketAvailable || reconnectTimer != null) {
+  if (connectionState.connected || reconnectTimer != null) {
     return
   }
 
@@ -54,6 +54,7 @@ export function initWebsocket () {
     window.addEventListener('EventOutputChunk', onOutputChunk)
     window.addEventListener('EventExecutionStarted', onExecutionChanged)
     window.addEventListener('EventExecutionFinished', onExecutionChanged)
+    window.addEventListener('pagehide', stopEventStream)
     listenersInitialized = true
   }
 
@@ -67,7 +68,7 @@ export function requestReconnectNow () {
     return
   }
 
-  if (window.websocketAvailable) {
+  if (connectionState.connected) {
     return
   }
 
@@ -109,7 +110,7 @@ async function reconnectWebsocket () {
     return
   }
 
-  if (window.websocketAvailable) {
+  if (connectionState.connected) {
     return
   }
 

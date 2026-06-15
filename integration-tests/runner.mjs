@@ -33,6 +33,10 @@ class OliveTinTestRunner {
 
 class OliveTinTestRunnerStartLocalProcess extends OliveTinTestRunner {
   async start (cfg) {
+    if (this.ot != null && this.ot.exitCode == null) {
+      await this.stop()
+    }
+
     let stdout = ""
     let stderr = ""
 
@@ -94,12 +98,22 @@ class OliveTinTestRunnerStartLocalProcess extends OliveTinTestRunner {
   }
 
   async stop () {
-    if ((await this.ot.exitCode) != null) {
-      console.log("      OliveTin local process tried stop(), but it already exited with code", this.ot.exitCode)
-    } else {
-      await this.ot.kill()
-      console.log("      OliveTin local process killed")
+    if (this.ot == null) {
+      return
     }
+
+    if (this.ot.exitCode != null) {
+      console.log('      OliveTin local process tried stop(), but it already exited with code', this.ot.exitCode)
+    } else {
+      const closed = new Promise((resolve) => {
+        this.ot.once('close', resolve)
+      })
+      this.ot.kill('SIGTERM')
+      await closed
+      console.log('      OliveTin local process killed')
+    }
+
+    this.ot = null
 
     if (process.env.CI === 'true') {
       // GitHub runners seem to need a bit more time to clean up
