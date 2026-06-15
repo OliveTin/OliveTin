@@ -1135,6 +1135,12 @@ export declare type EventStreamResponse = Message<"olivetin.api.v1.EventStreamRe
      */
     value: EventOutputChunk;
     case: "outputChunk";
+  } | {
+    /**
+     * @generated from field: olivetin.api.v1.EventHeartbeat heartbeat = 7;
+     */
+    value: EventHeartbeat;
+    case: "heartbeat";
   } | { case: undefined; value?: undefined };
 };
 
@@ -1188,6 +1194,18 @@ export declare type EventConfigChanged = Message<"olivetin.api.v1.EventConfigCha
  * Use `create(EventConfigChangedSchema)` to create a new message.
  */
 export declare const EventConfigChangedSchema: GenMessage<EventConfigChanged>;
+
+/**
+ * @generated from message olivetin.api.v1.EventHeartbeat
+ */
+export declare type EventHeartbeat = Message<"olivetin.api.v1.EventHeartbeat"> & {
+};
+
+/**
+ * Describes the message olivetin.api.v1.EventHeartbeat.
+ * Use `create(EventHeartbeatSchema)` to create a new message.
+ */
+export declare const EventHeartbeatSchema: GenMessage<EventHeartbeat>;
 
 /**
  * @generated from message olivetin.api.v1.EventExecutionFinished
@@ -1919,4 +1937,3 @@ export declare const OliveTinApiService: GenService<{
     output: typeof EntitySchema;
   },
 }>;
-

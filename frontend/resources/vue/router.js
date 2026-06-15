@@ -1,5 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
+import Dashboard from './Dashboard.vue'
+
 import { Wrench01Icon } from '@hugeicons/core-free-icons'
 import { LeftToRightListDashIcon } from '@hugeicons/core-free-icons'
 import { CellsIcon } from '@hugeicons/core-free-icons'
@@ -9,13 +11,13 @@ const routes = [
   {
     path: '/',
     name: 'Actions',
-    component: () => import('./Dashboard.vue'),
+    component: Dashboard,
     meta: { title: 'Actions', icon: DashboardSquare01Icon }
   },
   {
     path: '/dashboards/:title/:entityType?/:entityKey?',
     name: 'Dashboard',
-    component: () => import('./Dashboard.vue'),
+    component: Dashboard,
     props: true,
     meta: { title: 'Dashboard' }
   },
@@ -30,7 +32,7 @@ const routes = [
     path: '/logs',
     name: 'Logs',
     component: () => import('./views/LogsListView.vue'),
-    meta: { 
+    meta: {
       title: 'Logs',
       icon: LeftToRightListDashIcon
     }
@@ -39,7 +41,7 @@ const routes = [
     path: '/logs/calendar',
     name: 'LogsCalendar',
     component: () => import('./views/LogsCalendarView.vue'),
-    meta: { 
+    meta: {
       title: 'Logs Calendar',
       breadcrumb: [
         { name: "Logs", href: "/logs" },
@@ -51,7 +53,7 @@ const routes = [
     path: '/entities',
     name: 'Entities',
     component: () => import('./views/EntitiesView.vue'),
-    meta: { 
+    meta: {
       title: 'Entities',
       icon: CellsIcon
     }
@@ -61,8 +63,8 @@ const routes = [
     name: 'EntityDetails',
     component: () => import('./views/EntityDetailsView.vue'),
     props: true,
-    meta: { 
-      title: 'OliveTin - Entity Details', 
+    meta: {
+      title: 'OliveTin - Entity Details',
       breadcrumb: [
         { name: "Entities", href: "/entities" },
         { name: "Entity Details" }
@@ -74,8 +76,8 @@ const routes = [
     name: 'Execution',
     component: () => import('./views/ExecutionView.vue'),
     props: true,
-    meta: { 
-      title: 'Execution', 
+    meta: {
+      title: 'Execution',
       breadcrumb: [
         { name: "Logs", href: "/logs" },
         { name: "Execution" },
@@ -87,7 +89,7 @@ const routes = [
     name: 'ActionDetails',
     component: () => import('./views/ActionDetailsView.vue'),
     props: true,
-    meta: { 
+    meta: {
       title: 'Action Details',
       breadcrumb: [
         { name: "Actions", href: "/" },
@@ -112,7 +114,7 @@ const routes = [
     path: '/diagnostics',
     name: 'Diagnostics',
     component: () => import('./views/DiagnosticsView.vue'),
-    meta: { 
+    meta: {
       title: 'Diagnostics',
       icon: Wrench01Icon
     }
@@ -163,7 +165,7 @@ router.beforeEach((to, from, next) => {
 router.beforeEach((to, from, next) => {
   // Check if user is authenticated for protected routes
   const isAuthenticated = window.isAuthenticated || true // Default to true for now
-  
+
   if (to.meta.requiresAuth && !isAuthenticated) {
     next('/login')
   } else {
@@ -171,4 +173,4 @@ router.beforeEach((to, from, next) => {
   }
 })
 
-export default router 
+export default router

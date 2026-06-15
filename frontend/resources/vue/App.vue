@@ -100,6 +100,7 @@ import Sidebar from 'picocrank/vue/components/Sidebar.vue';
 import Navigation from 'picocrank/vue/components/Navigation.vue';
 import Header from 'picocrank/vue/components/Header.vue';
 import ConnectionBanner from './components/ConnectionBanner.vue';
+import { connectEventStreamIfNeeded } from '../../js/websocket.js';
 import { HugeiconsIcon } from '@hugeicons/vue'
 import { Menu01Icon } from '@hugeicons/core-free-icons'
 import { UserCircle02Icon } from '@hugeicons/core-free-icons'
@@ -237,9 +238,12 @@ function updateHeaderFromInit() {
     applyTheme()
 
     if (window.initResponse.loginRequired) {
+        connectEventStreamIfNeeded()
         router.push('/login')
         return
     }
+
+    connectEventStreamIfNeeded()
 }
 
 function renderNavigation() {

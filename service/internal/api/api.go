@@ -58,18 +58,43 @@ func (api *oliveTinAPI) copyOfStreamingClients() []*streamingClient {
 type streamingClient struct {
 	channel           chan *apiv1.EventStreamResponse
 	AuthenticatedUser *authpublic.AuthenticatedUser
+	heartbeatStopOnce sync.Once
+	heartbeatStop     chan struct{}
+	heartbeatDone     chan struct{}
 }
 
-// trySendEventToClient sends msg to the client's channel. Returns false if the channel is full (client should be removed).
+func (c *streamingClient) stopHeartbeat() {
+	if c.heartbeatStop == nil || c.heartbeatDone == nil {
+		return
+	}
+	c.heartbeatStopOnce.Do(func() {
+		close(c.heartbeatStop)
+	})
+	<-c.heartbeatDone
+}
+
+// trySendEventToClient sends msg to the client's channel. Returns false if the channel is full or closed.
 func (api *oliveTinAPI) trySendEventToClient(client *streamingClient, msg *apiv1.EventStreamResponse) bool {
 	if client == nil || msg == nil {
 		return false
 	}
+	sent := sendToStreamingClientChannel(client.channel, msg)
+	if !sent {
+		log.Warnf("EventStream: client channel is full or closed, removing client")
+	}
+	return sent
+}
+
+func sendToStreamingClientChannel(ch chan *apiv1.EventStreamResponse, msg *apiv1.EventStreamResponse) (sent bool) {
+	defer func() {
+		if recover() != nil {
+			sent = false
+		}
+	}()
 	select {
-	case client.channel <- msg:
+	case ch <- msg:
 		return true
 	default:
-		log.Warnf("EventStream: client channel is full, removing client")
 		return false
 	}
 }
@@ -933,6 +958,8 @@ func (api *oliveTinAPI) EventStream(ctx ctx.Context, req *connect.Request[apiv1.
 	client := &streamingClient{
 		channel:           make(chan *apiv1.EventStreamResponse, 10), // Buffered channel to hold Events
 		AuthenticatedUser: user,
+		heartbeatStop:     make(chan struct{}),
+		heartbeatDone:     make(chan struct{}),
 	}
 
 	log.WithFields(log.Fields{
@@ -942,6 +969,8 @@ func (api *oliveTinAPI) EventStream(ctx ctx.Context, req *connect.Request[apiv1.
 	api.streamingClientsMutex.Lock()
 	api.streamingClients[client] = struct{}{}
 	api.streamingClientsMutex.Unlock()
+
+	go api.sendEventStreamHeartbeats(client)
 
 	// loop over client channel and send events to connectedClient
 	for msg := range client.channel {
@@ -959,13 +988,59 @@ func (api *oliveTinAPI) EventStream(ctx ctx.Context, req *connect.Request[apiv1.
 	return nil
 }
 
+func (api *oliveTinAPI) sendEventStreamHeartbeats(client *streamingClient) {
+	defer close(client.heartbeatDone)
+
+	if !api.sendEventStreamHeartbeat(client) {
+		return
+	}
+
+	ticker := time.NewTicker(10 * time.Second)
+	defer ticker.Stop()
+	api.runEventStreamHeartbeatLoop(client, ticker)
+}
+
+func (api *oliveTinAPI) runEventStreamHeartbeatLoop(client *streamingClient, ticker *time.Ticker) {
+	for {
+		if api.waitEventStreamHeartbeatOrDone(client.heartbeatStop, ticker) {
+			return
+		}
+		if !api.sendEventStreamHeartbeat(client) {
+			return
+		}
+	}
+}
+
+func (api *oliveTinAPI) waitEventStreamHeartbeatOrDone(done <-chan struct{}, ticker *time.Ticker) bool {
+	select {
+	case <-done:
+		return true
+	case <-ticker.C:
+		return false
+	}
+}
+
+func (api *oliveTinAPI) sendEventStreamHeartbeat(client *streamingClient) bool {
+	msg := &apiv1.EventStreamResponse{
+		Event: &apiv1.EventStreamResponse_Heartbeat{
+			Heartbeat: &apiv1.EventHeartbeat{},
+		},
+	}
+	return api.trySendEventToClient(client, msg)
+}
+
 func (api *oliveTinAPI) removeClient(clientToRemove *streamingClient) {
 	if clientToRemove == nil {
 		return
 	}
 	api.streamingClientsMutex.Lock()
+	if _, exists := api.streamingClients[clientToRemove]; !exists {
+		api.streamingClientsMutex.Unlock()
+		return
+	}
 	delete(api.streamingClients, clientToRemove)
 	api.streamingClientsMutex.Unlock()
+	clientToRemove.stopHeartbeat()
 	close(clientToRemove.channel)
 }
 
@@ -973,14 +1048,12 @@ func (api *oliveTinAPI) OnActionMapRebuilt() {
 	toRemove := []*streamingClient{}
 
 	for _, client := range api.copyOfStreamingClients() {
-		select {
-		case client.channel <- &apiv1.EventStreamResponse{
+		msg := &apiv1.EventStreamResponse{
 			Event: &apiv1.EventStreamResponse_ConfigChanged{
 				ConfigChanged: &apiv1.EventConfigChanged{},
 			},
-		}:
-		default:
-			log.Warnf("EventStream: client channel is full, removing client")
+		}
+		if !api.trySendEventToClient(client, msg) {
 			toRemove = append(toRemove, client)
 		}
 	}

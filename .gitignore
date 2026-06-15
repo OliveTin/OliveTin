@@ -22,3 +22,4 @@ webui.dev
 sessions.yaml
 docs/build/
 build/
+.cursor

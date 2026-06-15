@@ -70,6 +70,7 @@ import { HugeiconsIcon } from '@hugeicons/vue'
 import { WorkoutRunIcon, Cancel02Icon, ArrowLeftIcon } from '@hugeicons/core-free-icons'
 import { useRouter } from 'vue-router'
 import { buttonResults } from '../stores/buttonResults'
+import { requestReconnectNow } from '../../../js/websocket.js'
 
 const router = useRouter()
 
@@ -177,6 +178,7 @@ async function rerunAction() {
   }
 
   try {
+    requestReconnectNow()
     const startActionArgs = {
       "bindingId": bindingId,
       "arguments": []
