@@ -385,6 +385,8 @@ func (api *oliveTinAPI) internalLogEntryToPb(logEntry *executor.InternalLogEntry
 		ExecutionFinished:        logEntry.ExecutionFinished,
 		User:                     logEntry.Username,
 		BindingId:                logEntry.GetBindingId(),
+		Queued:                   logEntry.Queued,
+		QueuedForGroup:           logEntry.QueuedForGroup,
 		DatetimeRateLimitExpires: calculateRateLimitExpires(api, logEntry),
 	}
 
@@ -623,7 +625,10 @@ func (api *oliveTinAPI) GetLogs(ctx ctx.Context, req *connect.Request[apiv1.GetL
 	}
 
 	pageSize := resolveLogsPageSize(req.Msg.GetPageSize(), api.cfg.LogHistoryPageSize)
-	logEntries, paging := api.executor.GetLogTrackingIdsACL(api.cfg, user, req.Msg.StartOffset, pageSize, req.Msg.DateFilter)
+	logEntries, paging, err := api.executor.GetLogTrackingIdsACL(api.cfg, user, req.Msg.StartOffset, pageSize, req.Msg.DateFilter, req.Msg.GetFilter())
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, err)
+	}
 	ret := &apiv1.GetLogsResponse{}
 	for _, le := range logEntries {
 		ret.Logs = append(ret.Logs, api.internalLogEntryToPb(le, user))

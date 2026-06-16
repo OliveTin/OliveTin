@@ -31,6 +31,15 @@ translations:
   logs.calendar: Kalender
   logs.calendar-title: Protokoll-Kalender
   logs.back-to-list: Zurück zur Liste
+  logs.queue: Warteschlange
+  logs.queue-title: Ausführungswarteschlange
+  logs.queue-page-description: Aktive und wartende Ausführungen, nach Aktion gruppiert. Einträge ohne Berechtigung werden ausgeblendet.
+  logs.queue-empty: Derzeit gibt es keine aktiven oder wartenden Ausführungen.
+  logs.queue-group-active: "{active} aktiv (max. {max})"
+  logs.queue-waiting: Wartend
+  logs.queue-running: Läuft
+  logs.queue-position: "#{position}"
+  logs.queue-entity: Entität
   diagnostics.get-support: Unterstützung erhalten
   diagnostics.get-support-description: Wenn Sie Probleme mit OliveTin haben und eine Support-Anfrage stellen möchten, wäre es sehr hilfreich, einen sosreport von dieser Seite einzufügen.
   diagnostics.where-to-find-help: Wo Sie Hilfe finden

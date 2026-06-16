@@ -70,8 +70,8 @@ const showArgumentForm = ref(false)
 const rateLimitExpires = ref(0)
 const isRateLimited = ref(false)
 const rateLimitMessage = ref('')
-let rateLimitInterval = null
-let isComponentMounted = true
+const rateLimitInterval = ref(null)
+const isComponentMounted = ref(true)
 
 // Animation classes
 const buttonClasses = ref([])
@@ -151,9 +151,9 @@ function updateRateLimitStatus() {
   if (rateLimitExpires.value === 0) {
 	isRateLimited.value = false
 	rateLimitMessage.value = ''
-	if (rateLimitInterval) {
-	  clearInterval(rateLimitInterval)
-	  rateLimitInterval = null
+	if (rateLimitInterval.value) {
+	  clearInterval(rateLimitInterval.value)
+	  rateLimitInterval.value = null
 	}
 	return
   }
@@ -166,9 +166,9 @@ function updateRateLimitStatus() {
 	isRateLimited.value = false
 	rateLimitMessage.value = ''
 	rateLimitExpires.value = 0
-	if (rateLimitInterval) {
-	  clearInterval(rateLimitInterval)
-	  rateLimitInterval = null
+	if (rateLimitInterval.value) {
+	  clearInterval(rateLimitInterval.value)
+	  rateLimitInterval.value = null
 	}
   } else {
 	// Still rate limited
@@ -177,8 +177,8 @@ function updateRateLimitStatus() {
 	rateLimitMessage.value = `Rate limited, available in ${secondsRemaining} second${secondsRemaining !== 1 ? 's' : ''}`
 
 	// Set up interval to update every second
-	if (!rateLimitInterval) {
-	  rateLimitInterval = setInterval(() => {
+		if (!rateLimitInterval.value) {
+	  rateLimitInterval.value = setInterval(() => {
 		updateRateLimitStatus()
 	  }, 1000)
 	}
@@ -218,10 +218,10 @@ async function pollExecutionUntilDone (trackingId) {
   const pollTimeoutMs = 10 * 60 * 1000
   const deadline = Date.now() + pollTimeoutMs
 
-  while (Date.now() < deadline && isComponentMounted) {
+  while (Date.now() < deadline && isComponentMounted.value) {
     try {
       const result = await window.client.executionStatus({ executionTrackingId: trackingId })
-      if (!isComponentMounted) {
+      if (!isComponentMounted.value) {
         return
       }
       if (result.logEntry) {
@@ -234,7 +234,7 @@ async function pollExecutionUntilDone (trackingId) {
       console.error('Failed to poll execution status:', err)
     }
 
-    if (!isComponentMounted) {
+    if (!isComponentMounted.value) {
       return
     }
 
@@ -287,9 +287,16 @@ async function startAction(actionArgs) {
 function onLogEntryChanged(logEntry) {
   if (logEntry.executionFinished) {
 	onExecutionFinished(logEntry)
+  } else if (logEntry.queued && !logEntry.executionStarted) {
+	onExecutionQueued(logEntry)
   } else {
 	onExecutionStarted(logEntry)
   }
+}
+
+function onExecutionQueued(_logEntry) {
+  isDisabled.value = true
+  updateDom('action-queued', '[Queued]')
 }
 
 function onExecutionStarted(logEntry) {
@@ -298,6 +305,7 @@ function onExecutionStarted(logEntry) {
   }
 
   isDisabled.value = true
+  updateDom(null, title.value)
 }
 
 function onExecutionFinished(logEntry) {
@@ -358,10 +366,10 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  isComponentMounted = false
-  if (rateLimitInterval) {
-	clearInterval(rateLimitInterval)
-	rateLimitInterval = null
+  isComponentMounted.value = false
+  if (rateLimitInterval.value) {
+	clearInterval(rateLimitInterval.value)
+	rateLimitInterval.value = null
   }
 })
 
@@ -447,6 +455,12 @@ defineExpose({
 		background: #f8d7da !important;
 		border-color: #f5c6cb;
 		color: #721c24;
+	}
+
+	.action-button button.action-queued {
+		background: #e7f1ff !important;
+		border-color: #9ec5fe;
+		color: #084298;
 	}
 
 	.action-button button.action-nonzero-exit {

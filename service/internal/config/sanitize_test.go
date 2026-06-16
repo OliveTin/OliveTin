@@ -1,11 +1,8 @@
 package config
 
 import (
-	"bytes"
-	"runtime"
 	"testing"
 
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -110,6 +107,24 @@ func TestValidateReservedActionArgumentNames(t *testing.T) {
 	assert.Contains(t, err.Error(), `action "Reserved arg" argument "ot_custom" uses reserved prefix "ot_"`)
 }
 
+func TestSanitizeActionGroupsDedupesGroupNames(t *testing.T) {
+	c := DefaultConfig()
+	c.ActionGroups = map[string]*ActionGroup{
+		"unity": {MaxConcurrent: 1},
+	}
+	c.Actions = append(c.Actions, &Action{
+		Title:  "Build",
+		Shell:  "true",
+		Groups: []string{"unity", "unity", ""},
+	})
+
+	c.Sanitize()
+
+	action := c.findAction("Build")
+	require.NotNil(t, action)
+	assert.Equal(t, []string{"unity"}, action.Groups)
+}
+
 func TestValidateReservedActionArgumentNamesAllowsNonReserved(t *testing.T) {
 	c := DefaultConfig()
 	c.Actions = append(c.Actions, &Action{
@@ -162,23 +177,4 @@ func TestValidateUniqueLocalUserAPIKeys(t *testing.T) {
 		{Username: "b", ApiKey: "two"},
 	})
 	require.NoError(t, err)
-}
-
-func TestSanitizeServiceLogsUnsupportedPlatform(t *testing.T) {
-	if runtime.GOOS == "windows" {
-		t.Skip("serviceLogs.directory platform check only applies on non-Windows")
-	}
-
-	var logBuffer bytes.Buffer
-	previousOutput := logrus.StandardLogger().Out
-	logrus.SetOutput(&logBuffer)
-	t.Cleanup(func() {
-		logrus.SetOutput(previousOutput)
-	})
-
-	cfg := DefaultConfig()
-	cfg.ServiceLogs.Directory = "/var/log/OliveTin"
-	cfg.Sanitize()
-
-	assert.Contains(t, logBuffer.String(), "serviceLogs.directory is configured but this option is only supported on Windows")
 }

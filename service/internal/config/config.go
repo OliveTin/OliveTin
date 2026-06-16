@@ -33,6 +33,13 @@ type Action struct {
 	PopupOnStart           string           `koanf:"popupOnStart"`
 	SaveLogs               SaveLogsConfig   `koanf:"saveLogs"`
 	EnabledExpression      string           `koanf:"enabledExpression"`
+	Groups                 []string         `koanf:"groups"`
+}
+
+// ActionGroup defines shared limits and metadata for a set of actions.
+type ActionGroup struct {
+	MaxConcurrent int    `koanf:"maxConcurrent"`
+	Icon          string `koanf:"icon"`
 }
 
 // ActionArgument objects appear on Actions.
@@ -134,6 +141,7 @@ type Config struct {
 	LogLevel                        string                     `koanf:"logLevel"`
 	LogDebugOptions                 LogDebugOptions            `koanf:"logDebugOptions"`
 	LogHistoryPageSize              int64                      `koanf:"logHistoryPageSize"`
+	ActionGroups                    map[string]*ActionGroup    `koanf:"actionGroups"`
 	Actions                         []*Action                  `koanf:"actions"`
 	Entities                        []*EntityFile              `koanf:"entities"`
 	Dashboards                      []*DashboardComponent      `koanf:"dashboards"`

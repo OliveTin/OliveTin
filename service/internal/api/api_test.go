@@ -25,7 +25,10 @@ import (
 func getNewTestServerAndClient(injectedConfig *config.Config) (*httptest.Server, apiv1connect.OliveTinApiServiceClient) {
 	ex := executor.DefaultExecutor(injectedConfig)
 	ex.RebuildActionMap()
+	return getNewTestServerAndClientWithExecutor(injectedConfig, ex)
+}
 
+func getNewTestServerAndClientWithExecutor(injectedConfig *config.Config, ex *executor.Executor) (*httptest.Server, apiv1connect.OliveTinApiServiceClient) {
 	apiPath, apiHandler := GetNewHandler(ex)
 
 	mux := http.NewServeMux()

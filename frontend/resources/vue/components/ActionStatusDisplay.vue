@@ -19,6 +19,10 @@ const statusText = computed(() => {
     const logEntry = props.logEntry
     if (!logEntry) return 'unknown'
 
+    if (logEntry.queued && !logEntry.executionFinished) {
+        return 'Queued'
+    }
+
     if (logEntry.executionFinished) {
         if (logEntry.blocked) {
             return 'Blocked'

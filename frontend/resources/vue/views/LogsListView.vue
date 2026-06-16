@@ -1,6 +1,9 @@
 <template>
   <Section :title="t('logs.title')" :padding="false">
       <template #toolbar>
+        <router-link to="/logs/queue" class="button neutral">
+          {{ t('logs.queue') }}
+        </router-link>
         <router-link to="/logs/calendar" class="button neutral">
           {{ t('logs.calendar') }}
         </router-link>
@@ -9,7 +12,15 @@
             <path fill="currentColor"
               d="m19.6 21l-6.3-6.3q-.75.6-1.725.95T9.5 16q-2.725 0-4.612-1.888T3 9.5t1.888-4.612T9.5 3t4.613 1.888T16 9.5q0 1.1-.35 2.075T14.7 13.3l6.3 6.3zM9.5 14q1.875 0 3.188-1.312T14 9.5t-1.312-3.187T9.5 5T6.313 6.313T5 9.5t1.313 3.188T9.5 14" />
           </svg>
-          <input :placeholder="t('search-filter')" v-model="searchText" />
+          <input
+            :placeholder="t('logs.filter-placeholder')"
+            v-model="searchText"
+            list="logs-filter-suggestions"
+            :aria-invalid="filterError ? 'true' : 'false'"
+          />
+          <datalist id="logs-filter-suggestions">
+            <option v-for="suggestion in filterSuggestions" :key="suggestion" :value="suggestion" />
+          </datalist>
           <button :title="t('logs.clear-filter')" :disabled="!searchText" @click="clearSearch">
             <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
               <path fill="currentColor"
@@ -19,8 +30,18 @@
         </label>
       </template>
 
-      <p class = "padding">{{ t('logs.page-description') }}</p>
-      <div v-show="filteredLogs.length > 0">
+      <div class="padding logs-intro">
+        <p>{{ t('logs.page-description') }}</p>
+        <details class="filter-help">
+          <summary>{{ t('logs.filter-help-title') }}</summary>
+          <p>{{ t('logs.filter-help-intro') }}</p>
+          <p>{{ t('logs.filter-help-fields') }}</p>
+          <p><code>{{ t('logs.filter-help-examples') }}</code></p>
+        </details>
+        <p v-if="filterError" class="filter-error" role="alert">{{ filterError }}</p>
+      </div>
+
+      <div v-show="logs.length > 0">
         <table class="logs-table">
           <thead>
             <tr>
@@ -44,7 +65,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="log in filteredLogs" :key="log.executionTrackingId" class="log-row" :title="log.actionTitle">
+            <tr v-for="log in logs" :key="log.executionTrackingId" class="log-row" :title="log.actionTitle">
               <td class="timestamp">{{ formatTimestamp(log.datetimeStarted) }}</td>
               <td>
                 <ActionIconGlyph class="icon" :glyph="log.actionIcon" />
@@ -72,14 +93,21 @@
           @page-size-change="handlePageSizeChange" itemTitle="execution logs" />
       </div>
 
-      <div v-show="selectedDate && filteredLogs.length === 0" class="empty-state">
+      <div v-show="logs.length === 0 && !loading && searchText && !filterError" class="empty-state padding">
+        <p>{{ t('logs.no-logs-for-filter') }}</p>
+        <button @click="clearSearch" class="button neutral">
+          {{ t('logs.clear-filter') }}
+        </button>
+      </div>
+
+      <div v-show="selectedDate && logs.length === 0 && !loading && !searchText" class="empty-state padding">
         <p>{{ t('logs.no-logs-to-display') }} {{ formatDateFilter(selectedDate) }}.</p>
         <button @click="clearDateFilter" class="button neutral">
           {{ t('logs.clear-date-filter') }}
         </button>
       </div>
 
-      <div v-show="logs.length === 0 && !selectedDate" class="empty-state">
+      <div v-show="logs.length === 0 && !loading && !selectedDate && !searchText" class="empty-state padding">
         <p>{{ t('logs.no-logs-to-display') }}</p>
         <router-link to="/">{{ t('return-to-index') }}</router-link>
       </div>
@@ -87,8 +115,9 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { ConnectError, Code } from '@connectrpc/connect'
 import Pagination from 'picocrank/vue/components/Pagination.vue'
 import Section from 'picocrank/vue/components/Section.vue'
 import { useI18n } from 'vue-i18n'
@@ -105,10 +134,20 @@ const currentPage = ref(1)
 const loading = ref(false)
 const totalCount = ref(0)
 const selectedDate = ref(null)
+const filterError = ref('')
+let fetchTimer = null
+
+const filterSuggestions = [
+  '!Update',
+  'Status != Completed',
+  'Status == Blocked',
+  'Status == Running',
+  'Action contains backup',
+  'User == guest'
+]
 
 const { t } = useI18n()
 
-// Read date query parameter from route
 function updateDateFromRoute() {
   const dateParam = route.query.date
   if (dateParam) {
@@ -116,47 +155,35 @@ function updateDateFromRoute() {
   } else {
     selectedDate.value = null
   }
-  // Re-fetch logs when date changes
   fetchLogs()
 }
 
-// Watch for route changes to update date filter
 watch(() => route.query.date, () => {
   updateDateFromRoute()
 })
 
-const filteredLogs = computed(() => {
-  let result = logs.value
-
-  // Date filtering is now done server-side, so we only need to filter by search text
-  if (searchText.value) {
-    const searchLower = searchText.value.toLowerCase()
-    result = result.filter(log =>
-      log.actionTitle.toLowerCase().includes(searchLower)
-    )
-  }
-
-  // Sort by timestamp with most recent first
-  return [...result].sort((a, b) => {
-    const dateA = a.datetimeStarted ? new Date(a.datetimeStarted).getTime() : 0
-    const dateB = b.datetimeStarted ? new Date(b.datetimeStarted).getTime() : 0
-    return dateB - dateA // Descending order (most recent first)
-  })
+watch(searchText, () => {
+  currentPage.value = 1
+  scheduleFetchLogs()
 })
 
 async function fetchLogs() {
   loading.value = true
+  filterError.value = ''
   try {
     const startOffset = (currentPage.value - 1) * pageSize.value
 
     const args = {
-      "startOffset": BigInt(startOffset),
-      "pageSize": BigInt(pageSize.value),
+      startOffset: BigInt(startOffset),
+      pageSize: BigInt(pageSize.value)
     }
 
-    // Add date filter if selected
     if (selectedDate.value) {
       args.dateFilter = selectedDate.value
+    }
+
+    if (searchText.value.trim()) {
+      args.filter = searchText.value.trim()
     }
 
     const response = await window.client.getLogs(args)
@@ -165,26 +192,41 @@ async function fetchLogs() {
     totalCount.value = Number(response.totalCount) || 0
   } catch (err) {
     console.error('Failed to fetch logs:', err)
+    if (err instanceof ConnectError && err.code === Code.InvalidArgument && searchText.value.trim()) {
+      filterError.value = `${t('logs.filter-error')} ${err.message}`
+      logs.value = []
+      totalCount.value = 0
+      return
+    }
     window.showBigError('fetch-logs', 'getting logs', err, false)
   } finally {
     loading.value = false
   }
 }
 
+function scheduleFetchLogs() {
+  if (fetchTimer) {
+    clearTimeout(fetchTimer)
+  }
+  fetchTimer = setTimeout(() => {
+    fetchLogs()
+  }, 400)
+}
+
 function clearSearch() {
   searchText.value = ''
+  currentPage.value = 1
+  fetchLogs()
 }
 
 function clearDateFilter() {
   selectedDate.value = null
-  // Remove date query parameter from URL
   const query = { ...route.query }
   delete query.date
   router.push({ path: route.path, query })
 }
 
 function formatDateFilter(dateString) {
-  // Format YYYY-MM-DD to a short format (e.g., "Jan 15, 2024")
   try {
     const date = new Date(dateString + 'T00:00:00')
     return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
@@ -210,7 +252,7 @@ function handlePageChange(page) {
 
 function handlePageSizeChange(newPageSize) {
   pageSize.value = newPageSize
-  currentPage.value = 1 // Reset to first page
+  currentPage.value = 1
   fetchLogs()
 }
 
@@ -220,8 +262,29 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.logs-view {
-  padding: 1rem;
+.logs-intro {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.logs-intro p {
+  margin: 0;
+}
+
+.filter-help summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.filter-help code {
+  display: block;
+  white-space: pre-wrap;
+  margin-top: 0.5rem;
+}
+
+.filter-error {
+  color: var(--karma-bad-fg, #b00020);
 }
 
 .input-with-icons {
@@ -233,7 +296,7 @@ onMounted(() => {
   border-radius: 0.25rem;
   background: var(--section-background);
   width: 100%;
-  max-width: 300px;
+  max-width: 360px;
 }
 
 .input-with-icons input {
@@ -266,16 +329,6 @@ onMounted(() => {
 .icon {
   margin-right: 0.5rem;
   font-size: 1.2em;
-}
-
-.content {
-  color: #007bff;
-  text-decoration: none;
-  cursor: pointer;
-}
-
-.content:hover {
-  text-decoration: underline;
 }
 
 .annotation {

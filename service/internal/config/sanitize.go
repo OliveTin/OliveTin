@@ -2,7 +2,6 @@ package config
 
 import (
 	"fmt"
-	"runtime"
 	"strings"
 	"text/template"
 
@@ -19,7 +18,6 @@ func (cfg *Config) Sanitize() {
 	cfg.sanitizeLogHistoryPageSize()
 	cfg.sanitizeLocalUsers()
 	cfg.sanitizeSecurityHeaders()
-	cfg.sanitizeServiceLogs()
 
 	// log.Infof("cfg %p", cfg)
 
@@ -28,6 +26,8 @@ func (cfg *Config) Sanitize() {
 	}
 
 	cfg.sanitizeDashboardsForInlineActions()
+
+	cfg.sanitizeActionGroupReferences()
 
 	if err := cfg.validateReservedActionArgumentNames(); err != nil {
 		log.Fatalf("%v", err)
@@ -170,16 +170,6 @@ func (cfg *Config) sanitizeLogLevel() {
 	}
 }
 
-func (cfg *Config) sanitizeServiceLogs() {
-	if cfg.ServiceLogs.Directory == "" {
-		return
-	}
-
-	if runtime.GOOS != "windows" {
-		log.Errorf("serviceLogs.directory is configured but this option is only supported on Windows")
-	}
-}
-
 func (action *Action) sanitize(cfg *Config) {
 	if action.Timeout < 3 {
 		action.Timeout = 3
@@ -193,8 +183,61 @@ func (action *Action) sanitize(cfg *Config) {
 		action.MaxConcurrent = 1
 	}
 
+	action.Groups = dedupeStrings(action.Groups)
+
 	for idx := range action.Arguments {
 		action.Arguments[idx].sanitize()
+	}
+}
+
+func dedupeStrings(values []string) []string {
+	seen := make(map[string]struct{}, len(values))
+	out := make([]string, 0, len(values))
+
+	for _, value := range values {
+		out = appendUniqueString(out, seen, value)
+	}
+
+	return out
+}
+
+func appendUniqueString(out []string, seen map[string]struct{}, value string) []string {
+	if value == "" {
+		return out
+	}
+
+	if _, found := seen[value]; found {
+		return out
+	}
+
+	seen[value] = struct{}{}
+
+	return append(out, value)
+}
+
+func (cfg *Config) sanitizeActionGroupReferences() {
+	for _, action := range cfg.Actions {
+		for _, groupName := range action.Groups {
+			cfg.warnInvalidActionGroupReference(action, groupName)
+		}
+	}
+}
+
+func (cfg *Config) warnInvalidActionGroupReference(action *Action, groupName string) {
+	group, found := cfg.ActionGroups[groupName]
+	if !found {
+		log.WithFields(log.Fields{
+			"actionTitle": action.Title,
+			"groupName":   groupName,
+		}).Warn("Action references unknown action group")
+		return
+	}
+
+	if group == nil || group.MaxConcurrent < 1 {
+		log.WithFields(log.Fields{
+			"actionTitle": action.Title,
+			"groupName":   groupName,
+		}).Warn("Action references action group that will not be enforced at runtime")
 	}
 }
 

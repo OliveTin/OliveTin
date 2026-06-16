@@ -3,7 +3,7 @@
 
 By default, OliveTin will allow you to run several instances of an action at the same time. For example, an action might take 20 seconds, and if you click the button 3 times, for a time there will be 3 actions running at the same time.
 
-Sometimes you don't want to allow this - an example case where it would not make sense is in the case of a backup script. To stop this, we can set `maxConcurrent` to `1`. 
+Sometimes you don't want to allow this - an example case where it would not make sense is in the case of a backup script. To stop this, we can set `maxConcurrent` to `1`.
 
 [source,yaml]
 ----
@@ -29,4 +29,30 @@ WARN Blocked from executing. This would mean this action is running 2 times conc
 
 Naturally, you can set `maxConcurrent` to `3` or some other number, to limit the amount of times the action executes at once.
 
+== Action groups
 
+Sometimes you need to limit concurrency across several different actions. For example, Unity only allows one build at a time, but you might have separate actions for different platforms.
+
+Use `actionGroups` to define a shared limit, and assign actions to a group with `groups`:
+
+[source,yaml]
+----
+actionGroups:
+  unity:
+    maxConcurrent: 1
+
+actions:
+  - title: Unity Android Build
+    shell: /opt/unity/build-android.sh
+    groups: [ unity ]
+
+  - title: Unity iOS Build
+    shell: /opt/unity/build-ios.sh
+    groups: [ unity ]
+----
+
+When the group limit is reached, additional requests are queued automatically and run in order when a slot becomes free. Queued executions appear in the logs with a queued status.
+
+Per-action `maxConcurrent` still applies separately. If the same action binding is started twice while one is already running, the second request is blocked immediately (not queued).
+
+The queue is held in memory. If OliveTin restarts while actions are queued, those queued requests are not preserved.

@@ -50,6 +50,18 @@ const routes = [
     }
   },
   {
+    path: '/logs/queue',
+    name: 'LogsQueue',
+    component: () => import('./views/LogsQueueView.vue'),
+    meta: {
+      title: 'Execution Queue',
+      breadcrumb: [
+        { name: "Logs", href: "/logs" },
+        { name: "Queue" },
+      ]
+    }
+  },
+  {
     path: '/entities',
     name: 'Entities',
     component: () => import('./views/EntitiesView.vue'),

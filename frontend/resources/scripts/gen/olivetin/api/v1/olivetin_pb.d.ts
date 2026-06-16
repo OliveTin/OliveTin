@@ -568,6 +568,13 @@ export declare type GetLogsRequest = Message<"olivetin.api.v1.GetLogsRequest"> &
    * @generated from field: int64 page_size = 3;
    */
   pageSize: bigint;
+
+  /**
+   * Optional filter expression (see logs UI syntax help)
+   *
+   * @generated from field: string filter = 4;
+   */
+  filter: string;
 };
 
 /**
@@ -673,6 +680,16 @@ export declare type LogEntry = Message<"olivetin.api.v1.LogEntry"> & {
    * @generated from field: string binding_id = 20;
    */
   bindingId: string;
+
+  /**
+   * @generated from field: bool queued = 21;
+   */
+  queued: boolean;
+
+  /**
+   * @generated from field: string queued_for_group = 22;
+   */
+  queuedForGroup: string;
 };
 
 /**
@@ -773,6 +790,85 @@ export declare type GetActionLogsResponse = Message<"olivetin.api.v1.GetActionLo
  * Use `create(GetActionLogsResponseSchema)` to create a new message.
  */
 export declare const GetActionLogsResponseSchema: GenMessage<GetActionLogsResponse>;
+
+/**
+ * @generated from message olivetin.api.v1.GetExecutionQueueRequest
+ */
+export declare type GetExecutionQueueRequest = Message<"olivetin.api.v1.GetExecutionQueueRequest"> & {
+};
+
+/**
+ * Describes the message olivetin.api.v1.GetExecutionQueueRequest.
+ * Use `create(GetExecutionQueueRequestSchema)` to create a new message.
+ */
+export declare const GetExecutionQueueRequestSchema: GenMessage<GetExecutionQueueRequest>;
+
+/**
+ * @generated from message olivetin.api.v1.ExecutionQueueGroup
+ */
+export declare type ExecutionQueueGroup = Message<"olivetin.api.v1.ExecutionQueueGroup"> & {
+  /**
+   * @generated from field: string binding_id = 1;
+   */
+  bindingId: string;
+
+  /**
+   * @generated from field: string action_title = 2;
+   */
+  actionTitle: string;
+
+  /**
+   * @generated from field: string action_icon = 3;
+   */
+  actionIcon: string;
+
+  /**
+   * @generated from field: int32 max_concurrent = 4;
+   */
+  maxConcurrent: number;
+
+  /**
+   * @generated from field: int32 active_count = 5;
+   */
+  activeCount: number;
+
+  /**
+   * @generated from field: string entity_prefix = 6;
+   */
+  entityPrefix: string;
+
+  /**
+   * @generated from field: repeated olivetin.api.v1.LogEntry entries = 7;
+   */
+  entries: LogEntry[];
+};
+
+/**
+ * Describes the message olivetin.api.v1.ExecutionQueueGroup.
+ * Use `create(ExecutionQueueGroupSchema)` to create a new message.
+ */
+export declare const ExecutionQueueGroupSchema: GenMessage<ExecutionQueueGroup>;
+
+/**
+ * @generated from message olivetin.api.v1.GetExecutionQueueResponse
+ */
+export declare type GetExecutionQueueResponse = Message<"olivetin.api.v1.GetExecutionQueueResponse"> & {
+  /**
+   * @generated from field: repeated olivetin.api.v1.ExecutionQueueGroup groups = 1;
+   */
+  groups: ExecutionQueueGroup[];
+
+  /**
+   * @generated from field: int32 total_active = 2;
+   */
+  totalActive: number;
+};
+
+/**
+ * Describes the message olivetin.api.v1.GetExecutionQueueResponse.
+ * Use `create(GetExecutionQueueResponseSchema)` to create a new message.
+ */
+export declare const GetExecutionQueueResponseSchema: GenMessage<GetExecutionQueueResponse>;
 
 /**
  * @generated from message olivetin.api.v1.ValidateArgumentTypeRequest
@@ -1815,6 +1911,14 @@ export declare const OliveTinApiService: GenService<{
     methodKind: "unary";
     input: typeof GetActionLogsRequestSchema;
     output: typeof GetActionLogsResponseSchema;
+  },
+  /**
+   * @generated from rpc olivetin.api.v1.OliveTinApiService.GetExecutionQueue
+   */
+  getExecutionQueue: {
+    methodKind: "unary";
+    input: typeof GetExecutionQueueRequestSchema;
+    output: typeof GetExecutionQueueResponseSchema;
   },
   /**
    * @generated from rpc olivetin.api.v1.OliveTinApiService.ValidateArgumentType

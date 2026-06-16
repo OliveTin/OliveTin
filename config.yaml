@@ -6,8 +6,16 @@
 listenAddressSingleHTTPFrontend: 0.0.0.0:1337
 
 # Choose from INFO (default), WARN and DEBUG
-# Docs: https://docs.olivetin.app/advanced_configuration/logs.html 
+# Docs: https://docs.olivetin.app/advanced_configuration/logs.html
 logLevel: "INFO"
+
+# Action groups share a concurrency limit across multiple actions. When the
+# limit is reached, additional requests are queued and run in order.
+# Docs: https://docs.olivetin.app/action_customization/concurrency.html#action-groups
+actionGroups:
+  backup-jobs:
+    maxConcurrent: 1
+    icon: backup
 
 # Actions are commands that are executed by OliveTin, and normally show up as
 # buttons on the WebUI.
@@ -69,18 +77,25 @@ actions:
       - "@hourly"
 
   # You are not limited to operating system commands, and of course you can run
-  # your own scripts. Here `maxConcurrent` stops the script running multiple
-  # times in parallel. There is also a timeout that will kill the command if it
-  # runs for too long.
+  # your own scripts. The backup-jobs action group limits how many backup-related
+  # actions can run at once; extra requests are queued instead of blocked.
+  # There is also a timeout that will kill the command if it runs for too long.
   - title: Run backup script
     shell: /opt/backupScript.sh
     shellAfterCompleted: "apprise -t 'Notification: Backup script completed' -b 'The backup script completed with code {{ exitCode}}. The log is: \n {{ output }} '"
-    maxConcurrent: 1
+    groups: [ backup-jobs ]
     timeout: 10
     icon: backup
     popupOnStart: execution-dialog
     # https://docs.olivetin.app/action_execution/oncalendar.html
     execOnCalendarFile: examples/demo-olivetin-calendar.yaml
+
+  - title: Verify backup archive
+    shell: sleep 3 && echo "Backup archive verified"
+    groups: [ backup-jobs ]
+    timeout: 30
+    icon: backup
+    popupOnStart: execution-dialog
 
   # When you want to prompt users for input, that is when you should use
   # `arguments` - this presents a popup dialog and asks for argument values.
@@ -147,7 +162,7 @@ actions:
   #
   # Docs: https://docs.olivetin.app/reference/reference_themes_for_users.html
   - title: Get OliveTin Theme
-    exec: 
+    exec:
       - "olivetin-get-theme"
       - "{{ themeGitRepo }}"
       - "{{ themeFolderName }}"
@@ -372,7 +387,7 @@ dashboards:
 
 # Security - Authentication
 
-# This setting effectively enables or disables guests. 
+# This setting effectively enables or disables guests.
 # If set to "true", then users will have to login to do anything.
 authRequireGuestsToLogin: false
 
@@ -381,7 +396,7 @@ authRequireGuestsToLogin: false
 # and JWT authentication which are documented separately.
 #
 # Docs: https://docs.olivetin.app/security/local.html
-# 
+#
 # How to get a hashed password:
 # Docs: https://docs.olivetin.app/security/local.html#_get_a_argon2id_hashed_password
 authLocalUsers:

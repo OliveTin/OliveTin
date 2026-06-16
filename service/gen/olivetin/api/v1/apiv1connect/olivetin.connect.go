@@ -63,6 +63,9 @@ const (
 	// OliveTinApiServiceGetActionLogsProcedure is the fully-qualified name of the OliveTinApiService's
 	// GetActionLogs RPC.
 	OliveTinApiServiceGetActionLogsProcedure = "/olivetin.api.v1.OliveTinApiService/GetActionLogs"
+	// OliveTinApiServiceGetExecutionQueueProcedure is the fully-qualified name of the
+	// OliveTinApiService's GetExecutionQueue RPC.
+	OliveTinApiServiceGetExecutionQueueProcedure = "/olivetin.api.v1.OliveTinApiService/GetExecutionQueue"
 	// OliveTinApiServiceValidateArgumentTypeProcedure is the fully-qualified name of the
 	// OliveTinApiService's ValidateArgumentType RPC.
 	OliveTinApiServiceValidateArgumentTypeProcedure = "/olivetin.api.v1.OliveTinApiService/ValidateArgumentType"
@@ -121,6 +124,7 @@ type OliveTinApiServiceClient interface {
 	ExecutionStatus(context.Context, *connect.Request[v1.ExecutionStatusRequest]) (*connect.Response[v1.ExecutionStatusResponse], error)
 	GetLogs(context.Context, *connect.Request[v1.GetLogsRequest]) (*connect.Response[v1.GetLogsResponse], error)
 	GetActionLogs(context.Context, *connect.Request[v1.GetActionLogsRequest]) (*connect.Response[v1.GetActionLogsResponse], error)
+	GetExecutionQueue(context.Context, *connect.Request[v1.GetExecutionQueueRequest]) (*connect.Response[v1.GetExecutionQueueResponse], error)
 	ValidateArgumentType(context.Context, *connect.Request[v1.ValidateArgumentTypeRequest]) (*connect.Response[v1.ValidateArgumentTypeResponse], error)
 	WhoAmI(context.Context, *connect.Request[v1.WhoAmIRequest]) (*connect.Response[v1.WhoAmIResponse], error)
 	SosReport(context.Context, *connect.Request[v1.SosReportRequest]) (*connect.Response[v1.SosReportResponse], error)
@@ -207,6 +211,12 @@ func NewOliveTinApiServiceClient(httpClient connect.HTTPClient, baseURL string, 
 			httpClient,
 			baseURL+OliveTinApiServiceGetActionLogsProcedure,
 			connect.WithSchema(oliveTinApiServiceMethods.ByName("GetActionLogs")),
+			connect.WithClientOptions(opts...),
+		),
+		getExecutionQueue: connect.NewClient[v1.GetExecutionQueueRequest, v1.GetExecutionQueueResponse](
+			httpClient,
+			baseURL+OliveTinApiServiceGetExecutionQueueProcedure,
+			connect.WithSchema(oliveTinApiServiceMethods.ByName("GetExecutionQueue")),
 			connect.WithClientOptions(opts...),
 		),
 		validateArgumentType: connect.NewClient[v1.ValidateArgumentTypeRequest, v1.ValidateArgumentTypeResponse](
@@ -314,6 +324,7 @@ type oliveTinApiServiceClient struct {
 	executionStatus         *connect.Client[v1.ExecutionStatusRequest, v1.ExecutionStatusResponse]
 	getLogs                 *connect.Client[v1.GetLogsRequest, v1.GetLogsResponse]
 	getActionLogs           *connect.Client[v1.GetActionLogsRequest, v1.GetActionLogsResponse]
+	getExecutionQueue       *connect.Client[v1.GetExecutionQueueRequest, v1.GetExecutionQueueResponse]
 	validateArgumentType    *connect.Client[v1.ValidateArgumentTypeRequest, v1.ValidateArgumentTypeResponse]
 	whoAmI                  *connect.Client[v1.WhoAmIRequest, v1.WhoAmIResponse]
 	sosReport               *connect.Client[v1.SosReportRequest, v1.SosReportResponse]
@@ -379,6 +390,11 @@ func (c *oliveTinApiServiceClient) GetLogs(ctx context.Context, req *connect.Req
 // GetActionLogs calls olivetin.api.v1.OliveTinApiService.GetActionLogs.
 func (c *oliveTinApiServiceClient) GetActionLogs(ctx context.Context, req *connect.Request[v1.GetActionLogsRequest]) (*connect.Response[v1.GetActionLogsResponse], error) {
 	return c.getActionLogs.CallUnary(ctx, req)
+}
+
+// GetExecutionQueue calls olivetin.api.v1.OliveTinApiService.GetExecutionQueue.
+func (c *oliveTinApiServiceClient) GetExecutionQueue(ctx context.Context, req *connect.Request[v1.GetExecutionQueueRequest]) (*connect.Response[v1.GetExecutionQueueResponse], error) {
+	return c.getExecutionQueue.CallUnary(ctx, req)
 }
 
 // ValidateArgumentType calls olivetin.api.v1.OliveTinApiService.ValidateArgumentType.
@@ -468,6 +484,7 @@ type OliveTinApiServiceHandler interface {
 	ExecutionStatus(context.Context, *connect.Request[v1.ExecutionStatusRequest]) (*connect.Response[v1.ExecutionStatusResponse], error)
 	GetLogs(context.Context, *connect.Request[v1.GetLogsRequest]) (*connect.Response[v1.GetLogsResponse], error)
 	GetActionLogs(context.Context, *connect.Request[v1.GetActionLogsRequest]) (*connect.Response[v1.GetActionLogsResponse], error)
+	GetExecutionQueue(context.Context, *connect.Request[v1.GetExecutionQueueRequest]) (*connect.Response[v1.GetExecutionQueueResponse], error)
 	ValidateArgumentType(context.Context, *connect.Request[v1.ValidateArgumentTypeRequest]) (*connect.Response[v1.ValidateArgumentTypeResponse], error)
 	WhoAmI(context.Context, *connect.Request[v1.WhoAmIRequest]) (*connect.Response[v1.WhoAmIResponse], error)
 	SosReport(context.Context, *connect.Request[v1.SosReportRequest]) (*connect.Response[v1.SosReportResponse], error)
@@ -550,6 +567,12 @@ func NewOliveTinApiServiceHandler(svc OliveTinApiServiceHandler, opts ...connect
 		OliveTinApiServiceGetActionLogsProcedure,
 		svc.GetActionLogs,
 		connect.WithSchema(oliveTinApiServiceMethods.ByName("GetActionLogs")),
+		connect.WithHandlerOptions(opts...),
+	)
+	oliveTinApiServiceGetExecutionQueueHandler := connect.NewUnaryHandler(
+		OliveTinApiServiceGetExecutionQueueProcedure,
+		svc.GetExecutionQueue,
+		connect.WithSchema(oliveTinApiServiceMethods.ByName("GetExecutionQueue")),
 		connect.WithHandlerOptions(opts...),
 	)
 	oliveTinApiServiceValidateArgumentTypeHandler := connect.NewUnaryHandler(
@@ -664,6 +687,8 @@ func NewOliveTinApiServiceHandler(svc OliveTinApiServiceHandler, opts ...connect
 			oliveTinApiServiceGetLogsHandler.ServeHTTP(w, r)
 		case OliveTinApiServiceGetActionLogsProcedure:
 			oliveTinApiServiceGetActionLogsHandler.ServeHTTP(w, r)
+		case OliveTinApiServiceGetExecutionQueueProcedure:
+			oliveTinApiServiceGetExecutionQueueHandler.ServeHTTP(w, r)
 		case OliveTinApiServiceValidateArgumentTypeProcedure:
 			oliveTinApiServiceValidateArgumentTypeHandler.ServeHTTP(w, r)
 		case OliveTinApiServiceWhoAmIProcedure:
@@ -741,6 +766,10 @@ func (UnimplementedOliveTinApiServiceHandler) GetLogs(context.Context, *connect.
 
 func (UnimplementedOliveTinApiServiceHandler) GetActionLogs(context.Context, *connect.Request[v1.GetActionLogsRequest]) (*connect.Response[v1.GetActionLogsResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("olivetin.api.v1.OliveTinApiService.GetActionLogs is not implemented"))
+}
+
+func (UnimplementedOliveTinApiServiceHandler) GetExecutionQueue(context.Context, *connect.Request[v1.GetExecutionQueueRequest]) (*connect.Response[v1.GetExecutionQueueResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("olivetin.api.v1.OliveTinApiService.GetExecutionQueue is not implemented"))
 }
 
 func (UnimplementedOliveTinApiServiceHandler) ValidateArgumentType(context.Context, *connect.Request[v1.ValidateArgumentTypeRequest]) (*connect.Response[v1.ValidateArgumentTypeResponse], error) {
