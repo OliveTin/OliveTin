@@ -245,7 +245,7 @@ func warnIfPuidGuid() {
 }
 
 func main() {
-	servicehost.Start(cfg.ServiceHostMode)
+	servicehost.Start(cfg.ServiceHostMode, cfg.ServiceLogs.Directory)
 
 	log.WithFields(log.Fields{
 		"configDir": cfg.GetDir(),

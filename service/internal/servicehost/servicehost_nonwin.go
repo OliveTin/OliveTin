@@ -7,7 +7,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func Start(mode string) {
+func Start(_ string, _ string) {
 	log.Debugf("servicehost nonwin")
 }
 

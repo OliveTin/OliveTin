@@ -117,6 +117,7 @@ All configuration options are covered in the solution sections
 | `WebUIDir` | The directory to serve the web UI from. | Calculated at runtime. | Requires Restart | -
 | `CronSupportForSeconds` | Whether or not to support seconds in cron expressions. | `false` | Requires Restart | xref:action_execution/oncron.adoc[Cron]
 | `SaveLogs` | Whether or not to save logs to disk. | `[]` | Requires Restart | xref:action_customization/savelogs.adoc[Save Logs]
+| `ServiceLogs` | Windows process log directory (`serviceLogs.directory`). | `%ProgramData%\OliveTin\logs\` on Windows | Requires Restart | xref:install/windows_service.adoc#windows-service-logs[Windows service logs]
 | `Prometheus` | Prometheus configuration. | `-` | Requires Restart | xref:advanced_configuration/prometheus.adoc[Prometheus]
 |===
 

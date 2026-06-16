@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"runtime"
 	"strings"
 	"text/template"
 
@@ -18,6 +19,7 @@ func (cfg *Config) Sanitize() {
 	cfg.sanitizeLogHistoryPageSize()
 	cfg.sanitizeLocalUsers()
 	cfg.sanitizeSecurityHeaders()
+	cfg.sanitizeServiceLogs()
 
 	// log.Infof("cfg %p", cfg)
 
@@ -165,6 +167,16 @@ func (cfg *Config) sanitizeLogLevel() {
 	if logLevel, err := log.ParseLevel(cfg.LogLevel); err == nil {
 		log.Info("Setting log level to ", logLevel)
 		log.SetLevel(logLevel)
+	}
+}
+
+func (cfg *Config) sanitizeServiceLogs() {
+	if cfg.ServiceLogs.Directory == "" {
+		return
+	}
+
+	if runtime.GOOS != "windows" {
+		log.Errorf("serviceLogs.directory is configured but this option is only supported on Windows")
 	}
 }
 
