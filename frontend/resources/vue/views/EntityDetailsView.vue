@@ -22,22 +22,22 @@
 				<template v-if="entityDetails.fields">
 					<template v-for="(value, key) in entityDetails.fields" :key="key">
 						<dt>{{ key }}</dt>
-						<dd>{{ value }}</dd>
+						<dd v-html="value"></dd>
 					</template>
 				</template>
 			</dl>
 			<p v-if="!entityDetails.title && (!entityDetails.fields || Object.keys(entityDetails.fields).length === 0)">No details available for this entity.</p>
 
 			<hr />
-			
+
 			<h3>Dashboard Entity Directories</h3>
 			<div v-if="filteredDirectories.length > 0" class="directories-section">
 				<ul class="directory-list">
 					<li v-for="(directory, idx) in filteredDirectories" :key="idx">
-						<router-link 
-							:to="{ 
-								name: 'Dashboard', 
-								params: { 
+						<router-link
+							:to="{
+								name: 'Dashboard',
+								params: {
 									title: directory,
 									entityType: entityType,
 									entityKey: entityKey

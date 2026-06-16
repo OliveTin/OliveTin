@@ -1,8 +1,8 @@
 <template>
-  <div class="mre-container" :class="component.cssClass">   
-    <router-link 
-        v-if="executionTrackingId" 
-        :to="`/logs/${executionTrackingId}`" 
+  <div class="mre-container" :class="component.cssClass">
+    <router-link
+        v-if="executionTrackingId"
+        :to="`/logs/${executionTrackingId}`"
         class="mre-link"
     >
         <pre class="mre-output">{{ output }}</pre>
@@ -58,7 +58,7 @@ async function fetchMostRecentExecution() {
     }
 
     const result = await window.client.executionStatus(executionStatusArgs)
-    
+
     if (result.logEntry) {
       updateFromLogEntry(result.logEntry)
     } else {
@@ -79,7 +79,7 @@ async function fetchMostRecentExecution() {
 
 onMounted(() => {
   fetchMostRecentExecution()
-  
+
   unwatchButtonResults = watch(
     buttonResults,
     () => {
@@ -87,7 +87,7 @@ onMounted(() => {
       const bindingId = props.component.title
       let mostRecent = null
       let mostRecentTime = null
-      
+
       for (const trackingId in buttonResults) {
         const logEntry = buttonResults[trackingId]
         if (logEntry && logEntry.bindingId === bindingId && logEntry.executionFinished) {
@@ -98,7 +98,7 @@ onMounted(() => {
           }
         }
       }
-      
+
       if (mostRecent) {
         updateFromLogEntry(mostRecent)
       }
@@ -114,7 +114,9 @@ onBeforeUnmount(() => {
 })
 </script>
 
-<style scoped>
+<style>
+
+@layer components {
 .mre-container {
   display: grid;
   grid-column: span 2;
@@ -154,10 +156,11 @@ onBeforeUnmount(() => {
     border: 1px dashed #444;
     box-shadow: 0 0 .6em #444;
   }
-  
+
   .mre-link:hover .mre-output {
     border-color: #666;
   }
 }
-</style>
+}
 
+</style>

@@ -1,0 +1,25 @@
+#
+# Integration Test Config: entity HTML in display components (#804)
+#
+
+listenAddressSingleHTTPFrontend: 0.0.0.0:1337
+
+logLevel: "DEBUG"
+checkForUpdates: false
+
+entities:
+  - file: entities/html_display.yaml
+    name: html_display
+
+actions: []
+
+dashboards:
+  - title: Html Display Dashboard
+    contents:
+      - title: Compare result
+        type: fieldset
+        entity: html_display
+        contents:
+          - type: display
+            cssClass: test-html-display
+            title: '{{ html_display.content }}'

@@ -2,3 +2,5 @@
 recursive: true
 require:
   - mochaSetup.mjs
+ignore:
+  - 'tests/**/custom-webui/**'

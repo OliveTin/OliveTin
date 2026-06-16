@@ -32,17 +32,19 @@ const unicodeIcon = computed(() => {
 
 function navigateToDirectory() {
     const params = { title: props.component.title }
-    
+
     if (props.component.entityType && props.component.entityKey) {
         params.entityType = props.component.entityType
         params.entityKey = props.component.entityKey
     }
-    
+
     router.push({ name: 'Dashboard', params })
 }
 </script>
 
-<style scoped>
+<style>
+
+@layer components {
 .folder-container {
     display: grid;
 }
@@ -92,6 +94,7 @@ button .title {
         box-shadow: 0 0 6px #444;
         color: #fff;
     }
+}
 }
 
 </style>
