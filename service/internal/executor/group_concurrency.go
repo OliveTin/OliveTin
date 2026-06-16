@@ -61,10 +61,14 @@ func actionInGroup(action *config.Action, groupName string) bool {
 }
 
 func (e *Executor) countActiveInGroup(groupName string) int {
-	count := 0
-
 	e.logmutex.RLock()
 	defer e.logmutex.RUnlock()
+
+	return e.countActiveInGroupLocked(groupName)
+}
+
+func (e *Executor) countActiveInGroupLocked(groupName string) int {
+	count := 0
 
 	for _, logEntry := range e.logs {
 		if logEntryIsActiveInGroup(logEntry, groupName) {
@@ -129,12 +133,25 @@ func firstFullGroupName(e *Executor, req *ExecutionRequest) string {
 	return ""
 }
 
-func (e *Executor) queueRequest(req *ExecutionRequest, wg *sync.WaitGroup) {
-	groupName := firstFullGroupName(e, req)
+func firstFullGroupNameLocked(e *Executor, req *ExecutionRequest) string {
+	for _, limit := range actionGroupLimits(req) {
+		if e.countActiveInGroupLocked(limit.name) >= (limit.maxConcurrent + 1) {
+			return limit.name
+		}
+	}
 
-	req.logEntry.Queued = true
-	req.logEntry.QueuedForGroup = groupName
-	req.logEntry.Output = fmt.Sprintf("Queued waiting for action group %q", groupName)
+	return ""
+}
+
+func (e *Executor) queueRequest(req *ExecutionRequest, wg *sync.WaitGroup) {
+	var groupName string
+
+	req.mutateLogEntry(func(entry *InternalLogEntry) {
+		groupName = firstFullGroupNameLocked(e, req)
+		entry.Queued = true
+		entry.QueuedForGroup = groupName
+		entry.Output = fmt.Sprintf("Queued waiting for action group %q", groupName)
+	})
 
 	log.WithFields(log.Fields{
 		"actionTitle": req.logEntry.ActionTitle,
@@ -163,16 +180,16 @@ func (e *Executor) drainGroupQueue() {
 	e.groupQueue = e.groupQueue[1:]
 	e.groupQueueMu.Unlock()
 
+	next.req.mutateLogEntry(func(entry *InternalLogEntry) {
+		entry.Queued = false
+		entry.QueuedForGroup = ""
+	})
+
 	go e.runDequeuedExecution(next)
 }
 
 func (e *Executor) runDequeuedExecution(queued *queuedExecution) {
 	req := queued.req
-
-	e.logmutex.Lock()
-	req.logEntry.Queued = false
-	req.logEntry.QueuedForGroup = ""
-	e.logmutex.Unlock()
 
 	req.skipRequestRegistration = true
 

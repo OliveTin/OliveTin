@@ -297,6 +297,7 @@ function onExecutionStarted(logEntry) {
   }
 
   isDisabled.value = true
+  updateDom(null, title.value)
 }
 
 function onExecutionFinished(logEntry) {

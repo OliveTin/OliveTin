@@ -64,19 +64,19 @@ func TestGroupConcurrencyQueuesSecondAction(t *testing.T) {
 	})
 
 	require.Eventually(t, func() bool {
-		logEntry, ok := e.GetLog(tracking2)
-		return ok && logEntry.Queued
+		snapshot, ok := e.SnapshotLog(tracking2)
+		return ok && snapshot.Queued
 	}, time.Second, 10*time.Millisecond)
 
 	wg1.Wait()
 	wg2.Wait()
 
-	logEntry, ok := e.GetLog(tracking2)
+	snapshot, ok := e.SnapshotLog(tracking2)
 	require.True(t, ok)
-	assert.False(t, logEntry.Queued)
-	assert.False(t, logEntry.Blocked)
-	assert.Equal(t, int32(0), logEntry.ExitCode)
-	assert.Contains(t, logEntry.Output, "queued-run")
+	assert.False(t, snapshot.Queued)
+	assert.False(t, snapshot.Blocked)
+	assert.Equal(t, int32(0), snapshot.ExitCode)
+	assert.Contains(t, snapshot.Output, "queued-run")
 }
 
 func TestDifferentGroupsRunConcurrently(t *testing.T) {
@@ -101,13 +101,13 @@ func TestDifferentGroupsRunConcurrently(t *testing.T) {
 		},
 	)
 
-	wg1, _ := e.ExecRequest(&ExecutionRequest{
+	wg1, tracking1 := e.ExecRequest(&ExecutionRequest{
 		Binding:           e.FindBindingWithNoEntity(actionA),
 		Cfg:               cfg,
 		AuthenticatedUser: auth.UserFromSystem(cfg, "testuser"),
 	})
 
-	time.Sleep(50 * time.Millisecond)
+	waitUntilExecutionStarted(t, e, tracking1)
 
 	wg2, tracking2 := e.ExecRequest(&ExecutionRequest{
 		Binding:           e.FindBindingWithNoEntity(actionB),
@@ -116,16 +116,16 @@ func TestDifferentGroupsRunConcurrently(t *testing.T) {
 	})
 
 	require.Eventually(t, func() bool {
-		logEntry, ok := e.GetLog(tracking2)
-		return ok && logEntry.ExecutionFinished && !logEntry.Queued
+		snapshot, ok := e.SnapshotLog(tracking2)
+		return ok && snapshot.ExecutionFinished && !snapshot.Queued
 	}, 2*time.Second, 20*time.Millisecond)
 
 	wg1.Wait()
 	wg2.Wait()
 
-	logEntry, ok := e.GetLog(tracking2)
+	snapshot, ok := e.SnapshotLog(tracking2)
 	require.True(t, ok)
-	assert.Contains(t, logEntry.Output, "group-b")
+	assert.Contains(t, snapshot.Output, "group-b")
 }
 
 func TestPerActionConcurrencyStillBlocksWithoutQueue(t *testing.T) {
@@ -140,13 +140,13 @@ func TestPerActionConcurrencyStillBlocksWithoutQueue(t *testing.T) {
 	e, cfg := testGroupExecutor([]*config.Action{action}, nil)
 	binding := e.FindBindingWithNoEntity(action)
 
-	wg1, _ := e.ExecRequest(&ExecutionRequest{
+	wg1, tracking1 := e.ExecRequest(&ExecutionRequest{
 		Binding:           binding,
 		Cfg:               cfg,
 		AuthenticatedUser: auth.UserFromSystem(cfg, "testuser"),
 	})
 
-	time.Sleep(50 * time.Millisecond)
+	waitUntilExecutionStarted(t, e, tracking1)
 
 	wg2, tracking2 := e.ExecRequest(&ExecutionRequest{
 		Binding:           binding,
@@ -157,18 +157,18 @@ func TestPerActionConcurrencyStillBlocksWithoutQueue(t *testing.T) {
 	wg1.Wait()
 	wg2.Wait()
 
-	logEntry, ok := e.GetLog(tracking2)
+	snapshot, ok := e.SnapshotLog(tracking2)
 	require.True(t, ok)
-	assert.True(t, logEntry.Blocked)
-	assert.False(t, logEntry.Queued)
+	assert.True(t, snapshot.Blocked)
+	assert.False(t, snapshot.Queued)
 }
 
 func waitUntilExecutionStarted(t *testing.T, e *Executor, trackingID string) {
 	t.Helper()
 
 	require.Eventually(t, func() bool {
-		logEntry, ok := e.GetLog(trackingID)
-		return ok && logEntry.ExecutionStarted
+		snapshot, ok := e.SnapshotLog(trackingID)
+		return ok && snapshot.ExecutionStarted
 	}, 2*time.Second, 10*time.Millisecond)
 }
 
@@ -247,9 +247,9 @@ func TestStartActionAndWaitWaitsForQueuedExecution(t *testing.T) {
 
 	assertWaitGroupCompletes(t, wg2)
 
-	logEntry, ok := e.GetLog(tracking2)
+	snapshot, ok := e.SnapshotLog(tracking2)
 	require.True(t, ok)
-	assert.Contains(t, logEntry.Output, "waited")
+	assert.Contains(t, snapshot.Output, "waited")
 }
 
 func TestUnknownActionGroupReferenceWarnsAndSkipsLimit(t *testing.T) {
@@ -270,8 +270,8 @@ func TestUnknownActionGroupReferenceWarnsAndSkipsLimit(t *testing.T) {
 
 	wg.Wait()
 
-	logEntry, ok := e.GetLog(tracking)
+	snapshot, ok := e.SnapshotLog(tracking)
 	require.True(t, ok)
-	assert.False(t, logEntry.Queued)
-	assert.Equal(t, int32(0), logEntry.ExitCode)
+	assert.False(t, snapshot.Queued)
+	assert.Equal(t, int32(0), snapshot.ExitCode)
 }
