@@ -71,6 +71,7 @@ const rateLimitExpires = ref(0)
 const isRateLimited = ref(false)
 const rateLimitMessage = ref('')
 let rateLimitInterval = null
+let isComponentMounted = true
 
 // Animation classes
 const buttonClasses = ref([])
@@ -217,9 +218,12 @@ async function pollExecutionUntilDone (trackingId) {
   const pollTimeoutMs = 10 * 60 * 1000
   const deadline = Date.now() + pollTimeoutMs
 
-  while (Date.now() < deadline) {
+  while (Date.now() < deadline && isComponentMounted) {
     try {
       const result = await window.client.executionStatus({ executionTrackingId: trackingId })
+      if (!isComponentMounted) {
+        return
+      }
       if (result.logEntry) {
         applyExecutionLogEntry(result.logEntry)
         if (result.logEntry.executionFinished) {
@@ -228,6 +232,10 @@ async function pollExecutionUntilDone (trackingId) {
       }
     } catch (err) {
       console.error('Failed to poll execution status:', err)
+    }
+
+    if (!isComponentMounted) {
+      return
     }
 
     await new Promise(resolve => setTimeout(resolve, pollIntervalMs))
@@ -350,6 +358,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  isComponentMounted = false
   if (rateLimitInterval) {
 	clearInterval(rateLimitInterval)
 	rateLimitInterval = null

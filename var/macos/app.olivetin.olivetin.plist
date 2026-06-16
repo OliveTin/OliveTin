@@ -6,8 +6,8 @@
 
   As a per-user LaunchAgent (recommended, no root needed):
       cp app.olivetin.olivetin.plist ~/Library/LaunchAgents/
-      launchctl bootstrap   ~/Library/LaunchAgents/app.olivetin.olivetin.plist   # start now + at login
-      launchctl bootout ~/Library/LaunchAgents/app.olivetin.olivetin.plist   # stop + disable
+      launchctl load   ~/Library/LaunchAgents/app.olivetin.olivetin.plist   # start now + at login
+      launchctl unload ~/Library/LaunchAgents/app.olivetin.olivetin.plist   # stop + disable
 
   As a system-wide LaunchDaemon (starts at boot, before login; needs root):
       sudo cp app.olivetin.olivetin.plist /Library/LaunchDaemons/
@@ -27,7 +27,7 @@
     <array>
         <string>/usr/local/bin/OliveTin</string>
         <string>-configdir</string>
-        <string>/usr/local/etc/OliveTin</string>
+        <string>/Users/YOUR_USER/etc/OliveTin</string>
     </array>
 
     <!-- systemd's Restart=always -->
@@ -38,10 +38,11 @@
     <key>RunAtLoad</key>
     <true/>
 
-    <!-- Where stdout/stderr go; tail these for troubleshooting -->
+<!-- For LaunchAgent (per-user): use /Users/YOUR_USER/Library/Logs/olivetin.log
+     For LaunchDaemon (system-wide): use /usr/local/var/log/olivetin.log -->
     <key>StandardOutPath</key>
-    <string>/usr/local/var/log/olivetin.log</string>
+    <string>/Users/YOUR_USER/Library/Logs/olivetin.log</string>
     <key>StandardErrorPath</key>
-    <string>/usr/local/var/log/olivetin.log</string>
+    <string>/Users/YOUR_USER/Library/Logs/olivetin.log</string>
 </dict>
 </plist>

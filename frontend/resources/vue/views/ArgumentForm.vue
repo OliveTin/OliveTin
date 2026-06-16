@@ -58,7 +58,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, onMounted, onBeforeUnmount, onUnmounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { requestReconnectNow } from '../../../js/websocket.js'
 
@@ -76,6 +76,7 @@ const formErrors = ref({})
 const actionArguments = ref([])
 const popupOnStart = ref('')
 const formReady = ref(false)
+let isComponentMounted = true
 
 // Computed properties
 
@@ -145,8 +146,10 @@ async function setup() {
       }
     }
 
-    formReady.value = true
-    document.body.setAttribute('loaded-argument-form', props.bindingId)
+    if (isComponentMounted) {
+      formReady.value = true
+      document.body.setAttribute('loaded-argument-form', props.bindingId)
+    }
   } catch (err) {
     console.error('Failed to load argument form:', err)
   }
@@ -484,6 +487,10 @@ defineExpose({
 // Lifecycle
 onMounted(() => {
   setup()
+})
+
+onBeforeUnmount(() => {
+  isComponentMounted = false
 })
 
 onUnmounted(() => {

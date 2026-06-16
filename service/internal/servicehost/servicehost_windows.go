@@ -53,7 +53,10 @@ func (m *otWindowsService) Execute(args []string, r <-chan svc.ChangeRequest, st
 func setupLogging() {
 	logsDir := path.Join(GetConfigFilePath(), "logs")
 
-	os.MkdirAll(logsDir, 0755)
+	if err := os.MkdirAll(logsDir, 0755); err != nil {
+		log.Errorf("Failed to create logs directory %v: %v", logsDir, err)
+		return
+	}
 
 	timestamp := time.Now().Format("2006-01-02_15-04-05")
 
@@ -64,7 +67,7 @@ func setupLogging() {
 	f, err := os.Create(filename)
 
 	if err != nil {
-		log.Infof("Failed to open log file: %v", err)
+		log.Errorf("Failed to open log file: %v", err)
 	} else {
 		log.Infof("Switching to log file: %v", f.Name())
 		log.SetOutput(f)

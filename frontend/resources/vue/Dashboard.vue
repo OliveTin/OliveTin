@@ -83,6 +83,7 @@ const loadingTime = ref(0)
 const initError = ref(null)
 let loadingTimer = null
 let checkInitInterval = null
+let dashboardRequestId = 0
 
 const isDirectory = computed(() => {
     if (!dashboard.value || !window.initResponse) {
@@ -106,6 +107,7 @@ function goBack() {
 }
 
 async function getDashboard() {
+    const requestId = ++dashboardRequestId
     let title = props.title
 
     // If no specific title was provided or it's the placeholder 'default',
@@ -125,6 +127,10 @@ async function getDashboard() {
         }
 
         const ret = await window.client.getDashboard(request)
+
+        if (requestId !== dashboardRequestId) {
+            return
+        }
 
         if (!ret || !ret.dashboard) {
             throw new Error('No dashboard found')
@@ -146,6 +152,10 @@ async function getDashboard() {
         // Set attribute to indicate dashboard is loaded successfully
         document.body.setAttribute('loaded-dashboard', title || 'default')
     } catch (e) {
+        if (requestId !== dashboardRequestId) {
+            return
+        }
+
         // On error, provide a safe fallback state
         console.error('Failed to load dashboard', e)
         dashboard.value = { title: title || 'Default', contents: [] }

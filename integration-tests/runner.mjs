@@ -105,11 +105,29 @@ class OliveTinTestRunnerStartLocalProcess extends OliveTinTestRunner {
     if (this.ot.exitCode != null) {
       console.log('      OliveTin local process tried stop(), but it already exited with code', this.ot.exitCode)
     } else {
+      const stopTimeoutMs = 5000
       const closed = new Promise((resolve) => {
         this.ot.once('close', resolve)
       })
+
       this.ot.kill('SIGTERM')
-      await closed
+
+      const didStopGracefully = await Promise.race([
+        closed.then(() => true),
+        new Promise((resolve) => setTimeout(() => resolve(false), stopTimeoutMs))
+      ])
+
+      if (!didStopGracefully) {
+        console.log('      OliveTin local process did not exit after SIGTERM, sending SIGKILL')
+        if (this.ot.exitCode == null) {
+          this.ot.kill('SIGKILL')
+        }
+        await Promise.race([
+          closed,
+          new Promise((resolve) => setTimeout(resolve, stopTimeoutMs))
+        ])
+      }
+
       console.log('      OliveTin local process killed')
     }
 

@@ -5,7 +5,7 @@ import {
   getRootAndWait,
   getActionButton,
   takeScreenshotOnFailure,
-  waitForArgumentFormPage,
+  waitForArgumentFormReady,
   waitForLogsPage,
 } from '../../lib/elements.js'
 
@@ -29,7 +29,7 @@ describe('config: datetime', function () {
 
     await btn.click()
 
-    await waitForArgumentFormPage()
+    await waitForArgumentFormReady()
 
     // Find the datetime input field
     const datetimeInput = await webdriver.findElement(By.id('datetime'))
@@ -54,7 +54,7 @@ describe('config: datetime', function () {
 
     await btn.click()
 
-    await waitForArgumentFormPage()
+    await waitForArgumentFormReady()
 
     // Find the datetime input field
     const datetimeInput = await webdriver.findElement(By.id('datetime'))
