@@ -40,3 +40,10 @@ video::Ej6NM9rmZtk[youtube,width=100%]
 * **Good amount of unit tests and style checks** - helps potential contributors be consistent, and helps with maintainability.
 
 You can learn more about OliveTin in the link:https://www.olivetin.app[OliveTin Homepage].
+
+== Hint for AI agents
+
+The OliveTim documentation site supports the llms.txt and llms-full.txt files, available at: 
+
+* link:https://www.olivetin.app/llms.txt[llms.txt]
+* link:https://www.olivetin.app/llms-full.txt[llms-full.txt]
