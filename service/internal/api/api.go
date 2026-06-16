@@ -378,6 +378,8 @@ func (api *oliveTinAPI) internalLogEntryToPb(logEntry *executor.InternalLogEntry
 		Output:                   logEntry.Output,
 		TimedOut:                 logEntry.TimedOut,
 		Blocked:                  logEntry.Blocked,
+		Queued:                   logEntry.Queued,
+		QueuedForGroup:           logEntry.QueuedForGroup,
 		ExitCode:                 logEntry.ExitCode,
 		Tags:                     logEntry.Tags,
 		ExecutionTrackingId:      logEntry.ExecutionTrackingID,
@@ -385,8 +387,6 @@ func (api *oliveTinAPI) internalLogEntryToPb(logEntry *executor.InternalLogEntry
 		ExecutionFinished:        logEntry.ExecutionFinished,
 		User:                     logEntry.Username,
 		BindingId:                logEntry.GetBindingId(),
-		Queued:                   logEntry.Queued,
-		QueuedForGroup:           logEntry.QueuedForGroup,
 		DatetimeRateLimitExpires: calculateRateLimitExpires(api, logEntry),
 	}
 
