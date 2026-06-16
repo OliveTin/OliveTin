@@ -110,6 +110,24 @@ func TestValidateReservedActionArgumentNames(t *testing.T) {
 	assert.Contains(t, err.Error(), `action "Reserved arg" argument "ot_custom" uses reserved prefix "ot_"`)
 }
 
+func TestSanitizeActionGroupsDedupesGroupNames(t *testing.T) {
+	c := DefaultConfig()
+	c.ActionGroups = map[string]*ActionGroup{
+		"unity": {MaxConcurrent: 1},
+	}
+	c.Actions = append(c.Actions, &Action{
+		Title:  "Build",
+		Shell:  "true",
+		Groups: []string{"unity", "unity", ""},
+	})
+
+	c.Sanitize()
+
+	action := c.findAction("Build")
+	require.NotNil(t, action)
+	assert.Equal(t, []string{"unity"}, action.Groups)
+}
+
 func TestValidateReservedActionArgumentNamesAllowsNonReserved(t *testing.T) {
 	c := DefaultConfig()
 	c.Actions = append(c.Actions, &Action{

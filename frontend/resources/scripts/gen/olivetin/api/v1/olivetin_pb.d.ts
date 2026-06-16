@@ -673,6 +673,16 @@ export declare type LogEntry = Message<"olivetin.api.v1.LogEntry"> & {
    * @generated from field: string binding_id = 20;
    */
   bindingId: string;
+
+  /**
+   * @generated from field: bool queued = 21;
+   */
+  queued: boolean;
+
+  /**
+   * @generated from field: string queued_for_group = 22;
+   */
+  queuedForGroup: string;
 };
 
 /**

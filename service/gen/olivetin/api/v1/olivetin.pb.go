@@ -1305,6 +1305,8 @@ type LogEntry struct {
 	CanKill                  bool                   `protobuf:"varint,18,opt,name=can_kill,json=canKill,proto3" json:"can_kill,omitempty"`
 	DatetimeRateLimitExpires string                 `protobuf:"bytes,19,opt,name=datetime_rate_limit_expires,json=datetimeRateLimitExpires,proto3" json:"datetime_rate_limit_expires,omitempty"` // Datetime when rate limit expires (empty string if not rate limited), format: "2006-01-02 15:04:05"
 	BindingId                string                 `protobuf:"bytes,20,opt,name=binding_id,json=bindingId,proto3" json:"binding_id,omitempty"`                                                  // Binding ID for matching rate limits to action buttons
+	Queued                   bool                   `protobuf:"varint,21,opt,name=queued,proto3" json:"queued,omitempty"`
+	QueuedForGroup           string                 `protobuf:"bytes,22,opt,name=queued_for_group,json=queuedForGroup,proto3" json:"queued_for_group,omitempty"`
 	unknownFields            protoimpl.UnknownFields
 	sizeCache                protoimpl.SizeCache
 }
@@ -1461,6 +1463,20 @@ func (x *LogEntry) GetDatetimeRateLimitExpires() string {
 func (x *LogEntry) GetBindingId() string {
 	if x != nil {
 		return x.BindingId
+	}
+	return ""
+}
+
+func (x *LogEntry) GetQueued() bool {
+	if x != nil {
+		return x.Queued
+	}
+	return false
+}
+
+func (x *LogEntry) GetQueuedForGroup() string {
+	if x != nil {
+		return x.QueuedForGroup
 	}
 	return ""
 }
@@ -4183,7 +4199,7 @@ const file_olivetin_api_v1_olivetin_proto_rawDesc = "" +
 	"\fstart_offset\x18\x01 \x01(\x03R\vstartOffset\x12\x1f\n" +
 	"\vdate_filter\x18\x02 \x01(\tR\n" +
 	"dateFilter\x12\x1b\n" +
-	"\tpage_size\x18\x03 \x01(\x03R\bpageSize\"\x89\x05\n" +
+	"\tpage_size\x18\x03 \x01(\x03R\bpageSize\"\xcb\x05\n" +
 	"\bLogEntry\x12)\n" +
 	"\x10datetime_started\x18\x01 \x01(\tR\x0fdatetimeStarted\x12!\n" +
 	"\faction_title\x18\x02 \x01(\tR\vactionTitle\x12\x16\n" +
@@ -4206,7 +4222,9 @@ const file_olivetin_api_v1_olivetin_proto_rawDesc = "" +
 	"\bcan_kill\x18\x12 \x01(\bR\acanKill\x12=\n" +
 	"\x1bdatetime_rate_limit_expires\x18\x13 \x01(\tR\x18datetimeRateLimitExpires\x12\x1d\n" +
 	"\n" +
-	"binding_id\x18\x14 \x01(\tR\tbindingId\"\xca\x01\n" +
+	"binding_id\x18\x14 \x01(\tR\tbindingId\x12\x16\n" +
+	"\x06queued\x18\x15 \x01(\bR\x06queued\x12(\n" +
+	"\x10queued_for_group\x18\x16 \x01(\tR\x0equeuedForGroup\"\xca\x01\n" +
 	"\x0fGetLogsResponse\x12-\n" +
 	"\x04logs\x18\x01 \x03(\v2\x19.olivetin.api.v1.LogEntryR\x04logs\x12'\n" +
 	"\x0fcount_remaining\x18\x02 \x01(\x03R\x0ecountRemaining\x12\x1b\n" +

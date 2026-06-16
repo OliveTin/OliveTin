@@ -157,6 +157,8 @@ message LogEntry {
 	bool can_kill = 18;
 	string datetime_rate_limit_expires = 19; // Datetime when rate limit expires (empty string if not rate limited), format: "2006-01-02 15:04:05"
 	string binding_id = 20; // Binding ID for matching rate limits to action buttons
+	bool queued = 21;
+	string queued_for_group = 22;
 }
 
 message GetLogsResponse {
