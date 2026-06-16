@@ -587,8 +587,6 @@ func (e *Executor) initializeExecRequest(req *ExecutionRequest) {
 		ActionIcon:          "&#x1f4a9;",
 		Username:            req.AuthenticatedUser.Username,
 	}
-
-	req.logEntry.ExecutionTrackingID = req.TrackingID
 }
 
 func bindingIDForTrace(req *ExecutionRequest) string {
@@ -665,8 +663,8 @@ func getConcurrentCount(req *ExecutionRequest) int {
 	req.executor.logmutex.RLock()
 	logs := req.executor.LogsByBindingId[req.Binding.ID]
 
-	for _, log := range logs {
-		if !log.ExecutionFinished && !log.Queued {
+	for _, logEntry := range logs {
+		if !logEntry.ExecutionFinished && !logEntry.Queued {
 			concurrentCount += 1
 		}
 	}

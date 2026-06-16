@@ -144,6 +144,8 @@ func firstFullGroupNameLocked(e *Executor, req *ExecutionRequest) string {
 }
 
 func (e *Executor) queueRequest(req *ExecutionRequest, wg *sync.WaitGroup) {
+	e.groupQueueMu.Lock()
+
 	var groupName string
 
 	req.mutateLogEntry(func(entry *InternalLogEntry) {
@@ -153,14 +155,15 @@ func (e *Executor) queueRequest(req *ExecutionRequest, wg *sync.WaitGroup) {
 		entry.Output = fmt.Sprintf("Queued waiting for action group %q", groupName)
 	})
 
+	e.groupQueue = append(e.groupQueue, &queuedExecution{req: req, wg: wg})
+	e.groupQueueMu.Unlock()
+
+	e.drainGroupQueue()
+
 	log.WithFields(log.Fields{
 		"actionTitle": req.logEntry.ActionTitle,
 		"groupName":   groupName,
 	}).Infof("Action queued due to action group concurrency limit")
-
-	e.groupQueueMu.Lock()
-	e.groupQueue = append(e.groupQueue, &queuedExecution{req: req, wg: wg})
-	e.groupQueueMu.Unlock()
 }
 
 func (e *Executor) drainGroupQueue() {
@@ -178,12 +181,13 @@ func (e *Executor) drainGroupQueue() {
 	}
 
 	e.groupQueue = e.groupQueue[1:]
-	e.groupQueueMu.Unlock()
 
 	next.req.mutateLogEntry(func(entry *InternalLogEntry) {
 		entry.Queued = false
 		entry.QueuedForGroup = ""
 	})
+
+	e.groupQueueMu.Unlock()
 
 	go e.runDequeuedExecution(next)
 }
