@@ -45,5 +45,5 @@ You can learn more about OliveTin in the link:https://www.olivetin.app[OliveTin 
 
 The OliveTin documentation site supports the llm.txt and llm-full.txt files, available at:
 
-* link:https://www.olivetin.app/llm.txt[llm.txt]
-* link:https://www.olivetin.app/llm-full.txt[llm-full.txt]
+* link:https://docs.olivetin.app/llm.txt[llm.txt]
+* link:https://docs.olivetin.app/llm-full.txt[llm-full.txt]
