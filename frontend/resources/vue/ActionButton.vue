@@ -279,9 +279,16 @@ async function startAction(actionArgs) {
 function onLogEntryChanged(logEntry) {
   if (logEntry.executionFinished) {
 	onExecutionFinished(logEntry)
+  } else if (logEntry.queued && !logEntry.executionStarted) {
+	onExecutionQueued(logEntry)
   } else {
 	onExecutionStarted(logEntry)
   }
+}
+
+function onExecutionQueued(_logEntry) {
+  isDisabled.value = true
+  updateDom('action-queued', '[Queued]')
 }
 
 function onExecutionStarted(logEntry) {
@@ -438,6 +445,12 @@ defineExpose({
 		background: #f8d7da !important;
 		border-color: #f5c6cb;
 		color: #721c24;
+	}
+
+	.action-button button.action-queued {
+		background: #fff3cd !important;
+		border-color: #ffeaa7;
+		color: #856404;
 	}
 
 	.action-button button.action-nonzero-exit {

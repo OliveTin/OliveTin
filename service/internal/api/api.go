@@ -378,6 +378,8 @@ func (api *oliveTinAPI) internalLogEntryToPb(logEntry *executor.InternalLogEntry
 		Output:                   logEntry.Output,
 		TimedOut:                 logEntry.TimedOut,
 		Blocked:                  logEntry.Blocked,
+		Queued:                   logEntry.Queued,
+		QueuedForGroup:           logEntry.QueuedForGroup,
 		ExitCode:                 logEntry.ExitCode,
 		Tags:                     logEntry.Tags,
 		ExecutionTrackingId:      logEntry.ExecutionTrackingID,

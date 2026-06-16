@@ -71,6 +71,9 @@ type Executor struct {
 	listeners []listener
 
 	chainOfCommand []executorStepFunc
+
+	groupQueue   []*queuedExecution
+	groupQueueMu sync.Mutex
 }
 
 // ExecutionRequest is a request to execute an action. It's passed to an
@@ -84,11 +87,12 @@ type ExecutionRequest struct {
 	AuthenticatedUser *authpublic.AuthenticatedUser
 	TriggerDepth      int
 
-	logEntry           *InternalLogEntry
-	finalParsedCommand string
-	execArgs           []string
-	useDirectExec      bool
-	executor           *Executor
+	logEntry                *InternalLogEntry
+	finalParsedCommand      string
+	execArgs                []string
+	useDirectExec           bool
+	executor                *Executor
+	skipRequestRegistration bool
 }
 
 // InternalLogEntry objects are created by an Executor, and represent the final
@@ -101,6 +105,8 @@ type InternalLogEntry struct {
 	Output              string
 	TimedOut            bool
 	Blocked             bool
+	Queued              bool
+	QueuedForGroup      string
 	ExitCode            int32
 	Tags                []string
 	ExecutionStarted    bool
@@ -496,6 +502,26 @@ func (e *Executor) SetLog(trackingID string, entry *InternalLogEntry) {
 
 // ExecRequest processes an ExecutionRequest
 func (e *Executor) ExecRequest(req *ExecutionRequest) (*sync.WaitGroup, string) {
+	e.initializeExecRequest(req)
+
+	log.Tracef("executor.ExecRequest(): %v", req)
+
+	e.SetLog(req.TrackingID, req.logEntry)
+
+	wg := new(sync.WaitGroup)
+	wg.Add(1)
+
+	go func() {
+		queued := e.execChain(req, wg)
+		if !queued {
+			wg.Done()
+		}
+	}()
+
+	return wg, req.TrackingID
+}
+
+func (e *Executor) initializeExecRequest(req *ExecutionRequest) {
 	if req.AuthenticatedUser == nil {
 		req.AuthenticatedUser = auth.UserGuest(req.Cfg)
 	}
@@ -519,41 +545,54 @@ func (e *Executor) ExecRequest(req *ExecutionRequest) (*sync.WaitGroup, string) 
 		req.TrackingID = uuid.NewString()
 	}
 
-	// Update the log entry with the final tracking ID
 	req.logEntry.ExecutionTrackingID = req.TrackingID
-
-	log.Tracef("executor.ExecRequest(): %v", req)
-
-	e.SetLog(req.TrackingID, req.logEntry)
-
-	wg := new(sync.WaitGroup)
-	wg.Add(1)
-
-	go func() {
-		e.execChain(req)
-		defer wg.Done()
-	}()
-
-	return wg, req.TrackingID
 }
 
-func (e *Executor) execChain(req *ExecutionRequest) {
-	for _, step := range e.chainOfCommand {
+func (e *Executor) execChain(req *ExecutionRequest, wg *sync.WaitGroup) bool {
+	if !req.skipRequestRegistration {
+		finished, queued := e.registerOrQueueRequest(req, wg)
+		if finished || queued {
+			return queued
+		}
+	}
+
+	e.runExecutionSteps(req)
+	e.finishExecChain(req)
+
+	return false
+}
+
+func (e *Executor) registerOrQueueRequest(req *ExecutionRequest, wg *sync.WaitGroup) (finished bool, queued bool) {
+	if !stepRequestAction(req) {
+		e.finishExecChain(req)
+		return true, false
+	}
+
+	if !actionNeedsGroupLimit(req) || e.groupsHaveCapacityForActive(req) {
+		return false, false
+	}
+
+	e.queueRequest(req, wg)
+
+	return false, true
+}
+
+func (e *Executor) runExecutionSteps(req *ExecutionRequest) {
+	for _, step := range e.chainOfCommand[1:] {
 		if !step(req) {
 			break
 		}
 	}
+}
 
-	// Ensure DatetimeFinished is set even if execution was blocked early
+func (e *Executor) finishExecChain(req *ExecutionRequest) {
 	if req.logEntry.DatetimeFinished.IsZero() {
 		req.logEntry.DatetimeFinished = time.Now()
 	}
 
 	req.logEntry.ExecutionFinished = true
-
-	// This isn't a step, because we want to notify all listeners, irrespective
-	// of how many steps were actually executed.
 	notifyListenersFinished(req)
+	e.drainGroupQueue()
 }
 
 func getConcurrentCount(req *ExecutionRequest) int {

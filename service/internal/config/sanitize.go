@@ -25,6 +25,8 @@ func (cfg *Config) Sanitize() {
 		cfg.Actions[idx].sanitize(cfg)
 	}
 
+	cfg.sanitizeActionGroupReferences()
+
 	cfg.sanitizeDashboardsForInlineActions()
 
 	if err := cfg.validateReservedActionArgumentNames(); err != nil {
@@ -181,8 +183,48 @@ func (action *Action) sanitize(cfg *Config) {
 		action.MaxConcurrent = 1
 	}
 
+	action.Groups = dedupeStrings(action.Groups)
+
 	for idx := range action.Arguments {
 		action.Arguments[idx].sanitize()
+	}
+}
+
+func dedupeStrings(values []string) []string {
+	seen := make(map[string]struct{}, len(values))
+	out := make([]string, 0, len(values))
+
+	for _, value := range values {
+		out = appendUniqueString(out, seen, value)
+	}
+
+	return out
+}
+
+func appendUniqueString(out []string, seen map[string]struct{}, value string) []string {
+	if value == "" {
+		return out
+	}
+
+	if _, found := seen[value]; found {
+		return out
+	}
+
+	seen[value] = struct{}{}
+
+	return append(out, value)
+}
+
+func (cfg *Config) sanitizeActionGroupReferences() {
+	for _, action := range cfg.Actions {
+		for _, groupName := range action.Groups {
+			if _, found := cfg.ActionGroups[groupName]; !found {
+				log.WithFields(log.Fields{
+					"actionTitle": action.Title,
+					"groupName":   groupName,
+				}).Warn("Action references unknown action group")
+			}
+		}
 	}
 }
 

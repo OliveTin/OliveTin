@@ -194,11 +194,27 @@ async function handleConfigChangedEvent (j) {
   window.dispatchEvent(j)
 }
 
+const eventCaseToTypeName = {
+  entityChanged: 'EventEntityChanged',
+  configChanged: 'EventConfigChanged',
+  executionFinished: 'EventExecutionFinished',
+  executionStarted: 'EventExecutionStarted',
+  outputChunk: 'EventOutputChunk',
+  heartbeat: 'EventHeartbeat'
+}
+
 function handleEvent (msg) {
-  const typeName = msg.event.value.$typeName.replace('olivetin.api.v1.', '')
+  const eventCase = msg?.event?.case
+  const eventValue = msg?.event?.value
+  const typeName = eventCaseToTypeName[eventCase]
+
+  if (!typeName || !eventValue) {
+    console.warn('Skipping websocket event with no payload:', msg)
+    return
+  }
 
   const j = new Event(typeName)
-  j.payload = msg.event.value
+  j.payload = eventValue
 
   switch (typeName) {
     case 'EventConfigChanged':
