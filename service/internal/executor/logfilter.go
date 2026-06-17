@@ -31,13 +31,25 @@ func applyLogFilter(entries []*InternalLogEntry, program *vm.Program) ([]*Intern
 func filterEntries(entries []*InternalLogEntry, program *vm.Program) ([]*InternalLogEntry, error) {
 	filtered := make([]*InternalLogEntry, 0, len(entries))
 	for _, entry := range entries {
-		matched, err := entryMatchesFilter(entry, program)
+		var err error
+		filtered, err = appendMatchingEntry(filtered, entry, program)
 		if err != nil {
 			return nil, err
 		}
-		if matched {
-			filtered = append(filtered, entry)
-		}
+	}
+	return filtered, nil
+}
+
+func appendMatchingEntry(filtered []*InternalLogEntry, entry *InternalLogEntry, program *vm.Program) ([]*InternalLogEntry, error) {
+	if entry == nil {
+		return nil, fmt.Errorf("log entry is nil")
+	}
+	matched, err := entryMatchesFilter(entry, program)
+	if err != nil {
+		return nil, err
+	}
+	if matched {
+		filtered = append(filtered, entry)
 	}
 	return filtered, nil
 }

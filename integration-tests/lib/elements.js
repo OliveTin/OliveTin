@@ -48,14 +48,22 @@ export function takeScreenshot (webdriver, title) {
   })
 }
 
-export async function waitForDashboardLoaded(timeoutMs = DEFAULT_UI_WAIT_MS) {
+export async function waitForDashboardLoaded(timeoutMs = DEFAULT_UI_WAIT_MS, expectedTitle = null) {
   await webdriver.wait(new Condition('wait for loaded-dashboard', async function () {
     const body = await webdriver.findElement(By.tagName('body'))
     const attr = await body.getAttribute('loaded-dashboard')
 
     console.log('loaded-dashboard: ', attr)
 
-    return attr != null && attr !== ''
+    if (attr == null || attr === '') {
+      return false
+    }
+
+    if (expectedTitle != null) {
+      return attr === expectedTitle
+    }
+
+    return true
   }), timeoutMs)
 }
 

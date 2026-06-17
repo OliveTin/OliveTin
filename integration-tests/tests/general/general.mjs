@@ -23,7 +23,7 @@ describe('config: general', function () {
   });
 
   it('Page title', async function () {
-    await webdriver.get(runner.baseUrl())
+    await getRootAndWait()
 
     const title = await webdriver.getTitle()
     expect(title).to.be.equal("Actions - OliveTin")

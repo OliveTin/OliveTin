@@ -115,7 +115,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ConnectError, Code } from '@connectrpc/connect'
 import Pagination from 'picocrank/vue/components/Pagination.vue'
@@ -215,8 +215,6 @@ function scheduleFetchLogs() {
 
 function clearSearch() {
   searchText.value = ''
-  currentPage.value = 1
-  fetchLogs()
 }
 
 function clearDateFilter() {
@@ -258,6 +256,13 @@ function handlePageSizeChange(newPageSize) {
 
 onMounted(() => {
   updateDateFromRoute()
+})
+
+onUnmounted(() => {
+  if (fetchTimer) {
+    clearTimeout(fetchTimer)
+    fetchTimer = null
+  }
 })
 </script>
 
