@@ -52,8 +52,68 @@ func TestSanitizePopupOnStartHistory(t *testing.T) {
 
 	a := c.findAction("With history")
 	if assert.NotNil(t, a) {
-		assert.Equal(t, "history", a.PopupOnStart, "history must be preserved, not replaced by defaultPopupOnStart")
+		assert.Equal(t, "history", a.OnClick, "history must be preserved on onclick")
+		assert.Equal(t, "history", a.PopupOnStart, "legacy popupOnStart must mirror onclick")
 	}
+}
+
+func TestSanitizeMigratesPopupOnStartToOnClick(t *testing.T) {
+	c := DefaultConfig()
+	c.Actions = append(c.Actions, &Action{
+		Title:        "Legacy popup",
+		PopupOnStart: "execution-dialog",
+		Shell:        "true",
+	})
+	c.Sanitize()
+
+	a := c.findAction("Legacy popup")
+	require.NotNil(t, a)
+	assert.Equal(t, "execution-dialog", a.OnClick)
+	assert.Equal(t, "execution-dialog", a.PopupOnStart)
+}
+
+func TestSanitizeOnClickPreferredOverPopupOnStart(t *testing.T) {
+	c := DefaultConfig()
+	c.Actions = append(c.Actions, &Action{
+		Title:        "Preferred onclick",
+		OnClick:      "history",
+		PopupOnStart: "execution-dialog",
+		Shell:        "true",
+	})
+	c.Sanitize()
+
+	a := c.findAction("Preferred onclick")
+	require.NotNil(t, a)
+	assert.Equal(t, "history", a.OnClick)
+	assert.Equal(t, "history", a.PopupOnStart)
+}
+
+func TestSanitizeMigratesDefaultPopupOnStartToDefaultOnClick(t *testing.T) {
+	c := DefaultConfig()
+	c.DefaultPopupOnStart = "execution-dialog"
+	c.DefaultOnClick = ""
+	c.Sanitize()
+
+	assert.Equal(t, "execution-dialog", c.DefaultOnClick)
+	assert.Equal(t, "execution-dialog", c.DefaultPopupOnStart)
+}
+
+func TestSanitizeMigratesDefaultPopupOnStartWhenDefaultOnClickUnchanged(t *testing.T) {
+	c := DefaultConfig()
+	c.DefaultPopupOnStart = "execution-dialog"
+	c.Actions = append(c.Actions, &Action{
+		Title: "Uses default onclick",
+		Shell: "true",
+	})
+	c.Sanitize()
+
+	assert.Equal(t, "execution-dialog", c.DefaultOnClick)
+	assert.Equal(t, "execution-dialog", c.DefaultPopupOnStart)
+
+	a := c.findAction("Uses default onclick")
+	require.NotNil(t, a)
+	assert.Equal(t, "execution-dialog", a.OnClick)
+	assert.Equal(t, "execution-dialog", a.PopupOnStart)
 }
 
 func TestSanitizeConfigInlineDashboardActions(t *testing.T) {

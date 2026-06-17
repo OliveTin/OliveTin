@@ -1,10 +1,11 @@
-[#popup-on-start]
-= Popup on Start (Execution Feedback)
+[#onclick]
+= On Click (Execution Feedback)
 
-OliveTin now has several options to control "execution feedback" when actions are started. This can be controlled on
-a per-action basis, using the `popupOnStart` configuration option.
+OliveTin has several options to control what happens when an action button is clicked and the execution starts. This can be controlled on a per-action basis using the `onclick` configuration option.
 
-You can also set the default for OliveTin using the `defaultPopupOnStart` configuration option.
+You can also set the default for OliveTin using the `defaultOnClick` configuration option.
+
+NOTE: The older names `popupOnStart` and `defaultPopupOnStart` do exactly the same thing. OliveTin copies legacy values into `onclick` / `defaultOnClick` during config load. New configurations should use `onclick` and `defaultOnClick`.
 
 == Big Flashy Buttons (default)
 
@@ -13,7 +14,7 @@ You can also set the default for OliveTin using the `defaultPopupOnStart` config
 ----
 actions:
   - title: Ping the Internet
-    popupOnStart: default
+    onclick: default
 ----
 
 This will also be the option that is used if no other values match.
@@ -29,7 +30,7 @@ This can be useful for just displaying the output of a command, without too many
 ----
 actions:
   - title: Check disk space
-    popupOnStart: execution-dialog-stdout-only
+    onclick: execution-dialog-stdout-only
 ----
 
 [NOTE]
@@ -39,22 +40,22 @@ image::../popupOutputOnly.png[]
 
 == Execution Dialog
 
-The `execution-dialog` option for `popupOnStart` is simialr to the above `execution-dialog-stdout-only`, but it includes the start time, end time, exit code and the duration of time it took for the command to execute.
+The `execution-dialog` option is simialr to the above `execution-dialog-stdout-only`, but it includes the start time, end time, exit code and the duration of time it took for the command to execute.
 
 [source,yaml]
 .`config.yaml`
 ----
 actions:
   - title: Check dmesg logs
-    popupOnStart: execution-dialog
+    onclick: execution-dialog
 ----
 
-.Example of `popupOnStart: execution-dialog`
+.Example of `onclick: execution-dialog`
 image::../executionDialog.png[]
 
 == Execution Buttons
 
-This mode of `popupOnStart` will create a new button for each individual execution. This can be useful for actions that are executed again and again.
+This mode will create a new button for each individual execution. This can be useful for actions that are executed again and again.
 
 The text of the button (eg, "0s" in the screenshot below), is the time it took to execute the action in seconds.
 
@@ -63,7 +64,7 @@ The text of the button (eg, "0s" in the screenshot below), is the time it took t
 ----
 actions:
   - title: date
-    popupOnStart: execution-button
+    onclick: execution-button
 ----
 
 image::../executionButtons.png[]
@@ -77,7 +78,5 @@ The `history` option opens the action details page for that binding when the exe
 ----
 actions:
   - title: Long-running job
-    popupOnStart: history
+    onclick: history
 ----
-
-

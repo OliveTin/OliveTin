@@ -87,6 +87,7 @@ type ExecutionRequest struct {
 	Cfg               *config.Config
 	AuthenticatedUser *authpublic.AuthenticatedUser
 	TriggerDepth      int
+	Justification     string
 
 	logEntry                *InternalLogEntry
 	finalParsedCommand      string
@@ -166,8 +167,9 @@ type InternalLogEntry struct {
 		that logs are lightweight (so we don't need to have an action associated to
 		logs, etc. Therefore, we duplicate those values here.
 	*/
-	ActionTitle string
-	ActionIcon  string
+	ActionTitle   string
+	ActionIcon    string
+	Justification string
 }
 
 // .Binding can be nil, so we need to handle that.
@@ -280,7 +282,7 @@ func (e *Executor) GetLogTrackingIds(startOffset int64, pageCount int64) ([]*Int
 	trackingIds := make([]*InternalLogEntry, 0, pageCount)
 
 	if totalLogCount > 0 {
-		for i := endIndex; i <= startIndex; i++ {
+		for i := startIndex; i >= endIndex; i-- {
 			trackingIds = append(trackingIds, e.logs[e.logsTrackingIdsByDate[i]])
 		}
 	}
@@ -376,7 +378,7 @@ func paginateFilteredLogs(filtered []*InternalLogEntry, startOffset int64, pageC
 	endIndex := max(0, (startIndex-pageCount)+1)
 
 	out := make([]*InternalLogEntry, 0, pageCount)
-	for i := endIndex; i <= startIndex && i < int64(len(filtered)); i++ {
+	for i := startIndex; i >= endIndex && i < int64(len(filtered)); i-- {
 		out = append(out, filtered[i])
 	}
 
@@ -996,6 +998,7 @@ func stepRequestActionPopulateLogEntry(req *ExecutionRequest) {
 		entry.ActionTitle = tpl.ParseTemplateOfActionBeforeExec(req.Binding.Action.Title, req.Binding.Entity)
 		entry.ActionIcon = req.Binding.Action.Icon
 		entry.Tags = req.Tags
+		entry.Justification = ResolveJustification(req)
 		if req.Binding.Entity != nil {
 			entry.EntityPrefix = req.Binding.Entity.UniqueKey
 		}
@@ -1148,9 +1151,18 @@ func prepareCommand(cmd *exec.Cmd, streamer *OutputStreamer, req *ExecutionReque
 	cmd.Stdout = streamer
 	cmd.Stderr = streamer
 	cmd.Env = buildEnv(req.Arguments)
+
+	started := false
 	req.mutateLogEntry(func(entry *InternalLogEntry) {
+		if entry.ExecutionStarted {
+			return
+		}
 		entry.ExecutionStarted = true
+		started = true
 	})
+	if started {
+		notifyListenersStarted(req)
+	}
 }
 
 func stepExecAfter(req *ExecutionRequest) bool {
@@ -1284,6 +1296,7 @@ func triggerLoop(req *ExecutionRequest) {
 			Arguments:         req.Arguments,
 			Cfg:               req.Cfg,
 			TriggerDepth:      req.TriggerDepth + 1,
+			Justification:     fmt.Sprintf("Triggered by action: %s", req.logEntry.ActionTitle),
 		}
 
 		req.executor.ExecRequest(trigger)

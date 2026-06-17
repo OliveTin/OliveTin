@@ -48,7 +48,7 @@
 ** xref:action_execution/aftercompletion.adoc[Execute after completion]
 ** xref:action_execution/triggers.adoc[Triggers]
 * xref:action_customization/intro.adoc[Action Customization]
-** xref:action_customization/popuponstart.adoc[Popup on start]
+** xref:action_customization/popuponstart.adoc[On click]
 ** xref:action_customization/icons.adoc[Icons]
 ** xref:action_customization/timeouts.adoc[Timeouts]
 ** xref:action_customization/users.adoc[Users]

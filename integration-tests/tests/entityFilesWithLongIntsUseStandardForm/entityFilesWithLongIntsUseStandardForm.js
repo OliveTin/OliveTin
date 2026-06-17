@@ -40,7 +40,7 @@ describe('config: entityFilesWithLongIntsUseStandardForm', function () {
     await waitForLogsPage()
     await waitForExecutionComplete()
 
-    const statusElement = await webdriver.findElement(By.id('execution-dialog-status'))
+    const statusElement = await webdriver.findElement(By.css('.execution-dialog-status'))
     const statusText = await statusElement.getText()
 
     // The status should indicate success (not "Executing..." or "Failed")

@@ -42,7 +42,7 @@
       </div>
 
       <div v-show="logs.length > 0">
-        <table class="logs-table">
+        <table class="logs-table row-hover">
           <thead>
             <tr>
               <th>
@@ -70,7 +70,7 @@
               <td>
                 <ActionIconGlyph class="icon" :glyph="log.actionIcon" />
                 <router-link :to="`/logs/${log.executionTrackingId}`">
-                  {{ log.actionTitle }}
+                  <LogActionTitle :action-title="log.actionTitle" :justification="log.justification" />
                 </router-link>
               </td>
               <td class="tags">
@@ -123,6 +123,8 @@ import Section from 'picocrank/vue/components/Section.vue'
 import { useI18n } from 'vue-i18n'
 import ActionStatusDisplay from '../components/ActionStatusDisplay.vue'
 import ActionIconGlyph from '../components/ActionIconGlyph.vue'
+import LogActionTitle from '../components/LogActionTitle.vue'
+import { getExecutionLogEntry, updateLogEntryInList } from '../utils/executionLogEvents.js'
 
 const route = useRoute()
 const router = useRouter()
@@ -254,8 +256,30 @@ function handlePageSizeChange(newPageSize) {
   fetchLogs()
 }
 
+function onExecutionEvent(evt) {
+  const logEntry = getExecutionLogEntry(evt)
+  if (!logEntry) {
+    return
+  }
+
+  if (!updateLogEntryInList(logs.value, logEntry)) {
+    fetchLogs()
+  }
+}
+
 onMounted(() => {
   updateDateFromRoute()
+  window.addEventListener('EventExecutionStarted', onExecutionEvent)
+  window.addEventListener('EventExecutionFinished', onExecutionEvent)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('EventExecutionStarted', onExecutionEvent)
+  window.removeEventListener('EventExecutionFinished', onExecutionEvent)
+  if (fetchTimer) {
+    clearTimeout(fetchTimer)
+    fetchTimer = null
+  }
 })
 
 onUnmounted(() => {

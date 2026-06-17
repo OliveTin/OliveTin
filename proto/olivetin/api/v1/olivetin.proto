@@ -20,6 +20,9 @@ message Action {
 	repeated string exec_on_file_changed_in_dir = 13;
 	string exec_on_calendar_file = 14;
 	repeated ActionWebhookExecHint exec_on_webhooks = 15;
+	bool justification = 16;
+	bool has_running_instance = 17;
+	bool has_queued_instance = 18;
 }
 
 message ActionWebhookExecHint {
@@ -95,6 +98,7 @@ message StartActionRequest {
 	repeated StartActionArgument arguments = 2;
 
 	string unique_tracking_id = 3;
+	string justification = 4;
 }
 
 message StartActionArgument {
@@ -110,6 +114,8 @@ message StartActionAndWaitRequest {
 	string action_id = 1;
 
 	repeated StartActionArgument arguments = 2;
+
+	string justification = 3;
 }
 
 message StartActionAndWaitResponse {
@@ -160,6 +166,7 @@ message LogEntry {
 	string binding_id = 20; // Binding ID for matching rate limits to action buttons
 	bool queued = 21;
 	string queued_for_group = 22;
+	string justification = 23;
 }
 
 message GetLogsResponse {

@@ -22,6 +22,27 @@ actionGroups:
 #
 # Docs: https://docs.olivetin.app/action_execution/create_your_first.html
 actions:
+  # Lots of people use OliveTin to build web interfaces for their electronics
+  # projects. It's best to install OliveTin as a native package (eg, .deb), and
+  # then you can use either a python script or the `gpio` command.
+  - title: Toggle GPIO light
+    shell: gpioset gpiochip1 9=1 || true # The "|| true" is to ignore errors the demo environment doesn't have GPIO access.
+    icon: light
+
+  # Lots of people also use OliveTin to monitor their servers, like checking
+  # disk space, or checking logs. `onclick: execution-dialog` shows output.
+  - title: Check disk space
+    icon: disk
+    shell: df -h /
+    onclick: execution-dialog
+
+  # This uses `onclick: execution-dialog` to show a dialog with more
+  # information about the command that was run.
+  - title: Check shell history
+    shell: cat ~/.bash_history
+    icon: logs
+    onclick: execution-dialog
+
   # Every action can still be run on demand from the web UI or API. The keys
   # below are optional *additional* triggers (see each action and
   # https://docs.olivetin.app/action_execution/ ).
@@ -34,47 +55,19 @@ actions:
   - title: Ping the Internet
     shell: ping -c 3 1.1.1.1
     icon: ping
-    popupOnStart: execution-dialog-stdout-only
+    onclick: execution-dialog
     # https://docs.olivetin.app/action_execution/onstartup.html
     execOnStartup: true
 
-  # This uses `popupOnStart: execution-dialog-stdout-only` to simply show just
-  # the command output.
-  - title: Check disk space
-    icon: disk
-    shell: df -h /media
-    popupOnStart: execution-dialog-stdout-only
-    # https://docs.olivetin.app/action_execution/onfilechanged.html
-    # Create the directory first, e.g. mkdir -p /tmp/olivetin-demo-file-changed
-    execOnFileChangedInDir:
-      - /tmp/olivetin-demo-file-changed
-
-  # This uses `popupOnStart: execution-dialog` to show a dialog with more
-  # information about the command that was run.
-  - title: check dmesg logs
-    shell: dmesg | tail
-    icon: logs
-    popupOnStart: execution-dialog
-    # https://docs.olivetin.app/action_execution/oncron.html — second example;
-    # the "date" action uses @hourly elsewhere in this file.
-    execOnCron:
-      - "0 3 * * 0"
-
-  # This uses `popupOnStart: execution-button` to display a mini button that
-  # links to the logs.
-  #
   # You can also rate-limit actions too.
-  - title: date
-    shell: date
-    id: date
-    timeout: 6
-    icon: clock
-    popupOnStart: execution-button
+  - title: Sync Disks
+    shell: sync
+    id: syncdisks
+    icon: disk
+    onclick: execution-button
     maxRate:
       - limit: 3
         duration: 1m
-    execOnCron:
-      - "@hourly"
 
   # You are not limited to operating system commands, and of course you can run
   # your own scripts. The backup-jobs action group limits how many backup-related
@@ -86,7 +79,7 @@ actions:
     groups: [ backup-jobs ]
     timeout: 10
     icon: backup
-    popupOnStart: execution-dialog
+    onclick: execution-dialog
     # https://docs.olivetin.app/action_execution/oncalendar.html
     execOnCalendarFile: examples/demo-olivetin-calendar.yaml
 
@@ -95,7 +88,7 @@ actions:
     groups: [ backup-jobs ]
     timeout: 30
     icon: backup
-    popupOnStart: execution-dialog
+    onclick: execution-dialog
 
   # When you want to prompt users for input, that is when you should use
   # `arguments` - this presents a popup dialog and asks for argument values.
@@ -106,7 +99,7 @@ actions:
     shell: ping {{ host }} -c {{ count }}
     icon: ping
     timeout: 100
-    popupOnStart: execution-dialog-stdout-only
+    onclick: history
     # https://docs.olivetin.app/action_execution/onwebhook.html — POST to /webhooks
     # with header X-OliveTin-Demo: ping-host (path and payload rules are documented).
     execOnWebhook:
@@ -148,7 +141,8 @@ actions:
   # Docs: https://docs.olivetin.app/args/input_confirmation.html
   - title: Delete old backups
     icon: ashtonished
-    shell: rm -rf /opt/oldBackups/
+    justification: true
+    shell: rm -rf /opt/oliveTinOldBackups/ && sleep 5
     arguments:
       - type: html
         title: Description
@@ -186,7 +180,7 @@ actions:
   - title: "Setup easy SSH"
     icon: ssh
     shell: olivetin-setup-easy-ssh
-    popupOnStart: execution-dialog
+    onclick: execution-dialog
     # Second webhook example: POST /webhooks?demo=setup-ssh
     execOnWebhook:
       - matchQuery:
@@ -202,13 +196,6 @@ actions:
     icon: restart
     timeout: 1
     shell: ssh -F /config/ssh/easy.cfg root@server1 'service httpd restart'
-
-  # Lots of people use OliveTin to build web interfaces for their electronics
-  # projects. It's best to install OliveTin as a native package (eg, .deb), and
-  # then you can use either a python script or the `gpio` command.
-  - title: Toggle GPIO light
-    shell: gpioset gpiochip1 9=1
-    icon: light
 
   # There are several built-in shortcuts for the `icon` option, but you
   # can also just specify any HTML, this includes any unicode character,
@@ -273,6 +260,14 @@ actions:
     shell: docker stop {{ .CurrentEntity.Names }}
     entity: container
     triggers: ["Update container entity file"]
+
+  - title: Long running action
+    shell: sleep 300
+    timeout: 300
+    icon: logs
+    onclick: execution-dialog
+    execOnCron:
+      - "@hourly"
 
   # Lastly, you can hide actions from the web UI, this is useful for creating
   # background helpers that execute only on startup or a cron, for updating

@@ -16,12 +16,56 @@ import (
 	"github.com/OliveTin/OliveTin/internal/tpl"
 )
 
+type bindingActiveState struct {
+	hasRunning bool
+	hasQueued  bool
+}
+
 type DashboardRenderRequest struct {
-	AuthenticatedUser *authpublic.AuthenticatedUser
-	cfg               *config.Config
-	ex                *executor.Executor
-	EntityType        string
-	EntityKey         string
+	AuthenticatedUser   *authpublic.AuthenticatedUser
+	cfg                 *config.Config
+	ex                  *executor.Executor
+	EntityType          string
+	EntityKey           string
+	activeBindingStates map[string]bindingActiveState
+}
+
+func activeBindingID(entry *executor.InternalLogEntry) string {
+	if entry == nil || entry.ExecutionFinished {
+		return ""
+	}
+	return entry.GetBindingId()
+}
+
+func applyEntryToBindingState(state bindingActiveState, entry *executor.InternalLogEntry) bindingActiveState {
+	if entry.ExecutionStarted {
+		state.hasRunning = true
+	} else {
+		state.hasQueued = true
+	}
+	return state
+}
+
+func buildActiveBindingStates(active []*executor.InternalLogEntry) map[string]bindingActiveState {
+	states := make(map[string]bindingActiveState)
+
+	for _, entry := range active {
+		bindingID := activeBindingID(entry)
+		if bindingID == "" {
+			continue
+		}
+		states[bindingID] = applyEntryToBindingState(states[bindingID], entry)
+	}
+
+	return states
+}
+
+func populateActiveBindingStates(rr *DashboardRenderRequest) {
+	if rr == nil || rr.ex == nil || rr.activeBindingStates != nil {
+		return
+	}
+
+	rr.activeBindingStates = buildActiveBindingStates(rr.ex.GetActiveExecutionsACL(rr.cfg, rr.AuthenticatedUser))
 }
 
 func (rr *DashboardRenderRequest) findAction(title string) *apiv1.Action {
@@ -135,43 +179,56 @@ func actionFromBinding(actionBinding *executor.ActionBinding) (*executor.ActionB
 	return actionBinding, actionBinding.Action
 }
 
+func applyActiveBindingStateToAction(btn *apiv1.Action, bindingID string, states map[string]bindingActiveState) {
+	if states == nil {
+		return
+	}
+	state, ok := states[bindingID]
+	if !ok {
+		return
+	}
+	btn.HasRunningInstance = state.hasRunning
+	btn.HasQueuedInstance = state.hasQueued
+}
+
+func buildActionArguments(action *config.Action, entity *entities.Entity) []*apiv1.ActionArgument {
+	args := make([]*apiv1.ActionArgument, 0, len(action.Arguments))
+	for _, cfgArg := range action.Arguments {
+		args = append(args, &apiv1.ActionArgument{
+			Name:                  cfgArg.Name,
+			Title:                 cfgArg.Title,
+			Type:                  cfgArg.Type,
+			Description:           cfgArg.Description,
+			DefaultValue:          getDefaultArgumentValue(cfgArg, entity),
+			Choices:               buildChoices(cfgArg),
+			Suggestions:           cfgArg.Suggestions,
+			SuggestionsBrowserKey: cfgArg.SuggestionsBrowserKey,
+		})
+	}
+	return args
+}
+
 func buildAction(actionBinding *executor.ActionBinding, rr *DashboardRenderRequest) *apiv1.Action {
 	binding, action := actionFromBinding(actionBinding)
 	if binding == nil {
 		return nil
 	}
 
-	aclCanExec := acl.IsAllowedExec(rr.cfg, rr.AuthenticatedUser, action)
-	enabledExprCanExec := evaluateEnabledExpression(action, binding.Entity)
-	datetimeRateLimitExpires := formatRateLimitExpiry(rr.ex.GetTimeUntilAvailable(binding))
-
 	btn := apiv1.Action{
 		BindingId:                binding.ID,
 		Title:                    tpl.ParseTemplateOfActionBeforeExec(action.Title, binding.Entity),
 		Icon:                     tpl.ParseTemplateOfActionBeforeExec(action.Icon, binding.Entity),
-		CanExec:                  aclCanExec && enabledExprCanExec,
-		PopupOnStart:             action.PopupOnStart,
+		CanExec:                  acl.IsAllowedExec(rr.cfg, rr.AuthenticatedUser, action) && evaluateEnabledExpression(action, binding.Entity),
+		PopupOnStart:             action.OnClick,
 		Order:                    int32(binding.ConfigOrder),
 		Timeout:                  int32(action.Timeout),
-		DatetimeRateLimitExpires: datetimeRateLimitExpires,
+		DatetimeRateLimitExpires: formatRateLimitExpiry(rr.ex.GetTimeUntilAvailable(binding)),
+		Justification:            action.Justification,
 	}
 
+	applyActiveBindingStateToAction(&btn, binding.ID, rr.activeBindingStates)
 	applyActionExecTriggers(&btn, action)
-
-	for _, cfgArg := range action.Arguments {
-		pbArg := apiv1.ActionArgument{
-			Name:                  cfgArg.Name,
-			Title:                 cfgArg.Title,
-			Type:                  cfgArg.Type,
-			Description:           cfgArg.Description,
-			DefaultValue:          getDefaultArgumentValue(cfgArg, binding.Entity),
-			Choices:               buildChoices(cfgArg),
-			Suggestions:           cfgArg.Suggestions,
-			SuggestionsBrowserKey: cfgArg.SuggestionsBrowserKey,
-		}
-
-		btn.Arguments = append(btn.Arguments, &pbArg)
-	}
+	btn.Arguments = buildActionArguments(action, binding.Entity)
 
 	return &btn
 }

@@ -17,12 +17,17 @@
 
 		<div v-if="logEntry" class = "flex-row">
 				<dl class = "fg1">
+					<dt>Action</dt>
+					<dd>
+						<LogActionTitle :action-title="title" :justification="logEntry.justification" />
+					</dd>
+
 					<dt>Duration</dt>
 					<dd><span v-html="duration"></span></dd>
 
 					<dt>Status</dt>
-					<dd>
-						<ActionStatusDisplay :log-entry="logEntry" id = "execution-dialog-status" />
+					<dd class="execution-dialog-status">
+						<ActionStatusDisplay :log-entry="logEntry" :link-queued-status="true" />
 					</dd>
 				</dl>
         <ActionIconGlyph class="icon" role="img" :glyph="icon" style="align-self: start" />
@@ -64,6 +69,7 @@
 	import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import ActionIconGlyph from '../components/ActionIconGlyph.vue'
 import ActionStatusDisplay from '../components/ActionStatusDisplay.vue'
+import LogActionTitle from '../components/LogActionTitle.vue'
 import Section from 'picocrank/vue/components/Section.vue'
 import { OutputTerminal } from '../../../js/OutputTerminal.js'
 import { HugeiconsIcon } from '@hugeicons/vue'
@@ -71,6 +77,7 @@ import { WorkoutRunIcon, Cancel02Icon, ArrowLeftIcon } from '@hugeicons/core-fre
 import { useRouter } from 'vue-router'
 import { buttonResults } from '../stores/buttonResults'
 import { requestReconnectNow } from '../../../js/websocket.js'
+import { needsArgumentForm } from '../utils/needsArgumentForm.js'
 
 const router = useRouter()
 
@@ -178,10 +185,16 @@ async function rerunAction() {
   }
 
   try {
+    const binding = await window.client.getActionBinding({ bindingId })
+    if (needsArgumentForm(binding.action)) {
+      router.push(`/actionBinding/${bindingId}/argumentForm`)
+      return
+    }
+
     requestReconnectNow()
     const startActionArgs = {
-      "bindingId": bindingId,
-      "arguments": []
+      bindingId: bindingId,
+      arguments: []
     }
 
     const res = await window.client.startAction(startActionArgs)
