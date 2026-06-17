@@ -3,6 +3,7 @@ package logfilter
 import (
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/expr-lang/expr"
@@ -14,6 +15,17 @@ const maxFilterLength = 512
 var (
 	comparePattern  = regexp.MustCompile(`(?i)\b(Status|Action|User|ExitCode|Blocked|TimedOut|Running)\s*(==|!=)\s*("[^"]*"|\S+)`)
 	containsPattern = regexp.MustCompile(`(?i)\b(Status|Action|User|Output)\s+contains\s+("[^"]*"|\S+)`)
+
+	fieldNameByLower = map[string]string{
+		"status":   "Status",
+		"action":   "Action",
+		"user":     "User",
+		"exitcode": "ExitCode",
+		"blocked":  "Blocked",
+		"timedout": "TimedOut",
+		"running":  "Running",
+		"output":   "Output",
+	}
 )
 
 // Compile parses and compiles a filter expression. Returns an error for invalid syntax.
@@ -44,25 +56,31 @@ func compileNormalized(normalized string) (*vm.Program, error) {
 }
 
 func includes(params ...any) (any, error) {
+	if len(params) < 2 {
+		return nil, fmt.Errorf("includes expects 2 arguments, got %d", len(params))
+	}
 	haystack, ok := params[0].(string)
 	if !ok {
-		return false, nil
+		return nil, fmt.Errorf("expected string for haystack")
 	}
 	needle, ok := params[1].(string)
 	if !ok {
-		return false, nil
+		return nil, fmt.Errorf("expected string for needle")
 	}
 	return strings.Contains(strings.ToLower(haystack), strings.ToLower(needle)), nil
 }
 
 func hasTag(params ...any) (any, error) {
+	if len(params) < 2 {
+		return nil, fmt.Errorf("hasTag expects 2 arguments, got %d", len(params))
+	}
 	tags, ok := params[0].([]string)
 	if !ok {
-		return false, nil
+		return nil, fmt.Errorf("expected []string for tags")
 	}
 	needle, ok := params[1].(string)
 	if !ok {
-		return false, nil
+		return nil, fmt.Errorf("expected string for needle")
 	}
 	return tagListIncludes(tags, needle), nil
 }
@@ -145,7 +163,7 @@ func positiveSearchExpression(term string) string {
 func replaceContainsOperators(expression string) string {
 	return containsPattern.ReplaceAllStringFunc(expression, func(match string) string {
 		parts := containsPattern.FindStringSubmatch(match)
-		field := parts[1]
+		field := normalizeFieldName(parts[1])
 		value := quoteIfNeeded(parts[2])
 		return fmt.Sprintf("includes(%s, %s)", field, value)
 	})
@@ -154,11 +172,18 @@ func replaceContainsOperators(expression string) string {
 func replaceComparisons(expression string) string {
 	return comparePattern.ReplaceAllStringFunc(expression, func(match string) string {
 		parts := comparePattern.FindStringSubmatch(match)
-		field := parts[1]
+		field := normalizeFieldName(parts[1])
 		operator := parts[2]
 		value := quoteIfNeeded(parts[3])
 		return fmt.Sprintf("%s %s %s", field, operator, value)
 	})
+}
+
+func normalizeFieldName(field string) string {
+	if canonical, ok := fieldNameByLower[strings.ToLower(field)]; ok {
+		return canonical
+	}
+	return field
 }
 
 func replaceBooleanWords(expression string) string {
@@ -170,7 +195,20 @@ func quoteIfNeeded(value string) string {
 	if strings.HasPrefix(value, "\"") {
 		return value
 	}
+	if isBooleanLiteral(value) || isIntegerLiteral(value) {
+		return strings.ToLower(value)
+	}
 	return quoteLiteral(value)
+}
+
+func isBooleanLiteral(value string) bool {
+	lower := strings.ToLower(value)
+	return lower == "true" || lower == "false"
+}
+
+func isIntegerLiteral(value string) bool {
+	_, err := strconv.ParseInt(value, 10, 64)
+	return err == nil
 }
 
 func quoteLiteral(value string) string {

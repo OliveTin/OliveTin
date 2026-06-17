@@ -163,6 +163,47 @@ func TestPerActionConcurrencyStillBlocksWithoutQueue(t *testing.T) {
 	assert.False(t, snapshot.Queued)
 }
 
+func TestPerActionConcurrencyBlocksSameBindingBeforeGroupQueue(t *testing.T) {
+	t.Parallel()
+
+	action := &config.Action{
+		Title:         "Single binding grouped",
+		Shell:         "sleep 1",
+		MaxConcurrent: 1,
+		Groups:        []string{"unity"},
+	}
+
+	e, cfg := testGroupExecutor(
+		[]*config.Action{action},
+		map[string]*config.ActionGroup{
+			"unity": {MaxConcurrent: 1},
+		},
+	)
+	binding := e.FindBindingWithNoEntity(action)
+
+	wg1, tracking1 := e.ExecRequest(&ExecutionRequest{
+		Binding:           binding,
+		Cfg:               cfg,
+		AuthenticatedUser: auth.UserFromSystem(cfg, "testuser"),
+	})
+
+	waitUntilExecutionStarted(t, e, tracking1)
+
+	wg2, tracking2 := e.ExecRequest(&ExecutionRequest{
+		Binding:           binding,
+		Cfg:               cfg,
+		AuthenticatedUser: auth.UserFromSystem(cfg, "testuser"),
+	})
+
+	wg1.Wait()
+	wg2.Wait()
+
+	snapshot, ok := e.SnapshotLog(tracking2)
+	require.True(t, ok)
+	assert.True(t, snapshot.Blocked)
+	assert.False(t, snapshot.Queued)
+}
+
 func waitUntilExecutionStarted(t *testing.T, e *Executor, trackingID string) {
 	t.Helper()
 

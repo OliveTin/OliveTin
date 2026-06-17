@@ -32,6 +32,27 @@ func TestCompileContainsAndBooleanWords(t *testing.T) {
 	assert.False(t, mustMatch(t, program, Record{Status: "Blocked", Action: "Nightly backup"}))
 }
 
+func TestCompileNormalizesFieldNamesAndValueTypes(t *testing.T) {
+	cases := []struct {
+		expression string
+		record     Record
+		want       bool
+	}{
+		{"status == completed", Record{Status: "completed"}, true},
+		{"ExitCode == 0", Record{ExitCode: 0}, true},
+		{"exitcode == 0", Record{ExitCode: 0}, true},
+		{"Blocked == true", Record{Blocked: true}, true},
+		{"blocked == false", Record{Blocked: false}, true},
+	}
+	for _, tc := range cases {
+		t.Run(tc.expression, func(t *testing.T) {
+			program, err := Compile(tc.expression)
+			require.NoError(t, err)
+			assert.Equal(t, tc.want, mustMatch(t, program, tc.record))
+		})
+	}
+}
+
 func TestCompileRejectsOverlongExpression(t *testing.T) {
 	_, err := Compile(string(make([]byte, maxFilterLength+1)))
 	require.Error(t, err)
@@ -40,6 +61,41 @@ func TestCompileRejectsOverlongExpression(t *testing.T) {
 func TestCompileRejectsUnknownField(t *testing.T) {
 	_, err := Compile(`SecretField == "x"`)
 	require.Error(t, err)
+}
+
+func TestIncludesReturnsErrorsForMalformedArguments(t *testing.T) {
+	_, err := includes("only-one")
+	require.Error(t, err)
+
+	_, err = includes(123, "needle")
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "haystack")
+
+	_, err = includes("hay", 123)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "needle")
+}
+
+func TestHasTagReturnsErrorsForMalformedArguments(t *testing.T) {
+	_, err := hasTag("only-one")
+	require.Error(t, err)
+
+	_, err = hasTag("not-tags", "x")
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "tags")
+
+	_, err = hasTag([]string{"a"}, 123)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "needle")
+}
+
+func TestMatchesSurfacesIncludesTypeErrors(t *testing.T) {
+	program, err := Compile(`Action contains 123`)
+	require.NoError(t, err)
+
+	_, err = Matches(program, Record{Action: "test 123"})
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "needle")
 }
 
 func mustMatch(t *testing.T, program *vm.Program, record Record) bool {

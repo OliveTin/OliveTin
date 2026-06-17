@@ -11,6 +11,9 @@ find-flakey-tests:
 	echo "Running test-run infinately"
 	sh -c "while make test-run; do :; done"
 
+find-flakey-tests-inf: test-install
+	node scripts/find-flakey-tests-inf.mjs
+
 nginx:
 	podman-compose up -d nginx
 
@@ -21,4 +24,4 @@ getsnapshot:
 	rm -rf /opt/OliveTin-snapshot/*
 	gh run download -D /opt/OliveTin-snapshot/
 
-.PHONY: default
+.PHONY: default find-flakey-tests find-flakey-tests-inf

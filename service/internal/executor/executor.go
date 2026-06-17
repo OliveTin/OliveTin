@@ -631,6 +631,23 @@ func (e *Executor) registerOrQueueRequest(req *ExecutionRequest, wg *sync.WaitGr
 		return true, false
 	}
 
+	if e.finishIfConcurrencyBlocked(req) {
+		return true, false
+	}
+
+	return e.queueRequestIfGroupLimited(req, wg)
+}
+
+func (e *Executor) finishIfConcurrencyBlocked(req *ExecutionRequest) bool {
+	if stepConcurrencyCheck(req) {
+		return false
+	}
+
+	e.finishExecChain(req)
+	return true
+}
+
+func (e *Executor) queueRequestIfGroupLimited(req *ExecutionRequest, wg *sync.WaitGroup) (finished bool, queued bool) {
 	if !actionNeedsGroupLimit(req) || e.groupsHaveCapacityForActive(req) {
 		return false, false
 	}
