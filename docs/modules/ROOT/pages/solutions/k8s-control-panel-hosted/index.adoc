@@ -15,7 +15,7 @@ image::solution-k8s-hosted.png[]
 === Environment
 
 * A Kubernetes cluster that is up and running.
-* Kubernetes permissions to create a helm deployment, a `ClusterRole` and `ClusterRoleBinding`. 
+* Kubernetes permissions to create a helm deployment, a `ClusterRole` and `ClusterRoleBinding`.
 * A configured Ingress Controller, exposing the for web interface
 
 === System
@@ -58,7 +58,7 @@ rules:
 --
 ====
 
-Now that the `ClusterRole` has been created, we need to associate it to a `ServiceAccount` with a `ClusterRoleBinding`. 
+Now that the `ClusterRole` has been created, we need to associate it to a `ServiceAccount` with a `ClusterRoleBinding`.
 Create a cluster role binding;
 
 [tabs]
@@ -82,7 +82,7 @@ Add `kubectl` job to OliveTin config with `kubectl edit cm/olivetin-config -n ol
 apiVersion: v1
 data:
   config.yaml: |
-    defaultPopupOnStart: execution-dialog-output-only
+    defaultOnClick: execution-dialog-output-only
 
     actions:
       - title: get pods
@@ -114,4 +114,3 @@ metadata:
 ----
 
 Don't forget to restart the OliveTin deployment as good measure, because Kubernetes can be slow to update configmaps.
-

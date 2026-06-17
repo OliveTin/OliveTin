@@ -38,6 +38,9 @@ type Action struct {
 	ExecOnFileChangedInDir   []string                 `protobuf:"bytes,13,rep,name=exec_on_file_changed_in_dir,json=execOnFileChangedInDir,proto3" json:"exec_on_file_changed_in_dir,omitempty"`
 	ExecOnCalendarFile       string                   `protobuf:"bytes,14,opt,name=exec_on_calendar_file,json=execOnCalendarFile,proto3" json:"exec_on_calendar_file,omitempty"`
 	ExecOnWebhooks           []*ActionWebhookExecHint `protobuf:"bytes,15,rep,name=exec_on_webhooks,json=execOnWebhooks,proto3" json:"exec_on_webhooks,omitempty"`
+	Justification            bool                     `protobuf:"varint,16,opt,name=justification,proto3" json:"justification,omitempty"`
+	HasRunningInstance       bool                     `protobuf:"varint,17,opt,name=has_running_instance,json=hasRunningInstance,proto3" json:"has_running_instance,omitempty"`
+	HasQueuedInstance        bool                     `protobuf:"varint,18,opt,name=has_queued_instance,json=hasQueuedInstance,proto3" json:"has_queued_instance,omitempty"`
 	unknownFields            protoimpl.UnknownFields
 	sizeCache                protoimpl.SizeCache
 }
@@ -175,6 +178,27 @@ func (x *Action) GetExecOnWebhooks() []*ActionWebhookExecHint {
 		return x.ExecOnWebhooks
 	}
 	return nil
+}
+
+func (x *Action) GetJustification() bool {
+	if x != nil {
+		return x.Justification
+	}
+	return false
+}
+
+func (x *Action) GetHasRunningInstance() bool {
+	if x != nil {
+		return x.HasRunningInstance
+	}
+	return false
+}
+
+func (x *Action) GetHasQueuedInstance() bool {
+	if x != nil {
+		return x.HasQueuedInstance
+	}
+	return false
 }
 
 type ActionWebhookExecHint struct {
@@ -802,6 +826,7 @@ type StartActionRequest struct {
 	BindingId        string                 `protobuf:"bytes,1,opt,name=binding_id,json=bindingId,proto3" json:"binding_id,omitempty"`
 	Arguments        []*StartActionArgument `protobuf:"bytes,2,rep,name=arguments,proto3" json:"arguments,omitempty"`
 	UniqueTrackingId string                 `protobuf:"bytes,3,opt,name=unique_tracking_id,json=uniqueTrackingId,proto3" json:"unique_tracking_id,omitempty"`
+	Justification    string                 `protobuf:"bytes,4,opt,name=justification,proto3" json:"justification,omitempty"`
 	unknownFields    protoimpl.UnknownFields
 	sizeCache        protoimpl.SizeCache
 }
@@ -853,6 +878,13 @@ func (x *StartActionRequest) GetArguments() []*StartActionArgument {
 func (x *StartActionRequest) GetUniqueTrackingId() string {
 	if x != nil {
 		return x.UniqueTrackingId
+	}
+	return ""
+}
+
+func (x *StartActionRequest) GetJustification() string {
+	if x != nil {
+		return x.Justification
 	}
 	return ""
 }
@@ -957,6 +989,7 @@ type StartActionAndWaitRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ActionId      string                 `protobuf:"bytes,1,opt,name=action_id,json=actionId,proto3" json:"action_id,omitempty"`
 	Arguments     []*StartActionArgument `protobuf:"bytes,2,rep,name=arguments,proto3" json:"arguments,omitempty"`
+	Justification string                 `protobuf:"bytes,3,opt,name=justification,proto3" json:"justification,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1003,6 +1036,13 @@ func (x *StartActionAndWaitRequest) GetArguments() []*StartActionArgument {
 		return x.Arguments
 	}
 	return nil
+}
+
+func (x *StartActionAndWaitRequest) GetJustification() string {
+	if x != nil {
+		return x.Justification
+	}
+	return ""
 }
 
 type StartActionAndWaitResponse struct {
@@ -1315,6 +1355,7 @@ type LogEntry struct {
 	BindingId                string                 `protobuf:"bytes,20,opt,name=binding_id,json=bindingId,proto3" json:"binding_id,omitempty"`                                                  // Binding ID for matching rate limits to action buttons
 	Queued                   bool                   `protobuf:"varint,21,opt,name=queued,proto3" json:"queued,omitempty"`
 	QueuedForGroup           string                 `protobuf:"bytes,22,opt,name=queued_for_group,json=queuedForGroup,proto3" json:"queued_for_group,omitempty"`
+	Justification            string                 `protobuf:"bytes,23,opt,name=justification,proto3" json:"justification,omitempty"`
 	unknownFields            protoimpl.UnknownFields
 	sizeCache                protoimpl.SizeCache
 }
@@ -1485,6 +1526,13 @@ func (x *LogEntry) GetQueued() bool {
 func (x *LogEntry) GetQueuedForGroup() string {
 	if x != nil {
 		return x.QueuedForGroup
+	}
+	return ""
+}
+
+func (x *LogEntry) GetJustification() string {
+	if x != nil {
+		return x.Justification
 	}
 	return ""
 }
@@ -4275,7 +4323,7 @@ var File_olivetin_api_v1_olivetin_proto protoreflect.FileDescriptor
 
 const file_olivetin_api_v1_olivetin_proto_rawDesc = "" +
 	"\n" +
-	"\x1eolivetin/api/v1/olivetin.proto\x12\x0folivetin.api.v1\"\x89\x05\n" +
+	"\x1eolivetin/api/v1/olivetin.proto\x12\x0folivetin.api.v1\"\x91\x06\n" +
 	"\x06Action\x12\x1d\n" +
 	"\n" +
 	"binding_id\x18\x01 \x01(\tR\tbindingId\x12\x14\n" +
@@ -4294,7 +4342,10 @@ const file_olivetin_api_v1_olivetin_proto_rawDesc = "" +
 	"\x1bexec_on_file_created_in_dir\x18\f \x03(\tR\x16execOnFileCreatedInDir\x12;\n" +
 	"\x1bexec_on_file_changed_in_dir\x18\r \x03(\tR\x16execOnFileChangedInDir\x121\n" +
 	"\x15exec_on_calendar_file\x18\x0e \x01(\tR\x12execOnCalendarFile\x12P\n" +
-	"\x10exec_on_webhooks\x18\x0f \x03(\v2&.olivetin.api.v1.ActionWebhookExecHintR\x0eexecOnWebhooks\"\x8a\x03\n" +
+	"\x10exec_on_webhooks\x18\x0f \x03(\v2&.olivetin.api.v1.ActionWebhookExecHintR\x0eexecOnWebhooks\x12$\n" +
+	"\rjustification\x18\x10 \x01(\bR\rjustification\x120\n" +
+	"\x14has_running_instance\x18\x11 \x01(\bR\x12hasRunningInstance\x12.\n" +
+	"\x13has_queued_instance\x18\x12 \x01(\bR\x11hasQueuedInstance\"\x8a\x03\n" +
 	"\x15ActionWebhookExecHint\x12\x1a\n" +
 	"\btemplate\x18\x01 \x01(\tR\btemplate\x12\x1d\n" +
 	"\n" +
@@ -4359,20 +4410,22 @@ const file_olivetin_api_v1_olivetin_proto_rawDesc = "" +
 	"\ventity_type\x18\a \x01(\tR\n" +
 	"entityType\x12\x1d\n" +
 	"\n" +
-	"entity_key\x18\b \x01(\tR\tentityKey\"\xa5\x01\n" +
+	"entity_key\x18\b \x01(\tR\tentityKey\"\xcb\x01\n" +
 	"\x12StartActionRequest\x12\x1d\n" +
 	"\n" +
 	"binding_id\x18\x01 \x01(\tR\tbindingId\x12B\n" +
 	"\targuments\x18\x02 \x03(\v2$.olivetin.api.v1.StartActionArgumentR\targuments\x12,\n" +
-	"\x12unique_tracking_id\x18\x03 \x01(\tR\x10uniqueTrackingId\"?\n" +
+	"\x12unique_tracking_id\x18\x03 \x01(\tR\x10uniqueTrackingId\x12$\n" +
+	"\rjustification\x18\x04 \x01(\tR\rjustification\"?\n" +
 	"\x13StartActionArgument\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value\"I\n" +
 	"\x13StartActionResponse\x122\n" +
-	"\x15execution_tracking_id\x18\x02 \x01(\tR\x13executionTrackingId\"|\n" +
+	"\x15execution_tracking_id\x18\x02 \x01(\tR\x13executionTrackingId\"\xa2\x01\n" +
 	"\x19StartActionAndWaitRequest\x12\x1b\n" +
 	"\taction_id\x18\x01 \x01(\tR\bactionId\x12B\n" +
-	"\targuments\x18\x02 \x03(\v2$.olivetin.api.v1.StartActionArgumentR\targuments\"T\n" +
+	"\targuments\x18\x02 \x03(\v2$.olivetin.api.v1.StartActionArgumentR\targuments\x12$\n" +
+	"\rjustification\x18\x03 \x01(\tR\rjustification\"T\n" +
 	"\x1aStartActionAndWaitResponse\x126\n" +
 	"\tlog_entry\x18\x01 \x01(\v2\x19.olivetin.api.v1.LogEntryR\blogEntry\"6\n" +
 	"\x17StartActionByGetRequest\x12\x1b\n" +
@@ -4388,7 +4441,7 @@ const file_olivetin_api_v1_olivetin_proto_rawDesc = "" +
 	"\vdate_filter\x18\x02 \x01(\tR\n" +
 	"dateFilter\x12\x1b\n" +
 	"\tpage_size\x18\x03 \x01(\x03R\bpageSize\x12\x16\n" +
-	"\x06filter\x18\x04 \x01(\tR\x06filter\"\xcb\x05\n" +
+	"\x06filter\x18\x04 \x01(\tR\x06filter\"\xf1\x05\n" +
 	"\bLogEntry\x12)\n" +
 	"\x10datetime_started\x18\x01 \x01(\tR\x0fdatetimeStarted\x12!\n" +
 	"\faction_title\x18\x02 \x01(\tR\vactionTitle\x12\x16\n" +
@@ -4413,7 +4466,8 @@ const file_olivetin_api_v1_olivetin_proto_rawDesc = "" +
 	"\n" +
 	"binding_id\x18\x14 \x01(\tR\tbindingId\x12\x16\n" +
 	"\x06queued\x18\x15 \x01(\bR\x06queued\x12(\n" +
-	"\x10queued_for_group\x18\x16 \x01(\tR\x0equeuedForGroup\"\xca\x01\n" +
+	"\x10queued_for_group\x18\x16 \x01(\tR\x0equeuedForGroup\x12$\n" +
+	"\rjustification\x18\x17 \x01(\tR\rjustification\"\xca\x01\n" +
 	"\x0fGetLogsResponse\x12-\n" +
 	"\x04logs\x18\x01 \x03(\v2\x19.olivetin.api.v1.LogEntryR\x04logs\x12'\n" +
 	"\x0fcount_remaining\x18\x02 \x01(\x03R\x0ecountRemaining\x12\x1b\n" +

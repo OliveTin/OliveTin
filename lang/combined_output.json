@@ -119,6 +119,7 @@
             "logs.no-logs-to-display": "There are no logs to display.",
             "logs.page-description": "This is a list of logs from actions that have been executed. Use the filter box for search terms and expressions.",
             "logs.queue": "Queue",
+            "logs.queue-action-details": "Action Details",
             "logs.queue-empty": "There are no active or waiting executions right now.",
             "logs.queue-entity": "Entity",
             "logs.queue-group-active": "{active} active (max {max})",

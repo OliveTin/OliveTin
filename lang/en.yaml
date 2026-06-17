@@ -47,6 +47,7 @@ translations:
   logs.queue-running: Running
   logs.queue-position: "#{position}"
   logs.queue-entity: Entity
+  logs.queue-action-details: Action Details
   diagnostics.get-support: Get support
   diagnostics.get-support-description: If you are having problems with OliveTin and want to raise a support request, it would be very helpful to include a sosreport from this page.
   diagnostics.where-to-find-help: Where to find help

@@ -1,5 +1,12 @@
 <template>
 	<div :id="`actionButton-${bindingId}`" role="none" class="action-button" @contextmenu.prevent="openActionDetails">
+		<span
+			v-if="showExecutionIndicator"
+			class="execution-indicator"
+			:class="executionIndicatorClass"
+			:title="executionIndicatorTitle"
+			aria-hidden="true"
+		></span>
 		<button :id="`actionButtonInner-${bindingId}`" :title="title" :disabled="!canExec || isDisabled"
 													  :class="combinedClasses" @click="handleClick">
 
@@ -29,9 +36,12 @@
 <script setup>
 import { buttonResults } from './stores/buttonResults'
 import { rateLimits } from './stores/rateLimits'
+import { bindingExecutionState, setBindingExecutionState } from './stores/bindingExecutionState'
 import { connectionState } from './stores/connectionState'
 import { requestReconnectNow, applyExecutionLogEntry } from '../../js/websocket.js'
 import { useRouter } from 'vue-router'
+import { needsArgumentForm } from './utils/needsArgumentForm.js'
+import { shouldSuppressPopupOnStartNavigation } from './utils/popupOnStartNavigation.js'
 import { HugeiconsIcon } from '@hugeicons/vue'
 import { WorkoutRunIcon, TypeCursorIcon, ComputerTerminal01Icon, WorkHistoryIcon } from '@hugeicons/core-free-icons'
 
@@ -93,6 +103,40 @@ const combinedClasses = computed(() => {
 	return classes
 })
 
+const hasRunningInstance = computed(() => {
+	const id = bindingId.value
+	return !!(id && bindingExecutionState[id]?.hasRunning)
+})
+
+const hasQueuedInstance = computed(() => {
+	const id = bindingId.value
+	return !!(id && bindingExecutionState[id]?.hasQueued)
+})
+
+const showExecutionIndicator = computed(() => {
+	return hasRunningInstance.value || hasQueuedInstance.value
+})
+
+const executionIndicatorClass = computed(() => {
+	if (hasRunningInstance.value) {
+		return 'execution-indicator-running'
+	}
+	if (hasQueuedInstance.value) {
+		return 'execution-indicator-queued'
+	}
+	return ''
+})
+
+const executionIndicatorTitle = computed(() => {
+	if (hasRunningInstance.value) {
+		return 'Running'
+	}
+	if (hasQueuedInstance.value) {
+		return 'Queued'
+	}
+	return ''
+})
+
 // Timestamps
 const updateIterationTimestamp = ref(0)
 
@@ -110,7 +154,7 @@ function constructFromJson(json) {
 	navigateOnStart.value = 'pop'
   } else if (popupOnStart.value === 'history') {
 	navigateOnStart.value = 'hist'
-  } else if (props.actionData.arguments.length > 0) {
+  } else if (needsArgumentForm(props.actionData)) {
 	navigateOnStart.value = 'arg'
   }
 
@@ -127,6 +171,11 @@ function constructFromJson(json) {
   // Also initialize the store so the watch picks it up
   if (bindingId.value) {
 	rateLimits[bindingId.value] = rateLimitExpires.value
+	setBindingExecutionState(
+	  bindingId.value,
+	  !!json.hasRunningInstance,
+	  !!json.hasQueuedInstance
+	)
   }
   updateRateLimitStatus()
 }
@@ -198,7 +247,7 @@ async function handleClick() {
 	openActionDetails()
 	return
   }
-  if (props.actionData.arguments && props.actionData.arguments.length > 0) {
+  if (needsArgumentForm(props.actionData)) {
 	router.push(`/actionBinding/${props.actionData.bindingId}/argumentForm`)
   } else {
 	await startAction()
@@ -300,7 +349,11 @@ function onExecutionQueued(_logEntry) {
 }
 
 function onExecutionStarted(logEntry) {
-  if (popupOnStart.value && popupOnStart.value.includes('execution-dialog')) {
+  if (
+	popupOnStart.value &&
+	popupOnStart.value.includes('execution-dialog') &&
+	!shouldSuppressPopupOnStartNavigation(router)
+  ) {
 	router.push(`/logs/${logEntry.executionTrackingId}`)
   }
 
@@ -397,6 +450,26 @@ defineExpose({
 		display: flex;
 		flex-direction: column;
 		flex-grow: 1;
+		position: relative;
+	}
+
+	.execution-indicator {
+		position: absolute;
+		top: 0.45em;
+		left: 0.45em;
+		width: 0.65em;
+		height: 0.65em;
+		border-radius: 50%;
+		z-index: 1;
+		pointer-events: none;
+	}
+
+	.execution-indicator-running {
+		background: #28a745;
+	}
+
+	.execution-indicator-queued {
+		background: #0d6efd;
 	}
 
 	.action-button button {

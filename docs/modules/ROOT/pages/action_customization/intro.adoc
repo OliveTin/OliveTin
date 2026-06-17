@@ -27,7 +27,6 @@ Explore specific customization options:
 * xref:action_customization/concurrency.adoc[Control concurrency] - Limit simultaneous executions
 * xref:action_customization/ratelimiting.adoc[Set rate limits] - Prevent actions from running too frequently
 * xref:action_customization/enabledExpression.adoc[Enabled expressions] - Dynamically enable/disable actions based on entity state
-* xref:action_customization/popuponstart.adoc[Configure popups] - Control popup behavior when actions start
+* xref:action_customization/popuponstart.adoc[Configure on-click behavior] - Control what happens when an action is started
 * xref:action_customization/savelogs.adoc[Save action logs] - Configure log retention for actions
 * xref:action_customization/ids.adoc[Set action IDs] - Assign IDs for API access
-

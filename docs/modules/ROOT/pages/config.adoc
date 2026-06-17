@@ -53,7 +53,8 @@ All configuration options are covered in the solution sections
 | `showNavigation` | Show (or hide) the sidebar/topbar section navigation. | `true` | Live reloadable | xref:advanced_configuration/webui.adoc[Customize the web UI].
 | `showNavigateOnStartIcons` | Show (or hide) the small icons on action buttons that indicate popup/argument/background behavior on start. | `true` | Live reloadable | xref:advanced_configuration/webui.adoc[Customize the web UI].
 | `sectionNavigationStyle` | The style of the section navigation. `sidebar`, `topbar` | `sidebar` | Live reloadable | xref:advanced_configuration/webui.adoc[Customize the web UI].
-| `defaultPopupOnStart` | The default popup to show on start. | `none` | Live reloadable | xref:action_customization/popuponstart.adoc[Popup On Start].
+| `defaultOnClick` | The default on-click behavior when an action starts. | `nothing` | Live reloadable | xref:action_customization/popuponstart.adoc[On Click].
+| `defaultPopupOnStart` | Legacy name for `defaultOnClick`. | - | Live reloadable | xref:action_customization/popuponstart.adoc[On Click].
 | `defaultIconForActions` | The default icon string for actions (Unicode aliases such as `smile`, `hugeicons:NeutralIcon`, HTML, Iconify snippets, images, etc.). See xref:action_customization/icons.adoc[Icons]. | `hugeicons:CommandLineIcon` | Requires Restart | -
 | `defaultIconForDirectories` | The default icon to use for directories. | `directory` | Requires Restart | -
 | `defaultIconForBack` | The default icon to use for back (from directories). | `&laquo;` | Requires Restart | -

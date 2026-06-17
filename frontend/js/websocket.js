@@ -1,6 +1,11 @@
 import { buttonResults } from '../resources/vue/stores/buttonResults.js'
 import { rateLimits } from '../resources/vue/stores/rateLimits.js'
 import { connectionState } from '../resources/vue/stores/connectionState.js'
+import {
+  applyExecutionFinishedBindingState,
+  applyExecutionStartedBindingState
+} from '../resources/vue/stores/bindingExecutionState.js'
+import { cloneLogEntry } from '../resources/vue/utils/executionLogEvents.js'
 
 const RECONNECT_DELAYS_MS = [200, 1000, 2000, 4000, 8000, 16000, 32000]
 const BANNER_DELAY_MS = 2000
@@ -52,8 +57,8 @@ export function connectEventStreamIfNeeded () {
 export function initWebsocket () {
   if (!listenersInitialized) {
     window.addEventListener('EventOutputChunk', onOutputChunk)
-    window.addEventListener('EventExecutionStarted', onExecutionChanged)
-    window.addEventListener('EventExecutionFinished', onExecutionChanged)
+    window.addEventListener('EventExecutionStarted', onExecutionStarted)
+    window.addEventListener('EventExecutionFinished', onExecutionFinished)
     window.addEventListener('pagehide', stopEventStream)
     listenersInitialized = true
   }
@@ -250,20 +255,27 @@ function onOutputChunk (evt) {
 }
 
 export function applyExecutionLogEntry (logEntry) {
-  if (!logEntry?.executionTrackingId) {
+  const entry = cloneLogEntry(logEntry)
+  if (!entry?.executionTrackingId) {
     return
   }
 
-  buttonResults[logEntry.executionTrackingId] = logEntry
+  buttonResults[entry.executionTrackingId] = entry
 
-  if (logEntry.datetimeRateLimitExpires && logEntry.bindingId) {
-    const date = new Date(logEntry.datetimeRateLimitExpires.replace(' ', 'T') + 'Z')
-    rateLimits[logEntry.bindingId] = date.getTime() / 1000
-  } else if (logEntry.bindingId) {
-    rateLimits[logEntry.bindingId] = 0
+  if (entry.datetimeRateLimitExpires && entry.bindingId) {
+    const date = new Date(entry.datetimeRateLimitExpires.replace(' ', 'T') + 'Z')
+    rateLimits[entry.bindingId] = date.getTime() / 1000
+  } else if (entry.bindingId) {
+    rateLimits[entry.bindingId] = 0
   }
 }
 
-function onExecutionChanged (evt) {
+function onExecutionStarted (evt) {
   applyExecutionLogEntry(evt.payload.logEntry)
+  applyExecutionStartedBindingState(evt.payload.logEntry)
+}
+
+function onExecutionFinished (evt) {
+  applyExecutionLogEntry(evt.payload.logEntry)
+  applyExecutionFinishedBindingState(evt.payload.logEntry)
 }

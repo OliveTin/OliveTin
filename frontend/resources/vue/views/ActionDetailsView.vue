@@ -53,7 +53,7 @@
       </div>
 
       <div v-show="filteredLogs.length > 0">
-        <table class="logs-table">
+        <table class="logs-table row-hover">
           <thead>
             <tr>
               <th>Timestamp</th>
@@ -82,7 +82,7 @@
                 </span>
               </td>
               <td class="exit-code">
-                <ActionStatusDisplay :logEntry="log" />
+                <ActionStatusDisplay :logEntry="log" :link-queued-status="true" />
               </td>
             </tr>
           </tbody>
@@ -107,6 +107,8 @@ import Section from 'picocrank/vue/components/Section.vue'
 import ActionIconGlyph from '../components/ActionIconGlyph.vue'
 import ActionStatusDisplay from '../components/ActionStatusDisplay.vue'
 import { requestReconnectNow } from '../../../js/websocket.js'
+import { needsArgumentForm } from '../utils/needsArgumentForm.js'
+import { getExecutionLogEntry, updateLogEntryInList } from '../utils/executionLogEvents.js'
 
 const route = useRoute()
 const router = useRouter()
@@ -266,13 +268,6 @@ function syncDurationTicker() {
   }, 1000)
 }
 
-onUnmounted(() => {
-  if (durationTicker != null) {
-    clearInterval(durationTicker)
-    durationTicker = null
-  }
-})
-
 function handlePageChange(page) {
   currentPage.value = page
   fetchActionLogs()
@@ -290,11 +285,16 @@ async function startAction() {
     return
   }
 
+  if (needsArgumentForm(action.value)) {
+    router.push(`/actionBinding/${action.value.bindingId}/argumentForm`)
+    return
+  }
+
   try {
     requestReconnectNow()
     const args = {
-      "bindingId": action.value.bindingId,
-      "arguments": []
+      bindingId: action.value.bindingId,
+      arguments: []
     }
 
     const response = await window.client.startAction(args)
@@ -305,9 +305,24 @@ async function startAction() {
   }
 }
 
+function onExecutionEvent(evt) {
+  const logEntry = getExecutionLogEntry(evt)
+  if (!logEntry || logEntry.bindingId !== route.params.actionId) {
+    return
+  }
+
+  if (!updateLogEntryInList(logs.value, logEntry)) {
+    fetchActionLogs()
+    return
+  }
+  syncDurationTicker()
+}
+
 onMounted(() => {
   fetchAction()
   fetchActionLogs()
+  window.addEventListener('EventExecutionStarted', onExecutionEvent)
+  window.addEventListener('EventExecutionFinished', onExecutionEvent)
 })
 
 watch(
@@ -319,6 +334,15 @@ watch(
   },
   { immediate: false }
 )
+
+onUnmounted(() => {
+  window.removeEventListener('EventExecutionStarted', onExecutionEvent)
+  window.removeEventListener('EventExecutionFinished', onExecutionEvent)
+  if (durationTicker != null) {
+    clearInterval(durationTicker)
+    durationTicker = null
+  }
+})
 </script>
 
 <style scoped>

@@ -66,6 +66,14 @@ If you are looking for OliveTin's AI policy, you can find it in `AI.md`.
 - Review the pull request template at `.github/PULL_REQUEST_TEMPLATE.md`.
 - When changing behaviour covered by a spec in `specs/`, ensure implementation and tests match the spec.
 
+### Branch Naming
+Use conventional-commit-style branch names with a type prefix, optional issue reference, and a short kebab-case description:
+
+- `feat/[#123]-add-justification-prompt`
+- `fix/[#456]-websocket-reconnect`
+
+Do **not** use `feat-...`, `feature/...`, or other variants. Omit the `[#<issue>]` segment only when there is no linked issue.
+
 ### Troubleshooting
 - API tests failing with content-type errors: ensure Connect handler is served under `/api/` and the client targets that base URL.
 - Executor panics: check for nil `Binding/Action` and add guards in step functions.

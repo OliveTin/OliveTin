@@ -79,6 +79,79 @@ func TestGroupConcurrencyQueuesSecondAction(t *testing.T) {
 	assert.Contains(t, snapshot.Output, "queued-run")
 }
 
+func TestQueuedActionNotifiesWhenExecutionBegins(t *testing.T) {
+	t.Parallel()
+
+	slowAction := &config.Action{
+		Title:  "Hold group",
+		Shell:  "sleep 1",
+		Groups: []string{"unity"},
+	}
+	queuedAction := &config.Action{
+		Title:  "Queued job",
+		Shell:  "echo queued-run",
+		Groups: []string{"unity"},
+	}
+
+	e, cfg := testGroupExecutor(
+		[]*config.Action{slowAction, queuedAction},
+		map[string]*config.ActionGroup{
+			"unity": {MaxConcurrent: 1},
+		},
+	)
+
+	notifications := make(chan startedNotification, 8)
+	e.AddListener(&executionStartedCollector{ch: notifications})
+
+	wg1, tracking1 := e.ExecRequest(&ExecutionRequest{
+		Binding:           e.FindBindingWithNoEntity(slowAction),
+		Cfg:               cfg,
+		AuthenticatedUser: auth.UserFromSystem(cfg, "testuser"),
+	})
+
+	waitUntilExecutionStarted(t, e, tracking1)
+
+	wg2, tracking2 := e.ExecRequest(&ExecutionRequest{
+		Binding:           e.FindBindingWithNoEntity(queuedAction),
+		Cfg:               cfg,
+		AuthenticatedUser: auth.UserFromSystem(cfg, "testuser"),
+	})
+
+	require.Eventually(t, func() bool {
+		snapshot, ok := e.SnapshotLog(tracking2)
+		return ok && snapshot.Queued
+	}, time.Second, 10*time.Millisecond)
+
+	wg1.Wait()
+	wg2.Wait()
+
+	sawQueuedStart, sawRunningStart := collectQueuedStartNotifications(notifications, tracking2)
+
+	assert.True(t, sawQueuedStart, "queued action should notify when queued")
+	assert.True(t, sawRunningStart, "queued action should notify again when execution begins")
+}
+
+func isQueuedStartNotification(notification startedNotification, trackingID string) bool {
+	return notification.trackingID == trackingID && notification.queued && !notification.started
+}
+
+func isRunningStartNotification(notification startedNotification, trackingID string) bool {
+	return notification.trackingID == trackingID && !notification.queued && notification.started
+}
+
+func collectQueuedStartNotifications(notifications <-chan startedNotification, trackingID string) (sawQueuedStart, sawRunningStart bool) {
+	for len(notifications) > 0 {
+		notification := <-notifications
+		if isQueuedStartNotification(notification, trackingID) {
+			sawQueuedStart = true
+		}
+		if isRunningStartNotification(notification, trackingID) {
+			sawRunningStart = true
+		}
+	}
+	return sawQueuedStart, sawRunningStart
+}
+
 func TestDifferentGroupsRunConcurrently(t *testing.T) {
 	t.Parallel()
 
@@ -212,6 +285,30 @@ func waitUntilExecutionStarted(t *testing.T, e *Executor, trackingID string) {
 		return ok && snapshot.ExecutionStarted
 	}, 2*time.Second, 10*time.Millisecond)
 }
+
+type executionStartedCollector struct {
+	ch chan startedNotification
+}
+
+type startedNotification struct {
+	trackingID string
+	started    bool
+	queued     bool
+}
+
+func (c *executionStartedCollector) OnExecutionStarted(entry *InternalLogEntry) {
+	c.ch <- startedNotification{
+		trackingID: entry.ExecutionTrackingID,
+		started:    entry.ExecutionStarted,
+		queued:     entry.Queued,
+	}
+}
+
+func (c *executionStartedCollector) OnExecutionFinished(_ *InternalLogEntry) {}
+
+func (c *executionStartedCollector) OnOutputChunk(_ []byte, _ string) {}
+
+func (c *executionStartedCollector) OnActionMapRebuilt() {}
 
 func assertWaitGroupPending(t *testing.T, wg *sync.WaitGroup) {
 	t.Helper()

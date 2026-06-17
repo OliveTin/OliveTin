@@ -18,6 +18,7 @@ func (cfg *Config) Sanitize() {
 	cfg.sanitizeLogHistoryPageSize()
 	cfg.sanitizeLocalUsers()
 	cfg.sanitizeSecurityHeaders()
+	cfg.sanitizeOnClickDefaults()
 
 	// log.Infof("cfg %p", cfg)
 
@@ -177,7 +178,9 @@ func (action *Action) sanitize(cfg *Config) {
 
 	action.ID = getActionID(action)
 	action.Icon = lookupHTMLIcon(action.Icon, cfg.DefaultIconForActions)
-	action.PopupOnStart = sanitizePopupOnStart(action.PopupOnStart, cfg)
+	migrateActionOnClick(action)
+	action.OnClick = sanitizeOnClick(action.OnClick, cfg)
+	action.PopupOnStart = action.OnClick
 
 	if action.MaxConcurrent < 1 {
 		action.MaxConcurrent = 1
@@ -359,7 +362,7 @@ func getActionID(action *Action) string {
 }
 
 //gocyclo:ignore
-func sanitizePopupOnStart(raw string, cfg *Config) string {
+func sanitizeOnClick(raw string, cfg *Config) string {
 	switch raw {
 	case "execution-dialog":
 		return raw
@@ -372,8 +375,41 @@ func sanitizePopupOnStart(raw string, cfg *Config) string {
 	case "history":
 		return raw
 	default:
-		return cfg.DefaultPopupOnStart
+		return cfg.DefaultOnClick
 	}
+}
+
+func migrateActionOnClick(action *Action) {
+	if action.OnClick == "" && action.PopupOnStart != "" {
+		action.OnClick = action.PopupOnStart
+	}
+}
+
+func shouldMigrateDefaultOnClickFromPopup(onClick, popupOnStart string) bool {
+	if popupOnStart == "" {
+		return false
+	}
+	if onClick == "" {
+		return true
+	}
+	return onClick == "nothing" && popupOnStart != "nothing"
+}
+
+func (cfg *Config) migrateDefaultOnClickFromLegacyPopup() {
+	if !shouldMigrateDefaultOnClickFromPopup(cfg.DefaultOnClick, cfg.DefaultPopupOnStart) {
+		return
+	}
+	cfg.DefaultOnClick = cfg.DefaultPopupOnStart
+}
+
+func (cfg *Config) sanitizeOnClickDefaults() {
+	cfg.migrateDefaultOnClickFromLegacyPopup()
+
+	if cfg.DefaultOnClick == "" {
+		cfg.DefaultOnClick = "nothing"
+	}
+
+	cfg.DefaultPopupOnStart = cfg.DefaultOnClick
 }
 
 func (arg *ActionArgument) sanitize() {

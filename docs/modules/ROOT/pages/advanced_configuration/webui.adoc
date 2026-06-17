@@ -1,7 +1,7 @@
 [#customize-webui]
 = Customize the web UI
 
-The OliveTin web UI is reasonably customizable - parts of the page that you don't need can be hidden when they're not needed. 
+The OliveTin web UI is reasonably customizable - parts of the page that you don't need can be hidden when they're not needed.
 
 == Page Title
 
@@ -43,8 +43,8 @@ image::defaultUiHideNav.png[]
 
 When enabled (the default), each action button can show a small icon indicating what happens when the action is started:
 
-* **Popup dialog** — the action opens a popup (e.g. `popupOnStart: execution-dialog`)
-* **Action history** — the action opens the action details page (e.g. `popupOnStart: history`)
+* **Popup dialog** — the action opens a popup (e.g. `onclick: execution-dialog`)
+* **Action history** — the action opens the action details page (e.g. `onclick: history`)
 * **Argument form** — the action opens an argument form on start
 * **Run in background** — the action runs without opening a dialog
 
@@ -85,7 +85,7 @@ This is controlled by the **showVersionNumber** policy (in `defaultPolicy` or pe
 [#show-new-versions]
 == New version available - show/hide
 
-You can disable the "new version" information in the footer - the default for `showNewVersions` is `true`; 
+You can disable the "new version" information in the footer - the default for `showNewVersions` is `true`;
 
 .`config.yaml`
 [source,yaml]
@@ -135,7 +135,7 @@ This is considered an advanced feature, and is not recommended unless you like w
 You can add custom JavaScript to OliveTin, which will be executed on every page load. This can be useful for adding custom functionality to the web UI.
 
 1. The custom javascript should be in a file called `custom.js` and saved in `custom-webui/`, which should be in the same directory as your `config.yaml`.
-2. You can put whatever code you like really in your `custom.js` file. 
+2. You can put whatever code you like really in your `custom.js` file.
 3. Set `enableCustomJs: true` in your `config.yaml` to enable this feature.
 4. Restart OliveTin. Note that the custom JavaScript will only be loaded once on startup, so if you are changing the custom JavaScript while OliveTin is running, you will need to restart OliveTin to see the changes.
 
@@ -147,7 +147,7 @@ You can customize OliveTin with themes, but it's also possible to write your on 
 
 === Writing a simple theme with a CSS change
 
-You'll need to create a new theme, and let's assume our theme name is going to be called `uihack`. OliveTin themes are simply a directory of CSS and other assets. OliveTin looks for a directory called `custom-webui/themes/<theme-folder-name>` in the same directory as your `config.yaml` file. 
+You'll need to create a new theme, and let's assume our theme name is going to be called `uihack`. OliveTin themes are simply a directory of CSS and other assets. OliveTin looks for a directory called `custom-webui/themes/<theme-folder-name>` in the same directory as your `config.yaml` file.
 
 Start by creating a directory called `custom-webui/themes/uihack` relative to the same directory as your `config.yaml` file. In this directory, create a file called `theme.css`.
 

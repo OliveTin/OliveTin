@@ -5,6 +5,8 @@ import { Condition } from 'selenium-webdriver'
 
 export const DEFAULT_UI_WAIT_MS = 3000
 
+const executionDialogStatusBy = By.css('.execution-dialog-status')
+
 export async function getActionButtons () {
   // Currently, only the active dashboard's contents are rendered,
   // so we don't need to scope the selector by dashboard title.
@@ -91,13 +93,13 @@ export async function waitForArgumentFormReady(timeoutMs = DEFAULT_UI_WAIT_MS) {
 
 export async function waitForExecutionComplete(timeoutMs = DEFAULT_UI_WAIT_MS) {
   await webdriver.wait(new Condition('wait for execution status', async () => {
-    const statusElements = await webdriver.findElements(By.id('execution-dialog-status'))
+    const statusElements = await webdriver.findElements(executionDialogStatusBy)
     return statusElements.length > 0
   }), timeoutMs)
 
   await webdriver.wait(new Condition('wait for execution to finish', async () => {
     try {
-      const statusElement = await webdriver.findElement(By.id('execution-dialog-status'))
+      const statusElement = await webdriver.findElement(executionDialogStatusBy)
       const statusText = await statusElement.getText()
       return !statusText.includes('Still running')
     } catch (e) {
@@ -163,7 +165,7 @@ export async function getNavigationLinks() {
 
 export async function requireExecutionDialogStatus (webdriver, expected) {
   await webdriver.wait(new Condition('wait for action to be running', async function () {
-    const dialogStatus = await webdriver.findElement(By.id('execution-dialog-status'))
+    const dialogStatus = await webdriver.findElement(executionDialogStatusBy)
     const actual = await dialogStatus.getText()
 
     if (actual === expected) {

@@ -90,6 +90,21 @@ export declare type Action = Message<"olivetin.api.v1.Action"> & {
    * @generated from field: repeated olivetin.api.v1.ActionWebhookExecHint exec_on_webhooks = 15;
    */
   execOnWebhooks: ActionWebhookExecHint[];
+
+  /**
+   * @generated from field: bool justification = 16;
+   */
+  justification: boolean;
+
+  /**
+   * @generated from field: bool has_running_instance = 17;
+   */
+  hasRunningInstance: boolean;
+
+  /**
+   * @generated from field: bool has_queued_instance = 18;
+   */
+  hasQueuedInstance: boolean;
 };
 
 /**
@@ -400,6 +415,11 @@ export declare type StartActionRequest = Message<"olivetin.api.v1.StartActionReq
    * @generated from field: string unique_tracking_id = 3;
    */
   uniqueTrackingId: string;
+
+  /**
+   * @generated from field: string justification = 4;
+   */
+  justification: string;
 };
 
 /**
@@ -458,6 +478,11 @@ export declare type StartActionAndWaitRequest = Message<"olivetin.api.v1.StartAc
    * @generated from field: repeated olivetin.api.v1.StartActionArgument arguments = 2;
    */
   arguments: StartActionArgument[];
+
+  /**
+   * @generated from field: string justification = 3;
+   */
+  justification: string;
 };
 
 /**
@@ -690,6 +715,11 @@ export declare type LogEntry = Message<"olivetin.api.v1.LogEntry"> & {
    * @generated from field: string queued_for_group = 22;
    */
   queuedForGroup: string;
+
+  /**
+   * @generated from field: string justification = 23;
+   */
+  justification: string;
 };
 
 /**

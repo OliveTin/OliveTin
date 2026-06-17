@@ -40,7 +40,13 @@
             <span class="argument-description" v-html="arg.description"></span>
           </template>
         </template>
-        <div v-else>
+
+        <template v-if="justificationRequired">
+          <label for="justification">Justification:</label>
+          <input id="justification" name="justification" type="text" v-model="justificationValue" required />
+        </template>
+
+        <div v-if="actionArguments.length === 0 && !justificationRequired">
           <p>No arguments required</p>
         </div>
 
@@ -76,6 +82,8 @@ const formErrors = ref({})
 const actionArguments = ref([])
 const popupOnStart = ref('')
 const formReady = ref(false)
+const justificationRequired = ref(false)
+const justificationValue = ref('')
 let isComponentMounted = true
 
 // Computed properties
@@ -103,6 +111,8 @@ async function setup() {
     icon.value = action.icon
     popupOnStart.value = action.popupOnStart || ''
     actionArguments.value = action.arguments || []
+    justificationRequired.value = action.justification || false
+    justificationValue.value = ''
     argValues.value = {}
     formErrors.value = {}
     confirmationChecked.value = false
@@ -306,19 +316,41 @@ function updateUrlWithArg(name, value) {
   }
 }
 
+function shouldSendArgument(arg) {
+  if (!arg.name) {
+    return false
+  }
+
+  return arg.type !== 'html'
+}
+
+function formatArgumentValueForApi(arg, rawValue) {
+  if (arg.type === 'checkbox' || arg.type === 'confirmation') {
+    return rawValue === '1' || rawValue === true || rawValue === 'true' ? '1' : '0'
+  }
+
+  if (rawValue === true) {
+    return '1'
+  }
+
+  if (rawValue === false) {
+    return '0'
+  }
+
+  return rawValue ?? ''
+}
+
 function getArgumentValues() {
   const ret = []
 
   for (const arg of actionArguments.value) {
-    let value = argValues.value[arg.name] || ''
-
-    if (arg.type === 'checkbox' || arg.type === 'confirmation') {
-      value = value ? '1' : '0'
+    if (!shouldSendArgument(arg)) {
+      continue
     }
 
     ret.push({
       name: arg.name,
-      value: value
+      value: formatArgumentValueForApi(arg, argValues.value[arg.name])
     })
   }
 
@@ -394,6 +426,10 @@ async function startAction(actionArgs) {
     uniqueTrackingId: getUniqueId()
   }
 
+  if (justificationRequired.value) {
+    startActionArgs.justification = justificationValue.value
+  }
+
   try {
     requestReconnectNow()
     const response = await window.client.startAction(startActionArgs)
@@ -418,6 +454,13 @@ async function handleSubmit(event) {
   }
 
   // Set custom validity for required fields
+  if (justificationRequired.value && (!justificationValue.value || justificationValue.value.trim() === '')) {
+    const inputElement = document.getElementById('justification')
+    if (inputElement) {
+      inputElement.setCustomValidity('This field is required')
+    }
+  }
+
   for (const arg of actionArguments.value) {
     const value = argValues.value[arg.name]
     const inputElement = document.getElementById(arg.name)

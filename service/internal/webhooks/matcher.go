@@ -138,6 +138,19 @@ func (m *WebhookMatcher) compareValues(actual, expected string) bool {
 	return actual == expected
 }
 
+func (m *WebhookMatcher) ExtractJustification() (string, error) {
+	if m.config.Justification == "" {
+		return "", nil
+	}
+
+	matcher, err := NewJSONMatcher(m.bodyBytes)
+	if err != nil {
+		return "", err
+	}
+
+	return matcher.ExtractValue(m.config.Justification)
+}
+
 func (m *WebhookMatcher) ExtractArguments() (map[string]string, error) {
 	matcher, err := NewJSONMatcher(m.bodyBytes)
 	if err != nil {
