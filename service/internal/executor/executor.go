@@ -48,11 +48,11 @@ var (
 )
 
 type ActionBinding struct {
-	ID            string
-	Action        *config.Action
-	Entity        *entities.Entity
-	ConfigOrder   int
-	IsOnDashboard bool
+	ID           string
+	Action       *config.Action
+	Entity       *entities.Entity
+	ConfigOrder  int
+	OnDashboards []DashboardNavigationTarget
 }
 
 // Executor represents a helper class for executing commands. It's main method
@@ -641,6 +641,10 @@ func (e *Executor) registerOrQueueRequest(req *ExecutionRequest, wg *sync.WaitGr
 }
 
 func (e *Executor) finishIfConcurrencyBlocked(req *ExecutionRequest) bool {
+	if actionNeedsGroupLimit(req) {
+		return false
+	}
+
 	if stepConcurrencyCheck(req) {
 		return false
 	}
@@ -663,7 +667,11 @@ func (e *Executor) queueRequestAfterACL(req *ExecutionRequest, wg *sync.WaitGrou
 		return true, false
 	}
 
-	e.queueRequest(req, wg)
+	if e.queueRequest(req, wg) {
+		e.finishExecChain(req)
+		return true, false
+	}
+
 	notifyListenersStarted(req)
 
 	return false, true
@@ -708,6 +716,10 @@ func getConcurrentCount(req *ExecutionRequest) int {
 }
 
 func stepConcurrencyCheck(req *ExecutionRequest) bool {
+	if actionNeedsGroupLimit(req) {
+		return true
+	}
+
 	concurrentCount := getConcurrentCount(req)
 
 	// Note that the current execution is counted int the logs, so when checking we +1

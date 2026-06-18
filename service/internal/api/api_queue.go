@@ -148,6 +148,7 @@ func newExecutionQueueGroup(name string, cfg *config.Config) *apiv1.ExecutionQue
 
 	group.Icon = actionGroup.Icon
 	group.MaxConcurrent = int32(actionGroup.MaxConcurrent)
+	group.QueueSize = int32(actionGroup.QueueSize)
 	return group
 }
 

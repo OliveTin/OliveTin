@@ -165,23 +165,19 @@ const router = createRouter({
 })
 
 // Navigation guard to update page title
-router.beforeEach((to, from, next) => {
+router.beforeEach((to) => {
   if (to.meta && to.meta.title) {
     const pageTitle = window.initResponse?.pageTitle || 'OliveTin'
     document.title = to.meta.title + " - " + pageTitle
   }
-  next()
 })
 
 // Navigation guard for authentication (if needed)
-router.beforeEach((to, from, next) => {
-  // Check if user is authenticated for protected routes
+router.beforeEach((to) => {
   const isAuthenticated = window.isAuthenticated || true // Default to true for now
 
   if (to.meta.requiresAuth && !isAuthenticated) {
-    next('/login')
-  } else {
-    next()
+    return '/login'
   }
 })
 

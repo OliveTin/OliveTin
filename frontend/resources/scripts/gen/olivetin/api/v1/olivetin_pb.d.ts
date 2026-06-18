@@ -105,6 +105,11 @@ export declare type Action = Message<"olivetin.api.v1.Action"> & {
    * @generated from field: bool has_queued_instance = 18;
    */
   hasQueuedInstance: boolean;
+
+  /**
+   * @generated from field: repeated olivetin.api.v1.ActionGroupMembership groups = 19;
+   */
+  groups: ActionGroupMembership[];
 };
 
 /**
@@ -112,6 +117,32 @@ export declare type Action = Message<"olivetin.api.v1.Action"> & {
  * Use `create(ActionSchema)` to create a new message.
  */
 export declare const ActionSchema: GenMessage<Action>;
+
+/**
+ * @generated from message olivetin.api.v1.ActionGroupMembership
+ */
+export declare type ActionGroupMembership = Message<"olivetin.api.v1.ActionGroupMembership"> & {
+  /**
+   * @generated from field: string name = 1;
+   */
+  name: string;
+
+  /**
+   * @generated from field: int32 max_concurrent = 2;
+   */
+  maxConcurrent: number;
+
+  /**
+   * @generated from field: int32 queue_size = 3;
+   */
+  queueSize: number;
+};
+
+/**
+ * Describes the message olivetin.api.v1.ActionGroupMembership.
+ * Use `create(ActionGroupMembershipSchema)` to create a new message.
+ */
+export declare const ActionGroupMembershipSchema: GenMessage<ActionGroupMembership>;
 
 /**
  * @generated from message olivetin.api.v1.ActionWebhookExecHint
@@ -912,6 +943,11 @@ export declare type ExecutionQueueGroup = Message<"olivetin.api.v1.ExecutionQueu
    * @generated from field: int32 queued_count = 6;
    */
   queuedCount: number;
+
+  /**
+   * @generated from field: int32 queue_size = 7;
+   */
+  queueSize: number;
 };
 
 /**
@@ -1047,6 +1083,37 @@ export declare type ExecutionStatusRequest = Message<"olivetin.api.v1.ExecutionS
 export declare const ExecutionStatusRequestSchema: GenMessage<ExecutionStatusRequest>;
 
 /**
+ * @generated from message olivetin.api.v1.DashboardNavigationTarget
+ */
+export declare type DashboardNavigationTarget = Message<"olivetin.api.v1.DashboardNavigationTarget"> & {
+  /**
+   * @generated from field: string title = 1;
+   */
+  title: string;
+
+  /**
+   * @generated from field: string entity_type = 2;
+   */
+  entityType: string;
+
+  /**
+   * @generated from field: string entity_key = 3;
+   */
+  entityKey: string;
+
+  /**
+   * @generated from field: string path = 4;
+   */
+  path: string;
+};
+
+/**
+ * Describes the message olivetin.api.v1.DashboardNavigationTarget.
+ * Use `create(DashboardNavigationTargetSchema)` to create a new message.
+ */
+export declare const DashboardNavigationTargetSchema: GenMessage<DashboardNavigationTarget>;
+
+/**
  * @generated from message olivetin.api.v1.ExecutionStatusResponse
  */
 export declare type ExecutionStatusResponse = Message<"olivetin.api.v1.ExecutionStatusResponse"> & {
@@ -1054,6 +1121,11 @@ export declare type ExecutionStatusResponse = Message<"olivetin.api.v1.Execution
    * @generated from field: olivetin.api.v1.LogEntry log_entry = 1;
    */
   logEntry?: LogEntry | undefined;
+
+  /**
+   * @generated from field: repeated olivetin.api.v1.DashboardNavigationTarget back_to_dashboards = 2;
+   */
+  backToDashboards: DashboardNavigationTarget[];
 };
 
 /**
@@ -1800,6 +1872,11 @@ export declare type GetActionBindingResponse = Message<"olivetin.api.v1.GetActio
    * @generated from field: olivetin.api.v1.Action action = 1;
    */
   action?: Action | undefined;
+
+  /**
+   * @generated from field: repeated olivetin.api.v1.DashboardNavigationTarget back_to_dashboards = 2;
+   */
+  backToDashboards: DashboardNavigationTarget[];
 };
 
 /**

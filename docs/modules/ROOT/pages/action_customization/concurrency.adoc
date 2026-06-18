@@ -40,6 +40,7 @@ Use `actionGroups` to define a shared limit, and assign actions to a group with 
 actionGroups:
   unity:
     maxConcurrent: 1
+    queueSize: 5
 
 actions:
   - title: Unity Android Build
@@ -51,8 +52,21 @@ actions:
     groups: [ unity ]
 ----
 
-When the group limit is reached, additional requests are queued automatically and run in order when a slot becomes free. Queued executions appear in the logs with a queued status.
+=== maxConcurrent vs queueSize
 
-Per-action `maxConcurrent` still applies separately. If the same action binding is started twice while one is already running, the second request is blocked immediately (not queued).
+Action groups define two related limits:
+
+* `maxConcurrent` -- how many executions in the group may *run at the same time*. When every slot is in use, new requests wait for a free slot instead of running immediately.
+* `queueSize` -- how many executions may *wait in the queue* for a slot. If the group is full and the queue already holds this many waiting executions, additional requests are blocked (the same "blocked" status as per-action concurrency).
+
+For example, with `maxConcurrent: 1` and `queueSize: 5`, OliveTin can have one execution running and up to five more waiting. A seventh request while those six are still outstanding is blocked.
+
+`queueSize` defaults to `5` when omitted.
+
+When the group limit is reached but the queue is not full, additional requests are queued automatically and run in order when a slot becomes free. Queued executions appear in the logs with a queued status.
+
+Per-action `maxConcurrent` still applies to actions that are not in a group. For actions in a group, concurrency is governed by the group `maxConcurrent` and `queueSize` settings instead. A second request for the same action may run concurrently when the group has spare capacity, or join the queue when the group is full.
+
+Actions that are not in a group are never queued. They only use their own `maxConcurrent` limit (default `1`).
 
 The queue is held in memory. If OliveTin restarts while actions are queued, those queued requests are not preserved.

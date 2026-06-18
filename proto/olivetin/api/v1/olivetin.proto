@@ -23,6 +23,13 @@ message Action {
 	bool justification = 16;
 	bool has_running_instance = 17;
 	bool has_queued_instance = 18;
+	repeated ActionGroupMembership groups = 19;
+}
+
+message ActionGroupMembership {
+	string name = 1;
+	int32 max_concurrent = 2;
+	int32 queue_size = 3;
 }
 
 message ActionWebhookExecHint {
@@ -209,6 +216,7 @@ message ExecutionQueueGroup {
 	int32 active_count = 4;
 	repeated ExecutionQueueAction actions = 5;
 	int32 queued_count = 6;
+	int32 queue_size = 7;
 }
 
 message GetExecutionQueueResponse {
@@ -241,8 +249,16 @@ message ExecutionStatusRequest {
 	string action_id = 2;
 }
 
+message DashboardNavigationTarget {
+	string title = 1;
+	string entity_type = 2;
+	string entity_key = 3;
+	string path = 4;
+}
+
 message ExecutionStatusResponse {
 	LogEntry log_entry = 1;
+	repeated DashboardNavigationTarget back_to_dashboards = 2;
 }
 
 message WhoAmIRequest {}
@@ -406,6 +422,7 @@ message GetActionBindingRequest {
 
 message GetActionBindingResponse {
 	Action action = 1;
+	repeated DashboardNavigationTarget back_to_dashboards = 2;
 }
 
 message GetEntitiesRequest {

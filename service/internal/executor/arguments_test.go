@@ -660,6 +660,20 @@ func TestTypecheckActionArgumentConfirmation(t *testing.T) {
 	assert.Nil(t, err, "Confirmation type should always pass validation")
 }
 
+func TestTypecheckActionArgumentHtmlWithoutName(t *testing.T) {
+	action := config.Action{
+		Title: "Delete old backups",
+		Shell: "rm -rf /opt/oliveTinOldBackups/ && sleep 5",
+		Arguments: []config.ActionArgument{
+			{Type: "html", Title: "Description"},
+			{Type: "confirmation", Title: "Are you sure?!"},
+		},
+	}
+
+	err := validateArguments(map[string]string{}, &action)
+	assert.NoError(t, err)
+}
+
 func TestParseCommandForReplacements(t *testing.T) {
 	tests := []struct {
 		name           string

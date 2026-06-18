@@ -3,7 +3,6 @@ package executor
 import (
 	"crypto/sha256"
 	"fmt"
-	"slices"
 
 	config "github.com/OliveTin/OliveTin/internal/config"
 	"github.com/OliveTin/OliveTin/internal/entities"
@@ -37,8 +36,8 @@ func (e *Executor) FindBindingWithNoEntity(action *config.Action) *ActionBinding
 }
 
 type RebuildActionMapRequest struct {
-	Cfg                   *config.Config
-	DashboardActionTitles []string
+	Cfg              *config.Config
+	dashboardTargets *dashboardTargetIndex
 }
 
 func validateArgumentDefaults(cfg *config.Config) {
@@ -81,15 +80,9 @@ func (e *Executor) RebuildActionMap() {
 	clear(e.MapActionBindings)
 
 	req := &RebuildActionMapRequest{
-		Cfg:                   e.Cfg,
-		DashboardActionTitles: make([]string, 0),
+		Cfg:              e.Cfg,
+		dashboardTargets: buildDashboardTargetIndex(e.Cfg),
 	}
-
-	findDashboardActionTitles(req)
-
-	log.WithFields(log.Fields{
-		"titles": req.DashboardActionTitles,
-	}).Trace("dashboardActionTitles")
 
 	for configOrder, action := range e.Cfg.Actions {
 		if action.Entity != "" {
@@ -106,42 +99,15 @@ func (e *Executor) RebuildActionMap() {
 	}
 }
 
-func findDashboardActionTitles(req *RebuildActionMapRequest) {
-	for _, dashboard := range req.Cfg.Dashboards {
-		recurseDashboardForActionTitles(dashboard, req)
-	}
-}
-
-//gocyclo:ignore
-func recurseDashboardForActionTitles(component *config.DashboardComponent, req *RebuildActionMapRequest) {
-	for _, sub := range component.Contents {
-		if sub.InlineAction != nil {
-			title := sub.Title
-			if title == "" {
-				title = sub.InlineAction.Title
-			}
-			if title != "" {
-				req.DashboardActionTitles = append(req.DashboardActionTitles, title)
-			}
-		} else if sub.Type == "link" || sub.Type == "" {
-			req.DashboardActionTitles = append(req.DashboardActionTitles, sub.Title)
-		}
-
-		if len(sub.Contents) > 0 {
-			recurseDashboardForActionTitles(sub, req)
-		}
-	}
-}
-
 func registerAction(e *Executor, configOrder int, action *config.Action, req *RebuildActionMapRequest) {
 	bindingId := generateActionBindingId(action, "")
 
 	e.MapActionBindings[bindingId] = &ActionBinding{
-		ID:            bindingId,
-		Action:        action,
-		Entity:        nil,
-		ConfigOrder:   configOrder,
-		IsOnDashboard: slices.Contains(req.DashboardActionTitles, action.Title),
+		ID:           bindingId,
+		Action:       action,
+		Entity:       nil,
+		ConfigOrder:  configOrder,
+		OnDashboards: resolveOnDashboards(req.dashboardTargets, action.Title, ""),
 	}
 }
 
@@ -155,11 +121,11 @@ func registerActionFromEntity(e *Executor, configOrder int, tpl *config.Action, 
 	virtualActionId := generateActionBindingId(tpl, ent.UniqueKey)
 
 	e.MapActionBindings[virtualActionId] = &ActionBinding{
-		ID:            virtualActionId,
-		Action:        tpl,
-		Entity:        ent,
-		ConfigOrder:   configOrder,
-		IsOnDashboard: slices.Contains(req.DashboardActionTitles, tpl.Title),
+		ID:           virtualActionId,
+		Action:       tpl,
+		Entity:       ent,
+		ConfigOrder:  configOrder,
+		OnDashboards: resolveOnDashboards(req.dashboardTargets, tpl.Title, ent.UniqueKey),
 	}
 }
 

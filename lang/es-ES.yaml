@@ -35,7 +35,7 @@ translations:
   logs.queue-title: Cola de ejecución
   logs.queue-page-description: Ejecuciones activas y en espera agrupadas por grupo de acciones. Las entradas que no puede ver se ocultan.
   logs.queue-default-group: Predeterminado
-  logs.queue-group-limit: "límite {max}, en espera {queued}"
+  logs.action-group-limits: "simultáneas: {concurrent}, tamaño de cola: {queueSize}"
   logs.queue-group-active-unlimited: "{active} activas"
   logs.queue-empty: No hay ejecuciones activas o en espera en este momento.
   logs.queue-group-active: "{active} activas (máx. {max})"

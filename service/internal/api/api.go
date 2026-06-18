@@ -450,6 +450,32 @@ func (api *oliveTinAPI) getExecutionStatusByRequest(msg *apiv1.ExecutionStatusRe
 	return getMostRecentExecutionStatusByActionId(api, msg.ActionId)
 }
 
+func dashboardNavigationTargetsToPb(targets []executor.DashboardNavigationTarget) []*apiv1.DashboardNavigationTarget {
+	if len(targets) == 0 {
+		return nil
+	}
+
+	result := make([]*apiv1.DashboardNavigationTarget, 0, len(targets))
+	for _, target := range targets {
+		result = append(result, &apiv1.DashboardNavigationTarget{
+			Title:      target.Title,
+			EntityType: target.EntityType,
+			EntityKey:  target.EntityKey,
+			Path:       target.Path,
+		})
+	}
+
+	return result
+}
+
+func (api *oliveTinAPI) executionStatusBackToDashboards(ile *executor.InternalLogEntry) []*apiv1.DashboardNavigationTarget {
+	if ile == nil || ile.Binding == nil {
+		return nil
+	}
+
+	return dashboardNavigationTargetsToPb(ile.Binding.OnDashboards)
+}
+
 func (api *oliveTinAPI) ExecutionStatus(ctx ctx.Context, req *connect.Request[apiv1.ExecutionStatusRequest]) (*connect.Response[apiv1.ExecutionStatusResponse], error) {
 	user := auth.UserFromApiCall(ctx, req, api.cfg)
 	if err := api.checkDashboardAccess(user); err != nil {
@@ -460,7 +486,8 @@ func (api *oliveTinAPI) ExecutionStatus(ctx ctx.Context, req *connect.Request[ap
 		return nil, err
 	}
 	res := &apiv1.ExecutionStatusResponse{
-		LogEntry: api.internalLogEntryToPb(ile, user),
+		LogEntry:         api.internalLogEntryToPb(ile, user),
+		BackToDashboards: api.executionStatusBackToDashboards(ile),
 	}
 	return connect.NewResponse(res), nil
 }
@@ -531,7 +558,8 @@ func (api *oliveTinAPI) getActionBindingResponse(user *authpublic.AuthenticatedU
 	}
 
 	return &apiv1.GetActionBindingResponse{
-		Action: buildAction(binding, api.createDashboardRenderRequest(user, "", "")),
+		Action:           buildAction(binding, api.createDashboardRenderRequest(user, "", "")),
+		BackToDashboards: dashboardNavigationTargetsToPb(binding.OnDashboards),
 	}, nil
 }
 

@@ -12,6 +12,7 @@ import (
 type groupLimit struct {
 	name          string
 	maxConcurrent int
+	queueSize     int
 }
 
 type queuedExecution struct {
@@ -45,7 +46,11 @@ func groupLimitFromConfig(cfg *config.Config, groupName string) (groupLimit, boo
 		return groupLimit{}, false
 	}
 
-	return groupLimit{name: groupName, maxConcurrent: group.MaxConcurrent}, true
+	return groupLimit{
+		name:          groupName,
+		maxConcurrent: group.MaxConcurrent,
+		queueSize:     group.QueueSize,
+	}, true
 }
 
 func actionNeedsGroupLimit(req *ExecutionRequest) bool {
@@ -77,6 +82,64 @@ func (e *Executor) countActiveInGroupLocked(groupName string) int {
 	}
 
 	return count
+}
+
+func (e *Executor) countQueuedInGroupLocked(groupName string) int {
+	count := 0
+
+	for _, logEntry := range e.logs {
+		if queuedLogEntryInGroup(logEntry, groupName) {
+			count++
+		}
+	}
+
+	return count
+}
+
+func queuedLogEntryInGroup(logEntry *InternalLogEntry, groupName string) bool {
+	if !logEntryIsBound(logEntry) {
+		return false
+	}
+
+	if !logEntry.Queued || logEntry.ExecutionFinished {
+		return false
+	}
+
+	return actionInGroup(logEntry.Binding.Action, groupName)
+}
+
+func logEntryIsBound(logEntry *InternalLogEntry) bool {
+	return logEntry != nil && logEntry.Binding != nil && logEntry.Binding.Action != nil
+}
+
+func groupIsAtActiveCapacity(activeCount int, limit groupLimit) bool {
+	return activeCount >= (limit.maxConcurrent + 1)
+}
+
+func (e *Executor) fullGroupWithQueueExceededLocked(req *ExecutionRequest) string {
+	for _, limit := range actionGroupLimits(req) {
+		if !groupIsAtActiveCapacity(e.countActiveInGroupLocked(limit.name), limit) {
+			continue
+		}
+
+		if e.countQueuedInGroupLocked(limit.name) >= limit.queueSize {
+			return limit.name
+		}
+	}
+
+	return ""
+}
+
+func (e *Executor) blockRequestForGroupQueue(req *ExecutionRequest, groupName string) {
+	log.WithFields(log.Fields{
+		"actionTitle": req.logEntry.ActionTitle,
+		"groupName":   groupName,
+	}).Warnf("Blocked from executing due to action group queue limit")
+
+	req.mutateLogEntry(func(entry *InternalLogEntry) {
+		entry.Output = fmt.Sprintf("Blocked from executing due to action group %q queue limit", groupName)
+		entry.Blocked = true
+	})
 }
 
 func logEntryIsActiveInGroup(logEntry *InternalLogEntry, groupName string) bool {
@@ -143,16 +206,26 @@ func firstFullGroupNameLocked(e *Executor, req *ExecutionRequest) string {
 	return ""
 }
 
-func (e *Executor) queueRequest(req *ExecutionRequest, wg *sync.WaitGroup) {
+func (e *Executor) queueRequest(req *ExecutionRequest, wg *sync.WaitGroup) bool {
 	e.groupQueueMu.Lock()
 
-	var groupName string
+	e.logmutex.RLock()
+	groupName := e.fullGroupWithQueueExceededLocked(req)
+	e.logmutex.RUnlock()
+
+	if groupName != "" {
+		e.groupQueueMu.Unlock()
+		e.blockRequestForGroupQueue(req, groupName)
+		return true
+	}
+
+	var waitingForGroup string
 
 	req.mutateLogEntry(func(entry *InternalLogEntry) {
-		groupName = firstFullGroupNameLocked(e, req)
+		waitingForGroup = firstFullGroupNameLocked(e, req)
 		entry.Queued = true
-		entry.QueuedForGroup = groupName
-		entry.Output = fmt.Sprintf("Queued waiting for action group %q", groupName)
+		entry.QueuedForGroup = waitingForGroup
+		entry.Output = fmt.Sprintf("Queued waiting for action group %q", waitingForGroup)
 	})
 
 	e.groupQueue = append(e.groupQueue, &queuedExecution{req: req, wg: wg})
@@ -162,8 +235,10 @@ func (e *Executor) queueRequest(req *ExecutionRequest, wg *sync.WaitGroup) {
 
 	log.WithFields(log.Fields{
 		"actionTitle": req.logEntry.ActionTitle,
-		"groupName":   groupName,
+		"groupName":   waitingForGroup,
 	}).Infof("Action queued due to action group concurrency limit")
+
+	return false
 }
 
 func (e *Executor) drainGroupQueue() {
