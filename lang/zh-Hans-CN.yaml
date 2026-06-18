@@ -42,7 +42,10 @@ translations:
   logs.back-to-list: 返回列表
   logs.queue: 队列
   logs.queue-title: 执行队列
-  logs.queue-page-description: 按动作分组显示正在运行和等待中的执行。您无权查看的条目会被隐藏。
+  logs.queue-page-description: 按动作组分组显示正在运行和等待中的执行。您无权查看的条目会被隐藏。
+  logs.queue-default-group: 默认
+  logs.queue-group-limit: "上限 {max}，排队 {queued}"
+  logs.queue-group-active-unlimited: "{active} 个活动"
   logs.queue-empty: 当前没有正在运行或等待中的执行。
   logs.queue-group-active: "{active} 个活动（上限 {max}）"
   logs.queue-waiting: 等待中

@@ -14,10 +14,13 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestGetExecutionQueueGroupsByBinding(t *testing.T) {
+func TestGetExecutionQueueGroupsByActionGroup(t *testing.T) {
 	cfg := config.DefaultConfig()
+	cfg.ActionGroups = map[string]*config.ActionGroup{
+		"deploy": {MaxConcurrent: 2, Icon: "backup"},
+	}
 	cfg.Actions = []*config.Action{
-		{Title: "backup", Shell: "sleep 1", MaxConcurrent: 1},
+		{Title: "backup", Shell: "sleep 1", MaxConcurrent: 1, Groups: []string{"deploy"}},
 		{Title: "ping", Shell: "echo ping"},
 	}
 	cfg.Sanitize()
@@ -32,6 +35,7 @@ func TestGetExecutionQueueGroupsByBinding(t *testing.T) {
 
 	backupRunning := newAPIQueueLogEntry(backupBinding, true, false)
 	backupWaiting := newAPIQueueLogEntry(backupBinding, false, false)
+	backupWaiting.Queued = true
 	pingRunning := newAPIQueueLogEntry(pingBinding, true, false)
 
 	ex.SetLog(backupRunning.ExecutionTrackingID, backupRunning)
@@ -47,20 +51,32 @@ func TestGetExecutionQueueGroupsByBinding(t *testing.T) {
 	assert.Equal(t, int32(3), resp.Msg.TotalActive)
 	require.Len(t, resp.Msg.Groups, 2)
 
-	var backupGroup *apiv1.ExecutionQueueGroup
-	for _, group := range resp.Msg.Groups {
-		if group.BindingId == backupBinding.ID {
-			backupGroup = group
+	deployGroup := findExecutionQueueGroup(resp.Msg.Groups, "deploy")
+	defaultGroup := findExecutionQueueGroup(resp.Msg.Groups, defaultActionGroupName)
+	require.NotNil(t, deployGroup)
+	require.NotNil(t, defaultGroup)
+
+	assert.Equal(t, int32(2), deployGroup.MaxConcurrent)
+	assert.Equal(t, "&#128190;", deployGroup.Icon)
+	assert.Equal(t, int32(2), deployGroup.ActiveCount)
+	assert.Equal(t, int32(1), deployGroup.QueuedCount)
+	require.Len(t, deployGroup.Actions, 1)
+	assert.Equal(t, "backup", deployGroup.Actions[0].ActionTitle)
+	require.Len(t, deployGroup.Actions[0].Entries, 2)
+
+	require.Len(t, defaultGroup.Actions, 1)
+	assert.Equal(t, "ping", defaultGroup.Actions[0].ActionTitle)
+	assert.Equal(t, int32(1), defaultGroup.Actions[0].ActiveCount)
+}
+
+func findExecutionQueueGroup(groups []*apiv1.ExecutionQueueGroup, name string) *apiv1.ExecutionQueueGroup {
+	for _, group := range groups {
+		if group.Name == name {
+			return group
 		}
 	}
 
-	require.NotNil(t, backupGroup)
-	assert.Equal(t, "backup", backupGroup.ActionTitle)
-	assert.Equal(t, int32(1), backupGroup.MaxConcurrent)
-	assert.Equal(t, int32(2), backupGroup.ActiveCount)
-	require.Len(t, backupGroup.Entries, 2)
-	assert.False(t, backupGroup.Entries[1].ExecutionStarted)
-	assert.True(t, backupGroup.Entries[0].ExecutionStarted)
+	return nil
 }
 
 func newAPIQueueLogEntry(binding *executor.ActionBinding, started bool, finished bool) *executor.InternalLogEntry {

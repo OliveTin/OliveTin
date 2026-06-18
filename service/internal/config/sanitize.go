@@ -28,6 +28,7 @@ func (cfg *Config) Sanitize() {
 
 	cfg.sanitizeDashboardsForInlineActions()
 
+	cfg.sanitizeActionGroups()
 	cfg.sanitizeActionGroupReferences()
 
 	if err := cfg.validateReservedActionArgumentNames(); err != nil {
@@ -216,6 +217,16 @@ func appendUniqueString(out []string, seen map[string]struct{}, value string) []
 	seen[value] = struct{}{}
 
 	return append(out, value)
+}
+
+func (cfg *Config) sanitizeActionGroups() {
+	for _, group := range cfg.ActionGroups {
+		if group == nil {
+			continue
+		}
+
+		group.Icon = lookupHTMLIcon(group.Icon, cfg.DefaultIconForActions)
+	}
 }
 
 func (cfg *Config) sanitizeActionGroupReferences() {

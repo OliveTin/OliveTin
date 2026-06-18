@@ -36,19 +36,25 @@ export function updateLogEntryInGroups (groups, logEntry) {
     return null
   }
 
-  for (const group of groups) {
-    const entries = group.entries || []
-    const index = entries.findIndex(
-      item => item.executionTrackingId === entry.executionTrackingId
-    )
-    if (index < 0) {
-      continue
-    }
+  let firstMatch = null
 
-    const previous = entries[index]
-    entries[index] = entry
-    return { group, index, previous }
+  for (const group of groups) {
+    for (const action of group.actions || []) {
+      const entries = action.entries || []
+      const index = entries.findIndex(
+        item => item.executionTrackingId === entry.executionTrackingId
+      )
+      if (index < 0) {
+        continue
+      }
+
+      const previous = entries[index]
+      entries[index] = entry
+      if (!firstMatch) {
+        firstMatch = { group, action, index, previous }
+      }
+    }
   }
 
-  return null
+  return firstMatch
 }

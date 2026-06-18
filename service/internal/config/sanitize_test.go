@@ -185,6 +185,17 @@ func TestSanitizeActionGroupsDedupesGroupNames(t *testing.T) {
 	assert.Equal(t, []string{"unity"}, action.Groups)
 }
 
+func TestSanitizeActionGroupsResolvesIcons(t *testing.T) {
+	c := DefaultConfig()
+	c.ActionGroups = map[string]*ActionGroup{
+		"backup-jobs": {MaxConcurrent: 1, Icon: "backup"},
+	}
+
+	c.Sanitize()
+
+	assert.Equal(t, "&#128190;", c.ActionGroups["backup-jobs"].Icon)
+}
+
 func TestValidateReservedActionArgumentNamesAllowsNonReserved(t *testing.T) {
 	c := DefaultConfig()
 	c.Actions = append(c.Actions, &Action{

@@ -40,9 +40,12 @@ translations:
   logs.back-to-list: Back to List
   logs.queue: Queue
   logs.queue-title: Execution Queue
-  logs.queue-page-description: Active and waiting executions grouped by action. Entries you are not permitted to view are hidden.
+  logs.queue-page-description: Active and waiting executions grouped by action group. Entries you are not permitted to view are hidden.
   logs.queue-empty: There are no active or waiting executions right now.
+  logs.queue-default-group: Default
+  logs.queue-group-limit: "limit {max}, queued {queued}"
   logs.queue-group-active: "{active} active (max {max})"
+  logs.queue-group-active-unlimited: "{active} active"
   logs.queue-waiting: Waiting
   logs.queue-running: Running
   logs.queue-position: "#{position}"

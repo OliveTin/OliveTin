@@ -33,7 +33,10 @@ translations:
   logs.back-to-list: Torna all'Elenco
   logs.queue: Coda
   logs.queue-title: Coda di esecuzione
-  logs.queue-page-description: Esecuzioni attive e in attesa raggruppate per azione. Le voci non autorizzate sono nascoste.
+  logs.queue-page-description: Esecuzioni attive e in attesa raggruppate per gruppo di azioni. Le voci non autorizzate sono nascoste.
+  logs.queue-default-group: Predefinito
+  logs.queue-group-limit: "limite {max}, in coda {queued}"
+  logs.queue-group-active-unlimited: "{active} attive"
   logs.queue-empty: Non ci sono esecuzioni attive o in attesa al momento.
   logs.queue-group-active: "{active} attive (max {max})"
   logs.queue-waiting: In attesa

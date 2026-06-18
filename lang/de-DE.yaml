@@ -33,7 +33,10 @@ translations:
   logs.back-to-list: Zurück zur Liste
   logs.queue: Warteschlange
   logs.queue-title: Ausführungswarteschlange
-  logs.queue-page-description: Aktive und wartende Ausführungen, nach Aktion gruppiert. Einträge ohne Berechtigung werden ausgeblendet.
+  logs.queue-page-description: Aktive und wartende Ausführungen, nach Aktionsgruppe gruppiert. Einträge ohne Berechtigung werden ausgeblendet.
+  logs.queue-default-group: Standard
+  logs.queue-group-limit: "Limit {max}, wartend {queued}"
+  logs.queue-group-active-unlimited: "{active} aktiv"
   logs.queue-empty: Derzeit gibt es keine aktiven oder wartenden Ausführungen.
   logs.queue-group-active: "{active} aktiv (max. {max})"
   logs.queue-waiting: Wartend

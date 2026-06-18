@@ -8,8 +8,16 @@ import (
 	apiv1 "github.com/OliveTin/OliveTin/gen/olivetin/api/v1"
 	"github.com/OliveTin/OliveTin/internal/auth"
 	authpublic "github.com/OliveTin/OliveTin/internal/auth/authpublic"
+	config "github.com/OliveTin/OliveTin/internal/config"
 	"github.com/OliveTin/OliveTin/internal/executor"
 )
+
+const defaultActionGroupName = "default"
+
+type executionQueueBucketKey struct {
+	groupName string
+	bindingID string
+}
 
 func (api *oliveTinAPI) GetExecutionQueue(ctx ctx.Context, req *connect.Request[apiv1.GetExecutionQueueRequest]) (*connect.Response[apiv1.GetExecutionQueueResponse], error) {
 	user := auth.UserFromApiCall(ctx, req, api.cfg)
@@ -28,23 +36,66 @@ func (api *oliveTinAPI) GetExecutionQueue(ctx ctx.Context, req *connect.Request[
 }
 
 func buildExecutionQueueGroups(active []*executor.InternalLogEntry, user *authpublic.AuthenticatedUser, api *oliveTinAPI) []*apiv1.ExecutionQueueGroup {
-	grouped := make(map[string]*apiv1.ExecutionQueueGroup)
+	actionBuckets := make(map[executionQueueBucketKey]*apiv1.ExecutionQueueAction)
 
 	for _, entry := range active {
-		bindingID := entry.GetBindingId()
-		group := grouped[bindingID]
-		if group == nil {
-			group = newExecutionQueueGroup(entry)
-			grouped[bindingID] = group
+		addActiveEntryToActionBuckets(actionBuckets, entry, api.cfg, user, api)
+	}
+
+	return buildExecutionQueueGroupsFromBuckets(actionBuckets, api.cfg)
+}
+
+func addActiveEntryToActionBuckets(
+	buckets map[executionQueueBucketKey]*apiv1.ExecutionQueueAction,
+	entry *executor.InternalLogEntry,
+	cfg *config.Config,
+	user *authpublic.AuthenticatedUser,
+	api *oliveTinAPI,
+) {
+	for _, groupName := range enforcedActionGroupNames(entry, cfg) {
+		key := executionQueueBucketKey{
+			groupName: groupName,
+			bindingID: entry.GetBindingId(),
 		}
 
-		group.Entries = append(group.Entries, api.internalLogEntryToPb(entry, user))
+		action := buckets[key]
+		if action == nil {
+			action = newExecutionQueueAction(entry)
+			buckets[key] = action
+		}
+
+		action.Entries = append(action.Entries, api.internalLogEntryToPb(entry, user))
+	}
+}
+
+func finalizeExecutionQueueGroup(group *apiv1.ExecutionQueueGroup) {
+	sortExecutionQueueActions(group.Actions)
+	group.ActiveCount = sumExecutionQueueActionEntries(group.Actions)
+	group.QueuedCount = countQueuedGroupEntries(group.Actions)
+}
+
+func buildExecutionQueueGroupsFromBuckets(
+	buckets map[executionQueueBucketKey]*apiv1.ExecutionQueueAction,
+	cfg *config.Config,
+) []*apiv1.ExecutionQueueGroup {
+	grouped := make(map[string]*apiv1.ExecutionQueueGroup)
+
+	for key, action := range buckets {
+		sortQueueEntries(action.Entries)
+		action.ActiveCount = int32(len(action.Entries))
+
+		group := grouped[key.groupName]
+		if group == nil {
+			group = newExecutionQueueGroup(key.groupName, cfg)
+			grouped[key.groupName] = group
+		}
+
+		group.Actions = append(group.Actions, action)
 	}
 
 	groups := make([]*apiv1.ExecutionQueueGroup, 0, len(grouped))
 	for _, group := range grouped {
-		sortQueueEntries(group.Entries)
-		group.ActiveCount = int32(len(group.Entries))
+		finalizeExecutionQueueGroup(group)
 		groups = append(groups, group)
 	}
 
@@ -52,8 +103,56 @@ func buildExecutionQueueGroups(active []*executor.InternalLogEntry, user *authpu
 	return groups
 }
 
-func newExecutionQueueGroup(entry *executor.InternalLogEntry) *apiv1.ExecutionQueueGroup {
-	group := &apiv1.ExecutionQueueGroup{
+func hasExecutionQueueBinding(entry *executor.InternalLogEntry, cfg *config.Config) bool {
+	return entry != nil && entry.Binding != nil && entry.Binding.Action != nil && cfg != nil
+}
+
+func collectEnforcedActionGroupNames(groups []string, cfg *config.Config) []string {
+	names := make([]string, 0, len(groups))
+	for _, groupName := range groups {
+		if isEnforcedActionGroup(cfg, groupName) {
+			names = append(names, groupName)
+		}
+	}
+	return names
+}
+
+func enforcedActionGroupNames(entry *executor.InternalLogEntry, cfg *config.Config) []string {
+	if !hasExecutionQueueBinding(entry, cfg) {
+		return []string{defaultActionGroupName}
+	}
+
+	names := collectEnforcedActionGroupNames(entry.Binding.Action.Groups, cfg)
+	if len(names) == 0 {
+		return []string{defaultActionGroupName}
+	}
+
+	return names
+}
+
+func isEnforcedActionGroup(cfg *config.Config, groupName string) bool {
+	group, found := cfg.ActionGroups[groupName]
+	return found && group != nil && group.MaxConcurrent >= 1
+}
+
+func newExecutionQueueGroup(name string, cfg *config.Config) *apiv1.ExecutionQueueGroup {
+	group := &apiv1.ExecutionQueueGroup{Name: name}
+	if name == defaultActionGroupName {
+		return group
+	}
+
+	actionGroup, found := cfg.ActionGroups[name]
+	if !found || actionGroup == nil {
+		return group
+	}
+
+	group.Icon = actionGroup.Icon
+	group.MaxConcurrent = int32(actionGroup.MaxConcurrent)
+	return group
+}
+
+func newExecutionQueueAction(entry *executor.InternalLogEntry) *apiv1.ExecutionQueueAction {
+	action := &apiv1.ExecutionQueueAction{
 		BindingId:    entry.GetBindingId(),
 		ActionTitle:  entry.ActionTitle,
 		ActionIcon:   entry.ActionIcon,
@@ -61,10 +160,34 @@ func newExecutionQueueGroup(entry *executor.InternalLogEntry) *apiv1.ExecutionQu
 	}
 
 	if entry.Binding != nil && entry.Binding.Action != nil {
-		group.MaxConcurrent = int32(entry.Binding.Action.MaxConcurrent)
+		action.MaxConcurrent = int32(entry.Binding.Action.MaxConcurrent)
 	}
 
-	return group
+	return action
+}
+
+func sumExecutionQueueActionEntries(actions []*apiv1.ExecutionQueueAction) int32 {
+	var total int32
+
+	for _, action := range actions {
+		total += int32(len(action.Entries))
+	}
+
+	return total
+}
+
+func countQueuedGroupEntries(actions []*apiv1.ExecutionQueueAction) int32 {
+	var total int32
+
+	for _, action := range actions {
+		for _, entry := range action.Entries {
+			if entry.Queued {
+				total++
+			}
+		}
+	}
+
+	return total
 }
 
 func sortQueueEntries(entries []*apiv1.LogEntry) {
@@ -73,13 +196,31 @@ func sortQueueEntries(entries []*apiv1.LogEntry) {
 	})
 }
 
+func sortExecutionQueueActions(actions []*apiv1.ExecutionQueueAction) {
+	sort.Slice(actions, func(i, j int) bool {
+		left := actions[i].ActionTitle
+		right := actions[j].ActionTitle
+		if left == right {
+			return actions[i].EntityPrefix < actions[j].EntityPrefix
+		}
+
+		return left < right
+	})
+}
+
 func sortExecutionQueueGroups(groups []*apiv1.ExecutionQueueGroup) {
 	sort.Slice(groups, func(i, j int) bool {
-		left := groups[i].ActionTitle
-		right := groups[j].ActionTitle
-		if left == right {
-			return groups[i].EntityPrefix < groups[j].EntityPrefix
+		left := groups[i].Name
+		right := groups[j].Name
+
+		if left == defaultActionGroupName {
+			return false
 		}
+
+		if right == defaultActionGroupName {
+			return true
+		}
+
 		return left < right
 	})
 }

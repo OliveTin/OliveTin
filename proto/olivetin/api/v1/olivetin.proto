@@ -192,7 +192,7 @@ message GetActionLogsResponse {
 
 message GetExecutionQueueRequest {}
 
-message ExecutionQueueGroup {
+message ExecutionQueueAction {
 	string binding_id = 1;
 	string action_title = 2;
 	string action_icon = 3;
@@ -200,6 +200,15 @@ message ExecutionQueueGroup {
 	int32 active_count = 5;
 	string entity_prefix = 6;
 	repeated LogEntry entries = 7;
+}
+
+message ExecutionQueueGroup {
+	string name = 1;
+	string icon = 2;
+	int32 max_concurrent = 3;
+	int32 active_count = 4;
+	repeated ExecutionQueueAction actions = 5;
+	int32 queued_count = 6;
 }
 
 message GetExecutionQueueResponse {

@@ -834,9 +834,9 @@ export declare type GetExecutionQueueRequest = Message<"olivetin.api.v1.GetExecu
 export declare const GetExecutionQueueRequestSchema: GenMessage<GetExecutionQueueRequest>;
 
 /**
- * @generated from message olivetin.api.v1.ExecutionQueueGroup
+ * @generated from message olivetin.api.v1.ExecutionQueueAction
  */
-export declare type ExecutionQueueGroup = Message<"olivetin.api.v1.ExecutionQueueGroup"> & {
+export declare type ExecutionQueueAction = Message<"olivetin.api.v1.ExecutionQueueAction"> & {
   /**
    * @generated from field: string binding_id = 1;
    */
@@ -871,6 +871,47 @@ export declare type ExecutionQueueGroup = Message<"olivetin.api.v1.ExecutionQueu
    * @generated from field: repeated olivetin.api.v1.LogEntry entries = 7;
    */
   entries: LogEntry[];
+};
+
+/**
+ * Describes the message olivetin.api.v1.ExecutionQueueAction.
+ * Use `create(ExecutionQueueActionSchema)` to create a new message.
+ */
+export declare const ExecutionQueueActionSchema: GenMessage<ExecutionQueueAction>;
+
+/**
+ * @generated from message olivetin.api.v1.ExecutionQueueGroup
+ */
+export declare type ExecutionQueueGroup = Message<"olivetin.api.v1.ExecutionQueueGroup"> & {
+  /**
+   * @generated from field: string name = 1;
+   */
+  name: string;
+
+  /**
+   * @generated from field: string icon = 2;
+   */
+  icon: string;
+
+  /**
+   * @generated from field: int32 max_concurrent = 3;
+   */
+  maxConcurrent: number;
+
+  /**
+   * @generated from field: int32 active_count = 4;
+   */
+  activeCount: number;
+
+  /**
+   * @generated from field: repeated olivetin.api.v1.ExecutionQueueAction actions = 5;
+   */
+  actions: ExecutionQueueAction[];
+
+  /**
+   * @generated from field: int32 queued_count = 6;
+   */
+  queuedCount: number;
 };
 
 /**

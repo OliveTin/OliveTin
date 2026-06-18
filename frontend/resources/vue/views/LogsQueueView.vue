@@ -18,74 +18,73 @@
   </Section>
 
   <section
-    v-for="group in groups"
-    :key="group.bindingId"
-    class="with-header-and-content queue-group-section"
+    v-for="actionGroup in groups"
+    :key="actionGroup.name"
+    class="with-header-and-content queue-action-group-section"
   >
     <div class="section-header flex-row">
-      <div class="fg1 queue-group-heading">
-        <ActionIconGlyph class="queue-group-icon" :glyph="group.actionIcon" />
-        <div class="queue-group-title">
-          <h2 :title="group.entityPrefix ? `${t('logs.queue-entity')}: ${group.entityPrefix}` : ''">
-            {{ group.actionTitle }}
-          </h2>
-          <p v-if="group.entityPrefix" class="queue-entity">
-            {{ t('logs.queue-entity') }}: {{ group.entityPrefix }}
-          </p>
-        </div>
+      <div class="fg1 queue-action-group-heading">
+        <ActionIconGlyph class="icon" :glyph="actionGroup.icon" />
+        <h2>{{ displayActionGroupName(actionGroup.name) }}</h2>
       </div>
-      <div role="toolbar" class="queue-group-toolbar">
-        <router-link
-          v-if="group.bindingId"
-          :to="`/action/${group.bindingId}`"
-          class="button neutral"
-          :title="t('logs.queue-action-details')"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
-            <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.31-8.86c-1.77-.45-2.34-.94-2.34-1.67 0-.84.79-1.43 2.1-1.43 1.38 0 1.9.66 1.94 1.64h1.71c-.05-1.34-.87-2.57-2.49-2.97V5H10.9v1.69c-1.51.32-2.72 1.3-2.72 2.81 0 1.79 1.49 2.69 3.66 3.21 1.95.46 2.34 1.22 2.34 1.8 0 .53-.39 1.39-2.1 1.39-1.6 0-2.05-.56-2.13-1.45H8.04c.08 1.5 1.18 2.37 2.82 2.69V19h2.34v-1.63c1.65-.35 2.48-1.24 2.48-2.77-.01-1.88-1.51-2.87-3.7-3.23z"/>
-          </svg>
-          {{ t('logs.queue-action-details') }}
-        </router-link>
-        <span class="queue-group-limit annotation">
-          {{ t('logs.queue-group-active', { active: group.activeCount, max: group.maxConcurrent }) }}
-        </span>
-      </div>
+      <span
+        v-if="actionGroup.maxConcurrent > 0"
+        class="queue-action-group-limit annotation"
+      >
+        {{ t('logs.queue-group-limit', { max: actionGroup.maxConcurrent, queued: actionGroup.queuedCount }) }}
+      </span>
     </div>
 
     <div class="section-content">
       <table class="logs-table row-hover">
-      <thead>
-        <tr>
-          <th>{{ t('logs.timestamp') }}</th>
-          <th>{{ t('logs.metadata') }}</th>
-          <th>{{ t('logs.status') }}</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="(entry, index) in group.entries" :key="entry.executionTrackingId" class="log-row">
-          <td class="timestamp">{{ formatTimestamp(entry.datetimeStarted) }}</td>
-          <td class="tags">
-            <span class="annotation">
-              <span class="annotation-key">User:</span>
-              <span class="annotation-val">{{ entry.user }}</span>
-            </span>
-            <span v-if="entry.tags && entry.tags.length > 0" class="tag-list">
-              <span v-for="tag in entry.tags" :key="tag" class="tag">{{ tag }}</span>
-            </span>
-            <span class="annotation">
-              <span class="annotation-key">ID:</span>
-              <router-link :to="`/logs/${entry.executionTrackingId}`">
-                {{ entry.executionTrackingId }}
-              </router-link>
-            </span>
-          </td>
-          <td class="exit-code">
-            <span v-if="!entry.executionFinished" class="queue-position">{{ t('logs.queue-position', { position: index + 1 }) }}</span>
-            <ActionStatusDisplay :logEntry="entry" />
-          </td>
-        </tr>
-      </tbody>
-    </table>
+        <thead>
+          <tr>
+            <th>{{ t('logs.timestamp') }}</th>
+            <th>{{ t('logs.action') }}</th>
+            <th>{{ t('logs.metadata') }}</th>
+            <th>{{ t('logs.status') }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <template v-for="action in actionGroup.actions" :key="`${actionGroup.name}:${action.bindingId}`">
+            <tr
+              v-for="(entry, index) in action.entries"
+              :key="entry.executionTrackingId"
+              class="log-row"
+              :title="action.actionTitle"
+            >
+              <td class="timestamp">{{ formatTimestamp(entry.datetimeStarted) }}</td>
+              <td>
+                <ActionIconGlyph class="icon" :glyph="action.actionIcon" />
+                <router-link :to="`/logs/${entry.executionTrackingId}`">
+                  <LogActionTitle
+                    :action-title="action.actionTitle"
+                    :justification="entry.justification"
+                  />
+                </router-link>
+                <span v-if="action.entityPrefix" class="queue-entity annotation">
+                  {{ action.entityPrefix }}
+                </span>
+              </td>
+              <td class="tags">
+                <span class="annotation">
+                  <span class="annotation-key">User:</span>
+                  <span class="annotation-val">{{ entry.user }}</span>
+                </span>
+                <span v-if="entry.tags && entry.tags.length > 0" class="tag-list">
+                  <span v-for="tag in entry.tags" :key="tag" class="tag">{{ tag }}</span>
+                </span>
+              </td>
+              <td class="exit-code">
+                <span v-if="!entry.executionFinished" class="queue-position">
+                  {{ t('logs.queue-position', { position: index + 1 }) }}
+                </span>
+                <ActionStatusDisplay :logEntry="entry" link-queued-status />
+              </td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
     </div>
   </section>
 </template>
@@ -95,20 +94,33 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import Section from 'picocrank/vue/components/Section.vue'
 import ActionIconGlyph from '../components/ActionIconGlyph.vue'
 import ActionStatusDisplay from '../components/ActionStatusDisplay.vue'
+import LogActionTitle from '../components/LogActionTitle.vue'
 import { useI18n } from 'vue-i18n'
 import { getExecutionLogEntry, cloneLogEntry, updateLogEntryInGroups } from '../utils/executionLogEvents.js'
+
+const defaultActionGroupName = 'default'
 
 const { t } = useI18n()
 
 const groups = ref([])
 const loading = ref(false)
 
+function displayActionGroupName (name) {
+  if (name === defaultActionGroupName) {
+    return t('logs.queue-default-group')
+  }
+
+  return name
+}
+
 function collectCompletedEntries (currentGroups) {
   const completed = []
   for (const group of currentGroups || []) {
-    for (const entry of group.entries || []) {
-      if (entry.executionFinished) {
-        completed.push(cloneLogEntry(entry))
+    for (const action of group.actions || []) {
+      for (const entry of action.entries || []) {
+        if (entry.executionFinished) {
+          completed.push(cloneLogEntry(entry))
+        }
       }
     }
   }
@@ -126,51 +138,106 @@ function sortGroupEntries (entries) {
 
 function sortGroups (groupList) {
   groupList.sort((left, right) => {
-    const byTitle = (left.actionTitle || '').localeCompare(right.actionTitle || '')
-    if (byTitle !== 0) {
-      return byTitle
+    if (left.name === defaultActionGroupName) {
+      return 1
     }
-    return (left.entityPrefix || '').localeCompare(right.entityPrefix || '')
+    if (right.name === defaultActionGroupName) {
+      return -1
+    }
+    return (left.name || '').localeCompare(right.name || '')
   })
 }
 
-function mergeCompletedEntries (apiGroups, completedEntries) {
-  const merged = (apiGroups || []).map(group => ({
+function sumActionEntries (actions) {
+  return (actions || []).reduce((total, action) => total + (action.entries || []).length, 0)
+}
+
+function cloneActionGroup (group) {
+  return {
     ...group,
-    entries: [...(group.entries || [])]
-  }))
+    actions: (group.actions || []).map(action => ({
+      ...action,
+      entries: [...(action.entries || [])]
+    }))
+  }
+}
+
+function findActionInGroups (groupList, bindingId) {
+  const matches = []
+
+  for (const group of groupList) {
+    for (const action of group.actions || []) {
+      if (action.bindingId === bindingId) {
+        matches.push({ group, action })
+      }
+    }
+  }
+
+  return matches
+}
+
+function mergeCompletedEntries (apiGroups, completedEntries) {
+  const merged = (apiGroups || []).map(cloneActionGroup)
 
   for (const entry of completedEntries) {
     const alreadyPresent = merged.some(group =>
-      group.entries.some(item => item.executionTrackingId === entry.executionTrackingId)
+      (group.actions || []).some(action =>
+        (action.entries || []).some(item => item.executionTrackingId === entry.executionTrackingId)
+      )
     )
     if (alreadyPresent) {
       continue
     }
 
-    let group = merged.find(item => item.bindingId === entry.bindingId)
-    if (!group) {
-      group = {
-        bindingId: entry.bindingId,
-        actionTitle: entry.actionTitle,
-        actionIcon: entry.actionIcon,
-        entityPrefix: '',
-        maxConcurrent: 0,
-        activeCount: 0,
-        entries: []
-      }
-      merged.push(group)
+    const matches = findActionInGroups(merged, entry.bindingId)
+    if (matches.length === 0) {
+      continue
     }
 
-    group.entries.push(entry)
+    for (const { action } of matches) {
+      action.entries.push(entry)
+    }
   }
 
   for (const group of merged) {
-    sortGroupEntries(group.entries)
+    for (const action of group.actions || []) {
+      sortGroupEntries(action.entries)
+      action.activeCount = action.entries.length
+    }
+    refreshGroupCounts(group)
   }
   sortGroups(merged)
 
   return merged
+}
+
+function forEachActionWithEntry (groupList, executionTrackingId, callback) {
+  for (const group of groupList) {
+    for (const action of group.actions || []) {
+      const hasEntry = (action.entries || []).some(
+        item => item.executionTrackingId === executionTrackingId
+      )
+      if (hasEntry) {
+        callback(group, action)
+      }
+    }
+  }
+}
+
+function refreshGroupCounts (group) {
+  let queued = 0
+
+  for (const action of group.actions || []) {
+    action.activeCount = (action.entries || []).length
+    for (const entry of action.entries || []) {
+      if (entry.queued) {
+        queued++
+      }
+    }
+  }
+
+  group.activeCount = sumActionEntries(group.actions)
+  group.queuedCount = queued
 }
 
 function applyQueueEntryUpdate (logEntry, afterUpdate) {
@@ -182,16 +249,13 @@ function applyQueueEntryUpdate (logEntry, afterUpdate) {
   if (afterUpdate) {
     afterUpdate(result)
   }
-  sortGroupEntries(result.group.entries)
-  return true
-}
 
-function adjustActiveCountOnStart (group, previous, logEntry) {
-  const wasActive = !previous.executionFinished
-  const isActive = !logEntry.executionFinished
-  if (!wasActive && isActive) {
-    group.activeCount++
-  }
+  forEachActionWithEntry(groups.value, logEntry.executionTrackingId, (group, action) => {
+    sortGroupEntries(action.entries)
+    refreshGroupCounts(group)
+  })
+
+  return true
 }
 
 function insertActiveQueueEntry (logEntry) {
@@ -200,23 +264,22 @@ function insertActiveQueueEntry (logEntry) {
     return
   }
 
-  let group = groups.value.find(item => item.bindingId === logEntry.bindingId)
-  if (!group) {
-    group = {
-      bindingId: logEntry.bindingId,
-      actionTitle: logEntry.actionTitle || '',
-      actionIcon: logEntry.actionIcon || '',
-      entityPrefix: logEntry.entityPrefix || '',
-      maxConcurrent: 0,
-      activeCount: 0,
-      entries: []
-    }
-    groups.value.push(group)
+  const matches = findActionInGroups(groups.value, logEntry.bindingId)
+  if (matches.length === 0) {
+    fetchQueue()
+    return
   }
 
-  group.entries.push(cloneLogEntry(logEntry))
-  adjustActiveCountOnStart(group, { executionFinished: true }, logEntry)
-  sortGroupEntries(group.entries)
+  const touchedGroups = new Set()
+  for (const { group, action } of matches) {
+    action.entries.push(cloneLogEntry(logEntry))
+    touchedGroups.add(group)
+    sortGroupEntries(action.entries)
+  }
+
+  for (const group of touchedGroups) {
+    refreshGroupCounts(group)
+  }
   sortGroups(groups.value)
 }
 
@@ -226,9 +289,7 @@ function onExecutionStarted (evt) {
     return
   }
 
-  if (!applyQueueEntryUpdate(logEntry, ({ group, previous }) => {
-    adjustActiveCountOnStart(group, previous, logEntry)
-  })) {
+  if (!applyQueueEntryUpdate(logEntry)) {
     insertActiveQueueEntry(logEntry)
   }
 }
@@ -239,12 +300,7 @@ function onExecutionFinished (evt) {
     return
   }
 
-  applyQueueEntryUpdate(logEntry, ({ group, previous }) => {
-    const wasActive = !previous.executionFinished
-    if (wasActive && logEntry.executionFinished && group.activeCount > 0) {
-      group.activeCount--
-    }
-  })
+  applyQueueEntryUpdate(logEntry)
 }
 
 function formatTimestamp (timestamp) {
@@ -285,37 +341,19 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.queue-group-heading {
+.queue-action-group-heading {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.5rem;
   min-width: 0;
 }
 
-.queue-group-title h2 {
+.queue-action-group-heading h2 {
   margin: 0;
 }
 
-.queue-group-toolbar {
-  display: inline-flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.queue-group-limit {
+.queue-action-group-limit {
   white-space: nowrap;
-}
-
-.queue-entity {
-  margin: 0.25rem 0 0;
-  font-size: 0.85rem;
-  color: #666;
-}
-
-.queue-group-icon {
-  font-size: 1.5em;
-  flex-shrink: 0;
 }
 
 .timestamp {
@@ -324,9 +362,20 @@ onUnmounted(() => {
   color: #666;
 }
 
+.icon {
+  margin-right: 0.5rem;
+  font-size: 1.2em;
+}
+
 .annotation {
   font-weight: 500;
   font-size: smaller;
+}
+
+.queue-entity {
+  display: block;
+  margin-top: 0.25rem;
+  color: #666;
 }
 
 .exit-code {
