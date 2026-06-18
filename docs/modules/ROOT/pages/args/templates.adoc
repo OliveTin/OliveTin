@@ -1,0 +1,70 @@
+[#templates]
+= Templates in actions
+
+OliveTin uses https://pkg.go.dev/text/template[Go text/template] syntax in action fields such as `shell`, `shellAfterCompleted`, entity directory titles, and `enabledExpression`. Template placeholders are written as `{{ ... }}`.
+
+In OliveTin 3k, use dotted names for template context variables:
+
+* `{{ .Arguments.NAME }}` — argument values (see xref:args/env.adoc[Environment variables])
+* `{{ .CurrentEntity.property }}` — entity properties (see xref:entities/intro.adoc[Entities])
+* `{{ .Env.VAR_NAME }}` — process environment (see xref:advanced_configuration/config_envs.adoc#using-env-in-template-replacements[Using .Env in template replacements])
+* `{{ .OliveTin.Build.Version }}` and related build/runtime fields
+
+In OliveTin 2k, argument and execution-request placeholders used the shorter form (for example, `{{ message }}` instead of `{{ .Arguments.message }}`).
+
+[#json-encoding]
+== JSON encoding with `Json`
+
+The `Json` template function encodes a value as a JSON string. Pipe a template value to it when you need structured data in a command — for example, passing argument or entity state to a script or HTTP client that expects JSON.
+
+[source,yaml]
+----
+actions:
+  - title: curl my knx thing
+    shell: curl --json https://knx.example.com/v1/group/global_on/write -d '{{ .Arguments | Json }}'
+    entity: light
+    arguments:
+      - name: value
+        default: "true"
+----
+
+After template substitution, `{{ .Arguments | Json }}` becomes a JSON object containing all argument names and values for that execution (including execution-request variables such as `ot_username` and `ot_executionTrackingId`).
+
+=== Examples
+
+Encode a single argument value:
+
+[source,yaml]
+----
+shell: echo {{ .Arguments.value | Json }}
+----
+
+If `value` is `hello`, the substituted command is `echo "hello"`.
+
+Encode an entity field:
+
+[source,yaml]
+----
+shell: curl -d {{ .CurrentEntity.foo.bar | Json }}
+----
+
+If `foo.bar` is the string `baz`, the substituted command is `curl -d "baz"`.
+
+Encode a nested entity object:
+
+[source,yaml]
+----
+shell: curl --json -d {{ .CurrentEntity.payload | Json }}
+----
+
+If `payload` is `{on: true}`, the substituted command is `curl --json -d {"on":true}`.
+
+=== Notes
+
+. `Json` uses Go's `encoding/json` package. Strings, numbers, booleans, objects, and arrays are encoded according to normal JSON rules.
+. Argument values in templates are strings (`map[string]string`). A checkbox or boolean argument therefore appears in JSON as a string (for example, `"true"`), not a JSON boolean.
+. If the piped value is missing or nil, `Json` produces `null`.
+. When embedding JSON in a shell command, quote the substitution if the JSON may contain spaces or shell metacharacters. Prefer single-quoted YAML strings around the template when possible, as shown in the curl example above.
+. For HTTP request bodies, pass one JSON-encoded value (or build the JSON structure you need in one template expression). Piping several values with spaces between them does not produce a single valid JSON document.
+
+See link:https://github.com/OliveTin/OliveTin/issues/829[GitHub issue #829] for the original feature request.

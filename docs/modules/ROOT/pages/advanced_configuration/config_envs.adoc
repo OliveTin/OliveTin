@@ -49,6 +49,6 @@ actions:
     shellAfterCompleted: "apprise -t 'Backup on {{ .Env.HOSTNAME }}' -b '{{ output }}'"
 ----
 
-`.Env` uses the same Go template context as other action variables (e.g. `.Arguments`, `.CurrentEntity`, `.OliveTin`). The map is built from the process environment when OliveTin starts; values are read at template execution time. If a variable is missing, the template engine will report a missing-key error (with `missingkey=error`), so use defaulting when a variable might be unset, e.g. `{{ or .Env.OPTIONAL_VAR "default" }}`.
+`.Env` uses the same Go template context as other action variables (e.g. `.Arguments`, `.CurrentEntity`, `.OliveTin`). The map is built from the process environment when OliveTin starts; values are read at template execution time. If a variable is missing, the template engine will report a missing-key error (with `missingkey=error`), so use defaulting when a variable might be unset, e.g. `{{ or .Env.OPTIONAL_VAR "default" }}`. For template functions such as JSON encoding, see xref:args/templates.adoc#json-encoding[JSON encoding with Json].
 
 This feature addresses the need to use environment variables in templates without changing the config loader (see link:https://github.com/OliveTin/OliveTin/issues/840[GitHub issue #840]).

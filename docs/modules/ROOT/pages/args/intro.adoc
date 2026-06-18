@@ -3,7 +3,7 @@
 
 Actions and commands that OliveTin runs, without arguments, are generally quite safe - only that command can be run, without modifications. However, many users need the flexibility to set options on that command - normally called command line arguments. In OliveTin, arguments are defined in a shell commands like `echo {{ message }}`, with a bit of extra configuration.
 
-Examples of valid argument names are `{{ personName }}`, `{{ customer_number }}` and `{{ ISBN11_code }}`. 
+Examples of valid argument names are `{{ personName }}`, `{{ customer_number }}` and `{{ ISBN11_code }}`.
 
 * a-z (case insensitive)
 * _ is allowed
@@ -19,5 +19,5 @@ Now that you understand how arguments work, explore the different argument types
 * xref:args/suggestions.adoc[Argument suggestions] - Add dynamic suggestions to help users
 * xref:args/regex.adoc[Input validation with regex] - Validate user input with regular expressions
 * xref:args/env.adoc[Environment variables] - Use arguments to set environment variables
+* xref:args/templates.adoc[Templates] - Use Go templates in actions, including JSON encoding
 * xref:action_examples/intro.adoc[See examples] - View real-world examples using arguments
-

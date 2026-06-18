@@ -79,6 +79,7 @@
 ** xref:args/input_textarea.adoc[Input: Textarea]
 ** xref:args/suggestions.adoc[Suggestions]
 ** xref:args/env.adoc[Environment Variables]
+** xref:args/templates.adoc[Templates]
 * xref:dashboards/intro.adoc[Dashboards]
 ** xref:dashboards/examples.adoc[Examples]
 ** xref:dashboards/actions.adoc[Actions (Linked)]
