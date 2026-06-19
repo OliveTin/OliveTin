@@ -260,13 +260,14 @@ func main() {
 
 	executor.LoadLogsFromDisk()
 
+	api.RegisterExecutorListener(executor)
+	entities.AddListener(executor.RebuildActionMap)
+
 	go onstartup.Execute(cfg, executor)
 	go oncron.Schedule(cfg, executor)
 	go onfileindir.WatchFilesInDirectory(cfg, executor)
 	go oncalendarfile.Schedule(cfg, executor)
 
-	api.RegisterExecutorListener(executor)
-	entities.AddListener(executor.RebuildActionMap)
 	go entities.SetupEntityFileWatchers(cfg)
 
 	go updatecheck.StartUpdateChecker(cfg)
