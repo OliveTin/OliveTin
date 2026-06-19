@@ -1019,7 +1019,7 @@ func stepRequestActionPopulateLogEntry(req *ExecutionRequest) {
 		entry.Binding = req.Binding
 		entry.ActionConfigTitle = req.Binding.Action.Title
 		entry.ActionTitle = tpl.ParseTemplateOfActionBeforeExec(req.Binding.Action.Title, req.Binding.Entity)
-		entry.ActionIcon = req.Binding.Action.Icon
+		entry.ActionIcon = tpl.ParseTemplateOfActionBeforeExec(req.Binding.Action.Icon, req.Binding.Entity)
 		entry.Tags = req.Tags
 		entry.Justification = ResolveJustification(req)
 		if req.Binding.Entity != nil {

@@ -10,6 +10,7 @@ import (
 	"github.com/OliveTin/OliveTin/internal/auth"
 	authpublic "github.com/OliveTin/OliveTin/internal/auth/authpublic"
 	config "github.com/OliveTin/OliveTin/internal/config"
+	"github.com/OliveTin/OliveTin/internal/entities"
 )
 
 func testingExecutor() (*Executor, *config.Config) {
@@ -57,6 +58,32 @@ func TestCreateExecutorAndExec(t *testing.T) {
 	wg.Wait()
 
 	assert.Equal(t, int32(0), req.logEntry.ExitCode, "Exit code is zero")
+}
+
+func TestStepRequestActionPopulateLogEntryResolvesEntityTemplates(t *testing.T) {
+	req := &ExecutionRequest{
+		logEntry: &InternalLogEntry{},
+		Binding: &ActionBinding{
+			Action: &config.Action{
+				Title: "Do something with {{ project.name }}",
+				Icon:  "{{ project.icon }}",
+			},
+			Entity: &entities.Entity{
+				Data: map[string]any{
+					"name": "foo",
+					"icon": "🐰",
+				},
+				UniqueKey: "foo-key",
+			},
+		},
+	}
+
+	stepRequestActionPopulateLogEntry(req)
+
+	assert.Equal(t, "Do something with foo", req.logEntry.ActionTitle)
+	assert.Equal(t, "🐰", req.logEntry.ActionIcon)
+	assert.Equal(t, "Do something with {{ project.name }}", req.logEntry.ActionConfigTitle)
+	assert.Equal(t, "foo-key", req.logEntry.EntityPrefix)
 }
 
 func TestExecNonExistant(t *testing.T) {
