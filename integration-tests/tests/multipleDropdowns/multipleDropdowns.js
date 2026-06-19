@@ -58,7 +58,10 @@ describe('config: multipleDropdowns', function () {
 
     const firstInput = await comboboxes[0].findElement(By.css('.choice-combobox-input'))
     await firstInput.click()
-    expect(await comboboxes[0].findElements(By.css('.choice-combobox-list li'))).to.have.length(2)
+    await webdriver.wait(new Condition('wait for first combobox list', async () => {
+      const lists = await comboboxes[0].findElements(By.css('.choice-combobox-list li'))
+      return lists.length === 2
+    }), 2000)
 
     await firstInput.sendKeys(Key.TAB)
 

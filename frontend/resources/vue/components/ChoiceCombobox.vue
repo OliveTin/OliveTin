@@ -2,6 +2,7 @@
   <div class="choice-combobox" ref="rootRef">
     <input
       ref="searchInputRef"
+      :id="id"
       type="text"
       class="choice-combobox-input"
       role="combobox"
@@ -11,21 +12,16 @@
       :aria-activedescendant="activeDescendantId"
       :placeholder="placeholderText"
       :value="query"
+      :required="required"
       @focus="handleFocus"
       @input="handleSearchInput"
       @keydown="handleKeydown"
       @blur="handleBlur"
     />
     <input
-      :id="id"
       :name="name"
-      type="text"
-      class="choice-combobox-hidden-value"
-      tabindex="-1"
+      type="hidden"
       :value="modelValue"
-      :required="required"
-      readonly
-      aria-hidden="true"
     />
     <ul
       v-if="isOpen && filteredChoices.length > 0"
@@ -38,7 +34,7 @@
         :id="`${listboxId}-option-${index}`"
         :key="choice.value"
         role="option"
-        :aria-selected="index === highlightedIndex"
+        :aria-selected="choice.value === modelValue"
         :class="{
           highlighted: index === highlightedIndex,
           selected: choice.value === modelValue
@@ -193,15 +189,23 @@ function moveHighlight(delta) {
 function handleKeydown(event) {
   if (event.key === 'ArrowDown') {
     event.preventDefault()
+    const wasOpen = isOpen.value
     openList()
-    moveHighlight(1)
+    if (wasOpen) {
+      moveHighlight(1)
+    }
     return
   }
 
   if (event.key === 'ArrowUp') {
     event.preventDefault()
+    const wasOpen = isOpen.value
     openList()
-    moveHighlight(-1)
+    if (wasOpen) {
+      moveHighlight(-1)
+    } else if (filteredChoices.value.length > 0) {
+      highlightedIndex.value = filteredChoices.value.length - 1
+    }
     return
   }
 
@@ -271,18 +275,6 @@ onBeforeUnmount(() => {
 
 .choice-combobox-input {
   width: 100%;
-}
-
-.choice-combobox-hidden-value {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
 }
 
 .choice-combobox-list {
