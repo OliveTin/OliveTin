@@ -9,14 +9,6 @@ listenAddressSingleHTTPFrontend: 0.0.0.0:1337
 # Docs: https://docs.olivetin.app/advanced_configuration/logs.html
 logLevel: "INFO"
 
-# Action groups share a concurrency limit across multiple actions. When the
-# limit is reached, additional requests are queued and run in order.
-# Docs: https://docs.olivetin.app/action_customization/concurrency.html#action-groups
-actionGroups:
-  backup-jobs:
-    maxConcurrent: 1
-    icon: backup
-
 # Actions are commands that are executed by OliveTin, and normally show up as
 # buttons on the WebUI.
 #
@@ -266,6 +258,7 @@ actions:
     timeout: 300
     icon: logs
     onclick: execution-dialog
+    groups: [ con2queue10 ]
     execOnCron:
       - "@hourly"
 
@@ -309,6 +302,17 @@ entities:
 
   - file: entities/containers.json
     name: container
+
+# Action groups share a concurrency limit across multiple actions. When the
+# limit is reached, additional requests are queued and run in order.
+# Docs: https://docs.olivetin.app/action_customization/concurrency.html#action-groups
+actionGroups:
+  backup-jobs:
+    maxConcurrent: 1
+    icon: backup
+  con2queue10:
+    maxConcurrent: 2
+    queueSize: 10
 
 # Dashboards are a way of taking actions from the default "actions" view, and
 # organizing them into groups - either into folders, or fieldsets.

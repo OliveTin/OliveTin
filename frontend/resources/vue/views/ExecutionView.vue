@@ -1,27 +1,43 @@
 <template>
-  <Section :title="'Execution Results: ' + title" id = "execution-results-popup">
+  <Section id="execution-results-popup">
+    <template #title>
+      <span class="section-title-with-icon">
+        Execution Results:
+        <router-link
+          v-if="actionId"
+          :to="`/action/${actionId}`"
+          class="action-details-title-link"
+          :title="titleTooltip"
+        >
+          <ActionIconGlyph class="action-title-icon" :glyph="icon" />
+          <LogActionTitle v-if="logEntry" :action-title="title" :justification="logEntry.justification" />
+          <span v-else>{{ title }}</span>
+        </router-link>
+        <template v-else>
+          <LogActionTitle v-if="logEntry" :action-title="title" :justification="logEntry.justification" />
+          <span v-else>{{ title }}</span>
+        </template>
+      </span>
+    </template>
     <template #toolbar>
-			<router-link v-if="actionId" :to="`/action/${actionId}`" title="View all executions for this action" class="button neutral">
-				<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
-					<path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.31-8.86c-1.77-.45-2.34-.94-2.34-1.67 0-.84.79-1.43 2.1-1.43 1.38 0 1.9.66 1.94 1.64h1.71c-.05-1.34-.87-2.57-2.49-2.97V5H10.9v1.69c-1.51.32-2.72 1.3-2.72 2.81 0 1.79 1.49 2.69 3.66 3.21 1.95.46 2.34 1.22 2.34 1.8 0 .53-.39 1.39-2.1 1.39-1.6 0-2.05-.56-2.13-1.45H8.04c.08 1.5 1.18 2.37 2.82 2.69V19h2.34v-1.63c1.65-.35 2.48-1.24 2.48-2.77-.01-1.88-1.51-2.87-3.7-3.23z"/>
-				</svg>
-				Action Details
-			</router-link>
-			<button @click="toggleSize" title="Toggle dialog size" class = "neutral">
-				<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
-					<path fill="currentColor"
-						  d="M3 3h6v2H6.462l4.843 4.843l-1.415 1.414L5 6.367V9H3zm0 18h6v-2H6.376l4.929-4.928l-1.415-1.414L5 17.548V15H3zm12 0h6v-6h-2v2.524l-4.867-4.866l-1.414 1.414L17.647 19H15zm6-18h-6v2h2.562l-4.843 4.843l1.414 1.414L19 6.39V9h2z" />
-				</svg>
+			<button
+				v-for="dashboard in backToDashboards"
+				:key="dashboard.path"
+				@click="goToDashboard(dashboard.path)"
+				:title="'Back to ' + dashboard.title"
+				class="button neutral"
+			>
+				<HugeiconsIcon :icon="DashboardSquare01Icon" />
+				{{ dashboard.title }}
+			</button>
+			<button v-if="backToDashboards.length === 0" @click="goBack" title="Go back" class="button neutral">
+				<HugeiconsIcon :icon="ArrowLeftIcon" />
+				Back
 			</button>
     </template>
 
 		<div v-if="logEntry" class = "flex-row">
 				<dl class = "fg1">
-					<dt>Action</dt>
-					<dd>
-						<LogActionTitle :action-title="title" :justification="logEntry.justification" />
-					</dd>
-
 					<dt>Duration</dt>
 					<dd><span v-html="duration"></span></dd>
 
@@ -30,7 +46,6 @@
 						<ActionStatusDisplay :log-entry="logEntry" :link-queued-status="true" />
 					</dd>
 				</dl>
-        <ActionIconGlyph class="icon" role="img" :glyph="icon" style="align-self: start" />
     </div>
 
 		<div v-if="notFound" class="error-message padded-content">
@@ -40,16 +55,24 @@
 			<router-link to="/logs">View all logs</router-link> or <router-link to="/">return to home</router-link>.
 		</div>
 
-    <div ref="xtermOutput"></div>
+    <div class="xterm-output-container">
+      <div class="xterm-overlay-toolbar">
+        <button type="button" class="xterm-overlay-button" @click="copyOutput" title="Copy to clipboard">
+          <HugeiconsIcon :icon="Copy01Icon" />
+        </button>
+        <button type="button" class="xterm-overlay-button" @click="toggleSize" title="Toggle fullscreen">
+          <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
+            <path fill="currentColor"
+                  d="M3 3h6v2H6.462l4.843 4.843l-1.415 1.414L5 6.367V9H3zm0 18h6v-2H6.376l4.929-4.928l-1.415-1.414L5 17.548V15H3zm12 0h6v-6h-2v2.524l-4.867-4.866l-1.414 1.414L17.647 19H15zm6-18h-6v2h2.562l-4.843 4.843l1.414 1.414L19 6.39V9h2z" />
+          </svg>
+        </button>
+      </div>
+      <div ref="xtermOutput"></div>
+    </div>
 
 			<br />
 
 			<div class="flex-row g1 buttons padded-content">
-				<button @click="goBack" title="Go back">
-					<HugeiconsIcon :icon="ArrowLeftIcon" />
-					Back
-				</button>
-
 				<div class = "fg1" />
 
 					<button :disabled="!canRerun" @click="rerunAction" title="Rerun">
@@ -73,7 +96,7 @@ import LogActionTitle from '../components/LogActionTitle.vue'
 import Section from 'picocrank/vue/components/Section.vue'
 import { OutputTerminal } from '../../../js/OutputTerminal.js'
 import { HugeiconsIcon } from '@hugeicons/vue'
-import { WorkoutRunIcon, Cancel02Icon, ArrowLeftIcon } from '@hugeicons/core-free-icons'
+import { WorkoutRunIcon, Cancel02Icon, ArrowLeftIcon, DashboardSquare01Icon, Copy01Icon } from '@hugeicons/core-free-icons'
 import { useRouter } from 'vue-router'
 import { buttonResults } from '../stores/buttonResults'
 import { requestReconnectNow } from '../../../js/websocket.js'
@@ -104,6 +127,7 @@ const logEntry = ref(null)
 const canRerun = ref(false)
 const canKill = ref(false)
 const actionId = ref('')
+const backToDashboards = ref([])
 const notFound = ref(false)
 const errorMessage = ref('')
 
@@ -134,6 +158,19 @@ function toggleSize() {
   }
 }
 
+async function copyOutput() {
+  const text = terminal?.getBufferAsString?.() || logEntry.value?.output || ''
+  if (!text) {
+    return
+  }
+
+  try {
+    await navigator.clipboard.writeText(text)
+  } catch (err) {
+    console.error('Failed to copy execution output:', err)
+  }
+}
+
 async function reset() {
   executionSeconds.value = 0
   executionTrackingId.value = 'notset'
@@ -149,6 +186,7 @@ async function reset() {
   canRerun.value = false
   canKill.value = false
   logEntry.value = null
+  backToDashboards.value = []
   notFound.value = false
   errorMessage.value = ''
 
@@ -239,15 +277,16 @@ async function fetchExecutionResult(executionTrackingIdParam) {
   executionTrackingId.value = executionTrackingIdParam
   notFound.value = false
   errorMessage.value = ''
+  backToDashboards.value = []
 
   const executionStatusArgs = {
 	executionTrackingId: executionTrackingId.value
   }
 
   try {
-	const logEntryResult = await window.client.executionStatus(executionStatusArgs)
+	const executionStatusResult = await window.client.executionStatus(executionStatusArgs)
 
-	await renderExecutionResult(logEntryResult)
+	await renderExecutionResult(executionStatusResult)
   } catch (err) {
 	// Check if it's a "not found" error (404 or similar)
 	if (err.status === 404 || err.code === 'NotFound' || err.message?.includes('not found')) {
@@ -286,6 +325,9 @@ function updateDuration(logEntryParam) {
 
 async function renderExecutionResult(res) {
   logEntry.value = res.logEntry
+  if (res.backToDashboards) {
+    backToDashboards.value = res.backToDashboards.slice(0, 3)
+  }
 
   // Clear ticker
   if (executionTicker) {
@@ -343,6 +385,10 @@ function goBack() {
   router.back()
 }
 
+function goToDashboard(path) {
+  router.push(path)
+}
+
 onMounted(() => {
   document.addEventListener('fullscreenchange', (e) => {
     setTimeout(() => { // Wait for the DOM to settle
@@ -390,6 +436,65 @@ defineExpose({
 </script>
 
 <style scoped>
+.section-title-with-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.action-title-icon {
+  font-size: 1.5rem;
+}
+
+.action-details-title-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: inherit;
+  text-decoration: none;
+}
+
+.action-details-title-link:hover {
+  text-decoration: underline;
+}
+
+.xterm-output-container {
+  position: relative;
+}
+
+.xterm-overlay-toolbar {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  z-index: 2;
+  display: flex;
+  gap: 0.35rem;
+}
+
+.xterm-overlay-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 0.25rem;
+  background: rgba(30, 30, 30, 0.85);
+  color: #f0f0f0;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.xterm-overlay-button:hover {
+  background: rgba(50, 50, 50, 0.95);
+  border-color: rgba(255, 255, 255, 0.45);
+  color: #fff;
+}
+
+.xterm-overlay-button:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.6);
+  outline-offset: 2px;
+}
+
 .action-history-link {
   color: var(--link-color, #007bff);
   text-decoration: none;

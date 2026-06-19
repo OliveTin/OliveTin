@@ -13,7 +13,7 @@
       </p>
 
       <h3 class="exec-type-heading">
-        On demand
+        On click
         <a class="doc-link" :href="execConditionDocs.onDemand" target="_blank" rel="noopener noreferrer">Documentation</a>
       </h3>
       <p>

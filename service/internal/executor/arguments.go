@@ -146,8 +146,17 @@ func redactExecArgs(execArgs []string, arguments []config.ActionArgument, argume
 	return redacted
 }
 
+func argumentSkipsValidation(arg *config.ActionArgument) bool {
+	switch arg.Type {
+	case "confirmation", "html":
+		return true
+	default:
+		return false
+	}
+}
+
 func typecheckActionArgument(arg *config.ActionArgument, value string, action *config.Action) error {
-	if arg.Type == "confirmation" {
+	if argumentSkipsValidation(arg) {
 		return nil
 	}
 

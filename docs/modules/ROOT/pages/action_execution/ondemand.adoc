@@ -1,5 +1,4 @@
-[#exec-on-demand]
-= Execute on demand
+[#exec-on-click]
+= Execute on click
 
 This is the default, meaning that the action shows up on a dashboard, and at the moment cannot be changed.
-

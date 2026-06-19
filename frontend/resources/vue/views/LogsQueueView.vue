@@ -27,12 +27,10 @@
         <ActionIconGlyph class="icon" :glyph="actionGroup.icon" />
         <h2>{{ displayActionGroupName(actionGroup.name) }}</h2>
       </div>
-      <span
-        v-if="actionGroup.maxConcurrent > 0"
-        class="queue-action-group-limit annotation"
-      >
-        {{ t('logs.queue-group-limit', { max: actionGroup.maxConcurrent, queued: actionGroup.queuedCount }) }}
-      </span>
+      <ActionGroupLimitsLabel
+        :max-concurrent="actionGroup.maxConcurrent"
+        :queue-size="actionGroup.queueSize"
+      />
     </div>
 
     <div class="section-content">
@@ -95,6 +93,7 @@ import Section from 'picocrank/vue/components/Section.vue'
 import ActionIconGlyph from '../components/ActionIconGlyph.vue'
 import ActionStatusDisplay from '../components/ActionStatusDisplay.vue'
 import LogActionTitle from '../components/LogActionTitle.vue'
+import ActionGroupLimitsLabel from '../components/ActionGroupLimitsLabel.vue'
 import { useI18n } from 'vue-i18n'
 import { getExecutionLogEntry, cloneLogEntry, updateLogEntryInGroups } from '../utils/executionLogEvents.js'
 
@@ -350,10 +349,6 @@ onUnmounted(() => {
 
 .queue-action-group-heading h2 {
   margin: 0;
-}
-
-.queue-action-group-limit {
-  white-space: nowrap;
 }
 
 .timestamp {

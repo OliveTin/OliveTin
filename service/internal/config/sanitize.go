@@ -219,10 +219,16 @@ func appendUniqueString(out []string, seen map[string]struct{}, value string) []
 	return append(out, value)
 }
 
+const defaultActionGroupQueueSize = 5
+
 func (cfg *Config) sanitizeActionGroups() {
 	for _, group := range cfg.ActionGroups {
 		if group == nil {
 			continue
+		}
+
+		if group.QueueSize <= 0 {
+			group.QueueSize = defaultActionGroupQueueSize
 		}
 
 		group.Icon = lookupHTMLIcon(group.Icon, cfg.DefaultIconForActions)

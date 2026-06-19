@@ -57,6 +57,7 @@ func TestGetExecutionQueueGroupsByActionGroup(t *testing.T) {
 	require.NotNil(t, defaultGroup)
 
 	assert.Equal(t, int32(2), deployGroup.MaxConcurrent)
+	assert.Equal(t, int32(5), deployGroup.QueueSize)
 	assert.Equal(t, "&#128190;", deployGroup.Icon)
 	assert.Equal(t, int32(2), deployGroup.ActiveCount)
 	assert.Equal(t, int32(1), deployGroup.QueuedCount)

@@ -37,7 +37,7 @@
 * Action Execution
 ** xref:action_execution/create_your_first.adoc[Create your first action]
 ** xref:action_execution/shellvsexec.adoc[Shell vs Exec]
-** xref:action_execution/ondemand.adoc[Execute on demand]
+** xref:action_execution/ondemand.adoc[Execute on click]
 ** xref:action_execution/oncron.adoc[Execute on schedule (cron)]
 ** xref:action_execution/onstartup.adoc[Execute on startup]
 ** xref:action_execution/onwebhook.adoc[Execute on webhook]

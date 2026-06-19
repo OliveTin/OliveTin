@@ -196,6 +196,28 @@ func TestSanitizeActionGroupsResolvesIcons(t *testing.T) {
 	assert.Equal(t, "&#128190;", c.ActionGroups["backup-jobs"].Icon)
 }
 
+func TestSanitizeActionGroupsDefaultsQueueSize(t *testing.T) {
+	c := DefaultConfig()
+	c.ActionGroups = map[string]*ActionGroup{
+		"unity": {MaxConcurrent: 1},
+	}
+
+	c.Sanitize()
+
+	assert.Equal(t, defaultActionGroupQueueSize, c.ActionGroups["unity"].QueueSize)
+}
+
+func TestSanitizeActionGroupsPreservesExplicitQueueSize(t *testing.T) {
+	c := DefaultConfig()
+	c.ActionGroups = map[string]*ActionGroup{
+		"unity": {MaxConcurrent: 1, QueueSize: 2},
+	}
+
+	c.Sanitize()
+
+	assert.Equal(t, 2, c.ActionGroups["unity"].QueueSize)
+}
+
 func TestValidateReservedActionArgumentNamesAllowsNonReserved(t *testing.T) {
 	c := DefaultConfig()
 	c.Actions = append(c.Actions, &Action{
