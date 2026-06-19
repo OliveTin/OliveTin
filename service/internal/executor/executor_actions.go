@@ -94,7 +94,7 @@ func (e *Executor) RebuildActionMap() {
 
 	e.MapActionBindingsLock.Unlock()
 
-	for _, l := range e.listeners {
+	for _, l := range e.copyListeners() {
 		l.OnActionMapRebuilt()
 	}
 }

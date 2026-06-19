@@ -7,6 +7,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	"github.com/OliveTin/OliveTin/internal/api"
 	"github.com/OliveTin/OliveTin/internal/auth"
 	"github.com/OliveTin/OliveTin/internal/entities"
 	"github.com/OliveTin/OliveTin/internal/executor"
@@ -264,6 +265,7 @@ func main() {
 	go onfileindir.WatchFilesInDirectory(cfg, executor)
 	go oncalendarfile.Schedule(cfg, executor)
 
+	api.RegisterExecutorListener(executor)
 	entities.AddListener(executor.RebuildActionMap)
 	go entities.SetupEntityFileWatchers(cfg)
 

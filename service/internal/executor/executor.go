@@ -69,7 +69,8 @@ type Executor struct {
 
 	Cfg *config.Config
 
-	listeners []listener
+	listeners   []listener
+	listenersMu sync.RWMutex
 
 	chainOfCommand []executorStepFunc
 
@@ -218,7 +219,17 @@ type listener interface {
 }
 
 func (e *Executor) AddListener(m listener) {
+	e.listenersMu.Lock()
+	defer e.listenersMu.Unlock()
 	e.listeners = append(e.listeners, m)
+}
+
+func (e *Executor) copyListeners() []listener {
+	e.listenersMu.RLock()
+	defer e.listenersMu.RUnlock()
+	out := make([]listener, len(e.listeners))
+	copy(out, e.listeners)
+	return out
 }
 
 // getPagingStartIndex calculates the starting index for log pagination.
@@ -1052,13 +1063,13 @@ func stepLogFinish(req *ExecutionRequest) bool {
 }
 
 func notifyListenersFinished(req *ExecutionRequest) {
-	for _, listener := range req.executor.listeners {
+	for _, listener := range req.executor.copyListeners() {
 		listener.OnExecutionFinished(req.logEntry)
 	}
 }
 
 func notifyListenersStarted(req *ExecutionRequest) {
-	for _, listener := range req.executor.listeners {
+	for _, listener := range req.executor.copyListeners() {
 		listener.OnExecutionStarted(req.logEntry)
 	}
 }
@@ -1079,7 +1090,7 @@ type OutputStreamer struct {
 }
 
 func (ost *OutputStreamer) Write(o []byte) (n int, err error) {
-	for _, listener := range ost.Req.executor.listeners {
+	for _, listener := range ost.Req.executor.copyListeners() {
 		listener.OnOutputChunk(o, ost.Req.TrackingID)
 	}
 
@@ -1107,6 +1118,13 @@ func buildEnv(args map[string]string) []string {
 	return ret
 }
 
+func commandExitCode(cmd *exec.Cmd) int {
+	if cmd == nil || cmd.ProcessState == nil {
+		return -1
+	}
+	return cmd.ProcessState.ExitCode()
+}
+
 func stepExec(req *ExecutionRequest) bool {
 	ctx, cancel := newTimeoutContext(context.Background(), time.Duration(req.Binding.Action.Timeout)*time.Second, req.executor)
 	defer cancel()
@@ -1127,7 +1145,7 @@ func stepExec(req *ExecutionRequest) bool {
 	ctx.setProcess(cmd.Process)
 	waiterr := cmd.Wait()
 	req.mutateLogEntry(func(entry *InternalLogEntry) {
-		entry.ExitCode = int32(cmd.ProcessState.ExitCode())
+		entry.ExitCode = int32(commandExitCode(cmd))
 		entry.Output = streamer.String()
 	})
 
@@ -1218,7 +1236,7 @@ func stepExecAfter(req *ExecutionRequest) bool {
 	}
 
 	req.mutateLogEntry(func(entry *InternalLogEntry) {
-		entry.Output += fmt.Sprintf("Your shellAfterCompleted exited with code %v\n", cmd.ProcessState.ExitCode())
+		entry.Output += fmt.Sprintf("Your shellAfterCompleted exited with code %v\n", commandExitCode(cmd))
 		entry.Output += "OliveTin::shellAfterCompleted output complete\n"
 	})
 

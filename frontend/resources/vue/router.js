@@ -174,7 +174,7 @@ router.beforeEach((to) => {
 
 // Navigation guard for authentication (if needed)
 router.beforeEach((to) => {
-  const isAuthenticated = window.isAuthenticated || true // Default to true for now
+  const isAuthenticated = window.isAuthenticated ?? false
 
   if (to.meta.requiresAuth && !isAuthenticated) {
     return '/login'

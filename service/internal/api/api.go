@@ -1023,6 +1023,7 @@ func (api *oliveTinAPI) sendEventStreamHeartbeats(client *streamingClient) {
 	defer close(client.heartbeatDone)
 
 	if !api.sendEventStreamHeartbeat(client) {
+		go api.removeClient(client)
 		return
 	}
 
@@ -1037,6 +1038,7 @@ func (api *oliveTinAPI) runEventStreamHeartbeatLoop(client *streamingClient, tic
 			return
 		}
 		if !api.sendEventStreamHeartbeat(client) {
+			go api.removeClient(client)
 			return
 		}
 	}
@@ -1582,18 +1584,43 @@ func (api *oliveTinAPI) restartActionLogEntry(executionTrackingId string) (*exec
 	return execReqLogEntry, nil
 }
 
-func newServer(ex *executor.Executor) *oliveTinAPI {
-	server := oliveTinAPI{}
-	server.cfg = ex.Cfg
-	server.executor = ex
-	server.streamingClients = make(map[*streamingClient]struct{})
+var (
+	executorListenersMu sync.Mutex
+	executorListeners   = map[*executor.Executor]*oliveTinAPI{}
+)
 
-	ex.AddListener(&server)
-	return &server
+// RegisterExecutorListener registers the API server as an executor listener during startup.
+// Call this before background goroutines that may trigger RebuildActionMap.
+func RegisterExecutorListener(ex *executor.Executor) {
+	ensureExecutorListener(ex)
+}
+
+func ensureExecutorListener(ex *executor.Executor) *oliveTinAPI {
+	executorListenersMu.Lock()
+	defer executorListenersMu.Unlock()
+
+	if server, ok := executorListeners[ex]; ok {
+		return server
+	}
+
+	server := newServer(ex)
+	executorListeners[ex] = server
+	return server
+}
+
+func newServer(ex *executor.Executor) *oliveTinAPI {
+	server := &oliveTinAPI{
+		cfg:              ex.Cfg,
+		executor:         ex,
+		streamingClients: make(map[*streamingClient]struct{}),
+	}
+
+	ex.AddListener(server)
+	return server
 }
 
 func GetNewHandler(ex *executor.Executor) (string, http.Handler) {
-	server := newServer(ex)
+	server := ensureExecutorListener(ex)
 
 	jsonOpt := connectproto.WithJSON(
 		protojson.MarshalOptions{

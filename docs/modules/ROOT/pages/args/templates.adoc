@@ -21,7 +21,7 @@ The `Json` template function encodes a value as a JSON string. Pipe a template v
 ----
 actions:
   - title: curl my knx thing
-    shell: curl --json https://knx.example.com/v1/group/global_on/write -d '{{ .Arguments | Json }}'
+    shell: curl --json '{{ .Arguments | Json }}' https://knx.example.com/v1/group/global_on/write
     entity: light
     arguments:
       - name: value
