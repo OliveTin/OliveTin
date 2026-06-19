@@ -21,12 +21,9 @@
                 </option>
               </datalist>
 
-              <select v-if="getInputComponent(arg) === 'select'" :id="arg.name" :name="arg.name" :value="getArgumentValue(arg)"
-                :required="arg.required" @input="handleInput(arg, $event)" @change="handleChange(arg, $event)">
-                <option v-for="choice in arg.choices" :key="choice.value" :value="choice.value">
-                  {{ choice.title || choice.value }}
-                </option>
-              </select>
+              <ChoiceCombobox v-if="getInputComponent(arg) === 'select'" :id="arg.name" :name="arg.name"
+                :choices="arg.choices" :model-value="getArgumentValue(arg)" :required="arg.required"
+                @update:model-value="handleChoiceUpdate(arg, $event)" />
 
               <component v-else :is="getInputComponent(arg)" :id="arg.name" :name="arg.name"
                 :value="(arg.type === 'checkbox' || arg.type === 'confirmation') ? undefined : getArgumentValue(arg)"
@@ -67,6 +64,7 @@
 import { ref, onMounted, onBeforeUnmount, onUnmounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { requestReconnectNow } from '../../../js/websocket.js'
+import ChoiceCombobox from '../components/ChoiceCombobox.vue'
 
 const router = useRouter()
 
@@ -238,6 +236,12 @@ function handleChange(arg, event) {
 
   // Validate the input
   validateArgument(arg, event.target.value)
+}
+
+function handleChoiceUpdate(arg, value) {
+  argValues.value[arg.name] = value
+  updateUrlWithArg(arg.name, value)
+  validateArgument(arg, value)
 }
 
 async function validateArgument(arg, value) {
