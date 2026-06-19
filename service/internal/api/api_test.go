@@ -25,7 +25,10 @@ import (
 func getNewTestServerAndClient(injectedConfig *config.Config) (*httptest.Server, apiv1connect.OliveTinApiServiceClient) {
 	ex := executor.DefaultExecutor(injectedConfig)
 	ex.RebuildActionMap()
+	return getNewTestServerAndClientWithExecutor(injectedConfig, ex)
+}
 
+func getNewTestServerAndClientWithExecutor(injectedConfig *config.Config, ex *executor.Executor) (*httptest.Server, apiv1connect.OliveTinApiServiceClient) {
 	apiPath, apiHandler := GetNewHandler(ex)
 
 	mux := http.NewServeMux()
@@ -822,4 +825,97 @@ func assertEventStreamAdminReceivesSecretActionEvents(t *testing.T, adminEvents 
 	}
 	assert.True(t, gotStarted, "admin must receive ExecutionStarted for secret_action")
 	assert.True(t, gotFinished, "admin must receive ExecutionFinished for secret_action")
+}
+
+func TestExecutionStatusReturnsBackToDashboards(t *testing.T) {
+	cfg := config.DefaultConfig()
+	cfg.Actions = []*config.Action{
+		{Title: "Dashboard Action", Shell: "echo ok"},
+	}
+	cfg.Dashboards = []*config.DashboardComponent{
+		{
+			Title: "Ops",
+			Contents: []*config.DashboardComponent{
+				{Title: "Dashboard Action"},
+			},
+		},
+	}
+
+	ex := executor.DefaultExecutor(cfg)
+	ex.RebuildActionMap()
+	binding := ex.FindBindingWithNoEntity(cfg.Actions[0])
+	require.NotNil(t, binding)
+
+	_, client := getNewTestServerAndClientWithExecutor(cfg, ex)
+
+	startResp, err := client.StartAction(context.Background(), connect.NewRequest(&apiv1.StartActionRequest{
+		BindingId: binding.ID,
+	}))
+	require.NoError(t, err)
+
+	statusResp, err := client.ExecutionStatus(context.Background(), connect.NewRequest(&apiv1.ExecutionStatusRequest{
+		ExecutionTrackingId: startResp.Msg.ExecutionTrackingId,
+	}))
+	require.NoError(t, err)
+	require.NotNil(t, statusResp.Msg)
+	require.Len(t, statusResp.Msg.BackToDashboards, 1)
+	assert.Equal(t, "Ops", statusResp.Msg.BackToDashboards[0].Title)
+	assert.Equal(t, "/dashboards/Ops", statusResp.Msg.BackToDashboards[0].Path)
+}
+
+func TestGetActionBindingReturnsBackToDashboards(t *testing.T) {
+	cfg := config.DefaultConfig()
+	cfg.Actions = []*config.Action{
+		{Title: "Dashboard Action", Shell: "echo ok"},
+	}
+	cfg.Dashboards = []*config.DashboardComponent{
+		{
+			Title: "Ops",
+			Contents: []*config.DashboardComponent{
+				{Title: "Dashboard Action"},
+			},
+		},
+	}
+
+	ex := executor.DefaultExecutor(cfg)
+	ex.RebuildActionMap()
+	binding := ex.FindBindingWithNoEntity(cfg.Actions[0])
+	require.NotNil(t, binding)
+
+	_, client := getNewTestServerAndClientWithExecutor(cfg, ex)
+
+	resp, err := client.GetActionBinding(context.Background(), connect.NewRequest(&apiv1.GetActionBindingRequest{
+		BindingId: binding.ID,
+	}))
+	require.NoError(t, err)
+	require.NotNil(t, resp.Msg)
+	require.Len(t, resp.Msg.BackToDashboards, 1)
+	assert.Equal(t, "Ops", resp.Msg.BackToDashboards[0].Title)
+	assert.Equal(t, "/dashboards/Ops", resp.Msg.BackToDashboards[0].Path)
+}
+
+func TestBuildActionIncludesGroups(t *testing.T) {
+	cfg := config.DefaultConfig()
+	cfg.ActionGroups = map[string]*config.ActionGroup{
+		"con2queue10": {MaxConcurrent: 2, QueueSize: 10},
+	}
+	cfg.Actions = []*config.Action{
+		{Title: "Long running action", Shell: "sleep 1", Groups: []string{"con2queue10", "missing"}},
+	}
+	cfg.Sanitize()
+
+	ex := executor.DefaultExecutor(cfg)
+	ex.RebuildActionMap()
+	binding := ex.FindBindingWithNoEntity(cfg.Actions[0])
+	require.NotNil(t, binding)
+
+	rr := &DashboardRenderRequest{cfg: cfg, ex: ex}
+	actionResult := buildAction(binding, rr)
+
+	require.Len(t, actionResult.Groups, 2)
+	assert.Equal(t, "con2queue10", actionResult.Groups[0].Name)
+	assert.Equal(t, int32(2), actionResult.Groups[0].MaxConcurrent)
+	assert.Equal(t, int32(10), actionResult.Groups[0].QueueSize)
+	assert.Equal(t, "missing", actionResult.Groups[1].Name)
+	assert.Equal(t, int32(0), actionResult.Groups[1].MaxConcurrent)
 }

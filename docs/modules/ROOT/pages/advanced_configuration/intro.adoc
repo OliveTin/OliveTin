@@ -20,8 +20,8 @@ Most users will not need to modify these settings for basic OliveTin usage, but 
 
 Explore the advanced configuration options:
 
-* xref:advanced_configuration/logs.adoc[Configure logging] - Set up application and action logging
-* xref:advanced_configuration/logs-calendar.adoc[Use the logs calendar] - Browse execution history visually
+* xref:advanced_configuration/logs.adoc[Configure application logging] - Set up OliveTin service log levels
+* xref:logs/intro.adoc[Browse action logs] - View execution history in the web interface
 * xref:advanced_configuration/diagnostics.adoc[Use diagnostics] - Access troubleshooting and diagnostic tools
 * xref:advanced_configuration/webui.adoc[Customize the web UI] - Modify the appearance and behavior of the interface
 * xref:advanced_configuration/stylemods.adoc[Apply style mods] - Use style modifications for UI customization

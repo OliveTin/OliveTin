@@ -2,3 +2,8 @@
 .action-button button.test-custom-class {
   background-color: rgb(32, 64, 128);
 }
+
+/* Display cssClass must be overridable by theme rules (#804) */
+.display.test-display-class {
+  background-color: rgb(64, 128, 192);
+}

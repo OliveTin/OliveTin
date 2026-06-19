@@ -137,7 +137,7 @@ func buildDefaultDashboard(rr *DashboardRenderRequest) *apiv1.Dashboard {
 			continue
 		}
 
-		if binding.IsOnDashboard {
+		if binding.IsOnConfiguredDashboard() {
 			continue
 		}
 

@@ -28,7 +28,8 @@ export class OutputTerminal {
 
     this.terminal = new Terminal({
       convertEol: true,
-      linkHandler
+      linkHandler,
+      scrollback: 10000
     })
 
     const fitAddon = new FitAddon()

@@ -18,6 +18,7 @@ func (cfg *Config) Sanitize() {
 	cfg.sanitizeLogHistoryPageSize()
 	cfg.sanitizeLocalUsers()
 	cfg.sanitizeSecurityHeaders()
+	cfg.sanitizeOnClickDefaults()
 
 	// log.Infof("cfg %p", cfg)
 
@@ -26,6 +27,9 @@ func (cfg *Config) Sanitize() {
 	}
 
 	cfg.sanitizeDashboardsForInlineActions()
+
+	cfg.sanitizeActionGroups()
+	cfg.sanitizeActionGroupReferences()
 
 	if err := cfg.validateReservedActionArgumentNames(); err != nil {
 		log.Fatalf("%v", err)
@@ -175,14 +179,85 @@ func (action *Action) sanitize(cfg *Config) {
 
 	action.ID = getActionID(action)
 	action.Icon = lookupHTMLIcon(action.Icon, cfg.DefaultIconForActions)
-	action.PopupOnStart = sanitizePopupOnStart(action.PopupOnStart, cfg)
+	migrateActionOnClick(action)
+	action.OnClick = sanitizeOnClick(action.OnClick, cfg)
+	action.PopupOnStart = action.OnClick
 
 	if action.MaxConcurrent < 1 {
 		action.MaxConcurrent = 1
 	}
 
+	action.Groups = dedupeStrings(action.Groups)
+
 	for idx := range action.Arguments {
 		action.Arguments[idx].sanitize()
+	}
+}
+
+func dedupeStrings(values []string) []string {
+	seen := make(map[string]struct{}, len(values))
+	out := make([]string, 0, len(values))
+
+	for _, value := range values {
+		out = appendUniqueString(out, seen, value)
+	}
+
+	return out
+}
+
+func appendUniqueString(out []string, seen map[string]struct{}, value string) []string {
+	if value == "" {
+		return out
+	}
+
+	if _, found := seen[value]; found {
+		return out
+	}
+
+	seen[value] = struct{}{}
+
+	return append(out, value)
+}
+
+const defaultActionGroupQueueSize = 5
+
+func (cfg *Config) sanitizeActionGroups() {
+	for _, group := range cfg.ActionGroups {
+		if group == nil {
+			continue
+		}
+
+		if group.QueueSize <= 0 {
+			group.QueueSize = defaultActionGroupQueueSize
+		}
+
+		group.Icon = lookupHTMLIcon(group.Icon, cfg.DefaultIconForActions)
+	}
+}
+
+func (cfg *Config) sanitizeActionGroupReferences() {
+	for _, action := range cfg.Actions {
+		for _, groupName := range action.Groups {
+			cfg.warnInvalidActionGroupReference(action, groupName)
+		}
+	}
+}
+
+func (cfg *Config) warnInvalidActionGroupReference(action *Action, groupName string) {
+	group, found := cfg.ActionGroups[groupName]
+	if !found {
+		log.WithFields(log.Fields{
+			"actionTitle": action.Title,
+			"groupName":   groupName,
+		}).Warn("Action references unknown action group")
+		return
+	}
+
+	if group == nil || group.MaxConcurrent < 1 {
+		log.WithFields(log.Fields{
+			"actionTitle": action.Title,
+			"groupName":   groupName,
+		}).Warn("Action references action group that will not be enforced at runtime")
 	}
 }
 
@@ -304,7 +379,7 @@ func getActionID(action *Action) string {
 }
 
 //gocyclo:ignore
-func sanitizePopupOnStart(raw string, cfg *Config) string {
+func sanitizeOnClick(raw string, cfg *Config) string {
 	switch raw {
 	case "execution-dialog":
 		return raw
@@ -317,8 +392,41 @@ func sanitizePopupOnStart(raw string, cfg *Config) string {
 	case "history":
 		return raw
 	default:
-		return cfg.DefaultPopupOnStart
+		return cfg.DefaultOnClick
 	}
+}
+
+func migrateActionOnClick(action *Action) {
+	if action.OnClick == "" && action.PopupOnStart != "" {
+		action.OnClick = action.PopupOnStart
+	}
+}
+
+func shouldMigrateDefaultOnClickFromPopup(onClick, popupOnStart string) bool {
+	if popupOnStart == "" {
+		return false
+	}
+	if onClick == "" {
+		return true
+	}
+	return onClick == "nothing" && popupOnStart != "nothing"
+}
+
+func (cfg *Config) migrateDefaultOnClickFromLegacyPopup() {
+	if !shouldMigrateDefaultOnClickFromPopup(cfg.DefaultOnClick, cfg.DefaultPopupOnStart) {
+		return
+	}
+	cfg.DefaultOnClick = cfg.DefaultPopupOnStart
+}
+
+func (cfg *Config) sanitizeOnClickDefaults() {
+	cfg.migrateDefaultOnClickFromLegacyPopup()
+
+	if cfg.DefaultOnClick == "" {
+		cfg.DefaultOnClick = "nothing"
+	}
+
+	cfg.DefaultPopupOnStart = cfg.DefaultOnClick
 }
 
 func (arg *ActionArgument) sanitize() {

@@ -1,58 +1,24 @@
 = macOS Service (launchd)
 
-This option installs OliveTin as a launchd service, so it runs in the background and starts automatically. This is the macOS equivalent of running OliveTin as a Linux systemd service or a xref:install/windows_service.adoc[Windows service]. If you just want to run OliveTin as a regular application, follow the xref:install/macos.adoc[macOS Desktop install] instructions instead.
+This option installs OliveTin as a launchd service, so it runs in the background and starts automatically. This is the macOS equivalent of running OliveTin as a Linux systemd service or a xref:install/windows_service.adoc[Windows service]. If you just want to run OliveTin as a regular application, follow the xref:install/macos.adoc[macOS install] instructions instead.
 
-Before continuing, complete the xref:install/macos.adoc[macOS Desktop install] steps (download, extract, and clear the Gatekeeper quarantine) and confirm OliveTin starts correctly by running `./OliveTin`.
+Before continuing, complete the xref:install/macos.adoc[macOS install] steps (download, extract, and clear the Gatekeeper quarantine) and confirm OliveTin starts correctly by running `./OliveTin`.
 
 == Choose LaunchAgent or LaunchDaemon
 
-launchd offers two ways to run a background service, and which one you pick decides whether you need root:
+launchd offers two ways to run a background service:
 
-* *LaunchAgent (local user)* - runs as your user and starts when you log in. *No `sudo` required*, and everything lives under your home folder. Best for a desktop Mac. Follow <<local-user,Local user installation>>.
-* *LaunchDaemon (system-wide)* - runs as `root` and starts at boot, before any user logs in. Requires `sudo`. Best for a headless, always-on Mac. Follow <<system-wide,System-wide installation>>.
+* *LaunchAgent* - runs as your user and starts when you log in. No root required. Best for a desktop Mac.
+* *LaunchDaemon* - runs as root and starts at boot, before any user logs in. Best for a headless, always-on Mac.
 
-You only need to follow *one* of the two sections below.
+Follow one complete flow below. Both use the same plist structure; only the install locations and `launchctl` domain differ.
 
-[#local-user]
-== Local user installation (no root)
-
-Everything - the binary, configuration, the `var` data folder, and the `webui` folder - is kept together under `~/Library/Application Support/OliveTin`, so you never need `sudo`.
-
-=== Install the files
-
-Run these from the extracted archive directory:
-
-[source,shell]
-----
-# Create the application folder and a place for logs
-mkdir -p ~/Library/Application\ Support/OliveTin/var
-mkdir -p ~/Library/Logs/OliveTin
-
-# Copy in the binary, your config, and the bundled web UI
-cp OliveTin   ~/Library/Application\ Support/OliveTin/
-cp config.yaml ~/Library/Application\ Support/OliveTin/
-cp -R webui   ~/Library/Application\ Support/OliveTin/
-----
-
-This gives you the following layout, all owned by your user:
-
-[source]
-----
-~/Library/Application Support/OliveTin/
-├── OliveTin          # the binary
-├── config.yaml       # your configuration
-├── webui/            # the web interface assets (shipped in the archive)
-└── var/              # runtime data OliveTin writes (logs, etc.)
-
-~/Library/Logs/OliveTin/olivetin.log   # service stdout/stderr
-----
-
-=== Create the service definition
+== Service definition
 
 Create a file named `app.olivetin.olivetin.plist` with the contents below.
 
 [IMPORTANT]
-launchd does *not* expand `~`, so the paths must be absolute. Replace `YOUR_USERNAME` with the output of `whoami` in every path.
+launchd does *not* expand `~`, so every path in the plist must be absolute. Replace `YOUR_USERNAME` with the output of `whoami` when using the LaunchAgent paths.
 
 [source,xml]
 ----
@@ -87,9 +53,65 @@ launchd does *not* expand `~`, so the paths must be absolute. Replace `YOUR_USER
 </plist>
 ----
 
-`WorkingDirectory` makes the relative `webui` and `var` folders resolve inside the application folder, `KeepAlive` restarts OliveTin if it exits (like systemd's `Restart=always`), and `RunAtLoad` starts it as soon as the service is loaded.
+For a LaunchDaemon, use the same keys but substitute the paths shown in the table:
 
-=== Register and start the service
+[cols="1,1,1"]
+|===
+| Plist entry | LaunchAgent | LaunchDaemon
+
+| Binary (`ProgramArguments[0]`)
+| `/Users/YOUR_USERNAME/Library/Application Support/OliveTin/OliveTin`
+| `/usr/local/bin/OliveTin`
+
+| `-configdir` and `WorkingDirectory`
+| `/Users/YOUR_USERNAME/Library/Application Support/OliveTin`
+| `/usr/local/etc/OliveTin`
+
+| `StandardOutPath` / `StandardErrorPath`
+| `/Users/YOUR_USERNAME/Library/Logs/OliveTin/olivetin.log`
+| `/usr/local/var/log/olivetin.log`
+|===
+
+`WorkingDirectory` makes the relative `webui` and `var` folders resolve inside the config directory, `KeepAlive` restarts OliveTin if it exits (like systemd's `Restart=always`), and `RunAtLoad` starts it as soon as the service is loaded.
+
+[NOTE]
+OliveTin looks for `config.yaml` in the directory given by the `-configdir` flag. The plist passes `-configdir` explicitly so the service does not depend on the process working directory alone.
+
+[NOTE]
+`launchctl bootstrap`/`bootout` replace the deprecated `launchctl load`/`unload`.
+
+== LaunchAgent (per-user)
+
+=== Install the files
+
+Run these from the extracted archive directory:
+
+[source,shell]
+----
+# Create the application folder and a place for logs
+mkdir -p ~/Library/Application\ Support/OliveTin/var
+mkdir -p ~/Library/Logs/OliveTin
+
+# Copy in the binary, your config, and the bundled web UI
+cp OliveTin   ~/Library/Application\ Support/OliveTin/
+cp config.yaml ~/Library/Application\ Support/OliveTin/
+cp -R webui   ~/Library/Application\ Support/OliveTin/
+----
+
+This gives you the following layout, all owned by your user:
+
+[source]
+----
+~/Library/Application Support/OliveTin/
+├── OliveTin          # the binary
+├── config.yaml       # your configuration
+├── webui/            # the web interface assets (shipped in the archive)
+└── var/              # runtime data OliveTin writes (logs, etc.)
+
+~/Library/Logs/OliveTin/olivetin.log   # service stdout/stderr
+----
+
+=== Register and start
 
 [source,shell]
 ----
@@ -97,10 +119,16 @@ cp app.olivetin.olivetin.plist ~/Library/LaunchAgents/
 launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/app.olivetin.olivetin.plist
 ----
 
-[NOTE]
-`bootstrap`/`bootout` replace the deprecated `launchctl load`/`unload`. They take a _domain target_: `gui/$(id -u)` is your own per-user GUI domain (`id -u` is your numeric user ID).
+=== Verify
 
-To stop and disable it:
+Open http://localhost:1337 in a browser. If the page does not load, check the service log:
+
+[source,shell]
+----
+tail -f ~/Library/Logs/OliveTin/olivetin.log
+----
+
+=== Stop and disable
 
 [source,shell]
 ----
@@ -109,7 +137,7 @@ launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/app.olivetin.olivetin.plis
 
 === Restart after a change
 
-After editing `config.yaml` or replacing the binary, restart the service so the change takes effect. To restart in place:
+After editing `config.yaml` or replacing the binary, restart the service so the change takes effect:
 
 [source,shell]
 ----
@@ -124,87 +152,53 @@ launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/app.olivetin.olivetin.plis
 launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/app.olivetin.olivetin.plist
 ----
 
+== LaunchDaemon (system-wide)
+
+=== Install the files
+
+Run these from the extracted archive directory:
+
+[source,shell]
+----
+sudo mkdir -p /usr/local/bin /usr/local/etc/OliveTin/var /usr/local/var/log
+
+sudo cp OliveTin   /usr/local/bin/OliveTin
+sudo cp config.yaml /usr/local/etc/OliveTin/
+sudo cp -R webui   /usr/local/etc/OliveTin/
+----
+
+This gives you the following layout:
+
+[source]
+----
+/usr/local/bin/OliveTin
+/usr/local/etc/OliveTin/
+├── config.yaml
+├── webui/
+└── var/
+
+/usr/local/var/log/olivetin.log   # service stdout/stderr
+----
+
+=== Register and start
+
+[source,shell]
+----
+sudo cp app.olivetin.olivetin.plist /Library/LaunchDaemons/
+sudo chown root:wheel /Library/LaunchDaemons/app.olivetin.olivetin.plist
+sudo launchctl bootstrap system /Library/LaunchDaemons/app.olivetin.olivetin.plist
+----
+
 === Verify
 
 Open http://localhost:1337 in a browser. If the page does not load, check the service log:
 
 [source,shell]
 ----
-tail -f ~/Library/Logs/OliveTin/olivetin.log
+tail -f /usr/local/var/log/olivetin.log
 ----
 
-[#system-wide]
-== System-wide installation (requires root)
-
-Use this for a headless or shared Mac that should start OliveTin at boot, before anyone logs in. It installs the binary on the system `PATH` and runs as `root` via a LaunchDaemon, so the commands use `sudo`.
-
-=== Install the files
-
-[source,shell]
-----
-sudo cp OliveTin /usr/local/bin/OliveTin
-
-sudo mkdir -p /usr/local/etc/OliveTin
-sudo cp config.yaml /usr/local/etc/OliveTin/config.yaml
-sudo cp -R webui /usr/local/etc/OliveTin/
-----
-
-[NOTE]
-OliveTin looks for `config.yaml` in the directory given by the `-configdir` flag, which defaults to the current directory. The service definition below passes `-configdir /usr/local/etc/OliveTin` explicitly, and sets `WorkingDirectory` so the `webui` and `var` folders resolve there.
-
-=== Create the service definition
-
-Create a file named `app.olivetin.olivetin.plist` with the following contents. Adjust the paths if you installed OliveTin elsewhere.
-
-[source,xml]
-----
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-<dict>
-    <key>Label</key>
-    <string>app.olivetin.olivetin</string>
-
-    <key>ProgramArguments</key>
-    <array>
-        <string>/usr/local/bin/OliveTin</string>
-        <string>-configdir</string>
-        <string>/usr/local/etc/OliveTin</string>
-    </array>
-
-    <key>WorkingDirectory</key>
-    <string>/usr/local/etc/OliveTin</string>
-
-    <key>KeepAlive</key>
-    <true/>
-
-    <key>RunAtLoad</key>
-    <true/>
-
-    <key>StandardOutPath</key>
-    <string>/usr/local/var/log/olivetin.log</string>
-    <key>StandardErrorPath</key>
-    <string>/usr/local/var/log/olivetin.log</string>
-</dict>
-</plist>
-----
-
-`KeepAlive` restarts OliveTin if it exits (like systemd's `Restart=always`), and `RunAtLoad` starts it as soon as the service is loaded.
-
-=== Register and start the service
-
-[source,shell]
-----
-sudo mkdir -p /usr/local/var/log
-sudo cp app.olivetin.olivetin.plist /Library/LaunchDaemons/
-sudo chown root:wheel /Library/LaunchDaemons/app.olivetin.olivetin.plist
-sudo launchctl bootstrap system /Library/LaunchDaemons/app.olivetin.olivetin.plist
-----
-
-[NOTE]
-`bootstrap`/`bootout` replace the deprecated `launchctl load`/`unload`. The domain target for a LaunchDaemon is `system`.
-
-To stop and disable it:
+=== Stop and disable
 
 [source,shell]
 ----
@@ -213,7 +207,7 @@ sudo launchctl bootout system /Library/LaunchDaemons/app.olivetin.olivetin.plist
 
 === Restart after a change
 
-After editing `config.yaml` or replacing the binary, restart the service so the change takes effect. To restart in place:
+After editing `config.yaml` or replacing the binary, restart the service so the change takes effect:
 
 [source,shell]
 ----
@@ -226,15 +220,6 @@ If you changed the *plist* itself, `kickstart` is not enough - boot the service 
 ----
 sudo launchctl bootout system /Library/LaunchDaemons/app.olivetin.olivetin.plist
 sudo launchctl bootstrap system /Library/LaunchDaemons/app.olivetin.olivetin.plist
-----
-
-=== Verify
-
-Open http://localhost:1337 in a browser. If the page does not load, check the service log:
-
-[source,shell]
-----
-tail -f /usr/local/var/log/olivetin.log
 ----
 
 include::partial$install/post_generic.adoc[]

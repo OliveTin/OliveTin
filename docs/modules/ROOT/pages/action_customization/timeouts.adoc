@@ -25,6 +25,4 @@ makes sense, please open an issue and let's discuss.
 
 If a action really does "time out", it will show in the logs with "(timed out)" next to the exist code;
 
-image:timeoutLogs.png[]
-
-
+image::action_customization/timeout-logs/timeoutLogs.png[]

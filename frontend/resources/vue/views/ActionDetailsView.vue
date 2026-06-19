@@ -1,12 +1,27 @@
 <template>
-  <Section :title="'Action Details: ' + actionTitle" :padding="false">
+  <Section :padding="false">
+      <template #title>
+        <span class="section-title-with-icon">
+          Action Details:
+          <ActionIconGlyph v-if="action" class="action-title-icon" :glyph="action.icon" />
+          {{ actionTitle }}
+        </span>
+      </template>
       <template #toolbar>
         <div class="action-details-toolbar">
-          <button v-if="action" @click="startAction" title="Start this action" class="button neutral">
-            <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
-              <path fill="currentColor" d="M8 6v12l8-6z" />
-            </svg>
-            Start
+          <button
+            v-for="dashboard in backToDashboards"
+            :key="dashboard.path"
+            @click="goToDashboard(dashboard.path)"
+            :title="'Back to ' + dashboard.title"
+            class="button neutral"
+          >
+            <HugeiconsIcon :icon="DashboardSquare01Icon" />
+            {{ dashboard.title }}
+          </button>
+          <button v-if="action" @click="startAction" title="Run this action" class="button neutral">
+            <HugeiconsIcon :icon="WorkoutRunIcon" />
+            Run
           </button>
           <router-link
             v-if="action"
@@ -14,7 +29,7 @@
             class="button neutral"
             title="View configured automatic triggers and on-demand execution"
           >
-            Execution conditions
+            Execution conditions ({{ executionConditionCount }})
           </router-link>
         </div>
       </template>
@@ -22,18 +37,30 @@
       <div class = "flex-row padding" v-if="action">
         <div class = "fg1">
           <dl>
-            <dt>Title</dt>
-            <dd>{{ action.title }}</dd>
             <dt>Timeout</dt>
             <dd>{{ action.timeout }} seconds</dd>
+
+            <template v-if="actionGroups.length > 0">
+              <dt>
+                <router-link :to="{ name: 'LogsQueue' }" class="action-groups-link">Action groups</router-link>
+              </dt>
+              <dd>
+                <ul class="action-group-list">
+                  <li v-for="group in actionGroups" :key="group.name" class="action-group-row">
+                    <router-link :to="{ name: 'LogsQueue' }" class="action-groups-link action-group-name">{{ group.name }}</router-link><template v-if="group.maxConcurrent > 0 && group.queueSize > 0"> - </template><ActionGroupLimitsLabel
+                      :max-concurrent="group.maxConcurrent"
+                      :queue-size="group.queueSize"
+                    />
+                  </li>
+                </ul>
+              </dd>
+            </template>
           </dl>
           <p class = "fg1">
             Execution history for this action. You can filter by execution tracking ID.
           </p>
         </div>
         <div style = "align-self: start; text-align: right;">
-          <ActionIconGlyph class="icon" :glyph="action.icon" />
-
           <div class="filter-container">
             <label class="input-with-icons">
               <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
@@ -53,7 +80,7 @@
       </div>
 
       <div v-show="filteredLogs.length > 0">
-        <table class="logs-table">
+        <table class="logs-table row-hover">
           <thead>
             <tr>
               <th>Timestamp</th>
@@ -82,7 +109,7 @@
                 </span>
               </td>
               <td class="exit-code">
-                <ActionStatusDisplay :logEntry="log" />
+                <ActionStatusDisplay :logEntry="log" :link-queued-status="true" />
               </td>
             </tr>
           </tbody>
@@ -106,11 +133,19 @@ import Pagination from 'picocrank/vue/components/Pagination.vue'
 import Section from 'picocrank/vue/components/Section.vue'
 import ActionIconGlyph from '../components/ActionIconGlyph.vue'
 import ActionStatusDisplay from '../components/ActionStatusDisplay.vue'
+import ActionGroupLimitsLabel from '../components/ActionGroupLimitsLabel.vue'
+import { HugeiconsIcon } from '@hugeicons/vue'
+import { DashboardSquare01Icon, WorkoutRunIcon } from '@hugeicons/core-free-icons'
+import { requestReconnectNow } from '../../../js/websocket.js'
+import { needsArgumentForm } from '../utils/needsArgumentForm.js'
+import { getExecutionLogEntry, updateLogEntryInList } from '../utils/executionLogEvents.js'
+import { countExecutionConditions } from '../utils/executionConditionCount.js'
 
 const route = useRoute()
 const router = useRouter()
 const logs = ref([])
 const action = ref(null)
+const backToDashboards = ref([])
 const actionTitle = ref('Action Details')
 const searchText = ref('')
 const pageSize = ref(10)
@@ -130,6 +165,10 @@ const filteredLogs = computed(() => {
     log.actionTitle.toLowerCase().includes(searchLower)
   )
 })
+
+const executionConditionCount = computed(() => countExecutionConditions(action.value))
+
+const actionGroups = computed(() => action.value?.groups ?? [])
 
 async function fetchActionLogs() {
   loading.value = true
@@ -168,6 +207,7 @@ async function fetchAction() {
     }
     const response = await window.client.getActionBinding(args)
     action.value = response.action
+    backToDashboards.value = (response.backToDashboards || []).slice(0, 3)
     actionTitle.value = action.value?.title || 'Unknown Action'
   } catch (err) {
     console.error('Failed to fetch action:', err)
@@ -175,8 +215,13 @@ async function fetchAction() {
   }
 }
 
+function goToDashboard(path) {
+  router.push(path)
+}
+
 function resetState() {
   action.value = null
+  backToDashboards.value = []
   actionTitle.value = 'Action Details'
   logs.value = []
   totalCount.value = 0
@@ -265,13 +310,6 @@ function syncDurationTicker() {
   }, 1000)
 }
 
-onUnmounted(() => {
-  if (durationTicker != null) {
-    clearInterval(durationTicker)
-    durationTicker = null
-  }
-})
-
 function handlePageChange(page) {
   currentPage.value = page
   fetchActionLogs()
@@ -289,10 +327,16 @@ async function startAction() {
     return
   }
 
+  if (needsArgumentForm(action.value)) {
+    router.push(`/actionBinding/${action.value.bindingId}/argumentForm`)
+    return
+  }
+
   try {
+    requestReconnectNow()
     const args = {
-      "bindingId": action.value.bindingId,
-      "arguments": []
+      bindingId: action.value.bindingId,
+      arguments: []
     }
 
     const response = await window.client.startAction(args)
@@ -303,9 +347,24 @@ async function startAction() {
   }
 }
 
+function onExecutionEvent(evt) {
+  const logEntry = getExecutionLogEntry(evt)
+  if (!logEntry || logEntry.bindingId !== route.params.actionId) {
+    return
+  }
+
+  if (!updateLogEntryInList(logs.value, logEntry)) {
+    fetchActionLogs()
+    return
+  }
+  syncDurationTicker()
+}
+
 onMounted(() => {
   fetchAction()
   fetchActionLogs()
+  window.addEventListener('EventExecutionStarted', onExecutionEvent)
+  window.addEventListener('EventExecutionFinished', onExecutionEvent)
 })
 
 watch(
@@ -317,10 +376,25 @@ watch(
   },
   { immediate: false }
 )
+
+onUnmounted(() => {
+  window.removeEventListener('EventExecutionStarted', onExecutionEvent)
+  window.removeEventListener('EventExecutionFinished', onExecutionEvent)
+  if (durationTicker != null) {
+    clearInterval(durationTicker)
+    durationTicker = null
+  }
+})
 </script>
 
 <style scoped>
-.icon {
+.section-title-with-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.action-title-icon {
   font-size: 1.5rem;
 }
 
@@ -445,5 +519,29 @@ watch(
   flex-wrap: wrap;
   gap: 0.5rem;
   align-items: center;
+}
+
+.action-group-list {
+  margin: 0;
+  padding-left: 0;
+  list-style: none;
+}
+
+.action-group-row {
+  padding: 0.25rem 0;
+}
+
+.action-group-name {
+  font-family: monospace;
+}
+
+.action-groups-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.action-groups-link:hover {
+  text-decoration: underline;
+  color: var(--link-color, #007bff);
 }
 </style>

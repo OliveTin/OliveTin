@@ -44,7 +44,7 @@ describe('config: enabledExpression', function () {
       }
       // Accept either decoded or encoded version (component should decode, but handle both)
       return attr === 'LightDashboard'
-    }), 10000)
+    }), 3000)
 
     // Verify we got the correct dashboard (prefer decoded, but accept encoded)
     const body = await webdriver.findElement(By.tagName('body'))
@@ -60,7 +60,7 @@ describe('config: enabledExpression', function () {
     // Debug: Check what's on the page
     const dashboardRows = await webdriver.findElements(By.css('.dashboard-row'))
     console.log(`Found ${dashboardRows.length} dashboard rows`)
-    
+
     for (let i = 0; i < dashboardRows.length; i++) {
       const row = dashboardRows[i]
       const h2Elements = await row.findElements(By.css('h2'))
@@ -82,25 +82,25 @@ describe('config: enabledExpression', function () {
     // Bedroom Light (powered_on: true) - Turn Off should be enabled, Turn On disabled
     let turnOnButton = null
     let turnOffButton = null
-    
+
     for (const row of dashboardRows) {
       // Get the fieldset in this row
       const fieldsets = await row.findElements(By.css('fieldset'))
       if (fieldsets.length === 0) continue
-      
+
       const buttons = await fieldsets[0].findElements(By.css('.action-button button'))
-      
+
       // Check each button to identify which entity this row represents
       for (const btn of buttons) {
         const title = await btn.getAttribute('title')
         const disabled = await btn.getAttribute('disabled')
         const isEnabled = disabled === null
-        
+
         if (title === 'Turn On Light' && isEnabled) {
           // This is the Living Room Light row (Turn On is enabled because powered_on: false)
           turnOnButton = btn
         }
-        
+
         if (title === 'Turn Off Light' && isEnabled) {
           // This is the Bedroom Light row (Turn Off is enabled because powered_on: true)
           turnOffButton = btn
@@ -127,7 +127,7 @@ describe('config: enabledExpression', function () {
     await webdriver.get(runner.baseUrl())
 
     // Wait for action buttons
-    await webdriver.wait(until.elementLocated(By.css('.action-button')), 10000)
+    await webdriver.wait(until.elementLocated(By.css('.action-button')), 3000)
 
     // Find "Always Enabled Action" button
     const actionButtons = await webdriver.findElements(By.css('.action-button button'))

@@ -74,4 +74,15 @@ describe('config: cssClass', function () {
     const classAttr = await displayElements[0].getAttribute('class')
     expect(classAttr).to.include('test-display-class')
   })
+
+  it('custom theme applies background color to display component via cssClass', async function () {
+    await getRootAndWait()
+
+    const displayElements = await webdriver.findElements(By.css('.display.test-display-class'))
+    expect(displayElements).to.have.length.at.least(1, 'Display with test-display-class should exist')
+
+    const bgColor = await displayElements[0].getCssValue('background-color')
+    expect(bgColor, 'Theme theme.css should set .display.test-display-class background to rgb(64, 128, 192)')
+      .to.match(/rgba?\(\s*64\s*,\s*128\s*,\s*192\s*(,\s*1)?\s*\)/)
+  })
 })

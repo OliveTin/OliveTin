@@ -1,6 +1,7 @@
 <template>
     <div :class = "statusClass + ' annotation'">
-        <span>{{ statusText }}</span><span>{{ exitCodeText }}</span>
+        <router-link v-if="showQueueLink" to="/logs/queue" class="queue-status-link">{{ statusText }}</router-link>
+        <span v-else>{{ statusText }}</span><span>{{ exitCodeText }}</span>
     </div>
 
 </template>
@@ -12,8 +13,18 @@ const props = defineProps({
     logEntry: {
         type: Object,
         required: true
+    },
+    linkQueuedStatus: {
+        type: Boolean,
+        default: false
     }
 })
+
+function isWaitingInQueue(logEntry) {
+    return logEntry &&
+        !logEntry.executionFinished &&
+        !logEntry.executionStarted
+}
 
 const statusText = computed(() => {
     const logEntry = props.logEntry
@@ -27,9 +38,13 @@ const statusText = computed(() => {
         } else {
             return 'Completed'
         }
-    } else {
-        return 'Still running...'
     }
+
+    if (isWaitingInQueue(logEntry)) {
+        return 'Queued'
+    }
+
+    return 'Still running...'
 })
 
 const exitCodeText = computed(() => {
@@ -45,6 +60,10 @@ const exitCodeText = computed(() => {
         return ' (Exit code: ' + logEntry.exitCode + ')'
     }
     return ''
+})
+
+const showQueueLink = computed(() => {
+    return props.linkQueuedStatus && isWaitingInQueue(props.logEntry)
 })
 
 const statusClass = computed(() => {
@@ -80,6 +99,15 @@ const statusClass = computed(() => {
 
 .status-blocked {
   color: #ca79ff;
+}
+
+.queue-status-link {
+  color: #0d6efd;
+  text-decoration: none;
+}
+
+.queue-status-link:hover {
+  text-decoration: underline;
 }
 
 

@@ -12,6 +12,8 @@ frontend/dist/
 frontend/node_modules
 custom-frontend
 integration-tests/screenshots/
+integration-tests/flakey-test-runs.log
+integration-tests/flakey-test-runs.jsonl
 .vscode/
 webui/
 server.log
@@ -22,3 +24,4 @@ webui.dev
 sessions.yaml
 docs/build/
 build/
+.cursor

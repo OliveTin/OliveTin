@@ -3,6 +3,10 @@ import fs from 'fs'
 import { expect } from 'chai'
 import { Condition } from 'selenium-webdriver'
 
+export const DEFAULT_UI_WAIT_MS = 3000
+
+const executionDialogStatusBy = By.css('.execution-dialog-status')
+
 export async function getActionButtons () {
   // Currently, only the active dashboard's contents are rendered,
   // so we don't need to scope the selector by dashboard title.
@@ -10,11 +14,11 @@ export async function getActionButtons () {
 }
 
 export async function getExecutionDialogOutput() {
-    await webdriver.wait(new Condition('Dialog with long int is visible', async () => { 
+    await webdriver.wait(new Condition('Dialog with long int is visible', async () => {
       const dialog = await webdriver.findElement({ id: 'execution-results-popup' })
       return await dialog.isDisplayed()
     }));
-    
+
     const ret = await webdriver.executeScript('return window.logEntries.get(window.executionDialog.executionTrackingId).output')
 
     return ret
@@ -46,20 +50,67 @@ export function takeScreenshot (webdriver, title) {
   })
 }
 
-export async function getRootAndWait() {
-  await webdriver.get(runner.baseUrl())
-  await webdriver.wait(new Condition('wait for loaded-dashboard', async function() {
+export async function waitForDashboardLoaded(timeoutMs = DEFAULT_UI_WAIT_MS, expectedTitle = null) {
+  await webdriver.wait(new Condition('wait for loaded-dashboard', async function () {
     const body = await webdriver.findElement(By.tagName('body'))
     const attr = await body.getAttribute('loaded-dashboard')
 
     console.log('loaded-dashboard: ', attr)
 
-    if (attr) {
-      return true
-    } else {
+    if (attr == null || attr === '') {
       return false
     }
-  }))
+
+    if (expectedTitle != null) {
+      return attr === expectedTitle
+    }
+
+    return true
+  }), timeoutMs)
+}
+
+export async function waitForLogsPage(timeoutMs = DEFAULT_UI_WAIT_MS) {
+  await webdriver.wait(new Condition('wait for logs page', async () => {
+    const url = await webdriver.getCurrentUrl()
+    return url.includes('/logs/') && !url.endsWith('/logs')
+  }), timeoutMs)
+}
+
+export async function waitForArgumentFormPage(timeoutMs = DEFAULT_UI_WAIT_MS) {
+  await webdriver.wait(new Condition('wait for argument form page', async () => {
+    const url = await webdriver.getCurrentUrl()
+    return url.includes('/actionBinding/') && url.includes('/argumentForm')
+  }), timeoutMs)
+}
+
+export async function waitForArgumentFormReady(timeoutMs = DEFAULT_UI_WAIT_MS) {
+  await webdriver.wait(new Condition('wait for argument form ready', async () => {
+    const body = await webdriver.findElement(By.tagName('body'))
+    const attr = await body.getAttribute('loaded-argument-form')
+    return attr != null && attr !== ''
+  }), timeoutMs)
+}
+
+export async function waitForExecutionComplete(timeoutMs = DEFAULT_UI_WAIT_MS) {
+  await webdriver.wait(new Condition('wait for execution status', async () => {
+    const statusElements = await webdriver.findElements(executionDialogStatusBy)
+    return statusElements.length > 0
+  }), timeoutMs)
+
+  await webdriver.wait(new Condition('wait for execution to finish', async () => {
+    try {
+      const statusElement = await webdriver.findElement(executionDialogStatusBy)
+      const statusText = await statusElement.getText()
+      return !statusText.includes('Still running') && !statusText.includes('Queued')
+    } catch (e) {
+      return false
+    }
+  }), timeoutMs)
+}
+
+export async function getRootAndWait() {
+  await webdriver.get(runner.baseUrl())
+  await waitForDashboardLoaded()
 }
 
 export async function closeSidebar() {
@@ -82,7 +133,7 @@ export async function closeSidebar() {
       console.log('Sidebar closed, left is: *' + left, left === neededLeft ? ' (as expected)' : '')
       return left === neededLeft
     }
-  }), 10000); // Wait up to 10 seconds for the sidebar to close
+  }), DEFAULT_UI_WAIT_MS)
 }
 
 export async function openSidebar() {
@@ -103,7 +154,7 @@ export async function openSidebar() {
       console.log('Sidebar opened, left is: ', left)
       return true
     }
-  }));
+  }), DEFAULT_UI_WAIT_MS)
 }
 
 export async function getNavigationLinks() {
@@ -114,7 +165,7 @@ export async function getNavigationLinks() {
 
 export async function requireExecutionDialogStatus (webdriver, expected) {
   await webdriver.wait(new Condition('wait for action to be running', async function () {
-    const dialogStatus = await webdriver.findElement(By.id('execution-dialog-status'))
+    const dialogStatus = await webdriver.findElement(executionDialogStatusBy)
     const actual = await dialogStatus.getText()
 
     if (actual === expected) {
@@ -123,7 +174,7 @@ export async function requireExecutionDialogStatus (webdriver, expected) {
       console.log('Waiting for domStatus text to be: ', expected, ', it is currently: ', actual)
       return false
     }
-  }))
+  }), DEFAULT_UI_WAIT_MS)
 }
 
 export async function findExecutionDialog (webdriver) {

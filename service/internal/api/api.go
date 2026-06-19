@@ -58,18 +58,43 @@ func (api *oliveTinAPI) copyOfStreamingClients() []*streamingClient {
 type streamingClient struct {
 	channel           chan *apiv1.EventStreamResponse
 	AuthenticatedUser *authpublic.AuthenticatedUser
+	heartbeatStopOnce sync.Once
+	heartbeatStop     chan struct{}
+	heartbeatDone     chan struct{}
 }
 
-// trySendEventToClient sends msg to the client's channel. Returns false if the channel is full (client should be removed).
+func (c *streamingClient) stopHeartbeat() {
+	if c.heartbeatStop == nil || c.heartbeatDone == nil {
+		return
+	}
+	c.heartbeatStopOnce.Do(func() {
+		close(c.heartbeatStop)
+	})
+	<-c.heartbeatDone
+}
+
+// trySendEventToClient sends msg to the client's channel. Returns false if the channel is full or closed.
 func (api *oliveTinAPI) trySendEventToClient(client *streamingClient, msg *apiv1.EventStreamResponse) bool {
 	if client == nil || msg == nil {
 		return false
 	}
+	sent := sendToStreamingClientChannel(client.channel, msg)
+	if !sent {
+		log.Warnf("EventStream: client channel is full or closed, removing client")
+	}
+	return sent
+}
+
+func sendToStreamingClientChannel(ch chan *apiv1.EventStreamResponse, msg *apiv1.EventStreamResponse) (sent bool) {
+	defer func() {
+		if recover() != nil {
+			sent = false
+		}
+	}()
 	select {
-	case client.channel <- msg:
+	case ch <- msg:
 		return true
 	default:
-		log.Warnf("EventStream: client channel is full, removing client")
 		return false
 	}
 }
@@ -125,35 +150,30 @@ func (api *oliveTinAPI) killActionByTrackingId(user *authpublic.AuthenticatedUse
 }
 
 func (api *oliveTinAPI) StartAction(ctx ctx.Context, req *connect.Request[apiv1.StartActionRequest]) (*connect.Response[apiv1.StartActionResponse], error) {
-	args := make(map[string]string)
-
-	for _, arg := range req.Msg.Arguments {
-		args[arg.Name] = arg.Value
-	}
-
-	pair := api.executor.FindBindingByID(req.Msg.BindingId)
-
-	if pair == nil || pair.Action == nil {
-		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("action with ID %s not found", req.Msg.BindingId))
+	pair, err := api.findBindingByIDOrNotFound(req.Msg.BindingId)
+	if err != nil {
+		return nil, err
 	}
 
 	authenticatedUser := auth.UserFromApiCall(ctx, req, api.cfg)
+	if err := validateJustificationRequired(pair.Action, req.Msg.Justification, authenticatedUser); err != nil {
+		return nil, connectInvalidJustification(err)
+	}
 
 	execReq := executor.ExecutionRequest{
 		Binding:           pair,
 		TrackingID:        req.Msg.UniqueTrackingId,
-		Arguments:         args,
+		Arguments:         startActionArgumentsFromProto(req.Msg.Arguments),
+		Justification:     req.Msg.Justification,
 		AuthenticatedUser: authenticatedUser,
 		Cfg:               api.cfg,
 	}
 
 	api.executor.ExecRequest(&execReq)
 
-	ret := &apiv1.StartActionResponse{
+	return connect.NewResponse(&apiv1.StartActionResponse{
 		ExecutionTrackingId: execReq.TrackingID,
-	}
-
-	return connect.NewResponse(ret), nil
+	}), nil
 }
 
 func (api *oliveTinAPI) PasswordHash(ctx ctx.Context, req *connect.Request[apiv1.PasswordHashRequest]) (*connect.Response[apiv1.PasswordHashResponse], error) {
@@ -234,11 +254,12 @@ func (api *oliveTinAPI) LocalUserLogin(ctx ctx.Context, req *connect.Request[api
 	return response, nil
 }
 
-func (api *oliveTinAPI) startActionAndWaitRun(binding *executor.ActionBinding, args map[string]string, user *authpublic.AuthenticatedUser) (*executor.InternalLogEntry, bool) {
+func (api *oliveTinAPI) startActionAndWaitRun(binding *executor.ActionBinding, args map[string]string, justification string, user *authpublic.AuthenticatedUser) (*executor.InternalLogEntry, bool) {
 	execReq := executor.ExecutionRequest{
 		Binding:           binding,
 		TrackingID:        uuid.NewString(),
 		Arguments:         args,
+		Justification:     justification,
 		AuthenticatedUser: user,
 		Cfg:               api.cfg,
 	}
@@ -255,19 +276,22 @@ func (api *oliveTinAPI) findBindingOrNotFound(actionId string) (*executor.Action
 	return binding, nil
 }
 
+func (api *oliveTinAPI) findBindingByIDOrNotFound(bindingId string) (*executor.ActionBinding, error) {
+	return api.findBindingOrNotFound(bindingId)
+}
+
 func (api *oliveTinAPI) StartActionAndWait(ctx ctx.Context, req *connect.Request[apiv1.StartActionAndWaitRequest]) (*connect.Response[apiv1.StartActionAndWaitResponse], error) {
 	binding, err := api.findBindingOrNotFound(req.Msg.ActionId)
 	if err != nil {
 		return nil, err
 	}
 
-	args := make(map[string]string)
-	for _, arg := range req.Msg.Arguments {
-		args[arg.Name] = arg.Value
-	}
 	user := auth.UserFromApiCall(ctx, req, api.cfg)
+	if err := validateJustificationRequired(binding.Action, req.Msg.Justification, user); err != nil {
+		return nil, connectInvalidJustification(err)
+	}
 
-	internalLogEntry, ok := api.startActionAndWaitRun(binding, args, user)
+	internalLogEntry, ok := api.startActionAndWaitRun(binding, startActionArgumentsFromProto(req.Msg.Arguments), req.Msg.Justification, user)
 	if !ok {
 		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("execution not found"))
 	}
@@ -353,6 +377,8 @@ func (api *oliveTinAPI) internalLogEntryToPb(logEntry *executor.InternalLogEntry
 		Output:                   logEntry.Output,
 		TimedOut:                 logEntry.TimedOut,
 		Blocked:                  logEntry.Blocked,
+		Queued:                   logEntry.Queued,
+		QueuedForGroup:           logEntry.QueuedForGroup,
 		ExitCode:                 logEntry.ExitCode,
 		Tags:                     logEntry.Tags,
 		ExecutionTrackingId:      logEntry.ExecutionTrackingID,
@@ -361,6 +387,7 @@ func (api *oliveTinAPI) internalLogEntryToPb(logEntry *executor.InternalLogEntry
 		User:                     logEntry.Username,
 		BindingId:                logEntry.GetBindingId(),
 		DatetimeRateLimitExpires: calculateRateLimitExpires(api, logEntry),
+		Justification:            logEntry.Justification,
 	}
 
 	if !pble.ExecutionFinished && logEntry.Binding != nil && logEntry.Binding.Action != nil {
@@ -423,6 +450,32 @@ func (api *oliveTinAPI) getExecutionStatusByRequest(msg *apiv1.ExecutionStatusRe
 	return getMostRecentExecutionStatusByActionId(api, msg.ActionId)
 }
 
+func dashboardNavigationTargetsToPb(targets []executor.DashboardNavigationTarget) []*apiv1.DashboardNavigationTarget {
+	if len(targets) == 0 {
+		return nil
+	}
+
+	result := make([]*apiv1.DashboardNavigationTarget, 0, len(targets))
+	for _, target := range targets {
+		result = append(result, &apiv1.DashboardNavigationTarget{
+			Title:      target.Title,
+			EntityType: target.EntityType,
+			EntityKey:  target.EntityKey,
+			Path:       target.Path,
+		})
+	}
+
+	return result
+}
+
+func (api *oliveTinAPI) executionStatusBackToDashboards(ile *executor.InternalLogEntry) []*apiv1.DashboardNavigationTarget {
+	if ile == nil || ile.Binding == nil {
+		return nil
+	}
+
+	return dashboardNavigationTargetsToPb(ile.Binding.OnDashboards)
+}
+
 func (api *oliveTinAPI) ExecutionStatus(ctx ctx.Context, req *connect.Request[apiv1.ExecutionStatusRequest]) (*connect.Response[apiv1.ExecutionStatusResponse], error) {
 	user := auth.UserFromApiCall(ctx, req, api.cfg)
 	if err := api.checkDashboardAccess(user); err != nil {
@@ -433,7 +486,8 @@ func (api *oliveTinAPI) ExecutionStatus(ctx ctx.Context, req *connect.Request[ap
 		return nil, err
 	}
 	res := &apiv1.ExecutionStatusResponse{
-		LogEntry: api.internalLogEntryToPb(ile, user),
+		LogEntry:         api.internalLogEntryToPb(ile, user),
+		BackToDashboards: api.executionStatusBackToDashboards(ile),
 	}
 	return connect.NewResponse(res), nil
 }
@@ -504,11 +558,8 @@ func (api *oliveTinAPI) getActionBindingResponse(user *authpublic.AuthenticatedU
 	}
 
 	return &apiv1.GetActionBindingResponse{
-		Action: buildAction(binding, &DashboardRenderRequest{
-			cfg:               api.cfg,
-			AuthenticatedUser: user,
-			ex:                api.executor,
-		}),
+		Action:           buildAction(binding, api.createDashboardRenderRequest(user, "", "")),
+		BackToDashboards: dashboardNavigationTargetsToPb(binding.OnDashboards),
 	}, nil
 }
 
@@ -549,13 +600,15 @@ func (api *oliveTinAPI) checkDashboardAccess(user *authpublic.AuthenticatedUser)
 }
 
 func (api *oliveTinAPI) createDashboardRenderRequest(user *authpublic.AuthenticatedUser, entityType, entityKey string) *DashboardRenderRequest {
-	return &DashboardRenderRequest{
+	rr := &DashboardRenderRequest{
 		AuthenticatedUser: user,
 		cfg:               api.cfg,
 		ex:                api.executor,
 		EntityType:        entityType,
 		EntityKey:         entityKey,
 	}
+	populateActiveBindingStates(rr)
+	return rr
 }
 
 func (api *oliveTinAPI) isDefaultDashboard(title string) bool {
@@ -598,7 +651,10 @@ func (api *oliveTinAPI) GetLogs(ctx ctx.Context, req *connect.Request[apiv1.GetL
 	}
 
 	pageSize := resolveLogsPageSize(req.Msg.GetPageSize(), api.cfg.LogHistoryPageSize)
-	logEntries, paging := api.executor.GetLogTrackingIdsACL(api.cfg, user, req.Msg.StartOffset, pageSize, req.Msg.DateFilter)
+	logEntries, paging, err := api.executor.GetLogTrackingIdsACL(api.cfg, user, req.Msg.StartOffset, pageSize, req.Msg.DateFilter, req.Msg.GetFilter())
+	if err != nil {
+		return nil, connect.NewError(connect.CodeInvalidArgument, err)
+	}
 	ret := &apiv1.GetLogsResponse{}
 	for _, le := range logEntries {
 		ret.Logs = append(ret.Logs, api.internalLogEntryToPb(le, user))
@@ -933,6 +989,8 @@ func (api *oliveTinAPI) EventStream(ctx ctx.Context, req *connect.Request[apiv1.
 	client := &streamingClient{
 		channel:           make(chan *apiv1.EventStreamResponse, 10), // Buffered channel to hold Events
 		AuthenticatedUser: user,
+		heartbeatStop:     make(chan struct{}),
+		heartbeatDone:     make(chan struct{}),
 	}
 
 	log.WithFields(log.Fields{
@@ -942,6 +1000,8 @@ func (api *oliveTinAPI) EventStream(ctx ctx.Context, req *connect.Request[apiv1.
 	api.streamingClientsMutex.Lock()
 	api.streamingClients[client] = struct{}{}
 	api.streamingClientsMutex.Unlock()
+
+	go api.sendEventStreamHeartbeats(client)
 
 	// loop over client channel and send events to connectedClient
 	for msg := range client.channel {
@@ -959,13 +1019,61 @@ func (api *oliveTinAPI) EventStream(ctx ctx.Context, req *connect.Request[apiv1.
 	return nil
 }
 
+func (api *oliveTinAPI) sendEventStreamHeartbeats(client *streamingClient) {
+	defer close(client.heartbeatDone)
+
+	if !api.sendEventStreamHeartbeat(client) {
+		go api.removeClient(client)
+		return
+	}
+
+	ticker := time.NewTicker(10 * time.Second)
+	defer ticker.Stop()
+	api.runEventStreamHeartbeatLoop(client, ticker)
+}
+
+func (api *oliveTinAPI) runEventStreamHeartbeatLoop(client *streamingClient, ticker *time.Ticker) {
+	for {
+		if api.waitEventStreamHeartbeatOrDone(client.heartbeatStop, ticker) {
+			return
+		}
+		if !api.sendEventStreamHeartbeat(client) {
+			go api.removeClient(client)
+			return
+		}
+	}
+}
+
+func (api *oliveTinAPI) waitEventStreamHeartbeatOrDone(done <-chan struct{}, ticker *time.Ticker) bool {
+	select {
+	case <-done:
+		return true
+	case <-ticker.C:
+		return false
+	}
+}
+
+func (api *oliveTinAPI) sendEventStreamHeartbeat(client *streamingClient) bool {
+	msg := &apiv1.EventStreamResponse{
+		Event: &apiv1.EventStreamResponse_Heartbeat{
+			Heartbeat: &apiv1.EventHeartbeat{},
+		},
+	}
+	return api.trySendEventToClient(client, msg)
+}
+
 func (api *oliveTinAPI) removeClient(clientToRemove *streamingClient) {
 	if clientToRemove == nil {
 		return
 	}
 	api.streamingClientsMutex.Lock()
+	if _, exists := api.streamingClients[clientToRemove]; !exists {
+		api.streamingClientsMutex.Unlock()
+		return
+	}
 	delete(api.streamingClients, clientToRemove)
 	api.streamingClientsMutex.Unlock()
+	clientToRemove.stopHeartbeat()
 	close(clientToRemove.channel)
 }
 
@@ -973,14 +1081,12 @@ func (api *oliveTinAPI) OnActionMapRebuilt() {
 	toRemove := []*streamingClient{}
 
 	for _, client := range api.copyOfStreamingClients() {
-		select {
-		case client.channel <- &apiv1.EventStreamResponse{
+		msg := &apiv1.EventStreamResponse{
 			Event: &apiv1.EventStreamResponse_ConfigChanged{
 				ConfigChanged: &apiv1.EventConfigChanged{},
 			},
-		}:
-		default:
-			log.Warnf("EventStream: client channel is full, removing client")
+		}
+		if !api.trySendEventToClient(client, msg) {
 			toRemove = append(toRemove, client)
 		}
 	}
@@ -1437,30 +1543,16 @@ func serializeEntityFields(data any) map[string]string {
 }
 
 func (api *oliveTinAPI) RestartAction(ctx ctx.Context, req *connect.Request[apiv1.RestartActionRequest]) (*connect.Response[apiv1.StartActionResponse], error) {
-	ret := &apiv1.StartActionResponse{
-		ExecutionTrackingId: req.Msg.ExecutionTrackingId,
+	execReqLogEntry, err := api.restartActionLogEntry(req.Msg.ExecutionTrackingId)
+	if err != nil {
+		return nil, err
 	}
 
-	execReqLogEntry, found := api.executor.GetLog(req.Msg.ExecutionTrackingId)
-
-	if !found {
-		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("execution not found for tracking ID %s", req.Msg.ExecutionTrackingId))
-	}
-
-	if execReqLogEntry.Binding == nil {
-		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("log entry has no binding for tracking ID %s", req.Msg.ExecutionTrackingId))
-	}
-
-	action := execReqLogEntry.Binding.Action
-
-	if action == nil {
-		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("action not found for tracking ID %s", req.Msg.ExecutionTrackingId))
+	if execReqLogEntry.Binding.Action.Justification {
+		return nil, restartRequiresJustificationError()
 	}
 
 	authenticatedUser := auth.UserFromApiCall(ctx, req, api.cfg)
-
-	// TrackingID is deliberately not passed to the executor, so that it generates a new one for the restarted execution.
-	// This is because the old execution (identified by the old TrackingID) is already used.
 	execReq := executor.ExecutionRequest{
 		Binding:           execReqLogEntry.Binding,
 		Arguments:         make(map[string]string),
@@ -1470,22 +1562,65 @@ func (api *oliveTinAPI) RestartAction(ctx ctx.Context, req *connect.Request[apiv
 
 	api.executor.ExecRequest(&execReq)
 
-	ret.ExecutionTrackingId = execReq.TrackingID
-	return connect.NewResponse(ret), nil
+	return connect.NewResponse(&apiv1.StartActionResponse{
+		ExecutionTrackingId: execReq.TrackingID,
+	}), nil
+}
+
+func (api *oliveTinAPI) restartActionLogEntry(executionTrackingId string) (*executor.InternalLogEntry, error) {
+	execReqLogEntry, found := api.executor.GetLog(executionTrackingId)
+	if !found {
+		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("execution not found for tracking ID %s", executionTrackingId))
+	}
+
+	if execReqLogEntry.Binding == nil {
+		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("log entry has no binding for tracking ID %s", executionTrackingId))
+	}
+
+	if execReqLogEntry.Binding.Action == nil {
+		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("action not found for tracking ID %s", executionTrackingId))
+	}
+
+	return execReqLogEntry, nil
+}
+
+var (
+	executorListenersMu sync.Mutex
+	executorListeners   = map[*executor.Executor]*oliveTinAPI{}
+)
+
+// RegisterExecutorListener registers the API server as an executor listener during startup.
+// Call this before background goroutines that may trigger RebuildActionMap.
+func RegisterExecutorListener(ex *executor.Executor) {
+	ensureExecutorListener(ex)
+}
+
+func ensureExecutorListener(ex *executor.Executor) *oliveTinAPI {
+	executorListenersMu.Lock()
+	defer executorListenersMu.Unlock()
+
+	if server, ok := executorListeners[ex]; ok {
+		return server
+	}
+
+	server := newServer(ex)
+	executorListeners[ex] = server
+	return server
 }
 
 func newServer(ex *executor.Executor) *oliveTinAPI {
-	server := oliveTinAPI{}
-	server.cfg = ex.Cfg
-	server.executor = ex
-	server.streamingClients = make(map[*streamingClient]struct{})
+	server := &oliveTinAPI{
+		cfg:              ex.Cfg,
+		executor:         ex,
+		streamingClients: make(map[*streamingClient]struct{}),
+	}
 
-	ex.AddListener(&server)
-	return &server
+	ex.AddListener(server)
+	return server
 }
 
 func GetNewHandler(ex *executor.Executor) (string, http.Handler) {
-	server := newServer(ex)
+	server := ensureExecutorListener(ex)
 
 	jsonOpt := connectproto.WithJSON(
 		protojson.MarshalOptions{

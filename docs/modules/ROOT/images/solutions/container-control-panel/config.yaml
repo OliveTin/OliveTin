@@ -1,0 +1,34 @@
+---
+listenAddressSingleHTTPFrontend: 0.0.0.0:11337
+
+logLevel: "WARN"
+checkForUpdates: false
+showFooter: false
+
+actions:
+  - title: Start {{ container.Names }}
+    icon: box
+    shell: echo "start {{ container.Names }}"
+    entity: container
+
+  - title: Stop {{ container.Names }}
+    icon: box
+    shell: echo "stop {{ container.Names }}"
+    entity: container
+
+entities:
+  - file: containers.json
+    name: container
+
+dashboards:
+  - title: My Containers
+    contents:
+      - title: 'Container {{ container.Names }} ({{ container.Image }})'
+        entity: container
+        type: fieldset
+        contents:
+          - type: display
+            title: |
+              {{ container.RunningFor }} <br /><br /><strong>{{ container.State }}</strong>
+          - title: 'Start {{ container.Names }}'
+          - title: 'Stop {{ container.Names }}'

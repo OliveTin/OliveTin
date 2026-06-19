@@ -6,7 +6,7 @@ You will need approximately **10 minutes** to install OliveTin on almost every p
 
 You probably will need about **10-20 minutes** to understand how OliveTin configuration works, and to be able to write your first action to make it do something useful.
 
-== Where to find help 
+== Where to find help
 
 include::partial$support.adoc[]
 
@@ -36,7 +36,7 @@ include::partial$support.adoc[]
 After installing OliveTin, follow these steps to get started:
 
 * xref:config.adoc[Learn about configuration] - Understand how OliveTin's configuration works
-* xref:action_execution/create_your_first.adoc[Create your first action] - Build a simple action to test your installation
+* xref:action_buttons/create_your_first.adoc[Create your first action] - Build a simple action to test your installation
 * xref:action_examples/intro.adoc[Explore action examples] - See what OliveTin can do with real-world examples
 * xref:solutions/intro.adoc[Check out solutions] - Find complete configurations for common use cases
 * xref:reverse-proxies/intro.adoc[Set up a reverse proxy] - Configure secure access through a reverse proxy

@@ -16,7 +16,14 @@ translations:
   disconnected-banner-suffix-reconnecting: " since {disconnectedSince}. Trying reconnect…"
   login-button: Login
   logs.title: Logs
-  logs.page-description: This is a list of logs from actions that have been executed. You can filter the list by action title.
+  logs.page-description: This is a list of logs from actions that have been executed. Use the filter box for search terms and expressions.
+  logs.filter-placeholder: Filter logs (e.g. !Update or Status != Completed)
+  logs.filter-help-title: Filter syntax
+  logs.filter-help-intro: Filters run on the server over entries you are allowed to view. Combine terms with and / or.
+  logs.filter-help-fields: "Fields: Status, Action, User, Output, Blocked, TimedOut, Running, ExitCode. Operators: ==, !=, contains. Prefix ! on a single word excludes matching entries."
+  logs.filter-help-examples: "Examples: backup · !Update · Status != Completed · Status == Blocked · Action contains backup and Status == Completed"
+  logs.filter-error: Could not apply filter expression.
+  logs.no-logs-for-filter: No logs match the current filter.
   logs.timestamp: Timestamp
   logs.action: Action
   logs.metadata: Metadata
@@ -31,6 +38,19 @@ translations:
   logs.calendar: Calendar
   logs.calendar-title: Logs Calendar
   logs.back-to-list: Back to List
+  logs.queue: Queue
+  logs.queue-title: Execution Queue
+  logs.queue-page-description: Active and waiting executions grouped by action group. Entries you are not permitted to view are hidden.
+  logs.queue-empty: There are no active or waiting executions right now.
+  logs.queue-default-group: Default
+  logs.action-group-limits: "concurrent: {concurrent}, queue size: {queueSize}"
+  logs.queue-group-active: "{active} active (max {max})"
+  logs.queue-group-active-unlimited: "{active} active"
+  logs.queue-waiting: Waiting
+  logs.queue-running: Running
+  logs.queue-position: "#{position}"
+  logs.queue-entity: Entity
+  logs.queue-action-details: Action Details
   diagnostics.get-support: Get support
   diagnostics.get-support-description: If you are having problems with OliveTin and want to raise a support request, it would be very helpful to include a sosreport from this page.
   diagnostics.where-to-find-help: Where to find help

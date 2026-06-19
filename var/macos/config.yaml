@@ -147,6 +147,7 @@ actions:
   # Using a path under the user's home is more natural on macOS.
   - title: Delete old backups
     icon: ashtonished
+    justification: true
     shell: rm -rf "$HOME/Backups/old/"
     arguments:
       - name: confirm

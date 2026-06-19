@@ -30,10 +30,10 @@ NOTE: `suggestions:` is a yaml **map**, not a **list**. If you leave the title e
 == Examples
 
 .Screenshot of input suggestions with Firefox on Linux.
-image::arg-suggestions-firefox.png[]
+image::args/suggestions/arg-suggestions-firefox.png[]
 
 .Screenshot of input suggestions with Chrome on Linux.
-image::arg-suggestions-chrome.png[]
+image::args/suggestions/arg-suggestions-chrome.png[]
 
 [#suggestions-browser-key]
 == Browser-Stored Suggestions
@@ -125,5 +125,3 @@ This gives users quick access to the predefined environments while also remember
 == Browser Support
 
 `datalist` is widely supported now-a-days, but Firefox on Android notably lacks support; https://caniuse.com/datalist . See the upstream bug here; https://bugzilla.mozilla.org/show_bug.cgi?id=1535985 .
-
-

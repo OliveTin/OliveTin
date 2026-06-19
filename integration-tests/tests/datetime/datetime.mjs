@@ -1,10 +1,12 @@
 import { describe, it, before, after } from 'mocha'
 import { expect } from 'chai'
-import { By, Condition } from 'selenium-webdriver'
+import { By } from 'selenium-webdriver'
 import {
   getRootAndWait,
   getActionButton,
   takeScreenshotOnFailure,
+  waitForArgumentFormReady,
+  waitForLogsPage,
 } from '../../lib/elements.js'
 
 describe('config: datetime', function () {
@@ -27,14 +29,7 @@ describe('config: datetime', function () {
 
     await btn.click()
 
-    // Wait for navigation to argument form page
-    await webdriver.wait(
-      new Condition('wait for argument form page', async () => {
-        const url = await webdriver.getCurrentUrl()
-        return url.includes('/actionBinding/') && url.includes('/argumentForm')
-      }),
-      8000
-    )
+    await waitForArgumentFormReady()
 
     // Find the datetime input field
     const datetimeInput = await webdriver.findElement(By.id('datetime'))
@@ -59,14 +54,7 @@ describe('config: datetime', function () {
 
     await btn.click()
 
-    // Wait for navigation to argument form page
-    await webdriver.wait(
-      new Condition('wait for argument form page', async () => {
-        const url = await webdriver.getCurrentUrl()
-        return url.includes('/actionBinding/') && url.includes('/argumentForm')
-      }),
-      8000
-    )
+    await waitForArgumentFormReady()
 
     // Find the datetime input field
     const datetimeInput = await webdriver.findElement(By.id('datetime'))
@@ -74,7 +62,7 @@ describe('config: datetime', function () {
     // Set a datetime value (format: YYYY-MM-DDTHH:mm)
     // datetime-local returns values without seconds, backend will add :00
     const testDateTime = '2023-12-25T15:30'
-    
+
     // Use JavaScript to set the value directly (more reliable for datetime-local inputs)
     await webdriver.executeScript(
       'arguments[0].value = arguments[1]',
@@ -101,18 +89,10 @@ describe('config: datetime', function () {
     )
     await submitButton.click()
 
-    // Wait for navigation to logs page
-    await webdriver.wait(
-      new Condition('wait for logs page', async () => {
-        const url = await webdriver.getCurrentUrl()
-        return url.includes('/logs/')
-      }),
-      8000
-    )
+    await waitForLogsPage()
 
     // Verify we're on the logs page (action was executed)
     const url = await webdriver.getCurrentUrl()
     expect(url).to.include('/logs/')
   })
 })
-

@@ -90,6 +90,26 @@ export declare type Action = Message<"olivetin.api.v1.Action"> & {
    * @generated from field: repeated olivetin.api.v1.ActionWebhookExecHint exec_on_webhooks = 15;
    */
   execOnWebhooks: ActionWebhookExecHint[];
+
+  /**
+   * @generated from field: bool justification = 16;
+   */
+  justification: boolean;
+
+  /**
+   * @generated from field: bool has_running_instance = 17;
+   */
+  hasRunningInstance: boolean;
+
+  /**
+   * @generated from field: bool has_queued_instance = 18;
+   */
+  hasQueuedInstance: boolean;
+
+  /**
+   * @generated from field: repeated olivetin.api.v1.ActionGroupMembership groups = 19;
+   */
+  groups: ActionGroupMembership[];
 };
 
 /**
@@ -97,6 +117,32 @@ export declare type Action = Message<"olivetin.api.v1.Action"> & {
  * Use `create(ActionSchema)` to create a new message.
  */
 export declare const ActionSchema: GenMessage<Action>;
+
+/**
+ * @generated from message olivetin.api.v1.ActionGroupMembership
+ */
+export declare type ActionGroupMembership = Message<"olivetin.api.v1.ActionGroupMembership"> & {
+  /**
+   * @generated from field: string name = 1;
+   */
+  name: string;
+
+  /**
+   * @generated from field: int32 max_concurrent = 2;
+   */
+  maxConcurrent: number;
+
+  /**
+   * @generated from field: int32 queue_size = 3;
+   */
+  queueSize: number;
+};
+
+/**
+ * Describes the message olivetin.api.v1.ActionGroupMembership.
+ * Use `create(ActionGroupMembershipSchema)` to create a new message.
+ */
+export declare const ActionGroupMembershipSchema: GenMessage<ActionGroupMembership>;
 
 /**
  * @generated from message olivetin.api.v1.ActionWebhookExecHint
@@ -400,6 +446,11 @@ export declare type StartActionRequest = Message<"olivetin.api.v1.StartActionReq
    * @generated from field: string unique_tracking_id = 3;
    */
   uniqueTrackingId: string;
+
+  /**
+   * @generated from field: string justification = 4;
+   */
+  justification: string;
 };
 
 /**
@@ -458,6 +509,11 @@ export declare type StartActionAndWaitRequest = Message<"olivetin.api.v1.StartAc
    * @generated from field: repeated olivetin.api.v1.StartActionArgument arguments = 2;
    */
   arguments: StartActionArgument[];
+
+  /**
+   * @generated from field: string justification = 3;
+   */
+  justification: string;
 };
 
 /**
@@ -568,6 +624,13 @@ export declare type GetLogsRequest = Message<"olivetin.api.v1.GetLogsRequest"> &
    * @generated from field: int64 page_size = 3;
    */
   pageSize: bigint;
+
+  /**
+   * Optional filter expression (see logs UI syntax help)
+   *
+   * @generated from field: string filter = 4;
+   */
+  filter: string;
 };
 
 /**
@@ -673,6 +736,21 @@ export declare type LogEntry = Message<"olivetin.api.v1.LogEntry"> & {
    * @generated from field: string binding_id = 20;
    */
   bindingId: string;
+
+  /**
+   * @generated from field: bool queued = 21;
+   */
+  queued: boolean;
+
+  /**
+   * @generated from field: string queued_for_group = 22;
+   */
+  queuedForGroup: string;
+
+  /**
+   * @generated from field: string justification = 23;
+   */
+  justification: string;
 };
 
 /**
@@ -773,6 +851,131 @@ export declare type GetActionLogsResponse = Message<"olivetin.api.v1.GetActionLo
  * Use `create(GetActionLogsResponseSchema)` to create a new message.
  */
 export declare const GetActionLogsResponseSchema: GenMessage<GetActionLogsResponse>;
+
+/**
+ * @generated from message olivetin.api.v1.GetExecutionQueueRequest
+ */
+export declare type GetExecutionQueueRequest = Message<"olivetin.api.v1.GetExecutionQueueRequest"> & {
+};
+
+/**
+ * Describes the message olivetin.api.v1.GetExecutionQueueRequest.
+ * Use `create(GetExecutionQueueRequestSchema)` to create a new message.
+ */
+export declare const GetExecutionQueueRequestSchema: GenMessage<GetExecutionQueueRequest>;
+
+/**
+ * @generated from message olivetin.api.v1.ExecutionQueueAction
+ */
+export declare type ExecutionQueueAction = Message<"olivetin.api.v1.ExecutionQueueAction"> & {
+  /**
+   * @generated from field: string binding_id = 1;
+   */
+  bindingId: string;
+
+  /**
+   * @generated from field: string action_title = 2;
+   */
+  actionTitle: string;
+
+  /**
+   * @generated from field: string action_icon = 3;
+   */
+  actionIcon: string;
+
+  /**
+   * @generated from field: int32 max_concurrent = 4;
+   */
+  maxConcurrent: number;
+
+  /**
+   * @generated from field: int32 active_count = 5;
+   */
+  activeCount: number;
+
+  /**
+   * @generated from field: string entity_prefix = 6;
+   */
+  entityPrefix: string;
+
+  /**
+   * @generated from field: repeated olivetin.api.v1.LogEntry entries = 7;
+   */
+  entries: LogEntry[];
+};
+
+/**
+ * Describes the message olivetin.api.v1.ExecutionQueueAction.
+ * Use `create(ExecutionQueueActionSchema)` to create a new message.
+ */
+export declare const ExecutionQueueActionSchema: GenMessage<ExecutionQueueAction>;
+
+/**
+ * @generated from message olivetin.api.v1.ExecutionQueueGroup
+ */
+export declare type ExecutionQueueGroup = Message<"olivetin.api.v1.ExecutionQueueGroup"> & {
+  /**
+   * @generated from field: string name = 1;
+   */
+  name: string;
+
+  /**
+   * @generated from field: string icon = 2;
+   */
+  icon: string;
+
+  /**
+   * @generated from field: int32 max_concurrent = 3;
+   */
+  maxConcurrent: number;
+
+  /**
+   * @generated from field: int32 active_count = 4;
+   */
+  activeCount: number;
+
+  /**
+   * @generated from field: repeated olivetin.api.v1.ExecutionQueueAction actions = 5;
+   */
+  actions: ExecutionQueueAction[];
+
+  /**
+   * @generated from field: int32 queued_count = 6;
+   */
+  queuedCount: number;
+
+  /**
+   * @generated from field: int32 queue_size = 7;
+   */
+  queueSize: number;
+};
+
+/**
+ * Describes the message olivetin.api.v1.ExecutionQueueGroup.
+ * Use `create(ExecutionQueueGroupSchema)` to create a new message.
+ */
+export declare const ExecutionQueueGroupSchema: GenMessage<ExecutionQueueGroup>;
+
+/**
+ * @generated from message olivetin.api.v1.GetExecutionQueueResponse
+ */
+export declare type GetExecutionQueueResponse = Message<"olivetin.api.v1.GetExecutionQueueResponse"> & {
+  /**
+   * @generated from field: repeated olivetin.api.v1.ExecutionQueueGroup groups = 1;
+   */
+  groups: ExecutionQueueGroup[];
+
+  /**
+   * @generated from field: int32 total_active = 2;
+   */
+  totalActive: number;
+};
+
+/**
+ * Describes the message olivetin.api.v1.GetExecutionQueueResponse.
+ * Use `create(GetExecutionQueueResponseSchema)` to create a new message.
+ */
+export declare const GetExecutionQueueResponseSchema: GenMessage<GetExecutionQueueResponse>;
 
 /**
  * @generated from message olivetin.api.v1.ValidateArgumentTypeRequest
@@ -880,6 +1083,37 @@ export declare type ExecutionStatusRequest = Message<"olivetin.api.v1.ExecutionS
 export declare const ExecutionStatusRequestSchema: GenMessage<ExecutionStatusRequest>;
 
 /**
+ * @generated from message olivetin.api.v1.DashboardNavigationTarget
+ */
+export declare type DashboardNavigationTarget = Message<"olivetin.api.v1.DashboardNavigationTarget"> & {
+  /**
+   * @generated from field: string title = 1;
+   */
+  title: string;
+
+  /**
+   * @generated from field: string entity_type = 2;
+   */
+  entityType: string;
+
+  /**
+   * @generated from field: string entity_key = 3;
+   */
+  entityKey: string;
+
+  /**
+   * @generated from field: string path = 4;
+   */
+  path: string;
+};
+
+/**
+ * Describes the message olivetin.api.v1.DashboardNavigationTarget.
+ * Use `create(DashboardNavigationTargetSchema)` to create a new message.
+ */
+export declare const DashboardNavigationTargetSchema: GenMessage<DashboardNavigationTarget>;
+
+/**
  * @generated from message olivetin.api.v1.ExecutionStatusResponse
  */
 export declare type ExecutionStatusResponse = Message<"olivetin.api.v1.ExecutionStatusResponse"> & {
@@ -887,6 +1121,11 @@ export declare type ExecutionStatusResponse = Message<"olivetin.api.v1.Execution
    * @generated from field: olivetin.api.v1.LogEntry log_entry = 1;
    */
   logEntry?: LogEntry | undefined;
+
+  /**
+   * @generated from field: repeated olivetin.api.v1.DashboardNavigationTarget back_to_dashboards = 2;
+   */
+  backToDashboards: DashboardNavigationTarget[];
 };
 
 /**
@@ -1135,6 +1374,12 @@ export declare type EventStreamResponse = Message<"olivetin.api.v1.EventStreamRe
      */
     value: EventOutputChunk;
     case: "outputChunk";
+  } | {
+    /**
+     * @generated from field: olivetin.api.v1.EventHeartbeat heartbeat = 7;
+     */
+    value: EventHeartbeat;
+    case: "heartbeat";
   } | { case: undefined; value?: undefined };
 };
 
@@ -1188,6 +1433,18 @@ export declare type EventConfigChanged = Message<"olivetin.api.v1.EventConfigCha
  * Use `create(EventConfigChangedSchema)` to create a new message.
  */
 export declare const EventConfigChangedSchema: GenMessage<EventConfigChanged>;
+
+/**
+ * @generated from message olivetin.api.v1.EventHeartbeat
+ */
+export declare type EventHeartbeat = Message<"olivetin.api.v1.EventHeartbeat"> & {
+};
+
+/**
+ * Describes the message olivetin.api.v1.EventHeartbeat.
+ * Use `create(EventHeartbeatSchema)` to create a new message.
+ */
+export declare const EventHeartbeatSchema: GenMessage<EventHeartbeat>;
 
 /**
  * @generated from message olivetin.api.v1.EventExecutionFinished
@@ -1615,6 +1872,11 @@ export declare type GetActionBindingResponse = Message<"olivetin.api.v1.GetActio
    * @generated from field: olivetin.api.v1.Action action = 1;
    */
   action?: Action | undefined;
+
+  /**
+   * @generated from field: repeated olivetin.api.v1.DashboardNavigationTarget back_to_dashboards = 2;
+   */
+  backToDashboards: DashboardNavigationTarget[];
 };
 
 /**
@@ -1799,6 +2061,14 @@ export declare const OliveTinApiService: GenService<{
     output: typeof GetActionLogsResponseSchema;
   },
   /**
+   * @generated from rpc olivetin.api.v1.OliveTinApiService.GetExecutionQueue
+   */
+  getExecutionQueue: {
+    methodKind: "unary";
+    input: typeof GetExecutionQueueRequestSchema;
+    output: typeof GetExecutionQueueResponseSchema;
+  },
+  /**
    * @generated from rpc olivetin.api.v1.OliveTinApiService.ValidateArgumentType
    */
   validateArgumentType: {
@@ -1919,4 +2189,3 @@ export declare const OliveTinApiService: GenService<{
     output: typeof EntitySchema;
   },
 }>;
-

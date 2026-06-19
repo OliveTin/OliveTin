@@ -137,11 +137,20 @@ func (h *WebhookHandler) processWebhook(actionConfig ActionWebhookConfig, r *htt
 		return false
 	}
 
-	h.executeAction(actionConfig.Action, args)
+	justification, err := matcher.ExtractJustification()
+	if err != nil {
+		log.WithFields(log.Fields{
+			"actionTitle": actionConfig.Action.Title,
+			"error":       err,
+		}).Warnf("Failed to extract webhook justification")
+		return false
+	}
+
+	h.executeAction(actionConfig.Action, args, justification)
 	return true
 }
 
-func (h *WebhookHandler) executeAction(action *config.Action, args map[string]string) {
+func (h *WebhookHandler) executeAction(action *config.Action, args map[string]string, justification string) {
 	binding := h.executor.FindBindingWithNoEntity(action)
 	if binding == nil {
 		log.WithFields(log.Fields{
@@ -156,6 +165,7 @@ func (h *WebhookHandler) executeAction(action *config.Action, args map[string]st
 		Cfg:               h.cfg,
 		Tags:              []string{"webhook"},
 		Arguments:         definedArgs,
+		Justification:     justification,
 		AuthenticatedUser: auth.UserFromSystem(h.cfg, "webhook"),
 	}
 

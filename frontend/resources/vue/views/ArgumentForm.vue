@@ -40,12 +40,18 @@
             <span class="argument-description" v-html="arg.description"></span>
           </template>
         </template>
-        <div v-else>
+
+        <template v-if="justificationRequired">
+          <label for="justification">Justification:</label>
+          <input id="justification" name="justification" type="text" v-model="justificationValue" required />
+        </template>
+
+        <div v-if="actionArguments.length === 0 && !justificationRequired">
           <p>No arguments required</p>
         </div>
 
         <div class="buttons">
-          <button name="start" type="submit" :disabled="hasConfirmation && !confirmationChecked">
+          <button name="start" type="submit" :disabled="!formReady || (hasConfirmation && !confirmationChecked)">
             Start
           </button>
           <button name="cancel" type="button" @click="handleCancel">
@@ -58,8 +64,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, onMounted, onBeforeUnmount, onUnmounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
+import { requestReconnectNow } from '../../../js/websocket.js'
 
 const router = useRouter()
 
@@ -74,6 +81,10 @@ const hasConfirmation = ref(false)
 const formErrors = ref({})
 const actionArguments = ref([])
 const popupOnStart = ref('')
+const formReady = ref(false)
+const justificationRequired = ref(false)
+const justificationValue = ref('')
+let isComponentMounted = true
 
 // Computed properties
 
@@ -86,23 +97,29 @@ const props = defineProps({
 
 // Methods
 async function setup() {
-  const ret = await window.client.getActionBinding({
-    bindingId: props.bindingId
-  })
+  formReady.value = false
+  document.body.removeAttribute('loaded-argument-form')
 
-  const action = ret.action
+  try {
+    const ret = await window.client.getActionBinding({
+      bindingId: props.bindingId
+    })
 
-  title.value = action.title
-  icon.value = action.icon
-  popupOnStart.value = action.popupOnStart || ''
-  actionArguments.value = action.arguments || []
-  argValues.value = {}
-  formErrors.value = {}
-  confirmationChecked.value = false
-  hasConfirmation.value = false
+    const action = ret.action
 
-  // Initialize values from query params or defaults
-  actionArguments.value.forEach(arg => {
+    title.value = action.title
+    icon.value = action.icon
+    popupOnStart.value = action.popupOnStart || ''
+    actionArguments.value = action.arguments || []
+    justificationRequired.value = action.justification || false
+    justificationValue.value = ''
+    argValues.value = {}
+    formErrors.value = {}
+    confirmationChecked.value = false
+    hasConfirmation.value = false
+
+    // Initialize values from query params or defaults
+    actionArguments.value.forEach(arg => {
     if (arg.type === 'confirmation') {
       hasConfirmation.value = true
       const paramValue = getQueryParamValue(arg.name)
@@ -129,14 +146,22 @@ async function setup() {
         argValues.value[arg.name] = paramValue !== null ? paramValue : arg.defaultValue || ''
       }
     }
-  })
+    })
 
-  // Run initial validation on all fields after DOM is updated
-  await nextTick()
-  for (const arg of actionArguments.value) {
-    if (arg.type && !arg.type.startsWith('regex:') && arg.type !== 'select' && arg.type !== '' && arg.type !== 'confirmation' && arg.type !== 'checkbox') {
-      await validateArgument(arg, argValues.value[arg.name] || '')
+    // Run initial validation on all fields after DOM is updated
+    await nextTick()
+    for (const arg of actionArguments.value) {
+      if (arg.type && !arg.type.startsWith('regex:') && arg.type !== 'select' && arg.type !== '' && arg.type !== 'confirmation' && arg.type !== 'checkbox') {
+        await validateArgument(arg, argValues.value[arg.name] || '')
+      }
     }
+
+    if (isComponentMounted) {
+      formReady.value = true
+      document.body.setAttribute('loaded-argument-form', props.bindingId)
+    }
+  } catch (err) {
+    console.error('Failed to load argument form:', err)
   }
 }
 
@@ -291,19 +316,41 @@ function updateUrlWithArg(name, value) {
   }
 }
 
+function shouldSendArgument(arg) {
+  if (!arg.name) {
+    return false
+  }
+
+  return arg.type !== 'html'
+}
+
+function formatArgumentValueForApi(arg, rawValue) {
+  if (arg.type === 'checkbox' || arg.type === 'confirmation') {
+    return rawValue === '1' || rawValue === true || rawValue === 'true' ? '1' : '0'
+  }
+
+  if (rawValue === true) {
+    return '1'
+  }
+
+  if (rawValue === false) {
+    return '0'
+  }
+
+  return rawValue ?? ''
+}
+
 function getArgumentValues() {
   const ret = []
 
   for (const arg of actionArguments.value) {
-    let value = argValues.value[arg.name] || ''
-
-    if (arg.type === 'checkbox' || arg.type === 'confirmation') {
-      value = value ? '1' : '0'
+    if (!shouldSendArgument(arg)) {
+      continue
     }
 
     ret.push({
       name: arg.name,
-      value: value
+      value: formatArgumentValueForApi(arg, argValues.value[arg.name])
     })
   }
 
@@ -379,7 +426,12 @@ async function startAction(actionArgs) {
     uniqueTrackingId: getUniqueId()
   }
 
+  if (justificationRequired.value) {
+    startActionArgs.justification = justificationValue.value
+  }
+
   try {
+    requestReconnectNow()
     const response = await window.client.startAction(startActionArgs)
     console.log('Action started successfully with tracking ID:', response.executionTrackingId)
     return response
@@ -392,12 +444,23 @@ async function startAction(actionArgs) {
 async function handleSubmit(event) {
   event.preventDefault()
 
+  if (!formReady.value) {
+    return
+  }
+
   if (popupOnStart.value === 'history') {
     router.push(`/action/${props.bindingId}`)
     return
   }
 
   // Set custom validity for required fields
+  if (justificationRequired.value && (!justificationValue.value || justificationValue.value.trim() === '')) {
+    const inputElement = document.getElementById('justification')
+    if (inputElement) {
+      inputElement.setCustomValidity('This field is required')
+    }
+  }
+
   for (const arg of actionArguments.value) {
     const value = argValues.value[arg.name]
     const inputElement = document.getElementById(arg.name)
@@ -467,6 +530,14 @@ defineExpose({
 // Lifecycle
 onMounted(() => {
   setup()
+})
+
+onBeforeUnmount(() => {
+  isComponentMounted = false
+})
+
+onUnmounted(() => {
+  document.body.removeAttribute('loaded-argument-form')
 })
 </script>
 

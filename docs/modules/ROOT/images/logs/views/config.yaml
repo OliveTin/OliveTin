@@ -1,0 +1,31 @@
+---
+listenAddressSingleHTTPFrontend: 0.0.0.0:11337
+
+logLevel: "WARN"
+checkForUpdates: false
+showFooter: false
+
+actionGroups:
+  backup:
+    maxConcurrent: 1
+    queueSize: 5
+
+actions:
+  - title: Check disk space
+    icon: disk
+    shell: |
+      echo "Filesystem      Size  Used Avail Use% Mounted on"
+      echo "/dev/sda1        50G   12G   38G  24% /"
+
+  - title: Restart service
+    icon: restart
+    shell: echo "Service restarted successfully"
+
+  - title: Slow action
+    icon: clock
+    shell: sleep 5
+
+  - title: Slow backup
+    icon: backup
+    shell: sleep 30
+    groups: [ backup ]

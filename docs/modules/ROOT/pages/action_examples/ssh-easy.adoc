@@ -26,7 +26,7 @@ Setup an action as follows, to use the builtin olivetin-setup-easy-ssh script th
 actions:
   - title: Setup SSH
     shell: olivetin-setup-easy-ssh
-    popupOnStart: execution-dialog
+    onclick: execution-dialog
 ----
 
 [#ssh-easy-step-2]

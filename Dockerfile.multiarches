@@ -42,6 +42,8 @@ EXPOSE 1337/tcp
 
 COPY config.yaml /config
 COPY var/entities/* /config/entities/
+COPY examples/backupScript.sh /opt/backupScript.sh
+RUN chmod 755 /opt/backupScript.sh
 VOLUME /config
 
 ARG TARGETPLATFORM

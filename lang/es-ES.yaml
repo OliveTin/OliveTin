@@ -31,6 +31,18 @@ translations:
   logs.calendar: Calendario
   logs.calendar-title: Calendario de Registros
   logs.back-to-list: Volver a la Lista
+  logs.queue: Cola
+  logs.queue-title: Cola de ejecución
+  logs.queue-page-description: Ejecuciones activas y en espera agrupadas por grupo de acciones. Las entradas que no puede ver se ocultan.
+  logs.queue-default-group: Predeterminado
+  logs.action-group-limits: "simultáneas: {concurrent}, tamaño de cola: {queueSize}"
+  logs.queue-group-active-unlimited: "{active} activas"
+  logs.queue-empty: No hay ejecuciones activas o en espera en este momento.
+  logs.queue-group-active: "{active} activas (máx. {max})"
+  logs.queue-waiting: En espera
+  logs.queue-running: En ejecución
+  logs.queue-position: "#{position}"
+  logs.queue-entity: Entidad
   diagnostics.get-support: Obtener soporte
   diagnostics.get-support-description: Si tiene problemas con OliveTin y desea presentar una solicitud de soporte, sería muy útil incluir un sosreport de esta página.
   diagnostics.where-to-find-help: Dónde encontrar ayuda
