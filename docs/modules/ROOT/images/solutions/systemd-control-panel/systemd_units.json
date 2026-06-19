@@ -1,0 +1,4 @@
+{"unit":"boot.mount","load":"loaded","active":"active","sub":"mounted","description":"/boot"}
+{"unit":"podman.service","load":"loaded","active":"inactive","sub":"dead","description":"Podman API Service"}
+{"unit":"upsilon-drone.service","load":"loaded","active":"active","sub":"running","description":"upsilon-drone"}
+{"unit":"podman.socket","load":"loaded","active":"active","sub":"listening","description":"Podman API Socket"}

@@ -3,7 +3,7 @@
 
 On Windows, OliveTin writes its **process logs** (startup messages, configuration load, errors, and internal diagnostics) to a log file on disk. By default these files are stored under `%ProgramData%\OliveTin\logs\` as `OliveTin-service-<timestamp>.log`.
 
-This is separate from xref:action_customization/savelogs.adoc[action execution logs] (`saveLogs`), which persist command output from individual actions.
+This is separate from xref:logs/saving.adoc[action execution logs] (`saveLogs`), which persist command output from individual actions.
 
 Portable or self-contained installs often keep OliveTin, its configuration, and its logs together in one folder. Without a custom path, process logs always go to `%ProgramData%`, even when you run OliveTin from another location.
 

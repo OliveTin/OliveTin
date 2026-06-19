@@ -1,0 +1,9 @@
+- name: server1
+  hostname: server1.example.com
+  ip: 192.168.0.1
+- name: server2
+  hostname: server2.example.com
+  ip: 192.168.0.2
+- name: server3
+  hostname: server3.example.com
+  ip: 192.168.0.3

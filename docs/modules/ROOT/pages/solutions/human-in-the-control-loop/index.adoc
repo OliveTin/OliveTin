@@ -1,0 +1,37 @@
+[#human-in-the-control-loop]
+= Human in the Control Loop
+
+This solution shows a simple control-panel pattern where a human operator sees live status on a dashboard and decides when to run an action.
+
+A hidden background action keeps the displayed status up to date, while the dashboard only shows the operator control you want them to use.
+
+image::solutions/human-in-the-control-loop/preview.png[]
+
+== How it works
+
+* **Pump ON - 5m** is the only visible action on the dashboard. The operator starts the pump when they choose.
+* **Update Water Level** is a xref:action_execution/triggers.adoc[hidden] action that runs on startup and on a schedule. It prints dummy output (`Water level 47%`) that OliveTin keeps in the action logs.
+* A xref:dashboards/5-output-views.adoc[most recent execution] dashboard component shows the latest output from **Update Water Level**, so the operator always sees the current reading without clicking a refresh button.
+
+When the pump action finishes, it xref:action_execution/triggers.adoc[triggers] **Update Water Level** so the displayed value can be refreshed after manual control.
+
+== Configuration
+
+[source,yaml]
+.`config.yaml`
+----
+include::example$solutions/human-in-the-control-loop/config.yaml[]
+----
+
+== Customising this pattern
+
+* Replace the dummy `echo` commands with scripts that read real sensors or call your APIs.
+* Change the cron schedule on **Update Water Level** to match how often the status should refresh.
+* Add ACLs if only certain users should see the dashboard or run the pump action.
+
+== See also
+
+* xref:dashboards/5-output-views.adoc[Most recent action output]
+* xref:action_execution/oncron.adoc[Execute on schedule (cron)]
+* xref:action_execution/onstartup.adoc[Execute on startup]
+* xref:action_execution/triggers.adoc[Triggers]

@@ -53,8 +53,8 @@ All configuration options are covered in the solution sections
 | `showNavigation` | Show (or hide) the sidebar/topbar section navigation. | `true` | Live reloadable | xref:advanced_configuration/webui.adoc[Customize the web UI].
 | `showNavigateOnStartIcons` | Show (or hide) the small icons on action buttons that indicate popup/argument/background behavior on start. | `true` | Live reloadable | xref:advanced_configuration/webui.adoc[Customize the web UI].
 | `sectionNavigationStyle` | The style of the section navigation. `sidebar`, `topbar` | `sidebar` | Live reloadable | xref:advanced_configuration/webui.adoc[Customize the web UI].
-| `defaultOnClick` | The default on-click behavior when an action starts. | `nothing` | Live reloadable | xref:action_customization/popuponstart.adoc[On Click].
-| `defaultPopupOnStart` | Legacy name for `defaultOnClick`. | - | Live reloadable | xref:action_customization/popuponstart.adoc[On Click].
+| `defaultOnClick` | The default on-click behavior when an action starts. | `nothing` | Live reloadable | xref:action_execution/ondemand.adoc[Execute on click].
+| `defaultPopupOnStart` | Legacy name for `defaultOnClick`. | - | Live reloadable | xref:action_execution/ondemand.adoc[Execute on click].
 | `defaultIconForActions` | The default icon string for actions (Unicode aliases such as `smile`, `hugeicons:NeutralIcon`, HTML, Iconify snippets, images, etc.). See xref:action_customization/icons.adoc[Icons]. | `hugeicons:CommandLineIcon` | Requires Restart | -
 | `defaultIconForDirectories` | The default icon to use for directories. | `directory` | Requires Restart | -
 | `defaultIconForBack` | The default icon to use for back (from directories). | `&laquo;` | Requires Restart | -
@@ -117,7 +117,7 @@ All configuration options are covered in the solution sections
 
 | `WebUIDir` | The directory to serve the web UI from. | Calculated at runtime. | Requires Restart | -
 | `CronSupportForSeconds` | Whether or not to support seconds in cron expressions. | `false` | Requires Restart | xref:action_execution/oncron.adoc[Cron]
-| `SaveLogs` | Whether or not to save logs to disk. | `[]` | Requires Restart | xref:action_customization/savelogs.adoc[Save Logs]
+| `SaveLogs` | Whether or not to save logs to disk. | `[]` | Requires Restart | xref:logs/saving.adoc[Save Logs]
 | `ServiceLogs` | Windows process log directory (`serviceLogs.directory`). | `%ProgramData%\OliveTin\logs\` on Windows | Requires Restart | xref:install/windows_service.adoc#windows-service-logs[Windows service logs]
 | `Prometheus` | Prometheus configuration. | `-` | Requires Restart | xref:advanced_configuration/prometheus.adoc[Prometheus]
 |===
@@ -126,7 +126,7 @@ All configuration options are covered in the solution sections
 
 Now that you understand the configuration structure, here are the next steps:
 
-* xref:action_execution/create_your_first.adoc[Create your first action] - Start building actions for your use case
+* xref:action_buttons/create_your_first.adoc[Create your first action] - Start building actions for your use case
 * xref:action_examples/intro.adoc[Browse action examples] - Get inspiration from real-world configurations
 * xref:args/intro.adoc[Add arguments to actions] - Make actions interactive with user input
 * xref:dashboards/intro.adoc[Organize with dashboards] - Create custom views to organize your actions

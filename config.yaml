@@ -12,7 +12,7 @@ logLevel: "INFO"
 # Actions are commands that are executed by OliveTin, and normally show up as
 # buttons on the WebUI.
 #
-# Docs: https://docs.olivetin.app/action_execution/create_your_first.html
+# Docs: https://docs.olivetin.app/action_buttons/create_your_first.html
 actions:
   # Lots of people use OliveTin to build web interfaces for their electronics
   # projects. It's best to install OliveTin as a native package (eg, .deb), and
