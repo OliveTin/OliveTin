@@ -101,7 +101,7 @@ export async function waitForExecutionComplete(timeoutMs = DEFAULT_UI_WAIT_MS) {
     try {
       const statusElement = await webdriver.findElement(executionDialogStatusBy)
       const statusText = await statusElement.getText()
-      return !statusText.includes('Still running')
+      return !statusText.includes('Still running') && !statusText.includes('Queued')
     } catch (e) {
       return false
     }

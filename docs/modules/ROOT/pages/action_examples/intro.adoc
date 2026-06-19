@@ -17,7 +17,7 @@ Each example includes a complete configuration snippet that you can adapt for yo
 
 After reviewing the examples, you can:
 
-* xref:action_execution/create_your_first.adoc[Create your own action] - Build a custom action for your needs
+* xref:action_buttons/create_your_first.adoc[Create your own action] - Build a custom action for your needs
 * xref:action_customization/intro.adoc[Customize your actions] - Learn how to configure action properties
 * xref:args/intro.adoc[Add arguments] - Make your actions interactive with user input
 * xref:solutions/intro.adoc[Explore complete solutions] - See full configurations for common use cases

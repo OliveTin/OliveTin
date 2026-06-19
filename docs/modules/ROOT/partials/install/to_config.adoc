@@ -1,8 +1,7 @@
-You should be able to browse to http://yourserver:1337 (or similar) to get to 
+You should be able to browse to http://yourserver:1337 (or similar) to get to
 the web interface.
 
 If you see the OliveTin page popup in your browser, you are good to go! Here are some helpful next steps;
 
-* xref:action_execution/create_your_first.adoc[Create your first action]
+* xref:action_buttons/create_your_first.adoc[Create your first action]
 * xref:config.adoc[configuration section] for a list of all configuration options.
-

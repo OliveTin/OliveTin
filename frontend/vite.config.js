@@ -12,6 +12,16 @@ export default defineConfig({
     }),
     vue(),
   ],
+  build: {
+    rolldownOptions: {
+      onLog (level, log, defaultHandler) {
+        if (log.code === 'INVALID_ANNOTATION') {
+          return
+        }
+        defaultHandler(level, log)
+      },
+    },
+  },
   server: {
     proxy: {
       '/api': {

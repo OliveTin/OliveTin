@@ -1,0 +1,21 @@
+---
+listenAddressSingleHTTPFrontend: 0.0.0.0:11337
+
+logLevel: "WARN"
+checkForUpdates: false
+showFooter: false
+
+actions:
+  - title: Restart Docker Container
+    icon: restart
+    shell: "echo 'Restarting container: {{ container }}'"
+    arguments:
+      - name: container
+        title: Container name
+        type: ascii_identifier
+        suggestions:
+          plex:
+          graefik:
+          grafana:
+          wifi-controller: WiFi Controller
+          firewall-controller: Firewall Controller

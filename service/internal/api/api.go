@@ -450,6 +450,32 @@ func (api *oliveTinAPI) getExecutionStatusByRequest(msg *apiv1.ExecutionStatusRe
 	return getMostRecentExecutionStatusByActionId(api, msg.ActionId)
 }
 
+func dashboardNavigationTargetsToPb(targets []executor.DashboardNavigationTarget) []*apiv1.DashboardNavigationTarget {
+	if len(targets) == 0 {
+		return nil
+	}
+
+	result := make([]*apiv1.DashboardNavigationTarget, 0, len(targets))
+	for _, target := range targets {
+		result = append(result, &apiv1.DashboardNavigationTarget{
+			Title:      target.Title,
+			EntityType: target.EntityType,
+			EntityKey:  target.EntityKey,
+			Path:       target.Path,
+		})
+	}
+
+	return result
+}
+
+func (api *oliveTinAPI) executionStatusBackToDashboards(ile *executor.InternalLogEntry) []*apiv1.DashboardNavigationTarget {
+	if ile == nil || ile.Binding == nil {
+		return nil
+	}
+
+	return dashboardNavigationTargetsToPb(ile.Binding.OnDashboards)
+}
+
 func (api *oliveTinAPI) ExecutionStatus(ctx ctx.Context, req *connect.Request[apiv1.ExecutionStatusRequest]) (*connect.Response[apiv1.ExecutionStatusResponse], error) {
 	user := auth.UserFromApiCall(ctx, req, api.cfg)
 	if err := api.checkDashboardAccess(user); err != nil {
@@ -460,7 +486,8 @@ func (api *oliveTinAPI) ExecutionStatus(ctx ctx.Context, req *connect.Request[ap
 		return nil, err
 	}
 	res := &apiv1.ExecutionStatusResponse{
-		LogEntry: api.internalLogEntryToPb(ile, user),
+		LogEntry:         api.internalLogEntryToPb(ile, user),
+		BackToDashboards: api.executionStatusBackToDashboards(ile),
 	}
 	return connect.NewResponse(res), nil
 }
@@ -531,7 +558,8 @@ func (api *oliveTinAPI) getActionBindingResponse(user *authpublic.AuthenticatedU
 	}
 
 	return &apiv1.GetActionBindingResponse{
-		Action: buildAction(binding, api.createDashboardRenderRequest(user, "", "")),
+		Action:           buildAction(binding, api.createDashboardRenderRequest(user, "", "")),
+		BackToDashboards: dashboardNavigationTargetsToPb(binding.OnDashboards),
 	}, nil
 }
 
@@ -995,6 +1023,7 @@ func (api *oliveTinAPI) sendEventStreamHeartbeats(client *streamingClient) {
 	defer close(client.heartbeatDone)
 
 	if !api.sendEventStreamHeartbeat(client) {
+		go api.removeClient(client)
 		return
 	}
 
@@ -1009,6 +1038,7 @@ func (api *oliveTinAPI) runEventStreamHeartbeatLoop(client *streamingClient, tic
 			return
 		}
 		if !api.sendEventStreamHeartbeat(client) {
+			go api.removeClient(client)
 			return
 		}
 	}
@@ -1554,18 +1584,43 @@ func (api *oliveTinAPI) restartActionLogEntry(executionTrackingId string) (*exec
 	return execReqLogEntry, nil
 }
 
-func newServer(ex *executor.Executor) *oliveTinAPI {
-	server := oliveTinAPI{}
-	server.cfg = ex.Cfg
-	server.executor = ex
-	server.streamingClients = make(map[*streamingClient]struct{})
+var (
+	executorListenersMu sync.Mutex
+	executorListeners   = map[*executor.Executor]*oliveTinAPI{}
+)
 
-	ex.AddListener(&server)
-	return &server
+// RegisterExecutorListener registers the API server as an executor listener during startup.
+// Call this before background goroutines that may trigger RebuildActionMap.
+func RegisterExecutorListener(ex *executor.Executor) {
+	ensureExecutorListener(ex)
+}
+
+func ensureExecutorListener(ex *executor.Executor) *oliveTinAPI {
+	executorListenersMu.Lock()
+	defer executorListenersMu.Unlock()
+
+	if server, ok := executorListeners[ex]; ok {
+		return server
+	}
+
+	server := newServer(ex)
+	executorListeners[ex] = server
+	return server
+}
+
+func newServer(ex *executor.Executor) *oliveTinAPI {
+	server := &oliveTinAPI{
+		cfg:              ex.Cfg,
+		executor:         ex,
+		streamingClients: make(map[*streamingClient]struct{}),
+	}
+
+	ex.AddListener(server)
+	return server
 }
 
 func GetNewHandler(ex *executor.Executor) (string, http.Handler) {
-	server := newServer(ex)
+	server := ensureExecutorListener(ex)
 
 	jsonOpt := connectproto.WithJSON(
 		protojson.MarshalOptions{

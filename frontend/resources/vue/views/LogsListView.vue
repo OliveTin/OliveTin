@@ -281,13 +281,6 @@ onUnmounted(() => {
     fetchTimer = null
   }
 })
-
-onUnmounted(() => {
-  if (fetchTimer) {
-    clearTimeout(fetchTimer)
-    fetchTimer = null
-  }
-})
 </script>
 
 <style scoped>

@@ -41,6 +41,7 @@ type Action struct {
 // ActionGroup defines shared limits and metadata for a set of actions.
 type ActionGroup struct {
 	MaxConcurrent int    `koanf:"maxConcurrent"`
+	QueueSize     int    `koanf:"queueSize"`
 	Icon          string `koanf:"icon"`
 }
 

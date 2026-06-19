@@ -229,8 +229,37 @@ func buildAction(actionBinding *executor.ActionBinding, rr *DashboardRenderReque
 	applyActiveBindingStateToAction(&btn, binding.ID, rr.activeBindingStates)
 	applyActionExecTriggers(&btn, action)
 	btn.Arguments = buildActionArguments(action, binding.Entity)
+	btn.Groups = buildActionGroups(action, rr.cfg)
 
 	return &btn
+}
+
+func buildActionGroups(action *config.Action, cfg *config.Config) []*apiv1.ActionGroupMembership {
+	if action == nil || len(action.Groups) == 0 {
+		return nil
+	}
+
+	groups := make([]*apiv1.ActionGroupMembership, 0, len(action.Groups))
+
+	for _, name := range action.Groups {
+		groups = append(groups, actionGroupMembershipFromConfig(name, cfg))
+	}
+
+	return groups
+}
+
+func actionGroupMembershipFromConfig(name string, cfg *config.Config) *apiv1.ActionGroupMembership {
+	membership := &apiv1.ActionGroupMembership{Name: name}
+
+	group, found := cfg.ActionGroups[name]
+	if !found || group == nil || group.MaxConcurrent < 1 {
+		return membership
+	}
+
+	membership.MaxConcurrent = int32(group.MaxConcurrent)
+	membership.QueueSize = int32(group.QueueSize)
+
+	return membership
 }
 
 func buildChoices(arg config.ActionArgument) []*apiv1.ActionArgumentChoice {

@@ -4,7 +4,7 @@ This solution gives you quick and easy buttons to run kubectl commands, when Oli
 
 This use case is enabled by simply providing the OliveTin pod access to talk to the kubernetes API, and using `kubectl` which is preinstalled with modern versions of OliveTin.
 
-image::solution-k8s-hosted.png[]
+image::solutions/k8s-control-panel-hosted/preview.png[]
 
 == Requirements & Assumptions
 

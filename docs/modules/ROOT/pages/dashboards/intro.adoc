@@ -7,7 +7,7 @@ If you want to start organizing OliveTin actions more effectively, then **Dashbo
 
 One of the biggest reasons to use Dashboards as opposed to just the "Actions" section, is that dashboards allow you to use xref:dashboards/3-folders.adoc[Folders], and dashboards really start to get exciting when you start using xref:entities/intro.adoc[entities] and displays.
 
-image::dashboard.png[]
+image::dashboards/intro/preview.png[]
 
 == Dashboards pull actions from the default view
 
@@ -44,7 +44,7 @@ dashboards:
   # Top level items are dashboards.
   - title: My Servers
     contents:
-      # On dashboards, all items need to be in a "fieldset". If you don't 
+      # On dashboards, all items need to be in a "fieldset". If you don't
       # specify a fieldset, actions will be assigned to a fieldset with a title
       # called "default".
       - title: All Servers
@@ -94,4 +94,3 @@ Now that you understand dashboards, explore these related features:
 * xref:entities/intro.adoc[Use entities with dashboards] - Dynamically generate actions from entity files
 * xref:dashboards/examples.adoc[View dashboard examples] - See complete dashboard configurations
 * xref:dashboards/css.adoc[Customize dashboard styling] - Change the appearance of dashboard components
-

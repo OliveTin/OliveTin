@@ -5,7 +5,7 @@ OliveTin supports two different methods to run commands: `shell` and `exec`. The
 * **Shell** is more flexible, because it allows you to chain commands (eg, using &&) and redirect or pipe output (eg: ">" or "|").
 * **Exec** is more secure, because it does not invoke a shell, and thus avoids shell injection attacks.
 
-Shell can be safe and secure with simple argument types (like ascii_identifier), but some argument types like URL can contain basically any character - /, :, ?, &, etc - which can lead to shell injection vulnerabilities while still being a valid URL. 
+Shell can be safe and secure with simple argument types (like ascii_identifier), but some argument types like URL can contain basically any character - /, :, ?, &, etc - which can lead to shell injection vulnerabilities while still being a valid URL.
 
 OliveTin will try and prevent you from using dangerous characters in shell commands (eg, URL is no longer permitted with Shell).
 
@@ -36,7 +36,7 @@ When in doubt, prefer `exec` over `shell` for better security. Shell was added i
 
 Now that you understand execution methods, continue building your actions:
 
-* xref:action_execution/create_your_first.adoc[Create your first action] - Build a simple action to get started
+* xref:action_buttons/create_your_first.adoc[Create your first action] - Build a simple action to get started
 * xref:args/intro.adoc[Add arguments to actions] - Make actions interactive with user input
 * xref:action_execution/oncron.adoc[Schedule actions] - Set up automated execution
 * xref:action_execution/onwebhook.adoc[Trigger via webhooks] - Integrate with external systems

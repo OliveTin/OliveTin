@@ -13,20 +13,40 @@ import {
   waitForExecutionComplete,
 } from '../../lib/elements.js'
 
+async function clickBackFromLogsPage() {
+  const goBackButtons = await webdriver.findElements(By.css('button[title="Go back"]'))
+  if (goBackButtons.length > 0) {
+    await goBackButtons[0].click()
+    return 'history'
+  }
+
+  const dashboardBackButtons = await webdriver.findElements(By.css('button[title^="Back to "]'))
+  if (dashboardBackButtons.length > 0) {
+    await dashboardBackButtons[0].click()
+    return 'dashboard'
+  }
+
+  throw new Error('No back button found on execution logs page')
+}
+
 async function ensureOnDashboard() {
   let url = await webdriver.getCurrentUrl()
 
   if (url.includes('/logs/')) {
-    const backButton = await webdriver.findElement(By.css('button[title="Go back"]'))
-    await backButton.click()
-    await webdriver.wait(
-      new Condition('wait for argument form after logs back', async () => {
-        const currentUrl = await webdriver.getCurrentUrl()
-        return currentUrl.includes('/argumentForm')
-      }),
-      DEFAULT_UI_WAIT_MS
-    )
-    url = await webdriver.getCurrentUrl()
+    const backType = await clickBackFromLogsPage()
+    if (backType === 'history') {
+      await webdriver.wait(
+        new Condition('wait for argument form after logs back', async () => {
+          const currentUrl = await webdriver.getCurrentUrl()
+          return currentUrl.includes('/argumentForm')
+        }),
+        DEFAULT_UI_WAIT_MS
+      )
+      url = await webdriver.getCurrentUrl()
+    } else {
+      await waitForDashboardLoaded()
+      url = await webdriver.getCurrentUrl()
+    }
   }
 
   if (url.includes('/argumentForm')) {
