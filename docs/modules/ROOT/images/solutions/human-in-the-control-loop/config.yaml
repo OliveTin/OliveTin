@@ -1,0 +1,33 @@
+---
+listenAddressSingleHTTPFrontend: 0.0.0.0:11337
+
+logLevel: "WARN"
+checkForUpdates: false
+showFooter: false
+
+actions:
+  - title: Pump ON - 5m
+    id: pump_on_5m
+    icon: restart
+    shell: |
+      echo "Pump started"
+      sleep 300
+    triggers:
+      - Update Water Level
+
+  - title: Update Water Level
+    id: update_water_level
+    shell: echo "Water level 47%"
+    hidden: true
+    execOnStartup: true
+    execOnCron: "*/1 * * * *"
+
+dashboards:
+  - title: Human in the Control Loop
+    contents:
+      - title: Water tank
+        type: fieldset
+        contents:
+          - type: stdout-most-recent-execution
+            title: update_water_level
+          - title: Pump ON - 5m

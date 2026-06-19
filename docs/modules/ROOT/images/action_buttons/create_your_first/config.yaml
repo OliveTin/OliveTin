@@ -1,0 +1,12 @@
+---
+listenAddressSingleHTTPFrontend: 0.0.0.0:11337
+
+logLevel: "WARN"
+checkForUpdates: false
+showFooter: false
+
+actions:
+  - title: Say Hello
+    shell: echo "Hello World!"
+    icon: smile
+    onclick: execution-dialog

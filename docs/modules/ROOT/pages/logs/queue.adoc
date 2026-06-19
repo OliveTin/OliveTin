@@ -1,0 +1,19 @@
+[#logs-queue]
+= Queue view
+
+When actions belong to an xref:action_customization/concurrency.adoc[action group] and the group is at its concurrency limit, additional executions wait in a queue until a slot is free.
+
+The **Queue** page shows those waiting executions grouped by action group, including queue position and status.
+
+== Accessing the queue view
+
+From the **Logs** page, click the **Queue** button in the toolbar to open the queue view.
+
+You can return to the list view at any time using **Back to list**.
+
+image::logs/views/logsQueue.png[]
+
+== See also
+
+* xref:logs/intro.adoc[Logs overview]
+* xref:action_customization/concurrency.adoc[Concurrency and action groups]

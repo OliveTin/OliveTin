@@ -1,0 +1,30 @@
+---
+listenAddressSingleHTTPFrontend: 0.0.0.0:11337
+
+logLevel: "WARN"
+checkForUpdates: false
+showFooter: false
+
+actions:
+  - title: get pods
+    icon: <iconify-icon icon="pajamas:pod"></iconify-icon>
+    shell: |
+      echo "NAME                          READY   STATUS    RESTARTS   AGE"
+      echo "olivetin-7f8b9c6d4-xk2mp       1/1     Running   0          3d"
+      echo "postgres-5d4f8b7c9-mn8pq        1/1     Running   0          12d"
+      echo "nginx-ingress-controller-2h9k   1/1     Running   0          45d"
+
+  - title: restart postgres deployment
+    icon: <iconify-icon icon="pajamas:clear-all"></iconify-icon>
+    shell: echo "deployment.apps/postgres restarted"
+
+  - title: evacuate node
+    icon: <iconify-icon icon="pajamas:rocket-launch"></iconify-icon>
+    shell: echo "node/{{ NodeName }} cordoned and drained"
+    arguments:
+      - name: NodeName
+        type: ascii_identifier
+        choices:
+          - value: node1
+          - value: node2
+          - value: node3
