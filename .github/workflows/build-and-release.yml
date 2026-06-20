@@ -73,13 +73,15 @@ jobs:
         run: go version
 
       - name: Login to Docker Hub
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
         uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_KEY }}
 
       - name: Login to ghcr
-        uses: docker/login-action@v3
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -111,15 +113,17 @@ jobs:
             !integration-tests/node_modules
 
       - name: Install goreleaser
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
         uses: goreleaser/goreleaser-action@v6
         with:
           install-only: true
 
       - name: Set up Docker Buildx
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
         uses: docker/setup-buildx-action@v3
 
       - name: release
-        if: github.ref_type != 'tag'
+        if: github.ref_type != 'tag' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false)
         uses: cycjimmy/semantic-release-action@v4
         with:
           extra_plugins: |
@@ -131,8 +135,8 @@ jobs:
           GH_TOKEN: ${{ secrets.CONTAINER_TOKEN }}
 
       - name: Archive binaries
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
         uses: actions/upload-artifact@v4.3.1
         with:
           name: "OliveTin-snapshot-${{ env.DATE }}-${{ github.sha }}"
           path: dist/OliveTin*.*
-
