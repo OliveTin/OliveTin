@@ -1,0 +1,96 @@
+[#themes]
+= Themes (for users)
+
+You can look for themes on the link:http://www.olivetin.app/themes/[OliveTin Theme Site].
+
+== Installing a theme
+
+There are 3 ways to install a theme;
+
+
+If running inside a Docker container: 
+
+1. Use the `olivetin-get-theme` command to easily Git clone the theme into your `custom-webui/themes/` directory.
+
+If running without using containers: 
+
+1. Download the theme .zip and copy it across to your `custom-webui/themes/` directory.
+2. Git Clone the theme into your `custom-webui/themes/` directory.
+
+[#get-theme]
+== How to use the `olivetin-get-theme` command
+
+The default OliveTin configuration comes with an action to get new OliveTin themes. If you deleted it from your configuration, you can add it back in by adding the following to your `config.yaml` file;
+
+[source,bash]
+----
+actions:
+  - title: Get OliveTin Theme
+    shell: olivetin-get-theme {{ themeGitRepo }} {{ themeFolderName }}
+    icon: theme
+    arguments:
+      - name: themeGitRepo
+        title: Theme's Git Repository
+        description: Find new themes at https://olivetin.app/themes
+        type: url
+
+      - name: themeFolderName
+        title: Theme's Folder Name
+        type: ascii_identifier
+----
+
+When you are browsing the OliveTin Theme Site, you can click on a theme and see it's Git Repository URL. You can then copy this URL and paste it into the `olivetin-get-theme` command.
+
+== Where do I find my themes directory?
+
+When OliveTin starts up, it will try to create a directory called `custom-webui/themes/` in your config directory. This directory is where you can put your own custom themes.
+
+OliveTin will then serve this theme directory at `http://yourserver:1337/custom-webui/themes/`, this means that all theme content should go into `/custom-webui/themes/mytheme/`.
+
+Install Themes into your `custom-webui/themes/` directory, which should be in your config directory. If this directory does not exist, you can create it.
+
+[source,yaml]
+----
+├── config.yaml
+├── custom-webui
+│   └── themes
+│       └── custom-icons
+│           ├── icon.png
+│           └── theme.css
+├── entities
+│   ├── containers.json
+│   ├── heating.yaml
+│   ├── servers2.yml
+│   ├── servers.yaml
+│   └── systemd_units.json
+└── installation-id.txt
+----
+
+== Create your own theme (without any intention of publishing it)
+
+Create a sub-directory under your theme directory (eg `custom-webui/themes/mytheme`);
+
+Set your theme in your config
+
+[source,yaml]
+.`config.yaml`
+----
+themeName: mytheme
+----
+
+Add your css into `custom-webui/themes/mytheme/theme.css`.
+
+Your theme css will be loaded "on top" of the existing stylesheet.
+
+To test it is working, set your theme CSS to something ridiculous like;
+
+----
+body {
+    background-color: red !important;
+}
+----
+
+Profit.
+
+Check out xref:reference/reference_themes_for_developers.adoc[Themes for Developers] for more information on how to develop themes.
+

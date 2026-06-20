@@ -25,8 +25,9 @@ type SessionStorage struct {
 }
 
 var (
-	sessionStorage      *SessionStorage
-	sessionStorageMutex sync.RWMutex
+	sessionStorage       *SessionStorage
+	sessionStorageMutex  sync.RWMutex
+	oauth2SessionRevoker func(sid string)
 )
 
 func init() {
@@ -56,6 +57,38 @@ func RegisterUserSession(cfg *config.Config, provider string, sid string, userna
 	}
 
 	saveUserSessions(cfg)
+}
+
+// RegisterOAuth2SessionRevoker registers a callback to revoke OAuth2 sessions on logout.
+// OAuth2 uses its own session storage; the API calls this when provider is oauth2.
+func RegisterOAuth2SessionRevoker(fn func(sid string)) {
+	oauth2SessionRevoker = fn
+}
+
+// RevokeSessionForProvider invalidates the session for the given provider and SID (e.g. on logout).
+// Local auth uses shared SessionStorage; OAuth2 uses a separate storage and revoker.
+func RevokeSessionForProvider(cfg *config.Config, provider string, sid string) {
+	if sid == "" {
+		return
+	}
+	if provider == "oauth2" && oauth2SessionRevoker != nil {
+		oauth2SessionRevoker(sid)
+		return
+	}
+	RevokeUserSession(cfg, provider, sid)
+}
+
+// RevokeUserSession removes a session from storage so it can no longer be used (e.g. on logout).
+func RevokeUserSession(cfg *config.Config, provider string, sid string) {
+	sessionStorageMutex.Lock()
+	defer sessionStorageMutex.Unlock()
+
+	if sessionStorage.Providers[provider] != nil {
+		delete(sessionStorage.Providers[provider].Sessions, sid)
+		if cfg != nil {
+			saveUserSessions(cfg)
+		}
+	}
 }
 
 // GetUserSession retrieves a user session

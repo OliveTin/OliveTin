@@ -1,0 +1,127 @@
+[#arg-suggestions]
+= Suggestions
+
+Argument inputs can also have "suggested" values, which can make it quicker to type commonly used options. The way that these are displayed will vary depending on your browser, as they are implemented as a modern HTML5 browser feature called "datalist".
+
+Suggestions are configured like this;
+
+[source,yaml]
+.Configuration example of input suggestions
+----
+actions:
+  - title: Restart Docker Container
+    icon: restart
+    shell: docker restart {{ container }}
+    arguments:
+      - name: container
+        title: Container name
+        suggestions:
+          - plex:
+          - graefik:
+          - grafana:
+          - wifi-controller: WiFi Controller
+          - firewall-controller: Firewall Controller
+----
+
+In the examples above, there are 5 suggestions. The first 3 suggestions contain a suggestion with a blank title. The last 2 suggestions contain a human readable title (eg: `wifi-controller` is the suggestion, and `WiFi Controller` is the title).
+
+NOTE: `suggestions:` is a yaml **map**, not a **list**. If you leave the title empty you must still end the suggestion with a ":".
+
+== Examples
+
+.Screenshot of input suggestions with Firefox on Linux.
+image::args/suggestions/arg-suggestions-firefox.png[]
+
+.Screenshot of input suggestions with Chrome on Linux.
+image::args/suggestions/arg-suggestions-chrome.png[]
+
+[#suggestions-browser-key]
+== Browser-Stored Suggestions
+
+In addition to static suggestions defined in your configuration, OliveTin can remember values that users have previously entered and offer them as suggestions for future use. This is enabled using the `suggestionsBrowserKey` property.
+
+When a user submits an action with a `suggestionsBrowserKey` configured, the entered value is saved in the browser's local storage. The next time the user opens the same form (or any form with the same key), those previously-used values appear as suggestions alongside any static suggestions.
+
+=== Basic Usage
+
+[source,yaml]
+----
+actions:
+  - title: SSH to Server
+    shell: ssh {{ hostname }}
+    arguments:
+      - name: hostname
+        title: Hostname
+        description: Server to connect to
+        suggestionsBrowserKey: ssh-hosts
+----
+
+With this configuration:
+
+1. The first time a user runs this action and enters `server1.example.com`, that value is saved
+2. The next time they open the action, `server1.example.com` appears as a suggestion
+3. Each new unique value they enter is added to the suggestions list
+
+=== Sharing Suggestions Across Arguments
+
+Multiple arguments can share the same `suggestionsBrowserKey`, allowing suggestions to be reused across different actions or arguments. This is useful when the same type of value is used in multiple places.
+
+[source,yaml]
+----
+actions:
+  - title: Ping Host
+    shell: ping -c 4 {{ host }}
+    arguments:
+      - name: host
+        title: Hostname
+        suggestionsBrowserKey: network-hosts
+
+  - title: SSH to Host
+    shell: ssh {{ server }}
+    arguments:
+      - name: server
+        title: Server
+        suggestionsBrowserKey: network-hosts
+
+  - title: Traceroute
+    shell: traceroute {{ destination }}
+    arguments:
+      - name: destination
+        title: Destination
+        suggestionsBrowserKey: network-hosts
+----
+
+In this example, all three actions share the `network-hosts` key. If a user enters `192.168.1.100` in the Ping action, that value will also appear as a suggestion in the SSH and Traceroute actions.
+
+=== Combining Static and Browser Suggestions
+
+You can use both static `suggestions` and `suggestionsBrowserKey` together. Both sets of suggestions will be displayed to the user:
+
+[source,yaml]
+----
+actions:
+  - title: Deploy to Environment
+    shell: /opt/scripts/deploy.sh {{ environment }}
+    arguments:
+      - name: environment
+        title: Environment
+        suggestions:
+          production: Production Server
+          staging: Staging Server
+          development: Development Server
+        suggestionsBrowserKey: deploy-environments
+----
+
+This gives users quick access to the predefined environments while also remembering any custom environments they've deployed to.
+
+=== Behavior Notes
+
+* **Password and sensitive fields**: Values from `password`, `checkbox`, and `confirmation` type arguments are never saved to browser storage
+* **Empty values**: Empty or blank values are not saved as suggestions
+* **Local storage**: Suggestions are stored in the browser's `localStorage` under keys prefixed with `olivetin-suggestions-`
+* **Per-browser**: Since suggestions use browser local storage, they are specific to each browser and device - they don't sync across devices or browsers
+* **Clearing suggestions**: Users can clear their saved suggestions by clearing their browser's local storage for the OliveTin site
+
+== Browser Support
+
+`datalist` is widely supported now-a-days, but Firefox on Android notably lacks support; https://caniuse.com/datalist . See the upstream bug here; https://bugzilla.mozilla.org/show_bug.cgi?id=1535985 .

@@ -1,0 +1,189 @@
+[#enabled-expression]
+= Enabled Expression
+
+The `enabledExpression` property allows you to dynamically enable or disable action buttons based on entity properties. This is useful when you want to show context-appropriate actions - for example, only showing a "Turn Off" button when a device is already on, or only allowing a "Start" action when a service is stopped.
+
+== Basic Usage
+
+The `enabledExpression` is a Go template that must evaluate to a boolean value. When the expression evaluates to `true`, the action button will be enabled (clickable). When it evaluates to `false`, the button will be disabled (greyed out and not clickable).
+
+[source,yaml]
+----
+actions:
+  - title: Turn On Light
+    shell: echo "Turning on {{ .CurrentEntity.name }}"
+    icon: 💡
+    entity: light
+    enabledExpression: "{{ eq .CurrentEntity.powered_on false }}"
+
+  - title: Turn Off Light
+    shell: echo "Turning off {{ .CurrentEntity.name }}"
+    icon: 💡
+    entity: light
+    enabledExpression: "{{ eq .CurrentEntity.powered_on true }}"
+----
+
+In this example:
+
+* The "Turn On Light" button is only enabled when `powered_on` is `false`
+* The "Turn Off Light" button is only enabled when `powered_on` is `true`
+
+== How It Works
+
+The `enabledExpression` uses the same Go template syntax used elsewhere in OliveTin. It has access to the `.CurrentEntity` variable which contains all properties of the entity the action is bound to.
+
+=== Result Evaluation
+
+The template result is evaluated as follows:
+
+[cols="1,1", options="header"]
+|===
+| Result | Enabled?
+| `true` (case insensitive) | ✓ Yes
+| Non-zero integer (e.g., `1`, `42`) | ✓ Yes
+| `false` (case insensitive) | ✗ No
+| `0` | ✗ No
+| Empty string | ✗ No
+| Template error | ✗ No
+|===
+
+=== Default Behavior
+
+If `enabledExpression` is not specified, the action is always enabled (assuming the user has permission to execute it via ACLs).
+
+== Examples
+
+=== Simple Boolean Check
+
+[source,yaml]
+----
+actions:
+  - title: Start Service
+    shell: systemctl start {{ .CurrentEntity.service_name }}
+    entity: service
+    enabledExpression: "{{ eq .CurrentEntity.running false }}"
+
+  - title: Stop Service  
+    shell: systemctl stop {{ .CurrentEntity.service_name }}
+    entity: service
+    enabledExpression: "{{ eq .CurrentEntity.running true }}"
+----
+
+=== Checking Status Values
+
+[source,yaml]
+----
+actions:
+  - title: Resume Download
+    shell: resume-download {{ .CurrentEntity.id }}
+    entity: download
+    enabledExpression: "{{ eq .CurrentEntity.status \"paused\" }}"
+----
+
+=== Using Integer Status Codes
+
+If your entity has integer status values, you can use them directly:
+
+[source,yaml]
+----
+actions:
+  - title: Process Item
+    shell: process {{ .CurrentEntity.id }}
+    entity: item
+    # Status 1 means "ready" - action is enabled when status is 1
+    enabledExpression: "{{ .CurrentEntity.status }}"
+----
+
+=== Combining with Other Template Functions
+
+You can use Go template functions for more complex logic:
+
+[source,yaml]
+----
+actions:
+  - title: Deploy to Production
+    shell: deploy {{ .CurrentEntity.name }}
+    entity: service
+    # Only enable if status is "ready" AND environment is "staging"
+    enabledExpression: "{{ and (eq .CurrentEntity.status \"ready\") (eq .CurrentEntity.environment \"staging\") }}"
+----
+
+== Complete Example
+
+Here's a complete configuration showing `enabledExpression` with entities and dashboards:
+
+[source,yaml]
+----
+entities:
+  - file: /etc/OliveTin/lights.yaml
+    name: light
+
+actions:
+  - title: Turn On Light
+    shell: /opt/smart-home/light-control.sh on {{ .CurrentEntity.id }}
+    icon: 💡
+    entity: light
+    enabledExpression: "{{ eq .CurrentEntity.powered_on false }}"
+
+  - title: Turn Off Light
+    shell: /opt/smart-home/light-control.sh off {{ .CurrentEntity.id }}
+    icon: 🔌
+    entity: light
+    enabledExpression: "{{ eq .CurrentEntity.powered_on true }}"
+
+dashboards:
+  - title: Light Controls
+    contents:
+      - title: Lights
+        type: fieldset
+        entity: light
+        contents:
+          - type: display
+            title: |
+              <strong>{{ .CurrentEntity.name }}</strong>
+          - title: Turn On Light
+          - title: Turn Off Light
+----
+
+With an entity file like:
+
+[source,yaml]
+./etc/OliveTin/lights.yaml
+----
+- id: kitchen
+  name: Kitchen Light
+  powered_on: false
+
+- id: living_room
+  name: Living Room Light
+  powered_on: true
+----
+
+In this setup:
+
+* The Kitchen Light will have "Turn On" enabled and "Turn Off" disabled
+* The Living Room Light will have "Turn Off" enabled and "Turn On" disabled
+
+== Error Handling
+
+If the `enabledExpression` template fails to parse or execute (e.g., due to syntax errors or missing entity properties), OliveTin will:
+
+1. Log a warning message with details about the failure
+2. Treat the action as **disabled** for safety
+
+This ensures that misconfigured expressions don't accidentally allow unintended actions.
+
+== Relationship with ACLs
+
+The `enabledExpression` works in combination with xref:security/acl.adoc[Access Control Lists (ACLs)]. An action button is only enabled when **both** conditions are met:
+
+1. The user has `exec` permission via ACLs
+2. The `enabledExpression` evaluates to `true`
+
+If either condition is not met, the action button will be disabled.
+
+== See Also
+
+* xref:entities/intro.adoc[Entities] - Learn about defining entities
+* xref:dashboards/intro.adoc[Dashboards] - Display entity-bound actions
+* xref:security/acl.adoc[Access Control Lists] - Control who can execute actions

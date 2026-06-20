@@ -21,6 +21,7 @@ var (
 		"unicode_identifier":        `^[\w\-\.\_\d]+$`,
 		"ascii":                     `^[a-zA-Z0-9]+$`,
 		"ascii_identifier":          `^[a-zA-Z0-9\-\._]+$`,
+		"shell_safe_identifier":     `^[a-zA-Z0-9@\.\_\+\-]+$`,
 		"ascii_sentence":            `^[a-zA-Z0-9\-\._, ]+$`,
 	}
 )
@@ -145,8 +146,17 @@ func redactExecArgs(execArgs []string, arguments []config.ActionArgument, argume
 	return redacted
 }
 
+func argumentSkipsValidation(arg *config.ActionArgument) bool {
+	switch arg.Type {
+	case "confirmation", "html":
+		return true
+	default:
+		return false
+	}
+}
+
 func typecheckActionArgument(arg *config.ActionArgument, value string, action *config.Action) error {
-	if arg.Type == "confirmation" {
+	if argumentSkipsValidation(arg) {
 		return nil
 	}
 
@@ -250,13 +260,10 @@ func typecheckChoiceEntity(value string, arg *config.ActionArgument) error {
 
 func typeSafetyCheckEmail(value string) error {
 	_, err := mail.ParseAddress(value)
-
-	log.Errorf("Email check: %v, %v", err, value)
-
 	if err != nil {
+		log.WithField("type", "email").Debugf("Email argument type check failed")
 		return err
 	}
-
 	return nil
 }
 
@@ -310,7 +317,7 @@ func checkShellArgumentSafety(action *config.Action) error {
 	if action.Shell == "" {
 		return nil
 	}
-	unsafe := map[string]struct{}{"url": {}, "email": {}, "raw_string_multiline": {}, "very_dangerous_raw_string": {}}
+	unsafe := map[string]struct{}{"url": {}, "email": {}, "raw_string_multiline": {}, "very_dangerous_raw_string": {}, "password": {}}
 	for _, arg := range action.Arguments {
 		if _, bad := unsafe[arg.Type]; bad {
 			return fmt.Errorf("unsafe argument type '%s' cannot be used with Shell execution. Use 'exec' instead. See https://docs.olivetin.app/action_execution/shellvsexec.html", arg.Type)

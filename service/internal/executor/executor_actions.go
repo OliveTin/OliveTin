@@ -3,7 +3,6 @@ package executor
 import (
 	"crypto/sha256"
 	"fmt"
-	"slices"
 
 	config "github.com/OliveTin/OliveTin/internal/config"
 	"github.com/OliveTin/OliveTin/internal/entities"
@@ -37,25 +36,53 @@ func (e *Executor) FindBindingWithNoEntity(action *config.Action) *ActionBinding
 }
 
 type RebuildActionMapRequest struct {
-	Cfg                   *config.Config
-	DashboardActionTitles []string
+	Cfg              *config.Config
+	dashboardTargets *dashboardTargetIndex
+}
+
+func validateArgumentDefaults(cfg *config.Config) {
+	if cfg == nil {
+		return
+	}
+	for _, action := range cfg.Actions {
+		validateActionArgumentDefaults(action)
+	}
+}
+
+func validateActionArgumentDefaults(action *config.Action) {
+	if action == nil {
+		return
+	}
+	for i := range action.Arguments {
+		validateArgumentDefault(action, &action.Arguments[i])
+	}
+}
+
+func validateArgumentDefault(action *config.Action, arg *config.ActionArgument) {
+	if arg.Default == "" {
+		return
+	}
+	if err := ValidateArgument(arg, arg.Default, action); err != nil {
+		log.WithFields(log.Fields{
+			"actionTitle": action.Title,
+			"argName":     arg.Name,
+			"default":     arg.Default,
+			"error":       err,
+		}).Warn("Argument default value failed validation")
+	}
 }
 
 func (e *Executor) RebuildActionMap() {
+	validateArgumentDefaults(e.Cfg)
+
 	e.MapActionBindingsLock.Lock()
 
 	clear(e.MapActionBindings)
 
 	req := &RebuildActionMapRequest{
-		Cfg:                   e.Cfg,
-		DashboardActionTitles: make([]string, 0),
+		Cfg:              e.Cfg,
+		dashboardTargets: buildDashboardTargetIndex(e.Cfg),
 	}
-
-	findDashboardActionTitles(req)
-
-	log.WithFields(log.Fields{
-		"titles": req.DashboardActionTitles,
-	}).Trace("dashboardActionTitles")
 
 	for configOrder, action := range e.Cfg.Actions {
 		if action.Entity != "" {
@@ -67,35 +94,8 @@ func (e *Executor) RebuildActionMap() {
 
 	e.MapActionBindingsLock.Unlock()
 
-	for _, l := range e.listeners {
+	for _, l := range e.copyListeners() {
 		l.OnActionMapRebuilt()
-	}
-}
-
-func findDashboardActionTitles(req *RebuildActionMapRequest) {
-	for _, dashboard := range req.Cfg.Dashboards {
-		recurseDashboardForActionTitles(dashboard, req)
-	}
-}
-
-//gocyclo:ignore
-func recurseDashboardForActionTitles(component *config.DashboardComponent, req *RebuildActionMapRequest) {
-	for _, sub := range component.Contents {
-		if sub.InlineAction != nil {
-			title := sub.Title
-			if title == "" {
-				title = sub.InlineAction.Title
-			}
-			if title != "" {
-				req.DashboardActionTitles = append(req.DashboardActionTitles, title)
-			}
-		} else if sub.Type == "link" || sub.Type == "" {
-			req.DashboardActionTitles = append(req.DashboardActionTitles, sub.Title)
-		}
-
-		if len(sub.Contents) > 0 {
-			recurseDashboardForActionTitles(sub, req)
-		}
 	}
 }
 
@@ -103,16 +103,16 @@ func registerAction(e *Executor, configOrder int, action *config.Action, req *Re
 	bindingId := generateActionBindingId(action, "")
 
 	e.MapActionBindings[bindingId] = &ActionBinding{
-		ID:            bindingId,
-		Action:        action,
-		Entity:        nil,
-		ConfigOrder:   configOrder,
-		IsOnDashboard: slices.Contains(req.DashboardActionTitles, action.Title),
+		ID:           bindingId,
+		Action:       action,
+		Entity:       nil,
+		ConfigOrder:  configOrder,
+		OnDashboards: resolveOnDashboards(req.dashboardTargets, action.Title, ""),
 	}
 }
 
 func registerActionsFromEntities(e *Executor, configOrder int, entityTitle string, tpl *config.Action, req *RebuildActionMapRequest) {
-	for _, ent := range entities.GetEntityInstances(entityTitle) {
+	for _, ent := range entities.GetEntityInstancesOrdered(entityTitle) {
 		registerActionFromEntity(e, configOrder, tpl, ent, req)
 	}
 }
@@ -121,11 +121,11 @@ func registerActionFromEntity(e *Executor, configOrder int, tpl *config.Action, 
 	virtualActionId := generateActionBindingId(tpl, ent.UniqueKey)
 
 	e.MapActionBindings[virtualActionId] = &ActionBinding{
-		ID:            virtualActionId,
-		Action:        tpl,
-		Entity:        ent,
-		ConfigOrder:   configOrder,
-		IsOnDashboard: slices.Contains(req.DashboardActionTitles, tpl.Title),
+		ID:           virtualActionId,
+		Action:       tpl,
+		Entity:       ent,
+		ConfigOrder:  configOrder,
+		OnDashboards: resolveOnDashboards(req.dashboardTargets, tpl.Title, ent.UniqueKey),
 	}
 }
 

@@ -1,0 +1,63 @@
+== Post installation (container)
+
+You will need to write a basic configuration file before OliveTin will startup.
+
+Create a basic config file at `/etc/OliveTin/config.yaml` - the exact path depends on what directory you specified in the bind mount container creation in the last step. Note that the file must be called `config.yaml`, and `config.yml` or `mystuff.yaml` would not work. You can download a sample configuration file like this if you like;
+
+[source,shell]
+.Download the sample config.yaml file to get you started.
+----
+user@host: cd /etc/OliveTin/
+user@host: curl -O https://raw.githubusercontent.com/OliveTin/OliveTin/main/config.yaml
+----
+
+The file contents should look something like this;
+
+.The most simple `config.yaml` file.
+[source,yaml]
+----
+actions:
+  - title: "Hello world!"
+    shell: echo 'Hello World!'
+----
+
+If you are running a firewall on your server, like firewalld, you will need to
+open port 1337;
+
+== Configure your firewall 
+
+[tabs]
+====
+No Firewall:: If you don't have a firewall, continue to the next section.
+
+FirewallD:: This is how you configure your firewalld firewall for OliveTin:
++
+[source, shell]
+----
+user@host: firewall-cmd --add-port 1337/tcp --permanent
+user@host: firewall-cmd --reload
+----
++
+====
+
+== Start the OliveTin service
+
+Now that you have a configuration file, and the OliveTin container created, you are now ready to start OliveTin!
+
+----
+user@host: docker start olivetin
+----
+
+include::partial$install/to_config.adoc[]
+
+== Troubleshooting podman/docker installations
+
+If you are having problems in starting OliveTin, or OliveTin is crashing on startup, then check the logs like this;
+
+----
+user@host: docker logs OliveTin
+----
+
+For more detail on what to capture and how to share logs when asking for help, see xref:troubleshooting/service-logs.adoc[Service logs (troubleshooting)].
+
+If you cannot understand the logs, or otherwise need help, see the xref:troubleshooting/wheretofindhelp.adoc[support page].

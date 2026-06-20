@@ -1,0 +1,121 @@
+[#update-tracking]
+= Update Checks & Tracking (legacy)
+
+NOTE: This page is for OliveTin versions **2022-01-06** to **2024.06.02**. To see the current behavior of update checking, go to xref:reference/updateChecks.adoc[update checks]
+
+The OliveTin server will now check for updates on startup, and every 7 days after that. It will report those updates as a log message in the console. It does not apply any updates, because this is the choice and responsibility of whoever is running OliveTin to decide if, when, and how to apply any updates.
+
+The information OliveTin sends to the update server is stored/saved., and this could be considered a form of tracking - that is tracking installations, not tracking people. This page hopefully helps explain what, how and why that information is used so you can be informed (and make changes if you wish).
+
+== Design considerations
+
+* The source code for the update check (client), and the update service are open and on GitHub, freely auditable.
+* A generated installation ID (which is just a UUID), that is used to differentiate between installations <<installation-id,more info>>.
+* The update request is sent and stored in plain text - easy to check/audit.
+* The update request goes to an obvious domain name - update-check.olivetin.app
+* The checkins can be freely viewed by anyone in the public log.
+* The update check can be disabled.
+
+[#update-sent]
+== What is sent (and tracked)
+
+When OliveTin checks for updates, it will send the following;
+
+* CurrentVersion - eg: 1.0.0
+* CurrentCommit - the Git commit used to build this version
+* OS - The update check wants to know your OS, because it’s possible in the future that some versions and updates might not be available for all OSes at the same time.
+* Architecture (x86_64, ARM, etc)
+* InstallationID - See below
+
+Here is an example of a log entry that is sent/stored;
+
+----
+{"CurrentVersion":"dev","CurrentCommit":"nocommit","OS":"linux","Arch":"amd64","InstallationID":"f232d115-255c-4728-ba7f-a8f8b2b10a1f"}
+----
+
+If you would like to audit the update code, look at the following directory; https://github.com/OliveTin/OliveTin/tree/main/internal/updatecheck
+
+[#installation-id]
+== What is the OliveTin installation ID?
+
+This is a randomly generated link:https://en.wikipedia.org/wiki/Universally_unique_identifier[UUID] - that is not based on your operating system, not on any of your data. OliveTin tries to create a random installation-id.txt in your config directory when it starts up. 
+
+The reason for creating a installation ID is to tell the differences between installations - without this identifier, we would not know if 10 instances, or 1 instances of OliveTin are running a specific version. 
+
+In older versions of OliveTin, the MachineID was used instead of InstallationID (see below). 
+
+[#machine-id]
+== Why do you need my machine ID?
+
+This was changed in OliveTin - the MachineID is no longer collected, and the project moved to InstallationID instead. The answer is kept here for old versions.
+
+First of all, OliveTin only sends a hashed version of a unique identifier for your machine. OliveTin does not use your actual machine ID, because this is private, and potentially sensitive information in it’s original form. This hashed version of this ID is used, which should be considered safe - because it’s a hash, it’s not possible to get back to the original sensitive machine ID.
+
+From a technical perspective, OliveTin uses the golang package `machineiid` to 
+get as hashed version of your MachineId. OliveTin follows the security
+recommendations of that project by using the hashed MachineId; https://github.com/denisbrodbeck/machineid#security-considerations 
+
+The reason for getting the machine ID is to tell the differences between installations -
+without this identifier, we would not know if 10 instances, or 1 instances of
+OliveTin are running a specific version. 
+
+== Why do you need to store any information at all?
+
+This is incredibly useful information for project developers to know, because;
+
+1. It helps the project developers know how long it takes for updates to be applied by users of OliveTin (ie, should updates be released more often / less often) - the installation ID helps track this.
+2. This helps the project better understand what are the most popular operating systems and architectures (ie, so more testing can be done).
+3. How many old versions of the project to support?
+
+== What is stored?
+
+The update service only stores the information that is sent - <<update-sent,explained with an example above>>. 
+
+You can audit the update service code here; https://github.com/OliveTin/update-check.olivetin.app
+
+== What is not sent/stored
+
+* No information about you, users of your system, no files, nothing else apart from what is mentioned above.
+* Not your public IP address, or any information about your network
+* Not any information about how you have configured OliveTin, or any actions.
+
+== Where is the information sent
+
+To http://update-check.olivetin.app . This is a virtual machine which stores the logs on the machine filesystem. The data is accessible to all who which to view it, in the interest of transparency.
+
+== Why isn’t this opt-in?
+
+It seems the majority of software does perform update checks by default like this - Chrome, Firefox, most modern Operating Systems, etc. Because no information about people, or your data is being used, apart from your installation ID, this seems like a safe default.
+
+Also, if this were to default off, many people probably would not think about turning it on.
+
+[#disable-update-checks]
+== How do I disable update checking?
+
+If you are worried about privacy, or similar, please do make your concerns known. This is best if this is an open discussion.
+
+But, simply, to disable this feature, add to your config file;
+
+	checkForUpdates: false
+
+[#hide-news-versions]
+== How can I hide version upgrades in the OliveTin web interface?
+
+Set the following in your configuration file;
+
+    showNewVersions: false
+
+OliveTin will need to be restarted for this change to have affect.
+
+[#hsts]
+== Why can't I visit update-check.olivetin.app in my browser?
+
+The root domain for OliveTin (OliveTin.app) has HSTS turned on - this forces your browser to use SSL (HTTPS - the little encryption padlock) for all subdomains - including www.olivetin.app and docs.olivetin.app. Although both of those websites don't transmit anything that really needs encrypion, the web is certainly moving to having SSL turned on everywhere. It even has a positive impact on search engine rankings!
+
+The update-check service - which is accessible from update-check.olivetin.app - is designed to be only accessed via the OliveTin app. Non-web browsers, like this OliveTin app, generally ignore HSTS (and therefore don't try and access the update-check site via SSL/HTTPS. 
+
+If you use a non-web browser to try to access the site over HTTP, (eg, curl), you should find it works like normal. 
+
+As mentioned previously, the update-check site deliberately uses does not use SSL/HTTPS, to make it easy for people to audit what is actually being sent to the update site. Tools like tcpdump, wireshark, or others can verify that OliveTin is not sending more information than is described on this page.
+
+

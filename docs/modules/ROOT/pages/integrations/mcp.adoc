@@ -1,0 +1,12 @@
+= OliveTin and MCP Servers
+
+OliveTin does not yet include a built-in link:https://modelcontextprotocol.io[Model Context Protocol (MCP)] server integration, and there is no current roadmap to add one to OliveTin itself.
+
+== Community project
+
+A community-maintained MCP server for OliveTin is available at link:https://github.com/vaddisrinivas/olivetin-mcp[olivetin-mcp].
+
+[NOTE]
+====
+This project is not maintained by the OliveTin project maintainers. For issues specific to the MCP server, please use that repository. If you run into problems on the OliveTin side, the OliveTin community will try to help where it can.
+====

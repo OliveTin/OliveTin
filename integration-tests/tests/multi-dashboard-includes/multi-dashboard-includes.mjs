@@ -2,11 +2,13 @@ import { describe, it, before, after } from 'mocha'
 import { expect, assert } from 'chai'
 import { By } from 'selenium-webdriver'
 import {
+  DEFAULT_UI_WAIT_MS,
   getRootAndWait,
   getActionButtons,
   getNavigationLinks,
   openSidebar,
   takeScreenshotOnFailure,
+  waitForDashboardLoaded,
 } from '../../lib/elements.js'
 
 describe('config: multi-dashboard-includes', function () {
@@ -41,6 +43,7 @@ describe('config: multi-dashboard-includes', function () {
     assert.strictEqual(matching.length, 1, `Expected exactly one navigation link with title "${title}"`)
 
     await matching[0].click()
+    await waitForDashboardLoaded(DEFAULT_UI_WAIT_MS, title)
   }
 
   async function getActionTitlesOnDashboard (dashboardTitle = null) {

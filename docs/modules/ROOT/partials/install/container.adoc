@@ -1,0 +1,6 @@
+[NOTE]
+====
+OliveTin is supported when run as a Linux Container in many different ways, and lot of OliveTin users will assume that a Linux Container is the best way to install OliveTin because Linux Containers are really popular...
+
+However, it is very common that some OliveTin use cases become overcomplicated when a container is used, compared to running as a native service. Read the <<install-container-vs-service>> document to understand if a container or a service is right for your use case.
+====

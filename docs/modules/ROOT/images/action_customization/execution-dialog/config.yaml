@@ -1,0 +1,17 @@
+---
+listenAddressSingleHTTPFrontend: 0.0.0.0:11337
+
+logLevel: "WARN"
+checkForUpdates: false
+showFooter: false
+
+actions:
+  - title: Check dmesg logs
+    icon: logs
+    onclick: execution-dialog
+    shell: |
+      echo "[    0.000000] Linux version 6.8.7-100.fc38.x86_64 (mock build) #1 SMP PREEMPT_DYNAMIC"
+      echo "[    0.123456] Command line: BOOT_IMAGE=/vmlinuz root=UUID=..."
+      echo "[    1.234567] systemd[1]: Started OliveTin documentation screenshot service."
+      echo "[    1.456789] eth0: renamed from enp0s3"
+      echo "[    2.012345] IPv6: ADDRCONF(NETDEV_CHANGE): eth0: link becomes ready"

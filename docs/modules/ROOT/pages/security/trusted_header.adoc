@@ -1,0 +1,34 @@
+[#trusted-header]
+= Trusted Header Authorization
+
+Trusted Header Authorization is useful if you have a proxy that handles authentication, and you just want OliveTin to trust HTTP Servers sent via that proxy.
+
+This comes with the obvious security caveat that anyone who can set HTTP headers on requests to OliveTin can impersonate any user or usergroup. Therefore, you should only use this method if you are sure that requests to OliveTin are **only coming from trusted proxies**.
+
+== Configuring your reverse proxy
+
+You will need to configure your reverse proxy to set a header for the Username (eg `X-Username`) and optionally a header for Usergroup (eg `X-Usergroup`). How you do this will depend on your reverse proxy software. It is better that you check out the documentation for your reverse proxy software for how to set HTTP headers.
+
+== Configuring OliveTin
+
+To configure Trusted Header Authorization, set the following configuration options in your `config.yaml` file:
+
+[source,yaml]
+.`config.yaml`
+----
+authHttpHeaderUsername: "X-Username"
+authHttpHeaderUsergroup: "X-Usergroup"
+----
+
+The value of `X-Username` and `X-Usergroup` can be whatever you like, as long as they match the headers set by your reverse proxy.
+
+NOTE: You *must* set `AuthHttpHeaderUsername` to some value, even if you only intend to use `AuthHttpHeaderUsergroup`, otherwise usergroups will be ignored.
+
+== Multiple usergroups
+
+OliveTin will automatically detect multiple usergroups in the `authHttpHeaderUsergroup` header if they are separated by a space. You can also set a configuration option to use a different separator string with `authHttpHeaderUsergroupSep`. For example, if you set `authHttpHeaderUsergroupSep` to `,`, then the header `X-Usergroup: group1,group2` will be interpreted as two usergroups: `group1` and `group2`. 
+
+[source, yaml]
+----
+authHttpHeaderUsergroupSep: ","
+----

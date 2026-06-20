@@ -1,0 +1,34 @@
+[#arg-types]
+= Argument types
+
+A full list of argument types are below;
+
+.Argument types reference table
+[%header,cols="1,0,2"]
+|===
+| Type                        | Rendered as                       | Allowed values
+| (default)                   | xref:args/input.adoc[Textbox]           | If a `type:` is not set, and `choices:` is empty, then ascii will be used, and a warning will be logged. It is recommended that you set the type explicitly, rather than relying on defaults.
+| ascii                       | xref:args/input.adoc[Textbox]           | a-z (case insensitive), 0-9, but no spaces or punctuation
+| ascii_identifier            | xref:args/input.adoc[Textbox]           | Like a DNS name, a-Z (case insensitive), 0-9, `-`, `.`, and `_`. 
+| shell_safe_identifier       | xref:args/input.adoc[Textbox]           | Like an ascii identifier, but also allows `@` and `+`. Useful for shell-safe usernames and email-style identifiers.
+| ascii_sentence              | xref:args/input.adoc[Textbox]           | a-z (case insensitive), 0-9, with spaces, `.` and `,`. 
+| unicode_identifier          | xref:args/input.adoc[Textbox]           | Like an ascii identifier, but allows unicode characters. This is useful for languages that use non-ascii characters, such as Chinese, Japanese, etc.
+| email                       | xref:args/input.adoc[Textbox]           | An email address.
+| password                    | xref:args/password.adoc[Password]       | A password, which is hidden when typed.
+| very_dangerous_raw_string   | xref:args/input.adoc[Textbox]           | Anything. This is **incredibly dangerous**, as effectively people can type anything they like, including executing additional commands beyond what you specify. Absolutely should not be used unless your OliveTin instance can only be used by people you trust entirely.
+| regex:...                   | xref:args/input.adoc[Textbox]           | Version 2024.03.081 and above support custom regex patterns. See xref:args/regex.adoc[Custom regex arguments].
+| int                         | xref:args/input.adoc[Textbox]           | Any number, made up of the characters 0 to 9. Negative numbers are not supported.
+| url                         | xref:args/input.adoc[Textbox]           | A URL (e.g. https://example.com). Accepts any scheme, including `file://` and `ftp://`. See warning below.
+| confirmation                | xref:args/input_confirmation.adoc[Confirmation] | A "hidden" argument that makes the action require a confirmation before launching.
+| n/a, but `choices` used     | xref:args/input_dropdown.adoc[Dropdown]         | A "hidden" argument that makes the action require a confirmation before launching.
+| raw_string_multiline        | xref:args/input_textarea.adoc[Textarea]         | Anything. This is **dangerous**, as effectively people can type anything they like
+|===
+
+[WARNING]
+.Security risk: URL argument type
+====
+The `url` argument type does not restrict the URL scheme. Users can enter `file://` (local filesystem) URLs, `ftp://`, or other schemes. If the argument value is passed directly to curl, wget, or similar tools, a malicious or mistaken input could read local files, access internal services, or trigger unwanted network requests.
+
+If your action might be used by untrusted users, validate or filter the URL in your script (e.g. allow only `https://`) before using the value.
+====
+

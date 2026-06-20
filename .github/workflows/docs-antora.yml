@@ -1,0 +1,44 @@
+name: Antora docs
+on:
+  push:
+    paths:
+      - 'docs/**'
+      - 'local-antora-playbook.yml'
+      - 'local-antora-playbook-ci.yml'
+      - '.github/workflows/docs-antora.yml'
+  pull_request:
+    paths:
+      - 'docs/**'
+      - 'local-antora-playbook.yml'
+      - 'local-antora-playbook-ci.yml'
+      - '.github/workflows/docs-antora.yml'
+
+jobs:
+  antora:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install Antora toolchain
+        run: npm i antora@3.1.14 asciidoctor-kroki@0.18.1 @asciidoctor/tabs@1.0.0-beta.6
+
+      - name: Generate docs site (smoke)
+        run: npx antora local-antora-playbook-ci.yml --log-level info
+
+  trigger-docs-publish:
+    needs: antora
+    if: github.event_name == 'push' && github.ref == 'refs/heads/next'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger docs.olivetin.app publish
+        env:
+          GH_TOKEN: ${{ secrets.CONTAINER_TOKEN }}
+        run: gh workflow run asciidoc.yml --repo OliveTin/docs.olivetin.app --ref main

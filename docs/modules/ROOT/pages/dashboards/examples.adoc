@@ -1,0 +1,7 @@
+= Example Dashboard usage
+
+Check out the following examples of dashboards in several complete OliveTin solutions;
+
+* xref:solutions/container-control-panel/index.adoc[Container Control Panel]
+* xref:solutions/systemd-control-panel/index.adoc[Systemd Control Panel]
+

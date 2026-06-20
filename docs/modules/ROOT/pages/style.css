@@ -1,0 +1,212 @@
+body {
+  font-family: sans-serif;
+  line-height: 1.5;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-areas: "nav content" "nav footer";
+  grid-template-columns: 20em auto;
+  grid-template-rows: auto min-content;
+  height: 100vh;
+  align-items: stretch;
+}
+
+a {
+  text-decoration: none;
+  color: #36f;
+  font-weight: bold;
+}
+
+a:focus, #toc a:focus {
+  background-color: black;
+  color: white;
+}
+
+a:visited {
+  color: #36f;
+  font-weight: bold;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+#header {
+  background-color: #fafafa;
+  grid-area: nav;
+  box-shadow: 0 0 10px #cecece;
+}
+
+#footer {
+  grid-area: footer;
+  justify-self: center;
+  align-self: end;
+  padding: 1em;
+}
+
+#toc {
+  padding: 1em;
+}
+
+#toc a {
+  color: black;
+  font-weight: normal;
+}
+
+#toc li {
+  padding-bottom: .6em;
+}
+
+#toc ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+#toc ul ul {
+  padding-left: 1.4em;
+}
+
+#toctitle {
+  font-weight: bold;
+  color: black;
+}
+
+#content ul {
+  list-style: '\25b9    ';
+}
+
+h1 {
+  font-size: 1.4em;
+  font-weight: lighter;
+  background-color: black;
+  padding: .6em;
+  margin: 0;
+  color: white;
+}
+
+#toc a:hover {
+  text-decoration: underline;
+}
+
+#content {
+  background-color: white;
+  grid-area: content;
+  max-width: 1000px;
+  padding: 1em;
+  justify-self: center;
+}
+
+#content img {
+  max-width: 100%;
+  vertical-align: middle;
+}
+
+code {
+  background-color: #f7f7f8;
+}
+
+pre {
+  background-color: #f7f7f8;
+  padding: 1em;
+  word-wrap: break-word;
+  white-space: no-wrap;
+  overflow: auto;
+}
+
+table {
+  border-collapse: collapse;
+}
+
+td, th {
+  border: 1px solid gray;
+  padding: .4em;
+}
+
+th {
+  background-color: #f9f9f9;
+  text-align: left;
+}
+
+.imageblock {
+  float: center;
+}
+
+.imageblock.right {
+  float: right;
+}
+
+.imageblock .title {
+  margin-bottom: 2em;
+}
+
+.imageblock img {
+  border-radius: 1em;
+  box-shadow: 0 0 10px #cecece;
+}
+
+.imageblock.right img {
+  box-shadow: none;
+}
+
+
+.listingblock {
+  box-shadow: 0 0 10px #cecece;
+  border-radius: 1em;
+}
+
+.listingblock .title {
+  border-radius: 1em 1em 0 0;
+}
+
+.listingblock .title ~ .content, .listingblock .title ~ .content pre {
+  border-radius: 0 0 1em 1em;
+}
+
+.listingblock .content, .listingblock .content pre {
+  border-radius: 1em;
+}
+
+hr {
+  clear: both;
+  border: 0;
+  border-bottom: 1px solid #efefef;
+  margin: 1em;
+}
+
+div.admonitionblock.note {
+  background-color: beige;
+}
+
+div.admonitionblock td {
+  border: 0;
+}
+
+div.admonitionblock td:first-child {
+  font-weight: bold;
+}
+
+.listingblock .title {
+  background-color: #efefef;
+  margin-bottom: -1em;
+  padding: 1em;
+}
+
+.red {
+  color: white;
+  border: 1px solid black;
+  padding: .2em;
+  font-weight: bold;
+  background-color: #cc0000;
+}
+
+.red a {
+  color: white;
+}
+
+@media (max-width: 700px) {
+  body {
+    display: block;
+  }
+}
+

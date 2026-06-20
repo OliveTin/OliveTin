@@ -1,0 +1,13 @@
+#
+# Integration Test Config: xterm link handling
+#
+
+listenAddressSingleHTTPFrontend: 0.0.0.0:1337
+
+logLevel: "DEBUG"
+checkForUpdates: false
+
+actions:
+  - title: Echo URL
+    shell: echo "See https://example.com for more info"
+    popupOnStart: execution-dialog-stdout-only

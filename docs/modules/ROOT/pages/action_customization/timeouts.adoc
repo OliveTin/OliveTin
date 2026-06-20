@@ -1,0 +1,28 @@
+[#timeout]
+= Timeouts
+
+By default, actions in OliveTin have a **3 second timeout** for all actions.
+This means that OliveTin will kill the action if it is running for longer than
+the timeout, which can be useful to stop commands running for a long time.
+
+You can set your own timeouts like this;
+
+[source,yaml]
+----
+actions:
+  - title: My special action
+    shell: sleep 5
+    timeout: 10
+----
+
+NOTE: Allowing commands to run for infinity just doesn't seem to make sense, or
+at least is probably a bad case for OliveTin. Therefore, if you set a timeout
+*less than 3 seconds*, OliveTin will overwrite your Timeout and default to 3
+seconds. If you think you have a use case where a shorter (or infinite) timeout
+makes sense, please open an issue and let's discuss.
+
+== Check the logs
+
+If a action really does "time out", it will show in the logs with "(timed out)" next to the exist code;
+
+image::action_customization/timeout-logs/timeoutLogs.png[]

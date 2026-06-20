@@ -10,6 +10,8 @@ package entities
  */
 
 import (
+	"sort"
+	"strconv"
 	"strings"
 	"sync"
 )
@@ -62,6 +64,49 @@ func GetEntityInstances(entityName string) entityInstancesByKey {
 	}
 
 	return make(entityInstancesByKey, 0)
+}
+
+func GetEntityInstancesOrdered(entityName string) []*Entity {
+	instances := GetEntityInstances(entityName)
+	if len(instances) == 0 {
+		return nil
+	}
+
+	keys := make([]string, 0, len(instances))
+	for key := range instances {
+		keys = append(keys, key)
+	}
+	sort.Slice(keys, func(i, j int) bool {
+		return compareEntityKeys(keys[i], keys[j]) < 0
+	})
+
+	result := make([]*Entity, 0, len(keys))
+	for _, key := range keys {
+		result = append(result, instances[key])
+	}
+	return result
+}
+
+//gocyclo:ignore
+func compareEntityKeys(a, b string) int {
+	ai, errA := strconv.ParseInt(a, 10, 64)
+	bi, errB := strconv.ParseInt(b, 10, 64)
+	if errA == nil && errB == nil {
+		if ai < bi {
+			return -1
+		}
+		if ai > bi {
+			return 1
+		}
+		return 0
+	}
+	if a < b {
+		return -1
+	}
+	if a > b {
+		return 1
+	}
+	return 0
 }
 
 func AddEntity(entityName string, entityKey string, data any) {

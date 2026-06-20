@@ -1,0 +1,70 @@
+[#version-display]
+= Version display
+
+NOTE: This feature was added in OliveTin version 3000.11.0.
+
+OliveTin can show or hide the application version in the web interface. This is controlled by the **showVersionNumber** policy, which can be set globally or per user/group via xref:security/acl.adoc#_acls_and_policies_global[ACL policies].
+
+== What you see
+
+When **showVersionNumber** is enabled (the default):
+
+* The page footer shows the application name and version, for example: **OliveTin 2024.06.02**.
+* If xref:reference/updateChecks.adoc[update checks] are enabled and a newer version exists, a link to the new version may appear in the footer.
+* xref:troubleshooting/server-diagnostics.adoc[Server diagnostics] includes the installed version.
+
+When **showVersionNumber** is disabled:
+
+* The footer shows only **OliveTin** (no version number).
+* No update-version link is shown, even if update checks are on.
+* In server diagnostics output, the version information is redacted, which can be useful for privacy when sharing the report.
+
+== Configuration
+
+The policy defaults to `true` for all users. You can change it in the **defaultPolicy** or override it per user or group in an ACL.
+
+=== Hide version for everyone
+
+[source,yaml]
+.`config.yaml`
+----
+defaultPolicy:
+  showVersionNumber: false
+----
+
+=== Show version only for some users
+
+To hide the version by default but show it for certain users (for example, admins):
+
+[source,yaml]
+.`config.yaml`
+----
+defaultPolicy:
+  showVersionNumber: false
+
+accessControlLists:
+  - name: admins
+    matchUsergroups:
+      - admins
+    policy:
+      showVersionNumber: true
+----
+
+=== Show version for everyone (default)
+
+If you do not set **showVersionNumber**, it is treated as `true`. To set it explicitly:
+
+[source,yaml]
+.`config.yaml`
+----
+defaultPolicy:
+  showVersionNumber: true
+  showDiagnostics: true
+  showLogList: true
+----
+
+== See also
+
+* xref:security/acl.adoc[Access Control Lists] — how policies and ACLs work
+* xref:reference/updateChecks.adoc[Update Checks] — how OliveTin checks for new versions
+* xref:troubleshooting/server-diagnostics.adoc[Server diagnostics] — version is included or redacted based on this policy

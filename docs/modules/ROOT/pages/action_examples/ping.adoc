@@ -1,0 +1,16 @@
+[#action-ping]
+= Ping an address
+
+:systemd: Easy
+:container: Easy
+include::partial$action_examples/actionHeader.adoc[]
+
+[source,yaml]
+----
+actions:
+    # This sends 1 ping to google.com.
+  - title: ping google.com
+    shell: ping google.com -c 1
+    icon: ping
+    timeout: 3
+----

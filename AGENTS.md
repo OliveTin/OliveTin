@@ -13,12 +13,15 @@ If you are looking for OliveTin's AI policy, you can find it in `AI.md`.
 - **Frontend (Vue 3)**: `frontend/` (served by the service)
 - **Integration tests**: `integration-tests/`
 - **Protos/Generated**: `proto/`, `service/gen/...`
+- **Specs**: `specs/` — Markdown specs that define how code should behave in human-readable form. When changing behavior in a spec-covered area, keep implementation and tests aligned with the spec; do not reference code or symbols in specs (English only).
 
 ### How to Run
 - Run the server (dev):
   - From repo root: `go run ./service`
 - Unit tests (Go):
   - From repo root: `cd service && make unittests`
+- Code style (after editing code in `service/`):
+  - From repo root: `cd service && make codestyle`
 - Integration tests (Mocha + Selenium):
   - Single test: `cd integration-tests && npx --yes mocha test/general.mjs`
   - All tests: `cd integration-tests && npx --yes mocha`
@@ -41,6 +44,7 @@ If you are looking for OliveTin's AI policy, you can find it in `AI.md`.
 - Do not swallow errors; propagate or log meaningfully.
 - Match existing formatting; avoid unrelated reformatting.
 - Be safe around nils in executor steps (e.g., guard `req.Binding` and `req.Binding.Action`).
+- Cyclomatic complexity over 4 is not permitted.
 
 ### API and Execution Flow (High-level)
 1. Client calls Connect RPC (e.g., `Init`, `GetDashboard`, `StartAction`).
@@ -59,11 +63,18 @@ If you are looking for OliveTin's AI policy, you can find it in `AI.md`.
 ### Contributing Checklist
 - Review the contributing guidelines at `CONTRIBUTING.adoc`.
 - Review the AI guidance in `AI.md`.
-- Review the pull request template at `.github/PULL_REQUEST_TEMPLATE.md`. 
+- Review the pull request template at `.github/PULL_REQUEST_TEMPLATE.md`.
+- When changing behaviour covered by a spec in `specs/`, ensure implementation and tests match the spec.
+
+### Branch Naming
+Use conventional-commit-style branch names with a type prefix, optional issue reference, and a short kebab-case description:
+
+- `feat/[#123]-add-justification-prompt`
+- `fix/[#456]-websocket-reconnect`
+
+Do **not** use `feat-...`, `feature/...`, or other variants. Omit the `[#<issue>]` segment only when there is no linked issue.
 
 ### Troubleshooting
 - API tests failing with content-type errors: ensure Connect handler is served under `/api/` and the client targets that base URL.
 - Executor panics: check for nil `Binding/Action` and add guards in step functions.
 - Integration timeouts: wait for `loaded-dashboard` and use selectors matching the Vue UI.
-
-

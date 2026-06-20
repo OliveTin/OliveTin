@@ -13,7 +13,9 @@ const props = defineProps({
 })
 </script>
 
-<style scoped>
+<style>
+
+@layer components {
 .display {
 	padding: 1em;
 	border-radius: .7em;
@@ -32,6 +34,7 @@ const props = defineProps({
         border-color: #000;
         box-shadow: 0 0 .6em #000;
     }
+}
 }
 
 </style>

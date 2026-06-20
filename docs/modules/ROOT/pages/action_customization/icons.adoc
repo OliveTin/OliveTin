@@ -1,0 +1,158 @@
+[#icons]
+= Icons
+
+You can specify any HTML for an icon. It's a popular choice to use Unicode
+icons because they are extremely fast to load and there are a lot of them,
+but OliveTin also support Iconify, and simple PNG, JPG, WEBP and similar images.
+
+.Examples of icons in OliveTin
+image::../exampleIcons.png[]
+
+For a quick reference, here are some examples of how to use different types of icons in OliveTin;
+
+.`config.yaml`
+```yaml
+include::example$action_customization/icons/config.yaml[]
+```
+
+== Iconify Icons
+
+Browse over 200,000 icons that can be used with OliveTin here; https://icon-sets.iconify.design/
+
+Note, the icons are loaded from the internet, but should be cached by your browser afer the first load.
+
+On the Iconfiy website, you should select **Iconify Icon**
+
+image::../iconify.png[]
+
+Then copy this icon code, and place it in your config;
+
+[source,yaml]
+.`config.yaml`
+----
+actions:
+  - title: Iconify Icon
+    icon: <iconify-icon icon="ant-design:bug-filled"></iconify-icon>
+----
+
+And you should get something that looks like this;
+
+image::../action-button-iconify.png[]
+
+== Default Icon (bundled HugeIcon)
+
+OliveTin used to use a default emoji smiley face as the default icon for actions, but that was a bit too "emoji" and not everyone liked it. Now, OliveTin uses a simple "command line" icon from the HugeIcons set as the default icon for actions. This is a simple and neutral icon that should work well for most actions.
+
+If you need to reset a default icon for some reason, this is how you can do it;
+
+.`config.yaml`
+----
+actions:
+  - title: Action with the bundled CLI HugeIcon
+    icon: hugeicons:CommandLineIcon
+    shell: echo hello
+----
+
+If you want to use other icons from the HugeIcons set, you need to use the Iconify method described above, not with the "hugeicons:" prefix - that only works for the default icon.
+
+== Unicode icons ("emoji")
+
+Using simple emoji (unicode) icons from your browser's font is extremely fast, and can look good on some platforms. However, the icons are platform specific, which mean's they'll look different between browsers and between operating systems.
+
+There are great sites like link:https://symbl.cc/en/emoji/[symbl.cc - a list of
+"Emoji" in unicode].
+
+For example, if you find "link:https://symbl.cc/en/1F60E/[Smiling face with sunglasses]" you can click
+on it to see it's "HTML-code". In OliveTin, you'd setup the icon like this;
+
+----
+actions:
+  - title: Unicode (emoji) icon
+    icon: "&#128526;"
+    shell: echo "You are awesome"
+----
+
+=== Unicode aliases
+
+OliveTin has hard-coded aliases for a few commonly used icons, so you don't have to type out the full unicode codes. A list of those hard coded icons is;
+
+.Alias'd unicode reference table
+[%header]
+|===
+| Alias                       | Rendered as
+
+| `poop`                      | &#x1f4a9;
+| `smile`                     | &#x1F600;
+|	`ping`                      | &#x1f4e1;
+|	`backup`                    | &#128190;
+|	`reboot`                    | &#128260;
+|	`restart`                   | &#128260;
+|	`box`                       | &#128230;
+|	`ashtonished`               | &#128562;
+|	`clock`                     | &#128338;
+|	`disk`                      | &#128189;
+|	`logs`                      | &#128269;
+|	`light`                     | &#128161;
+|	`robot`                     | &#129302;
+|	`ssh`                       | &#128272;
+|	`theme`                     | &#127912;
+|===
+
+A full reference can be found in: https://github.com/OliveTin/OliveTin/blob/main/service/internal/config/emoji.go
+
+== Full HTML icons (`<img src ...`)
+You can also specify the full HTML for an image, like;
+
+----
+actions:
+    - title: HTML (jpg/png/etc) icon
+      icon: '<img src = "https://www.docker.com/sites/default/files/d8/2019-07/vertical-logo-monochromatic.png" width = "48px"/>'
+      shell: docker ps
+----
+
+=== Saving and serving icons for "offline" use
+
+Sometimes you might want to store images to use as icons, with your installation of OliveTin. This can be useful when your installation is meant to be offline, or disconnected from the internet. This is easily done.
+
+OliveTin will try to create a directory called `custom-webui` in the same directory as the `config.yaml` file. If this directory exists, OliveTin will serve files from this directory as if they were in the standard webui directory, in the same path as your OliveTin web UI.
+
+Ideally, put your icons in a directory like `<your-config-dir>/custom-webui/icons/`. If this directory contained a file called "mrgreen.gif", then it would be served at `http://myserver:1337/custom-webui/icons/mrgreen.gif`. Below is a picture of Mr Green. Feel free to save his likeness and awesomeness for yourself, for future awesome offline usage.
+
+.Mr Green, the original awesome smily.
+image::../mrgreen.gif[Mr Green]
+
+In your OliveTin config, customize your command again using HTML, like this;
+
+----
+actions:
+    - title: Mr Green
+      icon: '<img src = "custom-webui/icons/mrgreen.gif" />'
+      shell: echo "I don't like the word 'emoji' "
+----
+
+This will result in a locally hosted icon that will work offline, that looks like this;
+
+image::../mrGreenAction.png[]
+
+////
+= CSS styles
+
+OliveTin allows you to write any CSS style rules directly on a single action.
+This is both pretty powerful if you want an action to have a particular style,
+but it does require understanding that you are writing your code - and can
+break things! Be careful!
+
+A tutorial on how to use CSS can easily be found online, but here are some
+examples;
+
+== Example: Bold & Purple action
+
+----
+- actions:
+    - title: My special action
+      css:
+        background-color: purple
+        font-weight: bold
+      shell: echo "I like purple"
+----
+////

@@ -1,0 +1,385 @@
+[#exec-webhook-github]
+= GitHub Webhooks
+
+OliveTin includes built-in templates for GitHub webhooks that simplify configuration. Instead of manually configuring header matching and argument extraction, you can use a template that handles all the common settings for you.
+
+== Supported GitHub Templates
+
+OliveTin supports the following GitHub webhook templates:
+
+* `github-push` - Triggered on push events
+* `github-pr` or `github-pull-request` - Triggered on pull request events
+* `github-release` - Triggered on release events
+* `github-workflow` - Triggered on workflow run events
+
+== Setting Up GitHub Webhooks
+
+=== 1. Configure the Webhook in GitHub
+
+1. Go to your GitHub repository → **Settings** → **Webhooks** → **Add webhook**
+2. Set the **Payload URL** to `http://your-olivetin-server:1337/webhooks`
+3. Set **Content type** to `application/json`
+4. Enter a **Secret** (you'll use this in your OliveTin config)
+5. Choose which events to trigger the webhook:
+   - Select **Just the push event** for push triggers
+   - Or select **Let me select individual events** for more control
+6. Click **Add webhook**
+
+=== 2. Configure OliveTin
+
+Use the `template` property to apply GitHub-specific settings:
+
+[source,yaml]
+.`config.yaml`
+----
+actions:
+  - title: Deploy on Push
+    shell: |
+      echo "Deploying commit {{ git_commit }} to {{ git_branch }}"
+      /opt/scripts/deploy.sh "{{ git_branch }}"
+    arguments:
+      - name: git_commit
+        type: ascii
+      - name: git_branch
+        type: ascii
+    execOnWebhook:
+      - template: github-push
+        secret: your-github-webhook-secret
+----
+
+== GitHub Push Template
+
+The `github-push` template is designed for push events. It automatically:
+
+* Sets authentication to HMAC-SHA256 with the `X-Hub-Signature-256` header
+* Matches the `X-GitHub-Event: push` header
+* Extracts common push event data
+
+=== Extracted Arguments
+
+The following arguments are automatically extracted and available in your action:
+
+[cols="1,2,2"]
+|===
+|Argument Name |Description |JSONPath
+
+|`git_repository`
+|Full repository name (owner/repo)
+|`$.repository.full_name`
+
+|`git_ref`
+|Full git reference (e.g., refs/heads/main)
+|`$.ref`
+
+|`git_commit`
+|The HEAD commit SHA
+|`$.head_commit.id`
+
+|`git_branch`
+|The branch reference
+|`$.ref`
+
+|`git_message`
+|The commit message
+|`$.head_commit.message`
+
+|`git_author`
+|The commit author's name
+|`$.head_commit.author.name`
+|===
+
+=== Example: Deploy on Push to Main
+
+[source,yaml]
+----
+actions:
+  - title: Deploy to Production
+    shell: |
+      if [ "{{ git_ref }}" = "refs/heads/main" ]; then
+        echo "Deploying {{ git_commit }} by {{ git_author }}"
+        /opt/scripts/deploy.sh production
+      else
+        echo "Ignoring push to non-main branch"
+      fi
+    arguments:
+      - name: git_ref
+        type: ascii
+      - name: git_commit
+        type: ascii
+      - name: git_author
+        type: ascii
+    execOnWebhook:
+      - template: github-push
+        secret: your-secret
+----
+
+=== Example: Filter by Branch
+
+To only trigger on specific branches, add a `matchPath` condition:
+
+[source,yaml]
+----
+actions:
+  - title: Deploy Staging
+    shell: /opt/scripts/deploy.sh staging
+    execOnWebhook:
+      - template: github-push
+        secret: your-secret
+        matchPath: '$.ref="refs/heads/develop"'
+----
+
+== GitHub Pull Request Template
+
+The `github-pr` (or `github-pull-request`) template handles pull request events.
+
+=== Extracted Arguments
+
+[cols="1,2,2"]
+|===
+|Argument Name |Description |JSONPath
+
+|`pr_number`
+|Pull request number
+|`$.number`
+
+|`pr_title`
+|Pull request title
+|`$.pull_request.title`
+
+|`pr_author`
+|PR author's username
+|`$.pull_request.user.login`
+
+|`pr_action`
+|Event action (opened, closed, synchronize, etc.)
+|`$.action`
+
+|`git_repository`
+|Full repository name
+|`$.repository.full_name`
+
+|`pr_state`
+|PR state (open, closed)
+|`$.pull_request.state`
+
+|`pr_head_sha`
+|HEAD commit SHA of the PR branch
+|`$.pull_request.head.sha`
+|===
+
+=== Example: Run Tests on PR
+
+[source,yaml]
+----
+actions:
+  - title: Run PR Tests
+    shell: |
+      echo "Running tests for PR #{{ pr_number }}: {{ pr_title }}"
+      echo "Action: {{ pr_action }}, Author: {{ pr_author }}"
+      /opt/scripts/run-tests.sh "{{ pr_head_sha }}"
+    arguments:
+      - name: pr_number
+        type: ascii
+      - name: pr_title
+        type: ascii
+      - name: pr_action
+        type: ascii
+      - name: pr_author
+        type: ascii
+      - name: pr_head_sha
+        type: ascii
+    execOnWebhook:
+      - template: github-pr
+        secret: your-secret
+----
+
+=== Example: Only on PR Open or Synchronize
+
+[source,yaml]
+----
+actions:
+  - title: CI Build
+    shell: /opt/scripts/ci-build.sh "{{ pr_head_sha }}"
+    arguments:
+      - name: pr_head_sha
+        type: ascii
+    execOnWebhook:
+      - template: github-pr
+        secret: your-secret
+        matchPath: '$.action="opened"'
+      - template: github-pr
+        secret: your-secret
+        matchPath: '$.action="synchronize"'
+----
+
+== GitHub Release Template
+
+The `github-release` template handles release events.
+
+=== Extracted Arguments
+
+[cols="1,2,2"]
+|===
+|Argument Name |Description |JSONPath
+
+|`release_action`
+|Release action (published, created, etc.)
+|`$.action`
+
+|`release_tag`
+|Release tag name
+|`$.release.tag_name`
+
+|`release_name`
+|Release name/title
+|`$.release.name`
+
+|`git_repository`
+|Full repository name
+|`$.repository.full_name`
+
+|`release_author`
+|Release author's username
+|`$.release.author.login`
+|===
+
+=== Example: Deploy on Release
+
+[source,yaml]
+----
+actions:
+  - title: Deploy Release
+    shell: |
+      echo "Deploying release {{ release_tag }}: {{ release_name }}"
+      /opt/scripts/deploy-release.sh "{{ release_tag }}"
+    arguments:
+      - name: release_tag
+        type: ascii
+      - name: release_name
+        type: ascii
+    execOnWebhook:
+      - template: github-release
+        secret: your-secret
+        matchPath: '$.action="published"'
+----
+
+== GitHub Workflow Template
+
+The `github-workflow` template handles workflow run events, useful for triggering actions when GitHub Actions workflows complete.
+
+=== Extracted Arguments
+
+[cols="1,2,2"]
+|===
+|Argument Name |Description |JSONPath
+
+|`workflow_name`
+|Name of the workflow
+|`$.workflow_run.name`
+
+|`workflow_status`
+|Workflow status
+|`$.workflow_run.status`
+
+|`workflow_conclusion`
+|Workflow conclusion (success, failure, etc.)
+|`$.workflow_run.conclusion`
+
+|`git_repository`
+|Full repository name
+|`$.repository.full_name`
+
+|`git_commit`
+|HEAD commit SHA
+|`$.workflow_run.head_sha`
+
+|`git_branch`
+|Branch that triggered the workflow
+|`$.workflow_run.head_branch`
+|===
+
+=== Example: Deploy After CI Success
+
+[source,yaml]
+----
+actions:
+  - title: Deploy After CI
+    shell: |
+      echo "CI workflow '{{ workflow_name }}' completed with {{ workflow_conclusion }}"
+      if [ "{{ workflow_conclusion }}" = "success" ]; then
+        /opt/scripts/deploy.sh "{{ git_branch }}" "{{ git_commit }}"
+      fi
+    arguments:
+      - name: workflow_name
+        type: ascii
+      - name: workflow_conclusion
+        type: ascii
+      - name: git_branch
+        type: ascii
+      - name: git_commit
+        type: ascii
+    execOnWebhook:
+      - template: github-workflow
+        secret: your-secret
+        matchPath: '$.action="completed"'
+----
+
+== Customizing Templates
+
+Templates provide default values, but you can override or extend them:
+
+[source,yaml]
+----
+actions:
+  - title: Custom Push Handler
+    shell: echo "Push from {{ custom_field }}"
+    arguments:
+      - name: custom_field
+        type: ascii
+      - name: git_commit
+        type: ascii
+    execOnWebhook:
+      - template: github-push
+        secret: your-secret
+        # Add additional extractions
+        extract:
+          custom_field: "$.sender.login"
+        # Add additional match criteria
+        matchPath: '$.repository.private=false'
+----
+
+Custom `extract` values are merged with template defaults, so you can add extra fields without losing the standard ones.
+
+== Security Considerations
+
+1. **Always use a secret** - Without a secret, anyone can trigger your webhooks
+2. **Use HTTPS** - When exposing OliveTin to the internet, use a reverse proxy with TLS
+3. **Limit webhook events** - Only subscribe to the events you actually need in GitHub
+4. **Validate in your scripts** - Add additional validation in your shell scripts for sensitive operations
+
+== Troubleshooting
+
+=== Webhook Not Triggering
+
+1. Check the OliveTin logs with `logLevel: DEBUG` for webhook processing details
+2. Verify the webhook is being received (check GitHub webhook delivery history)
+3. Ensure the secret matches exactly between GitHub and OliveTin config
+4. Verify the `template` name is spelled correctly
+
+=== Signature Verification Failed
+
+1. Ensure the secret in OliveTin matches the one configured in GitHub
+2. Check that you're using the correct template (GitHub uses HMAC-SHA256 by default)
+3. Make sure the webhook Content-Type is set to `application/json`
+
+=== Arguments Not Extracted
+
+1. Verify the argument names match exactly (case-sensitive)
+2. Check that arguments are defined in the action's `arguments` list
+3. Use `logLevel: DEBUG` to see extracted values in the logs
+
+== See Also
+
+* xref:action_execution/onwebhook.adoc[Webhooks Overview] - General webhook configuration
+* xref:solutions/on-git-push/index.adoc[GitOps Solution] - Alternative approach using Git hooks
+* https://docs.github.com/en/webhooks[GitHub Webhooks Documentation^] - Official GitHub webhook documentation

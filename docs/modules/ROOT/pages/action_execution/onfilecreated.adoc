@@ -1,0 +1,26 @@
+[#exec-file-created]
+= Execute on file created
+
+You can execute an action when a file is created in a directory. The argument `filename` is pre-populated for you.
+
+[source,yaml]
+.`config.yaml`
+----
+actions:
+  - title: Print names of new files
+    shell: echo {{ filename }}
+    arguments:
+      - name: filename
+        type: unicode_identifier
+      - name: filedir
+        type: unicode_identifier
+      - name: fileext
+        type: unicode_identifier
+
+    execOnFileCreatedInDir:
+      - /home/user/Downloads/
+----
+
+include::partial$action_execution/onfileindir_arguments.adoc[]
+
+

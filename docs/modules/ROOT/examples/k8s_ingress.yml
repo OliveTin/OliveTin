@@ -1,0 +1,21 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata: 
+  name: olivetin-ingress
+spec:
+  defaultBackend: 
+    service: 
+      name: olivetin
+      port:
+        number: 1337
+  rules:
+    - host: olivetin.apps.ocp.teratan.net
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: olivetin
+                port:
+                  number: 1337

@@ -1,0 +1,96 @@
+[#local-users]
+= Local Users Login
+
+OliveTin supports just basic users defined with a username and password in the config.yaml file. This can be used when you do not want to use a full authentication system like LDAP, OAuth2 or a Reverse Proxy.
+
+For programmatic access (scripts, integrations) using per-user bearer API keys, see xref:security/api_keys.adoc[API Keys].
+
+== Define a user
+
+include::partial$config-start.adoc[]
+----
+authLocalUsers:
+  enabled: true
+  users:
+    - username: james
+      password: $argon2id$v=19$m=65536,t=4,p=6$LnNW4sw+jZfa5Ex3YjfuHQ$vl8pjUJhxNmBxScV4lI3cgAZPkNB1rSrnX6ibgoAP8k
+----
+
+== Define users with a user group
+
+OliveTin local users do not need to be part of a user group, and unless any user groups are added, they will not be in any user group. However, if you want to add a user to a user group, you can do so like this:
+
+include::partial$config-start.adoc[]
+----
+authLocalUsers:
+  enabled: true
+  users:
+    - username: alice
+      usergroup: admins
+      password: $argon2id$v=19$m=65536,t=4,p=6$LnNW4sw+jZfa5Ex3YjfuHQ$vl8pjUJhxNmBxScV4lI3cgAZPkNB1rSrnX6ibgoAP8k
+
+    - username: bob
+      password: ...
+      usergroup: admins
+
+    - username: charlie
+      password: ...
+      usergroup: webmasters
+----
+
+== Get a Argon2id hashed password
+
+You will notice from the configuration examples above that the password is hashed using Argon2id. You can use any of the following methods to generate a Argon2id hashed password;
+
+=== Option A - Using OliveTin API
+
+You can see from the example above that the config contains a single user called *james*, and the password is hashed using Argon2id. OliveTin provides a utility API to hash passwords using Argon2id which can be useful when you want to create new users. Simply run the following curl command to hash a password:
+
+```bash
+curl -sS --json '{"password": "myPassword"}' http://olivetin.example.com:1337/api/PasswordHash
+```
+
+NOTE: Curl 7.82 added support for the `--json` option, if you are using an older version of curl, see link:https://github.com/OliveTin/OliveTin/issues/462[this issue].
+
+This will return a output like this, you can then copy and paste this hash into your config.yaml file;
+
+```
+Your password hash is: $argon2id$v=19$m=65536,t=4,p=6$dlWTV1RL04/Nuvxzl94NAg$KsYXvCFE2Eu/jkXi/dbbZM3I/2b2VByTAwRIenUwdJk
+```
+
+=== Option B - Using the `argon2` command line tool
+
+You can also easily hash the password using the `argon2` package:
+
+```bash
+echo -n "myPassword" | argon2 "$(openssl rand -base64 16)" -id -t 4 -m 16 -p 6 -l 32 -e
+```
+
+=== Opption C - Using the `hash` docker image
+Or using the link:https://hub.docker.com/r/leplusorg/hash[hash] docker image:
+
+```bash
+docker run --rm -i --net=none leplusorg/hash sh -c 'echo -n "myPassword" | argon2 "$(openssl rand -base64 16)" -id -t 4 -m 16 -p 6 -l 32 -e'
+```
+
+Then simply visit the OliveTin web interface and browse to the login page, eg: http://olivetin.example.com:1337/login
+
+=== Why does OliveTin use Argon2id? 
+Argon2id is the password hashing algorithm that is link:https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html[recommended by OWASP] as of October 2024. There doesn't seem to be a good reason yet to provide configuration options for changing the password hashing algorithm, but if you have a good reason, please open an issue on the GitHub repository.
+
+
+== Force login page
+
+If you don't want to allow guests to do anything in OliveTin, you can use the `authRequireGuestsToLogin` option to force all users to login before they do anything. This will redirect all users to the login page if they are not logged in, and it will also set `defaultPermissions` to `false`, meaning that permissions must be explicitly set for each user or user group.
+
+include::partial$config-start.adoc[]
+----
+authRequireGuestsToLogin: true
+
+authLocalUsers:
+  enabled: true
+  users:
+    - username: james
+      password: $argon2id$v=19$m=65536,t=4,p=6$LnNW4sw+jZfa5Ex3YjfuHQ$vl8pjUJhxNmBxScV4lI3cgAZPkNB1rSrnX6ibgoAP8k
+----
+

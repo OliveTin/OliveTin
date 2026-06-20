@@ -1,0 +1,19 @@
+services:
+  app:
+    image: 'jc21/nginx-proxy-manager:latest'
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '81:81'
+      - '443:443'
+    volumes:
+      - ./data:/data
+      - ./letsencrypt:/etc/letsencrypt
+  olivetin:
+    container_name: olivetin
+    image: jamesread/olivetin
+    volumes:
+      - ./OliveTin:/config # replace host path or volume as needed
+    ports:
+      - "1337:1337"
+    restart: unless-stopped

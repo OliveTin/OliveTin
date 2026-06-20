@@ -3,6 +3,16 @@ name: "Build & Release pipeline"
 
 on:
   pull_request:
+    paths:
+      - '.github/workflows/build-and-release.yml'
+      - '.goreleaser.yml'
+      - 'Dockerfile.multiarches'
+      - 'Dockerfile.singlearch'
+      - 'Makefile'
+      - 'frontend/**'
+      - 'integration-tests/**'
+      - 'proto/**'
+      - 'service/**'
   workflow_dispatch:
   push:
     tags:
@@ -11,31 +21,49 @@ on:
       - main
       - next
       - beta
+    paths:
+      - '.github/workflows/build-and-release.yml'
+      - '.goreleaser.yml'
+      - 'Dockerfile.multiarches'
+      - 'Dockerfile.singlearch'
+      - 'Makefile'
+      - 'frontend/**'
+      - 'integration-tests/**'
+      - 'proto/**'
+      - 'service/**'
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
       - name: Set up QEMU
         id: qemu
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v4
         with:
           image: tonistiigi/binfmt:latest
           platforms: arm64,arm
 
-      - name: Setup node
-        uses: actions/setup-node@v4
+      - name: Setup node (npm cache)
+        if: github.event_name != 'pull_request'
+        uses: actions/setup-node@v6.4.0
         with:
+          node-version: '22'
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
 
+      - name: Setup node
+        if: github.event_name == 'pull_request'
+        uses: actions/setup-node@v6.4.0
+        with:
+          node-version: '22'
+
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version-file: 'service/go.mod'
           cache: true
@@ -45,13 +73,15 @@ jobs:
         run: go version
 
       - name: Login to Docker Hub
-        uses: docker/login-action@v3
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
+        uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_KEY }}
 
       - name: Login to ghcr
-        uses: docker/login-action@v3
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
+        uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -74,7 +104,7 @@ jobs:
         run: cd integration-tests && make -w
 
       - name: Archive integration tests
-        uses: actions/upload-artifact@v4.3.1
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: "OliveTin-integration-tests-${{ env.DATE }}-${{ github.sha }}"
@@ -83,12 +113,17 @@ jobs:
             !integration-tests/node_modules
 
       - name: Install goreleaser
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
         uses: goreleaser/goreleaser-action@v6
         with:
           install-only: true
 
+      - name: Set up Docker Buildx
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
+        uses: docker/setup-buildx-action@v3
+
       - name: release
-        if: github.ref_type != 'tag'
+        if: github.ref_type != 'tag' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false)
         uses: cycjimmy/semantic-release-action@v4
         with:
           extra_plugins: |
@@ -100,8 +135,8 @@ jobs:
           GH_TOKEN: ${{ secrets.CONTAINER_TOKEN }}
 
       - name: Archive binaries
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
         uses: actions/upload-artifact@v4.3.1
         with:
           name: "OliveTin-snapshot-${{ env.DATE }}-${{ github.sha }}"
           path: dist/OliveTin*.*
-

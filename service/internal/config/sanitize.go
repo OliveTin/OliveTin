@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"strings"
 	"text/template"
 
@@ -15,7 +16,9 @@ func (cfg *Config) Sanitize() {
 	cfg.sanitizeLogLevel()
 	cfg.sanitizeAuthRequireGuestsToLogin()
 	cfg.sanitizeLogHistoryPageSize()
-	cfg.sanitizeLocalUserPasswords()
+	cfg.sanitizeLocalUsers()
+	cfg.sanitizeSecurityHeaders()
+	cfg.sanitizeOnClickDefaults()
 
 	// log.Infof("cfg %p", cfg)
 
@@ -24,6 +27,37 @@ func (cfg *Config) Sanitize() {
 	}
 
 	cfg.sanitizeDashboardsForInlineActions()
+
+	cfg.sanitizeActionGroups()
+	cfg.sanitizeActionGroupReferences()
+
+	if err := cfg.validateReservedActionArgumentNames(); err != nil {
+		log.Fatalf("%v", err)
+	}
+}
+
+func (cfg *Config) validateReservedActionArgumentNames() error {
+	for _, action := range cfg.Actions {
+		if err := action.validateReservedArgumentNames(); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (action *Action) validateReservedArgumentNames() error {
+	if action == nil {
+		return nil
+	}
+
+	for _, arg := range action.Arguments {
+		if strings.HasPrefix(arg.Name, ReservedArgumentNamePrefix) {
+			return fmt.Errorf("action %q argument %q uses reserved prefix %q", action.Title, arg.Name, ReservedArgumentNamePrefix)
+		}
+	}
+
+	return nil
 }
 
 func (cfg *Config) sanitizeDashboardsForInlineActions() {
@@ -145,14 +179,85 @@ func (action *Action) sanitize(cfg *Config) {
 
 	action.ID = getActionID(action)
 	action.Icon = lookupHTMLIcon(action.Icon, cfg.DefaultIconForActions)
-	action.PopupOnStart = sanitizePopupOnStart(action.PopupOnStart, cfg)
+	migrateActionOnClick(action)
+	action.OnClick = sanitizeOnClick(action.OnClick, cfg)
+	action.PopupOnStart = action.OnClick
 
 	if action.MaxConcurrent < 1 {
 		action.MaxConcurrent = 1
 	}
 
+	action.Groups = dedupeStrings(action.Groups)
+
 	for idx := range action.Arguments {
 		action.Arguments[idx].sanitize()
+	}
+}
+
+func dedupeStrings(values []string) []string {
+	seen := make(map[string]struct{}, len(values))
+	out := make([]string, 0, len(values))
+
+	for _, value := range values {
+		out = appendUniqueString(out, seen, value)
+	}
+
+	return out
+}
+
+func appendUniqueString(out []string, seen map[string]struct{}, value string) []string {
+	if value == "" {
+		return out
+	}
+
+	if _, found := seen[value]; found {
+		return out
+	}
+
+	seen[value] = struct{}{}
+
+	return append(out, value)
+}
+
+const defaultActionGroupQueueSize = 5
+
+func (cfg *Config) sanitizeActionGroups() {
+	for _, group := range cfg.ActionGroups {
+		if group == nil {
+			continue
+		}
+
+		if group.QueueSize <= 0 {
+			group.QueueSize = defaultActionGroupQueueSize
+		}
+
+		group.Icon = lookupHTMLIcon(group.Icon, cfg.DefaultIconForActions)
+	}
+}
+
+func (cfg *Config) sanitizeActionGroupReferences() {
+	for _, action := range cfg.Actions {
+		for _, groupName := range action.Groups {
+			cfg.warnInvalidActionGroupReference(action, groupName)
+		}
+	}
+}
+
+func (cfg *Config) warnInvalidActionGroupReference(action *Action, groupName string) {
+	group, found := cfg.ActionGroups[groupName]
+	if !found {
+		log.WithFields(log.Fields{
+			"actionTitle": action.Title,
+			"groupName":   groupName,
+		}).Warn("Action references unknown action group")
+		return
+	}
+
+	if group == nil || group.MaxConcurrent < 1 {
+		log.WithFields(log.Fields{
+			"actionTitle": action.Title,
+			"groupName":   groupName,
+		}).Warn("Action references action group that will not be enforced at runtime")
 	}
 }
 
@@ -163,6 +268,7 @@ func (cfg *Config) sanitizeAuthRequireGuestsToLogin() {
 		cfg.DefaultPermissions.View = false
 		cfg.DefaultPermissions.Exec = false
 		cfg.DefaultPermissions.Logs = false
+		cfg.DefaultPermissions.Kill = false
 	}
 }
 
@@ -175,24 +281,86 @@ func (cfg *Config) sanitizeLogHistoryPageSize() {
 	}
 }
 
-func (cfg *Config) sanitizeLocalUserPasswords() {
+func (cfg *Config) sanitizeLocalUsers() {
 	for _, user := range cfg.AuthLocalUsers.Users {
-		if user.Password != "" {
-			user.Password = parsePasswordTemplate(user.Password)
-		}
+		expandLocalUserEnvTemplates(user)
+	}
+
+	if err := validateUniqueLocalUserAPIKeys(cfg.AuthLocalUsers.Users); err != nil {
+		log.Fatalf("%v", err)
 	}
 }
 
-// parsePasswordTemplate expands {{ .Env.VAR }} in local user password fields using the process environment.
-func parsePasswordTemplate(source string) string {
-	t, err := template.New("password").Option("missingkey=error").Parse(source)
+func expandLocalUserEnvTemplates(user *LocalUser) {
+	if user == nil {
+		return
+	}
+
+	if user.Password != "" {
+		user.Password = expandEnvTemplate(user.Password)
+	}
+
+	if user.ApiKey != "" {
+		user.ApiKey = expandEnvTemplate(user.ApiKey)
+	}
+}
+
+// validateUniqueLocalUserAPIKeys returns an error when two local users share the same non-empty apiKey.
+func validateUniqueLocalUserAPIKeys(users []*LocalUser) error {
+	seen := make(map[string]string)
+
+	for _, user := range users {
+		if err := recordUniqueLocalUserAPIKey(seen, user); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func recordUniqueLocalUserAPIKey(seen map[string]string, user *LocalUser) error {
+	if user == nil || user.ApiKey == "" {
+		return nil
+	}
+
+	if prior, ok := seen[user.ApiKey]; ok {
+		return fmt.Errorf("duplicate authLocalUsers apiKey for users %q and %q", prior, user.Username)
+	}
+
+	seen[user.ApiKey] = user.Username
+
+	return nil
+}
+
+func (cfg *Config) sanitizeSecurityHeaders() {
+	cfg.sanitizeSecurityHeadersCSP()
+	cfg.sanitizeSecurityHeadersXFrameOptions()
+}
+
+func (cfg *Config) sanitizeSecurityHeadersCSP() {
+	if !cfg.Security.HeaderContentSecurityPolicy || cfg.Security.ContentSecurityPolicy != "" {
+		return
+	}
+	cfg.Security.ContentSecurityPolicy = ContentSecurityPolicyDefault
+}
+
+func (cfg *Config) sanitizeSecurityHeadersXFrameOptions() {
+	if !cfg.Security.HeaderXFrameOptions || cfg.Security.XFrameOptions != "" {
+		return
+	}
+	cfg.Security.XFrameOptions = "DENY"
+}
+
+// expandEnvTemplate expands {{ .Env.VAR }} in config strings using the process environment.
+func expandEnvTemplate(source string) string {
+	t, err := template.New("envTemplate").Option("missingkey=error").Parse(source)
 	if err != nil {
-		log.WithFields(log.Fields{"error": err}).Debug("Password template parse failed, using literal")
+		log.WithFields(log.Fields{"error": err}).Debug("Env template parse failed, using literal")
 		return source
 	}
 	var b strings.Builder
 	if err := t.Execute(&b, map[string]interface{}{"Env": env.BuildEnvMap()}); err != nil {
-		log.WithFields(log.Fields{"error": err}).Debug("Password template execute failed, using literal")
+		log.WithFields(log.Fields{"error": err}).Debug("Env template execute failed, using literal")
 		return source
 	}
 	return b.String()
@@ -211,7 +379,7 @@ func getActionID(action *Action) string {
 }
 
 //gocyclo:ignore
-func sanitizePopupOnStart(raw string, cfg *Config) string {
+func sanitizeOnClick(raw string, cfg *Config) string {
 	switch raw {
 	case "execution-dialog":
 		return raw
@@ -221,9 +389,44 @@ func sanitizePopupOnStart(raw string, cfg *Config) string {
 		return raw
 	case "execution-button":
 		return raw
+	case "history":
+		return raw
 	default:
-		return cfg.DefaultPopupOnStart
+		return cfg.DefaultOnClick
 	}
+}
+
+func migrateActionOnClick(action *Action) {
+	if action.OnClick == "" && action.PopupOnStart != "" {
+		action.OnClick = action.PopupOnStart
+	}
+}
+
+func shouldMigrateDefaultOnClickFromPopup(onClick, popupOnStart string) bool {
+	if popupOnStart == "" {
+		return false
+	}
+	if onClick == "" {
+		return true
+	}
+	return onClick == "nothing" && popupOnStart != "nothing"
+}
+
+func (cfg *Config) migrateDefaultOnClickFromLegacyPopup() {
+	if !shouldMigrateDefaultOnClickFromPopup(cfg.DefaultOnClick, cfg.DefaultPopupOnStart) {
+		return
+	}
+	cfg.DefaultOnClick = cfg.DefaultPopupOnStart
+}
+
+func (cfg *Config) sanitizeOnClickDefaults() {
+	cfg.migrateDefaultOnClickFromLegacyPopup()
+
+	if cfg.DefaultOnClick == "" {
+		cfg.DefaultOnClick = "nothing"
+	}
+
+	cfg.DefaultPopupOnStart = cfg.DefaultOnClick
 }
 
 func (arg *ActionArgument) sanitize() {
@@ -239,8 +442,7 @@ func (arg *ActionArgument) sanitize() {
 
 	arg.sanitizeNoType()
 
-	// TODO Validate the default against the type checker, but this creates a
-	// import loop
+	// Default value validation runs in executor at config load (validateArgumentDefaults).
 }
 
 func (arg *ActionArgument) sanitizeNoType() {

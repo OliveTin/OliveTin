@@ -1,0 +1,26 @@
+= Run as different users
+
+OliveTin does not *need* to run as root. It does not request any special
+permissions from the operating system that require root (as long as you run on
+ports above 1024, and it can read/write it's configuration). So, you can run as
+any non-root user if you wish.
+
+However, it is very convenient to run as root, as many users will need to run 
+actions and jobs that do require root permissions. 
+
+There are no ways in OliveTin to specify which user runs an action, because the
+Linux OS has several great ways to do this already, and adding support for it
+in OliveTin just adds bloat when there are perfectly good ways that already
+exist.
+
+== EG: Using sudo;
+
+----
+actions:
+  - title: Run echo as a different user
+    shell: sudo -u bob echo "I am Bob."
+----
+
+If you are worried about security, you could run OliveTin as a non-privileged
+user, and use sudo rules to control what it can and cannot do. 
+

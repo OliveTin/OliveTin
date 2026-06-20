@@ -1,0 +1,20 @@
+= Misc API calls
+
+== Example API call: Get the dashboard buttons ("components")
+
+.curl
+----
+user@host: curl http://olivetinServer:1337/api/GetDashboardComponents 
+----
+
+== Example API call: readyz Healthcheck
+
+This is useful for configuring healthchecks in docker containers, or on Kubernetes.
+
+.curl
+----
+user@host: curl http://olivetinServer:1337/api/readyz
+{"status": "ok"}
+----
+
+The response will always be "status: ok" to indicate that the API is up, or it will timeout.

@@ -7,6 +7,12 @@ translations:
   nav.diagnostics: Diagnostica
   docs: Documentazione
   connected: Connesso
+  disconnected: Disconnesso
+  reconnecting: Riconnessione…
+  disconnected-banner-announcement: Websocket eventi disconnesso.
+  disconnected-banner-link-text: "Websocket eventi disconnesso"
+  disconnected-banner-suffix: " dalle {disconnectedSince}. Nuovo tentativo tra {reconnectIn}."
+  disconnected-banner-suffix-reconnecting: " dalle {disconnectedSince}. Tentativo di connessione…"
   login-button: Login
   raise-issue: Segnala un problema su GitHub
   logs.title: Registri
@@ -25,6 +31,18 @@ translations:
   logs.calendar: Calendario
   logs.calendar-title: Calendario dei Registri
   logs.back-to-list: Torna all'Elenco
+  logs.queue: Coda
+  logs.queue-title: Coda di esecuzione
+  logs.queue-page-description: Esecuzioni attive e in attesa raggruppate per gruppo di azioni. Le voci non autorizzate sono nascoste.
+  logs.queue-default-group: Predefinito
+  logs.action-group-limits: "simultanei: {concurrent}, dimensione coda: {queueSize}"
+  logs.queue-group-active-unlimited: "{active} attive"
+  logs.queue-empty: Non ci sono esecuzioni attive o in attesa al momento.
+  logs.queue-group-active: "{active} attive (max {max})"
+  logs.queue-waiting: In attesa
+  logs.queue-running: In esecuzione
+  logs.queue-position: "#{position}"
+  logs.queue-entity: Entità
   diagnostics.get-support: Ottenere supporto
   diagnostics.get-support-description: Se hai problemi con OliveTin e vuoi presentare una richiesta di supporto, sarebbe molto utile includere un sosreport da questa pagina.
   diagnostics.where-to-find-help: Dove trovare aiuto

@@ -33,6 +33,13 @@ func parseJwtToken(cfg *config.Config, jwtString string) (*jwt.Token, error) {
 	return parseJwtTokenWithHMAC(cfg, jwtString)
 }
 
+func parserOptionsWithAudience(cfg *config.Config) []jwt.ParserOption {
+	if cfg.AuthJwtAud == "" {
+		return nil
+	}
+	return []jwt.ParserOption{jwt.WithAudience(cfg.AuthJwtAud)}
+}
+
 func getClaimsFromJwtToken(cfg *config.Config, jwtString string) (jwt.MapClaims, error) {
 	token, err := parseJwtToken(cfg, jwtString)
 
@@ -56,7 +63,8 @@ func parseJwtTokenWithRemoteKey(cfg *config.Config, jwtToken string) (*jwt.Token
 		return nil, err
 	}
 
-	return jwt.Parse(jwtToken, jwksVerifier.Keyfunc, jwt.WithAudience(cfg.AuthJwtAud))
+	opts := parserOptionsWithAudience(cfg)
+	return jwt.Parse(jwtToken, jwksVerifier.Keyfunc, opts...)
 }
 
 var (
@@ -148,24 +156,30 @@ func parseJwtTokenWithLocalKey(cfg *config.Config, jwtString string) (*jwt.Token
 		return nil, err
 	}
 
-	return jwt.Parse(jwtString, func(token *jwt.Token) (interface{}, error) {
+	keyFunc := func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
 			return nil, fmt.Errorf("parseJwt expected token algorithm RSA but got: %v", token.Header["alg"])
 		}
 
 		return pubKey, nil
-	})
+	}
+
+	opts := parserOptionsWithAudience(cfg)
+	return jwt.Parse(jwtString, keyFunc, opts...)
 }
 
 // Hash-based Message Authentication Code
 func parseJwtTokenWithHMAC(cfg *config.Config, jwtString string) (*jwt.Token, error) {
-	return jwt.Parse(jwtString, func(token *jwt.Token) (interface{}, error) {
+	keyFunc := func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("parseJwt expected token algorithm HMAC but got: %v", token.Header["alg"])
 		}
 
 		return []byte(cfg.AuthJwtHmacSecret), nil
-	})
+	}
+
+	opts := parserOptionsWithAudience(cfg)
+	return jwt.Parse(jwtString, keyFunc, opts...)
 }
 
 func lookupClaimValueOrDefault(claims jwt.MapClaims, key string, def string) string {

@@ -2,10 +2,14 @@ import { describe, it, before, after } from 'mocha'
 import { expect } from 'chai'
 import { By, Condition } from 'selenium-webdriver'
 import {
+  DEFAULT_UI_WAIT_MS,
   getRootAndWait,
   getActionButton,
   takeScreenshotOnFailure,
   getTerminalBuffer,
+  waitForArgumentFormPage,
+  waitForLogsPage,
+  waitForExecutionComplete,
 } from '../../lib/elements.js'
 
 async function openCheckboxArgumentForm() {
@@ -13,13 +17,7 @@ async function openCheckboxArgumentForm() {
   const btn = await getActionButton(webdriver, 'Test checkbox argument')
   await btn.click()
 
-  await webdriver.wait(
-    new Condition('wait for argument form page', async () => {
-      const url = await webdriver.getCurrentUrl()
-      return url.includes('/actionBinding/') && url.includes('/argumentForm')
-    }),
-    5000
-  )
+  await waitForArgumentFormPage()
 }
 
 async function getCheckboxInput() {
@@ -29,42 +27,6 @@ async function getCheckboxInput() {
 async function submitCheckboxForm() {
   const submitButton = await webdriver.findElement(By.css('button[name="start"]'))
   await submitButton.click()
-}
-
-async function waitForLogsPage() {
-  await webdriver.wait(
-    new Condition('wait for logs page', async () => {
-      const url = await webdriver.getCurrentUrl()
-      return url.includes('/logs/') && !url.endsWith('/logs')
-    }),
-    5000
-  )
-}
-
-async function waitForExecutionComplete() {
-  await webdriver.wait(
-    new Condition('wait for execution status', async () => {
-      const statusElements = await webdriver.findElements(By.id('execution-dialog-status'))
-      return statusElements.length > 0
-    }),
-    5000
-  )
-
-  await webdriver.wait(
-    new Condition('wait for execution to finish', async () => {
-      try {
-        const statusElement = await webdriver.findElement(By.id('execution-dialog-status'))
-        const statusText = await statusElement.getText()
-        return !statusText.includes('Executing')
-      } catch (e) {
-        return false
-      }
-    }),
-    5000
-  )
-
-  // Small delay to allow terminal to write output
-  await webdriver.sleep(500)
 }
 
 async function waitForTerminalOutput(expectedValue) {
@@ -77,18 +39,18 @@ async function waitForTerminalOutput(expectedValue) {
         if (!terminalReady) {
           return false
         }
-        
+
         const output = await getTerminalBuffer()
         if (!output) {
           return false
         }
-        
+
         return output.trim().includes(`Checkbox value: ${expectedValue}`)
       } catch (e) {
         return false
       }
     }),
-    5000
+    DEFAULT_UI_WAIT_MS
   )
 }
 
@@ -118,7 +80,6 @@ describe('config: checkbox', function () {
   })
 
   it('Checkbox argument submits 0 by default when unchecked', async function () {
-    this.timeout(15000)
     await openCheckboxArgumentForm()
 
     const checkboxInput = await getCheckboxInput()
@@ -131,7 +92,6 @@ describe('config: checkbox', function () {
   })
 
   it('Checkbox argument can be toggled and submitted', async function () {
-    this.timeout(15000)
     await openCheckboxArgumentForm()
 
     const checkboxInput = await getCheckboxInput()
@@ -146,5 +106,3 @@ describe('config: checkbox', function () {
     await waitForTerminalOutput('1')
   })
 })
-
-

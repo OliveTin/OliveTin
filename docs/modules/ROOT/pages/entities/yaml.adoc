@@ -1,0 +1,22 @@
+[#entities-yaml]
+= YAML entity files
+
+YAML files are the default expected format, so you can use .yml, .yaml, or even .txt - as long as the file contains a valid yaml LIST, then it will be loaded. 
+
+.`/etc/OliveTin/servers.yaml`
+[source,yaml]
+----
+- name: server1
+  state: started
+  hostname: server1.example.com
+  ip: 192.168.0.1
+- name: server2
+  state: started
+  hostname: server2.example.com
+  ip: 192.168.0.2
+- name: server3
+  state: stopped
+  hostname: server3.example.com
+  ip: 192.168.0.3
+----
+

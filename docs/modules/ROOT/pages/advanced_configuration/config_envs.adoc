@@ -1,0 +1,54 @@
+[#config-envs]
+= Environment Variables in the Config File
+
+You can pull configuration values from environment variables like this:
+
+.`config.yaml`
+[source,yaml]
+----
+logLevel: ${{ LOG_LEVEL }}
+
+pageTitle: Olivetin - ${{ DEPLOY_ENV }}
+
+actions:
+    ...
+----
+
+While loading the config file, Olivetin will substitute the value of the named environment variable for the token.
+If the variable is unset, Olivetin will use an empty string as the value and log a warning. This syntax works even for
+configuration values that aren't strings, as long as the final string value can be converted to the proper type.
+
+== Notes
+
+. These variables are read while loading the config file. Changes in the environment won't be reflected until the config
+file is reloaded. If you want to read environment variables at execution time in your action's `shell` line, make sure
+to use regular shell syntax, i.e., `$FOO` rather than `${{ FOO }}`. See xref:args/env.adoc[environment variables]
+for info on using environment variables in your actions.
+
+[#using-env-in-template-replacements]
+== Using .Env in template replacements
+
+In addition to config-file substitution, OliveTin supports using the process environment inside *action templates* (e.g. `shell`, `shellAfterCompleted`, entity directory titles, and other fields that use Go template syntax). Use `{{ .Env.VAR_NAME }}` to substitute an environment variable at the time the action is executed.
+
+This is useful when you want a command to depend on the runtime environment (e.g. container or system env) rather than config-load time, or when you need env values in template fields that are not the raw `shell` command (where you could use `$VAR`).
+
+.Example: use `.Env` in a shell command
+[source,yaml]
+----
+actions:
+  - title: Run with deploy env
+    shell: /opt/deploy.sh --env {{ .Env.DEPLOY_ENV }} --host {{ .Env.HOSTNAME }}
+----
+
+.Example: use `.Env` in a completion notification
+[source,yaml]
+----
+actions:
+  - title: Backup
+    shell: /opt/backup.sh
+    shellAfterCompleted: "apprise -t 'Backup on {{ .Env.HOSTNAME }}' -b '{{ output }}'"
+----
+
+`.Env` uses the same Go template context as other action variables (e.g. `.Arguments`, `.CurrentEntity`, `.OliveTin`). The map is built from the process environment when OliveTin starts; values are read at template execution time. If a variable is missing, the template engine will report a missing-key error (with `missingkey=error`), so use defaulting when a variable might be unset, e.g. `{{ or .Env.OPTIONAL_VAR "default" }}`. For template functions such as JSON encoding, see xref:args/templates.adoc#json-encoding[JSON encoding with Json].
+
+This feature addresses the need to use environment variables in templates without changing the config loader (see link:https://github.com/OliveTin/OliveTin/issues/840[GitHub issue #840]).

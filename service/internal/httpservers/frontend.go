@@ -13,6 +13,7 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"path"
+	"strings"
 
 	"github.com/OliveTin/OliveTin/internal/api"
 	"github.com/OliveTin/OliveTin/internal/auth"
@@ -23,13 +24,69 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+func applySecurityHeaders(cfg *config.Config, w http.ResponseWriter) {
+	applyCSP(cfg, w)
+	applyXContentTypeOptions(cfg, w)
+	applyXFrameOptions(cfg, w)
+}
+
+func applyCSP(cfg *config.Config, w http.ResponseWriter) {
+	if !cfg.Security.HeaderContentSecurityPolicy || cfg.Security.ContentSecurityPolicy == "" {
+		return
+	}
+	w.Header().Set("Content-Security-Policy", cfg.Security.ContentSecurityPolicy)
+}
+
+func applyXContentTypeOptions(cfg *config.Config, w http.ResponseWriter) {
+	if !cfg.Security.HeaderXContentTypeOptions {
+		return
+	}
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+}
+
+func applyXFrameOptions(cfg *config.Config, w http.ResponseWriter) {
+	if !cfg.Security.HeaderXFrameOptions || cfg.Security.XFrameOptions == "" {
+		return
+	}
+	w.Header().Set("X-Frame-Options", cfg.Security.XFrameOptions)
+}
+
+func securityHeadersMiddleware(cfg *config.Config, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		applySecurityHeaders(cfg, w)
+		next.ServeHTTP(w, r)
+	})
+}
+
+func isSensitiveLogHeaderName(name string) bool {
+	switch strings.ToLower(name) {
+	case "authorization", "cookie", "x-forwarded-access-token":
+		return true
+	default:
+		return false
+	}
+}
+
+func redactHeaderValuesForLog(name string, values []string) []string {
+	if !isSensitiveLogHeaderName(name) {
+		return values
+	}
+
+	out := make([]string, len(values))
+	for i := range values {
+		out[i] = "[redacted]"
+	}
+
+	return out
+}
+
 func logDebugRequest(cfg *config.Config, source string, r *http.Request) {
 	if cfg.LogDebugOptions.SingleFrontendRequests {
 		log.Debugf("SingleFrontend HTTP Req URL %v: %q", source, r.URL)
 
 		if cfg.LogDebugOptions.SingleFrontendRequestHeaders {
 			for name, values := range r.Header {
-				log.Debugf("SingleFrontend HTTP Req Hdr: %v = %v", name, values)
+				log.Debugf("SingleFrontend HTTP Req Hdr: %v = %v", name, redactHeaderValuesForLog(name, values))
 			}
 		}
 	}
@@ -67,6 +124,7 @@ func StartFrontendMux(cfg *config.Config, ex *executor.Executor) {
 
 	oauth2handler := otoauth2.NewOAuth2Handler(cfg)
 	auth.AddAuthChainFunction(oauth2handler.CheckUserFromOAuth2Cookie)
+	auth.RegisterOAuth2SessionRevoker(oauth2handler.RevokeSession)
 
 	mux.HandleFunc("/oauth/login", oauth2handler.HandleOAuthLogin)
 	mux.HandleFunc("/oauth/callback", oauth2handler.HandleOAuthCallback)
@@ -96,7 +154,7 @@ func StartFrontendMux(cfg *config.Config, ex *executor.Executor) {
 
 	srv := &http.Server{
 		Addr:    cfg.ListenAddressSingleHTTPFrontend,
-		Handler: mux,
+		Handler: securityHeadersMiddleware(cfg, mux),
 	}
 
 	log.Fatal(srv.ListenAndServe())

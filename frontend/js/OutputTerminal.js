@@ -1,5 +1,6 @@
 import { Terminal } from '@xterm/xterm'
 import { FitAddon } from '@xterm/addon-fit'
+import { WebLinksAddon } from '@xterm/addon-web-links'
 import { Mutex } from './Mutex.js'
 
 /**
@@ -18,13 +19,25 @@ export class OutputTerminal {
   constructor (executionTrackingId) {
     this.executionTrackingId = executionTrackingId
     this.writeMutex = new Mutex()
+    const linkHandler = {
+      activate (event, text, _range) {
+        event.preventDefault()
+        window.open(text, '_blank')
+      }
+    }
+
     this.terminal = new Terminal({
-      convertEol: true
+      convertEol: true,
+      linkHandler,
+      scrollback: 10000
     })
 
     const fitAddon = new FitAddon()
     this.terminal.loadAddon(fitAddon)
     this.terminal.fit = fitAddon
+
+    this.terminal.loadAddon(new WebLinksAddon((event, uri) => linkHandler.activate(event, uri)))
+    this.linkHandlerConfigured = true
   }
 
   async write (out, then) {

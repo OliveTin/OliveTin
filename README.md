@@ -10,6 +10,7 @@
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/5050/badge)](https://bestpractices.coreinfrastructure.org/projects/5050)
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/Olivetin/OliveTin)](https://goreportcard.com/report/github.com/OliveTin/OliveTin)
+[![AI Autonomy Level](https://img.shields.io/badge/AI%20Autonomy-Level%201%20of%205%20(assistance--only)-blue)](https://blog.jread.com/posts/ai-levels-of-autonomy-in-software-engineering/)
 
 [OliveTin 2k to 3k upgrade guide](https://docs.olivetin.app/upgrade/2k3k.html)
 </div>
@@ -18,6 +19,8 @@
 <a href = "#screenshots">More screenshots below</a>
 
 All documentation can be found at [docs.olivetin.app](https://docs.olivetin.app). This includes installation and usage guide, etc.
+
+The AsciiDoc sources for that site live in this repository under [`docs/`](docs/) (Antora component). The [docs.olivetin.app](https://github.com/OliveTin/docs.olivetin.app) repository contains the Antora playbook, theme supplemental files, and the workflow that publishes GitHub Pages.
 
 ## Use cases
 

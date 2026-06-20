@@ -14,6 +14,29 @@ message Action {
 	int32 order = 7;
 	int32 timeout = 8;
 	string datetime_rate_limit_expires = 9; // Datetime when rate limit expires (empty string if not rate limited), format: "2006-01-02 15:04:05"
+	bool exec_on_startup = 10;
+	repeated string exec_on_cron = 11;
+	repeated string exec_on_file_created_in_dir = 12;
+	repeated string exec_on_file_changed_in_dir = 13;
+	string exec_on_calendar_file = 14;
+	repeated ActionWebhookExecHint exec_on_webhooks = 15;
+	bool justification = 16;
+	bool has_running_instance = 17;
+	bool has_queued_instance = 18;
+	repeated ActionGroupMembership groups = 19;
+}
+
+message ActionGroupMembership {
+	string name = 1;
+	int32 max_concurrent = 2;
+	int32 queue_size = 3;
+}
+
+message ActionWebhookExecHint {
+	string template = 1;
+	string match_path = 2;
+	map<string, string> match_headers = 3;
+	map<string, string> match_query = 4;
 }
 
 message ActionArgument {
@@ -51,6 +74,7 @@ message GetDashboardResponse {
 message EffectivePolicy {
 	bool show_diagnostics = 1;
 	bool show_log_list = 2;
+	bool show_version_number = 3;
 }
 
 message GetDashboardRequest {
@@ -81,6 +105,7 @@ message StartActionRequest {
 	repeated StartActionArgument arguments = 2;
 
 	string unique_tracking_id = 3;
+	string justification = 4;
 }
 
 message StartActionArgument {
@@ -96,6 +121,8 @@ message StartActionAndWaitRequest {
 	string action_id = 1;
 
 	repeated StartActionArgument arguments = 2;
+
+	string justification = 3;
 }
 
 message StartActionAndWaitResponse {
@@ -121,6 +148,8 @@ message StartActionByGetAndWaitResponse {
 message GetLogsRequest{
   int64 start_offset = 1;
   string date_filter = 2; // Optional date filter in YYYY-MM-DD format
+  int64 page_size = 3;   // Number of logs per page (optional; server default used if 0 or unset)
+  string filter = 4;     // Optional filter expression (see logs UI syntax help)
 };
 
 message LogEntry {
@@ -142,6 +171,9 @@ message LogEntry {
 	bool can_kill = 18;
 	string datetime_rate_limit_expires = 19; // Datetime when rate limit expires (empty string if not rate limited), format: "2006-01-02 15:04:05"
 	string binding_id = 20; // Binding ID for matching rate limits to action buttons
+	bool queued = 21;
+	string queued_for_group = 22;
+	string justification = 23;
 }
 
 message GetLogsResponse {
@@ -163,6 +195,33 @@ message GetActionLogsResponse {
 	int64 page_size = 3;
 	int64 total_count = 4;
 	int64 start_offset = 5;
+}
+
+message GetExecutionQueueRequest {}
+
+message ExecutionQueueAction {
+	string binding_id = 1;
+	string action_title = 2;
+	string action_icon = 3;
+	int32 max_concurrent = 4;
+	int32 active_count = 5;
+	string entity_prefix = 6;
+	repeated LogEntry entries = 7;
+}
+
+message ExecutionQueueGroup {
+	string name = 1;
+	string icon = 2;
+	int32 max_concurrent = 3;
+	int32 active_count = 4;
+	repeated ExecutionQueueAction actions = 5;
+	int32 queued_count = 6;
+	int32 queue_size = 7;
+}
+
+message GetExecutionQueueResponse {
+	repeated ExecutionQueueGroup groups = 1;
+	int32 total_active = 2;
 }
 
 message ValidateArgumentTypeRequest {
@@ -190,8 +249,16 @@ message ExecutionStatusRequest {
 	string action_id = 2;
 }
 
+message DashboardNavigationTarget {
+	string title = 1;
+	string entity_type = 2;
+	string entity_key = 3;
+	string path = 4;
+}
+
 message ExecutionStatusResponse {
 	LogEntry log_entry = 1;
+	repeated DashboardNavigationTarget back_to_dashboards = 2;
 }
 
 message WhoAmIRequest {}
@@ -246,6 +313,7 @@ message EventStreamResponse {
     EventExecutionFinished execution_finished = 4;
     EventExecutionStarted execution_started = 5;
     EventOutputChunk output_chunk = 6;
+    EventHeartbeat heartbeat = 7;
   }
 }
 
@@ -257,6 +325,7 @@ message EventOutputChunk {
 
 message EventEntityChanged {}
 message EventConfigChanged {}
+message EventHeartbeat {}
 message EventExecutionFinished {
 	LogEntry log_entry = 1;
 }
@@ -353,6 +422,7 @@ message GetActionBindingRequest {
 
 message GetActionBindingResponse {
 	Action action = 1;
+	repeated DashboardNavigationTarget back_to_dashboards = 2;
 }
 
 message GetEntitiesRequest {
@@ -397,6 +467,8 @@ service OliveTinApiService {
 	rpc GetLogs(GetLogsRequest) returns (GetLogsResponse) {}
 
 	rpc GetActionLogs(GetActionLogsRequest) returns (GetActionLogsResponse) {}
+
+	rpc GetExecutionQueue(GetExecutionQueueRequest) returns (GetExecutionQueueResponse) {}
 
 	rpc ValidateArgumentType(ValidateArgumentTypeRequest) returns (ValidateArgumentTypeResponse) {}
 

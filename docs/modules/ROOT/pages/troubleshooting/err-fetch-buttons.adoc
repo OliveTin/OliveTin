@@ -1,0 +1,6 @@
+[#err-fetch-buttons]
+= Error Getting Buttons
+
+This is most often caused by not being able to get to /api/ properly - normally due to a bad proxy config, or your network was disconnected.
+
+

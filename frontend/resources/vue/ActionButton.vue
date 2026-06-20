@@ -1,5 +1,12 @@
 <template>
-	<div :id="`actionButton-${bindingId}`" role="none" class="action-button">
+	<div :id="`actionButton-${bindingId}`" role="none" class="action-button" @contextmenu.prevent="openActionDetails">
+		<span
+			v-if="showExecutionIndicator"
+			class="execution-indicator"
+			:class="executionIndicatorClass"
+			:title="executionIndicatorTitle"
+			aria-hidden="true"
+		></span>
 		<button :id="`actionButtonInner-${bindingId}`" :title="title" :disabled="!canExec || isDisabled"
 													  :class="combinedClasses" @click="handleClick">
 
@@ -10,12 +17,15 @@
 				<div v-if="navigateOnStart == 'arg'" class="navigate-on-start" title="Opens an argument form on start">
 					<HugeiconsIcon :icon="TypeCursorIcon" />
 				</div>
+				<div v-if="navigateOnStart == 'hist'" class="navigate-on-start" title="Opens action execution history on start">
+					<HugeiconsIcon :icon="WorkHistoryIcon" />
+				</div>
 				<div v-if="navigateOnStart == ''" class="navigate-on-start" title="Run in the background">
 					<HugeiconsIcon :icon="WorkoutRunIcon" />
 				</div>
 			</div>
 
-			<span class="icon" v-html="unicodeIcon"></span>
+			<ActionIconGlyph class="icon" :glyph="actionGlyph" />
 			<span class="title" aria-live="polite">{{ displayTitle }}
 			</span>
 			<span v-if="rateLimitMessage" class="rate-limit-message">{{ rateLimitMessage }}</span>
@@ -26,11 +36,18 @@
 <script setup>
 import { buttonResults } from './stores/buttonResults'
 import { rateLimits } from './stores/rateLimits'
+import { bindingExecutionState, setBindingExecutionState } from './stores/bindingExecutionState'
+import { connectionState } from './stores/connectionState'
+import { requestReconnectNow, applyExecutionLogEntry } from '../../js/websocket.js'
 import { useRouter } from 'vue-router'
+import { needsArgumentForm } from './utils/needsArgumentForm.js'
+import { shouldSuppressPopupOnStartNavigation } from './utils/popupOnStartNavigation.js'
 import { HugeiconsIcon } from '@hugeicons/vue'
-import { WorkoutRunIcon, TypeCursorIcon, ComputerTerminal01Icon } from '@hugeicons/core-free-icons'
+import { WorkoutRunIcon, TypeCursorIcon, ComputerTerminal01Icon, WorkHistoryIcon } from '@hugeicons/core-free-icons'
 
-import { ref, watch, onMounted, onUnmounted, inject, computed } from 'vue'
+import ActionIconGlyph from './components/ActionIconGlyph.vue'
+
+import { ref, watch, onMounted, onUnmounted, computed } from 'vue'
 
 const router = useRouter()
 const navigateOnStart = ref('')
@@ -53,7 +70,6 @@ const canExec = ref(true)
 const popupOnStart = ref('')
 
 // Display properties
-const unicodeIcon = ref('&#x1f4a9;')
 const displayTitle = ref('')
 
 // State
@@ -64,7 +80,8 @@ const showArgumentForm = ref(false)
 const rateLimitExpires = ref(0)
 const isRateLimited = ref(false)
 const rateLimitMessage = ref('')
-let rateLimitInterval = null
+const rateLimitInterval = ref(null)
+const isComponentMounted = ref(true)
 
 // Animation classes
 const buttonClasses = ref([])
@@ -73,6 +90,9 @@ const buttonClasses = ref([])
 const showNavigateOnStartIcons = computed(() => {
 	return window.initResponse?.showNavigateOnStartIcons ?? true
 })
+
+const actionGlyph = computed(() => props.actionData?.icon ?? '')
+const glyph = ref('')
 
 // Combined classes including custom cssClass
 const combinedClasses = computed(() => {
@@ -83,18 +103,42 @@ const combinedClasses = computed(() => {
 	return classes
 })
 
+const hasRunningInstance = computed(() => {
+	const id = bindingId.value
+	return !!(id && bindingExecutionState[id]?.hasRunning)
+})
+
+const hasQueuedInstance = computed(() => {
+	const id = bindingId.value
+	return !!(id && bindingExecutionState[id]?.hasQueued)
+})
+
+const showExecutionIndicator = computed(() => {
+	return hasRunningInstance.value || hasQueuedInstance.value
+})
+
+const executionIndicatorClass = computed(() => {
+	if (hasRunningInstance.value) {
+		return 'execution-indicator-running'
+	}
+	if (hasQueuedInstance.value) {
+		return 'execution-indicator-queued'
+	}
+	return ''
+})
+
+const executionIndicatorTitle = computed(() => {
+	if (hasRunningInstance.value) {
+		return 'Running'
+	}
+	if (hasQueuedInstance.value) {
+		return 'Queued'
+	}
+	return ''
+})
+
 // Timestamps
 const updateIterationTimestamp = ref(0)
-
-function getUnicodeIcon(icon) {
-  if (icon === '') {
-	console.log('icon not found	', icon)
-
-	return '&#x1f4a9;'
-  } else {
-	return unescape(icon)
-  }
-}
 
 function constructFromJson(json) {
   updateIterationTimestamp.value = 0
@@ -108,14 +152,15 @@ function constructFromJson(json) {
 
   if (popupOnStart.value.includes('execution-dialog')) {
 	navigateOnStart.value = 'pop'
-  } else if (props.actionData.arguments.length > 0) {
+  } else if (popupOnStart.value === 'history') {
+	navigateOnStart.value = 'hist'
+  } else if (needsArgumentForm(props.actionData)) {
 	navigateOnStart.value = 'arg'
   }
 
   isDisabled.value = !json.canExec
   displayTitle.value = title.value
-  unicodeIcon.value = getUnicodeIcon(json.icon)
-
+  glyph.value = json.icon ?? ''
   // Initialize rate limit from action data (parse datetime string)
   if (json.datetimeRateLimitExpires) {
 	const date = new Date(json.datetimeRateLimitExpires.replace(' ', 'T'))
@@ -126,6 +171,11 @@ function constructFromJson(json) {
   // Also initialize the store so the watch picks it up
   if (bindingId.value) {
 	rateLimits[bindingId.value] = rateLimitExpires.value
+	setBindingExecutionState(
+	  bindingId.value,
+	  !!json.hasRunningInstance,
+	  !!json.hasQueuedInstance
+	)
   }
   updateRateLimitStatus()
 }
@@ -133,8 +183,6 @@ function constructFromJson(json) {
 function updateFromJson(json) {
   // Fields that should not be updated
   // title - as the callback URL relies on it
-
-  unicodeIcon.value = getUnicodeIcon(json.icon)
 
   // Update rate limiting if changed (parse datetime string)
   if (json.datetimeRateLimitExpires) {
@@ -152,9 +200,9 @@ function updateRateLimitStatus() {
   if (rateLimitExpires.value === 0) {
 	isRateLimited.value = false
 	rateLimitMessage.value = ''
-	if (rateLimitInterval) {
-	  clearInterval(rateLimitInterval)
-	  rateLimitInterval = null
+	if (rateLimitInterval.value) {
+	  clearInterval(rateLimitInterval.value)
+	  rateLimitInterval.value = null
 	}
 	return
   }
@@ -167,9 +215,9 @@ function updateRateLimitStatus() {
 	isRateLimited.value = false
 	rateLimitMessage.value = ''
 	rateLimitExpires.value = 0
-	if (rateLimitInterval) {
-	  clearInterval(rateLimitInterval)
-	  rateLimitInterval = null
+	if (rateLimitInterval.value) {
+	  clearInterval(rateLimitInterval.value)
+	  rateLimitInterval.value = null
 	}
   } else {
 	// Still rate limited
@@ -178,16 +226,28 @@ function updateRateLimitStatus() {
 	rateLimitMessage.value = `Rate limited, available in ${secondsRemaining} second${secondsRemaining !== 1 ? 's' : ''}`
 
 	// Set up interval to update every second
-	if (!rateLimitInterval) {
-	  rateLimitInterval = setInterval(() => {
+		if (!rateLimitInterval.value) {
+	  rateLimitInterval.value = setInterval(() => {
 		updateRateLimitStatus()
 	  }, 1000)
 	}
   }
 }
 
+function openActionDetails() {
+  const id = props.actionData?.bindingId
+  if (!id) {
+	return
+  }
+  router.push(`/action/${id}`)
+}
+
 async function handleClick() {
-  if (props.actionData.arguments && props.actionData.arguments.length > 0) {
+  if (popupOnStart.value === 'history') {
+	openActionDetails()
+	return
+  }
+  if (needsArgumentForm(props.actionData)) {
 	router.push(`/actionBinding/${props.actionData.bindingId}/argumentForm`)
   } else {
 	await startAction()
@@ -199,6 +259,35 @@ function getUniqueId() {
 	return window.crypto.randomUUID()
   } else {
 	return Date.now().toString()
+  }
+}
+
+async function pollExecutionUntilDone (trackingId) {
+  const pollIntervalMs = 500
+  const pollTimeoutMs = 10 * 60 * 1000
+  const deadline = Date.now() + pollTimeoutMs
+
+  while (Date.now() < deadline && isComponentMounted.value) {
+    try {
+      const result = await window.client.executionStatus({ executionTrackingId: trackingId })
+      if (!isComponentMounted.value) {
+        return
+      }
+      if (result.logEntry) {
+        applyExecutionLogEntry(result.logEntry)
+        if (result.logEntry.executionFinished) {
+          return
+        }
+      }
+    } catch (err) {
+      console.error('Failed to poll execution status:', err)
+    }
+
+    if (!isComponentMounted.value) {
+      return
+    }
+
+    await new Promise(resolve => setTimeout(resolve, pollIntervalMs))
   }
 }
 
@@ -226,8 +315,19 @@ async function startAction(actionArgs) {
 	}
   )
 
+  requestReconnectNow()
+
   try {
-	await window.client.startAction(startActionArgs)
+	const response = await window.client.startAction(startActionArgs)
+	const trackingId = response.executionTrackingId || startActionArgs.uniqueTrackingId
+
+	if (popupOnStart.value && popupOnStart.value.includes('execution-dialog')) {
+	  router.push(`/logs/${trackingId}`)
+	}
+
+	if (!connectionState.connected) {
+	  await pollExecutionUntilDone(trackingId)
+	}
   } catch (err) {
 	console.error('Failed to start action:', err)
   }
@@ -236,17 +336,29 @@ async function startAction(actionArgs) {
 function onLogEntryChanged(logEntry) {
   if (logEntry.executionFinished) {
 	onExecutionFinished(logEntry)
+  } else if (logEntry.queued && !logEntry.executionStarted) {
+	onExecutionQueued(logEntry)
   } else {
 	onExecutionStarted(logEntry)
   }
 }
 
+function onExecutionQueued(_logEntry) {
+  isDisabled.value = true
+  updateDom('action-queued', '[Queued]')
+}
+
 function onExecutionStarted(logEntry) {
-  if (popupOnStart.value && popupOnStart.value.includes('execution-dialog')) {
+  if (
+	popupOnStart.value &&
+	popupOnStart.value.includes('execution-dialog') &&
+	!shouldSuppressPopupOnStartNavigation(router)
+  ) {
 	router.push(`/logs/${logEntry.executionTrackingId}`)
   }
 
   isDisabled.value = true
+  updateDom(null, title.value)
 }
 
 function onExecutionFinished(logEntry) {
@@ -307,9 +419,10 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  if (rateLimitInterval) {
-	clearInterval(rateLimitInterval)
-	rateLimitInterval = null
+  isComponentMounted.value = false
+  if (rateLimitInterval.value) {
+	clearInterval(rateLimitInterval.value)
+	rateLimitInterval.value = null
   }
 })
 
@@ -317,9 +430,16 @@ watch(
   () => props.actionData,
   (newData) => {
 	updateFromJson(newData)
+	if (newData?.icon !== undefined) {
+	  glyph.value = newData.icon ?? ''
+	}
   },
   { deep: true }
 )
+
+defineExpose({
+  glyph
+})
 
 </script>
 
@@ -330,6 +450,26 @@ watch(
 		display: flex;
 		flex-direction: column;
 		flex-grow: 1;
+		position: relative;
+	}
+
+	.execution-indicator {
+		position: absolute;
+		top: 0.45em;
+		left: 0.45em;
+		width: 0.65em;
+		height: 0.65em;
+		border-radius: 50%;
+		z-index: 1;
+		pointer-events: none;
+	}
+
+	.execution-indicator-running {
+		background: #28a745;
+	}
+
+	.execution-indicator-queued {
+		background: #0d6efd;
 	}
 
 	.action-button button {
@@ -388,6 +528,12 @@ watch(
 		background: #f8d7da !important;
 		border-color: #f5c6cb;
 		color: #721c24;
+	}
+
+	.action-button button.action-queued {
+		background: #e7f1ff !important;
+		border-color: #9ec5fe;
+		color: #084298;
 	}
 
 	.action-button button.action-nonzero-exit {

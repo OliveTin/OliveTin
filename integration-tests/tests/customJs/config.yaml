@@ -1,0 +1,16 @@
+#
+# Integration Test Config: custom JavaScript (#803)
+#
+
+listenAddressSingleHTTPFrontend: 0.0.0.0:1337
+
+logLevel: "DEBUG"
+checkForUpdates: false
+
+enableCustomJs: true
+
+actions: []
+
+dashboards:
+  - title: Custom JS Dashboard
+    contents: []

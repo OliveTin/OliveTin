@@ -1,8 +1,6 @@
 package httpservers
 
 import (
-
-	//	cors "github.com/OliveTin/OliveTin/internal/cors"
 	"net/http"
 	"os"
 	"path"

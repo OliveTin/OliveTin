@@ -1,8 +1,10 @@
 package config
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestSanitizeConfig(t *testing.T) {
@@ -32,9 +34,86 @@ func TestSanitizeConfig(t *testing.T) {
 
 	assert.NotNil(t, a2, "Found action after adding it")
 	assert.Equal(t, 3, a2.Timeout, "Default timeout is set")
-	assert.Equal(t, "&#x1F600;", a2.Icon, "Default icon is a smiley")
+	assert.Equal(t, "hugeicons:CommandLineIcon", a2.Icon, "Default icon is the neutral CLI glyph")
 	assert.Equal(t, "Carrots", a2.Arguments[0].Title, "Arg title is set to name")
 	assert.Equal(t, "Waffle", a2.Arguments[0].Choices[0].Title, "Choice title is set to name")
+}
+
+func TestSanitizePopupOnStartHistory(t *testing.T) {
+	c := DefaultConfig()
+	c.DefaultPopupOnStart = "nothing"
+
+	c.Actions = append(c.Actions, &Action{
+		Title:        "With history",
+		PopupOnStart: "history",
+		Shell:        "true",
+	})
+	c.Sanitize()
+
+	a := c.findAction("With history")
+	if assert.NotNil(t, a) {
+		assert.Equal(t, "history", a.OnClick, "history must be preserved on onclick")
+		assert.Equal(t, "history", a.PopupOnStart, "legacy popupOnStart must mirror onclick")
+	}
+}
+
+func TestSanitizeMigratesPopupOnStartToOnClick(t *testing.T) {
+	c := DefaultConfig()
+	c.Actions = append(c.Actions, &Action{
+		Title:        "Legacy popup",
+		PopupOnStart: "execution-dialog",
+		Shell:        "true",
+	})
+	c.Sanitize()
+
+	a := c.findAction("Legacy popup")
+	require.NotNil(t, a)
+	assert.Equal(t, "execution-dialog", a.OnClick)
+	assert.Equal(t, "execution-dialog", a.PopupOnStart)
+}
+
+func TestSanitizeOnClickPreferredOverPopupOnStart(t *testing.T) {
+	c := DefaultConfig()
+	c.Actions = append(c.Actions, &Action{
+		Title:        "Preferred onclick",
+		OnClick:      "history",
+		PopupOnStart: "execution-dialog",
+		Shell:        "true",
+	})
+	c.Sanitize()
+
+	a := c.findAction("Preferred onclick")
+	require.NotNil(t, a)
+	assert.Equal(t, "history", a.OnClick)
+	assert.Equal(t, "history", a.PopupOnStart)
+}
+
+func TestSanitizeMigratesDefaultPopupOnStartToDefaultOnClick(t *testing.T) {
+	c := DefaultConfig()
+	c.DefaultPopupOnStart = "execution-dialog"
+	c.DefaultOnClick = ""
+	c.Sanitize()
+
+	assert.Equal(t, "execution-dialog", c.DefaultOnClick)
+	assert.Equal(t, "execution-dialog", c.DefaultPopupOnStart)
+}
+
+func TestSanitizeMigratesDefaultPopupOnStartWhenDefaultOnClickUnchanged(t *testing.T) {
+	c := DefaultConfig()
+	c.DefaultPopupOnStart = "execution-dialog"
+	c.Actions = append(c.Actions, &Action{
+		Title: "Uses default onclick",
+		Shell: "true",
+	})
+	c.Sanitize()
+
+	assert.Equal(t, "execution-dialog", c.DefaultOnClick)
+	assert.Equal(t, "execution-dialog", c.DefaultPopupOnStart)
+
+	a := c.findAction("Uses default onclick")
+	require.NotNil(t, a)
+	assert.Equal(t, "execution-dialog", a.OnClick)
+	assert.Equal(t, "execution-dialog", a.PopupOnStart)
 }
 
 func TestSanitizeConfigInlineDashboardActions(t *testing.T) {
@@ -71,4 +150,124 @@ func TestSanitizeConfigInlineDashboardActions(t *testing.T) {
 		assert.NotEmpty(t, found.Icon, "Inline action should have default icon applied")
 		assert.NotEmpty(t, found.ID, "Inline action should have a generated ID")
 	}
+}
+
+func TestValidateReservedActionArgumentNames(t *testing.T) {
+	c := DefaultConfig()
+	c.Actions = append(c.Actions, &Action{
+		Title: "Reserved arg",
+		Arguments: []ActionArgument{
+			{Name: "ot_custom", Type: "ascii"},
+		},
+	})
+
+	err := c.validateReservedActionArgumentNames()
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), `action "Reserved arg" argument "ot_custom" uses reserved prefix "ot_"`)
+}
+
+func TestSanitizeActionGroupsDedupesGroupNames(t *testing.T) {
+	c := DefaultConfig()
+	c.ActionGroups = map[string]*ActionGroup{
+		"unity": {MaxConcurrent: 1},
+	}
+	c.Actions = append(c.Actions, &Action{
+		Title:  "Build",
+		Shell:  "true",
+		Groups: []string{"unity", "unity", ""},
+	})
+
+	c.Sanitize()
+
+	action := c.findAction("Build")
+	require.NotNil(t, action)
+	assert.Equal(t, []string{"unity"}, action.Groups)
+}
+
+func TestSanitizeActionGroupsResolvesIcons(t *testing.T) {
+	c := DefaultConfig()
+	c.ActionGroups = map[string]*ActionGroup{
+		"backup-jobs": {MaxConcurrent: 1, Icon: "backup"},
+	}
+
+	c.Sanitize()
+
+	assert.Equal(t, "&#128190;", c.ActionGroups["backup-jobs"].Icon)
+}
+
+func TestSanitizeActionGroupsDefaultsQueueSize(t *testing.T) {
+	c := DefaultConfig()
+	c.ActionGroups = map[string]*ActionGroup{
+		"unity": {MaxConcurrent: 1},
+	}
+
+	c.Sanitize()
+
+	assert.Equal(t, defaultActionGroupQueueSize, c.ActionGroups["unity"].QueueSize)
+}
+
+func TestSanitizeActionGroupsPreservesExplicitQueueSize(t *testing.T) {
+	c := DefaultConfig()
+	c.ActionGroups = map[string]*ActionGroup{
+		"unity": {MaxConcurrent: 1, QueueSize: 2},
+	}
+
+	c.Sanitize()
+
+	assert.Equal(t, 2, c.ActionGroups["unity"].QueueSize)
+}
+
+func TestValidateReservedActionArgumentNamesAllowsNonReserved(t *testing.T) {
+	c := DefaultConfig()
+	c.Actions = append(c.Actions, &Action{
+		Title: "Allowed arg",
+		Arguments: []ActionArgument{
+			{Name: "target", Type: "ascii"},
+		},
+	})
+
+	require.NoError(t, c.validateReservedActionArgumentNames())
+}
+
+func TestValidateReservedActionArgumentNamesChecksInlineActions(t *testing.T) {
+	c := DefaultConfig()
+	c.Dashboards = []*DashboardComponent{
+		{
+			Title: "Dashboard",
+			Contents: []*DashboardComponent{
+				{
+					Title: "Inline reserved arg",
+					InlineAction: &Action{
+						Shell: "echo test",
+						Arguments: []ActionArgument{
+							{Name: "ot_custom", Type: "ascii"},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	c.sanitizeDashboardsForInlineActions()
+	err := c.validateReservedActionArgumentNames()
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), `action "Inline reserved arg" argument "ot_custom" uses reserved prefix "ot_"`)
+}
+
+func TestValidateUniqueLocalUserAPIKeys(t *testing.T) {
+	t.Parallel()
+
+	err := validateUniqueLocalUserAPIKeys([]*LocalUser{
+		{Username: "a", ApiKey: "same"},
+		{Username: "b", ApiKey: "same"},
+	})
+	require.Error(t, err)
+
+	err = validateUniqueLocalUserAPIKeys([]*LocalUser{
+		{Username: "a", ApiKey: "one"},
+		{Username: "b", ApiKey: "two"},
+	})
+	require.NoError(t, err)
 }

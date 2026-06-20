@@ -6,6 +6,12 @@ translations:
   nav.entities: 实体
   nav.diagnostics: 诊断
   connected: 已连接
+  disconnected: 已断开连接
+  reconnecting: 正在重新连接…
+  disconnected-banner-announcement: 事件 WebSocket 已断开。
+  disconnected-banner-link-text: "事件 WebSocket 已断开"
+  disconnected-banner-suffix: "自 {disconnectedSince}。{reconnectIn} 后尝试重连。"
+  disconnected-banner-suffix-reconnecting: "自 {disconnectedSince}。正在尝试重连…"
   login-button: 登录
   raise-issue: 在 GitHub 上报告问题
   docs: 文档
@@ -34,6 +40,18 @@ translations:
   logs.calendar: 日历
   logs.calendar-title: 日志日历
   logs.back-to-list: 返回列表
+  logs.queue: 队列
+  logs.queue-title: 执行队列
+  logs.queue-page-description: 按动作组分组显示正在运行和等待中的执行。您无权查看的条目会被隐藏。
+  logs.queue-default-group: 默认
+  logs.action-group-limits: "并发：{concurrent}，队列大小：{queueSize}"
+  logs.queue-group-active-unlimited: "{active} 个活动"
+  logs.queue-empty: 当前没有正在运行或等待中的执行。
+  logs.queue-group-active: "{active} 个活动（上限 {max}）"
+  logs.queue-waiting: 等待中
+  logs.queue-running: 运行中
+  logs.queue-position: "第 {position} 位"
+  logs.queue-entity: 实体
   diagnostics.get-support: 获取支持
   diagnostics.get-support-description: 如果您在使用 OliveTin 时遇到问题并希望提交支持请求，从本页面包含 sosreport 将非常有帮助。
   diagnostics.where-to-find-help: 在哪里找到帮助

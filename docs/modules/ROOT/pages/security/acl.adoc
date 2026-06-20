@@ -1,0 +1,152 @@
+[#acls]
+= Access Control Lists
+
+OliveTin uses Access Control Lists (ACLs) to implement it's security model, which allows you to have fine-grained control over indivividual actions or groups of actions. This can be used to implement role based access control (RBAC), or other security models that you may need.
+
+ACLs are built up of the following set of rules;
+
+* `name` - The name of the ACL. This is used to identify the ACL in the configuration file.
+* `matchUsergroups` - A list of usergroups that this ACL applies to. This is used to match users that are in the specified usergroup.
+* `matchUserNames` - A list of usernames that this ACL applies to. This is used to match users that are in the specified usergroup.
+* `permissions` - A set of permissions which are used with **actions**. eg: `view`, `exec`, `logs`, etc.
+** `addToEveryAction` - A boolean value that indicates if this ACL should be added to every action. This is useful if you want to apply the same ACL to all actions, without having to manually add it to each action.
+* `policy` - A policy is a set of rules that affect the **whole of OliveTin**.
+
+== ACLs and Policies (global)
+
+[mermaid, "sample", png]
+....
+graph TD
+	A[ACL] --> B[Policy]
+    A -->|User/UserGroup| C[User/UserGroup]
+....
+
+**Policies** are a set of rules that apply to the whole of OliveTin ("global"), and not just to individual actions (like permissions are).
+
+The **defaultPolicy** is special, in that all values are set to true by default. This means that if you do not set a `defaultPolicy`, then all policies will be set to `true` by default. This is effectively what the `defaultPolicy` is set to;
+
+[source,yaml]
+----
+defaultPolicy:
+  showDiagnostics: true
+  showLogList: true
+----
+
+You can override defaults using an ACL, like this;
+
+[source,yaml]
+----
+accessControlLists:
+  - name: admins
+    matchUsergroups:
+	  - admins
+	policy:
+	  showDiagnostics: true
+	  showLogList: true
+
+defaultPolicy:
+  showDiagnostics: false
+  showLogList: false
+----
+
+== ACLs and Permissions (for Actions)
+
+[mermaid, "sample", png]
+....
+graph TD
+    A[Action] -->|ACL| B[ACL]
+    B -->|User/UserGroup| C[User/UserGroup]
+    B -->|Permissions| D[Permissions]
+....
+
+An action always starts with `defaultPermissions` (see below), and then then have one or more ACLs applied to it. This means that you can for example have an action that is only available to a certain group of users, or only to a single user.
+
+Let's say you have a user `james` and a usergroup `admins`. You can then create an ACL that only allows `james` and users in the `admins` group to view and execute an action.
+
+You can specify default permissions for all actions by changing the `defaultPermissions` like this;
+
+[source,yaml]
+.`config.yaml`
+----
+defaultPermissions:
+  view: false
+  exec: false
+  logs: true
+----
+
+In the example above, all users will start off with the permissions to only see action logs - but will not be able to view or execute actions. 
+
+It is then possible to add an "admins" ACL on top of every action. In the example below, we define one extra ACL called "admins", which matches any users with the usergroup also called "admins". This ACL will then be applied to all actions, and will allow users in the "admins" usergroup to view and execute the action.
+
+[source,yaml]
+.`config.yaml`
+----
+defaultPermissions:
+  view: false
+  exec: false
+
+accessControlLists:
+  - name: admins
+    matchUsergroups:
+      - admins
+    permissions:
+      view: true
+      exec: true
+
+actions:
+  - title: Shutdown Reactor
+    acls:
+      - admins
+----
+
+=== Add an ACL to every action
+
+Sometimes you want to define an ACL that applies to all actions. It can be tedious and error prone to manually add the ACL under the "acls" list for every action, if you have several actions. Instead, there is a shortcut to add an ACL to all actions - `addToEveryAction: true`.
+
+[source,yaml]
+.`config.yaml`
+```yaml
+accessControlLists:
+  - name: admins
+    matchUsergroups:
+      - admins
+    permissions:
+      view: true
+      exec: true
+    addToEveryAction: true
+```
+
+== ACL Matching - usernames and usergroups.
+
+You can match users based on their usergroup which is the most common, but it is also possible to match based on the user's username.
+
+[source,yaml]
+.`config.yaml`
+```yaml
+accessControlLists:
+  - name: admins
+    matchUsergroups:
+      - admins
+    permissions:
+      view: true
+      exec: true
+
+  - name: james
+    matchUserNames:
+      - james
+    permissions:
+      view: true
+      exec: true
+```
+
+== What's Next?
+
+Now that you understand ACLs, here's how to implement them:
+
+* xref:security/examples.adoc[View security examples] - See complete ACL configurations
+* xref:security/example_login_required.adoc[Example: Login required] - Configure login requirements
+* xref:security/example_some_admin_actions.adoc[Example: Admin-only actions] - Restrict actions to admins
+* xref:security/local.adoc[Set up local users] - Create users for ACL matching
+* xref:security/oauth2.adoc[Configure OAuth2] - Set up OAuth2 for user groups
+* xref:security/design_choices.adoc[Security design recommendations] - Learn best practices for ACL design
+

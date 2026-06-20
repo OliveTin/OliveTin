@@ -2,12 +2,17 @@ package api
 
 import (
 	"context"
+	"net/http"
+	"net/http/httptest"
+	"path"
 	"testing"
+	"time"
 
 	"connectrpc.com/connect"
-	"github.com/stretchr/testify/assert"
-
+	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	apiv1 "github.com/OliveTin/OliveTin/gen/olivetin/api/v1"
 	apiv1connect "github.com/OliveTin/OliveTin/gen/olivetin/api/v1/apiv1connect"
@@ -15,16 +20,15 @@ import (
 	config "github.com/OliveTin/OliveTin/internal/config"
 	"github.com/OliveTin/OliveTin/internal/entities"
 	"github.com/OliveTin/OliveTin/internal/executor"
-
-	"net/http"
-	"net/http/httptest"
-	"path"
 )
 
 func getNewTestServerAndClient(injectedConfig *config.Config) (*httptest.Server, apiv1connect.OliveTinApiServiceClient) {
 	ex := executor.DefaultExecutor(injectedConfig)
 	ex.RebuildActionMap()
+	return getNewTestServerAndClientWithExecutor(injectedConfig, ex)
+}
 
+func getNewTestServerAndClientWithExecutor(injectedConfig *config.Config, ex *executor.Executor) (*httptest.Server, apiv1connect.OliveTinApiServiceClient) {
 	apiPath, apiHandler := GetNewHandler(ex)
 
 	mux := http.NewServeMux()
@@ -49,6 +53,24 @@ func getNewTestServerAndClient(injectedConfig *config.Config) (*httptest.Server,
 	log.Infof("Test server URL is %s", ts.URL+"/api"+apiPath)
 
 	return ts, client
+}
+
+func TestApplyActionExecTriggersIncludesWebhookHeaderAndQueryMatches(t *testing.T) {
+	cfg := &config.Action{
+		ExecOnWebhook: []config.WebhookConfig{
+			{
+				MatchHeaders: map[string]string{"X-GitHub-Event": "push"},
+				MatchQuery:   map[string]string{"source": "github"},
+			},
+		},
+	}
+	pb := &apiv1.Action{}
+
+	applyActionExecTriggers(pb, cfg)
+
+	require.Len(t, pb.ExecOnWebhooks, 1)
+	assert.Equal(t, cfg.ExecOnWebhook[0].MatchHeaders, pb.ExecOnWebhooks[0].MatchHeaders)
+	assert.Equal(t, cfg.ExecOnWebhook[0].MatchQuery, pb.ExecOnWebhooks[0].MatchQuery)
 }
 
 func TestGetActionsAndStart(t *testing.T) {
@@ -334,4 +356,566 @@ func testWithEntity(t *testing.T, binding *executor.ActionBinding, rr *Dashboard
 
 	actionResult := buildAction(binding, rr)
 	assert.Equal(t, expectedCanExec, actionResult.CanExec, message)
+}
+
+// buildViewPermissionTestConfig returns config and users for GHSA view-permission tests:
+// one action "secret_action", ACL "restricted" (view:false, logs:false) for user "low", ACL "full" (view:true, logs:true) for user "admin".
+func buildViewPermissionTestConfig(t *testing.T) (*config.Config, *authpublic.AuthenticatedUser, *authpublic.AuthenticatedUser) {
+	t.Helper()
+	cfg := config.DefaultConfig()
+	cfg.DefaultPermissions.View = false
+	cfg.DefaultPermissions.Exec = false
+	cfg.DefaultPermissions.Logs = false
+
+	cfg.Actions = append(cfg.Actions, &config.Action{
+		ID:    "secret_action",
+		Title: "Secret Action",
+		Shell: "echo sensitive",
+		Icon:  "🔒",
+	})
+
+	cfg.AccessControlLists = append(cfg.AccessControlLists,
+		&config.AccessControlList{
+			Name:             "restricted",
+			MatchUsernames:   []string{"low"},
+			AddToEveryAction: true,
+			Permissions:      config.PermissionsList{View: false, Exec: false, Logs: false, Kill: false},
+		},
+		&config.AccessControlList{
+			Name:             "full",
+			MatchUsernames:   []string{"admin"},
+			AddToEveryAction: true,
+			Permissions:      config.PermissionsList{View: true, Exec: true, Logs: true, Kill: true},
+		},
+	)
+
+	lowUser := &authpublic.AuthenticatedUser{Username: "low"}
+	lowUser.BuildUserAcls(cfg)
+	adminUser := &authpublic.AuthenticatedUser{Username: "admin"}
+	adminUser.BuildUserAcls(cfg)
+	return cfg, lowUser, adminUser
+}
+
+// TestViewPermissionExcludedFromDashboard (GHSA: view permission) asserts that when a user has view: false,
+// the default dashboard must not include that action. Covers GetDashboard not leaking action metadata.
+func TestViewPermissionExcludedFromDashboard(t *testing.T) {
+	cfg, lowUser, _ := buildViewPermissionTestConfig(t)
+	ex := executor.DefaultExecutor(cfg)
+	ex.RebuildActionMap()
+
+	rr := &DashboardRenderRequest{
+		AuthenticatedUser: lowUser,
+		cfg:               cfg,
+		ex:                ex,
+	}
+	db := buildDefaultDashboard(rr)
+
+	bindingIdsInDashboard := bindingIdsInDashboardContents(db.Contents)
+	assert.NotContains(t, bindingIdsInDashboard, "secret_action",
+		"user with view:false must not see action in dashboard; got bindingIds: %v", bindingIdsInDashboard)
+}
+
+// TestGetActionBindingDeniedWhenNoViewPermission (GHSA: view permission) asserts that GetActionBinding
+// returns permission denied for a user with view: false. Covers GetActionBinding not exposing action details.
+func TestGetActionBindingDeniedWhenNoViewPermission(t *testing.T) {
+	cfg, lowUser, _ := buildViewPermissionTestConfig(t)
+	ex := executor.DefaultExecutor(cfg)
+	ex.RebuildActionMap()
+	api := newServer(ex)
+
+	_, err := api.getActionBindingResponse(lowUser, "secret_action")
+	require.Error(t, err)
+	assert.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err),
+		"user with view:false must get permission denied from GetActionBinding")
+}
+
+// TestValidateArgumentTypeDeniesGuestsWhenLoginRequired (GHSA-f637-w7p2-m7fx) asserts that when
+// guests must log in, ValidateArgumentType does not bypass dashboard access controls.
+func TestValidateArgumentTypeDeniesGuestsWhenLoginRequired(t *testing.T) {
+	cfg := config.DefaultConfig()
+	cfg.AuthRequireGuestsToLogin = true
+	cfg.Actions = append(cfg.Actions, &config.Action{
+		ID:    "a1",
+		Title: "Probe",
+		Shell: "echo",
+		Arguments: []config.ActionArgument{
+			{Name: "x", Type: "ascii"},
+		},
+	})
+	ex := executor.DefaultExecutor(cfg)
+	ex.RebuildActionMap()
+	ts, client := getNewTestServerAndClient(cfg)
+	defer ts.Close()
+
+	_, err := client.ValidateArgumentType(context.Background(), connect.NewRequest(&apiv1.ValidateArgumentTypeRequest{
+		BindingId:    "a1",
+		ArgumentName: "x",
+		Value:        "v",
+		Type:         "ascii",
+	}))
+	require.Error(t, err)
+	assert.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err),
+		"guest must not call ValidateArgumentType when AuthRequireGuestsToLogin is true")
+}
+
+// TestValidateArgumentTypeDeniedWithoutViewPermission (GHSA-f637-w7p2-m7fx) asserts ValidateArgumentType
+// respects the same view ACL as GetActionBinding so the RPC cannot enumerate restricted actions.
+func TestValidateArgumentTypeDeniedWithoutViewPermission(t *testing.T) {
+	cfg, _, _ := buildViewPermissionTestConfig(t)
+	cfg.AuthHttpHeaderUsername = "X-Ot-User"
+	for i := range cfg.Actions {
+		if cfg.Actions[i].ID == "secret_action" {
+			cfg.Actions[i].Arguments = []config.ActionArgument{{Name: "target", Type: "ascii"}}
+			break
+		}
+	}
+	ex := executor.DefaultExecutor(cfg)
+	ex.RebuildActionMap()
+	ts, client := getNewTestServerAndClient(cfg)
+	defer ts.Close()
+
+	req := connect.NewRequest(&apiv1.ValidateArgumentTypeRequest{
+		BindingId:    "secret_action",
+		ArgumentName: "target",
+		Value:        "ok",
+		Type:         "ascii",
+	})
+	req.Header().Set("X-Ot-User", "low")
+
+	_, err := client.ValidateArgumentType(context.Background(), req)
+	require.Error(t, err)
+	assert.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err),
+		"user with view:false must get permission denied from ValidateArgumentType")
+}
+
+// TestValidateArgumentTypeAllowedWithViewPermission (GHSA-f637-w7p2-m7fx) asserts authenticated users
+// with view access can still use ValidateArgumentType for argument validation.
+func TestValidateArgumentTypeAllowedWithViewPermission(t *testing.T) {
+	cfg, _, _ := buildViewPermissionTestConfig(t)
+	cfg.AuthHttpHeaderUsername = "X-Ot-User"
+	for i := range cfg.Actions {
+		if cfg.Actions[i].ID == "secret_action" {
+			cfg.Actions[i].Arguments = []config.ActionArgument{{Name: "target", Type: "ascii"}}
+			break
+		}
+	}
+	ex := executor.DefaultExecutor(cfg)
+	ex.RebuildActionMap()
+	ts, client := getNewTestServerAndClient(cfg)
+	defer ts.Close()
+
+	req := connect.NewRequest(&apiv1.ValidateArgumentTypeRequest{
+		BindingId:    "secret_action",
+		ArgumentName: "target",
+		Value:        "ok",
+		Type:         "ascii",
+	})
+	req.Header().Set("X-Ot-User", "admin")
+
+	resp, err := client.ValidateArgumentType(context.Background(), req)
+	require.NoError(t, err)
+	require.NotNil(t, resp)
+	require.NotNil(t, resp.Msg)
+	assert.True(t, resp.Msg.Valid, "admin with view:true should get successful validation for a valid ascii value")
+}
+
+// TestViewPermissionAllowedSeesAction (GHSA: view permission) asserts that a user with view: true
+// still sees the action in the dashboard and can fetch it via GetActionBinding.
+func TestViewPermissionAllowedSeesAction(t *testing.T) {
+	cfg, _, adminUser := buildViewPermissionTestConfig(t)
+	ex := executor.DefaultExecutor(cfg)
+	ex.RebuildActionMap()
+	api := newServer(ex)
+
+	rr := &DashboardRenderRequest{
+		AuthenticatedUser: adminUser,
+		cfg:               cfg,
+		ex:                ex,
+	}
+	db := buildDefaultDashboard(rr)
+	bindingIdsInDashboard := bindingIdsInDashboardContents(db.Contents)
+	assert.Contains(t, bindingIdsInDashboard, "secret_action",
+		"user with view:true must see action in dashboard; got bindingIds: %v", bindingIdsInDashboard)
+
+	resp, err := api.getActionBindingResponse(adminUser, "secret_action")
+	require.NoError(t, err)
+	require.NotNil(t, resp)
+	require.NotNil(t, resp.Action)
+	assert.Equal(t, "secret_action", resp.Action.BindingId)
+}
+
+// TestViewPermissionExcludedFromCustomDashboard (issue #921) asserts that when a custom dashboard
+// lists an action by title, users without view permission do not see that action (title or icon).
+func TestViewPermissionExcludedFromCustomDashboard(t *testing.T) {
+	cfg, lowUser, _ := buildViewPermissionTestConfig(t)
+	cfg.Dashboards = []*config.DashboardComponent{
+		{
+			Title: "Custom",
+			Contents: []*config.DashboardComponent{
+				{Title: "Secret Action"},
+			},
+		},
+	}
+	ex := executor.DefaultExecutor(cfg)
+	ex.RebuildActionMap()
+
+	rr := &DashboardRenderRequest{
+		AuthenticatedUser: lowUser,
+		cfg:               cfg,
+		ex:                ex,
+	}
+	dashboard := findDashboardByTitle(rr, "Custom")
+	require.NotNil(t, dashboard)
+	db := buildDashboardFromConfig(dashboard, rr)
+	require.NotNil(t, db)
+
+	bindingIdsInDashboard := bindingIdsInDashboardContents(db.Contents)
+	assert.NotContains(t, bindingIdsInDashboard, "secret_action",
+		"user with view:false must not see action on custom dashboard; got bindingIds: %v", bindingIdsInDashboard)
+	assert.False(t, dashboardContentsContainForbiddenComponent(db.Contents, "Secret Action", "🔒"),
+		"user with view:false must not see Secret Action title or lock icon in custom dashboard")
+}
+
+// TestViewPermissionExcludedFromEntityDashboard (GHSA: view permission) asserts that when a dashboard
+// has an entity fieldset listing an action, users without view permission do not see that action.
+func TestViewPermissionExcludedFromEntityDashboard(t *testing.T) {
+	entities.ClearEntitiesOfType("vp_entity_test")
+	defer entities.ClearEntitiesOfType("vp_entity_test")
+	entities.AddEntity("vp_entity_test", "1", map[string]any{"title": "Test Entity"})
+
+	cfg, lowUser, _ := buildViewPermissionTestConfig(t)
+	cfg.Dashboards = []*config.DashboardComponent{
+		{
+			Title: "WithEntity",
+			Contents: []*config.DashboardComponent{
+				{
+					Title: "Servers", Type: "fieldset", Entity: "vp_entity_test",
+					Contents: []*config.DashboardComponent{{Title: "Secret Action"}},
+				},
+			},
+		},
+	}
+	ex := executor.DefaultExecutor(cfg)
+	ex.RebuildActionMap()
+
+	rr := &DashboardRenderRequest{
+		AuthenticatedUser: lowUser,
+		cfg:               cfg,
+		ex:                ex,
+	}
+	dashboard := findDashboardByTitle(rr, "WithEntity")
+	require.NotNil(t, dashboard)
+	db := buildDashboardFromConfig(dashboard, rr)
+	require.NotNil(t, db)
+
+	bindingIdsInDashboard := bindingIdsInDashboardContents(db.Contents)
+	assert.NotContains(t, bindingIdsInDashboard, "secret_action",
+		"user with view:false must not see action in entity fieldset; got bindingIds: %v", bindingIdsInDashboard)
+	assert.False(t, dashboardContentsContainForbiddenComponent(db.Contents, "Secret Action", "🔒"),
+		"user with view:false must not see Secret Action title or lock icon in entity dashboard")
+}
+
+func bindingIdsInDashboardContents(contents []*apiv1.DashboardComponent) []string {
+	var ids []string
+	for _, c := range contents {
+		ids = append(ids, bindingIdsFromComponent(c)...)
+	}
+	return ids
+}
+
+func bindingIdsFromComponent(c *apiv1.DashboardComponent) []string {
+	if c == nil {
+		return nil
+	}
+	var ids []string
+	if c.Action != nil && c.Action.BindingId != "" {
+		ids = append(ids, c.Action.BindingId)
+	}
+	return append(ids, bindingIdsInDashboardContents(c.Contents)...)
+}
+
+func componentHasForbiddenTitleOrIcon(c *apiv1.DashboardComponent, forbiddenTitle, forbiddenIcon string) bool {
+	return c != nil && (c.Title == forbiddenTitle || c.Icon == forbiddenIcon)
+}
+
+func componentOrDescendantsContainForbidden(c *apiv1.DashboardComponent, forbiddenTitle, forbiddenIcon string) bool {
+	if c == nil {
+		return false
+	}
+	if componentHasForbiddenTitleOrIcon(c, forbiddenTitle, forbiddenIcon) {
+		return true
+	}
+	return dashboardContentsContainForbiddenComponent(c.Contents, forbiddenTitle, forbiddenIcon)
+}
+
+// dashboardContentsContainForbiddenComponent recursively walks contents and returns true if any
+// component has Title == forbiddenTitle or Icon == forbiddenIcon.
+func dashboardContentsContainForbiddenComponent(contents []*apiv1.DashboardComponent, forbiddenTitle, forbiddenIcon string) bool {
+	for _, c := range contents {
+		if componentOrDescendantsContainForbidden(c, forbiddenTitle, forbiddenIcon) {
+			return true
+		}
+	}
+	return false
+}
+
+func TestOrderTopLevelDashboardComponents_RegularFieldsetsPreserveConfigOrder(t *testing.T) {
+	zebra := &apiv1.DashboardComponent{Title: "Zebra", Type: "fieldset", EntityType: ""}
+	alpha := &apiv1.DashboardComponent{Title: "Alpha", Type: "fieldset", EntityType: ""}
+	root := &apiv1.DashboardComponent{Title: "Actions", Type: "fieldset", EntityType: ""}
+	components := []*apiv1.DashboardComponent{zebra, alpha, root}
+
+	out := orderTopLevelDashboardComponents(components, root)
+
+	require.Len(t, out, 3)
+	assert.Same(t, zebra, out[0], "first must be Zebra (config order)")
+	assert.Same(t, alpha, out[1], "second must be Alpha (config order)")
+	assert.Same(t, root, out[2], "third must be root Actions fieldset")
+}
+
+func TestOrderTopLevelDashboardComponents_SortablesSorted(t *testing.T) {
+	entityBeta := &apiv1.DashboardComponent{Title: "Beta", Type: "fieldset", EntityType: "server"}
+	entityAlpha := &apiv1.DashboardComponent{Title: "Alpha", Type: "fieldset", EntityType: "server"}
+	components := []*apiv1.DashboardComponent{entityBeta, entityAlpha}
+
+	out := orderTopLevelDashboardComponents(components, nil)
+
+	require.Len(t, out, 2)
+	assert.Equal(t, "Alpha", out[0].Title, "sortables ordered by title")
+	assert.Equal(t, "Beta", out[1].Title)
+}
+
+// TestEventStreamACLNoLeakToUnauthorizedUser (GHSA-228v-wc5r-j8m7) asserts that EventStream
+// does not send execution events or output chunks to users who are not allowed to view that action's logs.
+func TestEventStreamACLNoLeakToUnauthorizedUser(t *testing.T) {
+	cfg, lowUser, adminUser := buildViewPermissionTestConfig(t)
+	ex := executor.DefaultExecutor(cfg)
+	ex.RebuildActionMap()
+	api := newServer(ex)
+
+	binding := ex.FindBindingByID("secret_action")
+	require.NotNil(t, binding, "secret_action binding must exist")
+
+	clientLow, clientAdmin := addEventStreamTestClients(t, api, lowUser, adminUser)
+	defer removeEventStreamTestClients(api, clientLow, clientAdmin)
+
+	runEventStreamTestExecution(t, ex, cfg, binding, adminUser)
+	adminEvents := drainEventStreamUntilFinished(clientAdmin.channel, 2*time.Second)
+	lowEvents := drainEventStreamWithTimeout(clientLow.channel, 50*time.Millisecond)
+
+	assertEventStreamLowUserReceivesNothing(t, lowEvents)
+	assertEventStreamAdminReceivesSecretActionEvents(t, adminEvents)
+}
+
+func addEventStreamTestClients(t *testing.T, api *oliveTinAPI, lowUser, adminUser *authpublic.AuthenticatedUser) (*streamingClient, *streamingClient) {
+	t.Helper()
+	clientLow := &streamingClient{
+		channel:           make(chan *apiv1.EventStreamResponse, 20),
+		AuthenticatedUser: lowUser,
+	}
+	clientAdmin := &streamingClient{
+		channel:           make(chan *apiv1.EventStreamResponse, 20),
+		AuthenticatedUser: adminUser,
+	}
+	api.streamingClientsMutex.Lock()
+	api.streamingClients[clientLow] = struct{}{}
+	api.streamingClients[clientAdmin] = struct{}{}
+	api.streamingClientsMutex.Unlock()
+	return clientLow, clientAdmin
+}
+
+func removeEventStreamTestClients(api *oliveTinAPI, clientLow, clientAdmin *streamingClient) {
+	api.streamingClientsMutex.Lock()
+	delete(api.streamingClients, clientLow)
+	delete(api.streamingClients, clientAdmin)
+	api.streamingClientsMutex.Unlock()
+	close(clientLow.channel)
+	close(clientAdmin.channel)
+}
+
+func runEventStreamTestExecution(t *testing.T, ex *executor.Executor, cfg *config.Config, binding *executor.ActionBinding, adminUser *authpublic.AuthenticatedUser) {
+	t.Helper()
+	execReq := &executor.ExecutionRequest{
+		Binding:           binding,
+		Arguments:         map[string]string{},
+		TrackingID:        uuid.NewString(),
+		Cfg:               cfg,
+		AuthenticatedUser: adminUser,
+	}
+	wg, _ := ex.ExecRequest(execReq)
+	wg.Wait()
+}
+
+func drainEventStreamUntilFinished(ch <-chan *apiv1.EventStreamResponse, timeout time.Duration) []*apiv1.EventStreamResponse {
+	var out []*apiv1.EventStreamResponse
+	deadline := time.Now().Add(timeout)
+	for time.Now().Before(deadline) {
+		ev, finished := recvEventStreamOne(ch, 50*time.Millisecond)
+		if ev != nil {
+			out = append(out, ev)
+		}
+		if finished {
+			return out
+		}
+	}
+	return out
+}
+
+func recvEventStreamOne(ch <-chan *apiv1.EventStreamResponse, timeout time.Duration) (*apiv1.EventStreamResponse, bool) {
+	select {
+	case ev, ok := <-ch:
+		if !ok {
+			return nil, true
+		}
+		return ev, ev.GetExecutionFinished() != nil
+	case <-time.After(timeout):
+		return nil, true
+	}
+}
+
+func eventStreamRecvResult(ev *apiv1.EventStreamResponse, ok bool) (*apiv1.EventStreamResponse, bool) {
+	if !ok {
+		return nil, true
+	}
+	return ev, false
+}
+
+func recvEventStreamWithTimeoutOne(ch <-chan *apiv1.EventStreamResponse, timeout time.Duration) (*apiv1.EventStreamResponse, bool) {
+	select {
+	case ev, ok := <-ch:
+		return eventStreamRecvResult(ev, ok)
+	case <-time.After(timeout):
+		return nil, true
+	}
+}
+
+func drainEventStreamWithTimeout(ch <-chan *apiv1.EventStreamResponse, timeout time.Duration) []*apiv1.EventStreamResponse {
+	var out []*apiv1.EventStreamResponse
+	for {
+		ev, done := recvEventStreamWithTimeoutOne(ch, timeout)
+		if done {
+			return out
+		}
+		out = append(out, ev)
+	}
+}
+
+func assertEventStreamLowUserReceivesNothing(t *testing.T, lowEvents []*apiv1.EventStreamResponse) {
+	t.Helper()
+	for _, ev := range lowEvents {
+		assert.Nil(t, ev.GetExecutionStarted(), "low-privilege user must not receive ExecutionStarted")
+		assert.Nil(t, ev.GetExecutionFinished(), "low-privilege user must not receive ExecutionFinished")
+		assert.Nil(t, ev.GetOutputChunk(), "low-privilege user must not receive OutputChunk")
+	}
+	assert.Empty(t, lowEvents, "low-privilege user with Logs:false must not receive any execution events")
+}
+
+func assertEventStreamAdminReceivesSecretActionEvents(t *testing.T, adminEvents []*apiv1.EventStreamResponse) {
+	t.Helper()
+	var gotStarted, gotFinished bool
+	for _, ev := range adminEvents {
+		if ev.GetExecutionStarted() != nil {
+			gotStarted = true
+			assert.Equal(t, "secret_action", ev.GetExecutionStarted().LogEntry.GetBindingId())
+		}
+		if ev.GetExecutionFinished() != nil {
+			gotFinished = true
+			assert.Equal(t, "secret_action", ev.GetExecutionFinished().LogEntry.GetBindingId())
+		}
+	}
+	assert.True(t, gotStarted, "admin must receive ExecutionStarted for secret_action")
+	assert.True(t, gotFinished, "admin must receive ExecutionFinished for secret_action")
+}
+
+func TestExecutionStatusReturnsBackToDashboards(t *testing.T) {
+	cfg := config.DefaultConfig()
+	cfg.Actions = []*config.Action{
+		{Title: "Dashboard Action", Shell: "echo ok"},
+	}
+	cfg.Dashboards = []*config.DashboardComponent{
+		{
+			Title: "Ops",
+			Contents: []*config.DashboardComponent{
+				{Title: "Dashboard Action"},
+			},
+		},
+	}
+
+	ex := executor.DefaultExecutor(cfg)
+	ex.RebuildActionMap()
+	binding := ex.FindBindingWithNoEntity(cfg.Actions[0])
+	require.NotNil(t, binding)
+
+	_, client := getNewTestServerAndClientWithExecutor(cfg, ex)
+
+	startResp, err := client.StartAction(context.Background(), connect.NewRequest(&apiv1.StartActionRequest{
+		BindingId: binding.ID,
+	}))
+	require.NoError(t, err)
+
+	statusResp, err := client.ExecutionStatus(context.Background(), connect.NewRequest(&apiv1.ExecutionStatusRequest{
+		ExecutionTrackingId: startResp.Msg.ExecutionTrackingId,
+	}))
+	require.NoError(t, err)
+	require.NotNil(t, statusResp.Msg)
+	require.Len(t, statusResp.Msg.BackToDashboards, 1)
+	assert.Equal(t, "Ops", statusResp.Msg.BackToDashboards[0].Title)
+	assert.Equal(t, "/dashboards/Ops", statusResp.Msg.BackToDashboards[0].Path)
+}
+
+func TestGetActionBindingReturnsBackToDashboards(t *testing.T) {
+	cfg := config.DefaultConfig()
+	cfg.Actions = []*config.Action{
+		{Title: "Dashboard Action", Shell: "echo ok"},
+	}
+	cfg.Dashboards = []*config.DashboardComponent{
+		{
+			Title: "Ops",
+			Contents: []*config.DashboardComponent{
+				{Title: "Dashboard Action"},
+			},
+		},
+	}
+
+	ex := executor.DefaultExecutor(cfg)
+	ex.RebuildActionMap()
+	binding := ex.FindBindingWithNoEntity(cfg.Actions[0])
+	require.NotNil(t, binding)
+
+	_, client := getNewTestServerAndClientWithExecutor(cfg, ex)
+
+	resp, err := client.GetActionBinding(context.Background(), connect.NewRequest(&apiv1.GetActionBindingRequest{
+		BindingId: binding.ID,
+	}))
+	require.NoError(t, err)
+	require.NotNil(t, resp.Msg)
+	require.Len(t, resp.Msg.BackToDashboards, 1)
+	assert.Equal(t, "Ops", resp.Msg.BackToDashboards[0].Title)
+	assert.Equal(t, "/dashboards/Ops", resp.Msg.BackToDashboards[0].Path)
+}
+
+func TestBuildActionIncludesGroups(t *testing.T) {
+	cfg := config.DefaultConfig()
+	cfg.ActionGroups = map[string]*config.ActionGroup{
+		"con2queue10": {MaxConcurrent: 2, QueueSize: 10},
+	}
+	cfg.Actions = []*config.Action{
+		{Title: "Long running action", Shell: "sleep 1", Groups: []string{"con2queue10", "missing"}},
+	}
+	cfg.Sanitize()
+
+	ex := executor.DefaultExecutor(cfg)
+	ex.RebuildActionMap()
+	binding := ex.FindBindingWithNoEntity(cfg.Actions[0])
+	require.NotNil(t, binding)
+
+	rr := &DashboardRenderRequest{cfg: cfg, ex: ex}
+	actionResult := buildAction(binding, rr)
+
+	require.Len(t, actionResult.Groups, 2)
+	assert.Equal(t, "con2queue10", actionResult.Groups[0].Name)
+	assert.Equal(t, int32(2), actionResult.Groups[0].MaxConcurrent)
+	assert.Equal(t, int32(10), actionResult.Groups[0].QueueSize)
+	assert.Equal(t, "missing", actionResult.Groups[1].Name)
+	assert.Equal(t, int32(0), actionResult.Groups[1].MaxConcurrent)
 }

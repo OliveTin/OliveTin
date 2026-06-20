@@ -76,8 +76,9 @@ archives:
       - README.md
       - src: Dockerfile.singlearch
         dst: Dockerfile
+      - examples/backupScript.sh
       - webui
-      - ./var/
+      - var
     name_template: "{{ .ProjectName }}-{{ .Os }}-{{ .Arch }}{{ .Arm }}"
     wrap_in_directory: true
     format_overrides:
@@ -103,6 +104,7 @@ dockers_v2:
       - var/entities/
       - config.yaml
       - var/helper-actions/
+      - examples/backupScript.sh
     labels:
       org.opencontainers.image.revision: "{{ .FullCommit }}"
       org.opencontainers.image.version: "{{ .Tag }}"

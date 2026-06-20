@@ -1,0 +1,78 @@
+# macOS release signing
+
+Release builds can sign and notarize the `darwin` binaries using [quill](https://github.com/anchore/quill) via GoReleaser. This runs on the existing Linux CI runner; no macOS runner is required.
+
+Signing is **optional**. If the GitHub secrets below are not all set, GoReleaser skips macOS signing and publishes unsigned binaries (the previous behaviour).
+
+## Prerequisites
+
+- An active [Apple Developer Program](https://developer.apple.com/programs/) membership.
+- A **Developer ID Application** certificate (not "Apple Development" or "Mac App Distribution").
+- An [App Store Connect API key](https://appstoreconnect.apple.com/access/integrations/api) with at least **Developer** access.
+
+## One-time setup
+
+### 1. Create the signing certificate
+
+1. Open [Certificates, Identifiers & Profiles](https://developer.apple.com/account/resources/certificates/list).
+2. Create a certificate of type **Developer ID Application**.
+3. Download the `.cer` file and double-click it to add it to **Keychain Access** on a Mac.
+4. In Keychain Access, export the certificate as a **Personal Information Exchange (`.p12`)** file. You will set an export password — remember it; this becomes `MACOS_SIGN_PASSWORD`.
+
+### 2. Create the notarization API key
+
+1. Open [App Store Connect → Users and Access → Integrations → App Store Connect API](https://appstoreconnect.apple.com/access/integrations/api).
+2. Create a key with **Developer** role (or Admin).
+3. Download the `.p8` file once (it cannot be downloaded again). Note the **Key ID** shown in the portal and the **Issuer ID** at the top of the API keys page.
+
+### 3. Base64-encode the key files
+
+Run on a machine that has the files (Linux or macOS):
+
+```sh
+base64 -w0 < ./Certificates.p12    # MACOS_SIGN_P12
+base64 -w0 < ./AuthKey_XXXXXX.p8   # MACOS_NOTARY_KEY
+```
+
+On macOS without GNU coreutils, use `base64 -i file | tr -d '\n'`.
+
+### 4. Add GitHub repository secrets
+
+In **Settings → Secrets and variables → Actions**, create:
+
+| Secret | Value |
+|--------|-------|
+| `MACOS_SIGN_P12` | Base64 contents of the `.p12` file |
+| `MACOS_SIGN_PASSWORD` | Password used when exporting the `.p12` |
+| `MACOS_NOTARY_KEY` | Base64 contents of the `.p8` file |
+| `MACOS_NOTARY_KEY_ID` | Key ID from App Store Connect (e.g. `ABC123DEF4`) |
+| `MACOS_NOTARY_ISSUER_ID` | Issuer UUID from App Store Connect |
+
+All five must be present for signing to run. Any missing secret disables signing for that release.
+
+## Renewal
+
+| Item | Typical lifetime | What to do |
+|------|------------------|------------|
+| Developer ID Application certificate | ~5 years | Create a new certificate in the Apple portal, export a new `.p12`, update `MACOS_SIGN_P12` and `MACOS_SIGN_PASSWORD`. |
+| App Store Connect API key | Does not expire, but can be revoked | Create a new key if compromised or lost; update `MACOS_NOTARY_KEY`, `MACOS_NOTARY_KEY_ID`, and optionally `MACOS_NOTARY_ISSUER_ID`. |
+| Apple Developer Program | Annual subscription | Renew membership before it lapses; existing certificates stop working if the account is inactive. |
+
+After updating secrets, the next release on `main` (via semantic-release) will use the new credentials automatically.
+
+## Verifying a signed release
+
+On a Mac, download a `OliveTin-darwin-*.tar.gz` release artifact and run:
+
+```sh
+tar -xzf OliveTin-darwin-arm64.tar.gz
+spctl -a -vv -t execute OliveTin-darwin-arm64/OliveTin
+```
+
+A signed and notarized binary should report `accepted` with `source=Notarized Developer ID`.
+
+## Configuration reference
+
+- GoReleaser: `notarize.macos` in [`.goreleaser.yml`](.goreleaser.yml)
+- CI secrets: [`.github/workflows/build-and-release.yml`](.github/workflows/build-and-release.yml) (`release` step)
+- [GoReleaser notarization docs](https://goreleaser.com/customization/notarize/)

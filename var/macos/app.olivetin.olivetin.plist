@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  launchd service definition for OliveTin on macOS.
+  This is the macOS equivalent of the Linux systemd unit (var/systemd/OliveTin.service).
+
+  As a per-user LaunchAgent (recommended, no root needed):
+      cp app.olivetin.olivetin.plist ~/Library/LaunchAgents/
+      launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/app.olivetin.olivetin.plist   # start now + at login
+      launchctl bootout   gui/$(id -u) ~/Library/LaunchAgents/app.olivetin.olivetin.plist   # stop + disable
+
+  As a system-wide LaunchDaemon (starts at boot, before login; needs root):
+      sudo cp app.olivetin.olivetin.plist /Library/LaunchDaemons/
+      sudo chown root:wheel /Library/LaunchDaemons/app.olivetin.olivetin.plist
+      sudo launchctl load /Library/LaunchDaemons/app.olivetin.olivetin.plist
+
+  Edit the two paths below to match where you installed the binary and config.
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>app.olivetin.olivetin</string>
+
+    <!-- Path to the OliveTin binary, then flags. -configdir is the directory
+         that contains your config.yaml. -->
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/local/bin/OliveTin</string>
+        <string>-configdir</string>
+        <string>/Users/YOUR_USER/etc/OliveTin</string>
+    </array>
+
+    <!-- systemd's Restart=always -->
+    <key>KeepAlive</key>
+    <true/>
+
+    <!-- Start at load (login for a LaunchAgent, boot for a LaunchDaemon) -->
+    <key>RunAtLoad</key>
+    <true/>
+
+<!-- For LaunchAgent (per-user): use /Users/YOUR_USER/Library/Logs/olivetin.log
+     For LaunchDaemon (system-wide): use /usr/local/var/log/olivetin.log -->
+    <key>StandardOutPath</key>
+    <string>/Users/YOUR_USER/Library/Logs/olivetin.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/YOUR_USER/Library/Logs/olivetin.log</string>
+</dict>
+</plist>

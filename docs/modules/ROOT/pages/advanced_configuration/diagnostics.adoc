@@ -1,0 +1,38 @@
+= Diagnostics
+
+OliveTin provides a built-in diagnostics page that can be used to help check how OliveTin is running and help to troubleshoot issues. It's mainly designed for checking SSH configuration at the moment.
+
+This is a screenshot of the diagnostics page, which can be accessed by clicking the "Diagnostics" link in the navigation bar:
+
+image::diagnostics.png[]
+
+== Disabling Diagnostics
+
+The diagnostics page is enabled by default, but you can disable it by using the OliveTin xref::security/acl.adoc#_acls_and_policies_global[security policy configuration], using the defaults, or via an ACL. Examples are shown below for each of these methods. 
+
+=== Disable Diagnostics for all users;
+
+[source, yaml]
+----
+logLevel: info
+
+defaultPolicy:
+	showDiagnostics: false
+----
+
+=== Disable Diagnostics expect for admin users
+
+[source, yaml]
+----
+logLevel: info
+defaultPolicy:
+	showDiagnostics: false
+
+accessControlLists:
+  - name: admin
+    matchUsernames:
+	  - alice
+	  - bob
+    policy:
+	  showDiagnostics: true
+----

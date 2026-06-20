@@ -76,8 +76,9 @@ func (u *AuthenticatedUser) BuildUserAcls(cfg *config.Config) {
 
 func getEffectivePolicy(cfg *config.Config, u *AuthenticatedUser) *config.ConfigurationPolicy {
 	ret := &config.ConfigurationPolicy{
-		ShowDiagnostics: cfg.DefaultPolicy.ShowDiagnostics,
-		ShowLogList:     cfg.DefaultPolicy.ShowLogList,
+		ShowDiagnostics:   cfg.DefaultPolicy.ShowDiagnostics,
+		ShowLogList:       cfg.DefaultPolicy.ShowLogList,
+		ShowVersionNumber: cfg.DefaultPolicy.ShowVersionNumber,
 	}
 
 	for _, acl := range cfg.AccessControlLists {
@@ -96,6 +97,10 @@ func buildConfigurationPolicy(ret *config.ConfigurationPolicy, policy config.Con
 
 	if policy.ShowLogList {
 		ret.ShowLogList = policy.ShowLogList
+	}
+
+	if policy.ShowVersionNumber {
+		ret.ShowVersionNumber = policy.ShowVersionNumber
 	}
 
 	return ret

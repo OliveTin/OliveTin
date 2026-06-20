@@ -1,0 +1,10 @@
+Note, because you are changing the default path (from `/` to `/OliveTin/`), you will need to tell the OliveTin webUI where to find the API. 
+
+You need to also set `externalRestAddress` in your config.yaml like this;
+
+.OliveTin config.yaml
+[source,yaml]
+----
+externalRestAddress: http://myserver/OliveTin
+----
+

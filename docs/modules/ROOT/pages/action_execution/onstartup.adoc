@@ -1,0 +1,32 @@
+[#exec-startup]
+= Execute on startup
+
+OliveTin can execute actions on a startup. 
+
+[source,yaml]
+.`config.yaml`
+----
+actions:
+  - title: Say hello
+    shell: echo "Hello!"
+    execOnStartup: true 
+----
+
+[#dnf-startup]
+== Example: Install additional commands into OliveTin
+
+This functionality to execute actions on startup is a very easy way to install additional commands in OliveTin, however it requires running OliveTin as a root user to be able to use `microdnf`;
+
+[source,yaml]
+.`config.yaml`
+----
+actions:
+  - title: Install dnsmasq
+    shell: microdnf install bind-utils
+    execOnStartup: true
+----
+
+A more secure method than running DNF as root, is a manual command the temporarily runs as root. To learn more about how to install additional packages into the container in this more secure way, see xref:reference/containerInstallPackages.adoc[Installing extra container packages].
+
+
+

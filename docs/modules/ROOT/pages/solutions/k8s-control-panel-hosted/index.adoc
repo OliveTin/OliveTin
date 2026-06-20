@@ -1,0 +1,116 @@
+= Solution: Kubernetes Control Panel (Hosted)
+
+This solution gives you quick and easy buttons to run kubectl commands, when OliveTin is running on top of Kubernetes (this means OliveTin is "hosted" by Kubernetes). This can be very easy for quick debugging purposes when you cannot type (eg from a mobile phone), or to  give junior sysadmins access to do basic predefined tasks.
+
+This use case is enabled by simply providing the OliveTin pod access to talk to the kubernetes API, and using `kubectl` which is preinstalled with modern versions of OliveTin.
+
+image::solutions/k8s-control-panel-hosted/preview.png[]
+
+== Requirements & Assumptions
+
+=== Time & skills
+
+* This should take approximately **10 minutes** to configure if you are comfortable in using Kubernetes - using helm, kubectl, and editing basic YAML.
+
+=== Environment
+
+* A Kubernetes cluster that is up and running.
+* Kubernetes permissions to create a helm deployment, a `ClusterRole` and `ClusterRoleBinding`.
+* A configured Ingress Controller, exposing the for web interface
+
+=== System
+
+* Approximately 128m RAM, 1vCPU to run the OliveTin pod.
+
+== Install OliveTin on top of Kubernetes
+
+* xref:install/helm.adoc[Install OliveTin on Kubernetes with Helm] (recommended)
+* xref:install/k8s.adoc[Install OliveTin on Kubernetes with Manifests]
+
+== Grant permissions to API
+
+OliveTin needs a `ClusterRole` that allow it to access resources on your Kubernetes cluster. This is because by default, pods can communicate to the API using the credentials mounted in the pod by the default `ServiceAccount`, but they don't have any permissions. This `ClusterRole` is being created to give permissions to the `ServiceAccount`. Create the `ClusterRole` like follows;
+
+[tabs]
+====
+kubectl cli::
++
+--
+[source,shell]
+----
+user@host: kubectl create clusterrole --resource=pods --verb=get,list,watch olivetin-k8s-permissions
+----
+--
+manifest::
++
+--
+[source,yaml]
+----
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: olivetin-k8s-permissions
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list", "watch"]
+----
+--
+====
+
+Now that the `ClusterRole` has been created, we need to associate it to a `ServiceAccount` with a `ClusterRoleBinding`.
+Create a cluster role binding;
+
+[tabs]
+====
+kubectl cli::
++
+--
+[source,shell]
+----
+user@host: kubectl create clusterrolebinding --clusterrole=olivetin-k8s-permissions --serviceaccount myolivetinnamespace:default --namespace myolivetinnamespace olivetin-crb
+----
+--
+====
+
+== Build a simple kubernetes control planel
+
+Add `kubectl` job to OliveTin config with `kubectl edit cm/olivetin-config -n olivetin`;
+
+[source,yaml]
+----
+apiVersion: v1
+data:
+  config.yaml: |
+    defaultOnClick: execution-dialog-output-only
+
+    actions:
+      - title: get pods
+        icon: <iconify-icon icon="pajamas:pod"></iconify-icon>
+        shell: kubectl get pods
+
+      - title: restart postgres deployment
+        icon: <iconify-icon icon="pajamas:clear-all"></iconify-icon>
+        shell: kubectl rollout restart deployment postgres
+
+      - title: evacuate node
+        icon: <iconify-icon icon="pajamas:rocket-launch"></iconify-icon>
+        shell: kubectl drain {{ NodeName }} --ignore-daemonsets --delete-emptydir-data
+        arguments:
+          - name: NodeName
+            choices:
+              - value: node1
+              - value: node2
+              - value: node3
+kind: ConfigMap
+metadata:
+  annotations:
+    meta.helm.sh/release-name: olivetin
+    meta.helm.sh/release-namespace: default
+  labels:
+    app.kubernetes.io/managed-by: Helm
+  name: olivetin-config
+  namespace: default
+----
+
+Don't forget to restart the OliveTin deployment as good measure, because Kubernetes can be slow to update configmaps.

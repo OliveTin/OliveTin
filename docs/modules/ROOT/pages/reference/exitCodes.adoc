@@ -1,0 +1,20 @@
+= Understanding exit codes
+
+OliveTin just runs commands. If the command exits with an unusual exit code
+(something other than 0), OliveTin will tell you. Many Linux commands will exit
+with code 1, 2, 3, etc to indicate different types of errors.
+
+It's important to understand that OliveTin is just reporting back what the
+command exited with, it's very unusual for OliveTin to cause new types of
+errors!
+
+For example, if `ping` exits with code 1 or 2, the documentation for ping says
+that this indicates either a name not found, timeout, or other similar error.
+The best thing you can do is `man ping` to read the ping manual page to find
+out more.
+
+== Common error codes
+
+* **Exit code 127** is used by the Linux shell to indicate "Command not found". Most often this means you need to install the command (often in the linux container image). 
+
+

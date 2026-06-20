@@ -1,0 +1,17 @@
+[#powershell]
+= Powershell
+
+:systemd: Easy
+:container: Not possible
+include::partial$action_examples/actionHeader.adoc[]
+
+Powershell requires `pwsh` to execute commands.
+
+[source,yaml]
+.`config.yaml`
+....
+actions:
+  - title: Run Powershell Script:
+    shell: pwsh C:/Scripts/MyScript.ps1
+....
+

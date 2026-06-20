@@ -1,0 +1,51 @@
+= macOS Desktop
+
+OliveTin runs natively on macOS, on both Apple Silicon (M-series) and Intel Macs. It is a single, self-contained binary - there is no installer and no dependencies to set up.
+
+If you want OliveTin to run in the background and start automatically, follow the xref:install/macos_service.adoc[install OliveTin as a launchd service] instructions instead.
+
+== Download
+
+macOS builds are published on the link:https://github.com/OliveTin/OliveTin/releases/latest[releases page]. Choose the archive that matches your Mac's processor:
+
+[cols="1,1"]
+|===
+| Your Mac | Archive
+
+| Apple Silicon (M1/M2/M3/M4)
+| link:https://github.com/OliveTin/OliveTin/releases/latest/download/OliveTin-darwin-arm64.tar.gz[`OliveTin-darwin-arm64.tar.gz`]
+
+| Intel
+| link:https://github.com/OliveTin/OliveTin/releases/latest/download/OliveTin-darwin-amd64.tar.gz[`OliveTin-darwin-amd64.tar.gz`]
+|===
+
+Not sure which you have? Run `uname -m` in Terminal - `arm64` means Apple Silicon, `x86_64` means Intel.
+
+[NOTE]
+If you run the wrong architecture, macOS reports `Bad CPU type in executable`. Download the other archive if you see this.
+
+== Extract
+
+Start a terminal, then extract the archive and change into the directory (replace `arm64` with `amd64` on Intel):
+
+[source,shell]
+----
+tar -xzf OliveTin-darwin-arm64.tar.gz
+cd OliveTin-darwin-arm64
+----
+
+== Remove the Gatekeeper quarantine
+
+The binary is downloaded from the internet and is not notarized by Apple, so on first run Gatekeeper blocks it with a message like _"OliveTin can't be opened because Apple cannot check it for malicious software."_
+
+Clear the quarantine attribute so it will run:
+
+[source,shell]
+----
+xattr -dr com.apple.quarantine ./OliveTin
+----
+
+[TIP]
+Alternatively, the first time only, right-click the binary in Finder and choose *Open*, or approve it under *System Settings -> Privacy & Security*.
+
+include::partial$install/post_generic.adoc[]

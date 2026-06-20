@@ -21,17 +21,14 @@
                 </option>
               </datalist>
 
-              <select v-if="getInputComponent(arg) === 'select'" :id="arg.name" :name="arg.name" :value="getArgumentValue(arg)"
-                :required="arg.required" @input="handleInput(arg, $event)" @change="handleChange(arg, $event)">
-                <option v-for="choice in arg.choices" :key="choice.value" :value="choice.value">
-                  {{ choice.title || choice.value }}
-                </option>
-              </select>
-              
-              <component v-else :is="getInputComponent(arg)" :id="arg.name" :name="arg.name" 
+              <ChoiceCombobox v-if="getInputComponent(arg) === 'select'" :id="arg.name" :name="arg.name"
+                :choices="arg.choices" :model-value="getArgumentValue(arg)" :required="arg.required"
+                @update:model-value="handleChoiceUpdate(arg, $event)" />
+
+              <component v-else :is="getInputComponent(arg)" :id="arg.name" :name="arg.name"
                 :value="(arg.type === 'checkbox' || arg.type === 'confirmation') ? undefined : getArgumentValue(arg)"
                 :checked="(arg.type === 'checkbox' || arg.type === 'confirmation') ? getArgumentValue(arg) : undefined"
-                :list="(arg.suggestions || getBrowserSuggestions(arg).length > 0) ? `${arg.name}-choices` : undefined" 
+                :list="(arg.suggestions || getBrowserSuggestions(arg).length > 0) ? `${arg.name}-choices` : undefined"
                 :type="getInputComponent(arg) !== 'select' ? getInputType(arg) : undefined"
                 :rows="arg.type === 'raw_string_multiline' ? 5 : undefined"
                 :step="arg.type === 'datetime' ? 1 : undefined" :pattern="getPattern(arg)"
@@ -40,12 +37,18 @@
             <span class="argument-description" v-html="arg.description"></span>
           </template>
         </template>
-        <div v-else>
+
+        <template v-if="justificationRequired">
+          <label for="justification">Justification:</label>
+          <input id="justification" name="justification" type="text" v-model="justificationValue" required />
+        </template>
+
+        <div v-if="actionArguments.length === 0 && !justificationRequired">
           <p>No arguments required</p>
         </div>
 
         <div class="buttons">
-          <button name="start" type="submit" :disabled="hasConfirmation && !confirmationChecked">
+          <button name="start" type="submit" :disabled="!formReady || (hasConfirmation && !confirmationChecked)">
             Start
           </button>
           <button name="cancel" type="button" @click="handleCancel">
@@ -58,8 +61,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, onMounted, onBeforeUnmount, onUnmounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
+import { requestReconnectNow } from '../../../js/websocket.js'
+import ChoiceCombobox from '../components/ChoiceCombobox.vue'
 
 const router = useRouter()
 
@@ -73,6 +78,11 @@ const confirmationChecked = ref(false)
 const hasConfirmation = ref(false)
 const formErrors = ref({})
 const actionArguments = ref([])
+const popupOnStart = ref('')
+const formReady = ref(false)
+const justificationRequired = ref(false)
+const justificationValue = ref('')
+let isComponentMounted = true
 
 // Computed properties
 
@@ -85,22 +95,29 @@ const props = defineProps({
 
 // Methods
 async function setup() {
-  const ret = await window.client.getActionBinding({
-    bindingId: props.bindingId
-  })
+  formReady.value = false
+  document.body.removeAttribute('loaded-argument-form')
 
-  const action = ret.action
+  try {
+    const ret = await window.client.getActionBinding({
+      bindingId: props.bindingId
+    })
 
-  title.value = action.title
-  icon.value = action.icon
-  actionArguments.value = action.arguments || []
-  argValues.value = {}
-  formErrors.value = {}
-  confirmationChecked.value = false
-  hasConfirmation.value = false
+    const action = ret.action
 
-  // Initialize values from query params or defaults
-  actionArguments.value.forEach(arg => {
+    title.value = action.title
+    icon.value = action.icon
+    popupOnStart.value = action.popupOnStart || ''
+    actionArguments.value = action.arguments || []
+    justificationRequired.value = action.justification || false
+    justificationValue.value = ''
+    argValues.value = {}
+    formErrors.value = {}
+    confirmationChecked.value = false
+    hasConfirmation.value = false
+
+    // Initialize values from query params or defaults
+    actionArguments.value.forEach(arg => {
     if (arg.type === 'confirmation') {
       hasConfirmation.value = true
       const paramValue = getQueryParamValue(arg.name)
@@ -127,14 +144,22 @@ async function setup() {
         argValues.value[arg.name] = paramValue !== null ? paramValue : arg.defaultValue || ''
       }
     }
-  })
+    })
 
-  // Run initial validation on all fields after DOM is updated
-  await nextTick()
-  for (const arg of actionArguments.value) {
-    if (arg.type && !arg.type.startsWith('regex:') && arg.type !== 'select' && arg.type !== '' && arg.type !== 'confirmation' && arg.type !== 'checkbox') {
-      await validateArgument(arg, argValues.value[arg.name] || '')
+    // Run initial validation on all fields after DOM is updated
+    await nextTick()
+    for (const arg of actionArguments.value) {
+      if (arg.type && !arg.type.startsWith('regex:') && arg.type !== 'select' && arg.type !== '' && arg.type !== 'confirmation' && arg.type !== 'checkbox') {
+        await validateArgument(arg, argValues.value[arg.name] || '')
+      }
     }
+
+    if (isComponentMounted) {
+      formReady.value = true
+      document.body.setAttribute('loaded-argument-form', props.bindingId)
+    }
+  } catch (err) {
+    console.error('Failed to load argument form:', err)
   }
 }
 
@@ -172,7 +197,7 @@ function getInputType(arg) {
     return 'checkbox'
   }
 
-  if (arg.type === 'ascii_identifier' || arg.type === 'ascii') {
+  if (arg.type === 'ascii_identifier' || arg.type === 'shell_safe_identifier' || arg.type === 'ascii' || arg.type === 'ascii_sentence') {
     return 'text'
   }
 
@@ -213,6 +238,12 @@ function handleChange(arg, event) {
   validateArgument(arg, event.target.value)
 }
 
+function handleChoiceUpdate(arg, value) {
+  argValues.value[arg.name] = value
+  updateUrlWithArg(arg.name, value)
+  validateArgument(arg, value)
+}
+
 async function validateArgument(arg, value) {
   if (!arg.type || arg.type.startsWith('regex:')) {
     return
@@ -250,7 +281,7 @@ async function validateArgument(arg, value) {
 
     // Get the input element to set custom validity
     const inputElement = document.getElementById(arg.name)
-    
+
     if (validation.valid) {
       delete formErrors.value[arg.name]
       // Clear custom validity message
@@ -289,19 +320,41 @@ function updateUrlWithArg(name, value) {
   }
 }
 
+function shouldSendArgument(arg) {
+  if (!arg.name) {
+    return false
+  }
+
+  return arg.type !== 'html'
+}
+
+function formatArgumentValueForApi(arg, rawValue) {
+  if (arg.type === 'checkbox' || arg.type === 'confirmation') {
+    return rawValue === '1' || rawValue === true || rawValue === 'true' ? '1' : '0'
+  }
+
+  if (rawValue === true) {
+    return '1'
+  }
+
+  if (rawValue === false) {
+    return '0'
+  }
+
+  return rawValue ?? ''
+}
+
 function getArgumentValues() {
   const ret = []
 
   for (const arg of actionArguments.value) {
-    let value = argValues.value[arg.name] || ''
-
-    if (arg.type === 'checkbox' || arg.type === 'confirmation') {
-      value = value ? '1' : '0'
+    if (!shouldSendArgument(arg)) {
+      continue
     }
 
     ret.push({
       name: arg.name,
-      value: value
+      value: formatArgumentValueForApi(arg, argValues.value[arg.name])
     })
   }
 
@@ -320,7 +373,7 @@ function getBrowserSuggestions(arg) {
   if (!arg.suggestionsBrowserKey) {
     return []
   }
-  
+
   try {
     const stored = localStorage.getItem(`olivetin-suggestions-${arg.suggestionsBrowserKey}`)
     if (stored) {
@@ -330,7 +383,7 @@ function getBrowserSuggestions(arg) {
   } catch (err) {
     console.warn('Failed to load browser suggestions:', err)
   }
-  
+
   return []
 }
 
@@ -338,21 +391,21 @@ function saveBrowserSuggestions() {
   for (const arg of actionArguments.value) {
     if (arg.suggestionsBrowserKey) {
       const value = argValues.value[arg.name]
-      
+
       // Only save non-empty values for non-checkbox/confirmation/password types
       if (value && value !== '' && arg.type !== 'checkbox' && arg.type !== 'confirmation' && arg.type !== 'password') {
         try {
           const key = `olivetin-suggestions-${arg.suggestionsBrowserKey}`
           const stored = localStorage.getItem(key)
           let suggestions = []
-          
+
           if (stored) {
             suggestions = JSON.parse(stored)
             if (!Array.isArray(suggestions)) {
               suggestions = []
             }
           }
-          
+
           // Add value if not already present
           if (!suggestions.includes(value)) {
             suggestions.unshift(value) // Add to beginning
@@ -377,7 +430,12 @@ async function startAction(actionArgs) {
     uniqueTrackingId: getUniqueId()
   }
 
+  if (justificationRequired.value) {
+    startActionArgs.justification = justificationValue.value
+  }
+
   try {
+    requestReconnectNow()
     const response = await window.client.startAction(startActionArgs)
     console.log('Action started successfully with tracking ID:', response.executionTrackingId)
     return response
@@ -388,11 +446,29 @@ async function startAction(actionArgs) {
 }
 
 async function handleSubmit(event) {
+  event.preventDefault()
+
+  if (!formReady.value) {
+    return
+  }
+
+  if (popupOnStart.value === 'history') {
+    router.push(`/action/${props.bindingId}`)
+    return
+  }
+
   // Set custom validity for required fields
+  if (justificationRequired.value && (!justificationValue.value || justificationValue.value.trim() === '')) {
+    const inputElement = document.getElementById('justification')
+    if (inputElement) {
+      inputElement.setCustomValidity('This field is required')
+    }
+  }
+
   for (const arg of actionArguments.value) {
     const value = argValues.value[arg.name]
     const inputElement = document.getElementById(arg.name)
-    
+
     if (arg.required && (!value || value === '')) {
       formErrors.value[arg.name] = 'This field is required'
       // Set custom validity for required field validation
@@ -408,17 +484,19 @@ async function handleSubmit(event) {
     return
   }
 
-  event.preventDefault()
-  
   const argvs = getArgumentValues()
   console.log('argument form has elements that passed validation')
-  
+
   // Save values to localStorage for arguments with suggestionsBrowserKey
   saveBrowserSuggestions()
-  
+
   try {
     const response = await startAction(argvs)
-    router.push(`/logs/${response.executionTrackingId}`)
+    if (popupOnStart.value && popupOnStart.value.includes('execution-dialog')) {
+      router.push(`/logs/${response.executionTrackingId}`)
+    } else {
+      router.back()
+    }
   } catch (err) {
     console.error('Failed to start action:', err)
   }
@@ -456,6 +534,14 @@ defineExpose({
 // Lifecycle
 onMounted(() => {
   setup()
+})
+
+onBeforeUnmount(() => {
+  isComponentMounted = false
+})
+
+onUnmounted(() => {
+  document.body.removeAttribute('loaded-argument-form')
 })
 </script>
 

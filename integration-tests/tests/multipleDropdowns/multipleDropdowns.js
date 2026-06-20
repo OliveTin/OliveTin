@@ -1,8 +1,8 @@
 import { describe, it, before, after } from 'mocha'
 import { expect } from 'chai'
-import { By, until, Condition } from 'selenium-webdriver'
-import { 
-  getRootAndWait, 
+import { By, until, Condition, Key } from 'selenium-webdriver'
+import {
+  getRootAndWait,
   getActionButtons,
   takeScreenshotOnFailure,
 } from '../../lib/elements.js'
@@ -52,10 +52,22 @@ describe('config: multipleDropdowns', function () {
       return url.includes('/actionBinding/') && url.includes('/argumentForm')
     }), 8000)
 
-    const selects = await webdriver.findElements(By.css('main select'))
-   
-    expect(selects).to.have.length(2)
-    expect(await selects[0].findElements(By.tagName('option'))).to.have.length(2)
-    expect(await selects[1].findElements(By.tagName('option'))).to.have.length(3)
+    const comboboxes = await webdriver.findElements(By.css('main .choice-combobox'))
+
+    expect(comboboxes).to.have.length(2)
+
+    const firstInput = await comboboxes[0].findElement(By.css('.choice-combobox-input'))
+    await firstInput.click()
+    await webdriver.wait(new Condition('wait for first combobox list', async () => {
+      const lists = await comboboxes[0].findElements(By.css('.choice-combobox-list li'))
+      return lists.length === 2
+    }), 2000)
+
+    await firstInput.sendKeys(Key.TAB)
+
+    await webdriver.wait(new Condition('wait for second combobox list', async () => {
+      const lists = await comboboxes[1].findElements(By.css('.choice-combobox-list li'))
+      return lists.length === 3
+    }), 2000)
   })
 })

@@ -4,6 +4,9 @@ import (
 	"fmt"
 )
 
+// ReservedArgumentNamePrefix is reserved for OliveTin-injected system arguments.
+const ReservedArgumentNamePrefix = "ot_"
+
 // Action represents the core functionality of OliveTin - commands that show up
 // as buttons in the UI.
 type Action struct {
@@ -27,9 +30,19 @@ type Action struct {
 	MaxConcurrent          int              `koanf:"maxConcurrent"`
 	MaxRate                []RateSpec       `koanf:"maxRate"`
 	Arguments              []ActionArgument `koanf:"arguments"`
+	OnClick                string           `koanf:"onclick"`
 	PopupOnStart           string           `koanf:"popupOnStart"`
 	SaveLogs               SaveLogsConfig   `koanf:"saveLogs"`
 	EnabledExpression      string           `koanf:"enabledExpression"`
+	Groups                 []string         `koanf:"groups"`
+	Justification          bool             `koanf:"justification"`
+}
+
+// ActionGroup defines shared limits and metadata for a set of actions.
+type ActionGroup struct {
+	MaxConcurrent int    `koanf:"maxConcurrent"`
+	QueueSize     int    `koanf:"queueSize"`
+	Icon          string `koanf:"icon"`
 }
 
 // ActionArgument objects appear on Actions.
@@ -60,14 +73,15 @@ type RateSpec struct {
 
 // WebhookConfig defines configuration for generic webhook triggers.
 type WebhookConfig struct {
-	Secret       string            `koanf:"secret"`       // Optional: secret for signature verification
-	AuthType     string            `koanf:"authType"`     // Optional: "hmac-sha256", "hmac-sha1", "bearer", "basic", "none"
-	AuthHeader   string            `koanf:"authHeader"`   // Optional: custom header name for auth (default: "X-Webhook-Signature")
-	MatchHeaders map[string]string `koanf:"matchHeaders"` // Match HTTP headers
-	MatchPath    string            `koanf:"matchPath"`    // JSONPath expression to match in request body (format: "jsonpath=value" or just "jsonpath")
-	MatchQuery   map[string]string `koanf:"matchQuery"`   // Match URL query parameters
-	Extract      map[string]string `koanf:"extract"`      // Map action argument names to JSONPath expressions
-	Template     string            `koanf:"template"`     // Optional: template name (e.g., "github-push", "github-pr")
+	Secret        string            `koanf:"secret"`        // Optional: secret for signature verification
+	AuthType      string            `koanf:"authType"`      // Optional: "hmac-sha256", "hmac-sha1", "bearer", "basic", "none"
+	AuthHeader    string            `koanf:"authHeader"`    // Optional: custom header name for auth (default: "X-Webhook-Signature")
+	MatchHeaders  map[string]string `koanf:"matchHeaders"`  // Match HTTP headers
+	MatchPath     string            `koanf:"matchPath"`     // JSONPath expression to match in request body (format: "jsonpath=value" or just "jsonpath")
+	MatchQuery    map[string]string `koanf:"matchQuery"`    // Match URL query parameters
+	Extract       map[string]string `koanf:"extract"`       // Map action argument names to JSONPath expressions
+	Template      string            `koanf:"template"`      // Optional: template name (e.g., "github-push", "github-pr")
+	Justification string            `koanf:"justification"` // Optional JSONPath to extract justification from webhook body
 }
 
 // Entity represents a "thing" that can have multiple actions associated with it.
@@ -98,13 +112,24 @@ type AccessControlList struct {
 
 // ConfigurationPolicy defines global settings which are overridden with an ACL.
 type ConfigurationPolicy struct {
-	ShowDiagnostics bool `koanf:"showDiagnostics"`
-	ShowLogList     bool `koanf:"showLogList"`
+	ShowDiagnostics   bool `koanf:"showDiagnostics"`
+	ShowLogList       bool `koanf:"showLogList"`
+	ShowVersionNumber bool `koanf:"showVersionNumber"`
 }
 
 type PrometheusConfig struct {
 	Enabled          bool `koanf:"enabled"`
 	DefaultGoMetrics bool `koanf:"defaultGoMetrics"`
+}
+
+// SecurityConfig allows users to fine tune the security related HTTP headers and cookie options.
+type SecurityConfig struct {
+	HeaderContentSecurityPolicy bool   `koanf:"headerContentSecurityPolicy"`
+	ContentSecurityPolicy       string `koanf:"contentSecurityPolicy"`
+	HeaderXContentTypeOptions   bool   `koanf:"headerXContentTypeOptions"`
+	HeaderXFrameOptions         bool   `koanf:"headerXFrameOptions"`
+	XFrameOptions               string `koanf:"xFrameOptions"`
+	ForceSecureCookies          bool   `koanf:"forceSecureCookies"`
 }
 
 // Config is the global config used through the whole app.
@@ -120,6 +145,7 @@ type Config struct {
 	LogLevel                        string                     `koanf:"logLevel"`
 	LogDebugOptions                 LogDebugOptions            `koanf:"logDebugOptions"`
 	LogHistoryPageSize              int64                      `koanf:"logHistoryPageSize"`
+	ActionGroups                    map[string]*ActionGroup    `koanf:"actionGroups"`
 	Actions                         []*Action                  `koanf:"actions"`
 	Entities                        []*EntityFile              `koanf:"entities"`
 	Dashboards                      []*DashboardComponent      `koanf:"dashboards"`
@@ -153,6 +179,7 @@ type Config struct {
 	WebUIDir                        string                     `koanf:"webUIDir"`
 	CronSupportForSeconds           bool                       `koanf:"cronSupportForSeconds"`
 	SectionNavigationStyle          string                     `koanf:"sectionNavigationStyle"`
+	DefaultOnClick                  string                     `koanf:"defaultOnClick"`
 	DefaultPopupOnStart             string                     `koanf:"defaultPopupOnStart"`
 	InsecureAllowDumpOAuth2UserData bool                       `koanf:"insecureAllowDumpOAuth2UserData"`
 	InsecureAllowDumpVars           bool                       `koanf:"insecureAllowDumpVars"`
@@ -160,7 +187,9 @@ type Config struct {
 	InsecureAllowDumpActionMap      bool                       `koanf:"insecureAllowDumpActionMap"`
 	InsecureAllowDumpJwtClaims      bool                       `koanf:"insecureAllowDumpJwtClaims"`
 	Prometheus                      PrometheusConfig           `koanf:"prometheus"`
+	Security                        SecurityConfig             `koanf:"security"`
 	SaveLogs                        SaveLogsConfig             `koanf:"saveLogs"`
+	ServiceLogs                     ServiceLogsConfig          `koanf:"serviceLogs"`
 	DefaultIconForActions           string                     `koanf:"defaultIconForActions"`
 	DefaultIconForDirectories       string                     `koanf:"defaultIconForDirectories"`
 	DefaultIconForBack              string                     `koanf:"defaultIconForBack"`
@@ -183,6 +212,7 @@ type LocalUser struct {
 	Username  string `koanf:"username"`
 	Usergroup string `koanf:"usergroup"`
 	Password  string `koanf:"password"`
+	ApiKey    string `koanf:"apiKey"`
 }
 
 type OAuth2Provider struct {
@@ -212,6 +242,10 @@ type NavigationLink struct {
 type SaveLogsConfig struct {
 	ResultsDirectory string `koanf:"resultsDirectory"`
 	OutputDirectory  string `koanf:"outputDirectory"`
+}
+
+type ServiceLogsConfig struct {
+	Directory string `koanf:"directory"`
 }
 
 type LogDebugOptions struct {
@@ -261,6 +295,7 @@ func DefaultConfigWithBasePort(basePort int) *Config {
 	config.WebUIDir = "./webui"
 	config.CronSupportForSeconds = false
 	config.SectionNavigationStyle = "sidebar"
+	config.DefaultOnClick = "nothing"
 	config.DefaultPopupOnStart = "nothing"
 	config.InsecureAllowDumpVars = false
 	config.InsecureAllowDumpSos = false
@@ -268,7 +303,12 @@ func DefaultConfigWithBasePort(basePort int) *Config {
 	config.InsecureAllowDumpJwtClaims = false
 	config.Prometheus.Enabled = false
 	config.Prometheus.DefaultGoMetrics = false
-	config.DefaultIconForActions = "&#x1F600;"
+	config.Security.HeaderContentSecurityPolicy = true
+	config.Security.ContentSecurityPolicy = ContentSecurityPolicyDefault
+	config.Security.HeaderXContentTypeOptions = true
+	config.Security.HeaderXFrameOptions = true
+	config.Security.XFrameOptions = "DENY"
+	config.DefaultIconForActions = "hugeicons:CommandLineIcon"
 	config.DefaultIconForDirectories = "&#128193"
 	config.DefaultIconForBack = "&laquo;"
 	config.ThemeCacheDisabled = false
@@ -281,6 +321,7 @@ func DefaultConfigWithBasePort(basePort int) *Config {
 
 	config.DefaultPolicy.ShowDiagnostics = true
 	config.DefaultPolicy.ShowLogList = true
+	config.DefaultPolicy.ShowVersionNumber = true
 
 	return &config
 }

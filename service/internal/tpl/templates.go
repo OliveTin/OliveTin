@@ -1,6 +1,7 @@
 package tpl
 
 import (
+	"encoding/json"
 	"fmt"
 	"regexp"
 	"strings"
@@ -12,8 +13,22 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+func jsonFunc(v any) (string, error) {
+	if v == nil {
+		return "null", nil
+	}
+	data, err := json.Marshal(v)
+	if err != nil {
+		return "", err
+	}
+	return string(data), nil
+}
+
+// Root template (funcs/options). parseTemplate clones before Parse — text/template
+// must not receive concurrent Parse calls on the same instance.
 var tpl = template.New("tpl").
-	Option("missingkey=error")
+	Option("missingkey=error").
+	Funcs(template.FuncMap{"Json": jsonFunc})
 
 type olivetinInfo struct {
 	Build   *installationinfo.BuildInfo
@@ -166,7 +181,12 @@ func checkMissingArgumentError(err error) (bool, string) {
 }
 
 func parseTemplate(source string, data any) (string, error) {
-	t, err := tpl.Parse(source)
+	clone, err := tpl.Clone()
+	if err != nil {
+		return "", err
+	}
+
+	t, err := clone.Parse(source)
 
 	if err != nil {
 		return "", err

@@ -1,0 +1,27 @@
+[#windows-service-logs]
+== Process log directory
+
+On Windows, OliveTin writes its **process logs** (startup messages, configuration load, errors, and internal diagnostics) to a log file on disk. By default these files are stored under `%ProgramData%\OliveTin\logs\` as `OliveTin-service-<timestamp>.log`.
+
+This is separate from xref:logs/saving.adoc[action execution logs] (`saveLogs`), which persist command output from individual actions.
+
+Portable or self-contained installs often keep OliveTin, its configuration, and its logs together in one folder. Without a custom path, process logs always go to `%ProgramData%`, even when you run OliveTin from another location.
+
+Add a `serviceLogs` block to your `config.yaml`:
+
+[source,yaml]
+----
+serviceLogs:
+  directory: ./logs/service/
+----
+
+OliveTin creates the directory if it does not exist and writes a new timestamped log file there on each startup.
+
+If `serviceLogs.directory` is omitted, OliveTin uses the default location: `%ProgramData%\OliveTin\logs\`.
+
+Relative paths (for example `./logs/service/`) are resolved from the directory containing `OliveTin.exe`. This keeps portable installs self-contained when you colocate logs with the application.
+
+[NOTE]
+====
+`serviceLogs.directory` is **Windows only**. If you set it on Linux, macOS, or in a container, OliveTin logs an error at startup and ignores the setting. On those platforms, use xref:troubleshooting/service-logs.adoc[service logs troubleshooting] for how to read process output (for example `journalctl` or container logs).
+====

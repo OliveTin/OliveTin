@@ -1,0 +1,32 @@
+actions:
+  - title: check log directory
+    hidden: true
+    shell: |
+      function addDirectory {
+        COUNT=$(ls -l $1 | wc -l)
+        echo "- directory: $1" >> /etc/OliveTin/entities/directories.yaml
+        echo "  count: $COUNT" >> /etc/OliveTin/entities/directories.yaml
+      }
+
+      truncate -s 0 /etc/OliveTin/entities/directories.yaml
+      addDirectory /var/log/
+      addDirectory /home/xconspirisist/logs
+    execOnStartup: true
+    execOnCron: "* * * * *"
+
+  - title: clean {{ log_directory.directory }} ({{log_directory.count }} files)
+    shell: |
+      echo "Removing all files in {{ log_directory.directory }}"
+    entity: log_directory
+
+entities:
+  - name: log_directory
+    file: /etc/OliveTin/entities/directories.yaml
+
+dashboards:
+  - title: Log Actions
+    contents:
+      - entity: log_directory
+        type: fieldset
+        contents:
+          - title: clean {{ log_directory.directory }} ({{log_directory.count }} files)

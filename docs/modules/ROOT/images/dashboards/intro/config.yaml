@@ -1,0 +1,53 @@
+---
+listenAddressSingleHTTPFrontend: 0.0.0.0:11337
+
+logLevel: "WARN"
+checkForUpdates: false
+showFooter: false
+
+actions:
+  - title: Ping All Servers
+    icon: ping
+    shell: echo "ping all..."
+
+  - title: Ping hypervisor1
+    icon: ping
+    shell: echo "ping hypervisor1"
+
+  - title: Ping hypervisor2
+    icon: ping
+    shell: echo "ping hypervisor2"
+
+  - title: '{{ server.name }} Wake on Lan'
+    shell: echo "wol {{ server.name }}"
+    entity: server
+
+  - title: '{{ server.name }} Power Off'
+    shell: echo "poweroff {{ server.name }}"
+    entity: server
+
+entities:
+  - file: servers.yaml
+    name: server
+
+dashboards:
+  - title: My Servers
+    contents:
+      - title: All Servers
+        type: fieldset
+        contents:
+          - title: Ping All Servers
+          - title: Hypervisors
+            contents:
+              - title: Ping hypervisor1
+              - title: Ping hypervisor2
+      - type: fieldset
+        entity: server
+        title: 'Server: {{ server.hostname }}'
+        contents:
+          - type: display
+            title: |
+              Hostname: <strong>{{ server.name }}</strong>
+              IP Address: <strong>{{ server.ip }}</strong>
+          - title: '{{ server.name }} Wake on Lan'
+          - title: '{{ server.name }} Power Off'

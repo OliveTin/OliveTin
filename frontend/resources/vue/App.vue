@@ -7,6 +7,7 @@
         </template>
 
         <template #user-info>
+            <ConnectionBanner />
             <div class="flex-row user-info" style="gap: .5em;">
                 <span id="link-login" v-if="!isLoggedIn && showLoginLink"><router-link to="/login">{{ t('login-button') }}</router-link></span>
                 <router-link v-else to="/user" class="user-link" v-if="isLoggedIn">
@@ -31,7 +32,7 @@
             <footer title="footer" v-if="showFooter">
                 <p>
                     <img title="application icon" :src="logoUrl" alt="OliveTin logo" style="height: 1em;" class="logo" />
-                    OliveTin {{ currentVersion }}
+                    OliveTin <span v-if="showVersionNumber">{{ currentVersion }}</span>
                 </p>
                 <p>
                     <span>
@@ -49,10 +50,8 @@
                     <span v-if="availableThemes.length > 1">
                         <a href="#" @click.prevent="openThemeDialog">{{ currentThemeName }}</a>
                     </span>
-
-                    <span>{{ t('connected') }}</span>
                 </p>
-                <p>
+                <p v-if="showVersionNumber">
                     <a id="available-version" href="http://olivetin.app" target="_blank" hidden>?</a>
                 </p>
             </footer>
@@ -68,7 +67,7 @@
                 </option>
             </select>
             <p class="browser-languages">
-                {{ t('language-dialog.browser-languages') }}: 
+                {{ t('language-dialog.browser-languages') }}:
                 <span v-if="browserLanguages.length > 0">{{ browserLanguages.join(', ') }}</span>
                 <span v-else>{{ t('language-dialog.not-available') }}</span>
             </p>
@@ -100,6 +99,8 @@ import { useRouter } from 'vue-router';
 import Sidebar from 'picocrank/vue/components/Sidebar.vue';
 import Navigation from 'picocrank/vue/components/Navigation.vue';
 import Header from 'picocrank/vue/components/Header.vue';
+import ConnectionBanner from './components/ConnectionBanner.vue';
+import { connectEventStreamIfNeeded } from '../../js/websocket.js';
 import { HugeiconsIcon } from '@hugeicons/vue'
 import { Menu01Icon } from '@hugeicons/core-free-icons'
 import { UserCircle02Icon } from '@hugeicons/core-free-icons'
@@ -107,7 +108,6 @@ import { DashboardSquare01Icon } from '@hugeicons/core-free-icons'
 import logoUrl from '../../OliveTinLogo.png';
 import { useI18n } from 'vue-i18n';
 import combinedTranslations from '../../../lang/combined_output.json';
-
 const { t, locale } = useI18n();
 
 const router = useRouter();
@@ -116,7 +116,6 @@ const sidebar = ref(null);
 const navigation = ref(null);
 const username = ref('notset');
 const isLoggedIn = ref(false);
-const serverConnection = ref(true);
 const currentVersion = ref('?');
 const pageTitle = ref('OliveTin');
 const bannerMessage = ref('');
@@ -126,6 +125,7 @@ const showFooter = ref(true)
 const showNavigation = ref(true)
 const showLogs = ref(true)
 const showDiagnostics = ref(true)
+const showVersionNumber = ref(true)
 const showLoginLink = ref(true)
 const sectionNavigationStyle = ref('sidebar')
 
@@ -184,7 +184,7 @@ function normalizeBrowserLanguage() {
     if (navigator.languages && navigator.languages.length > 0) {
         for (const candidate of navigator.languages) {
             const lowerCandidate = candidate.toLowerCase()
-            
+
             // Try exact match (case-insensitive)
             const exact = available.find(locale => locale.toLowerCase() === lowerCandidate)
             if (exact) {
@@ -223,6 +223,7 @@ function updateHeaderFromInit() {
     showNavigation.value = window.initResponse.showNavigation
     showLogs.value = window.initResponse.showLogList
     showDiagnostics.value = window.initResponse.showDiagnostics
+    showVersionNumber.value = window.initResponse.effectivePolicy?.showVersionNumber ?? true
     sectionNavigationStyle.value = window.initResponse.sectionNavigationStyle || 'sidebar'
     availableThemes.value = window.initResponse.availableThemes || []
 
@@ -231,14 +232,18 @@ function updateHeaderFromInit() {
     }
 
     applyStyleMods()
+    loadCustomJsIfEnabled()
 
     renderNavigation()
     applyTheme()
 
     if (window.initResponse.loginRequired) {
+        connectEventStreamIfNeeded()
         router.push('/login')
         return
     }
+
+    connectEventStreamIfNeeded()
 }
 
 function renderNavigation() {
@@ -276,7 +281,7 @@ function renderNavigation() {
 
 function openLanguageDialog() {
     selectedLanguage.value = languagePreference.value
-    
+
     if (typeof navigator !== 'undefined' && Array.isArray(navigator.languages)) {
         browserLanguages.value = navigator.languages
     } else {
@@ -326,7 +331,7 @@ function handleLanguageDialogClick(event) {
 
 function openThemeDialog() {
     selectedTheme.value = themePreference.value || ''
-    
+
     if (themeDialog.value) {
         themeDialog.value.showModal()
     }
@@ -353,7 +358,7 @@ function changeTheme() {
 
 function applyTheme() {
     let themeStyle = document.getElementById('theme-style')
-    
+
     if (!themeStyle) {
         themeStyle = document.createElement('style')
         themeStyle.id = 'theme-style'
@@ -367,6 +372,17 @@ function applyTheme() {
     } else {
         themeStyle.textContent = `@import url('/theme.css') layer(theme);`
     }
+}
+
+function loadCustomJsIfEnabled() {
+    if (!window.initResponse?.enableCustomJs || document.getElementById('olivetin-custom-js')) {
+        return
+    }
+    const script = document.createElement('script')
+    script.src = '/custom-webui/custom.js'
+    script.async = true
+    script.id = 'olivetin-custom-js'
+    document.head.appendChild(script)
 }
 
 function applyStyleMods() {
@@ -390,12 +406,11 @@ function handleThemeDialogClick(event) {
 window.updateHeaderFromInit = updateHeaderFromInit
 
 onMounted(() => {
-    serverConnection.value = true;
     updateHeaderFromInit()
-    
+
     // Initialize selected language from stored preference
     selectedLanguage.value = languagePreference.value
-    
+
     // Initialize selected theme from stored preference
     selectedTheme.value = themePreference.value || ''
 

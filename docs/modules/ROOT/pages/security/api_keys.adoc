@@ -1,0 +1,66 @@
+[#api-keys]
+= API Keys
+
+This page is for **developers** who want to call OliveTin's HTTP API (Connect RPC under `/api/`) using a **Bearer token**, without using the interactive web login.
+
+API keys are configured on xref:security/local.adoc[local users] as an optional `apiKey` field. When present, clients can authenticate by sending:
+
+----
+Authorization: Bearer <your-api-key>
+----
+
+The prefix `Bearer ` (including the trailing space after `Bearer`) must match exactly.
+
+== Configuration
+
+include::partial$config-start.adoc[]
+----
+authLocalUsers:
+  enabled: true
+  users:
+    - username: automation
+      usergroup: bots
+      apiKey: "{{ .Env.OLIVETIN_AUTOMATION_KEY }}"
+
+    - username: alice
+      usergroup: admins
+      password: $argon2id$v=19$m=65536,t=4,p=6$...
+      apiKey: "{{ .Env.OLIVETIN_ALICE_API_KEY }}"
+----
+
+* Use a **long, random** API key (similar to any other bearer secret).
+* Prefer loading the key from the environment with `{{ .Env.VAR }}` instead of committing the raw value to disk.
+* **TLS**: send bearer tokens only over HTTPS in real deployments.
+* **Interactive login**: if a user has **no** `password` configured, they **cannot** use the `/login` page; they can only authenticate with an API key (or another auth mechanism you configure separately).
+
+Two local users **must not** share the same `apiKey` value. OliveTin will refuse to start if duplicate keys are detected.
+
+== Authorization (permissions)
+
+API key authentication uses the same **username** and **usergroup** as the matching local user. xref:security/acl.adoc[Access Control Lists] and `defaultPermissions` apply in the same way as for users who sign in via the web UI.
+
+== Example: curl and Init
+
+The OliveTin API is **Connect RPC**. Unary calls accept JSON bodies. The following example calls `Init` with an empty request object:
+
+[source,bash]
+----
+curl -sS -X POST \
+  -H "Authorization: Bearer YOUR_API_KEY_HERE" \
+  -H "Content-Type: application/json" \
+  "https://olivetin.example.com:1337/api/olivetin.api.v1.OliveTinApiService/Init" \
+  --data '{}'
+----
+
+Replace the host, port, and path prefix if your installation differs. Other RPCs use the same URL pattern with a different final segment (method name).
+
+== Operational security notes
+
+* **Reverse proxies**: if you use xref:security/trusted_header.adoc[Trusted Header Authorization], remember it is evaluated **before** bearer API keys. Do not expose OliveTin in a way that allows clients to spoof trusted identity headers.
+* **Debug logging**: avoid enabling `logDebugOptions.singleFrontendRequestHeaders` in production. OliveTin redacts common sensitive headers (including `Authorization`) in debug output, but minimizing debug surface area is still recommended.
+* **Brute force**: OliveTin does not ship per-IP rate limiting for failed bearer attempts. Consider rate limiting or WAF rules on `/api/` at your reverse proxy.
+
+== See also
+
+* xref:security/local.adoc[Local Users Authorization] (password hashing and local user basics)
+* xref:security/acl.adoc[Access Control Lists]

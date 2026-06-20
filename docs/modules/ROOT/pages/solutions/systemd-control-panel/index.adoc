@@ -1,0 +1,42 @@
+[#systemd-control-panel]
+= Systemd Control Panel
+
+OliveTin can be used to manage selected systemd units (services) as well. This is powered by OliveTin's powerful xref::entities/intro.adoc[entity support]. Here is a screenshot of what that can look like (dark theme preference enabled).
+
+image::solutions/systemd-control-panel/preview.png[]
+
+NOTE: To control systemd, you will need the root user. If you are running OliveTin systemd service itself, then OliveTin should be configured to run as root. The alternative is to use OliveTin in a container, and use xref:action_examples/ssh-easy.adoc[SSH] to connect back to the host (as a user that can manage systemd -usually root). This is not an OliveTin limitation, it's just how systemd security works.
+
+== Entity file
+
+To build this Systemd Control dashboard, we use an xref:entities/intro.adoc[entity file] that stores and updates produced by `systemctl list-units..`, output to a json format, and then filtered with jq (JSON Query). Here is the full command that we will use in our config later;
+
+----
+user@host: systemctl list-units -a -o json --no-pager | jq -c 'map(select (.unit | contains ("upsilon", "podman", "boot.mount"))) | .[]'  > /etc/OliveTin/entities/systemd_units.json
+----
+
+That command will generate a file (example shown below). Let's break down that long command a little bit to explain what it is doing;
+
+. `systemctl list-units -a -o json --no-pager` - will list units, regardless of status - started, stopped, etc (`-a`), in JSON format, and output the results
+. `jq` (JSON Query) will select units from that output that match "upsilon", "podman", "boot.mount", and of course you can change this expression to add your own services.
+. The `map()` and `.[]` parts of the expression basically just put those units line by line into the file
+
+[source,json]
+.An example generated `/etc/OliveTin/entities/systemd_units.json` file
+----
+include::example$solutions/systemd-control-panel/config/systemd_units.json[]
+----
+
+You can generate this file yourself the first time, but the `config.yaml` below shows how OliveTin can run the `systemctl list-units ...` command on startup, and on a schedule to update the file.
+
+Note that if the file does not exist the first time OliveTin starts up, then OliveTin will will issue an error about not finding the file to monitor it. An easy way around this is to simply restart OliveTin a 2nd time, so that on the 2nd startup it will find the file (because it will be created the first time OliveTin starts up).
+
+== Configuration
+
+Finally, here is the example configuration file to build the dashboard;
+
+[source,yaml]
+.`config.yaml`
+----
+include::example$solutions/systemd-control-panel/config/config.yaml[]
+----

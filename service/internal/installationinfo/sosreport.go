@@ -40,15 +40,23 @@ func configToSosreport(cfg *config.Config) *sosReportConfig {
 	}
 }
 
-func GetSosReport() string {
+func GetSosReport(redactVersion bool) string {
 	ret := ""
 
 	ret += "### SOSREPORT START (copy all text to SOSREPORT END)\n"
 
-	out, _ := yaml.Marshal(Build)
+	buildForReport := *Build
+	if redactVersion {
+		buildForReport.Version = "[redacted]"
+	}
+	out, _ := yaml.Marshal(&buildForReport)
 	ret += fmt.Sprintf("# Build: \n%+v\n", string(out))
 
-	out, _ = yaml.Marshal(Runtime)
+	runtimeForReport := *Runtime
+	if redactVersion {
+		runtimeForReport.AvailableVersion = "[redacted]"
+	}
+	out, _ = yaml.Marshal(&runtimeForReport)
 	ret += fmt.Sprintf("# Runtime:\n%+v\n", string(out))
 
 	out, _ = yaml.Marshal(configToSosreport(Config))

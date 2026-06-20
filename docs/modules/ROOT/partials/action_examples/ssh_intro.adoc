@@ -1,0 +1,2 @@
+This is probably one of the most useful things OliveTin is used for - just plain old SSH, which allows it to easily connect from a container to any server running on your network to run commands. This is also the preferred method of running commands on the server that is hosting the OliveTin container image as well.
+

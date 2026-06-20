@@ -302,6 +302,40 @@ func TestCheckShellArgumentSafetyWithSafeTypes(t *testing.T) {
 	assert.Nil(t, err)
 }
 
+func TestCheckShellArgumentSafetyWithPassword(t *testing.T) {
+	a1 := config.Action{
+		Title: "Auth with password",
+		Shell: "somecommand --password '{{password}}'",
+		Arguments: []config.ActionArgument{
+			{
+				Name: "password",
+				Type: "password",
+			},
+		},
+	}
+
+	err := checkShellArgumentSafety(&a1)
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "unsafe argument type 'password' cannot be used with Shell execution")
+	assert.Contains(t, err.Error(), "https://docs.olivetin.app/action_execution/shellvsexec.html")
+}
+
+func TestCheckShellArgumentSafetyWithPasswordAndExec(t *testing.T) {
+	a1 := config.Action{
+		Title: "Auth with password via exec",
+		Exec:  []string{"somecommand", "--password", "{{password}}"},
+		Arguments: []config.ActionArgument{
+			{
+				Name: "password",
+				Type: "password",
+			},
+		},
+	}
+
+	err := checkShellArgumentSafety(&a1)
+	assert.Nil(t, err)
+}
+
 func TestTypeSafetyCheckUrl(t *testing.T) {
 	assert.Nil(t, TypeSafetyCheck("test1", "http://google.com", "url"), "Test URL: google.com")
 	assert.Nil(t, TypeSafetyCheck("test2", "http://technowax.net:80?foo=bar", "url"), "Test URL: technowax.net with query arguments")
@@ -542,6 +576,38 @@ func TestTypeSafetyCheckAsciiIdentifier(t *testing.T) {
 	}
 }
 
+func TestTypeSafetyCheckShellSafeIdentifier(t *testing.T) {
+	tests := []struct {
+		name     string
+		value    string
+		hasError bool
+	}{
+		{"Simple username", "alice123", false},
+		{"Email username", "alice@example.com", false},
+		{"Plus addressing", "alice+test@example.com", false},
+		{"Hyphen underscore dot", "alice-test_user.example", false},
+		{"Invalid space", "alice example", true},
+		{"Invalid shell substitution", "$(whoami)", true},
+		{"Invalid backtick", "`whoami`", true},
+		{"Invalid semicolon", "alice;id", true},
+		{"Invalid ampersand", "alice&id", true},
+		{"Invalid pipe", "alice|id", true},
+		{"Invalid quote", "alice'example", true},
+		{"Invalid slash", "alice/example", true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := TypeSafetyCheck("username", tt.value, "shell_safe_identifier")
+			if tt.hasError {
+				assert.NotNil(t, err, "Expected error for value '%s'", tt.value)
+			} else {
+				assert.Nil(t, err, "Expected no error for value '%s', but got: %v", tt.value, err)
+			}
+		})
+	}
+}
+
 func TestTypeSafetyCheckAsciiSentence(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -592,6 +658,20 @@ func TestTypecheckActionArgumentConfirmation(t *testing.T) {
 
 	err := typecheckActionArgument(&arg, "any_value", &action)
 	assert.Nil(t, err, "Confirmation type should always pass validation")
+}
+
+func TestTypecheckActionArgumentHtmlWithoutName(t *testing.T) {
+	action := config.Action{
+		Title: "Delete old backups",
+		Shell: "rm -rf /opt/oliveTinOldBackups/ && sleep 5",
+		Arguments: []config.ActionArgument{
+			{Type: "html", Title: "Description"},
+			{Type: "confirmation", Title: "Are you sure?!"},
+		},
+	}
+
+	err := validateArguments(map[string]string{}, &action)
+	assert.NoError(t, err)
 }
 
 func TestParseCommandForReplacements(t *testing.T) {

@@ -1,0 +1,20 @@
+[#install-linuxpackage]
+= Generic .deb based Linux
+
+Running OliveTin as a systemd service on a Linux machine means it can use any program installed on your machine (you don't have to add programs to a container). This is generally easier to use than a container, but containers can work just fine too with a bit more effort.
+
+There are .deb packages published for OliveTin on each release page. If you distribution is not linked in this installation guide, and you use a .deb based Linux distribution, this package should work. 
+
+* link:https://github.com/jamesread/OliveTin/releases[downloads page].
+
+You can install these packages for .deb like this;
+
+[source,bash]
+....
+user@host: wget https://github.com/OliveTin/OliveTin/releases/latest/download/OliveTin_linux_amd64.deb
+user@host: dpkg -i OliveTin_linux_amd64.deb
+....
+
+include::partial$install/post_systemd.adoc[]
+
+

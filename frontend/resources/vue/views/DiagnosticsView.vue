@@ -162,7 +162,10 @@ async function generateBrowserInfo() {
       userAgentData: userAgentData
     }
 
-    const olivetinVersion = window.initResponse?.currentVersion || t('diagnostics.unknown')
+    const showVersionNumber = window.initResponse?.effectivePolicy?.showVersionNumber ?? true
+    const olivetinVersion = showVersionNumber
+      ? (window.initResponse?.currentVersion || t('diagnostics.unknown'))
+      : '[hidden]'
     const currentLanguage = locale.value || t('diagnostics.unknown')
 
     let output = '';

@@ -1,10 +1,10 @@
-FROM --platform=linux/amd64 registry.fedoraproject.org/fedora-minimal:43-x86_64 AS olivetin-tmputils
+FROM --platform=linux/amd64 registry.fedoraproject.org/fedora-minimal:44-x86_64 AS olivetin-tmputils
 
 RUN microdnf -y install dnf-plugins-core && \
 	dnf-3 config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo && \
 	microdnf install -y docker-ce-cli docker-compose-plugin && microdnf clean all
 
-FROM --platform=linux/amd64 registry.fedoraproject.org/fedora-minimal:43-x86_64
+FROM --platform=linux/amd64 registry.fedoraproject.org/fedora-minimal:44-x86_64
 
 LABEL org.opencontainers.image.source https://github.com/OliveTin/OliveTin
 LABEL org.opencontainers.image.title OliveTin
@@ -35,6 +35,8 @@ EXPOSE 1337/tcp
 
 COPY config.yaml /config
 COPY var/entities/* /config/entities/
+COPY examples/backupScript.sh /opt/backupScript.sh
+RUN chmod 755 /opt/backupScript.sh
 VOLUME /config
 
 COPY OliveTin /usr/bin/OliveTin

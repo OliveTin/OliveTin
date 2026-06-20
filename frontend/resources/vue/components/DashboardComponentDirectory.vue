@@ -1,5 +1,5 @@
 <template>
-    <button @click="navigateToDirectory" :class="component.cssClass">
+    <button class="directory-button" :class="component.cssClass" @click="navigateToDirectory">
         <span class="icon" v-html="unicodeIcon"></span>
         <span class="title">{{ component.title }}</span>
     </button>
@@ -32,22 +32,20 @@ const unicodeIcon = computed(() => {
 
 function navigateToDirectory() {
     const params = { title: props.component.title }
-    
+
     if (props.component.entityType && props.component.entityKey) {
         params.entityType = props.component.entityType
         params.entityKey = props.component.entityKey
     }
-    
+
     router.push({ name: 'Dashboard', params })
 }
 </script>
 
-<style scoped>
-.folder-container {
-    display: grid;
-}
+<style>
 
-button {
+@layer components {
+.directory-button {
     display: flex;
     flex-direction: column;
     flex-grow: 1;
@@ -62,36 +60,37 @@ button {
     font-size: .85em;
 }
 
-button:hover {
+.directory-button:hover {
     background-color: #f5f5f5;
     border-color: #999;
 }
 
-button .icon {
+.directory-button .icon {
     font-size: 3em;
     flex-grow: 1;
     align-content: center;
 }
 
-button .title {
+.directory-button .title {
     font-weight: 500;
     padding: 0.2em;
 }
 
 @media (prefers-color-scheme: dark) {
-    button {
+    .directory-button {
         box-shadow: 0 0 .6em #000;
         background-color: #111;
         border-color: #000;
         color: #fff;
     }
 
-    button:hover {
+    .directory-button:hover {
         background-color: #222;
         border-color: #000;
         box-shadow: 0 0 6px #444;
         color: #fff;
     }
+}
 }
 
 </style>

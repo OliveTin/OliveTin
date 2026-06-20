@@ -1,0 +1,135 @@
+[#config]
+= Configuration
+
+OliveTin is controlled by a `config.yaml` file. On startup, it looks for this
+file in the following locations;
+
+1. The value specified by the `--configdir` argument, which defaults to the current working directory (`./`)
+2. `/config/` - Mostly used for containers
+3. `/etc/OliveTin/` - this is the recommended directory on Linux for your `config.yaml`.
+
+The most simple `config.yaml` would be something like this;
+
+.The most simple `config.yaml` file.
+[source,yaml]
+----
+actions:
+  - title: "Hello world!"
+    shell: echo 'Hello World!'
+----
+
+The configuration does not really get more complicated than that. You can of course add more actions, and customize more, but the syntax is otherwise extremely simple.
+
+For building up from here, look at the following resources;
+
+* See the xref:action_examples/intro.adoc[action examples] section for extra examples of what OliveTin could be configured to do.
+
+* See the xref:action_customization/intro.adoc[action customization] documentation to customize how those actions work.
+
+* See the xref:solutions/intro.adoc[Solutions] documentation for just the essential configuration to achieve popular use cases.
+
+All configuration options are covered in the solution sections
+
+[#config-list]
+== Core functionality
+
+|===
+| Option | Description | Default | Live Reloadable | Documentation
+
+| `actions` | The list of available actions. | `-` | Live Reloadable, but refreshing the web browser is recommended. | xref:action_examples/intro.adoc[Action examples]
+| `entities` | A list of "things" you can attach actions to. | `-` | Live Reloadable, but restart is recommended. | xref:entities/intro.adoc[Entities]
+| `dashboards` | A grouping of actions, with optional displays, or actions generated from entities. | `-` | Live Reloadable | xref:dashboards/intro.adoc[Dashboards]
+|===
+
+== UI Customization
+
+|===
+| Option | Description | Default | Live Reloadable | Documentation
+
+| `pageTitle` | A custom title for the OliveTin page. | `OliveTin` | Live reloadable | xref:advanced_configuration/webui.adoc[Customize the web UI].
+| `showFooter` | Show (or hide) the footer. | `true` | Live reloadable | xref:advanced_configuration/webui.adoc[Customize the web UI].
+| `showNewVersions` | Show (or hide) new versions in the footer. | `true` | Live reloadable | xref:advanced_configuration/webui.adoc[Customize the web UI].
+| `defaultPolicy.showVersionNumber` | Show (or hide) the application version in the footer. Can be overridden per user/group in ACLs. | `true` | Requires restart | xref:reference/version_display.adoc[Version display]
+| `showNavigation` | Show (or hide) the sidebar/topbar section navigation. | `true` | Live reloadable | xref:advanced_configuration/webui.adoc[Customize the web UI].
+| `showNavigateOnStartIcons` | Show (or hide) the small icons on action buttons that indicate popup/argument/background behavior on start. | `true` | Live reloadable | xref:advanced_configuration/webui.adoc[Customize the web UI].
+| `sectionNavigationStyle` | The style of the section navigation. `sidebar`, `topbar` | `sidebar` | Live reloadable | xref:advanced_configuration/webui.adoc[Customize the web UI].
+| `defaultOnClick` | The default on-click behavior when an action starts. | `nothing` | Live reloadable | xref:action_execution/ondemand.adoc[Execute on click].
+| `defaultPopupOnStart` | Legacy name for `defaultOnClick`. | - | Live reloadable | xref:action_execution/ondemand.adoc[Execute on click].
+| `defaultIconForActions` | The default icon string for actions (Unicode aliases such as `smile`, `hugeicons:NeutralIcon`, HTML, Iconify snippets, images, etc.). See xref:action_customization/icons.adoc[Icons]. | `hugeicons:CommandLineIcon` | Requires Restart | -
+| `defaultIconForDirectories` | The default icon to use for directories. | `directory` | Requires Restart | -
+| `defaultIconForBack` | The default icon to use for back (from directories). | `&laquo;` | Requires Restart | -
+| `enableCustomJs` | Enable custom JavaScript. | `false` | Live Reloadable, but refreshing the web browser is required. | xref:advanced_configuration/webui.adoc[Custom JS].
+| `themeName` | The theme to use. | `` | Restart recommended | xref:reference/reference_themes_for_users.adoc[Themes].
+|===
+
+== Security Configuration
+
+|===
+| Option | Description | Default | Live Reloadable | Documentation
+
+| `AuthJwtCookieName` | The name of the cookie to use for JWT authentication. | `` | Requires restart | xref:security/jwt_hmac.adoc[JWT with HMAC], xref:security/jwt_keys.adoc[JWT with Keys]
+| `AuthJwtAud` | The audience to use for JWT authentication. | `` | Requires restart | xref:security/jwt_keys.adoc[JWT with Keys]
+| `AuthJwtDomain` | The domain to use for JWT authentication. | `` | Requires restart | xref:security/jwt_hmac.adoc[JWT with HMAC], xref:security/jwt_keys.adoc[JWT with Keys]
+| `AuthJwtCertsURL` | The URL to fetch the public keys from with JWKS | `` | Requires restart | xref:security/jwt_keys.adoc[JWT with Keys]
+| `AuthJwtClaimUsername` | The claim to use for the username. | `sub` | Requires restart | xref:security/jwt_hmac.adoc[JWT with HMAC], xref:security/jwt_keys.adoc[JWT with Keys]
+| `AuthJwtClaimUserGroup` | The claim to use for the usergroup. | `sub` | Requires restart | xref:security/jwt_hmac.adoc[JWT with HMAC], xref:security/jwt_keys.adoc[JWT with Keys]
+| `AuthJwtHeader` | The HTTP header to use for JWT authentication. | `` | Requires restart | xref:security/jwt_keys.adoc[JWT with Keys]
+| `AuthJwtPubKeyPath` | The path to the public key to use for JWT authentication. | `` | Requires restart | xref:security/jwt_keys.adoc[JWT with Keys]
+| `AuthHttpHeaderUsername` | The HTTP header to use for the username. | `` | Requires restart | xref:security/trusted_header.adoc[Trusted Headers]
+| `AuthHttpHeaderUserGroup` | The HTTP header to use for the usergroup. | `` | Requires restart | xref:security/trusted_header.adoc[Trusted Headers]
+| `AuthLocalUsers` | The list of local users. | `[]` | Requires restart | xref:security/local.adoc[Local Users]
+| `AuthLoginUrl` | The URL to redirect to for login. | `` | Requires restart | xref:security/local.adoc[Login URL]
+| `AuthRequireGuestsToLogin` | Basically disables all functionality for guests. It sets all default permissions to false. | `false` | Requires restart | xref:security/acl.adoc[Access Control Lists]
+| `DefaultPermissions` | The default permissions to use. | `[]` | Requires restart | xref:security/acl.adoc[Access Control Lists]
+| `AccessControlLists` | The list of access control lists. | `[]` | Requires restart | xref:security/acl.adoc[Access Control Lists]
+| `security.headerContentSecurityPolicy` | Whether to send a `Content-Security-Policy` header from the single HTTP frontend. | `true` | Live reloadable | xref:security/content_security_policy.adoc[Content Security Policy headers]
+| `security.contentSecurityPolicy` | CSP header value when `security.headerContentSecurityPolicy` is enabled. If empty, a built-in default is used. | (built-in default) | Live reloadable | xref:security/content_security_policy.adoc[Content Security Policy headers]
+|===
+
+== Networking Configuration
+
+|===
+| Option | Description | Default | Live Reloadable | Documentation
+
+| `UseSingleHttpFrontend` | Whether or not to start the internal "microproxy" frontend. Disabling this is highly unusual and is only really useful for power users.  | true | Requires Restart | xref:reference/network-ports.adoc[Network Ports]
+| `ListenAddressSingleHTTPFrontend` | The address to listen on for the internal "microproxy" frontend. | `0.0.0.0:1337` | Requires Restart | xref:reference/network-ports.adoc[Network Ports]
+| `ListenAddressWebUI` | The address to listen on for the web UI. | `localhost:1340` | Requires Restart | xref:reference/network-ports.adoc[Network Ports]
+| `ListenAddressRestActions` | The address for the API | `localhost:1338` | Requires Restart | xref:reference/network-ports.adoc[Network Ports]
+| `ListenAddressGrpcActions` | The address for the gRPC API | `localhost:1339` | Requires Restart | xref:reference/network-ports.adoc[Network Ports]
+| `ListenAddressPrometheus` | The address for the Prometheus metrics | `localhost:1341` | Requires Restart | xref:reference/network-ports.adoc[Network Ports], xref:advanced_configuration/prometheus.adoc[Prometheus]
+| `ExternalRestAddress` | The address the web browser should use to connect to the API. | `.` | Requires Restart | xref:reference/network-ports.adoc[Network Ports]
+|===
+
+== Debugging Configuration
+
+|===
+| Option | Description | Default | Live Reloadable | Documentation
+
+| `LogLevel` | The log level to use. `INFO`, `DEBUG`, `WARN` | `INFO` | Requires Restart | -
+| `LogDebugOptions` | Enable various debug logs. | `-` | Requires Restart | xref:troubleshooting/advanced.adoc[Advanced Troubleshooting]
+| `Insecure*` | Various options to disable security features. | `false` | Restart recommended | xref:troubleshooting/advanced.adoc[Advanced Troubleshooting]
+|===
+
+== Miscellaneous Configuration
+
+|===
+| Option | Description | Default | Live Reloadable | Documentation
+
+| `WebUIDir` | The directory to serve the web UI from. | Calculated at runtime. | Requires Restart | -
+| `CronSupportForSeconds` | Whether or not to support seconds in cron expressions. | `false` | Requires Restart | xref:action_execution/oncron.adoc[Cron]
+| `SaveLogs` | Whether or not to save logs to disk. | `[]` | Requires Restart | xref:logs/saving.adoc[Save Logs]
+| `ServiceLogs` | Windows process log directory (`serviceLogs.directory`). | `%ProgramData%\OliveTin\logs\` on Windows | Requires Restart | xref:install/windows_service.adoc#windows-service-logs[Windows service logs]
+| `Prometheus` | Prometheus configuration. | `-` | Requires Restart | xref:advanced_configuration/prometheus.adoc[Prometheus]
+|===
+
+== What's Next?
+
+Now that you understand the configuration structure, here are the next steps:
+
+* xref:action_buttons/create_your_first.adoc[Create your first action] - Start building actions for your use case
+* xref:action_examples/intro.adoc[Browse action examples] - Get inspiration from real-world configurations
+* xref:args/intro.adoc[Add arguments to actions] - Make actions interactive with user input
+* xref:dashboards/intro.adoc[Organize with dashboards] - Create custom views to organize your actions
+* xref:entities/intro.adoc[Use entities] - Dynamically generate actions from entity files
+* xref:security/concepts.adoc[Configure security] - Set up authentication and authorization
+* xref:solutions/intro.adoc[Explore solutions] - Find complete configurations for common scenarios

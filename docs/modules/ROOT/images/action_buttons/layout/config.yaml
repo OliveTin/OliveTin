@@ -1,0 +1,37 @@
+---
+listenAddressSingleHTTPFrontend: 0.0.0.0:11337
+
+logLevel: "WARN"
+checkForUpdates: false
+showFooter: false
+
+actionGroups:
+  jobs:
+    maxConcurrent: 1
+    queueSize: 5
+
+actions:
+  - title: Restart service
+    icon: restart
+    onclick: execution-dialog
+    shell: echo "Service restarted"
+
+  - title: Long task
+    shell: sleep 120
+    timeout: 300
+    groups: [jobs]
+
+  - title: Backup job
+    shell: sleep 120
+    timeout: 300
+    groups: [jobs]
+
+dashboards:
+  - title: Action button layout
+    contents:
+      - title: Examples
+        type: fieldset
+        contents:
+          - title: Restart service
+          - title: Long task
+          - title: Backup job

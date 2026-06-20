@@ -1,0 +1,18 @@
+[#install-linuxpackage]
+= Generic .rpm based Linux
+
+Running OliveTin as a systemd service on a Linux machine means it can use any program installed on your machine (you don't have to add programs to a container). This is generally easier to use than a container, but containers can work just fine too with a bit more effort.
+
+There are .rpm packages published for OliveTin on each release page. If you distribution is not linked in this installation guide, and you use a .rpm based Linux distribution, this package should work. 
+
+* link:https://github.com/jamesread/OliveTin/releases[downloads page].
+
+You can install these packages for .rpm like this;
+
+[source,bash]
+....
+user@host: rpm -U https://github.com/OliveTin/OliveTin/releases/latest/download/OliveTin_linux_amd64.rpm
+....
+
+include::partial$install/post_systemd.adoc[]
+

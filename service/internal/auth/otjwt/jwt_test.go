@@ -66,12 +66,19 @@ func newMux() *http.ServeMux {
 }
 
 func createJWTTokenWithExpiration(t *testing.T, privateKey *rsa.PrivateKey, expire int64) string {
+	return createJWTTokenWithExpirationAndAudience(t, privateKey, expire, "")
+}
+
+func createJWTTokenWithExpirationAndAudience(t *testing.T, privateKey *rsa.PrivateKey, expire int64, audience string) string {
 	token := jwt.New(jwt.SigningMethodRS256)
 	claims := token.Claims.(jwt.MapClaims)
 	claims["nbf"] = time.Now().Unix() - 1000
 	claims["exp"] = time.Now().Unix() + expire
 	claims["sub"] = "test"
 	claims["olivetinGroup"] = "test"
+	if audience != "" {
+		claims["aud"] = audience
+	}
 
 	tokenStr, err := token.SignedString(privateKey)
 	if err != nil {
@@ -108,6 +115,10 @@ func verifyJWTResponse(t *testing.T, res *http.Response, expectCode int) {
 }
 
 func testJwkValidation(t *testing.T, expire int64, expectCode int) {
+	testJwkValidationWithAudience(t, expire, expectCode, "", "")
+}
+
+func testJwkValidationWithAudience(t *testing.T, expire int64, expectCode int, configAudience, tokenAudience string) {
 	privateKey, publicKeyPath := createKeys(t)
 	defer os.Remove(publicKeyPath)
 
@@ -116,8 +127,9 @@ func testJwkValidation(t *testing.T, expire int64, expectCode int) {
 	cfg.AuthJwtClaimUsername = "sub"
 	cfg.AuthJwtClaimUserGroup = "olivetinGroup"
 	cfg.AuthJwtHeader = "Authorization"
+	cfg.AuthJwtAud = configAudience
 
-	tokenStr := createJWTTokenWithExpiration(t, privateKey, expire)
+	tokenStr := createJWTTokenWithExpirationAndAudience(t, privateKey, expire, tokenAudience)
 	handler := setupJWTTestHandler(t, cfg)
 
 	srv := httptest.NewServer(handler)
@@ -133,6 +145,14 @@ func TestJWTSignatureVerificationSucceeds(t *testing.T) {
 
 func TestJWTSignatureVerificationFails(t *testing.T) {
 	testJwkValidation(t, -500, 403)
+}
+
+func TestJWTAudienceValidationRejectsWrongAudience(t *testing.T) {
+	testJwkValidationWithAudience(t, 1000, 403, "expected-audience", "wrong-audience")
+}
+
+func TestJWTAudienceValidationAcceptsCorrectAudience(t *testing.T) {
+	testJwkValidationWithAudience(t, 1000, 200, "expected-audience", "expected-audience")
 }
 
 func createJWTTokenWithGroups(t *testing.T, privateKey *rsa.PrivateKey, groups interface{}) string {
