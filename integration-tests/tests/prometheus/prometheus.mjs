@@ -8,6 +8,8 @@ import {
 
 let metrics = [
   {'name': 'olivetin_actions_requested_count', 'type': 'counter', 'desc': 'The actions requested count'},
+  {'name': 'olivetin_action_executions_total', 'type': 'counter', 'desc': 'Total number of finished action executions grouped by result\\.'},
+  {'name': 'olivetin_action_execution_duration_seconds', 'type': 'histogram', 'desc': 'Action execution duration in seconds from start to finish\\.'},
   {'name': 'olivetin_config_action_count', 'type': 'gauge', 'desc': 'The number of actions in the config file'},
   {'name': 'olivetin_config_reloaded_count', 'type': 'counter', 'desc': 'The number of times the config has been reloaded'},
 ]

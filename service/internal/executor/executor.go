@@ -11,8 +11,6 @@ import (
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
 	"gopkg.in/yaml.v3"
 
 	"bytes"
@@ -39,13 +37,6 @@ func isValidTrackingID(id string) bool {
 
 	return id != "" && len(id) <= MaxTrackingIDLength && validTrackingIDPattern.MatchString(id)
 }
-
-var (
-	metricActionsRequested = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "olivetin_actions_requested_count",
-		Help: "The actions requested count",
-	})
-)
 
 type ActionBinding struct {
 	ID           string
@@ -704,6 +695,8 @@ func (e *Executor) finishExecChain(req *ExecutionRequest) {
 
 		entry.ExecutionFinished = true
 	})
+
+	recordExecutionMetrics(req.logEntry)
 
 	notifyListenersFinished(req)
 	e.drainGroupQueue()
