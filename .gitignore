@@ -3,6 +3,7 @@
 service/OliveTin
 service/OliveTin.armhf
 service/OliveTin.exe
+service/resource_windows_*.syso
 service/reports
 releases/
 dist/
