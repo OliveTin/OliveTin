@@ -7,6 +7,7 @@ import (
 	"os"
 	"path"
 	"sort"
+	"strings"
 
 	"connectrpc.com/connect"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -388,6 +389,7 @@ func (api *oliveTinAPI) internalLogEntryToPb(logEntry *executor.InternalLogEntry
 		BindingId:                logEntry.GetBindingId(),
 		DatetimeRateLimitExpires: calculateRateLimitExpires(api, logEntry),
 		Justification:            logEntry.Justification,
+		Arguments:                logEntryArgumentsToProto(logEntry.Arguments),
 	}
 
 	if !pble.ExecutionFinished && logEntry.Binding != nil && logEntry.Binding.Action != nil {
@@ -1548,14 +1550,15 @@ func (api *oliveTinAPI) RestartAction(ctx ctx.Context, req *connect.Request[apiv
 		return nil, err
 	}
 
-	if execReqLogEntry.Binding.Action.Justification {
+	if execReqLogEntry.Binding.Action.Justification && strings.TrimSpace(execReqLogEntry.Justification) == "" {
 		return nil, restartRequiresJustificationError()
 	}
 
 	authenticatedUser := auth.UserFromApiCall(ctx, req, api.cfg)
 	execReq := executor.ExecutionRequest{
 		Binding:           execReqLogEntry.Binding,
-		Arguments:         make(map[string]string),
+		Arguments:         copyStringMap(execReqLogEntry.Arguments),
+		Justification:     execReqLogEntry.Justification,
 		AuthenticatedUser: authenticatedUser,
 		Cfg:               api.cfg,
 	}

@@ -174,6 +174,7 @@ message LogEntry {
 	bool queued = 21;
 	string queued_for_group = 22;
 	string justification = 23;
+	repeated StartActionArgument arguments = 24;
 }
 
 message GetLogsResponse {
