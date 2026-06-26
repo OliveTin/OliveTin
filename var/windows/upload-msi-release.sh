@@ -25,11 +25,16 @@ if ! command -v gh >/dev/null; then
 fi
 
 checksums_path="${DIST_DIR}/checksums.txt"
-if [[ -f "${checksums_path}" ]] && ! grep -qF " ${MSI_NAME}" "${checksums_path}"; then
-  (
-    cd "${DIST_DIR}"
-    sha256sum "${MSI_NAME}"
-  ) >> "${checksums_path}"
+new_checksum="$(cd "${DIST_DIR}" && sha256sum "${MSI_NAME}")"
+if [[ -f "${checksums_path}" ]] && grep -qF " ${MSI_NAME}" "${checksums_path}"; then
+  tmp="$(mktemp)"
+  grep -vF " ${MSI_NAME}" "${checksums_path}" > "${tmp}"
+  printf '%s\n' "${new_checksum}" >> "${tmp}"
+  mv "${tmp}" "${checksums_path}"
+elif [[ -f "${checksums_path}" ]]; then
+  printf '%s\n' "${new_checksum}" >> "${checksums_path}"
+else
+  printf '%s\n' "${new_checksum}" > "${checksums_path}"
 fi
 
 gh release upload "${TAG}" "${MSI_PATH}" --clobber

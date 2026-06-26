@@ -20,11 +20,11 @@ if ! command -v wixl >/dev/null || ! command -v wixl-heat >/dev/null; then
   exit 1
 fi
 
-normalize_windows_version() {
+normalize_msi_version() {
   local raw="${1#v}"
   raw="${raw%%-*}"
   if [[ ! "${raw}" =~ ^[0-9]+(\.[0-9]+){0,3}$ ]]; then
-    echo "0.0.0.0"
+    echo "0.0.0"
     return
   fi
   local -a parts=()
@@ -32,8 +32,7 @@ normalize_windows_version() {
   local major="${parts[0]:-0}"
   local minor="${parts[1]:-0}"
   local patch="${parts[2]:-0}"
-  local build="${parts[3]:-0}"
-  printf '%s.%s.%s.%s' "${major}" "${minor}" "${patch}" "${build}"
+  printf '%s.%s.%s' "${major}" "${minor}" "${patch}"
 }
 
 VERSION="${VERSION:-}"
@@ -44,7 +43,7 @@ if [[ -z "${VERSION}" ]]; then
   echo "Could not determine release version; set VERSION explicitly" >&2
   exit 1
 fi
-WINDOWS_VERSION="$(normalize_windows_version "${VERSION}")"
+MSI_VERSION="$(normalize_msi_version "${VERSION}")"
 
 STAGING="$(mktemp -d)"
 APP_STAGING="$(mktemp -d)"
@@ -82,7 +81,7 @@ cp -a "${SOURCE_ROOT}/webui/." "${APP_STAGING}/webui/"
 wixl \
   -v \
   -a x64 \
-  -D "Version=${WINDOWS_VERSION}" \
+  -D "Version=${MSI_VERSION}" \
   -D "Win64=yes" \
   -D "SourceDir=${APP_STAGING}" \
   -D "ConfigSource=${SOURCE_ROOT}/config.yaml" \

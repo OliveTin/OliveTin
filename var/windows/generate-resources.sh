@@ -70,14 +70,16 @@ fi
 WINDOWS_VERSION="$(normalize_windows_version "$(resolve_version "${1:-}")")"
 echo "Generating Windows resources for version ${WINDOWS_VERSION}"
 
+TOOL_BIN="$(mktemp -d)/bin"
+export GOBIN="${TOOL_BIN}"
 go install "github.com/josephspurrier/goversioninfo/cmd/goversioninfo@${GOVERSIONINFO_VERSION}"
 
 WORK_DIR="$(mktemp -d)"
-trap 'rm -rf "${WORK_DIR}"' EXIT
+trap 'rm -rf "${WORK_DIR}" "${TOOL_BIN%/*}"' EXIT
 
 (
   cd "${WORK_DIR}"
-  goversioninfo \
+  "${TOOL_BIN}/goversioninfo" \
     -64 \
     -platform-specific \
     -icon="${ICON_PATH}" \

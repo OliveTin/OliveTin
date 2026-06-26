@@ -72,4 +72,4 @@ clean:
 config-tool:
 	cd service && go run cmd/config-tool/main.go
 
-.PHONY: proto service
+.PHONY: proto service windows-resources windows-msi
