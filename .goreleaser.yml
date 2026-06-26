@@ -3,6 +3,7 @@ version: 2
 before:
   hooks:
     - make service-prep
+    - make windows-resources VERSION={{ .Version }}
 
 builds:
   - env:

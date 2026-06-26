@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Product
+    Id="*"
+    Name="OliveTin $(var.Version)"
+    Language="1033"
+    Version="$(var.Version)"
+    Manufacturer="James Read"
+    UpgradeCode="8B5E3F2A-1C4D-4E6F-9A0B-2D3C4E5F6071">
+    <Package
+      InstallerVersion="500"
+      Compressed="yes"
+      InstallScope="perMachine"
+      Description="OliveTin web interface for running shell commands"
+      Comments="https://github.com/OliveTin/OliveTin" />
+
+    <MajorUpgrade
+      AllowSameVersionUpgrades="yes"
+      DowngradeErrorMessage="A newer version of OliveTin is already installed." />
+    <MediaTemplate />
+
+    <Feature Id="ProductFeature" Title="OliveTin" Level="1">
+      <ComponentGroupRef Id="CG.AppFiles" />
+      <ComponentRef Id="ConfigFile" />
+    </Feature>
+
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="ProgramFiles64Folder">
+        <Directory Id="INSTALLDIR" Name="OliveTin" />
+      </Directory>
+      <Directory Id="CommonAppDataFolder">
+        <Directory Id="ConfigDir" Name="OliveTin" />
+      </Directory>
+    </Directory>
+
+    <DirectoryRef Id="ConfigDir">
+      <Component Id="ConfigFile" Guid="A1B2C3D4-E5F6-7890-ABCD-EF1234567890" Win64="yes">
+        <File
+          Id="ConfigYaml"
+          Source="$(var.ConfigSource)"
+          Name="config.yaml"
+          KeyPath="yes" />
+      </Component>
+    </DirectoryRef>
+  </Product>
+</Wix>
