@@ -13,6 +13,7 @@ on:
       - 'integration-tests/**'
       - 'proto/**'
       - 'service/**'
+      - 'var/windows/**'
   workflow_dispatch:
   push:
     tags:
@@ -31,6 +32,7 @@ on:
       - 'integration-tests/**'
       - 'proto/**'
       - 'service/**'
+      - 'var/windows/**'
 
 jobs:
   build:
@@ -111,6 +113,10 @@ jobs:
           path: |
             integration-tests
             !integration-tests/node_modules
+
+      - name: Install msitools
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
+        run: sudo apt-get update && sudo apt-get install -y msitools
 
       - name: Install goreleaser
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
