@@ -162,6 +162,7 @@ type InternalLogEntry struct {
 	ActionTitle   string
 	ActionIcon    string
 	Justification string
+	Arguments     map[string]string
 }
 
 // .Binding can be nil, so we need to handle that.
@@ -856,6 +857,7 @@ func stepParseArgs(req *ExecutionRequest) bool {
 		return fail(req, err)
 	}
 	mangleInvalidArgumentValues(req)
+	copyStorableArgumentsToLogEntry(req)
 
 	if hasExec(req) {
 		return handleExecBranch(req)

@@ -89,29 +89,48 @@ var envConfigTests = []struct {
 	}},
 }
 
+func setTestEnvInput(t *testing.T, input string) {
+	t.Helper()
+	if input != "" {
+		if err := os.Setenv("INPUT", input); err != nil {
+			t.Fatalf("Setenv INPUT: %v", err)
+		}
+		return
+	}
+	if err := os.Unsetenv("INPUT"); err != nil {
+		t.Fatalf("Unsetenv INPUT: %v", err)
+	}
+}
+
+func loadConfigFromYAML(t *testing.T, yamlStr string, cfg *Config) bool {
+	t.Helper()
+	k := koanf.New(".")
+	if err := k.Load(rawbytes.Provider([]byte(yamlStr)), yaml.Parser()); err != nil {
+		t.Errorf("Error loading YAML: %v", err)
+		return false
+	}
+	return unmarshalRoot(k, cfg)
+}
+
 func TestEnvInConfig(t *testing.T) {
+	originalInput, hadInput := os.LookupEnv("INPUT")
+	t.Cleanup(func() {
+		if hadInput {
+			setTestEnvInput(t, originalInput)
+			return
+		}
+		setTestEnvInput(t, "")
+	})
+
 	for _, tt := range envConfigTests {
 		cfg := DefaultConfig()
-		setIfNotEmpty("INPUT", tt.input)
-		k := koanf.New(".")
-		err := k.Load(rawbytes.Provider([]byte(tt.yaml)), yaml.Parser())
-		if err != nil {
-			t.Errorf("Error loading YAML: %v", err)
-			continue
-		}
-		if !unmarshalRoot(k, cfg) {
+		setTestEnvInput(t, tt.input)
+		if !loadConfigFromYAML(t, tt.yaml, cfg) {
 			t.Errorf("Error unmarshalling config for env=%q", tt.input)
 			continue
 		}
 		field := tt.selector(cfg)
 		assert.Equal(t, tt.output, field,
 			"Unmarshaled config field doesn't match expected value: env=%q", tt.input)
-		os.Unsetenv("INPUT")
-	}
-}
-
-func setIfNotEmpty(key, val string) {
-	if val != "" {
-		os.Setenv(key, val)
 	}
 }

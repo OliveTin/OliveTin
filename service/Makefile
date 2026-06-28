@@ -19,10 +19,11 @@ compile-x64-lin:
 	go build -o OliveTin
 	go env -u GOOS
 
-compile-x64-win:
-	go env -w GOOS=windows GOARCH=amd64
-	go build -o OliveTin.exe
-	go env -u GOOS GOARCH
+compile-x64-win: windows-resources
+	GOOS=windows GOARCH=amd64 go build -o OliveTin.exe
+
+windows-resources:
+	$(MAKE) -wC .. windows-resources
 
 compile: compile-armhf compile-x64-lin compile-x64-win
 
@@ -33,7 +34,7 @@ codestyle: go-tools
 	gocritic check ./...
 
 test: unittests
-	
+
 tests: unittests
 
 unittests:

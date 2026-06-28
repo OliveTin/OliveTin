@@ -8,6 +8,12 @@ service:
 service-prep:
 	$(MAKE) -wC service prep
 
+windows-resources:
+	VERSION="$(VERSION)" ./var/windows/generate-resources.sh
+
+windows-msi:
+	VERSION="$(VERSION)" ./var/windows/build-msi.sh
+
 service-unittests:
 	$(MAKE) -wC service unittests
 
@@ -59,10 +65,11 @@ clean:
 	$(call delete-files,OliveTin)
 	$(call delete-files,OliveTin.armhf)
 	$(call delete-files,OliveTin.exe)
+	rm -f service/resource_windows_*.syso
 	$(call delete-files,reports)
 	$(call delete-files,gen)
 
 config-tool:
 	cd service && go run cmd/config-tool/main.go
 
-.PHONY: proto service
+.PHONY: proto service windows-resources windows-msi
