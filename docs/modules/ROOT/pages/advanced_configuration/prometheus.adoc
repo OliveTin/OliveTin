@@ -25,16 +25,60 @@ This will give you metrics available at http://yourserver:1337/metrics. The page
 [source]
 ----
 # HELP olivetin_actions_requested_count The actions requested count
-# TYPE olivetin_actions_requested_count gauge
+# TYPE olivetin_actions_requested_count counter
 olivetin_actions_requested_count 0
+# HELP olivetin_action_executions_total Total number of finished action executions grouped by result.
+# TYPE olivetin_action_executions_total counter
+olivetin_action_executions_total{result="success"} 0
+olivetin_action_executions_total{result="failed"} 0
+olivetin_action_executions_total{result="blocked"} 0
+olivetin_action_executions_total{result="timeout"} 0
+olivetin_action_executions_total{result="error"} 0
+# HELP olivetin_action_execution_duration_seconds Action execution duration in seconds from start to finish.
+# TYPE olivetin_action_execution_duration_seconds histogram
+olivetin_action_execution_duration_seconds_bucket{le="0.1"} 0
 # HELP olivetin_config_action_count Then number of actions in the config file
 # TYPE olivetin_config_action_count gauge
 olivetin_config_action_count 18
 # HELP olivetin_config_reloaded_count The number of times the config has been reloaded
 # TYPE olivetin_config_reloaded_count counter
 olivetin_config_reloaded_count 1
-# HELP olivetin_sv_count The number entries in the sv map
-# TYPE olivetin_sv_count gauge
-olivetin_sv_count 49
+----
+
+=== Failed job monitoring
+
+Finished action executions are counted in `olivetin_action_executions_total` with a `result` label:
+
+[cols="1,2"]
+|===
+| `success` | Command finished with exit code 0
+| `failed` | Command ran but exited with a non-zero code
+| `timeout` | Command exceeded its configured timeout
+| `blocked` | Execution was blocked (ACL, rate limit, concurrency, or queue limit)
+| `error` | Execution failed before the command ran (for example, invalid arguments)
+|===
+
+`olivetin_action_execution_duration_seconds` records how long each finished execution took.
+
+Example Prometheus alert rules:
+
+[source,yaml]
+----
+groups:
+  - name: olivetin
+    rules:
+      - alert: OliveTinActionFailed
+        expr: increase(olivetin_action_executions_total{result="failed"}[15m]) > 0
+        labels:
+          severity: warning
+        annotations:
+          summary: OliveTin action failed with non-zero exit code
+
+      - alert: OliveTinActionTimedOut
+        expr: increase(olivetin_action_executions_total{result="timeout"}[15m]) > 0
+        labels:
+          severity: warning
+        annotations:
+          summary: OliveTin action timed out
 ----
 
