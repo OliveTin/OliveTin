@@ -28,7 +28,7 @@ checksums_path="${DIST_DIR}/checksums.txt"
 new_checksum="$(cd "${DIST_DIR}" && sha256sum "${MSI_NAME}")"
 if [[ -f "${checksums_path}" ]] && grep -qF " ${MSI_NAME}" "${checksums_path}"; then
   tmp="$(mktemp)"
-  grep -vF " ${MSI_NAME}" "${checksums_path}" > "${tmp}"
+  grep -vF " ${MSI_NAME}" "${checksums_path}" > "${tmp}" || true
   printf '%s\n' "${new_checksum}" >> "${tmp}"
   mv "${tmp}" "${checksums_path}"
 elif [[ -f "${checksums_path}" ]]; then

@@ -20,9 +20,7 @@ compile-x64-lin:
 	go env -u GOOS
 
 compile-x64-win: windows-resources
-	go env -w GOOS=windows GOARCH=amd64
-	go build -o OliveTin.exe
-	go env -u GOOS GOARCH
+	GOOS=windows GOARCH=amd64 go build -o OliveTin.exe
 
 windows-resources:
 	$(MAKE) -wC .. windows-resources

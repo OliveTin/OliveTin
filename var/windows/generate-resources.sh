@@ -37,12 +37,12 @@ normalize_windows_version() {
 }
 
 resolve_version() {
-  if [[ -n "${VERSION:-}" ]]; then
-    echo "${VERSION}"
-    return
-  fi
   if [[ $# -gt 0 && -n "${1:-}" ]]; then
     echo "${1}"
+    return
+  fi
+  if [[ -n "${VERSION:-}" ]]; then
+    echo "${VERSION}"
     return
   fi
   if git -C "${REPO_ROOT}" describe --tags --abbrev=0 >/dev/null 2>&1; then

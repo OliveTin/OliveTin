@@ -24,8 +24,8 @@ normalize_msi_version() {
   local raw="${1#v}"
   raw="${raw%%-*}"
   if [[ ! "${raw}" =~ ^[0-9]+(\.[0-9]+){0,3}$ ]]; then
-    echo "0.0.0"
-    return
+    echo "Invalid MSI version (expected major[.minor[.patch[.build]]]): ${1}" >&2
+    return 1
   fi
   local -a parts=()
   IFS='.' read -r -a parts <<<"${raw}"
@@ -43,7 +43,7 @@ if [[ -z "${VERSION}" ]]; then
   echo "Could not determine release version; set VERSION explicitly" >&2
   exit 1
 fi
-MSI_VERSION="$(normalize_msi_version "${VERSION}")"
+MSI_VERSION="$(normalize_msi_version "${VERSION}")" || exit 1
 
 STAGING="$(mktemp -d)"
 APP_STAGING="$(mktemp -d)"

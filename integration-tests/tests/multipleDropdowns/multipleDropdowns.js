@@ -5,6 +5,8 @@ import {
   getRootAndWait,
   getActionButtons,
   takeScreenshotOnFailure,
+  waitForArgumentFormPage,
+  waitForArgumentFormReady,
 } from '../../lib/elements.js'
 
 
@@ -46,11 +48,13 @@ describe('config: multipleDropdowns', function () {
 
     await button.click()
 
-    // Wait for navigation to argument form page
-    await webdriver.wait(new Condition('wait for argument form page', async () => {
-      const url = await webdriver.getCurrentUrl()
-      return url.includes('/actionBinding/') && url.includes('/argumentForm')
-    }), 8000)
+    await waitForArgumentFormPage(8000)
+    await waitForArgumentFormReady(10000)
+
+    await webdriver.wait(new Condition('wait for choice comboboxes', async () => {
+      const boxes = await webdriver.findElements(By.css('main .choice-combobox'))
+      return boxes.length >= 2
+    }), 10000)
 
     const comboboxes = await webdriver.findElements(By.css('main .choice-combobox'))
 

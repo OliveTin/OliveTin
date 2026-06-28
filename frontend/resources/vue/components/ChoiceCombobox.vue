@@ -52,6 +52,10 @@
 
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import {
+  choiceDisplayLabel,
+  syncStateFromModelValue
+} from './choiceComboboxHelpers.js'
 
 const props = defineProps({
   id: {
@@ -117,23 +121,23 @@ const filteredChoices = computed(() => {
   })
 })
 
-watch(() => props.modelValue, () => {
+watch([() => props.modelValue, () => props.choices], () => {
   if (!isOpen.value) {
-    query.value = selectedLabel()
+    syncFromModelValue()
   }
 }, { immediate: true })
 
 function choiceLabel(choice) {
-  return choice.title || choice.value
+  return choiceDisplayLabel(choice)
 }
 
-function selectedLabel() {
-  const match = props.choices.find(choice => choice.value === props.modelValue)
-  if (!match) {
-    return props.modelValue || ''
-  }
+function syncFromModelValue() {
+  const next = syncStateFromModelValue(props.choices, props.modelValue)
+  query.value = next.query
 
-  return choiceLabel(match)
+  if (next.modelValue !== props.modelValue) {
+    emitValue(next.modelValue)
+  }
 }
 
 function openList() {
@@ -144,7 +148,7 @@ function openList() {
 
 function closeList() {
   isOpen.value = false
-  query.value = selectedLabel()
+  syncFromModelValue()
 }
 
 function emitValue(value) {
@@ -153,11 +157,15 @@ function emitValue(value) {
 
 function selectChoice(choice) {
   emitValue(choice.value)
-  closeList()
+  query.value = choiceLabel(choice)
+  isOpen.value = false
 }
 
 function handleFocus() {
-  query.value = isOpen.value ? query.value : selectedLabel()
+  if (!isOpen.value) {
+    syncFromModelValue()
+  }
+
   openList()
 }
 
