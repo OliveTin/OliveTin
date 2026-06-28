@@ -29,7 +29,21 @@ var (
 		Help:    "Action execution duration in seconds from start to finish.",
 		Buckets: []float64{0.1, 0.5, 1, 2, 5, 10, 30, 60, 120, 300, 600},
 	})
+
+	executionResultLabels = []string{
+		executionResultSuccess,
+		executionResultFailed,
+		executionResultBlocked,
+		executionResultTimeout,
+		executionResultError,
+	}
 )
+
+func init() {
+	for _, result := range executionResultLabels {
+		metricActionExecutionsTotal.WithLabelValues(result)
+	}
+}
 
 func executionResultLabel(entry *InternalLogEntry) string {
 	if entry.Blocked {
