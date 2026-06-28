@@ -7,7 +7,6 @@ import (
 	"os"
 	"path"
 	"sort"
-	"strings"
 
 	"connectrpc.com/connect"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -1550,8 +1549,8 @@ func (api *oliveTinAPI) RestartAction(ctx ctx.Context, req *connect.Request[apiv
 		return nil, err
 	}
 
-	if execReqLogEntry.Binding.Action.Justification && strings.TrimSpace(execReqLogEntry.Justification) == "" {
-		return nil, restartRequiresJustificationError()
+	if err := validateRestartLogEntry(execReqLogEntry); err != nil {
+		return nil, err
 	}
 
 	authenticatedUser := auth.UserFromApiCall(ctx, req, api.cfg)

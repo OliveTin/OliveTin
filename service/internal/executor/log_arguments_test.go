@@ -119,3 +119,39 @@ func TestExecRequestStoresArgumentsOnLogEntry(t *testing.T) {
 	require.NotNil(t, logEntry.Arguments)
 	assert.Equal(t, "yourself", logEntry.Arguments["person"])
 }
+
+func TestRestartArgumentsIncompleteDetectsNonStorableArguments(t *testing.T) {
+	action := &config.Action{
+		Arguments: []config.ActionArgument{
+			{Name: "host", Type: "ascii_identifier"},
+			{Name: "pass", Type: "password"},
+		},
+	}
+
+	assert.True(t, RestartArgumentsIncomplete(action, nil, map[string]string{
+		"host": "db-1",
+	}))
+}
+
+func TestRestartArgumentsIncompleteDetectsMissingRequiredStoredArguments(t *testing.T) {
+	action := &config.Action{
+		Arguments: []config.ActionArgument{
+			{Name: "host", Type: "ascii_identifier"},
+		},
+	}
+
+	assert.True(t, RestartArgumentsIncomplete(action, nil, map[string]string{}))
+	assert.False(t, RestartArgumentsIncomplete(action, nil, map[string]string{
+		"host": "db-1",
+	}))
+}
+
+func TestRestartArgumentsIncompleteAllowsOptionalArgumentsWithDefaults(t *testing.T) {
+	action := &config.Action{
+		Arguments: []config.ActionArgument{
+			{Name: "host", Type: "ascii_identifier", Default: "example.com"},
+		},
+	}
+
+	assert.False(t, RestartArgumentsIncomplete(action, nil, map[string]string{}))
+}

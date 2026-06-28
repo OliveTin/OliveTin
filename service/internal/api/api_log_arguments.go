@@ -1,9 +1,14 @@
 package api
 
 import (
+	"fmt"
 	"sort"
+	"strings"
+
+	"connectrpc.com/connect"
 
 	apiv1 "github.com/OliveTin/OliveTin/gen/olivetin/api/v1"
+	"github.com/OliveTin/OliveTin/internal/executor"
 )
 
 func logEntryArgumentsToProto(args map[string]string) []*apiv1.StartActionArgument {
@@ -35,4 +40,20 @@ func copyStringMap(source map[string]string) map[string]string {
 	}
 
 	return copied
+}
+
+func restartArgumentsIncompleteError() error {
+	return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("stored arguments are incomplete for restart; use StartAction with the required arguments instead"))
+}
+
+func validateRestartLogEntry(entry *executor.InternalLogEntry) error {
+	if entry.Binding.Action.Justification && strings.TrimSpace(entry.Justification) == "" {
+		return restartRequiresJustificationError()
+	}
+
+	if executor.RestartArgumentsIncomplete(entry.Binding.Action, entry.Binding.Entity, entry.Arguments) {
+		return restartArgumentsIncompleteError()
+	}
+
+	return nil
 }

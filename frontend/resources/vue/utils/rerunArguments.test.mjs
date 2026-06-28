@@ -37,6 +37,20 @@ test('hasMissingRerunArguments requires password fields to be re-entered', () =>
   )
 })
 
+test('hasMissingRerunArguments requires very_dangerous_raw_string fields to be re-entered', () => {
+  const action = {
+    arguments: [
+      { name: 'host', type: 'ascii_identifier', required: true },
+      { name: 'payload', type: 'very_dangerous_raw_string', required: false }
+    ]
+  }
+
+  assert.equal(
+    hasMissingRerunArguments(action, [{ name: 'host', value: 'db-1' }]),
+    true
+  )
+})
+
 test('hasMissingRerunArguments detects missing required stored arguments', () => {
   const action = {
     arguments: [{ name: 'host', type: 'ascii_identifier', required: true }]

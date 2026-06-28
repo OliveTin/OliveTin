@@ -113,6 +113,15 @@ func loadConfigFromYAML(t *testing.T, yamlStr string, cfg *Config) bool {
 }
 
 func TestEnvInConfig(t *testing.T) {
+	originalInput, hadInput := os.LookupEnv("INPUT")
+	t.Cleanup(func() {
+		if hadInput {
+			setTestEnvInput(t, originalInput)
+			return
+		}
+		setTestEnvInput(t, "")
+	})
+
 	for _, tt := range envConfigTests {
 		cfg := DefaultConfig()
 		setTestEnvInput(t, tt.input)

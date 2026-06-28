@@ -158,6 +158,75 @@ func TestRestartActionReusesStoredArguments(t *testing.T) {
 	assert.Equal(t, "server-a", restartedArgs["host"])
 }
 
+func TestRestartActionRejectsIncompleteStoredArguments(t *testing.T) {
+	cfg := config.DefaultConfig()
+	cfg.Actions = []*config.Action{
+		{
+			Title:         "Connect",
+			Exec:          []string{"echo", "{{ user }}"},
+			MaxConcurrent: 1,
+			Arguments: []config.ActionArgument{
+				{Name: "user", Type: "ascii_identifier"},
+				{Name: "pass", Type: "password"},
+			},
+		},
+	}
+
+	ex := executor.DefaultExecutor(cfg)
+	ex.RebuildActionMap()
+	binding := ex.FindBindingWithNoEntity(cfg.Actions[0])
+	require.NotNil(t, binding)
+
+	ts, client := getNewTestServerAndClientWithExecutor(cfg, ex)
+	defer ts.Close()
+
+	startResp, err := client.StartAction(context.Background(), connect.NewRequest(&apiv1.StartActionRequest{
+		BindingId: binding.ID,
+		Arguments: []*apiv1.StartActionArgument{
+			{Name: "user", Value: "alice"},
+			{Name: "pass", Value: "secret"},
+		},
+	}))
+	require.NoError(t, err)
+
+	_, err = client.RestartAction(context.Background(), connect.NewRequest(&apiv1.RestartActionRequest{
+		ExecutionTrackingId: startResp.Msg.ExecutionTrackingId,
+	}))
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "stored arguments are incomplete for restart")
+}
+
+func TestRestartActionRejectsMissingRequiredStoredArguments(t *testing.T) {
+	cfg := config.DefaultConfig()
+	cfg.Actions = []*config.Action{
+		argumentAction("Ping host", "echo {{ host }}", []config.ActionArgument{
+			{Name: "host", Type: "ascii_identifier"},
+		}),
+	}
+
+	ex := executor.DefaultExecutor(cfg)
+	ex.RebuildActionMap()
+	binding := ex.FindBindingWithNoEntity(cfg.Actions[0])
+	require.NotNil(t, binding)
+
+	trackingID := "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+	ex.SetLog(trackingID, &executor.InternalLogEntry{
+		Binding:             binding,
+		ExecutionFinished:   true,
+		ExecutionTrackingID: trackingID,
+		Arguments:           map[string]string{},
+	})
+
+	ts, client := getNewTestServerAndClientWithExecutor(cfg, ex)
+	defer ts.Close()
+
+	_, err := client.RestartAction(context.Background(), connect.NewRequest(&apiv1.RestartActionRequest{
+		ExecutionTrackingId: trackingID,
+	}))
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "stored arguments are incomplete for restart")
+}
+
 func TestLogEntryArgumentsToProto(t *testing.T) {
 	assert.Nil(t, logEntryArgumentsToProto(nil))
 	assert.Nil(t, logEntryArgumentsToProto(map[string]string{}))

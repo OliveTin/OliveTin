@@ -1,5 +1,14 @@
 import { needsArgumentForm } from './needsArgumentForm.js'
 
+const nonStorableArgumentTypes = new Set([
+  'password',
+  'very_dangerous_raw_string'
+])
+
+function isNonStorableArgumentType (type) {
+  return nonStorableArgumentTypes.has(type)
+}
+
 export function logEntryArgumentsToStartActionArgs (logEntry) {
   return (logEntry?.arguments ?? []).map((arg) => ({
     name: arg.name,
@@ -23,7 +32,7 @@ export function hasMissingRerunArguments (action, storedArgs) {
   const stored = new Map(storedArgs.map((arg) => [arg.name, arg.value]))
 
   for (const arg of action?.arguments ?? []) {
-    if (arg.type === 'password') {
+    if (isNonStorableArgumentType(arg.type)) {
       return true
     }
 

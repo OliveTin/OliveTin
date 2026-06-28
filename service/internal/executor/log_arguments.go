@@ -4,6 +4,8 @@ import (
 	"strings"
 
 	config "github.com/OliveTin/OliveTin/internal/config"
+	"github.com/OliveTin/OliveTin/internal/entities"
+	"github.com/OliveTin/OliveTin/internal/tpl"
 )
 
 func argumentTypeStorableInLog(argType string) bool {
@@ -92,4 +94,48 @@ func copyStorableArgumentsToLogEntry(req *ExecutionRequest) {
 	req.mutateLogEntry(func(entry *InternalLogEntry) {
 		entry.Arguments = args
 	})
+}
+
+func restartArgumentMissingFromStored(arg *config.ActionArgument, entity *entities.Entity, storedArgs map[string]string) bool {
+	if !argumentTypeStorableInLog(arg.Type) {
+		return true
+	}
+
+	if !restartArgumentRequired(arg, entity) {
+		return false
+	}
+
+	if storedArgs == nil {
+		return true
+	}
+
+	_, ok := storedArgs[arg.Name]
+	return !ok
+}
+
+func RestartArgumentsIncomplete(action *config.Action, entity *entities.Entity, storedArgs map[string]string) bool {
+	if action == nil {
+		return false
+	}
+
+	for i := range action.Arguments {
+		if restartArgumentMissingFromStored(&action.Arguments[i], entity, storedArgs) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func restartArgumentRequired(arg *config.ActionArgument, entity *entities.Entity) bool {
+	if argumentSkipsValidation(arg) {
+		return false
+	}
+
+	defaultValue := arg.Default
+	if defaultValue != "" {
+		defaultValue = tpl.ParseTemplateOfActionBeforeExec(defaultValue, entity)
+	}
+
+	return defaultValue == ""
 }
