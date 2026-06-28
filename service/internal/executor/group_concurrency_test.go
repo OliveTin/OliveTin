@@ -508,36 +508,33 @@ func TestGroupQueueBlocksWhenQueueFull(t *testing.T) {
 		},
 	)
 
-	trackings, waitGroups := execAllGroupActions(t, e, cfg, actions)
+	wg1, tracking1 := e.ExecRequest(&ExecutionRequest{
+		Binding:           e.FindBindingWithNoEntity(actions[0]),
+		Cfg:               cfg,
+		AuthenticatedUser: auth.UserFromSystem(cfg, "testuser"),
+	})
+	waitUntilExecutionStarted(t, e, tracking1)
 
-	require.Eventually(t, func() bool {
-		return countSnapshots(e, trackings, func(snapshot LogEntrySnapshot) bool { return snapshot.Blocked }) == 1 &&
-			countSnapshots(e, trackings, func(snapshot LogEntrySnapshot) bool { return snapshot.Queued }) == 2 &&
-			countSnapshots(e, trackings, isRunningSnapshot) == 1
-	}, 2*time.Second, 20*time.Millisecond)
+	trackings := []string{tracking1}
+	waitGroups := []*sync.WaitGroup{wg1}
 
-	for _, wg := range waitGroups {
-		wg.Wait()
-	}
-}
-
-func execAllGroupActions(t *testing.T, e *Executor, cfg *config.Config, actions []*config.Action) ([]string, []*sync.WaitGroup) {
-	t.Helper()
-
-	trackings := make([]string, len(actions))
-	waitGroups := make([]*sync.WaitGroup, len(actions))
-
-	for idx, action := range actions {
+	for _, action := range actions[1:] {
 		wg, tracking := e.ExecRequest(&ExecutionRequest{
 			Binding:           e.FindBindingWithNoEntity(action),
 			Cfg:               cfg,
 			AuthenticatedUser: auth.UserFromSystem(cfg, "testuser"),
 		})
-		trackings[idx] = tracking
-		waitGroups[idx] = wg
+		trackings = append(trackings, tracking)
+		waitGroups = append(waitGroups, wg)
 	}
 
-	return trackings, waitGroups
+	require.Eventually(t, func() bool {
+		return groupExecutionDistributionMatches(e, trackings, 1, 2, 1)
+	}, 2*time.Second, 20*time.Millisecond)
+
+	for _, wg := range waitGroups {
+		wg.Wait()
+	}
 }
 
 func groupExecutionDistributionMatches(e *Executor, trackings []string, wantRunning, wantQueued, wantBlocked int) bool {

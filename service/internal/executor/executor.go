@@ -11,8 +11,6 @@ import (
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
 	"gopkg.in/yaml.v3"
 
 	"bytes"
@@ -39,13 +37,6 @@ func isValidTrackingID(id string) bool {
 
 	return id != "" && len(id) <= MaxTrackingIDLength && validTrackingIDPattern.MatchString(id)
 }
-
-var (
-	metricActionsRequested = promauto.NewCounter(prometheus.CounterOpts{
-		Name: "olivetin_actions_requested_count",
-		Help: "The actions requested count",
-	})
-)
 
 type ActionBinding struct {
 	ID           string
@@ -171,6 +162,7 @@ type InternalLogEntry struct {
 	ActionTitle   string
 	ActionIcon    string
 	Justification string
+	Arguments     map[string]string
 }
 
 // .Binding can be nil, so we need to handle that.
@@ -705,6 +697,8 @@ func (e *Executor) finishExecChain(req *ExecutionRequest) {
 		entry.ExecutionFinished = true
 	})
 
+	recordExecutionMetrics(req.logEntry)
+
 	notifyListenersFinished(req)
 	e.drainGroupQueue()
 }
@@ -863,6 +857,7 @@ func stepParseArgs(req *ExecutionRequest) bool {
 		return fail(req, err)
 	}
 	mangleInvalidArgumentValues(req)
+	copyStorableArgumentsToLogEntry(req)
 
 	if hasExec(req) {
 		return handleExecBranch(req)
@@ -1019,7 +1014,7 @@ func stepRequestActionPopulateLogEntry(req *ExecutionRequest) {
 		entry.Binding = req.Binding
 		entry.ActionConfigTitle = req.Binding.Action.Title
 		entry.ActionTitle = tpl.ParseTemplateOfActionBeforeExec(req.Binding.Action.Title, req.Binding.Entity)
-		entry.ActionIcon = req.Binding.Action.Icon
+		entry.ActionIcon = tpl.ParseTemplateOfActionBeforeExec(req.Binding.Action.Icon, req.Binding.Entity)
 		entry.Tags = req.Tags
 		entry.Justification = ResolveJustification(req)
 		if req.Binding.Entity != nil {

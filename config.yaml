@@ -118,7 +118,7 @@ actions:
   # Docs: https://docs.olivetin.app/solutions/container-control-panel/index.html
   - title: Restart Docker Container
     icon: restart
-    shell: docker restart {{ .CurrentEntity }}
+    shell: docker restart {{ container }}
     arguments:
       - name: container
         title: Container name

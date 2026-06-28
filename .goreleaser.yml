@@ -3,6 +3,7 @@ version: 2
 before:
   hooks:
     - make service-prep
+    - make windows-resources VERSION={{ .Version }}
 
 builds:
   - env:
@@ -42,6 +43,8 @@ builds:
 
 checksum:
   name_template: 'checksums.txt'
+  extra_files:
+    - glob: ./dist/OliveTin-windows-amd64.msi
 snapshot:
   version_template: "{{ .Branch }}-{{ .ShortCommit }}"
 changelog:
@@ -175,6 +178,8 @@ nfpms:
         dst: /usr/share/man/man1/OliveTin.1.gz
 
 release:
+  extra_files:
+    - glob: ./dist/OliveTin-windows-amd64.msi
   footer: |
     ## Container images (from GitHub)
 

@@ -1,17 +1,30 @@
 = Example: Some actions require admin
 
-A common use case for OliveTin with security is to expose some actions to guests, and have some actions that require login to be able to use. This page brings together the configuration options that are needed to achieve this. The most important configuration option is setting `authRequireGuestsToLogin` to `true`.
+A common use case for OliveTin with security is to expose some actions to guests, and have some actions that require login to be able to use. This page brings together the configuration options that are needed to achieve this.
+
+== How ACL permissions work
+
+OliveTin ACLs are *allow lists*, not deny lists. Each action starts with `defaultPermissions`, and then any ACLs listed on that action can *grant* access for matching users. An ACL with `view: false` does not deny access — it simply does not grant it. If no relevant ACL grants a permission, OliveTin falls back to `defaultPermissions`.
+
+The default `defaultPermissions` allow guests to view and execute every action. To restrict some actions to logged-in admins while leaving others open to guests, set `defaultPermissions` to deny access by default, then use ACLs to explicitly grant access on each action.
+
+See xref:security/acl.adoc[Access Control Lists] for the full ACL reference.
 
 == Full example configuration
 
 ```yaml
 logLevel: "INFO"
 
+defaultPermissions:
+  view: false
+  exec: false
+  logs: false
+
 accessControlLists:
-  - name: "noguests"
-    permissions: 
-      view: false
-      exec: false
+  - name: "guests"
+    permissions:
+      view: true
+      exec: true
       logs: false
     matchUsernames: [ "guest" ]
 
@@ -32,11 +45,12 @@ authLocalUsers:
 actions:
   - title: "Date"
     shell: date
+    acls:
+      - "guests"
 
   - title: "Reboot"
-    shell: reboot" # Note that this won't work inside a container
+    shell: reboot # Note that this won't work inside a container
     acls:
-      - "noguests"
       - "admins"
 
 dashboards:
@@ -50,3 +64,33 @@ dashboards:
 ```
 
 Note, to use this configuration, you will need to replace `-- your password hash here --` with a password hash. You can generate a password hash by looking at the options in the xref:security/local.adoc[local-users] configuration section.
+
+With this configuration:
+
+* Guests (not logged in) can view and run the *Date* action only.
+* Logged-in users in the `admins` usergroup can view and run the *Reboot* action.
+* Guests are not forced to log in — they simply do not see or cannot run actions that only list the `admins` ACL.
+
+== Common mistake: using a deny ACL for guests
+
+A configuration like the one below does *not* work as a deny rule when guests are allowed to browse without logging in:
+
+[source,yaml]
+----
+accessControlLists:
+  - name: "noguests"
+    permissions:
+      view: false
+      exec: false
+    matchUsernames: [ "guest" ]
+
+actions:
+  - title: "Reboot"
+    acls:
+      - "noguests"
+      - "admins"
+----
+
+Because `view: false` does not deny access, guests still fall back to `defaultPermissions` (which default to `true`) and can see the action. Setting `authRequireGuestsToLogin: true` makes that pattern appear to work, but only because it forces all guests to log in first and sets all `defaultPermissions` to `false`. If you need mixed guest and admin access without forcing login, use the allow-list pattern in the full example above instead.
+
+If you want *every* action to require login, see xref:security/example_login_required.adoc[Example: Force Login].

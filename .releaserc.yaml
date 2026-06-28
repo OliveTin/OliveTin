@@ -9,6 +9,6 @@ plugins:
   - '@semantic-release/git'
   - - "@semantic-release/exec"
     - publishCmd: |
-        goreleaser release --clean --timeout 60m
+        VERSION=${nextRelease.version} GORELEASER_TIMEOUT=60m ./var/windows/goreleaser-release-with-msi.sh
 
 tagFormat: '${version}'
