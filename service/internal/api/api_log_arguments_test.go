@@ -64,6 +64,8 @@ func TestExecutionStatusIncludesStoredArguments(t *testing.T) {
 	}))
 	require.NoError(t, err)
 
+	waitForLogArguments(t, ex, startResp.Msg.ExecutionTrackingId)
+
 	statusResp, err := client.ExecutionStatus(context.Background(), connect.NewRequest(&apiv1.ExecutionStatusRequest{
 		ExecutionTrackingId: startResp.Msg.ExecutionTrackingId,
 	}))
@@ -104,6 +106,8 @@ func TestExecutionStatusOmitsPasswordArguments(t *testing.T) {
 		},
 	}))
 	require.NoError(t, err)
+
+	waitForLogArguments(t, ex, startResp.Msg.ExecutionTrackingId)
 
 	statusResp, err := client.ExecutionStatus(context.Background(), connect.NewRequest(&apiv1.ExecutionStatusRequest{
 		ExecutionTrackingId: startResp.Msg.ExecutionTrackingId,
@@ -355,6 +359,8 @@ func TestGetLogsIncludesStoredArguments(t *testing.T) {
 	}))
 	require.NoError(t, err)
 	require.NotEmpty(t, startResp.Msg.ExecutionTrackingId)
+
+	waitForLogArguments(t, ex, startResp.Msg.ExecutionTrackingId)
 
 	logsResp, err := client.GetLogs(context.Background(), connect.NewRequest(&apiv1.GetLogsRequest{}))
 	require.NoError(t, err)
