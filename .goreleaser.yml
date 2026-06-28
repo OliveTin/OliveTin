@@ -6,7 +6,8 @@ before:
     - make windows-resources VERSION={{ .Version }}
 
 builds:
-  - env:
+  - skip: '{{ isEnvSet "GORELEASER_SKIP_BUILD" }}'
+    env:
       - CGO_ENABLED=0
     binary: OliveTin
     main: main.go

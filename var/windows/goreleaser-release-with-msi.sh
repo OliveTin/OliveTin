@@ -2,6 +2,8 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
+GORELEASER_CONFIG="${REPO_ROOT}/.goreleaser.yml"
 TIMEOUT="${GORELEASER_TIMEOUT:-60m}"
 
 if [[ -z "${VERSION:-}" ]]; then
@@ -9,9 +11,13 @@ if [[ -z "${VERSION:-}" ]]; then
   exit 1
 fi
 
-goreleaser release --clean --timeout "${TIMEOUT}" --skip=checksum,publish "$@"
+build_config="$(mktemp)"
+trap 'rm -f "${build_config}"' EXIT
+awk '/^checksum:/{print; print "  disable: true"; next}1' "${GORELEASER_CONFIG}" > "${build_config}"
+
+goreleaser release -f "${build_config}" --clean --timeout "${TIMEOUT}" --skip=publish "$@"
 
 "${SCRIPT_DIR}/build-msi.sh"
 
-goreleaser release --timeout "${TIMEOUT}" \
-  --skip=validate,before,build,archive,nfpm,docker,sign,sbom,after,announce "$@"
+GORELEASER_SKIP_BUILD=1 goreleaser release --timeout "${TIMEOUT}" \
+  --skip=validate,before,archive,nfpm,docker,sign,sbom,announce "$@"
