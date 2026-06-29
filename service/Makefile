@@ -43,9 +43,21 @@ unittests:
 	go test ./... -coverprofile reports/unittests.out
 	go tool cover -html=reports/unittests.out -o reports/unittests.html
 
+unittests-fast:
+	go test ./... -count=1
+
+find-flakey-tests:
+	echo "Running unittests-fast infinitely"
+	sh -c "while $(MAKE) unittests-fast; do :; done"
+
+find-flakey-tests-inf:
+	go run ./scripts/find-flakey-tests-inf
+
 go-tools:
 	go install "github.com/fzipp/gocyclo/cmd/gocyclo"
 	go install "github.com/go-critic/go-critic/cmd/gocritic"
+
+.PHONY: unittests unittests-fast find-flakey-tests find-flakey-tests-inf
 
 go-tools-all:
 	go install "github.com/bufbuild/buf/cmd/buf"
