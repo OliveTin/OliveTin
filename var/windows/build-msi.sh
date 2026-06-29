@@ -63,6 +63,15 @@ if [[ ! -f "${SOURCE_ROOT}/config.yaml" ]]; then
   exit 1
 fi
 
+if ! command -v objdump >/dev/null; then
+  echo "objdump is required to verify OliveTin.exe Windows resources" >&2
+  exit 1
+fi
+if ! objdump -h "${SOURCE_ROOT}/OliveTin.exe" | grep -q '[[:space:]]\.rsrc[[:space:]]'; then
+  echo "OliveTin.exe is missing embedded Windows resources (.rsrc); use main: . in .goreleaser.yml" >&2
+  exit 1
+fi
+
 mkdir -p "${APP_STAGING}/webui"
 cp "${SOURCE_ROOT}/OliveTin.exe" "${APP_STAGING}/"
 cp -a "${SOURCE_ROOT}/webui/." "${APP_STAGING}/webui/"
@@ -88,5 +97,10 @@ wixl \
   -o "${MSI_PATH}" \
   "${SCRIPT_DIR}/OliveTin.wxs" \
   "${HEAT_WXS}"
+
+if ! msiinfo export "${MSI_PATH}" Media 2>/dev/null | grep -q '#cab1.cab'; then
+  echo "MSI cabinet is not embedded (expected #cab1.cab in Media table); check EmbedCab in OliveTin.wxs" >&2
+  exit 1
+fi
 
 echo "Built ${MSI_PATH}"

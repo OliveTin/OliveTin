@@ -91,4 +91,10 @@ trap 'rm -rf "${WORK_DIR}" "${TOOL_BIN%/*}"' EXIT
 
 rm -f "${SERVICE_DIR}"/resource_windows_*.syso
 mv "${WORK_DIR}"/resource_windows_*.syso "${SERVICE_DIR}/"
+
+if ! compgen -G "${SERVICE_DIR}/resource_windows_*.syso" >/dev/null; then
+  echo "goversioninfo did not produce resource_windows_*.syso files" >&2
+  exit 1
+fi
+
 echo "Wrote Windows resource files to ${SERVICE_DIR}"

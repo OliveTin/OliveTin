@@ -17,7 +17,7 @@
     <MajorUpgrade
       AllowSameVersionUpgrades="yes"
       DowngradeErrorMessage="A newer version of OliveTin is already installed." />
-    <MediaTemplate />
+    <MediaTemplate EmbedCab="yes" />
 
     <Feature Id="ProductFeature" Title="OliveTin" Level="1">
       <ComponentGroupRef Id="CG.AppFiles" />
