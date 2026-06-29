@@ -2,10 +2,10 @@
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
   <Product
     Id="*"
-    Name="OliveTin $(var.Version)"
+    Name="OliveTin"
     Language="1033"
     Version="$(var.Version)"
-    Manufacturer="James Read"
+    Manufacturer="OliveTin contributors"
     UpgradeCode="8B5E3F2A-1C4D-4E6F-9A0B-2D3C4E5F6071">
     <Package
       InstallerVersion="500"
@@ -19,9 +19,14 @@
       DowngradeErrorMessage="A newer version of OliveTin is already installed." />
     <MediaTemplate EmbedCab="yes" />
 
+    <Icon Id="OliveTinIcon" SourceFile="$(var.SourceDir)/OliveTin.exe" />
+
+    <UIRef Id="WixUI_Minimal" />
+
     <Feature Id="ProductFeature" Title="OliveTin" Level="1">
       <ComponentGroupRef Id="CG.AppFiles" />
       <ComponentRef Id="ConfigFile" />
+      <ComponentRef Id="StartMenuShortcuts" />
     </Feature>
 
     <Directory Id="TARGETDIR" Name="SourceDir">
@@ -30,6 +35,9 @@
       </Directory>
       <Directory Id="CommonAppDataFolder">
         <Directory Id="ConfigDir" Name="OliveTin" />
+      </Directory>
+      <Directory Id="ProgramMenuFolder">
+        <Directory Id="ApplicationProgramsFolder" Name="OliveTin" />
       </Directory>
     </Directory>
 
@@ -40,6 +48,42 @@
           Source="$(var.ConfigSource)"
           Name="config.yaml"
           KeyPath="yes" />
+      </Component>
+    </DirectoryRef>
+
+    <DirectoryRef Id="ApplicationProgramsFolder">
+      <Component Id="StartMenuShortcuts" Guid="C3D4E5F6-A7B8-9012-CDEF-345678901234" Win64="yes">
+        <Shortcut
+          Id="OliveTinExeShortcut"
+          Name="OliveTin"
+          Description="OliveTin web interface for running shell commands"
+          Target="[INSTALLDIR]OliveTin.exe"
+          WorkingDirectory="INSTALLDIR"
+          Icon="OliveTinIcon"
+          IconIndex="0" />
+        <Shortcut
+          Id="ConfigYamlShortcut"
+          Name="config.yaml"
+          Description="OliveTin configuration file"
+          Target="[#ConfigYaml]"
+          Icon="OliveTinIcon"
+          IconIndex="0" />
+        <Shortcut
+          Id="ProgramDataDirShortcut"
+          Name="OliveTin Data"
+          Description="Open the OliveTin ProgramData directory"
+          Target="[System64Folder]explorer.exe"
+          Arguments="[ConfigDir]"
+          WorkingDirectory="ConfigDir" />
+        <Shortcut
+          Id="ProgramFilesDirShortcut"
+          Name="OliveTin Program Files"
+          Description="Open the OliveTin installation directory"
+          Target="[System64Folder]explorer.exe"
+          Arguments="&quot;[INSTALLDIR]&quot;"
+          WorkingDirectory="INSTALLDIR" />
+        <RemoveFolder Id="ApplicationProgramsFolder" On="uninstall" />
+        <RegistryValue Root="HKLM" Key="Software\OliveTin" Name="StartMenuShortcuts" Type="integer" Value="1" KeyPath="yes" />
       </Component>
     </DirectoryRef>
   </Product>

@@ -20,6 +20,11 @@ if ! command -v wixl >/dev/null || ! command -v wixl-heat >/dev/null; then
   exit 1
 fi
 
+if [[ ! -f "${SCRIPT_DIR}/License.rtf" ]]; then
+  echo "License.rtf not found: ${SCRIPT_DIR}/License.rtf" >&2
+  exit 1
+fi
+
 normalize_msi_version() {
   local raw="${1#v}"
   raw="${raw%%-*}"
@@ -87,16 +92,20 @@ cp -a "${SOURCE_ROOT}/webui/." "${APP_STAGING}/webui/"
   --win64 \
   > "${HEAT_WXS}"
 
-wixl \
-  -v \
-  -a x64 \
-  -D "Version=${MSI_VERSION}" \
-  -D "Win64=yes" \
-  -D "SourceDir=${APP_STAGING}" \
-  -D "ConfigSource=${SOURCE_ROOT}/config.yaml" \
-  -o "${MSI_PATH}" \
-  "${SCRIPT_DIR}/OliveTin.wxs" \
-  "${HEAT_WXS}"
+(
+  cd "${SCRIPT_DIR}"
+  wixl \
+    -v \
+    -a x64 \
+    --ext ui \
+    -D "Version=${MSI_VERSION}" \
+    -D "Win64=yes" \
+    -D "SourceDir=${APP_STAGING}" \
+    -D "ConfigSource=${SOURCE_ROOT}/config.yaml" \
+    -o "${MSI_PATH}" \
+    OliveTin.wxs \
+    "${HEAT_WXS}"
+)
 
 if ! msiinfo export "${MSI_PATH}" Media 2>/dev/null | grep -q '#cab1.cab'; then
   echo "MSI cabinet is not embedded (expected #cab1.cab in Media table); check EmbedCab in OliveTin.wxs" >&2
