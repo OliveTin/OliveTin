@@ -40,6 +40,22 @@ func waitForLogArguments(t *testing.T, ex *executor.Executor, trackingID string)
 	return nil
 }
 
+func waitForLogJustification(t *testing.T, ex *executor.Executor, trackingID, expected string) {
+	t.Helper()
+
+	deadline := time.Now().Add(2 * time.Second)
+	for time.Now().Before(deadline) {
+		entry, ok := ex.GetLog(trackingID)
+		if ok && entry.Justification == expected {
+			return
+		}
+
+		time.Sleep(5 * time.Millisecond)
+	}
+
+	t.Fatalf("timed out waiting for justification %q on log %s", expected, trackingID)
+}
+
 func TestExecutionStatusIncludesStoredArguments(t *testing.T) {
 	cfg := config.DefaultConfig()
 	cfg.Actions = []*config.Action{
@@ -321,18 +337,14 @@ func TestRestartActionReusesStoredJustificationViaStartActionPath(t *testing.T) 
 	}))
 	require.NoError(t, err)
 
-	originalLog, ok := ex.GetLog(startResp.Msg.ExecutionTrackingId)
-	require.True(t, ok)
-	assert.Equal(t, "maintenance window", originalLog.Justification)
+	waitForLogJustification(t, ex, startResp.Msg.ExecutionTrackingId, "maintenance window")
 
 	restartResp, err := client.RestartAction(context.Background(), connect.NewRequest(&apiv1.RestartActionRequest{
 		ExecutionTrackingId: startResp.Msg.ExecutionTrackingId,
 	}))
 	require.NoError(t, err)
 
-	restartedLog, ok := ex.GetLog(restartResp.Msg.ExecutionTrackingId)
-	require.True(t, ok)
-	assert.Equal(t, "maintenance window", restartedLog.Justification)
+	waitForLogJustification(t, ex, restartResp.Msg.ExecutionTrackingId, "maintenance window")
 }
 
 func TestGetLogsIncludesStoredArguments(t *testing.T) {

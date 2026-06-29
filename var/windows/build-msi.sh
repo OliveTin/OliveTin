@@ -20,6 +20,18 @@ if ! command -v wixl >/dev/null || ! command -v wixl-heat >/dev/null; then
   exit 1
 fi
 
+if [[ ! -f "${SCRIPT_DIR}/License.rtf" ]]; then
+  echo "License.rtf not found: ${SCRIPT_DIR}/License.rtf" >&2
+  exit 1
+fi
+
+INSTALLER_BANNER="${SCRIPT_DIR}/bitmaps/installer-banner.bmp"
+INSTALLER_DIALOG="${SCRIPT_DIR}/bitmaps/installer-dialog.bmp"
+if [[ ! -f "${INSTALLER_BANNER}" ]] || [[ ! -f "${INSTALLER_DIALOG}" ]]; then
+  echo "Installer bitmaps not found: ${INSTALLER_BANNER} and ${INSTALLER_DIALOG}" >&2
+  exit 1
+fi
+
 normalize_msi_version() {
   local raw="${1#v}"
   raw="${raw%%-*}"
@@ -48,7 +60,8 @@ MSI_VERSION="$(normalize_msi_version "${VERSION}")" || exit 1
 STAGING="$(mktemp -d)"
 APP_STAGING="$(mktemp -d)"
 HEAT_WXS="$(mktemp)"
-trap 'rm -rf "${STAGING}" "${APP_STAGING}" "${HEAT_WXS}"' EXIT
+WIXL_EXT_STAGING=""
+trap 'rm -rf "${STAGING}" "${APP_STAGING}" "${HEAT_WXS}" "${WIXL_EXT_STAGING}"' EXIT
 
 unzip -q "${ZIP_PATH}" -d "${STAGING}"
 SOURCE_ROOT="${STAGING}/OliveTin-windows-${ARCH}"
@@ -87,16 +100,38 @@ cp -a "${SOURCE_ROOT}/webui/." "${APP_STAGING}/webui/"
   --win64 \
   > "${HEAT_WXS}"
 
-wixl \
-  -v \
-  -a x64 \
-  -D "Version=${MSI_VERSION}" \
-  -D "Win64=yes" \
-  -D "SourceDir=${APP_STAGING}" \
-  -D "ConfigSource=${SOURCE_ROOT}/config.yaml" \
-  -o "${MSI_PATH}" \
-  "${SCRIPT_DIR}/OliveTin.wxs" \
-  "${HEAT_WXS}"
+WIXL_EXT_DIR=""
+for candidate in /usr/share/wixl*/ext; do
+  if [[ -d "${candidate}/ui/bitmaps" ]]; then
+    WIXL_EXT_DIR="${candidate}"
+    break
+  fi
+done
+if [[ -z "${WIXL_EXT_DIR}" ]]; then
+  echo "wixl UI extension not found under /usr/share/wixl*/ext" >&2
+  exit 1
+fi
+
+WIXL_EXT_STAGING="$(mktemp -d)"
+cp -a "${WIXL_EXT_DIR}/." "${WIXL_EXT_STAGING}/"
+cp "${INSTALLER_BANNER}" "${WIXL_EXT_STAGING}/ui/bitmaps/bannrbmp.bmp"
+cp "${INSTALLER_DIALOG}" "${WIXL_EXT_STAGING}/ui/bitmaps/dlgbmp.bmp"
+
+(
+  cd "${SCRIPT_DIR}"
+  wixl \
+    -v \
+    -a x64 \
+    --ext ui \
+    --extdir "${WIXL_EXT_STAGING}" \
+    -D "Version=${MSI_VERSION}" \
+    -D "Win64=yes" \
+    -D "SourceDir=${APP_STAGING}" \
+    -D "ConfigSource=${SOURCE_ROOT}/config.yaml" \
+    -o "${MSI_PATH}" \
+    OliveTin.wxs \
+    "${HEAT_WXS}"
+)
 
 if ! msiinfo export "${MSI_PATH}" Media 2>/dev/null | grep -q '#cab1.cab'; then
   echo "MSI cabinet is not embedded (expected #cab1.cab in Media table); check EmbedCab in OliveTin.wxs" >&2
