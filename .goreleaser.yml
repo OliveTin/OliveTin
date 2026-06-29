@@ -10,7 +10,7 @@ builds:
     env:
       - CGO_ENABLED=0
     binary: OliveTin
-    main: main.go
+    main: .
     dir: service
     goos:
       - linux
