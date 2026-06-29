@@ -22,6 +22,7 @@
     <Icon Id="OliveTinIcon" SourceFile="$(var.SourceDir)/OliveTin.exe" />
 
     <UIRef Id="WixUI_Minimal" />
+    <Property Id="WixUILicenseRtf" Value="License.rtf" />
 
     <Feature Id="ProductFeature" Title="OliveTin" Level="1">
       <ComponentGroupRef Id="CG.AppFiles" />

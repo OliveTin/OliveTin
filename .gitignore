@@ -27,4 +27,5 @@ webui.dev
 sessions.yaml
 docs/build/
 build/
+Binary/
 .cursor
