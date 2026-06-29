@@ -114,9 +114,9 @@ jobs:
             integration-tests
             !integration-tests/node_modules
 
-      - name: Install msitools
+      - name: Install wixl
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
-        run: sudo apt-get update && sudo apt-get install -y msitools
+        run: sudo apt-get update && sudo apt-get install -y wixl
 
       - name: Install goreleaser
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
