@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	defaultLogFile  = "flakey-test-runs.log"
+	defaultLogFile   = "flakey-test-runs.log"
 	defaultJSONLFile = "flakey-test-runs.jsonl"
 )
 
