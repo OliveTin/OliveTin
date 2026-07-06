@@ -20,7 +20,8 @@ message Action {
 	repeated string exec_on_file_changed_in_dir = 13;
 	string exec_on_calendar_file = 14;
 	repeated ActionWebhookExecHint exec_on_webhooks = 15;
-	bool justification = 16;
+	reserved 16;
+	string justification = 20;
 	bool has_running_instance = 17;
 	bool has_queued_instance = 18;
 	repeated ActionGroupMembership groups = 19;

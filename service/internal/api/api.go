@@ -156,15 +156,17 @@ func (api *oliveTinAPI) StartAction(ctx ctx.Context, req *connect.Request[apiv1.
 	}
 
 	authenticatedUser := auth.UserFromApiCall(ctx, req, api.cfg)
-	if err := validateJustificationRequired(pair.Action, req.Msg.Justification, authenticatedUser); err != nil {
+	args := startActionArgumentsFromProto(req.Msg.Arguments)
+	justification := resolveStartJustification(pair.Action, pair, req.Msg.Justification, args)
+	if err := validateJustificationRequired(pair.Action, justification, authenticatedUser); err != nil {
 		return nil, connectInvalidJustification(err)
 	}
 
 	execReq := executor.ExecutionRequest{
 		Binding:           pair,
 		TrackingID:        req.Msg.UniqueTrackingId,
-		Arguments:         startActionArgumentsFromProto(req.Msg.Arguments),
-		Justification:     req.Msg.Justification,
+		Arguments:         args,
+		Justification:     justification,
 		AuthenticatedUser: authenticatedUser,
 		Cfg:               api.cfg,
 	}
@@ -287,11 +289,13 @@ func (api *oliveTinAPI) StartActionAndWait(ctx ctx.Context, req *connect.Request
 	}
 
 	user := auth.UserFromApiCall(ctx, req, api.cfg)
-	if err := validateJustificationRequired(binding.Action, req.Msg.Justification, user); err != nil {
+	args := startActionArgumentsFromProto(req.Msg.Arguments)
+	justification := resolveStartJustification(binding.Action, binding, req.Msg.Justification, args)
+	if err := validateJustificationRequired(binding.Action, justification, user); err != nil {
 		return nil, connectInvalidJustification(err)
 	}
 
-	internalLogEntry, ok := api.startActionAndWaitRun(binding, startActionArgumentsFromProto(req.Msg.Arguments), req.Msg.Justification, user)
+	internalLogEntry, ok := api.startActionAndWaitRun(binding, args, justification, user)
 	if !ok {
 		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("execution not found"))
 	}

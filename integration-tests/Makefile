@@ -1,7 +1,11 @@
-default: test-install test-run
+default: test-install prep test-run
 
 test-install:
 	npm install --no-fund
+
+prep:
+	$(MAKE) -wC .. webui-dist
+	$(MAKE) -wC ../service compile-currentenv
 
 test-run:
     # GitHub Actions fails badly on the default timeout of 2000ms
@@ -24,4 +28,4 @@ getsnapshot:
 	rm -rf /opt/OliveTin-snapshot/*
 	gh run download -D /opt/OliveTin-snapshot/
 
-.PHONY: default find-flakey-tests find-flakey-tests-inf
+.PHONY: default find-flakey-tests find-flakey-tests-inf prep

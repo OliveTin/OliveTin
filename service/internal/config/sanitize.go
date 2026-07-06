@@ -227,6 +227,7 @@ func (action *Action) sanitize(cfg *Config) {
 	action.ID = getActionID(action)
 	action.Icon = lookupHTMLIcon(action.Icon, cfg.DefaultIconForActions)
 	migrateActionOnClick(action)
+	action.sanitizeJustification()
 	action.OnClick = sanitizeOnClick(action.OnClick, cfg)
 	action.PopupOnStart = action.OnClick
 
@@ -446,6 +447,15 @@ func sanitizeOnClick(raw string, cfg *Config) string {
 func migrateActionOnClick(action *Action) {
 	if action.OnClick == "" && action.PopupOnStart != "" {
 		action.OnClick = action.PopupOnStart
+	}
+}
+
+func (action *Action) sanitizeJustification() {
+	switch action.Justification {
+	case "false":
+		action.Justification = ""
+	case "true":
+		action.Justification = JustificationRequiredNoTemplate
 	}
 }
 

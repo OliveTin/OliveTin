@@ -45,7 +45,7 @@ func ResolveJustification(req *ExecutionRequest) string {
 }
 
 func actionRequiresJustification(req *ExecutionRequest) bool {
-	return req != nil && req.Binding != nil && req.Binding.Action != nil && req.Binding.Action.Justification
+	return req != nil && req.Binding != nil && req.Binding.Action != nil && req.Binding.Action.RequiresJustification()
 }
 
 func defaultJustificationForRequest(req *ExecutionRequest) string {

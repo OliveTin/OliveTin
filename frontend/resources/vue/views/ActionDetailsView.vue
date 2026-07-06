@@ -96,7 +96,9 @@
               <td class="duration">{{ formatExecutionDuration(log) }}</td>
               <td>
                 <router-link :to="`/logs/${log.executionTrackingId}`">
-                  {{ log.executionTrackingId }}
+                  <LogActionTitle :justification="log.justification">
+                    {{ log.executionTrackingId }}
+                  </LogActionTitle>
                 </router-link>
               </td>
               <td class="tags">
@@ -134,6 +136,7 @@ import Section from 'picocrank/vue/components/Section.vue'
 import ActionIconGlyph from '../components/ActionIconGlyph.vue'
 import ActionStatusDisplay from '../components/ActionStatusDisplay.vue'
 import ActionGroupLimitsLabel from '../components/ActionGroupLimitsLabel.vue'
+import LogActionTitle from '../components/LogActionTitle.vue'
 import { HugeiconsIcon } from '@hugeicons/vue'
 import { DashboardSquare01Icon, WorkoutRunIcon } from '@hugeicons/core-free-icons'
 import { requestReconnectNow } from '../../../js/websocket.js'
@@ -162,7 +165,8 @@ const filteredLogs = computed(() => {
   const searchLower = searchText.value.toLowerCase()
   return logs.value.filter(log =>
     log.executionTrackingId.toLowerCase().includes(searchLower) ||
-    log.actionTitle.toLowerCase().includes(searchLower)
+    log.actionTitle.toLowerCase().includes(searchLower) ||
+    (log.justification || '').toLowerCase().includes(searchLower)
   )
 })
 

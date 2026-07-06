@@ -57,6 +57,7 @@ devrun: compile
 devcontainer: compile podman-image podman-container
 
 webui-dist:
+	$(call delete-files,webui)
 	$(MAKE) -wC frontend dist
 	mv frontend/dist webui
 

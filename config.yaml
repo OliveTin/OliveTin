@@ -133,7 +133,8 @@ actions:
   # Docs: https://docs.olivetin.app/args/input_confirmation.html
   - title: Delete old backups
     icon: ashtonished
-    justification: true
+    # A single space requires justification with no prefilled template (empty disables it).
+    justification: " "
     shell: rm -rf /opt/oliveTinOldBackups/ && sleep 5
     arguments:
       - type: html
