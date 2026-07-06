@@ -9,7 +9,7 @@
       </button>
     </div>
     <fieldset class="choice-checklist-fieldset">
-      <legend class="visually-hidden">{{ name }}</legend>
+      <legend class="visually-hidden">{{ label || name }}</legend>
       <label
         v-for="(choice, index) in choices"
         :key="choice.value"
@@ -28,9 +28,12 @@
     <input
       :id="`${id}-value`"
       :name="name"
-      type="hidden"
+      type="text"
+      class="visually-hidden choice-checklist-value"
       :value="modelValue"
-      :required="required && modelValue === ''"
+      :required="required"
+      tabindex="-1"
+      aria-hidden="true"
     />
   </div>
 </template>
@@ -53,6 +56,10 @@ const props = defineProps({
   name: {
     type: String,
     required: true
+  },
+  label: {
+    type: String,
+    default: ''
   },
   choices: {
     type: Array,
@@ -119,7 +126,7 @@ function selectNone() {
   border: none;
   display: grid;
   gap: 0.5em 1em;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
   margin: 0;
   padding: 0;
 }

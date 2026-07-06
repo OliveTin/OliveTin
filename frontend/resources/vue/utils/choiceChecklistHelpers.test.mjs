@@ -15,6 +15,7 @@ const choices = [
 
 test('parseChecklistValue splits comma-delimited values', () => {
   assert.deepEqual(parseChecklistValue('documents,photos'), ['documents', 'photos'])
+  assert.deepEqual(parseChecklistValue('documents, photos'), ['documents', 'photos'])
   assert.deepEqual(parseChecklistValue(''), [])
 })
 

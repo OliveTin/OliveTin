@@ -27,9 +27,9 @@ async function submitChecklistForm() {
   await submitButton.click()
 }
 
-async function waitForTerminalOutput(expectedValue) {
+async function pollTerminal(matcher, timeoutMs = DEFAULT_UI_WAIT_MS) {
   await webdriver.wait(
-    new Condition(`wait for checklist value ${expectedValue} in output`, async () => {
+    new Condition('wait for terminal output', async () => {
       try {
         const terminalReady = await webdriver.executeScript(`
           return !!(window.terminal && window.terminal.getBufferAsString);
@@ -43,42 +43,34 @@ async function waitForTerminalOutput(expectedValue) {
           return false
         }
 
-        return output.trim().includes(`Selected segments: ${expectedValue}`)
+        return matcher(output.trim())
       } catch (e) {
         return false
       }
     }),
+    timeoutMs
+  )
+}
+
+async function waitForTerminalOutput(expectedValue) {
+  await pollTerminal(
+    (output) => output.includes(`Selected segments: ${expectedValue}`),
     DEFAULT_UI_WAIT_MS
   )
 }
 
 async function waitForTerminalOutputPattern(pattern) {
-  await webdriver.wait(
-    new Condition(`wait for terminal output matching ${pattern}`, async () => {
-      try {
-        const terminalReady = await webdriver.executeScript(`
-          return !!(window.terminal && window.terminal.getBufferAsString);
-        `)
-        if (!terminalReady) {
-          return false
-        }
-
-        const output = await getTerminalBuffer()
-        if (!output) {
-          return false
-        }
-
-        return pattern.test(output.trim())
-      } catch (e) {
-        return false
-      }
-    }),
+  await pollTerminal(
+    (output) => pattern.test(output),
     10000
   )
 }
 
 async function getCheckboxByValueIndex(index) {
-  return await webdriver.findElement(By.id(`segments-${index}`))
+  const checkboxes = await webdriver.findElements(
+    By.css('.choice-checklist-item input[type="checkbox"]')
+  )
+  return checkboxes[index]
 }
 
 describe('config: checklist', function () {
@@ -118,8 +110,8 @@ describe('config: checklist', function () {
     await selectNone.click()
     await webdriver.sleep(300)
 
-    const hidden = await webdriver.findElement(By.id('segments-value'))
-    expect(await hidden.getAttribute('value')).to.equal('')
+    const valueInput = await webdriver.findElement(By.css('.choice-checklist > input'))
+    expect(await valueInput.getAttribute('value')).to.equal('')
 
     await submitChecklistForm()
     await waitForLogsPage()

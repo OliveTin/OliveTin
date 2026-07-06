@@ -26,8 +26,8 @@
                 @update:model-value="handleChoiceUpdate(arg, $event)" />
 
               <ChoiceChecklist v-else-if="arg.type === 'checklist'" :id="arg.name" :name="arg.name"
-                :choices="arg.choices" :model-value="getArgumentValue(arg)" :required="arg.required"
-                @update:model-value="handleChecklistUpdate(arg, $event)" />
+                :label="arg.title" :choices="arg.choices" :model-value="getArgumentValue(arg)" :required="arg.required"
+                @update:model-value="handleChoiceUpdate(arg, $event)" />
 
               <component v-else :is="getInputComponent(arg)" :id="arg.name" :name="arg.name"
                 :value="(arg.type === 'checkbox' || arg.type === 'confirmation') ? undefined : getArgumentValue(arg)"
@@ -145,8 +145,6 @@ async function setup() {
         } else {
           argValues.value[arg.name] = false
         }
-      } else if (arg.type === 'checklist') {
-        argValues.value[arg.name] = paramValue !== null ? paramValue : arg.defaultValue || ''
       } else {
         argValues.value[arg.name] = paramValue !== null ? paramValue : arg.defaultValue || ''
       }
@@ -251,12 +249,6 @@ function getValidationElement(arg) {
   }
 
   return document.getElementById(arg.name)
-}
-
-function handleChecklistUpdate(arg, value) {
-  argValues.value[arg.name] = value
-  updateUrlWithArg(arg.name, value)
-  validateArgument(arg, value)
 }
 
 function handleChoiceUpdate(arg, value) {
@@ -500,6 +492,11 @@ async function handleSubmit(event) {
   const form = event.target
   if (!form.checkValidity()) {
     console.log('argument form has elements that failed validation')
+    return
+  }
+
+  if (Object.keys(formErrors.value).length > 0) {
+    console.log('argument form has validation errors')
     return
   }
 

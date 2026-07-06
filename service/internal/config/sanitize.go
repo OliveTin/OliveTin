@@ -34,6 +34,10 @@ func (cfg *Config) Sanitize() {
 	if err := cfg.validateReservedActionArgumentNames(); err != nil {
 		log.Fatalf("%v", err)
 	}
+
+	if err := cfg.validateChecklistChoiceValues(); err != nil {
+		log.Fatalf("%v", err)
+	}
 }
 
 func (cfg *Config) validateReservedActionArgumentNames() error {
@@ -54,6 +58,49 @@ func (action *Action) validateReservedArgumentNames() error {
 	for _, arg := range action.Arguments {
 		if strings.HasPrefix(arg.Name, ReservedArgumentNamePrefix) {
 			return fmt.Errorf("action %q argument %q uses reserved prefix %q", action.Title, arg.Name, ReservedArgumentNamePrefix)
+		}
+	}
+
+	return nil
+}
+
+func (cfg *Config) validateChecklistChoiceValues() error {
+	for _, action := range cfg.Actions {
+		if err := action.validateChecklistChoiceValues(); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (action *Action) validateChecklistChoiceValues() error {
+	if action == nil {
+		return nil
+	}
+
+	for _, arg := range action.Arguments {
+		if err := validateChecklistChoicesForArgument(action.Title, arg); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func validateChecklistChoicesForArgument(actionTitle string, arg ActionArgument) error {
+	if arg.Type != "checklist" {
+		return nil
+	}
+
+	for _, choice := range arg.Choices {
+		if strings.Contains(choice.Value, ",") {
+			return fmt.Errorf(
+				`action %q argument %q choice value %q must not contain commas`,
+				actionTitle,
+				arg.Name,
+				choice.Value,
+			)
 		}
 	}
 
