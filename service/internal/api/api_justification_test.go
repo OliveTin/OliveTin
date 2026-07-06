@@ -21,7 +21,7 @@ func TestStartActionRequiresJustificationForGuest(t *testing.T) {
 	action := &config.Action{
 		Title:         "Send email",
 		ID:            "send_email",
-		Justification: " ",
+		Justification: config.JustificationRequiredNoTemplate,
 		Shell:         "echo done",
 	}
 	cfg.Actions = append(cfg.Actions, action)
@@ -85,7 +85,7 @@ func TestBuildActionExposesBlankRequiredJustification(t *testing.T) {
 	action := &config.Action{
 		Title:         "Audited action",
 		ID:            "audited",
-		Justification: " ",
+		Justification: config.JustificationRequiredNoTemplate,
 		Shell:         "echo hi",
 	}
 	cfg.Actions = append(cfg.Actions, action)
@@ -101,7 +101,7 @@ func TestBuildActionExposesBlankRequiredJustification(t *testing.T) {
 	})
 
 	require.NotNil(t, pb)
-	assert.Equal(t, " ", pb.Justification)
+	assert.Equal(t, config.JustificationRequiredNoTemplate, pb.Justification)
 }
 
 func TestResolveStartJustificationUsesTemplateWhenClientValueEmpty(t *testing.T) {
@@ -168,7 +168,7 @@ func TestStartActionResolvesJustificationTemplateForGuest(t *testing.T) {
 
 func TestValidateJustificationRequiredAllowsSystemUser(t *testing.T) {
 	cfg := config.DefaultConfig()
-	action := &config.Action{Title: "Cron job", Justification: " "}
+	action := &config.Action{Title: "Cron job", Justification: config.JustificationRequiredNoTemplate}
 
 	err := validateJustificationRequired(action, "", auth.UserFromSystem(cfg, "cron"))
 	require.NoError(t, err)

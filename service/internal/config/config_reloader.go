@@ -55,6 +55,7 @@ func unmarshalRoot(k *koanf.Koanf, cfg *Config) bool {
 		DecoderConfig: &mapstructure.DecoderConfig{
 			DecodeHook: mapstructure.ComposeDecodeHookFunc(
 				envDecodeHookFunc,
+				justificationDecodeHookFunc,
 				mapstructure.StringToTimeDurationHookFunc(),
 				mapstructure.TextUnmarshallerHookFunc(),
 			),
@@ -258,6 +259,18 @@ func mergeFunc(src map[string]interface{}, dest map[string]interface{}) error {
 }
 
 var envRegex = regexp.MustCompile(`\${{ *?(\S+) *?}}`)
+
+func justificationDecodeHookFunc(from reflect.Type, to reflect.Type, data any) (any, error) {
+	if to.Kind() != reflect.String || from.Kind() != reflect.Bool {
+		return data, nil
+	}
+
+	if data.(bool) {
+		return JustificationRequiredNoTemplate, nil
+	}
+
+	return "", nil
+}
 
 func envDecodeHookFunc(from reflect.Type, to reflect.Type, data any) (any, error) {
 	log.Debugf("envDecodeHookFunc called: from=%v, to=%v, data=%v", from, to, data)
