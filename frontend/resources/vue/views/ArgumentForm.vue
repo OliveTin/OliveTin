@@ -70,6 +70,11 @@ import { useRouter } from 'vue-router'
 import { requestReconnectNow } from '../../../js/websocket.js'
 import ChoiceCombobox from '../components/ChoiceCombobox.vue'
 import ChoiceChecklist from '../components/ChoiceChecklist.vue'
+import {
+  actionJustificationTemplate,
+  actionRequiresJustification,
+  applyArgumentTemplate
+} from '../utils/justificationTemplate.js'
 
 const router = useRouter()
 
@@ -114,8 +119,7 @@ async function setup() {
     icon.value = action.icon
     popupOnStart.value = action.popupOnStart || ''
     actionArguments.value = action.arguments || []
-    justificationRequired.value = action.justification || false
-    justificationValue.value = ''
+    justificationRequired.value = actionRequiresJustification(action.justification)
     argValues.value = {}
     formErrors.value = {}
     confirmationChecked.value = false
@@ -150,6 +154,12 @@ async function setup() {
       }
     }
     })
+
+    const prefilledJustification = applyArgumentTemplate(
+      actionJustificationTemplate(action.justification),
+      argValues.value
+    )
+    justificationValue.value = prefilledJustification.trim() === '' ? '' : prefilledJustification
 
     // Run initial validation on all fields after DOM is updated
     await nextTick()

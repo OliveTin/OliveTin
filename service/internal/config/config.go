@@ -7,6 +7,9 @@ import (
 // ReservedArgumentNamePrefix is reserved for OliveTin-injected system arguments.
 const ReservedArgumentNamePrefix = "ot_"
 
+// JustificationRequiredNoTemplate requires a manual justification with no prefilled template.
+const JustificationRequiredNoTemplate = " "
+
 // Action represents the core functionality of OliveTin - commands that show up
 // as buttons in the UI.
 type Action struct {
@@ -43,7 +46,7 @@ func (action *Action) RequiresJustification() bool {
 }
 
 func (action *Action) JustificationTemplateText() string {
-	if action == nil || !action.RequiresJustification() {
+	if !action.RequiresJustification() {
 		return ""
 	}
 
