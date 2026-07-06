@@ -82,7 +82,11 @@ import { requestReconnectNow } from '../../../js/websocket.js'
 import ChoiceCombobox from '../components/ChoiceCombobox.vue'
 import ChoiceChecklist from '../components/ChoiceChecklist.vue'
 import ActionIconGlyph from '../components/ActionIconGlyph.vue'
-import { applyArgumentTemplate, actionJustificationTemplate, actionRequiresJustification } from '../utils/justificationTemplate.js'
+import {
+  actionJustificationTemplate,
+  actionRequiresJustification,
+  applyArgumentTemplate
+} from '../utils/justificationTemplate.js'
 import { getInitialArgumentValue, readPrefilledArgumentsFromNavigation } from '../utils/prefilledArguments.js'
 
 const router = useRouter()

@@ -38,7 +38,7 @@ type Action struct {
 	ExecOnFileChangedInDir   []string                 `protobuf:"bytes,13,rep,name=exec_on_file_changed_in_dir,json=execOnFileChangedInDir,proto3" json:"exec_on_file_changed_in_dir,omitempty"`
 	ExecOnCalendarFile       string                   `protobuf:"bytes,14,opt,name=exec_on_calendar_file,json=execOnCalendarFile,proto3" json:"exec_on_calendar_file,omitempty"`
 	ExecOnWebhooks           []*ActionWebhookExecHint `protobuf:"bytes,15,rep,name=exec_on_webhooks,json=execOnWebhooks,proto3" json:"exec_on_webhooks,omitempty"`
-	Justification            string                   `protobuf:"bytes,16,opt,name=justification,proto3" json:"justification,omitempty"`
+	Justification            string                   `protobuf:"bytes,20,opt,name=justification,proto3" json:"justification,omitempty"`
 	HasRunningInstance       bool                     `protobuf:"varint,17,opt,name=has_running_instance,json=hasRunningInstance,proto3" json:"has_running_instance,omitempty"`
 	HasQueuedInstance        bool                     `protobuf:"varint,18,opt,name=has_queued_instance,json=hasQueuedInstance,proto3" json:"has_queued_instance,omitempty"`
 	Groups                   []*ActionGroupMembership `protobuf:"bytes,19,rep,name=groups,proto3" json:"groups,omitempty"`
@@ -4751,7 +4751,7 @@ var File_olivetin_api_v1_olivetin_proto protoreflect.FileDescriptor
 
 const file_olivetin_api_v1_olivetin_proto_rawDesc = "" +
 	"\n" +
-	"\x1eolivetin/api/v1/olivetin.proto\x12\x0folivetin.api.v1\"\xd1\x06\n" +
+	"\x1eolivetin/api/v1/olivetin.proto\x12\x0folivetin.api.v1\"\xd7\x06\n" +
 	"\x06Action\x12\x1d\n" +
 	"\n" +
 	"binding_id\x18\x01 \x01(\tR\tbindingId\x12\x14\n" +
@@ -4771,10 +4771,10 @@ const file_olivetin_api_v1_olivetin_proto_rawDesc = "" +
 	"\x1bexec_on_file_changed_in_dir\x18\r \x03(\tR\x16execOnFileChangedInDir\x121\n" +
 	"\x15exec_on_calendar_file\x18\x0e \x01(\tR\x12execOnCalendarFile\x12P\n" +
 	"\x10exec_on_webhooks\x18\x0f \x03(\v2&.olivetin.api.v1.ActionWebhookExecHintR\x0eexecOnWebhooks\x12$\n" +
-	"\rjustification\x18\x10 \x01(\tR\rjustification\x120\n" +
+	"\rjustification\x18\x14 \x01(\tR\rjustification\x120\n" +
 	"\x14has_running_instance\x18\x11 \x01(\bR\x12hasRunningInstance\x12.\n" +
 	"\x13has_queued_instance\x18\x12 \x01(\bR\x11hasQueuedInstance\x12>\n" +
-	"\x06groups\x18\x13 \x03(\v2&.olivetin.api.v1.ActionGroupMembershipR\x06groups\"q\n" +
+	"\x06groups\x18\x13 \x03(\v2&.olivetin.api.v1.ActionGroupMembershipR\x06groupsJ\x04\b\x10\x10\x11\"q\n" +
 	"\x15ActionGroupMembership\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12%\n" +
 	"\x0emax_concurrent\x18\x02 \x01(\x05R\rmaxConcurrent\x12\x1d\n" +

@@ -92,7 +92,7 @@ export declare type Action = Message<"olivetin.api.v1.Action"> & {
   execOnWebhooks: ActionWebhookExecHint[];
 
   /**
-   * @generated from field: string justification = 16;
+   * @generated from field: string justification = 20;
    */
   justification: string;
 

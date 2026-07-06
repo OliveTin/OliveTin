@@ -12,6 +12,7 @@ import (
 	"github.com/OliveTin/OliveTin/internal/entities"
 	"github.com/OliveTin/OliveTin/internal/executor"
 	"github.com/OliveTin/OliveTin/internal/tpl"
+	log "github.com/sirupsen/logrus"
 )
 
 func validateJustificationRequired(action *config.Action, justification string, user *authpublic.AuthenticatedUser) error {
@@ -58,6 +59,11 @@ func resolveJustificationFromTemplate(action *config.Action, binding *executor.A
 
 	resolved, err := tpl.ParseTemplateWithActionContext(templateText, bindingEntity(binding), args)
 	if err != nil {
+		log.WithFields(log.Fields{
+			"template": templateText,
+			"entity":   bindingEntity(binding),
+			"error":    err,
+		}).Warn("Failed to resolve justification template")
 		return fallback
 	}
 
