@@ -248,6 +248,27 @@ export declare type ActionArgumentChoice = Message<"olivetin.api.v1.ActionArgume
 export declare const ActionArgumentChoiceSchema: GenMessage<ActionArgumentChoice>;
 
 /**
+ * @generated from message olivetin.api.v1.EntityRelatedAction
+ */
+export declare type EntityRelatedAction = Message<"olivetin.api.v1.EntityRelatedAction"> & {
+  /**
+   * @generated from field: olivetin.api.v1.Action action = 1;
+   */
+  action?: Action | undefined;
+
+  /**
+   * @generated from field: map<string, string> prefilled_arguments = 2;
+   */
+  prefilledArguments: { [key: string]: string };
+};
+
+/**
+ * Describes the message olivetin.api.v1.EntityRelatedAction.
+ * Use `create(EntityRelatedActionSchema)` to create a new message.
+ */
+export declare const EntityRelatedActionSchema: GenMessage<EntityRelatedAction>;
+
+/**
  * @generated from message olivetin.api.v1.Entity
  */
 export declare type Entity = Message<"olivetin.api.v1.Entity"> & {
@@ -275,6 +296,16 @@ export declare type Entity = Message<"olivetin.api.v1.Entity"> & {
    * @generated from field: map<string, string> fields = 5;
    */
   fields: { [key: string]: string };
+
+  /**
+   * @generated from field: repeated olivetin.api.v1.EntityRelatedAction related_actions = 6;
+   */
+  relatedActions: EntityRelatedAction[];
+
+  /**
+   * @generated from field: string icon = 7;
+   */
+  icon: string;
 };
 
 /**
@@ -1894,6 +1925,25 @@ export declare const GetActionBindingResponseSchema: GenMessage<GetActionBinding
  * @generated from message olivetin.api.v1.GetEntitiesRequest
  */
 export declare type GetEntitiesRequest = Message<"olivetin.api.v1.GetEntitiesRequest"> & {
+  /**
+   * @generated from field: string entity_type = 1;
+   */
+  entityType: string;
+
+  /**
+   * @generated from field: string filter = 2;
+   */
+  filter: string;
+
+  /**
+   * @generated from field: int32 page = 3;
+   */
+  page: number;
+
+  /**
+   * @generated from field: int32 page_size = 4;
+   */
+  pageSize: number;
 };
 
 /**
@@ -1936,6 +1986,21 @@ export declare type EntityDefinition = Message<"olivetin.api.v1.EntityDefinition
    * @generated from field: repeated string used_on_dashboards = 3;
    */
   usedOnDashboards: string[];
+
+  /**
+   * @generated from field: string icon = 4;
+   */
+  icon: string;
+
+  /**
+   * @generated from field: repeated olivetin.api.v1.EntityProperty properties = 5;
+   */
+  properties: EntityProperty[];
+
+  /**
+   * @generated from field: int32 total_instances = 6;
+   */
+  totalInstances: number;
 };
 
 /**
@@ -1943,6 +2008,27 @@ export declare type EntityDefinition = Message<"olivetin.api.v1.EntityDefinition
  * Use `create(EntityDefinitionSchema)` to create a new message.
  */
 export declare const EntityDefinitionSchema: GenMessage<EntityDefinition>;
+
+/**
+ * @generated from message olivetin.api.v1.EntityProperty
+ */
+export declare type EntityProperty = Message<"olivetin.api.v1.EntityProperty"> & {
+  /**
+   * @generated from field: string name = 1;
+   */
+  name: string;
+
+  /**
+   * @generated from field: string title = 2;
+   */
+  title: string;
+};
+
+/**
+ * Describes the message olivetin.api.v1.EntityProperty.
+ * Use `create(EntityPropertySchema)` to create a new message.
+ */
+export declare const EntityPropertySchema: GenMessage<EntityProperty>;
 
 /**
  * @generated from message olivetin.api.v1.GetEntityRequest

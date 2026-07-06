@@ -322,6 +322,12 @@ entities:
   # Docs: https://docs.olivetin.app/entities/intro.html
   - file: entities/servers.yaml
     name: server
+    icon: ssh
+    properties:
+      - name: hostname
+        title: Hostname
+      - name: ip
+        title: IP
 
   - file: entities/containers.json
     name: container
