@@ -58,12 +58,19 @@ message ActionArgumentChoice {
 	string title = 2;
 }
 
+message EntityRelatedAction {
+	Action action = 1;
+	map<string, string> prefilled_arguments = 2;
+}
+
 message Entity {
 	string title = 1;
     string unique_key = 2;
     string type = 3;
     repeated string directories = 4;
     map<string, string> fields = 5;
+    repeated EntityRelatedAction related_actions = 6;
+    string icon = 7;
 }
 
 message GetDashboardResponse {
@@ -428,6 +435,10 @@ message GetActionBindingResponse {
 }
 
 message GetEntitiesRequest {
+  string entity_type = 1;
+  string filter = 2;
+  int32 page = 3;
+  int32 page_size = 4;
 }
 
 message GetEntitiesResponse {
@@ -438,6 +449,14 @@ message EntityDefinition {
   string title = 1;
   repeated Entity instances = 2;
   repeated string used_on_dashboards = 3;
+  string icon = 4;
+  repeated EntityProperty properties = 5;
+  int32 total_instances = 6;
+}
+
+message EntityProperty {
+  string name = 1;
+  string title = 2;
 }
 
 message GetEntityRequest {

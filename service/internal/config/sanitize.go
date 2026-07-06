@@ -30,6 +30,7 @@ func (cfg *Config) Sanitize() {
 
 	cfg.sanitizeActionGroups()
 	cfg.sanitizeActionGroupReferences()
+	cfg.sanitizeEntities()
 
 	if err := cfg.validateReservedActionArgumentNames(); err != nil {
 		log.Fatalf("%v", err)
@@ -287,6 +288,25 @@ func (cfg *Config) sanitizeActionGroupReferences() {
 	for _, action := range cfg.Actions {
 		for _, groupName := range action.Groups {
 			cfg.warnInvalidActionGroupReference(action, groupName)
+		}
+	}
+}
+
+func (cfg *Config) sanitizeEntities() {
+	for _, entityFile := range cfg.Entities {
+		if entityFile == nil {
+			continue
+		}
+
+		entityFile.Icon = lookupHTMLIcon(entityFile.Icon, "")
+		sanitizeEntityProperties(entityFile)
+	}
+}
+
+func sanitizeEntityProperties(entityFile *EntityFile) {
+	for idx := range entityFile.Properties {
+		if entityFile.Properties[idx].Title == "" {
+			entityFile.Properties[idx].Title = entityFile.Properties[idx].Name
 		}
 	}
 }

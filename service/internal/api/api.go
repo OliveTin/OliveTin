@@ -4,9 +4,14 @@ import (
 	ctx "context"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"net/http"
 	"os"
 	"path"
 	"sort"
+	"strings"
+	"sync"
+	"time"
 
 	"connectrpc.com/connect"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -15,11 +20,6 @@ import (
 	apiv1connect "github.com/OliveTin/OliveTin/gen/olivetin/api/v1/apiv1connect"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
-
-	"fmt"
-	"net/http"
-	"sync"
-	"time"
 
 	acl "github.com/OliveTin/OliveTin/internal/acl"
 	auth "github.com/OliveTin/OliveTin/internal/auth"
@@ -1377,21 +1377,7 @@ func (api *oliveTinAPI) GetEntities(ctx ctx.Context, req *connect.Request[apiv1.
 	}
 
 	entityMap := entities.GetEntities()
-	entityNames := make([]string, 0, len(entityMap))
-	for name := range entityMap {
-		entityNames = append(entityNames, name)
-	}
-	sort.Strings(entityNames)
-
-	entityDefinitions := make([]*apiv1.EntityDefinition, 0, len(entityNames))
-	for _, name := range entityNames {
-		def := &apiv1.EntityDefinition{
-			Title:            name,
-			UsedOnDashboards: findDashboardsForEntity(name, api.cfg.Dashboards),
-			Instances:        buildSortedEntityInstances(name, entityMap[name]),
-		}
-		entityDefinitions = append(entityDefinitions, def)
-	}
+	entityDefinitions := api.buildEntityDefinitionsResponse(req.Msg, entityMap)
 
 	res := &apiv1.GetEntitiesResponse{
 		EntityDefinitions: entityDefinitions,
@@ -1400,7 +1386,7 @@ func (api *oliveTinAPI) GetEntities(ctx ctx.Context, req *connect.Request[apiv1.
 	return connect.NewResponse(res), nil
 }
 
-func buildSortedEntityInstances(entityType string, entityInstances map[string]*entities.Entity) []*apiv1.Entity {
+func buildSortedEntityInstances(entityType string, entityInstances map[string]*entities.Entity, properties []config.EntityProperty) []*apiv1.Entity {
 	instanceKeys := make([]string, 0, len(entityInstances))
 	for key := range entityInstances {
 		instanceKeys = append(instanceKeys, key)
@@ -1414,6 +1400,7 @@ func buildSortedEntityInstances(entityType string, entityInstances map[string]*e
 			Title:     e.Title,
 			UniqueKey: e.UniqueKey,
 			Type:      entityType,
+			Fields:    entityListFields(e.Data, properties),
 		})
 	}
 	return instances
@@ -1515,17 +1502,100 @@ func (api *oliveTinAPI) GetEntity(ctx ctx.Context, req *connect.Request[apiv1.Ge
 		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("entity with unique key %s not found in type %s", req.Msg.UniqueKey, req.Msg.Type))
 	}
 
-	res := buildEntityResponse(entity, req.Msg.Type, api.cfg.Dashboards)
+	res := buildEntityResponse(entity, req.Msg.Type, api.cfg)
+	res.RelatedActions = api.relatedActionsForEntity(user, req.Msg.Type, entity)
 	return connect.NewResponse(res), nil
 }
 
-func buildEntityResponse(entity *entities.Entity, entityType string, dashboards []*config.DashboardComponent) *apiv1.Entity {
+func entityTypeIcon(cfg *config.Config, entityType string) string {
+	entityFile := entityFileForType(cfg, entityType)
+	if entityFile == nil {
+		return ""
+	}
+
+	return entityFile.Icon
+}
+
+func entityFileForType(cfg *config.Config, entityType string) *config.EntityFile {
+	for _, entityFile := range cfg.Entities {
+		if entityFile != nil && entityFile.Name == entityType {
+			return entityFile
+		}
+	}
+
+	return nil
+}
+
+func entityPropertiesFromFile(entityFile *config.EntityFile) []config.EntityProperty {
+	if entityFile == nil {
+		return nil
+	}
+
+	return entityFile.Properties
+}
+
+func entityDefinitionProperties(properties []config.EntityProperty) []*apiv1.EntityProperty {
+	if len(properties) == 0 {
+		return nil
+	}
+
+	result := make([]*apiv1.EntityProperty, 0, len(properties))
+	for _, property := range properties {
+		result = append(result, &apiv1.EntityProperty{
+			Name:  property.Name,
+			Title: property.Title,
+		})
+	}
+
+	return result
+}
+
+func entityListFields(data any, properties []config.EntityProperty) map[string]string {
+	if len(properties) == 0 {
+		return nil
+	}
+
+	fields := make(map[string]string, len(properties))
+	for _, property := range properties {
+		fields[property.Name] = entityPropertyValue(data, property.Name)
+	}
+
+	return fields
+}
+
+func entityPropertyValue(data any, propertyName string) string {
+	dataMap, ok := data.(map[string]any)
+	if !ok {
+		return ""
+	}
+
+	if value, found := dataMap[propertyName]; found {
+		return fmt.Sprintf("%v", value)
+	}
+
+	return entityPropertyValueCaseInsensitive(dataMap, propertyName)
+}
+
+func entityPropertyValueCaseInsensitive(dataMap map[string]any, propertyName string) string {
+	propertyNameLower := strings.ToLower(propertyName)
+	for key, value := range dataMap {
+		if strings.ToLower(key) == propertyNameLower {
+			return fmt.Sprintf("%v", value)
+		}
+	}
+
+	return ""
+}
+
+func buildEntityResponse(entity *entities.Entity, entityType string, cfg *config.Config) *apiv1.Entity {
+	properties := entityPropertiesFromFile(entityFileForType(cfg, entityType))
 	res := &apiv1.Entity{
 		Title:       entity.Title,
 		UniqueKey:   entity.UniqueKey,
 		Type:        entityType,
-		Directories: findDirectoriesInEntityFieldsets(entityType, dashboards),
-		Fields:      serializeEntityFields(entity.Data),
+		Directories: findDirectoriesInEntityFieldsets(entityType, cfg.Dashboards),
+		Fields:      entityFieldsForResponse(entity.Data, properties),
+		Icon:        entityTypeIcon(cfg, entityType),
 	}
 	return res
 }

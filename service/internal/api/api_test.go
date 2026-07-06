@@ -120,6 +120,15 @@ func TestGetActionsAndStart(t *testing.T) {
 
 func TestGetEntities(t *testing.T) {
 	cfg := config.DefaultConfig()
+	cfg.Entities = []*config.EntityFile{
+		{
+			Name: "server",
+			Properties: []config.EntityProperty{
+				{Name: "hostname", Title: "Hostname"},
+			},
+		},
+	}
+	cfg.Sanitize()
 
 	ts, client := getNewTestServerAndClient(cfg)
 	defer ts.Close()
@@ -138,6 +147,25 @@ func TestGetEntities(t *testing.T) {
 	validateEntityOrderAndStructure(t, entityDefinitions)
 	validateNoDuplicates(t, entityDefinitions)
 	validateConsistency(t, client, entityDefinitions)
+	validateEntityListProperties(t, client)
+}
+
+func validateEntityListProperties(t *testing.T, client apiv1connect.OliveTinApiServiceClient) {
+	resp, err := client.GetEntities(context.Background(), connect.NewRequest(&apiv1.GetEntitiesRequest{
+		EntityType: "server",
+		Page:       1,
+		PageSize:   10,
+	}))
+	require.NoError(t, err)
+
+	serverDef := resp.Msg.EntityDefinitions[0]
+	require.NotNil(t, serverDef, "server entity definition should be present")
+	require.Len(t, serverDef.Properties, 1)
+	assert.Equal(t, "hostname", serverDef.Properties[0].Name)
+	assert.Equal(t, "Hostname", serverDef.Properties[0].Title)
+	assert.Equal(t, int32(3), serverDef.TotalInstances)
+	require.Len(t, serverDef.Instances, 3)
+	assert.Equal(t, "alpha.example.com", serverDef.Instances[0].Fields["hostname"])
 }
 
 func setupTestEntities() {
@@ -166,10 +194,8 @@ func validateEntityOrderAndStructure(t *testing.T, entityDefinitions []*apiv1.En
 	assert.Equal(t, "postgres", entityDefinitions[1].Instances[1].UniqueKey, "Second database instance should be 'postgres' (alphabetically second)")
 
 	assert.Equal(t, "server", entityDefinitions[2].Title, "Third entity should be 'server' (alphabetically third)")
-	assert.Equal(t, 3, len(entityDefinitions[2].Instances), "Server should have 3 instances")
-	assert.Equal(t, "alpha", entityDefinitions[2].Instances[0].UniqueKey, "First server instance should be 'alpha' (alphabetically first)")
-	assert.Equal(t, "beta", entityDefinitions[2].Instances[1].UniqueKey, "Second server instance should be 'beta' (alphabetically second)")
-	assert.Equal(t, "zebra", entityDefinitions[2].Instances[2].UniqueKey, "Third server instance should be 'zebra' (alphabetically third)")
+	assert.Equal(t, 0, len(entityDefinitions[2].Instances), "Server instances should not be included in bulk list response")
+	assert.Equal(t, int32(3), entityDefinitions[2].TotalInstances, "Server should report total instance count")
 }
 
 func validateNoDuplicates(t *testing.T, entityDefinitions []*apiv1.EntityDefinition) {

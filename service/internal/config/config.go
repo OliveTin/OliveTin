@@ -102,9 +102,16 @@ type WebhookConfig struct {
 // Entity represents a "thing" that can have multiple actions associated with it.
 // for example, a media player with a start and stop action.
 type EntityFile struct {
-	File string `koanf:"file"`
-	Name string `koanf:"name"`
-	Icon string `koanf:"icon"`
+	File       string           `koanf:"file"`
+	Name       string           `koanf:"name"`
+	Icon       string           `koanf:"icon"`
+	Properties []EntityProperty `koanf:"properties"`
+}
+
+// EntityProperty defines a column shown when listing entity instances in the UI.
+type EntityProperty struct {
+	Name  string `koanf:"name"`
+	Title string `koanf:"title"`
 }
 
 // PermissionsList defines what users can do with an action.
