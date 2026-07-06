@@ -498,11 +498,27 @@ func (arg *ActionArgument) sanitizeChecklist() {
 		return
 	}
 
+	arg.warnMissingChecklistChoices()
+	arg.warnInvalidChecklistEntityTemplate()
+}
+
+func (arg *ActionArgument) warnMissingChecklistChoices() {
 	if len(arg.Choices) == 0 {
 		log.WithFields(log.Fields{
 			"arg": arg.Name,
 		}).Warn("Checklist argument has no choices defined")
 	}
+}
+
+func (arg *ActionArgument) warnInvalidChecklistEntityTemplate() {
+	if arg.Entity == "" || len(arg.Choices) == 1 {
+		return
+	}
+
+	log.WithFields(log.Fields{
+		"arg":    arg.Name,
+		"entity": arg.Entity,
+	}).Warn("Checklist argument with entity should define exactly one choice template")
 }
 
 func (arg *ActionArgument) sanitizeNoType() {

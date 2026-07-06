@@ -505,6 +505,43 @@ func mangleChecklistSegment(arg *config.ActionArgument, segment string, actionTi
 }
 
 func mangleChoiceSegment(arg *config.ActionArgument, value string, actionTitle string) string {
+	if mapped, ok := mangleChoiceSegmentEntity(arg, value, actionTitle); ok {
+		return mapped
+	}
+
+	return mangleChoiceSegmentStatic(arg, value, actionTitle)
+}
+
+func mangleChoiceSegmentEntity(arg *config.ActionArgument, value string, actionTitle string) (string, bool) {
+	if arg.Entity == "" || len(arg.Choices) == 0 {
+		return value, false
+	}
+
+	return mangleEntityTemplateChoiceSegment(arg.Choices[0], arg.Entity, arg.Name, value, actionTitle)
+}
+
+func mangleEntityTemplateChoiceSegment(templateChoice config.ActionArgumentChoice, entityName string, argName string, value string, actionTitle string) (string, bool) {
+	for _, ent := range entities.GetEntityInstancesOrdered(entityName) {
+		expandedTitle := tpl.ParseTemplateOfActionBeforeExec(templateChoice.Title, ent)
+		if value != expandedTitle {
+			continue
+		}
+
+		expandedValue := tpl.ParseTemplateOfActionBeforeExec(templateChoice.Value, ent)
+		log.WithFields(log.Fields{
+			"arg":         argName,
+			"oldValue":    value,
+			"newValue":    expandedValue,
+			"actionTitle": actionTitle,
+		}).Infof("Mangled entity choice segment")
+
+		return expandedValue, true
+	}
+
+	return value, false
+}
+
+func mangleChoiceSegmentStatic(arg *config.ActionArgument, value string, actionTitle string) string {
 	for _, choice := range arg.Choices {
 		if value == choice.Title {
 			log.WithFields(log.Fields{

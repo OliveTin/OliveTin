@@ -53,3 +53,28 @@ arguments:
 Choice `value` fields must not contain commas, because commas are used to join multiple selections together.
 
 Each `title` is shown in the web interface. If a submitted segment matches a choice `title`, OliveTin maps it to the corresponding `value` before validation, matching the behaviour of xref:args/input_checkbox.adoc[checkbox] arguments with choices.
+
+== Using Entities
+
+Checklist options can be generated from entities, using the same pattern as xref:args/input_dropdown.adoc#args-dropdown-entities[entity-backed dropdowns]. Define one choice template and set `entity` to the entity type name:
+
+[source,yaml]
+----
+actions:
+  - title: Restart selected containers
+    shell: 'docker restart {{ containers }}'
+    arguments:
+      - name: containers
+        title: Containers to restart
+        type: checklist
+        entity: container
+        choices:
+          - value: '{{ container.Names }}'
+            title: '{{ container.Names }}'
+
+entities:
+  - file: entities/containers.json
+    name: container
+----
+
+OliveTin expands the template once per entity instance and renders each result as a checkbox. Selected values are still passed as a comma-separated string.

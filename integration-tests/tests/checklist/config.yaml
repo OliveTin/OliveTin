@@ -5,6 +5,10 @@ logLevel: "DEBUG"
 checkForUpdates: false
 defaultPopupOnStart: execution-dialog
 
+entities:
+  - file: entities/rooms.yaml
+    name: room
+
 actions:
   - title: Test checklist argument
     shell: "echo 'Selected segments: {{ segments }}'"
@@ -22,3 +26,15 @@ actions:
           - title: Hallway
             value: hallway
         default: kitchen,bedroom
+
+  - title: Test checklist entity argument
+    shell: "echo 'Selected rooms: {{ rooms }}'"
+    icon: ping
+    arguments:
+      - name: rooms
+        title: Rooms to include
+        type: checklist
+        entity: room
+        choices:
+          - title: '{{ room.hostname }}'
+            value: '{{ room.hostname }}'

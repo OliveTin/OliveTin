@@ -202,6 +202,55 @@ func TestMangleArgumentValueChecklist(t *testing.T) {
 	assert.Equal(t, "documents,photos", out)
 }
 
+func checklistEntityTestArg() config.ActionArgument {
+	return config.ActionArgument{
+		Name:   "rooms",
+		Type:   "checklist",
+		Entity: "room",
+		Choices: []config.ActionArgumentChoice{
+			{Title: "{{ room.hostname }}", Value: "{{ room.hostname }}"},
+		},
+	}
+}
+
+func TestValidateArgumentChecklistEntitySelections(t *testing.T) {
+	log.SetLevel(log.PanicLevel)
+
+	entities.AddEntity("room", "0", map[string]any{"hostname": "attic"})
+	entities.AddEntity("room", "1", map[string]any{"hostname": "basement"})
+
+	arg := checklistEntityTestArg()
+	action := config.Action{Title: "Test checklist entity"}
+
+	err := ValidateArgument(&arg, "attic", &action)
+	assert.Nil(t, err)
+
+	err = ValidateArgument(&arg, "attic,basement", &action)
+	assert.Nil(t, err)
+
+	err = ValidateArgument(&arg, "attic,unknown", &action)
+	assert.NotNil(t, err)
+}
+
+func TestMangleArgumentValueChecklistEntityTitles(t *testing.T) {
+	log.SetLevel(log.PanicLevel)
+
+	entities.AddEntity("room", "0", map[string]any{"hostname": "attic"})
+	entities.AddEntity("room", "1", map[string]any{"hostname": "basement"})
+
+	arg := config.ActionArgument{
+		Name:   "rooms",
+		Type:   "checklist",
+		Entity: "room",
+		Choices: []config.ActionArgumentChoice{
+			{Title: "{{ room.hostname }} room", Value: "{{ room.hostname }}"},
+		},
+	}
+
+	out := MangleArgumentValue(&arg, "attic room,basement room", "Test checklist entity titles")
+	assert.Equal(t, "attic,basement", out)
+}
+
 func TestParseActionArgumentsChecklistEmptySelection(t *testing.T) {
 	req := newExecRequest()
 	req.Binding.Action = &config.Action{

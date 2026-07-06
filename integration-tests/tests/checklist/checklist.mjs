@@ -13,9 +13,9 @@ import {
   waitForExecutionComplete,
 } from '../../lib/elements.js'
 
-async function openChecklistArgumentForm() {
+async function openChecklistArgumentForm(actionTitle = 'Test checklist argument') {
   await getRootAndWait()
-  const btn = await getActionButton(webdriver, 'Test checklist argument')
+  const btn = await getActionButton(webdriver, actionTitle)
   await btn.click()
 
   await waitForArgumentFormPage()
@@ -52,9 +52,9 @@ async function pollTerminal(matcher, timeoutMs = DEFAULT_UI_WAIT_MS) {
   )
 }
 
-async function waitForTerminalOutput(expectedValue) {
+async function waitForTerminalOutput(expectedValue, label = 'Selected segments') {
   await pollTerminal(
-    (output) => output.includes(`Selected segments: ${expectedValue}`),
+    (output) => output.includes(`${label}: ${expectedValue}`),
     DEFAULT_UI_WAIT_MS
   )
 }
@@ -144,5 +144,25 @@ describe('config: checklist', function () {
     await waitForLogsPage()
     await waitForExecutionComplete()
     await waitForTerminalOutput('kitchen,bedroom,hallway')
+  })
+
+  it('Checklist entity argument renders choices from entities', async function () {
+    await openChecklistArgumentForm('Test checklist entity argument')
+
+    const checkboxes = await webdriver.findElements(
+      By.css('.choice-checklist-item input[type="checkbox"]')
+    )
+    expect(checkboxes).to.have.length(2)
+
+    const labels = await webdriver.findElements(By.css('.choice-checklist-item span'))
+    expect(await labels[0].getText()).to.equal('attic')
+    expect(await labels[1].getText()).to.equal('basement')
+
+    await checkboxes[0].click()
+
+    await submitChecklistForm()
+    await waitForLogsPage()
+    await waitForExecutionComplete()
+    await waitForTerminalOutput('attic', 'Selected rooms')
   })
 })
