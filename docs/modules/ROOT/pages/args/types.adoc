@@ -9,9 +9,9 @@ A full list of argument types are below;
 | Type                        | Rendered as                       | Allowed values
 | (default)                   | xref:args/input.adoc[Textbox]           | If a `type:` is not set, and `choices:` is empty, then ascii will be used, and a warning will be logged. It is recommended that you set the type explicitly, rather than relying on defaults.
 | ascii                       | xref:args/input.adoc[Textbox]           | a-z (case insensitive), 0-9, but no spaces or punctuation
-| ascii_identifier            | xref:args/input.adoc[Textbox]           | Like a DNS name, a-Z (case insensitive), 0-9, `-`, `.`, and `_`. 
+| ascii_identifier            | xref:args/input.adoc[Textbox]           | Like a DNS name, a-Z (case insensitive), 0-9, `-`, `.`, and `_`.
 | shell_safe_identifier       | xref:args/input.adoc[Textbox]           | Like an ascii identifier, but also allows `@` and `+`. Useful for shell-safe usernames and email-style identifiers.
-| ascii_sentence              | xref:args/input.adoc[Textbox]           | a-z (case insensitive), 0-9, with spaces, `.` and `,`. 
+| ascii_sentence              | xref:args/input.adoc[Textbox]           | a-z (case insensitive), 0-9, with spaces, `.` and `,`.
 | unicode_identifier          | xref:args/input.adoc[Textbox]           | Like an ascii identifier, but allows unicode characters. This is useful for languages that use non-ascii characters, such as Chinese, Japanese, etc.
 | email                       | xref:args/input.adoc[Textbox]           | An email address.
 | password                    | xref:args/password.adoc[Password]       | A password, which is hidden when typed.
@@ -20,6 +20,7 @@ A full list of argument types are below;
 | int                         | xref:args/input.adoc[Textbox]           | Any number, made up of the characters 0 to 9. Negative numbers are not supported.
 | url                         | xref:args/input.adoc[Textbox]           | A URL (e.g. https://example.com). Accepts any scheme, including `file://` and `ftp://`. See warning below.
 | confirmation                | xref:args/input_confirmation.adoc[Confirmation] | A "hidden" argument that makes the action require a confirmation before launching.
+| checklist                   | xref:args/input_checklist.adoc[Checklist]     | Multiple checkboxes from predefined choices. Selected values are passed as a comma-separated string.
 | n/a, but `choices` used     | xref:args/input_dropdown.adoc[Dropdown]         | A "hidden" argument that makes the action require a confirmation before launching.
 | raw_string_multiline        | xref:args/input_textarea.adoc[Textarea]         | Anything. This is **dangerous**, as effectively people can type anything they like
 |===
@@ -31,4 +32,3 @@ The `url` argument type does not restrict the URL scheme. Users can enter `file:
 
 If your action might be used by untrusted users, validate or filter the URL in your script (e.g. allow only `https://`) before using the value.
 ====
-

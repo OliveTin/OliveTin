@@ -919,3 +919,23 @@ func TestBuildActionIncludesGroups(t *testing.T) {
 	assert.Equal(t, "missing", actionResult.Groups[1].Name)
 	assert.Equal(t, int32(0), actionResult.Groups[1].MaxConcurrent)
 }
+
+func TestBuildChoicesExpandsChecklistEntityChoices(t *testing.T) {
+	entities.AddEntity("room", "0", map[string]any{"hostname": "attic"})
+	entities.AddEntity("room", "1", map[string]any{"hostname": "basement"})
+
+	arg := config.ActionArgument{
+		Type:   "checklist",
+		Entity: "room",
+		Choices: []config.ActionArgumentChoice{
+			{Title: "{{ room.hostname }}", Value: "{{ room.hostname }}"},
+		},
+	}
+
+	choices := buildChoices(arg)
+	require.Len(t, choices, 2)
+	assert.Equal(t, "attic", choices[0].Value)
+	assert.Equal(t, "attic", choices[0].Title)
+	assert.Equal(t, "basement", choices[1].Value)
+	assert.Equal(t, "basement", choices[1].Title)
+}

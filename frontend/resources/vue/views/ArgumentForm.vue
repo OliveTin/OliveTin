@@ -8,7 +8,7 @@
         <template v-if="actionArguments.length > 0">
 
           <template v-for="arg in actionArguments" :key="arg.name">
-              <label :for="arg.name">
+              <label :for="arg.type === 'checklist' ? undefined : arg.name">
                 {{ formatLabel(arg.title) }}
               </label>
 
@@ -23,6 +23,10 @@
 
               <ChoiceCombobox v-if="getInputComponent(arg) === 'select'" :id="arg.name" :name="arg.name"
                 :choices="arg.choices" :model-value="getArgumentValue(arg)" :required="arg.required"
+                @update:model-value="handleChoiceUpdate(arg, $event)" />
+
+              <ChoiceChecklist v-else-if="arg.type === 'checklist'" :id="arg.name" :name="arg.name"
+                :label="arg.title" :choices="arg.choices" :model-value="getArgumentValue(arg)" :required="arg.required"
                 @update:model-value="handleChoiceUpdate(arg, $event)" />
 
               <component v-else :is="getInputComponent(arg)" :id="arg.name" :name="arg.name"
@@ -65,6 +69,7 @@ import { ref, onMounted, onBeforeUnmount, onUnmounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { requestReconnectNow } from '../../../js/websocket.js'
 import ChoiceCombobox from '../components/ChoiceCombobox.vue'
+import ChoiceChecklist from '../components/ChoiceChecklist.vue'
 
 const router = useRouter()
 
@@ -238,6 +243,14 @@ function handleChange(arg, event) {
   validateArgument(arg, event.target.value)
 }
 
+function getValidationElement(arg) {
+  if (arg.type === 'checklist') {
+    return document.getElementById(`${arg.name}-value`)
+  }
+
+  return document.getElementById(arg.name)
+}
+
 function handleChoiceUpdate(arg, value) {
   argValues.value[arg.name] = value
   updateUrlWithArg(arg.name, value)
@@ -251,7 +264,7 @@ async function validateArgument(arg, value) {
 
   // Skip validation for datetime - backend will handle mangling values without seconds
   if (arg.type === 'datetime') {
-    const inputElement = document.getElementById(arg.name)
+    const inputElement = getValidationElement(arg)
     if (inputElement) {
       inputElement.setCustomValidity('')
     }
@@ -261,7 +274,7 @@ async function validateArgument(arg, value) {
 
   // Skip validation for checkbox and confirmation - they're always valid
   if (arg.type === 'checkbox' || arg.type === 'confirmation') {
-    const inputElement = document.getElementById(arg.name)
+    const inputElement = getValidationElement(arg)
     if (inputElement) {
       inputElement.setCustomValidity('')
     }
@@ -279,8 +292,7 @@ async function validateArgument(arg, value) {
 
     const validation = await window.client.validateArgumentType(validateArgumentTypeArgs)
 
-    // Get the input element to set custom validity
-    const inputElement = document.getElementById(arg.name)
+    const inputElement = getValidationElement(arg)
 
     if (validation.valid) {
       delete formErrors.value[arg.name]
@@ -297,8 +309,7 @@ async function validateArgument(arg, value) {
     }
   } catch (err) {
     console.warn('Validation failed:', err)
-    // On error, clear any custom validity
-    const inputElement = document.getElementById(arg.name)
+    const inputElement = getValidationElement(arg)
     if (inputElement) {
       inputElement.setCustomValidity('')
     }
@@ -393,7 +404,7 @@ function saveBrowserSuggestions() {
       const value = argValues.value[arg.name]
 
       // Only save non-empty values for non-checkbox/confirmation/password types
-      if (value && value !== '' && arg.type !== 'checkbox' && arg.type !== 'confirmation' && arg.type !== 'password') {
+      if (value && value !== '' && arg.type !== 'checkbox' && arg.type !== 'confirmation' && arg.type !== 'checklist' && arg.type !== 'password') {
         try {
           const key = `olivetin-suggestions-${arg.suggestionsBrowserKey}`
           const stored = localStorage.getItem(key)
@@ -467,7 +478,7 @@ async function handleSubmit(event) {
 
   for (const arg of actionArguments.value) {
     const value = argValues.value[arg.name]
-    const inputElement = document.getElementById(arg.name)
+    const inputElement = getValidationElement(arg)
 
     if (arg.required && (!value || value === '')) {
       formErrors.value[arg.name] = 'This field is required'
@@ -481,6 +492,11 @@ async function handleSubmit(event) {
   const form = event.target
   if (!form.checkValidity()) {
     console.log('argument form has elements that failed validation')
+    return
+  }
+
+  if (Object.keys(formErrors.value).length > 0) {
+    console.log('argument form has validation errors')
     return
   }
 

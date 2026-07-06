@@ -73,6 +73,7 @@
 ** xref:args/regex.adoc[Input: Regex]
 ** xref:args/password.adoc[Input: Password]
 ** xref:args/input_checkbox.adoc[Input: Checkbox/Boolean]
+** xref:args/input_checklist.adoc[Input: Checklist]
 ** xref:args/input_dropdown.adoc[Input: Dropdown]
 ** xref:args/input_datetime.adoc[Input: Date & Time]
 ** xref:args/input_confirmation.adoc[Input: Confirmation]

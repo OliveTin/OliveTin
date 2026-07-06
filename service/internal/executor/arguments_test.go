@@ -115,6 +115,169 @@ func TestValidateArgumentCheckboxWithChoices(t *testing.T) {
 	assert.NotNil(t, err, "Expected unknown checkbox title to be rejected against choices")
 }
 
+func checklistTestArg() config.ActionArgument {
+	return config.ActionArgument{
+		Name: "directories",
+		Type: "checklist",
+		Choices: []config.ActionArgumentChoice{
+			{Title: "Documents", Value: "documents"},
+			{Title: "Photos", Value: "photos"},
+			{Title: "Music", Value: "music"},
+		},
+	}
+}
+
+func TestValidateArgumentChecklistSelections(t *testing.T) {
+	log.SetLevel(log.PanicLevel)
+
+	arg := checklistTestArg()
+	action := config.Action{Title: "Test checklist"}
+
+	err := ValidateArgument(&arg, "documents", &action)
+	assert.Nil(t, err)
+
+	err = ValidateArgument(&arg, "documents,photos", &action)
+	assert.Nil(t, err)
+
+	err = ValidateArgument(&arg, "documents,unknown", &action)
+	assert.NotNil(t, err)
+}
+
+func TestValidateArgumentChecklistTitleMangling(t *testing.T) {
+	log.SetLevel(log.PanicLevel)
+
+	arg := checklistTestArg()
+	action := config.Action{Title: "Test checklist title mangling"}
+
+	err := ValidateArgument(&arg, "Documents,Photos", &action)
+	assert.Nil(t, err)
+}
+
+func TestValidateArgumentChecklistEmptySelection(t *testing.T) {
+	log.SetLevel(log.PanicLevel)
+
+	arg := checklistTestArg()
+	action := config.Action{Title: "Test checklist empty"}
+
+	err := ValidateArgument(&arg, "", &action)
+	assert.Nil(t, err)
+
+	arg.RejectNull = true
+	err = ValidateArgument(&arg, "", &action)
+	assert.NotNil(t, err)
+}
+
+func TestValidateArgumentChecklistWithoutChoices(t *testing.T) {
+	log.SetLevel(log.PanicLevel)
+
+	arg := config.ActionArgument{
+		Name: "directories",
+		Type: "checklist",
+	}
+	action := config.Action{Title: "Test checklist without choices"}
+
+	err := ValidateArgument(&arg, "documents", &action)
+	assert.NotNil(t, err)
+}
+
+func TestValidateArgumentChecklistRejectsEmptySegment(t *testing.T) {
+	log.SetLevel(log.PanicLevel)
+
+	arg := checklistTestArg()
+	action := config.Action{Title: "Test checklist empty segment"}
+
+	err := ValidateArgument(&arg, "documents,,photos", &action)
+	assert.NotNil(t, err)
+}
+
+func TestMangleArgumentValueChecklist(t *testing.T) {
+	log.SetLevel(log.PanicLevel)
+
+	arg := checklistTestArg()
+
+	out := MangleArgumentValue(&arg, "Documents,Music", "Test action")
+	assert.Equal(t, "documents,music", out)
+
+	out = MangleArgumentValue(&arg, "documents,photos", "Test action")
+	assert.Equal(t, "documents,photos", out)
+}
+
+func checklistEntityTestArg() config.ActionArgument {
+	return config.ActionArgument{
+		Name:   "rooms",
+		Type:   "checklist",
+		Entity: "room",
+		Choices: []config.ActionArgumentChoice{
+			{Title: "{{ room.hostname }}", Value: "{{ room.hostname }}"},
+		},
+	}
+}
+
+func TestValidateArgumentChecklistEntitySelections(t *testing.T) {
+	log.SetLevel(log.PanicLevel)
+
+	entities.AddEntity("room", "0", map[string]any{"hostname": "attic"})
+	entities.AddEntity("room", "1", map[string]any{"hostname": "basement"})
+
+	arg := checklistEntityTestArg()
+	action := config.Action{Title: "Test checklist entity"}
+
+	err := ValidateArgument(&arg, "attic", &action)
+	assert.Nil(t, err)
+
+	err = ValidateArgument(&arg, "attic,basement", &action)
+	assert.Nil(t, err)
+
+	err = ValidateArgument(&arg, "attic,unknown", &action)
+	assert.NotNil(t, err)
+}
+
+func TestMangleArgumentValueChecklistEntityTitles(t *testing.T) {
+	log.SetLevel(log.PanicLevel)
+
+	entities.AddEntity("room", "0", map[string]any{"hostname": "attic"})
+	entities.AddEntity("room", "1", map[string]any{"hostname": "basement"})
+
+	arg := config.ActionArgument{
+		Name:   "rooms",
+		Type:   "checklist",
+		Entity: "room",
+		Choices: []config.ActionArgumentChoice{
+			{Title: "{{ room.hostname }} room", Value: "{{ room.hostname }}"},
+		},
+	}
+
+	out := MangleArgumentValue(&arg, "attic room,basement room", "Test checklist entity titles")
+	assert.Equal(t, "attic,basement", out)
+}
+
+func TestParseActionArgumentsChecklistEmptySelection(t *testing.T) {
+	req := newExecRequest()
+	req.Binding.Action = &config.Action{
+		Title: "Test checklist empty selection",
+		Shell: "echo 'Selected segments: {{ segments }}'",
+		Arguments: []config.ActionArgument{
+			{
+				Name: "segments",
+				Type: "checklist",
+				Choices: []config.ActionArgumentChoice{
+					{Value: "kitchen"},
+					{Value: "bedroom"},
+				},
+			},
+		},
+	}
+	req.Arguments = map[string]string{
+		"segments": "",
+	}
+
+	mangleInvalidArgumentValues(req)
+	out, err := parseActionArguments(req)
+
+	assert.Nil(t, err)
+	assert.Equal(t, "echo 'Selected segments: '", out)
+}
+
 func newExecRequest() *ExecutionRequest {
 	return &ExecutionRequest{
 		Arguments: make(map[string]string),
