@@ -51,11 +51,12 @@
 </template>
 
 <script setup>
-	import { computed, ref, watch, onMounted } from 'vue'
+	import { computed, ref, watch, onMounted, onBeforeUnmount } from 'vue'
 	import Section from 'picocrank/vue/components/Section.vue'
 	import ActionIconGlyph from './ActionIconGlyph.vue'
 	import EntityInstancesTable from './EntityInstancesTable.vue'
 	import EntityListFilter from './EntityListFilter.vue'
+	import { entityDetailsRoute } from '../utils/entityRoutes.js'
 
 	const props = defineProps({
 		definition: {
@@ -84,16 +85,6 @@
 	watch([currentPage, pageSize], () => {
 		scheduleFetchTableInstances()
 	})
-
-	function entityDetailsRoute(inst) {
-		return {
-			name: 'EntityDetails',
-			params: {
-				entityType: inst.type,
-				entityKey: inst.uniqueKey
-			}
-		}
-	}
 
 	function filteredDashboards(dashboards) {
 		return dashboards.filter(d => d && !d.includes('{{'))
@@ -152,6 +143,13 @@
 	onMounted(() => {
 		if (hasTable.value) {
 			fetchTableInstances()
+		}
+	})
+
+	onBeforeUnmount(() => {
+		if (fetchTimer) {
+			clearTimeout(fetchTimer)
+			fetchTimer = null
 		}
 	})
 </script>

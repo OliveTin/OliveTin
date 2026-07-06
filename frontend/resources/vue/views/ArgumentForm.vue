@@ -55,7 +55,7 @@
 
         <template v-if="justificationRequired">
           <label for="justification">Justification:</label>
-          <input id="justification" name="justification" type="text" v-model="justificationValue" required />
+          <input id="justification" name="justification" type="text" :value="justificationValue" required @input="handleJustificationInput" />
         </template>
 
         <div v-if="actionArguments.length === 0 && !justificationRequired">
@@ -105,6 +105,7 @@ const popupOnStart = ref('')
 const formReady = ref(false)
 const justificationConfig = ref('')
 const justificationValue = ref('')
+const justificationEditedManually = ref(false)
 const justificationRequired = computed(() => actionRequiresJustification(justificationConfig.value))
 const justificationTemplate = computed(() => actionJustificationTemplate(justificationConfig.value))
 let isComponentMounted = true
@@ -136,6 +137,7 @@ async function setup() {
     actionArguments.value = action.arguments || []
     justificationConfig.value = action.justification || ''
     justificationValue.value = ''
+    justificationEditedManually.value = false
     argValues.value = {}
     formErrors.value = {}
     confirmationChecked.value = false
@@ -244,6 +246,11 @@ function getArgumentValue(arg) {
     return argValues.value[arg.name] === '1' || argValues.value[arg.name] === true || argValues.value[arg.name] === 'true'
   }
   return argValues.value[arg.name] || ''
+}
+
+function handleJustificationInput(event) {
+  justificationValue.value = event.target.value
+  justificationEditedManually.value = true
 }
 
 function handleInput(arg, event) {
@@ -408,7 +415,7 @@ function getArgumentMapForTemplate() {
 }
 
 function updateJustificationFromTemplate() {
-  if (!justificationTemplate.value) {
+  if (!justificationTemplate.value || justificationEditedManually.value) {
     return
   }
 
@@ -619,12 +626,12 @@ onUnmounted(() => {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  color: inherit;
-  text-decoration: none;
+  color: var(--link-color, #0066cc);
+  text-decoration: underline;
 }
 
 .action-details-title-link:hover {
-  text-decoration: underline;
+  color: var(--link-hover-color, #004499);
 }
 
 form {

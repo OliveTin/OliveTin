@@ -56,7 +56,7 @@
 			</ul>
 		</div>
 		<p v-else>No directories found for this entity.
-			<a href = "https://docs.olivetin.app/dashboards/entity-directories.html" target = "_blank">Learn more</a>
+			<a href="https://docs.olivetin.app/dashboards/entity-directories.html" target="_blank" rel="noopener noreferrer">Learn more</a>
 		</p>
 	</Section>
 

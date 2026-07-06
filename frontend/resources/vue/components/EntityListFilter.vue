@@ -6,6 +6,7 @@
 		</svg>
 		<input
 			:value="modelValue"
+			aria-label="Filter entities"
 			placeholder="Filter entities..."
 			@input="$emit('update:modelValue', $event.target.value)"
 		/>

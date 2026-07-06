@@ -25,6 +25,7 @@
 	import { computed } from 'vue'
 	import Table from 'picocrank/vue/components/Table.vue'
 	import Pagination from 'picocrank/vue/components/Pagination.vue'
+	import { entityDetailsRoute } from '../utils/entityRoutes.js'
 
 	const props = defineProps({
 		instances: {
@@ -54,20 +55,21 @@
 	const headers = computed(() => {
 		const propertyHeaders = props.properties.map(property => ({
 			key: property.name,
-			label: property.title,
-			sortable: true
+			label: property.title
 		}))
 
 		return [
-			{ key: 'title', label: 'Name', sortable: true },
+			{ key: 'title', label: 'Name' },
 			...propertyHeaders
 		]
 	})
 
 	const tableRows = computed(() =>
 		props.instances.map(instance => ({
-			...instance,
-			...instance.fields
+			...instance.fields,
+			title: instance.title,
+			type: instance.type,
+			uniqueKey: instance.uniqueKey
 		}))
 	)
 
@@ -81,15 +83,6 @@
 		set: value => emit('update:pageSize', value)
 	})
 
-	function entityDetailsRoute(row) {
-		return {
-			name: 'EntityDetails',
-			params: {
-				entityType: row.type,
-				entityKey: row.uniqueKey
-			}
-		}
-	}
 </script>
 
 <style scoped>
