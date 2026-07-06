@@ -441,8 +441,21 @@ func (arg *ActionArgument) sanitize() {
 	}
 
 	arg.sanitizeNoType()
+	arg.sanitizeChecklist()
 
 	// Default value validation runs in executor at config load (validateArgumentDefaults).
+}
+
+func (arg *ActionArgument) sanitizeChecklist() {
+	if arg.Type != "checklist" {
+		return
+	}
+
+	if len(arg.Choices) == 0 {
+		log.WithFields(log.Fields{
+			"arg": arg.Name,
+		}).Warn("Checklist argument has no choices defined")
+	}
 }
 
 func (arg *ActionArgument) sanitizeNoType() {

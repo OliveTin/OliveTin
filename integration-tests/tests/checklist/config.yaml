@@ -1,0 +1,24 @@
+---
+listenAddressSingleHTTPFrontend: 0.0.0.0:1337
+
+logLevel: "DEBUG"
+checkForUpdates: false
+defaultPopupOnStart: execution-dialog
+
+actions:
+  - title: Test checklist argument
+    shell: "echo 'Selected segments: {{ segments }}'"
+    icon: ping
+    arguments:
+      - name: segments
+        title: Rooms to clean
+        type: checklist
+        description: Select the rooms to include in the vacuum run.
+        choices:
+          - title: Kitchen
+            value: kitchen
+          - title: Bedroom
+            value: bedroom
+          - title: Hallway
+            value: hallway
+        default: kitchen,bedroom

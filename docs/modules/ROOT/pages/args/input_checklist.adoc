@@ -1,0 +1,55 @@
+[#checklist]
+= Input: Checklist
+
+The `checklist` type argument renders multiple checkboxes from predefined `choices`. Users can select one or more options, and the selected values are passed to your action as a comma-separated string.
+
+[source,yaml]
+----
+actions:
+  - title: Backup selected directories
+    shell: echo "Backing up: {{ directories }}"
+    arguments:
+      - name: directories
+        title: Directories to back up
+        type: checklist
+        choices:
+          - title: Documents
+            value: documents
+          - title: Photos
+            value: photos
+          - title: Music
+            value: music
+        default: documents,photos
+----
+
+When the example above runs with Documents and Photos selected, the shell command becomes:
+
+[source,shell]
+----
+echo "Backing up: documents,photos"
+----
+
+== Select all / Select none
+
+The web interface includes **Select all** and **Select none** controls above the checkbox list.
+
+== Empty selections
+
+If no options are selected, the argument value is an empty string. Use `rejectNull: true` when at least one selection is required.
+
+[source,yaml]
+----
+arguments:
+  - name: directories
+    type: checklist
+    rejectNull: true
+    choices:
+      - value: documents
+      - value: photos
+----
+
+== Choice values
+
+Choice `value` fields must not contain commas, because commas are used to join multiple selections together.
+
+Each `title` is shown in the web interface. If a submitted segment matches a choice `title`, OliveTin maps it to the corresponding `value` before validation, matching the behaviour of xref:args/input_checkbox.adoc[checkbox] arguments with choices.

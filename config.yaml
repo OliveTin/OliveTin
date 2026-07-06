@@ -143,6 +143,29 @@ actions:
       - type: confirmation
         title: Are you sure?!
 
+  # Checklist arguments let users pick multiple predefined options. Selected
+  # values are passed to the action as a comma-separated string.
+  #
+  # Docs: https://docs.olivetin.app/args/input_checklist.html
+  - title: Backup selected directories
+    icon: backup
+    shell: 'echo "Backing up: {{ directories }}"'
+    arguments:
+      - name: directories
+        title: Directories to back up
+        type: checklist
+        description: Select one or more directories to include in the backup.
+        choices:
+          - title: Documents
+            value: documents
+          - title: Photos
+            value: photos
+          - title: Music
+            value: music
+          - title: Videos
+            value: videos
+        default: documents,photos
+
   # This is an action that runs a script included with OliveTin, that will
   # download themes. You will still need to set theme "themeName" in your config.
   #
