@@ -1,5 +1,12 @@
 <template>
-	<Section title="Entity Details">
+	<Section>
+		<template #title>
+			<span class="section-title-with-icon">
+				Entity Details:
+				<ActionIconGlyph v-if="entityIcon" class="entity-title-icon" :glyph="entityIcon" />
+				<span v-if="entityDetails?.title">{{ entityDetails.title }}</span>
+			</span>
+		</template>
 		<template #toolbar>
 			<button @click="goBack" class="back-button">
 				<HugeiconsIcon :icon="ArrowLeftIcon" width="1.2em" height="1.2em" />
@@ -22,37 +29,50 @@
 				<template v-if="entityDetails.fields">
 					<template v-for="(value, key) in entityDetails.fields" :key="key">
 						<dt>{{ key }}</dt>
-						<dd v-html="value"></dd>
+						<dd>{{ value }}</dd>
 					</template>
 				</template>
 			</dl>
 			<p v-if="!entityDetails.title && (!entityDetails.fields || Object.keys(entityDetails.fields).length === 0)">No details available for this entity.</p>
-
-			<hr />
-
-			<h3>Dashboard Entity Directories</h3>
-			<div v-if="filteredDirectories.length > 0" class="directories-section">
-				<ul class="directory-list">
-					<li v-for="(directory, idx) in filteredDirectories" :key="idx">
-						<router-link
-							:to="{
-								name: 'Dashboard',
-								params: {
-									title: directory,
-									entityType: entityType,
-									entityKey: entityKey
-								}
-							}">
-							{{ directory }}
-						</router-link>
-					</li>
-				</ul>
-			</div>
-			<p v-else>No directories found for this entity.
-				<a href = "https://docs.olivetin.app/dashboards/entity-directories.html" target = "_blank">Learn more</a>
-			</p>
 		</template>
 	</Section>
+
+	<Section v-if="entityDetails" title="Dashboard Entity Directories">
+		<div v-if="filteredDirectories.length > 0" class="directories-section">
+			<ul class="directory-list">
+				<li v-for="(directory, idx) in filteredDirectories" :key="idx">
+					<router-link
+						:to="{
+							name: 'Dashboard',
+							params: {
+								title: directory,
+								entityType: entityType,
+								entityKey: entityKey
+							}
+						}">
+						{{ directory }}
+					</router-link>
+				</li>
+			</ul>
+		</div>
+		<p v-else>No directories found for this entity.
+			<a href = "https://docs.olivetin.app/dashboards/entity-directories.html" target = "_blank">Learn more</a>
+		</p>
+	</Section>
+
+	<section v-if="entityDetails && relatedActions.length > 0" class="transparent">
+		<div class="dashboard-row">
+			<fieldset>
+				<template v-for="(related, idx) in relatedActions" :key="related.action?.bindingId || idx">
+					<ActionButton
+						v-if="related.action"
+						:action-data="related.action"
+						:prefilled-arguments="related.prefilledArguments"
+					/>
+				</template>
+			</fieldset>
+		</div>
+	</section>
 </template>
 
 <script setup>
@@ -61,6 +81,8 @@
 	import { HugeiconsIcon } from '@hugeicons/vue'
 	import { ArrowLeftIcon } from '@hugeicons/core-free-icons'
 	import Section from 'picocrank/vue/components/Section.vue'
+	import ActionButton from '../ActionButton.vue'
+	import ActionIconGlyph from '../components/ActionIconGlyph.vue'
 
 	const router = useRouter()
 	const entityDetails = ref(null)
@@ -76,6 +98,10 @@
 		}
 		return entityDetails.value.directories.filter(d => d)
 	})
+
+	const relatedActions = computed(() => entityDetails.value?.relatedActions ?? [])
+
+	const entityIcon = computed(() => entityDetails.value?.icon ?? '')
 
 	function goBack() {
 		router.push({ name: 'Entities' })
@@ -121,11 +147,6 @@
     box-shadow: 0 0 .5em rgba(0, 0, 0, 0.15);
 }
 
-.directories-section h3 {
-    margin-bottom: 0.5em;
-    font-size: 1.1em;
-}
-
 .directory-list a {
     text-decoration: none;
     padding: 0.5em;
@@ -149,9 +170,22 @@
     opacity: 0.8;
 }
 
-hr {
-	border: 0;
-	border-top: 1px solid var(--border-color, #ccc);
+.section-title-with-icon {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5em;
+}
+
+.entity-title-icon {
+	font-size: 1.2em;
+}
+
+fieldset {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, 180px);
+	grid-auto-rows: 1fr;
+	justify-content: center;
+	place-items: stretch;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -163,11 +197,6 @@ hr {
     .back-button:hover {
         background-color: var(--bg-hover, #222);
     }
-
-    .directories-section {
-        border-top-color: var(--border-color, #333);
-    }
-
 
     .directory-list a:hover {
         background-color: var(--bg-hover, #222);

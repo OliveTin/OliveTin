@@ -1,7 +1,18 @@
 <template>
   <section id = "argument-popup">
     <div class="section-header">
-      <h2>Start action: {{ title }}</h2>
+      <h2>
+        <span class="section-title-with-icon">
+          Start action:
+          <router-link
+            :to="`/action/${bindingId}`"
+            class="action-details-title-link"
+          >
+            <ActionIconGlyph v-if="icon" class="action-title-icon" :glyph="icon" />
+            {{ title }}
+          </router-link>
+        </span>
+      </h2>
     </div>
     <div class="section-content padding">
       <form @submit="handleSubmit">
@@ -65,11 +76,14 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount, onUnmounted, nextTick } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, onUnmounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { requestReconnectNow } from '../../../js/websocket.js'
 import ChoiceCombobox from '../components/ChoiceCombobox.vue'
 import ChoiceChecklist from '../components/ChoiceChecklist.vue'
+import ActionIconGlyph from '../components/ActionIconGlyph.vue'
+import { applyArgumentTemplate, actionJustificationTemplate, actionRequiresJustification } from '../utils/justificationTemplate.js'
+import { getInitialArgumentValue, readPrefilledArgumentsFromNavigation } from '../utils/prefilledArguments.js'
 
 const router = useRouter()
 
@@ -85,8 +99,10 @@ const formErrors = ref({})
 const actionArguments = ref([])
 const popupOnStart = ref('')
 const formReady = ref(false)
-const justificationRequired = ref(false)
+const justificationConfig = ref('')
 const justificationValue = ref('')
+const justificationRequired = computed(() => actionRequiresJustification(justificationConfig.value))
+const justificationTemplate = computed(() => actionJustificationTemplate(justificationConfig.value))
 let isComponentMounted = true
 
 // Computed properties
@@ -114,18 +130,20 @@ async function setup() {
     icon.value = action.icon
     popupOnStart.value = action.popupOnStart || ''
     actionArguments.value = action.arguments || []
-    justificationRequired.value = action.justification || false
+    justificationConfig.value = action.justification || ''
     justificationValue.value = ''
     argValues.value = {}
     formErrors.value = {}
     confirmationChecked.value = false
     hasConfirmation.value = false
 
-    // Initialize values from query params or defaults
+    const prefilledArguments = readPrefilledArgumentsFromNavigation()
+
+    // Initialize values from navigation state, query params, or defaults
     actionArguments.value.forEach(arg => {
     if (arg.type === 'confirmation') {
       hasConfirmation.value = true
-      const paramValue = getQueryParamValue(arg.name)
+      const paramValue = getInitialArgumentValue(arg.name, prefilledArguments)
       let checkedValue = false
       if (paramValue !== null) {
         checkedValue = paramValue === '1' || paramValue === 'true' || paramValue === true
@@ -135,7 +153,7 @@ async function setup() {
       argValues.value[arg.name] = checkedValue
       confirmationChecked.value = checkedValue
     } else {
-      const paramValue = getQueryParamValue(arg.name)
+      const paramValue = getInitialArgumentValue(arg.name, prefilledArguments)
       if (arg.type === 'checkbox') {
         // For checkboxes, handle boolean default values properly
         if (paramValue !== null) {
@@ -163,14 +181,11 @@ async function setup() {
       formReady.value = true
       document.body.setAttribute('loaded-argument-form', props.bindingId)
     }
+
+    updateJustificationFromTemplate()
   } catch (err) {
     console.error('Failed to load argument form:', err)
   }
-}
-
-function getQueryParamValue(paramName) {
-  const params = new URLSearchParams(window.location.search.substring(1))
-  return params.get(paramName)
 }
 
 function formatLabel(title) {
@@ -231,6 +246,7 @@ function handleInput(arg, event) {
   const value = event.target.type === 'checkbox' ? event.target.checked : event.target.value
   argValues.value[arg.name] = value
   updateUrlWithArg(arg.name, value)
+  updateJustificationFromTemplate()
 }
 
 function handleChange(arg, event) {
@@ -255,6 +271,7 @@ function handleChoiceUpdate(arg, value) {
   argValues.value[arg.name] = value
   updateUrlWithArg(arg.name, value)
   validateArgument(arg, value)
+  updateJustificationFromTemplate()
 }
 
 async function validateArgument(arg, value) {
@@ -370,6 +387,28 @@ function getArgumentValues() {
   }
 
   return ret
+}
+
+function getArgumentMapForTemplate() {
+  const args = {}
+
+  for (const arg of actionArguments.value) {
+    if (!shouldSendArgument(arg)) {
+      continue
+    }
+
+    args[arg.name] = formatArgumentValueForApi(arg, argValues.value[arg.name])
+  }
+
+  return args
+}
+
+function updateJustificationFromTemplate() {
+  if (!justificationTemplate.value) {
+    return
+  }
+
+  justificationValue.value = applyArgumentTemplate(justificationTemplate.value, getArgumentMapForTemplate())
 }
 
 function getUniqueId() {
@@ -562,6 +601,27 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+.section-title-with-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.action-title-icon {
+  font-size: 1.5rem;
+}
+
+.action-details-title-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: inherit;
+  text-decoration: none;
+}
+
+.action-details-title-link:hover {
+  text-decoration: underline;
+}
 
 form {
   grid-template-columns: max-content auto auto;
