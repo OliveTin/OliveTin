@@ -133,7 +133,7 @@ actions:
   # Docs: https://docs.olivetin.app/args/input_confirmation.html
   - title: Delete old backups
     icon: ashtonished
-    justification: true
+    justification: " "
     shell: rm -rf /opt/oliveTinOldBackups/ && sleep 5
     arguments:
       - type: html

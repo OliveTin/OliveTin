@@ -75,7 +75,7 @@ test('rerunNeedsArgumentForm can start directly when stored args are complete', 
 })
 
 test('rerunNeedsArgumentForm opens the form when justification is missing', () => {
-  const action = { justification: true, arguments: [] }
+  const action = { justification: ' ', arguments: [] }
 
   assert.equal(rerunNeedsArgumentForm(action, {}), true)
   assert.equal(
@@ -90,7 +90,7 @@ test('buildRerunStartActionArgs includes stored justification', () => {
       arguments: [{ name: 'host', value: 'db-1' }],
       justification: 'maintenance window'
     }, {
-      justification: true,
+      justification: ' ',
       arguments: [{ name: 'host', type: 'ascii_identifier' }]
     }),
     {

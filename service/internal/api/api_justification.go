@@ -9,7 +9,9 @@ import (
 	apiv1 "github.com/OliveTin/OliveTin/gen/olivetin/api/v1"
 	authpublic "github.com/OliveTin/OliveTin/internal/auth/authpublic"
 	"github.com/OliveTin/OliveTin/internal/config"
+	"github.com/OliveTin/OliveTin/internal/entities"
 	"github.com/OliveTin/OliveTin/internal/executor"
+	"github.com/OliveTin/OliveTin/internal/tpl"
 )
 
 func validateJustificationRequired(action *config.Action, justification string, user *authpublic.AuthenticatedUser) error {
@@ -21,7 +23,7 @@ func validateJustificationRequired(action *config.Action, justification string, 
 }
 
 func actionRequiresJustificationConfig(action *config.Action) bool {
-	return action != nil && action.Justification
+	return action != nil && action.RequiresJustification()
 }
 
 func justificationProvided(justification string, user *authpublic.AuthenticatedUser) bool {
@@ -38,6 +40,36 @@ func startActionArgumentsFromProto(args []*apiv1.StartActionArgument) map[string
 		result[arg.Name] = arg.Value
 	}
 	return result
+}
+
+func resolveStartJustification(action *config.Action, binding *executor.ActionBinding, clientJustification string, args map[string]string) string {
+	if strings.TrimSpace(clientJustification) != "" {
+		return clientJustification
+	}
+
+	return resolveJustificationFromTemplate(action, binding, clientJustification, args)
+}
+
+func resolveJustificationFromTemplate(action *config.Action, binding *executor.ActionBinding, fallback string, args map[string]string) string {
+	templateText := action.JustificationTemplateText()
+	if templateText == "" {
+		return fallback
+	}
+
+	resolved, err := tpl.ParseTemplateWithActionContext(templateText, bindingEntity(binding), args)
+	if err != nil {
+		return fallback
+	}
+
+	return resolved
+}
+
+func bindingEntity(binding *executor.ActionBinding) *entities.Entity {
+	if binding == nil {
+		return nil
+	}
+
+	return binding.Entity
 }
 
 func restartRequiresJustificationError() error {

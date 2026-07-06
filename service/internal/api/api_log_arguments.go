@@ -47,7 +47,7 @@ func restartArgumentsIncompleteError() error {
 }
 
 func validateRestartLogEntry(entry *executor.InternalLogEntry) error {
-	if entry.Binding.Action.Justification && strings.TrimSpace(entry.Justification) == "" {
+	if entry.Binding.Action.RequiresJustification() && strings.TrimSpace(entry.Justification) == "" {
 		return restartRequiresJustificationError()
 	}
 

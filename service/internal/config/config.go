@@ -35,7 +35,19 @@ type Action struct {
 	SaveLogs               SaveLogsConfig   `koanf:"saveLogs"`
 	EnabledExpression      string           `koanf:"enabledExpression"`
 	Groups                 []string         `koanf:"groups"`
-	Justification          bool             `koanf:"justification"`
+	Justification          string           `koanf:"justification"`
+}
+
+func (action *Action) RequiresJustification() bool {
+	return action != nil && action.Justification != ""
+}
+
+func (action *Action) JustificationTemplateText() string {
+	if action == nil || !action.RequiresJustification() {
+		return ""
+	}
+
+	return action.Justification
 }
 
 // ActionGroup defines shared limits and metadata for a set of actions.
