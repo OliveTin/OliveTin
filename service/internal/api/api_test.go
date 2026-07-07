@@ -546,6 +546,54 @@ func TestValidateArgumentTypeAllowedWithViewPermission(t *testing.T) {
 	assert.True(t, resp.Msg.Valid, "admin with view:true should get successful validation for a valid ascii value")
 }
 
+// buildExecWithoutLogsTestConfig returns config for GHSA-jm28: user "runner" may exec but not read logs.
+func buildExecWithoutLogsTestConfig(t *testing.T) (*config.Config, *authpublic.AuthenticatedUser) {
+	t.Helper()
+	cfg := config.DefaultConfig()
+	cfg.AuthHttpHeaderUsername = "X-Ot-User"
+	cfg.DefaultPermissions.View = false
+	cfg.DefaultPermissions.Exec = false
+	cfg.DefaultPermissions.Logs = false
+
+	cfg.Actions = append(cfg.Actions, &config.Action{
+		ID:    "run_only",
+		Title: "Run Only",
+		Shell: "echo sensitive-output",
+		Icon:  "🔒",
+	})
+
+	cfg.AccessControlLists = append(cfg.AccessControlLists, &config.AccessControlList{
+		Name:             "runner",
+		MatchUsernames:   []string{"runner"},
+		AddToEveryAction: true,
+		Permissions:      config.PermissionsList{View: true, Exec: true, Logs: false, Kill: false},
+	})
+
+	runner := &authpublic.AuthenticatedUser{Username: "runner"}
+	runner.BuildUserAcls(cfg)
+	return cfg, runner
+}
+
+// TestStartActionAndWaitDeniesLogsPermission (GHSA-jm28-2wcr-qf3h) asserts sync execution endpoints
+// enforce logs ACL and do not return action output to users allowed to exec but not read logs.
+func TestStartActionAndWaitDeniesLogsPermission(t *testing.T) {
+	cfg, _ := buildExecWithoutLogsTestConfig(t)
+	ex := executor.DefaultExecutor(cfg)
+	ex.RebuildActionMap()
+	ts, client := getNewTestServerAndClientWithExecutor(cfg, ex)
+	defer ts.Close()
+
+	req := connect.NewRequest(&apiv1.StartActionAndWaitRequest{
+		ActionId: "run_only",
+	})
+	req.Header().Set("X-Ot-User", "runner")
+
+	_, err := client.StartActionAndWait(context.Background(), req)
+	require.Error(t, err)
+	assert.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err),
+		"user with exec:true and logs:false must not receive log output from StartActionAndWait")
+}
+
 // TestViewPermissionAllowedSeesAction (GHSA: view permission) asserts that a user with view: true
 // still sees the action in the dashboard and can fetch it via GetActionBinding.
 func TestViewPermissionAllowedSeesAction(t *testing.T) {
