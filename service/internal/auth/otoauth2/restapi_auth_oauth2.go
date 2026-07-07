@@ -62,7 +62,13 @@ type oauth2State struct {
 	providerName   string
 	Username       string
 	Usergroup      string
+	createdAt      time.Time
 }
+
+const (
+	oauthStateMaxAge     = 900 // matches olivetin-sid-oauth cookie MaxAge
+	oauthStateMaxEntries = 10000
+)
 
 func assignIfEmpty(target *string, value string) {
 	if *target == "" {
@@ -129,6 +135,19 @@ func (h *OAuth2Handler) setOAuthCallbackCookie(w http.ResponseWriter, r *http.Re
 	http.SetCookie(w, cookie)
 }
 
+func (h *OAuth2Handler) deleteOAuthStateLocked(state string) {
+	delete(h.registeredStates, state)
+}
+
+func (h *OAuth2Handler) sweepExpiredOAuthStatesLocked(now time.Time) {
+	cutoff := now.Add(-oauthStateMaxAge * time.Second)
+	for state, entry := range h.registeredStates {
+		if entry.createdAt.Before(cutoff) {
+			delete(h.registeredStates, state)
+		}
+	}
+}
+
 func (h *OAuth2Handler) HandleOAuthLogin(w http.ResponseWriter, r *http.Request) {
 	state, err := randString(16)
 
@@ -147,10 +166,17 @@ func (h *OAuth2Handler) HandleOAuthLogin(w http.ResponseWriter, r *http.Request)
 	}
 
 	h.mu.Lock()
+	h.sweepExpiredOAuthStatesLocked(time.Now())
+	if len(h.registeredStates) >= oauthStateMaxEntries {
+		h.mu.Unlock()
+		http.Error(w, "OAuth login temporarily unavailable", http.StatusServiceUnavailable)
+		return
+	}
 	h.registeredStates[state] = &oauth2State{
 		providerConfig: provider,
 		providerName:   providerName,
 		Username:       "",
+		createdAt:      time.Now(),
 	}
 	h.mu.Unlock()
 
@@ -177,6 +203,9 @@ func (h *OAuth2Handler) checkOAuthCallbackCookie(w http.ResponseWriter, r *http.
 
 	if !h.validateStateMatch(r.URL.Query().Get("state"), state) {
 		log.Errorf("State mismatch: %v != %v", r.URL.Query().Get("state"), state)
+		h.mu.Lock()
+		h.deleteOAuthStateLocked(state)
+		h.mu.Unlock()
 		http.Error(w, "State mismatch", http.StatusBadRequest)
 		return nil, state, false
 	}
@@ -186,6 +215,9 @@ func (h *OAuth2Handler) checkOAuthCallbackCookie(w http.ResponseWriter, r *http.
 	h.mu.RUnlock()
 	if !ok {
 		log.Errorf("State not found in server: %v", state)
+		h.mu.Lock()
+		h.deleteOAuthStateLocked(state)
+		h.mu.Unlock()
 		http.Error(w, "State not found in server", http.StatusBadRequest)
 		return nil, state, false
 	}
