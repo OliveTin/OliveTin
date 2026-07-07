@@ -499,16 +499,21 @@ func mangleChecklistValue(arg *config.ActionArgument, value string, actionTitle 
 		return value
 	}
 
-	return mangleChecklistSegments(arg, segments, actionTitle)
+	return mangleChecklistSegments(arg, segments, value, actionTitle)
 }
 
-func mangleChecklistSegments(arg *config.ActionArgument, segments []string, actionTitle string) string {
+func mangleChecklistSegments(arg *config.ActionArgument, segments []string, fallback string, actionTitle string) string {
 	mangled := make([]string, len(segments))
 	for i, segment := range segments {
 		mangled[i] = mangleChecklistSegment(arg, segment, actionTitle)
 	}
 
-	return config.FormatChecklistValue(mangled)
+	formatted, err := config.FormatChecklistValue(mangled)
+	if err != nil {
+		return fallback
+	}
+
+	return formatted
 }
 
 func mangleChecklistSegment(arg *config.ActionArgument, segment string, actionTitle string) string {

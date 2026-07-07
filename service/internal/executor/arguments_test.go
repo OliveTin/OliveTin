@@ -136,10 +136,10 @@ func TestValidateArgumentChecklistSelections(t *testing.T) {
 	err := ValidateArgument(&arg, "documents", &action)
 	assert.Nil(t, err)
 
-	err = ValidateArgument(&arg, "documents,photos", &action)
+	err = ValidateArgument(&arg, `["documents","photos"]`, &action)
 	assert.Nil(t, err)
 
-	err = ValidateArgument(&arg, "documents,unknown", &action)
+	err = ValidateArgument(&arg, `["documents","unknown"]`, &action)
 	assert.NotNil(t, err)
 }
 
@@ -149,7 +149,7 @@ func TestValidateArgumentChecklistTitleMangling(t *testing.T) {
 	arg := checklistTestArg()
 	action := config.Action{Title: "Test checklist title mangling"}
 
-	err := ValidateArgument(&arg, "Documents,Photos", &action)
+	err := ValidateArgument(&arg, `["Documents","Photos"]`, &action)
 	assert.Nil(t, err)
 }
 
@@ -186,7 +186,7 @@ func TestValidateArgumentChecklistRejectsEmptySegment(t *testing.T) {
 	arg := checklistTestArg()
 	action := config.Action{Title: "Test checklist empty segment"}
 
-	err := ValidateArgument(&arg, "documents,,photos", &action)
+	err := ValidateArgument(&arg, `["documents","","photos"]`, &action)
 	assert.NotNil(t, err)
 }
 
@@ -195,10 +195,10 @@ func TestMangleArgumentValueChecklist(t *testing.T) {
 
 	arg := checklistTestArg()
 
-	out := MangleArgumentValue(&arg, "Documents,Music", "Test action")
+	out := MangleArgumentValue(&arg, `["Documents","Music"]`, "Test action")
 	assert.Equal(t, `["documents","music"]`, out)
 
-	out = MangleArgumentValue(&arg, "documents,photos", "Test action")
+	out = MangleArgumentValue(&arg, `["documents","photos"]`, "Test action")
 	assert.Equal(t, `["documents","photos"]`, out)
 }
 
@@ -225,10 +225,10 @@ func TestValidateArgumentChecklistEntitySelections(t *testing.T) {
 	err := ValidateArgument(&arg, "attic", &action)
 	assert.Nil(t, err)
 
-	err = ValidateArgument(&arg, "attic,basement", &action)
+	err = ValidateArgument(&arg, `["attic","basement"]`, &action)
 	assert.Nil(t, err)
 
-	err = ValidateArgument(&arg, "attic,unknown", &action)
+	err = ValidateArgument(&arg, `["attic","unknown"]`, &action)
 	assert.NotNil(t, err)
 }
 
@@ -247,7 +247,7 @@ func TestMangleArgumentValueChecklistEntityTitles(t *testing.T) {
 		},
 	}
 
-	out := MangleArgumentValue(&arg, "attic room,basement room", "Test checklist entity titles")
+	out := MangleArgumentValue(&arg, `["attic room","basement room"]`, "Test checklist entity titles")
 	assert.Equal(t, `["attic","basement"]`, out)
 }
 

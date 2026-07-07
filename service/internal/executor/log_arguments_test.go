@@ -92,7 +92,7 @@ func TestStorableArgumentsFromRequestStoresMangledChecklistValue(t *testing.T) {
 		},
 	}
 	req.Arguments = map[string]string{
-		"directories": "Documents,Photos",
+		"directories": `["Documents","Photos"]`,
 	}
 
 	mangleInvalidArgumentValues(req)

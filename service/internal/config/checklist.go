@@ -7,7 +7,7 @@ import (
 )
 
 // ParseChecklistValue parses a checklist argument wire value.
-// New values are JSON arrays; legacy comma-separated values are still accepted.
+// Values must be JSON arrays, or a single choice without commas.
 func ParseChecklistValue(value string) ([]string, error) {
 	trimmed := strings.TrimSpace(value)
 	if trimmed == "" {
@@ -18,7 +18,11 @@ func ParseChecklistValue(value string) ([]string, error) {
 		return parseJSONChecklistValue(trimmed)
 	}
 
-	return parseLegacyChecklistValue(value)
+	if strings.Contains(trimmed, ",") {
+		return nil, fmt.Errorf("checklist value uses legacy comma-separated format; use a JSON array instead")
+	}
+
+	return []string{trimmed}, nil
 }
 
 func parseJSONChecklistValue(value string) ([]string, error) {
@@ -27,34 +31,25 @@ func parseJSONChecklistValue(value string) ([]string, error) {
 		return nil, fmt.Errorf("invalid checklist JSON value: %w", err)
 	}
 
-	return values, nil
-}
-
-func parseLegacyChecklistValue(value string) ([]string, error) {
-	segments := strings.Split(value, ",")
-	values := make([]string, 0, len(segments))
-	for _, segment := range segments {
-		trimmedSegment := strings.TrimSpace(segment)
-		if trimmedSegment == "" {
+	for _, segment := range values {
+		if strings.TrimSpace(segment) == "" {
 			return nil, fmt.Errorf("checklist value contains an empty segment")
 		}
-
-		values = append(values, trimmedSegment)
 	}
 
 	return values, nil
 }
 
 // FormatChecklistValue serializes selected checklist values for API transport.
-func FormatChecklistValue(values []string) string {
+func FormatChecklistValue(values []string) (string, error) {
 	if len(values) == 0 {
-		return ""
+		return "", nil
 	}
 
 	encoded, err := json.Marshal(values)
 	if err != nil {
-		return ""
+		return "", fmt.Errorf("encoding checklist value: %w", err)
 	}
 
-	return string(encoded)
+	return string(encoded), nil
 }

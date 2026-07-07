@@ -19,25 +19,40 @@ func TestParseChecklistValueJSON(t *testing.T) {
 	assert.Equal(t, []string{"kitchen,bedroom", "hallway"}, values)
 }
 
-func TestParseChecklistValueLegacyCommaSeparated(t *testing.T) {
+func TestParseChecklistValueSingleValue(t *testing.T) {
 	t.Parallel()
 
-	values, err := ParseChecklistValue("documents, photos")
+	values, err := ParseChecklistValue("documents")
 	require.NoError(t, err)
-	assert.Equal(t, []string{"documents", "photos"}, values)
+	assert.Equal(t, []string{"documents"}, values)
 }
 
-func TestParseChecklistValueRejectsEmptyLegacySegment(t *testing.T) {
+func TestParseChecklistValueRejectsLegacyCommaSeparated(t *testing.T) {
 	t.Parallel()
 
-	_, err := ParseChecklistValue("documents,,photos")
+	_, err := ParseChecklistValue("documents, photos")
+	require.Error(t, err)
+}
+
+func TestParseChecklistValueRejectsEmptyJSONSegment(t *testing.T) {
+	t.Parallel()
+
+	_, err := ParseChecklistValue(`["documents","","photos"]`)
 	require.Error(t, err)
 }
 
 func TestFormatChecklistValueJSON(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, `["documents","photos"]`, FormatChecklistValue([]string{"documents", "photos"}))
-	assert.Equal(t, `["kitchen,bedroom"]`, FormatChecklistValue([]string{"kitchen,bedroom"}))
-	assert.Empty(t, FormatChecklistValue(nil))
+	encoded, err := FormatChecklistValue([]string{"documents", "photos"})
+	require.NoError(t, err)
+	assert.Equal(t, `["documents","photos"]`, encoded)
+
+	encoded, err = FormatChecklistValue([]string{"kitchen,bedroom"})
+	require.NoError(t, err)
+	assert.Equal(t, `["kitchen,bedroom"]`, encoded)
+
+	encoded, err = FormatChecklistValue(nil)
+	require.NoError(t, err)
+	assert.Empty(t, encoded)
 }
