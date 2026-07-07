@@ -40,6 +40,22 @@ func waitForLogArguments(t *testing.T, ex *executor.Executor, trackingID string)
 	return nil
 }
 
+func waitForLogFinished(t *testing.T, ex *executor.Executor, trackingID string) {
+	t.Helper()
+
+	deadline := time.Now().Add(2 * time.Second)
+	for time.Now().Before(deadline) {
+		entry, ok := ex.GetLog(trackingID)
+		if ok && entry.ExecutionFinished {
+			return
+		}
+
+		time.Sleep(5 * time.Millisecond)
+	}
+
+	t.Fatalf("timed out waiting for execution to finish on log %s", trackingID)
+}
+
 func waitForLogJustification(t *testing.T, ex *executor.Executor, trackingID, expected string) {
 	t.Helper()
 
@@ -166,6 +182,7 @@ func TestRestartActionReusesStoredArguments(t *testing.T) {
 
 	originalArgs := waitForLogArguments(t, ex, startResp.Msg.ExecutionTrackingId)
 	assert.Equal(t, "server-a", originalArgs["host"])
+	waitForLogFinished(t, ex, startResp.Msg.ExecutionTrackingId)
 
 	restartResp, err := client.RestartAction(context.Background(), connect.NewRequest(&apiv1.RestartActionRequest{
 		ExecutionTrackingId: startResp.Msg.ExecutionTrackingId,
@@ -338,6 +355,7 @@ func TestRestartActionReusesStoredJustificationViaStartActionPath(t *testing.T) 
 	require.NoError(t, err)
 
 	waitForLogJustification(t, ex, startResp.Msg.ExecutionTrackingId, "maintenance window")
+	waitForLogFinished(t, ex, startResp.Msg.ExecutionTrackingId)
 
 	restartResp, err := client.RestartAction(context.Background(), connect.NewRequest(&apiv1.RestartActionRequest{
 		ExecutionTrackingId: startResp.Msg.ExecutionTrackingId,
