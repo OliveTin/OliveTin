@@ -499,13 +499,72 @@ func TestCheckShellArgumentSafetyWithPasswordAndExec(t *testing.T) {
 	assert.Nil(t, err)
 }
 
+func TestCheckShellArgumentSafetyWithHTML(t *testing.T) {
+	a1 := config.Action{
+		Title: "HTML shell",
+		Shell: "echo {{ body }}",
+		Arguments: []config.ActionArgument{
+			{Name: "body", Type: "html"},
+		},
+	}
+
+	err := checkShellArgumentSafety(&a1)
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "unsafe argument type 'html'")
+}
+
+func TestCheckShellArgumentSafetyWithConfirmation(t *testing.T) {
+	a1 := config.Action{
+		Title: "Confirm shell",
+		Shell: "echo ok",
+		Arguments: []config.ActionArgument{
+			{Name: "agree", Type: "confirmation"},
+		},
+	}
+
+	err := checkShellArgumentSafety(&a1)
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "unsafe argument type 'confirmation'")
+}
+
+func TestCheckShellArgumentSafetyWithChoicelessCheckbox(t *testing.T) {
+	a1 := config.Action{
+		Title: "Checkbox shell",
+		Shell: "echo {{ flag }}",
+		Arguments: []config.ActionArgument{
+			{Name: "flag", Type: "checkbox"},
+		},
+	}
+
+	err := checkShellArgumentSafety(&a1)
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "unsafe argument type 'checkbox'")
+}
+
+func TestCheckShellArgumentSafetyWithCustomRegex(t *testing.T) {
+	a1 := config.Action{
+		Title: "Regex shell",
+		Shell: "curl {{ host }}",
+		Arguments: []config.ActionArgument{
+			{Name: "host", Type: "regex:[a-zA-Z0-9.-]+"},
+		},
+	}
+
+	err := checkShellArgumentSafety(&a1)
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "unsafe argument type 'regex:[a-zA-Z0-9.-]+'")
+}
+
 func TestTypeSafetyCheckUrl(t *testing.T) {
 	assert.Nil(t, TypeSafetyCheck("test1", "http://google.com", "url"), "Test URL: google.com")
 	assert.Nil(t, TypeSafetyCheck("test2", "http://technowax.net:80?foo=bar", "url"), "Test URL: technowax.net with query arguments")
 	assert.Nil(t, TypeSafetyCheck("test3", "http://localhost:80?foo=bar", "url"), "Test URL: localhost with query arguments")
+	assert.Nil(t, TypeSafetyCheck("test7", "https://example.com/path", "url"), "Test URL: https scheme")
 	assert.NotNil(t, TypeSafetyCheck("test4", "http://lo  host:80", "url"), "Test a badly formed URL")
 	assert.NotNil(t, TypeSafetyCheck("test5", "12345", "url"), "Test a badly formed URL")
 	assert.NotNil(t, TypeSafetyCheck("test6", "_!23;", "url"), "Test a badly formed URL")
+	assert.NotNil(t, TypeSafetyCheck("test8", "file:///etc/passwd", "url"), "file:// scheme must be rejected")
+	assert.NotNil(t, TypeSafetyCheck("test9", "gopher://example.com", "url"), "gopher:// scheme must be rejected")
 }
 
 func TestTypeSafetyCheckRegex(t *testing.T) {
@@ -528,6 +587,13 @@ func TestTypeSafetyCheckRegex(t *testing.T) {
 			field:    "Username",
 			pattern:  "regex:^[a-zA-Z]$",
 			value:    "James1234",
+			hasError: true,
+		},
+		{
+			name:     "GHSA-gvxq - reject partial regex match",
+			field:    "host",
+			pattern:  "regex:[a-zA-Z0-9.-]+",
+			value:    "example.com; id",
 			hasError: true,
 		},
 	}
