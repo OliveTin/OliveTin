@@ -13,14 +13,20 @@ const choices = [
   { title: 'Photos', value: 'photos' }
 ]
 
-test('parseChecklistValue splits comma-delimited values', () => {
-  assert.deepEqual(parseChecklistValue('documents,photos'), ['documents', 'photos'])
-  assert.deepEqual(parseChecklistValue('documents, photos'), ['documents', 'photos'])
+	test('parseChecklistValue parses JSON-encoded values', () => {
+  assert.deepEqual(parseChecklistValue('["documents","photos"]'), ['documents', 'photos'])
+  assert.deepEqual(parseChecklistValue('["kitchen,bedroom","hallway"]'), ['kitchen,bedroom', 'hallway'])
   assert.deepEqual(parseChecklistValue(''), [])
 })
 
-test('formatChecklistValue joins selected values', () => {
-  assert.equal(formatChecklistValue(['documents', 'photos']), 'documents,photos')
+test('parseChecklistValue accepts legacy comma-delimited values', () => {
+  assert.deepEqual(parseChecklistValue('documents,photos'), ['documents', 'photos'])
+  assert.deepEqual(parseChecklistValue('documents, photos'), ['documents', 'photos'])
+})
+
+test('formatChecklistValue joins selected values as JSON', () => {
+  assert.equal(formatChecklistValue(['documents', 'photos']), '["documents","photos"]')
+  assert.equal(formatChecklistValue(['kitchen,bedroom']), '["kitchen,bedroom"]')
   assert.equal(formatChecklistValue([]), '')
 })
 

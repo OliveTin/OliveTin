@@ -62,7 +62,17 @@ async function waitForTerminalOutput(expectedValue, label = 'Selected segments')
 async function waitForTerminalOutputPattern(pattern) {
   await pollTerminal(
     (output) => pattern.test(output),
-    10000
+    DEFAULT_UI_WAIT_MS
+  )
+}
+
+async function waitForChecklistValue(expectedValue) {
+  await webdriver.wait(
+    new Condition('wait for checklist hidden value', async () => {
+      const valueInput = await webdriver.findElement(By.css('.choice-checklist > input'))
+      return (await valueInput.getAttribute('value')) === expectedValue
+    }),
+    DEFAULT_UI_WAIT_MS
   )
 }
 
@@ -108,7 +118,7 @@ describe('config: checklist', function () {
 
     const selectNone = await webdriver.findElement(By.xpath("//button[normalize-space()='Select none']"))
     await selectNone.click()
-    await webdriver.sleep(300)
+    await waitForChecklistValue('')
 
     const valueInput = await webdriver.findElement(By.css('.choice-checklist > input'))
     expect(await valueInput.getAttribute('value')).to.equal('')
@@ -131,7 +141,7 @@ describe('config: checklist', function () {
     await submitChecklistForm()
     await waitForLogsPage()
     await waitForExecutionComplete()
-    await waitForTerminalOutput('kitchen,bedroom,hallway')
+    await waitForTerminalOutput('["kitchen","bedroom","hallway"]')
   })
 
   it('Checklist toggles individual choices before submit', async function () {
@@ -143,7 +153,7 @@ describe('config: checklist', function () {
     await submitChecklistForm()
     await waitForLogsPage()
     await waitForExecutionComplete()
-    await waitForTerminalOutput('kitchen,bedroom,hallway')
+    await waitForTerminalOutput('["kitchen","bedroom","hallway"]')
   })
 
   it('Checklist entity argument renders choices from entities', async function () {
@@ -163,6 +173,6 @@ describe('config: checklist', function () {
     await submitChecklistForm()
     await waitForLogsPage()
     await waitForExecutionComplete()
-    await waitForTerminalOutput('attic', 'Selected rooms')
+    await waitForTerminalOutput('["attic"]', 'Selected rooms')
   })
 })

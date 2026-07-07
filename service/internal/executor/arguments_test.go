@@ -196,10 +196,10 @@ func TestMangleArgumentValueChecklist(t *testing.T) {
 	arg := checklistTestArg()
 
 	out := MangleArgumentValue(&arg, "Documents,Music", "Test action")
-	assert.Equal(t, "documents,music", out)
+	assert.Equal(t, `["documents","music"]`, out)
 
 	out = MangleArgumentValue(&arg, "documents,photos", "Test action")
-	assert.Equal(t, "documents,photos", out)
+	assert.Equal(t, `["documents","photos"]`, out)
 }
 
 func checklistEntityTestArg() config.ActionArgument {
@@ -248,7 +248,7 @@ func TestMangleArgumentValueChecklistEntityTitles(t *testing.T) {
 	}
 
 	out := MangleArgumentValue(&arg, "attic room,basement room", "Test checklist entity titles")
-	assert.Equal(t, "attic,basement", out)
+	assert.Equal(t, `["attic","basement"]`, out)
 }
 
 func TestParseActionArgumentsChecklistEmptySelection(t *testing.T) {

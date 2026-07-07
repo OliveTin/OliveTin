@@ -17,13 +17,13 @@ type relatedActionCandidate struct {
 }
 
 func (api *oliveTinAPI) relatedActionsForEntity(user *authpublic.AuthenticatedUser, entityType string, entity *entities.Entity) []*apiv1.EntityRelatedAction {
-	rr := api.createDashboardRenderRequest(user, entityType, entity.UniqueKey)
-	populateActiveBindingStates(rr)
+	renderRequest := api.createDashboardRenderRequest(user, entityType, entity.UniqueKey)
+	populateActiveBindingStates(renderRequest)
 
 	candidates := collectRelatedActionCandidates(api, user, entityType, entity)
 	sortRelatedActionCandidates(candidates)
 
-	return buildEntityRelatedActions(candidates, rr)
+	return buildEntityRelatedActions(candidates, renderRequest)
 }
 
 func collectRelatedActionCandidates(api *oliveTinAPI, user *authpublic.AuthenticatedUser, entityType string, entity *entities.Entity) []relatedActionCandidate {
@@ -102,8 +102,12 @@ func buildPrefilledArgumentsForEntity(action *config.Action, entityType string, 
 }
 
 func sortRelatedActionCandidates(candidates []relatedActionCandidate) {
-	sort.Slice(candidates, func(i, j int) bool {
-		return candidates[i].binding.ConfigOrder < candidates[j].binding.ConfigOrder
+	sort.SliceStable(candidates, func(i, j int) bool {
+		if candidates[i].binding.ConfigOrder != candidates[j].binding.ConfigOrder {
+			return candidates[i].binding.ConfigOrder < candidates[j].binding.ConfigOrder
+		}
+
+		return candidates[i].binding.ID < candidates[j].binding.ID
 	})
 }
 

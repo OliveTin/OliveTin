@@ -241,8 +241,17 @@ func typecheckChecklist(value string, arg *config.ActionArgument) error {
 		return fmt.Errorf("checklist argument %q requires choices", arg.Name)
 	}
 
-	for _, segment := range strings.Split(value, ",") {
-		if err := typecheckChecklistSegment(strings.TrimSpace(segment), arg); err != nil {
+	segments, err := config.ParseChecklistValue(value)
+	if err != nil {
+		return err
+	}
+
+	return typecheckChecklistSegments(segments, arg)
+}
+
+func typecheckChecklistSegments(segments []string, arg *config.ActionArgument) error {
+	for _, segment := range segments {
+		if err := typecheckChecklistSegment(segment, arg); err != nil {
 			return err
 		}
 	}
@@ -485,14 +494,21 @@ func mangleChecklistValue(arg *config.ActionArgument, value string, actionTitle 
 		return value
 	}
 
-	segments := strings.Split(value, ",")
-	mangled := make([]string, len(segments))
+	segments, err := config.ParseChecklistValue(value)
+	if err != nil {
+		return value
+	}
 
+	return mangleChecklistSegments(arg, segments, actionTitle)
+}
+
+func mangleChecklistSegments(arg *config.ActionArgument, segments []string, actionTitle string) string {
+	mangled := make([]string, len(segments))
 	for i, segment := range segments {
 		mangled[i] = mangleChecklistSegment(arg, segment, actionTitle)
 	}
 
-	return strings.Join(mangled, ",")
+	return config.FormatChecklistValue(mangled)
 }
 
 func mangleChecklistSegment(arg *config.ActionArgument, segment string, actionTitle string) string {

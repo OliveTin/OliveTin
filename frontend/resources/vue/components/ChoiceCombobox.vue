@@ -152,8 +152,11 @@ function selectedChoiceIndex(choices) {
 
 function openList() {
   document.dispatchEvent(new CustomEvent(closeOthersEvent, { detail: { id: props.id } }))
+  const wasClosed = !isOpen.value
   isOpen.value = true
-  highlightedIndex.value = selectedChoiceIndex(filteredChoices.value)
+  if (wasClosed) {
+    highlightedIndex.value = selectedChoiceIndex(filteredChoices.value)
+  }
 }
 
 function closeList() {

@@ -272,7 +272,7 @@ func TestValidateUniqueLocalUserAPIKeys(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestValidateChecklistChoiceValuesRejectsCommas(t *testing.T) {
+func TestValidateChecklistChoiceValuesAllowsCommas(t *testing.T) {
 	t.Parallel()
 
 	c := DefaultConfig()
@@ -291,6 +291,5 @@ func TestValidateChecklistChoiceValuesRejectsCommas(t *testing.T) {
 	})
 
 	err := c.validateChecklistChoiceValues()
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), `choice value "kitchen,bedroom" must not contain commas`)
+	require.NoError(t, err)
 }

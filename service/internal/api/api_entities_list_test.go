@@ -64,6 +64,61 @@ func TestGetEntitiesPaginatesAndFiltersInstances(t *testing.T) {
 	assert.Equal(t, "1", pagedResp.Msg.EntityDefinitions[0].Instances[0].UniqueKey)
 }
 
+func TestGetEntitiesUnfilteredIncludesConfiguredProperties(t *testing.T) {
+	entities.ClearEntitiesOfType("server")
+	entities.AddEntity("server", "0", map[string]any{"name": "alpha", "hostname": "alpha.example.com", "ip": "10.0.0.1"})
+	t.Cleanup(func() {
+		entities.ClearEntitiesOfType("server")
+	})
+
+	cfg := config.DefaultConfig()
+	cfg.Entities = []*config.EntityFile{
+		{
+			Name: "server",
+			Properties: []config.EntityProperty{
+				{Name: "hostname", Title: "Hostname"},
+			},
+		},
+	}
+	cfg.Sanitize()
+
+	ex := executor.DefaultExecutor(cfg)
+	ex.RebuildActionMap()
+	ts, client := getNewTestServerAndClientWithExecutor(cfg, ex)
+	defer ts.Close()
+
+	resp, err := client.GetEntities(context.Background(), connect.NewRequest(&apiv1.GetEntitiesRequest{}))
+	require.NoError(t, err)
+
+	serverDef := findEntityDefinition(resp.Msg.EntityDefinitions, "server")
+	require.NotNil(t, serverDef)
+	require.Len(t, serverDef.Properties, 1)
+	assert.Equal(t, "hostname", serverDef.Properties[0].Name)
+	assert.Equal(t, int32(1), serverDef.TotalInstances)
+	assert.Empty(t, serverDef.Instances)
+}
+
+func TestPaginateEntityInstancesHandlesLargePageValues(t *testing.T) {
+	instances := []*apiv1.Entity{
+		{UniqueKey: "0"},
+		{UniqueKey: "1"},
+	}
+
+	assert.Empty(t, paginateEntityInstances(instances, 1<<30, 1))
+	assert.Empty(t, paginateEntityInstances(instances, 2, 1<<30))
+	assert.Equal(t, []*apiv1.Entity{{UniqueKey: "1"}}, paginateEntityInstances(instances, 2, 1))
+}
+
+func findEntityDefinition(definitions []*apiv1.EntityDefinition, title string) *apiv1.EntityDefinition {
+	for _, definition := range definitions {
+		if definition.Title == title {
+			return definition
+		}
+	}
+
+	return nil
+}
+
 func TestGetEntityRestrictsFieldsToConfiguredProperties(t *testing.T) {
 	entities.ClearEntitiesOfType("server")
 	entities.AddEntity("server", "0", map[string]any{

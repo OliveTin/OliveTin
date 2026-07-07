@@ -59,15 +59,30 @@ func resolveJustificationFromTemplate(action *config.Action, binding *executor.A
 
 	resolved, err := tpl.ParseTemplateWithActionContext(templateText, bindingEntity(binding), args)
 	if err != nil {
-		log.WithFields(log.Fields{
-			"template": templateText,
-			"entity":   bindingEntity(binding),
-			"error":    err,
-		}).Warn("Failed to resolve justification template")
+		log.WithFields(justificationTemplateErrorFields(templateText, binding, err)).Warn("Failed to resolve justification template")
 		return fallback
 	}
 
 	return resolved
+}
+
+func justificationTemplateErrorFields(templateText string, binding *executor.ActionBinding, err error) log.Fields {
+	fields := log.Fields{
+		"template": templateText,
+		"error":    err,
+	}
+
+	entity := bindingEntity(binding)
+	if entity == nil {
+		return fields
+	}
+
+	fields["entityKey"] = entity.UniqueKey
+	if binding.Action != nil && binding.Action.Entity != "" {
+		fields["entityType"] = binding.Action.Entity
+	}
+
+	return fields
 }
 
 func bindingEntity(binding *executor.ActionBinding) *entities.Entity {

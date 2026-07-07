@@ -286,7 +286,7 @@ func TestRestartActionRequiresJustificationWhenMissingFromStoredLog(t *testing.T
 			Title:         "Dangerous action",
 			Shell:         "echo ok",
 			MaxConcurrent: 1,
-			Justification: " ",
+			Justification: config.JustificationRequiredNoTemplate,
 		},
 	}
 
@@ -319,7 +319,7 @@ func TestRestartActionReusesStoredJustificationViaStartActionPath(t *testing.T) 
 			Title:         "Dangerous action",
 			Shell:         "echo ok",
 			MaxConcurrent: 1,
-			Justification: " ",
+			Justification: config.JustificationRequiredNoTemplate,
 		},
 	}
 

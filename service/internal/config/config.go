@@ -50,6 +50,10 @@ func (action *Action) JustificationTemplateText() string {
 		return ""
 	}
 
+	if action.Justification == JustificationRequiredNoTemplate {
+		return ""
+	}
+
 	return action.Justification
 }
 

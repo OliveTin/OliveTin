@@ -1,9 +1,27 @@
+function parseLegacyChecklistValue(value) {
+  return value.split(',').map((segment) => segment.trim()).filter((segment) => segment !== '')
+}
+
 export function parseChecklistValue(value) {
   if (!value || value === '') {
     return []
   }
 
-  return value.split(',').map((segment) => segment.trim()).filter((segment) => segment !== '')
+  const trimmed = value.trim()
+  if (trimmed.startsWith('[')) {
+    try {
+      const parsed = JSON.parse(trimmed)
+      if (!Array.isArray(parsed)) {
+        return []
+      }
+
+      return parsed.map((segment) => String(segment).trim()).filter((segment) => segment !== '')
+    } catch {
+      return []
+    }
+  }
+
+  return parseLegacyChecklistValue(value)
 }
 
 export function formatChecklistValue(selected) {
@@ -11,7 +29,7 @@ export function formatChecklistValue(selected) {
     return ''
   }
 
-  return selected.join(',')
+  return JSON.stringify(selected)
 }
 
 export function toggleChoice(selected, value) {

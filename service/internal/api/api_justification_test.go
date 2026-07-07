@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"testing"
-	"time"
 
 	"connectrpc.com/connect"
 	"github.com/google/uuid"
@@ -49,11 +48,7 @@ func TestStartActionRequiresJustificationForGuest(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEmpty(t, resp.Msg.ExecutionTrackingId)
 
-	time.Sleep(200 * time.Millisecond)
-
-	entry, ok := ex.GetLog(resp.Msg.ExecutionTrackingId)
-	require.True(t, ok)
-	assert.Equal(t, "New user registration foo@example.com", entry.Justification)
+	waitForLogJustification(t, ex, resp.Msg.ExecutionTrackingId, "New user registration foo@example.com")
 }
 
 func TestBuildActionExposesJustificationTemplate(t *testing.T) {
@@ -159,11 +154,7 @@ func TestStartActionResolvesJustificationTemplateForGuest(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEmpty(t, resp.Msg.ExecutionTrackingId)
 
-	time.Sleep(200 * time.Millisecond)
-
-	entry, ok := ex.GetLog(resp.Msg.ExecutionTrackingId)
-	require.True(t, ok)
-	assert.Equal(t, "stuffbox", entry.Justification)
+	waitForLogJustification(t, ex, resp.Msg.ExecutionTrackingId, "stuffbox")
 }
 
 func TestValidateJustificationRequiredAllowsSystemUser(t *testing.T) {

@@ -99,7 +99,7 @@ func TestStorableArgumentsFromRequestStoresMangledChecklistValue(t *testing.T) {
 	args := storableArgumentsFromRequest(req)
 
 	require.Len(t, args, 1)
-	assert.Equal(t, "documents,photos", args["directories"])
+	assert.Equal(t, `["documents","photos"]`, args["directories"])
 }
 
 func TestCopyStorableArgumentsToLogEntry(t *testing.T) {

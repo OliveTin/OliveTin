@@ -9,7 +9,10 @@ import (
 	"github.com/OliveTin/OliveTin/internal/entities"
 )
 
-const defaultEntityInstancesPageSize = 10
+const (
+	defaultEntityInstancesPageSize = 10
+	maxEntityInstancesPageSize     = 100
+)
 
 func (api *oliveTinAPI) buildEntityDefinitionsResponse(req *apiv1.GetEntitiesRequest, entityMap entities.EntitiesByClass) []*apiv1.EntityDefinition {
 	if req != nil && req.EntityType != "" {
@@ -91,6 +94,9 @@ func normalizeEntityInstancesPageSize(pageSize int32) int32 {
 	if pageSize < 1 {
 		return defaultEntityInstancesPageSize
 	}
+	if pageSize > maxEntityInstancesPageSize {
+		return maxEntityInstancesPageSize
+	}
 	return pageSize
 }
 
@@ -125,17 +131,18 @@ func entityInstanceMatchesFilter(instance *apiv1.Entity, filter string) bool {
 }
 
 func paginateEntityInstances(instances []*apiv1.Entity, page, pageSize int32) []*apiv1.Entity {
-	start := int((page - 1) * pageSize)
-	if start >= len(instances) {
+	count := int64(len(instances))
+	start := int64(page-1) * int64(pageSize)
+	if start >= count {
 		return []*apiv1.Entity{}
 	}
 
-	end := start + int(pageSize)
-	if end > len(instances) {
-		end = len(instances)
+	end := start + int64(pageSize)
+	if end > count {
+		end = count
 	}
 
-	return instances[start:end]
+	return instances[int(start):int(end)]
 }
 
 func entityFieldsForResponse(data any, properties []config.EntityProperty) map[string]string {

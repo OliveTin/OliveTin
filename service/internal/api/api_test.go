@@ -157,6 +157,7 @@ func validateEntityListProperties(t *testing.T, client apiv1connect.OliveTinApiS
 		PageSize:   10,
 	}))
 	require.NoError(t, err)
+	require.Len(t, resp.Msg.EntityDefinitions, 1)
 
 	serverDef := resp.Msg.EntityDefinitions[0]
 	require.NotNil(t, serverDef, "server entity definition should be present")
@@ -949,6 +950,9 @@ func TestBuildActionIncludesGroups(t *testing.T) {
 func TestBuildChoicesExpandsChecklistEntityChoices(t *testing.T) {
 	entities.AddEntity("room", "0", map[string]any{"hostname": "attic"})
 	entities.AddEntity("room", "1", map[string]any{"hostname": "basement"})
+	t.Cleanup(func() {
+		entities.ClearEntitiesOfType("room")
+	})
 
 	arg := config.ActionArgument{
 		Type:   "checklist",

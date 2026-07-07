@@ -7,11 +7,15 @@ export function readPrefilledArgumentsFromNavigation() {
 	return {}
 }
 
-export function getInitialArgumentValue(paramName, prefilledArguments) {
-	if (Object.prototype.hasOwnProperty.call(prefilledArguments, paramName)) {
-		return prefilledArguments[paramName]
+export function getInitialArgumentValue(paramName, prefilledArguments = {}) {
+	const safePrefilledArguments = prefilledArguments && typeof prefilledArguments === 'object'
+		? prefilledArguments
+		: {}
+
+	if (Object.prototype.hasOwnProperty.call(safePrefilledArguments, paramName)) {
+		return safePrefilledArguments[paramName]
 	}
 
-	const params = new URLSearchParams(window.location.search.substring(1))
+	const params = new URLSearchParams(window.location.search)
 	return params.get(paramName)
 }

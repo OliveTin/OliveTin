@@ -72,6 +72,7 @@
 	const pageSize = ref(10)
 	const tableError = ref('')
 	let fetchTimer = null
+	let fetchSequence = 0
 
 	const hasTable = computed(() => (props.definition.properties?.length ?? 0) > 0)
 
@@ -120,6 +121,7 @@
 			return
 		}
 
+		const requestId = ++fetchSequence
 		tableError.value = ''
 		try {
 			const response = await window.client.getEntities({
@@ -129,10 +131,18 @@
 				pageSize: pageSize.value
 			})
 
+			if (requestId !== fetchSequence) {
+				return
+			}
+
 			const definition = response.entityDefinitions?.find(def => def.title === props.definition.title)
 			tableInstances.value = definition?.instances ?? []
 			totalInstances.value = definition?.totalInstances ?? 0
 		} catch (err) {
+			if (requestId !== fetchSequence) {
+				return
+			}
+
 			console.error('Failed to fetch entity instances:', err)
 			tableError.value = 'Failed to load entity instances.'
 			tableInstances.value = []

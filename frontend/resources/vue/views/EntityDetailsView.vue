@@ -63,6 +63,7 @@
 	<section v-if="entityDetails && relatedActions.length > 0" class="transparent">
 		<div class="dashboard-row">
 			<fieldset>
+				<legend class="visually-hidden">Related actions</legend>
 				<template v-for="(related, idx) in relatedActions" :key="related.action?.bindingId || idx">
 					<ActionButton
 						v-if="related.action"

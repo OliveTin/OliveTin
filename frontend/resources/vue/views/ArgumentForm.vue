@@ -19,9 +19,12 @@
         <template v-if="actionArguments.length > 0">
 
           <template v-for="arg in actionArguments" :key="arg.name">
-              <label :for="arg.type === 'checklist' ? undefined : arg.name">
+              <label v-if="arg.type !== 'checklist'" :for="arg.name">
                 {{ formatLabel(arg.title) }}
               </label>
+              <div v-else class="argument-label">
+                {{ formatLabel(arg.title) }}
+              </div>
 
               <datalist v-if="(arg.suggestions && Object.keys(arg.suggestions).length > 0) || getBrowserSuggestions(arg).length > 0" :id="`${arg.name}-choices`">
                 <option v-for="(suggestion, key) in arg.suggestions" :key="key" :value="key">
@@ -383,35 +386,31 @@ function formatArgumentValueForApi(arg, rawValue) {
   return rawValue ?? ''
 }
 
-function getArgumentValues() {
-  const ret = []
+function getSelectedArgumentEntries() {
+  const entries = []
 
   for (const arg of actionArguments.value) {
     if (!shouldSendArgument(arg)) {
       continue
     }
 
-    ret.push({
+    entries.push({
       name: arg.name,
       value: formatArgumentValueForApi(arg, argValues.value[arg.name])
     })
   }
 
-  return ret
+  return entries
+}
+
+function getArgumentValues() {
+  return getSelectedArgumentEntries().map(({ name, value }) => ({ name, value }))
 }
 
 function getArgumentMapForTemplate() {
-  const args = {}
-
-  for (const arg of actionArguments.value) {
-    if (!shouldSendArgument(arg)) {
-      continue
-    }
-
-    args[arg.name] = formatArgumentValueForApi(arg, argValues.value[arg.name])
-  }
-
-  return args
+  return Object.fromEntries(
+    getSelectedArgumentEntries().map(({ name, value }) => [name, value])
+  )
 }
 
 function updateJustificationFromTemplate() {

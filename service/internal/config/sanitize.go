@@ -95,12 +95,11 @@ func validateChecklistChoicesForArgument(actionTitle string, arg ActionArgument)
 	}
 
 	for _, choice := range arg.Choices {
-		if strings.Contains(choice.Value, ",") {
+		if strings.TrimSpace(choice.Value) == "" {
 			return fmt.Errorf(
-				`action %q argument %q choice value %q must not contain commas`,
+				`action %q argument %q choice value must not be empty`,
 				actionTitle,
 				arg.Name,
-				choice.Value,
 			)
 		}
 	}
