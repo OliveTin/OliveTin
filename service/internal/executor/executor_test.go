@@ -1,6 +1,8 @@
 package executor
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -383,6 +385,64 @@ func TestWebhookAllowsExecExecution(t *testing.T) {
 	assert.NotNil(t, req.logEntry)
 	assert.Equal(t, int32(0), req.logEntry.ExitCode)
 	assert.Contains(t, req.logEntry.Output, "hello")
+}
+
+func TestWebhookRejectsShellAfterCompleted(t *testing.T) {
+	cfg := config.DefaultConfig()
+	e := DefaultExecutor(cfg)
+	a1 := &config.Action{
+		Title:               "Webhook After Shell Reject",
+		Exec:                []string{"echo", "{{ msg }}"},
+		ShellAfterCompleted: "echo after",
+		Arguments: []config.ActionArgument{
+			{Name: "msg", Type: "ascii"},
+		},
+	}
+	cfg.Actions = append(cfg.Actions, a1)
+	cfg.Sanitize()
+	e.RebuildActionMap()
+
+	req := ExecutionRequest{
+		Tags:              []string{"webhook"},
+		AuthenticatedUser: auth.UserFromSystem(cfg, "webhook"),
+		Cfg:               cfg,
+		Arguments:         map[string]string{"msg": "hello"},
+		Binding:           e.FindBindingWithNoEntity(a1),
+	}
+
+	wg, _ := e.ExecRequest(&req)
+	wg.Wait()
+
+	assert.NotNil(t, req.logEntry)
+	assert.Contains(t, req.logEntry.Output, "webhooks cannot use shellAfterCompleted")
+}
+
+func TestShellAfterCompletedUsesOutputEnvSafely(t *testing.T) {
+	cfg := config.DefaultConfig()
+	e := DefaultExecutor(cfg)
+	injectedPath := filepath.Join(t.TempDir(), "olivetin-injected")
+	a1 := &config.Action{
+		Title:               "After completion escape",
+		Shell:               "printf %s \"'; touch " + injectedPath + "; echo '\"",
+		ShellAfterCompleted: "printf %s '{{ output }}'",
+	}
+	cfg.Actions = append(cfg.Actions, a1)
+	cfg.Sanitize()
+	e.RebuildActionMap()
+
+	req := ExecutionRequest{
+		AuthenticatedUser: auth.UserFromSystem(cfg, "cron"),
+		Cfg:               cfg,
+		Binding:           e.FindBindingWithNoEntity(a1),
+	}
+
+	wg, _ := e.ExecRequest(&req)
+	wg.Wait()
+
+	assert.NotNil(t, req.logEntry)
+	assert.Equal(t, int32(0), req.logEntry.ExitCode)
+	_, err := os.Stat(injectedPath)
+	assert.True(t, os.IsNotExist(err), "shellAfterCompleted must not execute injected commands from output")
 }
 
 func TestFilterToDefinedArgumentsOnly(t *testing.T) {
