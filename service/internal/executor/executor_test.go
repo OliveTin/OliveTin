@@ -421,10 +421,11 @@ func TestShellAfterCompletedUsesOutputEnvSafely(t *testing.T) {
 	cfg := config.DefaultConfig()
 	e := DefaultExecutor(cfg)
 	injectedPath := filepath.Join(t.TempDir(), "olivetin-injected")
+	expectedMainOutput := "'; touch " + injectedPath + "; echo '"
 	a1 := &config.Action{
 		Title:               "After completion escape",
-		Shell:               "printf %s \"'; touch " + injectedPath + "; echo '\"",
-		ShellAfterCompleted: "printf %s '{{ output }}'",
+		Shell:               "printf %s \"" + expectedMainOutput + "\"",
+		ShellAfterCompleted: "printf %s {{ output }}",
 	}
 	cfg.Actions = append(cfg.Actions, a1)
 	cfg.Sanitize()
@@ -441,6 +442,8 @@ func TestShellAfterCompletedUsesOutputEnvSafely(t *testing.T) {
 
 	assert.NotNil(t, req.logEntry)
 	assert.Equal(t, int32(0), req.logEntry.ExitCode)
+	assert.True(t, strings.HasPrefix(req.logEntry.Output, expectedMainOutput))
+	assert.Contains(t, req.logEntry.Output, "OliveTin::shellAfterCompleted stdout\n"+expectedMainOutput)
 	_, err := os.Stat(injectedPath)
 	assert.True(t, os.IsNotExist(err), "shellAfterCompleted must not execute injected commands from output")
 }
