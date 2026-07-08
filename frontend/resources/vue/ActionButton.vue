@@ -61,6 +61,11 @@ const props = defineProps({
 	type: String,
 	required: false,
 	default: ''
+  },
+  prefilledArguments: {
+	type: Object,
+	required: false,
+	default: () => ({})
   }
 })
 
@@ -248,7 +253,16 @@ async function handleClick() {
 	return
   }
   if (needsArgumentForm(props.actionData)) {
-	router.push(`/actionBinding/${props.actionData.bindingId}/argumentForm`)
+	const bindingId = props.actionData.bindingId
+	const prefilled = props.prefilledArguments || {}
+	if (Object.keys(prefilled).length > 0) {
+	  router.push({
+		path: `/actionBinding/${bindingId}/argumentForm`,
+		state: { prefilledArguments: prefilled }
+	  })
+	} else {
+	  router.push(`/actionBinding/${bindingId}/argumentForm`)
+	}
   } else {
 	await startAction()
   }

@@ -11,7 +11,7 @@ import (
 
 func TestResolveJustificationUsesProvidedValue(t *testing.T) {
 	cfg := config.DefaultConfig()
-	action := &config.Action{Title: "Send email", Justification: true, Shell: "echo hi"}
+	action := &config.Action{Title: "Send email", Justification: config.JustificationRequiredNoTemplate, Shell: "echo hi"}
 	cfg.Actions = append(cfg.Actions, action)
 	ex := DefaultExecutor(cfg)
 	ex.RebuildActionMap()
@@ -29,7 +29,7 @@ func TestResolveJustificationUsesProvidedValue(t *testing.T) {
 
 func TestResolveJustificationCronDefault(t *testing.T) {
 	cfg := config.DefaultConfig()
-	action := &config.Action{Title: "Nightly backup", Justification: true, Shell: "echo hi"}
+	action := &config.Action{Title: "Nightly backup", Justification: config.JustificationRequiredNoTemplate, Shell: "echo hi"}
 	cfg.Actions = append(cfg.Actions, action)
 	ex := DefaultExecutor(cfg)
 	ex.RebuildActionMap()
@@ -45,7 +45,7 @@ func TestResolveJustificationCronDefault(t *testing.T) {
 
 func TestResolveJustificationStartupDefault(t *testing.T) {
 	cfg := config.DefaultConfig()
-	action := &config.Action{Title: "Init", Justification: true, Shell: "echo hi"}
+	action := &config.Action{Title: "Init", Justification: config.JustificationRequiredNoTemplate, Shell: "echo hi"}
 	cfg.Actions = append(cfg.Actions, action)
 	ex := DefaultExecutor(cfg)
 	ex.RebuildActionMap()
@@ -61,7 +61,7 @@ func TestResolveJustificationStartupDefault(t *testing.T) {
 
 func TestResolveJustificationWebhookDefault(t *testing.T) {
 	cfg := config.DefaultConfig()
-	action := &config.Action{Title: "Deploy", Justification: true, Exec: []string{"echo", "deploy"}}
+	action := &config.Action{Title: "Deploy", Justification: config.JustificationRequiredNoTemplate, Exec: []string{"echo", "deploy"}}
 	cfg.Actions = append(cfg.Actions, action)
 	ex := DefaultExecutor(cfg)
 	ex.RebuildActionMap()
@@ -95,7 +95,7 @@ func TestJustificationNotPassedToShellArgs(t *testing.T) {
 	cfg := config.DefaultConfig()
 	action := &config.Action{
 		Title:         "Echo",
-		Justification: true,
+		Justification: config.JustificationRequiredNoTemplate,
 		Shell:         "echo {{ message }}",
 		Arguments: []config.ActionArgument{
 			{Name: "message", Type: "ascii_sentence"},

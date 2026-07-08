@@ -1,16 +1,30 @@
 <template>
   <section id = "argument-popup">
     <div class="section-header">
-      <h2>Start action: {{ title }}</h2>
+      <h2>
+        <span class="section-title-with-icon">
+          Start action:
+          <router-link
+            :to="`/action/${bindingId}`"
+            class="action-details-title-link"
+          >
+            <ActionIconGlyph v-if="icon" class="action-title-icon" :glyph="icon" />
+            {{ title }}
+          </router-link>
+        </span>
+      </h2>
     </div>
     <div class="section-content padding">
       <form @submit="handleSubmit">
         <template v-if="actionArguments.length > 0">
 
           <template v-for="arg in actionArguments" :key="arg.name">
-              <label :for="arg.name">
+              <label v-if="arg.type !== 'checklist'" :for="arg.name">
                 {{ formatLabel(arg.title) }}
               </label>
+              <div v-else class="argument-label">
+                {{ formatLabel(arg.title) }}
+              </div>
 
               <datalist v-if="(arg.suggestions && Object.keys(arg.suggestions).length > 0) || getBrowserSuggestions(arg).length > 0" :id="`${arg.name}-choices`">
                 <option v-for="(suggestion, key) in arg.suggestions" :key="key" :value="key">
@@ -23,6 +37,10 @@
 
               <ChoiceCombobox v-if="getInputComponent(arg) === 'select'" :id="arg.name" :name="arg.name"
                 :choices="arg.choices" :model-value="getArgumentValue(arg)" :required="arg.required"
+                @update:model-value="handleChoiceUpdate(arg, $event)" />
+
+              <ChoiceChecklist v-else-if="arg.type === 'checklist'" :id="arg.name" :name="arg.name"
+                :label="arg.title" :choices="arg.choices" :model-value="getArgumentValue(arg)" :required="arg.required"
                 @update:model-value="handleChoiceUpdate(arg, $event)" />
 
               <component v-else :is="getInputComponent(arg)" :id="arg.name" :name="arg.name"
@@ -40,7 +58,7 @@
 
         <template v-if="justificationRequired">
           <label for="justification">Justification:</label>
-          <input id="justification" name="justification" type="text" v-model="justificationValue" required />
+          <input id="justification" name="justification" type="text" :value="justificationValue" required @input="handleJustificationInput" />
         </template>
 
         <div v-if="actionArguments.length === 0 && !justificationRequired">
@@ -61,10 +79,18 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount, onUnmounted, nextTick } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, onUnmounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { requestReconnectNow } from '../../../js/websocket.js'
 import ChoiceCombobox from '../components/ChoiceCombobox.vue'
+import ChoiceChecklist from '../components/ChoiceChecklist.vue'
+import ActionIconGlyph from '../components/ActionIconGlyph.vue'
+import {
+  actionJustificationTemplate,
+  actionRequiresJustification,
+  applyArgumentTemplate
+} from '../utils/justificationTemplate.js'
+import { getInitialArgumentValue, readPrefilledArgumentsFromNavigation } from '../utils/prefilledArguments.js'
 
 const router = useRouter()
 
@@ -80,8 +106,11 @@ const formErrors = ref({})
 const actionArguments = ref([])
 const popupOnStart = ref('')
 const formReady = ref(false)
-const justificationRequired = ref(false)
+const justificationConfig = ref('')
 const justificationValue = ref('')
+const justificationEditedManually = ref(false)
+const justificationRequired = computed(() => actionRequiresJustification(justificationConfig.value))
+const justificationTemplate = computed(() => actionJustificationTemplate(justificationConfig.value))
 let isComponentMounted = true
 
 // Computed properties
@@ -109,18 +138,21 @@ async function setup() {
     icon.value = action.icon
     popupOnStart.value = action.popupOnStart || ''
     actionArguments.value = action.arguments || []
-    justificationRequired.value = action.justification || false
+    justificationConfig.value = action.justification || ''
     justificationValue.value = ''
+    justificationEditedManually.value = false
     argValues.value = {}
     formErrors.value = {}
     confirmationChecked.value = false
     hasConfirmation.value = false
 
-    // Initialize values from query params or defaults
+    const prefilledArguments = readPrefilledArgumentsFromNavigation()
+
+    // Initialize values from navigation state, query params, or defaults
     actionArguments.value.forEach(arg => {
     if (arg.type === 'confirmation') {
       hasConfirmation.value = true
-      const paramValue = getQueryParamValue(arg.name)
+      const paramValue = getInitialArgumentValue(arg.name, prefilledArguments)
       let checkedValue = false
       if (paramValue !== null) {
         checkedValue = paramValue === '1' || paramValue === 'true' || paramValue === true
@@ -130,7 +162,7 @@ async function setup() {
       argValues.value[arg.name] = checkedValue
       confirmationChecked.value = checkedValue
     } else {
-      const paramValue = getQueryParamValue(arg.name)
+      const paramValue = getInitialArgumentValue(arg.name, prefilledArguments)
       if (arg.type === 'checkbox') {
         // For checkboxes, handle boolean default values properly
         if (paramValue !== null) {
@@ -158,14 +190,11 @@ async function setup() {
       formReady.value = true
       document.body.setAttribute('loaded-argument-form', props.bindingId)
     }
+
+    updateJustificationFromTemplate()
   } catch (err) {
     console.error('Failed to load argument form:', err)
   }
-}
-
-function getQueryParamValue(paramName) {
-  const params = new URLSearchParams(window.location.search.substring(1))
-  return params.get(paramName)
 }
 
 function formatLabel(title) {
@@ -222,10 +251,16 @@ function getArgumentValue(arg) {
   return argValues.value[arg.name] || ''
 }
 
+function handleJustificationInput(event) {
+  justificationValue.value = event.target.value
+  justificationEditedManually.value = true
+}
+
 function handleInput(arg, event) {
   const value = event.target.type === 'checkbox' ? event.target.checked : event.target.value
   argValues.value[arg.name] = value
   updateUrlWithArg(arg.name, value)
+  updateJustificationFromTemplate()
 }
 
 function handleChange(arg, event) {
@@ -238,10 +273,19 @@ function handleChange(arg, event) {
   validateArgument(arg, event.target.value)
 }
 
+function getValidationElement(arg) {
+  if (arg.type === 'checklist') {
+    return document.getElementById(`${arg.name}-value`)
+  }
+
+  return document.getElementById(arg.name)
+}
+
 function handleChoiceUpdate(arg, value) {
   argValues.value[arg.name] = value
   updateUrlWithArg(arg.name, value)
   validateArgument(arg, value)
+  updateJustificationFromTemplate()
 }
 
 async function validateArgument(arg, value) {
@@ -251,7 +295,7 @@ async function validateArgument(arg, value) {
 
   // Skip validation for datetime - backend will handle mangling values without seconds
   if (arg.type === 'datetime') {
-    const inputElement = document.getElementById(arg.name)
+    const inputElement = getValidationElement(arg)
     if (inputElement) {
       inputElement.setCustomValidity('')
     }
@@ -261,7 +305,7 @@ async function validateArgument(arg, value) {
 
   // Skip validation for checkbox and confirmation - they're always valid
   if (arg.type === 'checkbox' || arg.type === 'confirmation') {
-    const inputElement = document.getElementById(arg.name)
+    const inputElement = getValidationElement(arg)
     if (inputElement) {
       inputElement.setCustomValidity('')
     }
@@ -279,8 +323,7 @@ async function validateArgument(arg, value) {
 
     const validation = await window.client.validateArgumentType(validateArgumentTypeArgs)
 
-    // Get the input element to set custom validity
-    const inputElement = document.getElementById(arg.name)
+    const inputElement = getValidationElement(arg)
 
     if (validation.valid) {
       delete formErrors.value[arg.name]
@@ -297,8 +340,7 @@ async function validateArgument(arg, value) {
     }
   } catch (err) {
     console.warn('Validation failed:', err)
-    // On error, clear any custom validity
-    const inputElement = document.getElementById(arg.name)
+    const inputElement = getValidationElement(arg)
     if (inputElement) {
       inputElement.setCustomValidity('')
     }
@@ -344,21 +386,39 @@ function formatArgumentValueForApi(arg, rawValue) {
   return rawValue ?? ''
 }
 
-function getArgumentValues() {
-  const ret = []
+function getSelectedArgumentEntries() {
+  const entries = []
 
   for (const arg of actionArguments.value) {
     if (!shouldSendArgument(arg)) {
       continue
     }
 
-    ret.push({
+    entries.push({
       name: arg.name,
       value: formatArgumentValueForApi(arg, argValues.value[arg.name])
     })
   }
 
-  return ret
+  return entries
+}
+
+function getArgumentValues() {
+  return getSelectedArgumentEntries().map(({ name, value }) => ({ name, value }))
+}
+
+function getArgumentMapForTemplate() {
+  return Object.fromEntries(
+    getSelectedArgumentEntries().map(({ name, value }) => [name, value])
+  )
+}
+
+function updateJustificationFromTemplate() {
+  if (!justificationTemplate.value || justificationEditedManually.value) {
+    return
+  }
+
+  justificationValue.value = applyArgumentTemplate(justificationTemplate.value, getArgumentMapForTemplate())
 }
 
 function getUniqueId() {
@@ -393,7 +453,7 @@ function saveBrowserSuggestions() {
       const value = argValues.value[arg.name]
 
       // Only save non-empty values for non-checkbox/confirmation/password types
-      if (value && value !== '' && arg.type !== 'checkbox' && arg.type !== 'confirmation' && arg.type !== 'password') {
+      if (value && value !== '' && arg.type !== 'checkbox' && arg.type !== 'confirmation' && arg.type !== 'checklist' && arg.type !== 'password') {
         try {
           const key = `olivetin-suggestions-${arg.suggestionsBrowserKey}`
           const stored = localStorage.getItem(key)
@@ -467,7 +527,7 @@ async function handleSubmit(event) {
 
   for (const arg of actionArguments.value) {
     const value = argValues.value[arg.name]
-    const inputElement = document.getElementById(arg.name)
+    const inputElement = getValidationElement(arg)
 
     if (arg.required && (!value || value === '')) {
       formErrors.value[arg.name] = 'This field is required'
@@ -481,6 +541,11 @@ async function handleSubmit(event) {
   const form = event.target
   if (!form.checkValidity()) {
     console.log('argument form has elements that failed validation')
+    return
+  }
+
+  if (Object.keys(formErrors.value).length > 0) {
+    console.log('argument form has validation errors')
     return
   }
 
@@ -546,6 +611,27 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+.section-title-with-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.action-title-icon {
+  font-size: 1.5rem;
+}
+
+.action-details-title-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--link-color, #0066cc);
+  text-decoration: underline;
+}
+
+.action-details-title-link:hover {
+  color: var(--link-hover-color, #004499);
+}
 
 form {
   grid-template-columns: max-content auto auto;

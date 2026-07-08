@@ -30,8 +30,13 @@ func (cfg *Config) Sanitize() {
 
 	cfg.sanitizeActionGroups()
 	cfg.sanitizeActionGroupReferences()
+	cfg.sanitizeEntities()
 
 	if err := cfg.validateReservedActionArgumentNames(); err != nil {
+		log.Fatalf("%v", err)
+	}
+
+	if err := cfg.validateChecklistChoiceValues(); err != nil {
 		log.Fatalf("%v", err)
 	}
 }
@@ -54,6 +59,48 @@ func (action *Action) validateReservedArgumentNames() error {
 	for _, arg := range action.Arguments {
 		if strings.HasPrefix(arg.Name, ReservedArgumentNamePrefix) {
 			return fmt.Errorf("action %q argument %q uses reserved prefix %q", action.Title, arg.Name, ReservedArgumentNamePrefix)
+		}
+	}
+
+	return nil
+}
+
+func (cfg *Config) validateChecklistChoiceValues() error {
+	for _, action := range cfg.Actions {
+		if err := action.validateChecklistChoiceValues(); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (action *Action) validateChecklistChoiceValues() error {
+	if action == nil {
+		return nil
+	}
+
+	for _, arg := range action.Arguments {
+		if err := validateChecklistChoicesForArgument(action.Title, arg); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func validateChecklistChoicesForArgument(actionTitle string, arg ActionArgument) error {
+	if arg.Type != "checklist" {
+		return nil
+	}
+
+	for _, choice := range arg.Choices {
+		if strings.TrimSpace(choice.Value) == "" {
+			return fmt.Errorf(
+				`action %q argument %q choice value must not be empty`,
+				actionTitle,
+				arg.Name,
+			)
 		}
 	}
 
@@ -180,6 +227,7 @@ func (action *Action) sanitize(cfg *Config) {
 	action.ID = getActionID(action)
 	action.Icon = lookupHTMLIcon(action.Icon, cfg.DefaultIconForActions)
 	migrateActionOnClick(action)
+	action.sanitizeJustification()
 	action.OnClick = sanitizeOnClick(action.OnClick, cfg)
 	action.PopupOnStart = action.OnClick
 
@@ -239,6 +287,25 @@ func (cfg *Config) sanitizeActionGroupReferences() {
 	for _, action := range cfg.Actions {
 		for _, groupName := range action.Groups {
 			cfg.warnInvalidActionGroupReference(action, groupName)
+		}
+	}
+}
+
+func (cfg *Config) sanitizeEntities() {
+	for _, entityFile := range cfg.Entities {
+		if entityFile == nil {
+			continue
+		}
+
+		entityFile.Icon = lookupHTMLIcon(entityFile.Icon, "")
+		sanitizeEntityProperties(entityFile)
+	}
+}
+
+func sanitizeEntityProperties(entityFile *EntityFile) {
+	for idx := range entityFile.Properties {
+		if entityFile.Properties[idx].Title == "" {
+			entityFile.Properties[idx].Title = entityFile.Properties[idx].Name
 		}
 	}
 }
@@ -402,6 +469,15 @@ func migrateActionOnClick(action *Action) {
 	}
 }
 
+func (action *Action) sanitizeJustification() {
+	switch action.Justification {
+	case "false":
+		action.Justification = ""
+	case "true":
+		action.Justification = JustificationRequiredNoTemplate
+	}
+}
+
 func shouldMigrateDefaultOnClickFromPopup(onClick, popupOnStart string) bool {
 	if popupOnStart == "" {
 		return false
@@ -441,8 +517,37 @@ func (arg *ActionArgument) sanitize() {
 	}
 
 	arg.sanitizeNoType()
+	arg.sanitizeChecklist()
 
 	// Default value validation runs in executor at config load (validateArgumentDefaults).
+}
+
+func (arg *ActionArgument) sanitizeChecklist() {
+	if arg.Type != "checklist" {
+		return
+	}
+
+	arg.warnMissingChecklistChoices()
+	arg.warnInvalidChecklistEntityTemplate()
+}
+
+func (arg *ActionArgument) warnMissingChecklistChoices() {
+	if len(arg.Choices) == 0 {
+		log.WithFields(log.Fields{
+			"arg": arg.Name,
+		}).Warn("Checklist argument has no choices defined")
+	}
+}
+
+func (arg *ActionArgument) warnInvalidChecklistEntityTemplate() {
+	if arg.Entity == "" || len(arg.Choices) == 1 {
+		return
+	}
+
+	log.WithFields(log.Fields{
+		"arg":    arg.Name,
+		"entity": arg.Entity,
+	}).Warn("Checklist argument with entity should define exactly one choice template")
 }
 
 func (arg *ActionArgument) sanitizeNoType() {

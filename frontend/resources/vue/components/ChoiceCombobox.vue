@@ -88,6 +88,7 @@ const rootRef = ref(null)
 const searchInputRef = ref(null)
 const isOpen = ref(false)
 const query = ref('')
+const isUserFiltering = ref(false)
 const highlightedIndex = ref(0)
 
 const listboxId = computed(() => `${props.id}-listbox`)
@@ -109,6 +110,10 @@ const placeholderText = computed(() => {
 })
 
 const filteredChoices = computed(() => {
+  if (!isUserFiltering.value) {
+    return props.choices
+  }
+
   const search = query.value.trim().toLowerCase()
   if (!search) {
     return props.choices
@@ -140,14 +145,23 @@ function syncFromModelValue() {
   }
 }
 
+function selectedChoiceIndex(choices) {
+  const index = choices.findIndex(choice => choice.value === props.modelValue)
+  return index >= 0 ? index : 0
+}
+
 function openList() {
   document.dispatchEvent(new CustomEvent(closeOthersEvent, { detail: { id: props.id } }))
+  const wasClosed = !isOpen.value
   isOpen.value = true
-  highlightedIndex.value = 0
+  if (wasClosed) {
+    highlightedIndex.value = selectedChoiceIndex(filteredChoices.value)
+  }
 }
 
 function closeList() {
   isOpen.value = false
+  isUserFiltering.value = false
   syncFromModelValue()
 }
 
@@ -164,12 +178,14 @@ function selectChoice(choice) {
 function handleFocus() {
   if (!isOpen.value) {
     syncFromModelValue()
+    isUserFiltering.value = false
   }
 
   openList()
 }
 
 function handleSearchInput(event) {
+  isUserFiltering.value = true
   query.value = event.target.value
   openList()
   highlightedIndex.value = 0

@@ -57,6 +57,7 @@ devrun: compile
 devcontainer: compile podman-image podman-container
 
 webui-dist:
+	$(call delete-files,webui)
 	$(MAKE) -wC frontend dist
 	mv frontend/dist webui
 
@@ -72,4 +73,7 @@ clean:
 config-tool:
 	cd service && go run cmd/config-tool/main.go
 
-.PHONY: proto service windows-resources windows-msi
+devcheck:
+	python3 scripts/devcheck.py $(ARGS)
+
+.PHONY: proto service windows-resources windows-msi devcheck

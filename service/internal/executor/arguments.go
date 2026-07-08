@@ -191,6 +191,10 @@ func typecheckActionArgumentFound(value string, arg *config.ActionArgument) erro
 		return typecheckNull(arg)
 	}
 
+	if arg.Type == "checklist" {
+		return typecheckChecklist(value, arg)
+	}
+
 	if len(arg.Choices) > 0 {
 		return typecheckChoice(value, arg)
 	}
@@ -211,6 +215,8 @@ func TypeSafetyCheck(name string, value string, argumentType string) error {
 		return nil
 	case "checkbox":
 		return nil
+	case "checklist":
+		return nil
 	case "email":
 		return typeSafetyCheckEmail(value)
 	case "url":
@@ -228,6 +234,37 @@ func typecheckNull(arg *config.ActionArgument) error {
 	}
 
 	return nil
+}
+
+func typecheckChecklist(value string, arg *config.ActionArgument) error {
+	if len(arg.Choices) == 0 {
+		return fmt.Errorf("checklist argument %q requires choices", arg.Name)
+	}
+
+	segments, err := config.ParseChecklistValue(value)
+	if err != nil {
+		return err
+	}
+
+	return typecheckChecklistSegments(segments, arg)
+}
+
+func typecheckChecklistSegments(segments []string, arg *config.ActionArgument) error {
+	for _, segment := range segments {
+		if err := typecheckChecklistSegment(segment, arg); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func typecheckChecklistSegment(segment string, arg *config.ActionArgument) error {
+	if segment == "" {
+		return fmt.Errorf("checklist argument %q contains an empty segment", arg.Name)
+	}
+
+	return typecheckChoice(segment, arg)
 }
 
 func typecheckChoice(value string, arg *config.ActionArgument) error {
@@ -277,11 +314,17 @@ func typeSafetyCheckDatetime(value string) error {
 	return nil
 }
 
+func anchorCustomRegexPattern(pattern string) string {
+	return "^(?:" + pattern + ")$"
+}
+
 func typeSafetyCheckRegex(name string, value string, argumentType string) error {
 	pattern := ""
+	isCustomRegex := strings.HasPrefix(argumentType, "regex:")
 
-	if strings.HasPrefix(argumentType, "regex:") {
-		pattern = strings.Replace(argumentType, "regex:", "", 1)
+	if isCustomRegex {
+		pattern = strings.TrimPrefix(argumentType, "regex:")
+		pattern = anchorCustomRegexPattern(pattern)
 	} else {
 		found := false
 		pattern, found = typecheckRegex[argumentType]
@@ -308,21 +351,50 @@ func typeSafetyCheckRegex(name string, value string, argumentType string) error 
 }
 
 func typeSafetyCheckUrl(value string) error {
-	_, err := url.ParseRequestURI(value)
+	parsed, err := url.ParseRequestURI(value)
+	if err != nil {
+		return err
+	}
 
-	return err
+	scheme := strings.ToLower(parsed.Scheme)
+	if scheme != "http" && scheme != "https" {
+		return fmt.Errorf("url scheme %q is not allowed; only http and https are permitted", parsed.Scheme)
+	}
+
+	return nil
+}
+
+var shellUnsafeArgumentTypes = map[string]struct{}{
+	"url":                       {},
+	"email":                     {},
+	"raw_string_multiline":      {},
+	"very_dangerous_raw_string": {},
+	"password":                  {},
+	"html":                      {},
+	"confirmation":              {},
+}
+
+func isUnsafeShellArgumentType(arg *config.ActionArgument) bool {
+	if strings.HasPrefix(arg.Type, "regex:") {
+		return true
+	}
+
+	_, inMap := shellUnsafeArgumentTypes[arg.Type]
+	return inMap || (arg.Type == "checkbox" && len(arg.Choices) == 0)
 }
 
 func checkShellArgumentSafety(action *config.Action) error {
 	if action.Shell == "" {
 		return nil
 	}
-	unsafe := map[string]struct{}{"url": {}, "email": {}, "raw_string_multiline": {}, "very_dangerous_raw_string": {}, "password": {}}
-	for _, arg := range action.Arguments {
-		if _, bad := unsafe[arg.Type]; bad {
+
+	for i := range action.Arguments {
+		arg := &action.Arguments[i]
+		if isUnsafeShellArgumentType(arg) {
 			return fmt.Errorf("unsafe argument type '%s' cannot be used with Shell execution. Use 'exec' instead. See https://docs.olivetin.app/action_execution/shellvsexec.html", arg.Type)
 		}
 	}
+
 	return nil
 }
 
@@ -333,6 +405,7 @@ func mangleInvalidArgumentValues(req *ExecutionRequest) {
 		}
 
 		mangleCheckboxValues(req, &arg)
+		mangleChecklistValues(req, &arg)
 	}
 }
 
@@ -389,15 +462,20 @@ func MangleArgumentValue(arg *config.ActionArgument, value string, actionTitle s
 		return value
 	}
 
-	if arg.Type == "datetime" {
+	return mangleArgumentValueByType(arg, value, actionTitle)
+}
+
+func mangleArgumentValueByType(arg *config.ActionArgument, value string, actionTitle string) string {
+	switch arg.Type {
+	case "datetime":
 		return mangleDatetimeValue(arg, value, actionTitle)
-	}
-
-	if arg.Type == "checkbox" {
+	case "checkbox":
 		return mangleCheckboxValue(arg, value, actionTitle)
+	case "checklist":
+		return mangleChecklistValue(arg, value, actionTitle)
+	default:
+		return value
 	}
-
-	return value
 }
 
 func mangleDatetimeValue(arg *config.ActionArgument, value string, actionTitle string) string {
@@ -430,6 +508,96 @@ func mangleCheckboxValue(arg *config.ActionArgument, value string, actionTitle s
 		return value
 	}
 
+	return mangleChoiceSegment(arg, value, actionTitle)
+}
+
+func mangleChecklistValues(req *ExecutionRequest, arg *config.ActionArgument) {
+	if arg.Type != "checklist" {
+		return
+	}
+
+	value, exists := req.Arguments[arg.Name]
+	if !exists || value == "" {
+		return
+	}
+
+	req.Arguments[arg.Name] = mangleChecklistValue(arg, value, req.Binding.Action.Title)
+}
+
+func mangleChecklistValue(arg *config.ActionArgument, value string, actionTitle string) string {
+	if arg == nil || value == "" {
+		return value
+	}
+
+	segments, err := config.ParseChecklistValue(value)
+	if err != nil {
+		return value
+	}
+
+	return mangleChecklistSegments(arg, segments, value, actionTitle)
+}
+
+func mangleChecklistSegments(arg *config.ActionArgument, segments []string, fallback string, actionTitle string) string {
+	mangled := make([]string, len(segments))
+	for i, segment := range segments {
+		mangled[i] = mangleChecklistSegment(arg, segment, actionTitle)
+	}
+
+	formatted, err := config.FormatChecklistValue(mangled)
+	if err != nil {
+		return fallback
+	}
+
+	return formatted
+}
+
+func mangleChecklistSegment(arg *config.ActionArgument, segment string, actionTitle string) string {
+	trimmed := strings.TrimSpace(segment)
+	if trimmed == "" {
+		return ""
+	}
+
+	return mangleChoiceSegment(arg, trimmed, actionTitle)
+}
+
+func mangleChoiceSegment(arg *config.ActionArgument, value string, actionTitle string) string {
+	if mapped, ok := mangleChoiceSegmentEntity(arg, value, actionTitle); ok {
+		return mapped
+	}
+
+	return mangleChoiceSegmentStatic(arg, value, actionTitle)
+}
+
+func mangleChoiceSegmentEntity(arg *config.ActionArgument, value string, actionTitle string) (string, bool) {
+	if arg.Entity == "" || len(arg.Choices) == 0 {
+		return value, false
+	}
+
+	return mangleEntityTemplateChoiceSegment(arg.Choices[0], arg.Entity, arg.Name, value, actionTitle)
+}
+
+func mangleEntityTemplateChoiceSegment(templateChoice config.ActionArgumentChoice, entityName string, argName string, value string, actionTitle string) (string, bool) {
+	for _, ent := range entities.GetEntityInstancesOrdered(entityName) {
+		expandedTitle := tpl.ParseTemplateOfActionBeforeExec(templateChoice.Title, ent)
+		if value != expandedTitle {
+			continue
+		}
+
+		expandedValue := tpl.ParseTemplateOfActionBeforeExec(templateChoice.Value, ent)
+		log.WithFields(log.Fields{
+			"arg":         argName,
+			"oldValue":    value,
+			"newValue":    expandedValue,
+			"actionTitle": actionTitle,
+		}).Infof("Mangled entity choice segment")
+
+		return expandedValue, true
+	}
+
+	return value, false
+}
+
+func mangleChoiceSegmentStatic(arg *config.ActionArgument, value string, actionTitle string) string {
 	for _, choice := range arg.Choices {
 		if value == choice.Title {
 			log.WithFields(log.Fields{
@@ -437,7 +605,7 @@ func mangleCheckboxValue(arg *config.ActionArgument, value string, actionTitle s
 				"oldValue":    value,
 				"newValue":    choice.Value,
 				"actionTitle": actionTitle,
-			}).Infof("Mangled checkbox value")
+			}).Infof("Mangled choice segment")
 
 			return choice.Value
 		}

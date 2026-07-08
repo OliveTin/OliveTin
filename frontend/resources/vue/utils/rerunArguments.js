@@ -1,4 +1,5 @@
 import { needsArgumentForm } from './needsArgumentForm.js'
+import { actionRequiresJustification } from './justificationTemplate.js'
 
 const nonStorableArgumentTypes = new Set([
   'password',
@@ -17,7 +18,7 @@ export function logEntryArgumentsToStartActionArgs (logEntry) {
 }
 
 export function rerunNeedsArgumentForm (action, logEntry) {
-  if (action?.justification && !logEntry?.justification) {
+  if (actionRequiresJustification(action?.justification) && !logEntry?.justification) {
     return true
   }
 
@@ -60,7 +61,7 @@ export function buildRerunStartActionArgs (bindingId, logEntry, action) {
     arguments: logEntryArgumentsToStartActionArgs(logEntry)
   }
 
-  if (action?.justification && logEntry?.justification) {
+  if (actionRequiresJustification(action?.justification) && logEntry?.justification) {
     startActionArgs.justification = logEntry.justification
   }
 

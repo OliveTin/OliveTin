@@ -1238,9 +1238,59 @@ func stepExecAfter(req *ExecutionRequest) bool {
 	return true
 }
 
-func buildShellAfterCommand(ctx context.Context, req *ExecutionRequest, stdout, stderr *bytes.Buffer) (*exec.Cmd, map[string]string, error) {
+func shellAfterCompletedAction(req *ExecutionRequest) (*config.Action, bool) {
+	if req == nil {
+		return nil, false
+	}
+	if !hasBindingAndAction(req) {
+		return nil, false
+	}
 	if req.Binding.Action.ShellAfterCompleted == "" {
+		return nil, false
+	}
+	return req.Binding.Action, true
+}
+
+func substituteShellAfterCompletedEnvRefs(command string) string {
+	replacements := []struct{ old, new string }{
+		{"{{ output }}", `"$OUTPUT"`},
+		{"{{output}}", `"$OUTPUT"`},
+		{"{{ exitCode }}", `"$EXITCODE"`},
+		{"{{exitCode}}", `"$EXITCODE"`},
+		{"{{ exitCode}}", `"$EXITCODE"`},
+		{"{{exitCode }}", `"$EXITCODE"`},
+	}
+
+	for _, replacement := range replacements {
+		command = strings.ReplaceAll(command, replacement.old, replacement.new)
+	}
+
+	return command
+}
+
+func parseShellAfterCompletedCommand(req *ExecutionRequest, commandTemplate string, args map[string]string) (string, error) {
+	finalParsedCommand, err := tpl.ParseTemplateWithActionContext(commandTemplate, req.Binding.Entity, args)
+	if err != nil {
+		msg := "Could not prepare shellAfterCompleted command: " + err.Error() + "\n"
+		req.mutateLogEntry(func(entry *InternalLogEntry) {
+			entry.Output += msg
+		})
+		log.Warn(msg)
+		return "", err
+	}
+
+	return finalParsedCommand, nil
+}
+
+//gocyclo:ignore
+func buildShellAfterCommand(ctx context.Context, req *ExecutionRequest, stdout, stderr *bytes.Buffer) (*exec.Cmd, map[string]string, error) {
+	action, ok := shellAfterCompletedAction(req)
+	if !ok {
 		return nil, nil, nil
+	}
+
+	if hasWebhookTag(req) {
+		return nil, nil, fmt.Errorf("webhooks cannot use shellAfterCompleted; use exec without after-completion shell instead. See https://docs.olivetin.app/action_execution/shellvsexec.html")
 	}
 
 	args, err := buildShellAfterArgs(req)
@@ -1248,14 +1298,10 @@ func buildShellAfterCommand(ctx context.Context, req *ExecutionRequest, stdout, 
 		return nil, nil, err
 	}
 
-	finalParsedCommand, err := tpl.ParseTemplateWithActionContext(req.Binding.Action.ShellAfterCompleted, req.Binding.Entity, args)
+	commandTemplate := substituteShellAfterCompletedEnvRefs(action.ShellAfterCompleted)
+	finalParsedCommand, err := parseShellAfterCompletedCommand(req, commandTemplate, args)
 	if err != nil {
-		msg := "Could not prepare shellAfterCompleted command: " + err.Error() + "\n"
-		req.mutateLogEntry(func(entry *InternalLogEntry) {
-			entry.Output += msg
-		})
-		log.Warn(msg)
-		return nil, nil, nil
+		return nil, nil, err
 	}
 
 	cmd := wrapCommandInShell(ctx, finalParsedCommand)

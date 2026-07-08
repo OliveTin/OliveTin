@@ -7,7 +7,9 @@ defaultPopupOnStart: execution-dialog
 
 actions:
   - title: Test checkbox argument
-    shell: "echo 'Checkbox value: {{ confirm }}'"
+    exec:
+      - echo
+      - "Checkbox value: {{ confirm }}"
     icon: ping
     arguments:
       - name: confirm
@@ -15,5 +17,3 @@ actions:
         type: checkbox
         description: "When checked: 1, when unchecked: 0"
         default: false
-
-

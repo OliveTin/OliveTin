@@ -271,3 +271,25 @@ func TestValidateUniqueLocalUserAPIKeys(t *testing.T) {
 	})
 	require.NoError(t, err)
 }
+
+func TestValidateChecklistChoiceValuesAllowsCommas(t *testing.T) {
+	t.Parallel()
+
+	c := DefaultConfig()
+	c.Actions = append(c.Actions, &Action{
+		Title: "Checklist commas",
+		Shell: "true",
+		Arguments: []ActionArgument{
+			{
+				Name: "segments",
+				Type: "checklist",
+				Choices: []ActionArgumentChoice{
+					{Value: "kitchen,bedroom"},
+				},
+			},
+		},
+	})
+
+	err := c.validateChecklistChoiceValues()
+	require.NoError(t, err)
+}

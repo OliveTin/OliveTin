@@ -7,6 +7,9 @@ import (
 // ReservedArgumentNamePrefix is reserved for OliveTin-injected system arguments.
 const ReservedArgumentNamePrefix = "ot_"
 
+// JustificationRequiredNoTemplate requires a manual justification with no prefilled template.
+const JustificationRequiredNoTemplate = " "
+
 // Action represents the core functionality of OliveTin - commands that show up
 // as buttons in the UI.
 type Action struct {
@@ -35,7 +38,23 @@ type Action struct {
 	SaveLogs               SaveLogsConfig   `koanf:"saveLogs"`
 	EnabledExpression      string           `koanf:"enabledExpression"`
 	Groups                 []string         `koanf:"groups"`
-	Justification          bool             `koanf:"justification"`
+	Justification          string           `koanf:"justification"`
+}
+
+func (action *Action) RequiresJustification() bool {
+	return action != nil && action.Justification != ""
+}
+
+func (action *Action) JustificationTemplateText() string {
+	if !action.RequiresJustification() {
+		return ""
+	}
+
+	if action.Justification == JustificationRequiredNoTemplate {
+		return ""
+	}
+
+	return action.Justification
 }
 
 // ActionGroup defines shared limits and metadata for a set of actions.
@@ -87,9 +106,16 @@ type WebhookConfig struct {
 // Entity represents a "thing" that can have multiple actions associated with it.
 // for example, a media player with a start and stop action.
 type EntityFile struct {
-	File string `koanf:"file"`
-	Name string `koanf:"name"`
-	Icon string `koanf:"icon"`
+	File       string           `koanf:"file"`
+	Name       string           `koanf:"name"`
+	Icon       string           `koanf:"icon"`
+	Properties []EntityProperty `koanf:"properties"`
+}
+
+// EntityProperty defines a column shown when listing entity instances in the UI.
+type EntityProperty struct {
+	Name  string `koanf:"name"`
+	Title string `koanf:"title"`
 }
 
 // PermissionsList defines what users can do with an action.

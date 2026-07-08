@@ -10,13 +10,13 @@ actions:
   - title: Check date and send notification via apprise
     icon: date
     shell: date
-    shellAfterCompleted: "apprise -c /config/apprise.yml -t 'Notification: Backup script completed' -b 'The backup script completed with code {{ exitCode}}. The log is: \n {{ output }} '"
+    shellAfterCompleted: "apprise -c /config/apprise.yml -t 'Notification: Backup script completed' -b \"$(printf 'Backup completed with exit code %s. Log: %s' {{ exitCode }} {{ output }})\""
 ----
 
-When running shellAfterCompleted, you *cannot* use argument values - they are not passed to the command. However the following special arguments are defined; 
+When running shellAfterCompleted, you *cannot* use argument values - they are not passed to the command. However the following special arguments are defined;
 
-* `{{ exitCode }}` - The exit code of the previous shell command
-* `{{ output }}` - The standard output of the previous shell command
+* `{{ exitCode }}` - The exit code of the previous shell command. OliveTin substitutes this with the `EXITCODE` environment variable when running `shellAfterCompleted`, so shell metacharacters in the value cannot break quoting.
+* `{{ output }}` - The standard output of the previous shell command. OliveTin substitutes this with the `OUTPUT` environment variable when running `shellAfterCompleted`, so shell metacharacters in command output cannot be executed. You can also reference `$OUTPUT` directly in your `shellAfterCompleted` command. Do not place these placeholders inside single-quoted shell arguments; single quotes prevent `$OUTPUT` and `$EXITCODE` from expanding after substitution.
 * `{{ .Arguments.ot_executionTrackingId }}` - The unique execution tracking id for this execution (version 3k; in 2k use `{{ ot_executionTrackingId }}`)
 * `{{ .Arguments.ot_username }}` - The username of the user who started the execution (version 3k; in 2k use `{{ ot_username }}`). May be `guest` or `cron` for unauthenticated or automated runs.
 

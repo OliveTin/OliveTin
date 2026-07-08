@@ -79,6 +79,29 @@ func TestStorableArgumentsFromRequestStoresMangledCheckboxValue(t *testing.T) {
 	assert.Equal(t, "1", args["mode"])
 }
 
+func TestStorableArgumentsFromRequestStoresMangledChecklistValue(t *testing.T) {
+	req := newExecRequest()
+	req.Binding.Action.Arguments = []config.ActionArgument{
+		{
+			Name: "directories",
+			Type: "checklist",
+			Choices: []config.ActionArgumentChoice{
+				{Title: "Documents", Value: "documents"},
+				{Title: "Photos", Value: "photos"},
+			},
+		},
+	}
+	req.Arguments = map[string]string{
+		"directories": `["Documents","Photos"]`,
+	}
+
+	mangleInvalidArgumentValues(req)
+	args := storableArgumentsFromRequest(req)
+
+	require.Len(t, args, 1)
+	assert.Equal(t, `["documents","photos"]`, args["directories"])
+}
+
 func TestCopyStorableArgumentsToLogEntry(t *testing.T) {
 	req := newExecRequest()
 	req.logEntry = &InternalLogEntry{}

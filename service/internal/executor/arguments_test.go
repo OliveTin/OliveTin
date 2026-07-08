@@ -115,6 +115,169 @@ func TestValidateArgumentCheckboxWithChoices(t *testing.T) {
 	assert.NotNil(t, err, "Expected unknown checkbox title to be rejected against choices")
 }
 
+func checklistTestArg() config.ActionArgument {
+	return config.ActionArgument{
+		Name: "directories",
+		Type: "checklist",
+		Choices: []config.ActionArgumentChoice{
+			{Title: "Documents", Value: "documents"},
+			{Title: "Photos", Value: "photos"},
+			{Title: "Music", Value: "music"},
+		},
+	}
+}
+
+func TestValidateArgumentChecklistSelections(t *testing.T) {
+	log.SetLevel(log.PanicLevel)
+
+	arg := checklistTestArg()
+	action := config.Action{Title: "Test checklist"}
+
+	err := ValidateArgument(&arg, "documents", &action)
+	assert.Nil(t, err)
+
+	err = ValidateArgument(&arg, `["documents","photos"]`, &action)
+	assert.Nil(t, err)
+
+	err = ValidateArgument(&arg, `["documents","unknown"]`, &action)
+	assert.NotNil(t, err)
+}
+
+func TestValidateArgumentChecklistTitleMangling(t *testing.T) {
+	log.SetLevel(log.PanicLevel)
+
+	arg := checklistTestArg()
+	action := config.Action{Title: "Test checklist title mangling"}
+
+	err := ValidateArgument(&arg, `["Documents","Photos"]`, &action)
+	assert.Nil(t, err)
+}
+
+func TestValidateArgumentChecklistEmptySelection(t *testing.T) {
+	log.SetLevel(log.PanicLevel)
+
+	arg := checklistTestArg()
+	action := config.Action{Title: "Test checklist empty"}
+
+	err := ValidateArgument(&arg, "", &action)
+	assert.Nil(t, err)
+
+	arg.RejectNull = true
+	err = ValidateArgument(&arg, "", &action)
+	assert.NotNil(t, err)
+}
+
+func TestValidateArgumentChecklistWithoutChoices(t *testing.T) {
+	log.SetLevel(log.PanicLevel)
+
+	arg := config.ActionArgument{
+		Name: "directories",
+		Type: "checklist",
+	}
+	action := config.Action{Title: "Test checklist without choices"}
+
+	err := ValidateArgument(&arg, "documents", &action)
+	assert.NotNil(t, err)
+}
+
+func TestValidateArgumentChecklistRejectsEmptySegment(t *testing.T) {
+	log.SetLevel(log.PanicLevel)
+
+	arg := checklistTestArg()
+	action := config.Action{Title: "Test checklist empty segment"}
+
+	err := ValidateArgument(&arg, `["documents","","photos"]`, &action)
+	assert.NotNil(t, err)
+}
+
+func TestMangleArgumentValueChecklist(t *testing.T) {
+	log.SetLevel(log.PanicLevel)
+
+	arg := checklistTestArg()
+
+	out := MangleArgumentValue(&arg, `["Documents","Music"]`, "Test action")
+	assert.Equal(t, `["documents","music"]`, out)
+
+	out = MangleArgumentValue(&arg, `["documents","photos"]`, "Test action")
+	assert.Equal(t, `["documents","photos"]`, out)
+}
+
+func checklistEntityTestArg() config.ActionArgument {
+	return config.ActionArgument{
+		Name:   "rooms",
+		Type:   "checklist",
+		Entity: "room",
+		Choices: []config.ActionArgumentChoice{
+			{Title: "{{ room.hostname }}", Value: "{{ room.hostname }}"},
+		},
+	}
+}
+
+func TestValidateArgumentChecklistEntitySelections(t *testing.T) {
+	log.SetLevel(log.PanicLevel)
+
+	entities.AddEntity("room", "0", map[string]any{"hostname": "attic"})
+	entities.AddEntity("room", "1", map[string]any{"hostname": "basement"})
+
+	arg := checklistEntityTestArg()
+	action := config.Action{Title: "Test checklist entity"}
+
+	err := ValidateArgument(&arg, "attic", &action)
+	assert.Nil(t, err)
+
+	err = ValidateArgument(&arg, `["attic","basement"]`, &action)
+	assert.Nil(t, err)
+
+	err = ValidateArgument(&arg, `["attic","unknown"]`, &action)
+	assert.NotNil(t, err)
+}
+
+func TestMangleArgumentValueChecklistEntityTitles(t *testing.T) {
+	log.SetLevel(log.PanicLevel)
+
+	entities.AddEntity("room", "0", map[string]any{"hostname": "attic"})
+	entities.AddEntity("room", "1", map[string]any{"hostname": "basement"})
+
+	arg := config.ActionArgument{
+		Name:   "rooms",
+		Type:   "checklist",
+		Entity: "room",
+		Choices: []config.ActionArgumentChoice{
+			{Title: "{{ room.hostname }} room", Value: "{{ room.hostname }}"},
+		},
+	}
+
+	out := MangleArgumentValue(&arg, `["attic room","basement room"]`, "Test checklist entity titles")
+	assert.Equal(t, `["attic","basement"]`, out)
+}
+
+func TestParseActionArgumentsChecklistEmptySelection(t *testing.T) {
+	req := newExecRequest()
+	req.Binding.Action = &config.Action{
+		Title: "Test checklist empty selection",
+		Shell: "echo 'Selected segments: {{ segments }}'",
+		Arguments: []config.ActionArgument{
+			{
+				Name: "segments",
+				Type: "checklist",
+				Choices: []config.ActionArgumentChoice{
+					{Value: "kitchen"},
+					{Value: "bedroom"},
+				},
+			},
+		},
+	}
+	req.Arguments = map[string]string{
+		"segments": "",
+	}
+
+	mangleInvalidArgumentValues(req)
+	out, err := parseActionArguments(req)
+
+	assert.Nil(t, err)
+	assert.Equal(t, "echo 'Selected segments: '", out)
+}
+
 func newExecRequest() *ExecutionRequest {
 	return &ExecutionRequest{
 		Arguments: make(map[string]string),
@@ -336,13 +499,72 @@ func TestCheckShellArgumentSafetyWithPasswordAndExec(t *testing.T) {
 	assert.Nil(t, err)
 }
 
+func TestCheckShellArgumentSafetyWithHTML(t *testing.T) {
+	a1 := config.Action{
+		Title: "HTML shell",
+		Shell: "echo {{ body }}",
+		Arguments: []config.ActionArgument{
+			{Name: "body", Type: "html"},
+		},
+	}
+
+	err := checkShellArgumentSafety(&a1)
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "unsafe argument type 'html'")
+}
+
+func TestCheckShellArgumentSafetyWithConfirmation(t *testing.T) {
+	a1 := config.Action{
+		Title: "Confirm shell",
+		Shell: "echo ok",
+		Arguments: []config.ActionArgument{
+			{Name: "agree", Type: "confirmation"},
+		},
+	}
+
+	err := checkShellArgumentSafety(&a1)
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "unsafe argument type 'confirmation'")
+}
+
+func TestCheckShellArgumentSafetyWithChoicelessCheckbox(t *testing.T) {
+	a1 := config.Action{
+		Title: "Checkbox shell",
+		Shell: "echo {{ flag }}",
+		Arguments: []config.ActionArgument{
+			{Name: "flag", Type: "checkbox"},
+		},
+	}
+
+	err := checkShellArgumentSafety(&a1)
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "unsafe argument type 'checkbox'")
+}
+
+func TestCheckShellArgumentSafetyWithCustomRegex(t *testing.T) {
+	a1 := config.Action{
+		Title: "Regex shell",
+		Shell: "curl {{ host }}",
+		Arguments: []config.ActionArgument{
+			{Name: "host", Type: "regex:[a-zA-Z0-9.-]+"},
+		},
+	}
+
+	err := checkShellArgumentSafety(&a1)
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "unsafe argument type 'regex:[a-zA-Z0-9.-]+'")
+}
+
 func TestTypeSafetyCheckUrl(t *testing.T) {
 	assert.Nil(t, TypeSafetyCheck("test1", "http://google.com", "url"), "Test URL: google.com")
 	assert.Nil(t, TypeSafetyCheck("test2", "http://technowax.net:80?foo=bar", "url"), "Test URL: technowax.net with query arguments")
 	assert.Nil(t, TypeSafetyCheck("test3", "http://localhost:80?foo=bar", "url"), "Test URL: localhost with query arguments")
+	assert.Nil(t, TypeSafetyCheck("test7", "https://example.com/path", "url"), "Test URL: https scheme")
 	assert.NotNil(t, TypeSafetyCheck("test4", "http://lo  host:80", "url"), "Test a badly formed URL")
 	assert.NotNil(t, TypeSafetyCheck("test5", "12345", "url"), "Test a badly formed URL")
 	assert.NotNil(t, TypeSafetyCheck("test6", "_!23;", "url"), "Test a badly formed URL")
+	assert.NotNil(t, TypeSafetyCheck("test8", "file:///etc/passwd", "url"), "file:// scheme must be rejected")
+	assert.NotNil(t, TypeSafetyCheck("test9", "gopher://example.com", "url"), "gopher:// scheme must be rejected")
 }
 
 func TestTypeSafetyCheckRegex(t *testing.T) {
@@ -365,6 +587,20 @@ func TestTypeSafetyCheckRegex(t *testing.T) {
 			field:    "Username",
 			pattern:  "regex:^[a-zA-Z]$",
 			value:    "James1234",
+			hasError: true,
+		},
+		{
+			name:     "GHSA-gvxq - reject partial regex match",
+			field:    "host",
+			pattern:  "regex:[a-zA-Z0-9.-]+",
+			value:    "example.com; id",
+			hasError: true,
+		},
+		{
+			name:     "reject alternation bypass when pattern looks anchored",
+			field:    "host",
+			pattern:  "regex:^safe$|bad",
+			value:    "xxxbad",
 			hasError: true,
 		},
 	}
