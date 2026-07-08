@@ -1,0 +1,22 @@
+---
+listenAddressSingleHTTPFrontend: 0.0.0.0:11337
+
+logLevel: "WARN"
+checkForUpdates: false
+showFooter: false
+
+actions:
+  - title: Backup selected directories
+    shell: echo "Backing up {{ directories }}"
+    arguments:
+      - name: directories
+        title: Directories to back up
+        type: checklist
+        choices:
+          - title: Documents
+            value: documents
+          - title: Photos
+            value: photos
+          - title: Music
+            value: music
+        default: '["documents","photos"]'
