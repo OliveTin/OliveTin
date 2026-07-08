@@ -1,0 +1,120 @@
+[#entity-properties]
+= Entity properties
+
+The `properties` field is configured on each entity definition in `config.yaml`. It does not live in the entity data files themselves.
+
+Use it to choose which fields from your entity data files are shown in the web UI and API. Property *values* come from the entity file on disk; `properties` only controls which of those values OliveTin exposes when listing or viewing entities.
+
+== Configuration
+
+Add `properties` under an entity definition alongside `file`, `name`, and `icon`:
+
+[source,yaml]
+----
+entities:
+  - file: /etc/OliveTin/servers.yaml
+    name: server
+    icon: ssh
+    properties:
+      - name: hostname
+        title: Hostname
+      - name: ip
+        title: IP
+----
+
+Each entry has two fields:
+
+[cols="1,3", options="header"]
+|===
+| Field | Description
+
+| `name`
+| The key to read from each entity instance in the data file. Matching is case-insensitive.
+
+| `title`
+| The column heading shown in the entity list table. If omitted, OliveTin uses `name`.
+|===
+
+The entity data file supplies the values. For example, with the configuration above and this data file:
+
+[source,yaml]
+.`/etc/OliveTin/servers.yaml`
+----
+- name: server1
+  hostname: server1.example.com
+  ip: 192.168.0.1
+- name: server2
+  hostname: server2.example.com
+  ip: 192.168.0.2
+----
+
+OliveTin shows `server1` and `server2` as instance names (from the `name` field) and displays `hostname` and `ip` in the configured columns.
+
+== Effects
+
+=== Entity list in the web UI
+
+When `properties` is configured, the Entities page shows a searchable, paginated table for that entity type. Columns are:
+
+* **Name** — the instance title (derived from fields such as `name`, `title`, `hostname`, and so on)
+* One column per configured property, labelled with `title`
+
+When `properties` is omitted or empty, the Entities page shows a simple list of instance names and a total count instead of a table.
+
+=== Entity details page
+
+The entity details view shows only the fields listed in `properties`, plus type and title.
+
+If `properties` is not configured, all top-level fields from the entity data file are shown.
+
+=== API responses
+
+`properties` controls which fields appear in `fields` on entity instances returned by the API:
+
+* `GetEntity` — returns only configured property values in `fields` when `properties` is set; otherwise returns all top-level fields from the data file.
+* `GetEntities` — always includes the property definitions on `EntityDefinition`. When `properties` is set, instance rows in list responses include only those configured fields. The unfiltered list request omits instance rows (it returns `totalInstances` only); use a filtered request with `entityType` to fetch paginated instances for the table view.
+
+Search and pagination on the entity list operate over instance titles and the configured property values.
+
+=== What `properties` does not affect
+
+`properties` is a display and API filtering setting. It does **not** limit what you can use in action templates.
+
+Actions bound to an entity still have access to the full entity record through `{{ .CurrentEntity.field }}`, including fields you did not list under `properties`. See xref:args/templates.adoc[Templates in actions] and xref:action_customization/enabledExpression.adoc[Enabled Expression].
+
+Legacy template syntax such as `{{ server.hostname }}` is still migrated automatically to `{{ .CurrentEntity.hostname }}`.
+
+== Example
+
+This configuration pairs with the server data file shown above:
+
+[source,yaml]
+----
+entities:
+  - file: entities/servers.yaml
+    name: server
+    icon: ssh
+    properties:
+      - name: hostname
+        title: Hostname
+      - name: ip
+        title: IP
+----
+
+An action can still reference any field from the data file, even ones not listed in `properties`:
+
+[source,yaml]
+----
+actions:
+  - title: Wake server
+    shell: wakeonlan {{ .CurrentEntity.ip }}
+    entity: server
+----
+
+== What's next?
+
+* xref:entities/yaml.adoc[YAML entity files] — format for entity data files
+* xref:entities/json.adoc[JSON entity files] — line-delimited JSON entity files
+* xref:entities/icons.adoc[Entity icons] — configure an icon for each entity type
+* xref:entities/intro.adoc[Entities] — overview of entities in OliveTin
+* xref:dashboards/entity-directories.adoc[Entity directories] — generate per-entity dashboards

@@ -1,0 +1,115 @@
+[#entity-icons]
+= Entity icons
+
+The `icon` field is configured on each entity definition in `config.yaml`. It sets an icon for the entity *type* (for example, all `server` instances share the same icon).
+
+Entity icons use the same icon system as actions. See xref:action_customization/icons.adoc[Icons] for the full range of supported formats — Unicode aliases, HTML entities, Iconify, image paths, and custom-webui assets.
+
+== Configuration
+
+Add `icon` under an entity definition alongside `file`, `name`, and `properties`:
+
+[source,yaml]
+----
+entities:
+  - file: /etc/OliveTin/servers.yaml
+    name: server
+    icon: ssh
+    properties:
+      - name: hostname
+        title: Hostname
+
+  - file: /etc/OliveTin/containers.json
+    name: container
+    icon: <iconify-icon icon="logos:docker-icon"></iconify-icon>
+----
+
+If `icon` is omitted or empty, no icon is shown for that entity type. Unlike actions, entity types do not get a default icon.
+
+=== Short-name aliases
+
+OliveTin resolves a few common short names to Unicode HTML entities at config load time. These are convenient for entity types that match common action categories:
+
+[cols="1,1", options="header"]
+|===
+| Alias | Typical use
+
+| `ssh`
+| Servers accessed over SSH
+
+| `ping`
+| Network hosts
+
+| `box`
+| Containers or packages
+
+| `backup`
+| Backup targets
+
+| `restart` / `reboot`
+| Systems or services
+
+| `light`
+| Lights or switches
+
+| `robot`
+| Automation targets
+|===
+
+The full alias list is in the xref:action_customization/icons.adoc#icons[Icons] documentation and in the source file `service/internal/config/emoji.go`.
+
+=== Custom-webui image paths
+
+A path containing `/` (that does not start with `<`) is expanded to an `<img>` tag pointing at `/custom-webui/`. For example, `icons/server.png` becomes an image served from `<config-dir>/custom-webui/icons/server.png`.
+
+== Where icons appear
+
+Entity icons are shown in the web UI next to the entity type name, not next to individual instances.
+
+=== Entities page
+
+On the Entities page, each entity type section heading shows the configured icon beside the type name (for example, `Entity: server`).
+
+=== Entity details page
+
+When viewing a single entity instance, the icon appears in the page title beside the instance name. The icon comes from the entity type definition, not from fields in the entity data file.
+
+=== API
+
+The `icon` field is included on:
+
+* `EntityDefinition` — returned by `GetEntities` for each entity type
+* `Entity` — returned by `GetEntity` for a single instance (same type-level icon)
+
+== What entity icons do not affect
+
+* **Individual instances** — icons are per entity type in `config.yaml`, not per row in the entity data file. You cannot give `server1` a different icon from `server2` through entity configuration alone.
+* **Dashboards** — entity fieldsets and directories use their own `icon` fields on dashboard components. See xref:dashboards/intro.adoc[Dashboards].
+* **Action buttons** — actions have their own `icon` field. An entity-bound action does not inherit the entity type icon automatically.
+
+== Example
+
+[source,yaml]
+----
+entities:
+  - file: entities/servers.yaml
+    name: server
+    icon: ssh
+    properties:
+      - name: hostname
+        title: Hostname
+      - name: ip
+        title: IP
+
+  - file: entities/containers.json
+    name: container
+    icon: box
+----
+
+With this configuration, the Entities page shows a key icon beside the `server` section and a box icon beside the `container` section. Opening any server instance shows the same key icon in the details page title.
+
+== What's next?
+
+* xref:action_customization/icons.adoc[Icons] — full icon format reference (Iconify, Unicode, images, and offline hosting)
+* xref:entities/intro.adoc[Entities] — overview of entities in OliveTin
+* xref:entities/properties.adoc[Entity properties] — configure which fields appear in the entity list

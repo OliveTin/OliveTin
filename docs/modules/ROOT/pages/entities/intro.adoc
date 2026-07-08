@@ -9,7 +9,9 @@ A very popular use case that entities were designed for was for `container` enti
 
 Entities are just loaded from files on disk, OliveTin will also watch these files for updates while OliveTin is running, and update entities.
 
-Entities can have properties defined in those files, and those can be used in your configuration as variables. For example; `container.status`, or `vm.hostname`.
+Entity data files can contain any fields you need. Those values are available in action templates as `{{ .CurrentEntity.field }}` — for example, `{{ .CurrentEntity.status }}` or `{{ .CurrentEntity.hostname }}`.
+
+To control which fields appear in the Entities page table and entity details view, configure `properties` on the entity definition in `config.yaml`. See xref:entities/properties.adoc[Entity properties] for details.
 
 [source,yaml]
 ----
@@ -19,6 +21,12 @@ entities:
 
   - file: /etc/OliveTin/servers.yaml
     name: server
+    icon: ssh
+    properties:
+      - name: hostname
+        title: Hostname
+      - name: ip
+        title: IP
 ----
 
 Entity Actions can only be used on xref:dashboards/intro.adoc[Dashboards].
@@ -27,6 +35,8 @@ Entity Actions can only be used on xref:dashboards/intro.adoc[Dashboards].
 
 Now that you understand entities, here's how to use them effectively:
 
+* xref:entities/properties.adoc[Configure entity properties] - Choose which fields appear in the UI and API
+* xref:entities/icons.adoc[Configure entity icons] - Set an icon for each entity type
 * xref:entities/yaml.adoc[Create YAML entity files] - Learn the YAML format for entity files
 * xref:entities/json.adoc[Create JSON entity files] - Learn the JSON format for entity files
 * xref:entities/examples.adoc[View entity examples] - See complete examples of entity configurations

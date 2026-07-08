@@ -98,6 +98,8 @@
 ** xref:logs/queue.adoc[Queue view]
 ** xref:logs/saving.adoc[Saving logs]
 * xref:entities/intro.adoc[Entities]
+** xref:entities/properties.adoc[Entity Properties]
+** xref:entities/icons.adoc[Entity Icons]
 ** xref:entities/examples.adoc[Examples]
 ** xref:entities/yaml.adoc[YAML Entity Files]
 ** xref:entities/json.adoc[JSON Entity Files]
