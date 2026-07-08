@@ -385,7 +385,7 @@ func testWithEntity(t *testing.T, binding *executor.ActionBinding, rr *Dashboard
 	assert.Equal(t, expectedCanExec, actionResult.CanExec, message)
 }
 
-// buildExecWithoutLogsTestConfig returns config for GHSA-jm28: user "runner" may exec but not read logs.
+// buildExecWithoutLogsTestConfig returns config for GHSA-jm28-2wcr-qf3h: user "runner" may exec but not read logs.
 func buildExecWithoutLogsTestConfig(t *testing.T) (*config.Config, *authpublic.AuthenticatedUser) {
 	t.Helper()
 	cfg := config.DefaultConfig()

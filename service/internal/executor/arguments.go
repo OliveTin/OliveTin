@@ -315,10 +315,6 @@ func typeSafetyCheckDatetime(value string) error {
 }
 
 func anchorCustomRegexPattern(pattern string) string {
-	if strings.HasPrefix(pattern, "^") && strings.HasSuffix(pattern, "$") {
-		return pattern
-	}
-
 	return "^(?:" + pattern + ")$"
 }
 

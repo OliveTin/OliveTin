@@ -596,6 +596,13 @@ func TestTypeSafetyCheckRegex(t *testing.T) {
 			value:    "example.com; id",
 			hasError: true,
 		},
+		{
+			name:     "reject alternation bypass when pattern looks anchored",
+			field:    "host",
+			pattern:  "regex:^safe$|bad",
+			value:    "xxxbad",
+			hasError: true,
+		},
 	}
 
 	for _, tt := range tests {
