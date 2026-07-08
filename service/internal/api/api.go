@@ -282,6 +282,21 @@ func (api *oliveTinAPI) findBindingByIDOrNotFound(bindingId string) (*executor.A
 	return api.findBindingOrNotFound(bindingId)
 }
 
+func (api *oliveTinAPI) startActionAndWaitLogEntry(binding *executor.ActionBinding, args map[string]string, justification string, user *authpublic.AuthenticatedUser) (*apiv1.LogEntry, error) {
+	internalLogEntry, ok := api.startActionAndWaitRun(binding, args, justification, user)
+	if !ok {
+		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("execution not found"))
+	}
+	return api.logEntryForAllowedViewer(internalLogEntry, user)
+}
+
+func (api *oliveTinAPI) logEntryForAllowedViewer(internalLogEntry *executor.InternalLogEntry, user *authpublic.AuthenticatedUser) (*apiv1.LogEntry, error) {
+	if err := api.requireLogEntryAllowed(internalLogEntry, user); err != nil {
+		return nil, err
+	}
+	return api.internalLogEntryToPb(internalLogEntry, user), nil
+}
+
 func (api *oliveTinAPI) StartActionAndWait(ctx ctx.Context, req *connect.Request[apiv1.StartActionAndWaitRequest]) (*connect.Response[apiv1.StartActionAndWaitResponse], error) {
 	binding, err := api.findBindingOrNotFound(req.Msg.ActionId)
 	if err != nil {
@@ -295,12 +310,12 @@ func (api *oliveTinAPI) StartActionAndWait(ctx ctx.Context, req *connect.Request
 		return nil, connectInvalidJustification(err)
 	}
 
-	internalLogEntry, ok := api.startActionAndWaitRun(binding, args, justification, user)
-	if !ok {
-		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("execution not found"))
+	logEntry, err := api.startActionAndWaitLogEntry(binding, args, justification, user)
+	if err != nil {
+		return nil, err
 	}
 	return connect.NewResponse(&apiv1.StartActionAndWaitResponse{
-		LogEntry: api.internalLogEntryToPb(internalLogEntry, user),
+		LogEntry: logEntry,
 	}), nil
 }
 
@@ -327,16 +342,7 @@ func (api *oliveTinAPI) StartActionByGet(ctx ctx.Context, req *connect.Request[a
 	}), nil
 }
 
-func (api *oliveTinAPI) StartActionByGetAndWait(ctx ctx.Context, req *connect.Request[apiv1.StartActionByGetAndWaitRequest]) (*connect.Response[apiv1.StartActionByGetAndWaitResponse], error) {
-	binding := api.executor.FindBindingByID(req.Msg.ActionId)
-	if binding == nil || binding.Action == nil {
-		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("action with ID %s not found", req.Msg.ActionId))
-	}
-
-	args := make(map[string]string)
-
-	user := auth.UserFromApiCall(ctx, req, api.cfg)
-
+func (api *oliveTinAPI) runBindingAndWait(binding *executor.ActionBinding, args map[string]string, user *authpublic.AuthenticatedUser) (*executor.InternalLogEntry, bool) {
 	execReq := executor.ExecutionRequest{
 		Binding:           binding,
 		TrackingID:        uuid.NewString(),
@@ -348,14 +354,31 @@ func (api *oliveTinAPI) StartActionByGetAndWait(ctx ctx.Context, req *connect.Re
 	wg, _ := api.executor.ExecRequest(&execReq)
 	wg.Wait()
 
-	internalLogEntry, ok := api.executor.GetLog(execReq.TrackingID)
+	return api.executor.GetLog(execReq.TrackingID)
+}
 
-	if ok {
-		return connect.NewResponse(&apiv1.StartActionByGetAndWaitResponse{
-			LogEntry: api.internalLogEntryToPb(internalLogEntry, user),
-		}), nil
+func (api *oliveTinAPI) startActionByGetAndWaitLogEntry(binding *executor.ActionBinding, user *authpublic.AuthenticatedUser) (*apiv1.LogEntry, error) {
+	internalLogEntry, ok := api.runBindingAndWait(binding, map[string]string{}, user)
+	if !ok {
+		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("execution not found"))
 	}
-	return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("execution not found"))
+	return api.logEntryForAllowedViewer(internalLogEntry, user)
+}
+
+func (api *oliveTinAPI) StartActionByGetAndWait(ctx ctx.Context, req *connect.Request[apiv1.StartActionByGetAndWaitRequest]) (*connect.Response[apiv1.StartActionByGetAndWaitResponse], error) {
+	binding := api.executor.FindBindingByID(req.Msg.ActionId)
+	if binding == nil || binding.Action == nil {
+		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("action with ID %s not found", req.Msg.ActionId))
+	}
+
+	user := auth.UserFromApiCall(ctx, req, api.cfg)
+	logEntry, err := api.startActionByGetAndWaitLogEntry(binding, user)
+	if err != nil {
+		return nil, err
+	}
+	return connect.NewResponse(&apiv1.StartActionByGetAndWaitResponse{
+		LogEntry: logEntry,
+	}), nil
 }
 
 func calculateRateLimitExpires(api *oliveTinAPI, logEntry *executor.InternalLogEntry) string {
@@ -682,6 +705,13 @@ func (api *oliveTinAPI) isLogEntryAllowed(e *executor.InternalLogEntry, user *au
 		return false
 	}
 	return acl.IsAllowedLogs(api.cfg, user, e.Binding.Action)
+}
+
+func (api *oliveTinAPI) requireLogEntryAllowed(entry *executor.InternalLogEntry, user *authpublic.AuthenticatedUser) error {
+	if api.isLogEntryAllowed(entry, user) {
+		return nil
+	}
+	return connect.NewError(connect.CodePermissionDenied, fmt.Errorf("permission denied to view this execution"))
 }
 
 // mayViewExecutionEvent returns whether the user is allowed to receive this execution event (for EventStream ACL).
