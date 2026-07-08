@@ -314,11 +314,21 @@ func typeSafetyCheckDatetime(value string) error {
 	return nil
 }
 
+func anchorCustomRegexPattern(pattern string) string {
+	if strings.HasPrefix(pattern, "^") && strings.HasSuffix(pattern, "$") {
+		return pattern
+	}
+
+	return "^(?:" + pattern + ")$"
+}
+
 func typeSafetyCheckRegex(name string, value string, argumentType string) error {
 	pattern := ""
+	isCustomRegex := strings.HasPrefix(argumentType, "regex:")
 
-	if strings.HasPrefix(argumentType, "regex:") {
-		pattern = strings.Replace(argumentType, "regex:", "", 1)
+	if isCustomRegex {
+		pattern = strings.TrimPrefix(argumentType, "regex:")
+		pattern = anchorCustomRegexPattern(pattern)
 	} else {
 		found := false
 		pattern, found = typecheckRegex[argumentType]
@@ -345,21 +355,50 @@ func typeSafetyCheckRegex(name string, value string, argumentType string) error 
 }
 
 func typeSafetyCheckUrl(value string) error {
-	_, err := url.ParseRequestURI(value)
+	parsed, err := url.ParseRequestURI(value)
+	if err != nil {
+		return err
+	}
 
-	return err
+	scheme := strings.ToLower(parsed.Scheme)
+	if scheme != "http" && scheme != "https" {
+		return fmt.Errorf("url scheme %q is not allowed; only http and https are permitted", parsed.Scheme)
+	}
+
+	return nil
+}
+
+var shellUnsafeArgumentTypes = map[string]struct{}{
+	"url":                       {},
+	"email":                     {},
+	"raw_string_multiline":      {},
+	"very_dangerous_raw_string": {},
+	"password":                  {},
+	"html":                      {},
+	"confirmation":              {},
+}
+
+func isUnsafeShellArgumentType(arg *config.ActionArgument) bool {
+	if strings.HasPrefix(arg.Type, "regex:") {
+		return true
+	}
+
+	_, inMap := shellUnsafeArgumentTypes[arg.Type]
+	return inMap || (arg.Type == "checkbox" && len(arg.Choices) == 0)
 }
 
 func checkShellArgumentSafety(action *config.Action) error {
 	if action.Shell == "" {
 		return nil
 	}
-	unsafe := map[string]struct{}{"url": {}, "email": {}, "raw_string_multiline": {}, "very_dangerous_raw_string": {}, "password": {}}
-	for _, arg := range action.Arguments {
-		if _, bad := unsafe[arg.Type]; bad {
+
+	for i := range action.Arguments {
+		arg := &action.Arguments[i]
+		if isUnsafeShellArgumentType(arg) {
 			return fmt.Errorf("unsafe argument type '%s' cannot be used with Shell execution. Use 'exec' instead. See https://docs.olivetin.app/action_execution/shellvsexec.html", arg.Type)
 		}
 	}
+
 	return nil
 }
 
