@@ -44,15 +44,15 @@ translations:
   logs.queue-position: "#{position}"
   logs.queue-entity: Entidad
   diagnostics.get-support: Obtener soporte
-  diagnostics.get-support-description: Si tiene problemas con OliveTin y desea presentar una solicitud de soporte, sería muy útil incluir un sosreport de esta página.
+  diagnostics.get-support-description: Si tiene problemas con OliveTin y desea presentar una solicitud de soporte, sería muy útil incluir diagnósticos del servidor desde esta página.
   diagnostics.where-to-find-help: Dónde encontrar ayuda
   diagnostics.ssh: SSH
   diagnostics.found-key: Clave encontrada
   diagnostics.found-config: Configuración encontrada
-  diagnostics.sos-report: Informe SOS
-  diagnostics.sos-report-description: Esta sección le permite generar un informe detallado de su configuración y entorno. Es una buena idea incluir esto al presentar una solicitud de soporte.
-  diagnostics.sos-report-docs: Documentación de sosreport
-  diagnostics.generate-sos-report: Generar informe SOS
+  diagnostics.server-diagnostics: Diagnóstico del servidor
+  diagnostics.server-diagnostics-description: Esta sección le permite generar un informe detallado de su configuración y entorno. Es una buena idea incluir esto al presentar una solicitud de soporte.
+  diagnostics.server-diagnostics-docs: Documentación de diagnóstico del servidor
+  diagnostics.generate-server-diagnostics: Generar diagnóstico del servidor
   diagnostics.browser-info: Información del navegador
   diagnostics.browser-info-description: Esta sección le permite generar un informe detallado de su información del navegador. Esto puede ser útil al solucionar problemas específicos del navegador.
   diagnostics.generate-browser-info: Generar información del navegador

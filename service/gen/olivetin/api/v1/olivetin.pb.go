@@ -2649,26 +2649,26 @@ func (x *WhoAmIResponse) GetSid() string {
 	return ""
 }
 
-type SosReportRequest struct {
+type ServerDiagnosticsRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *SosReportRequest) Reset() {
-	*x = SosReportRequest{}
+func (x *ServerDiagnosticsRequest) Reset() {
+	*x = ServerDiagnosticsRequest{}
 	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[39]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *SosReportRequest) String() string {
+func (x *ServerDiagnosticsRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*SosReportRequest) ProtoMessage() {}
+func (*ServerDiagnosticsRequest) ProtoMessage() {}
 
-func (x *SosReportRequest) ProtoReflect() protoreflect.Message {
+func (x *ServerDiagnosticsRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[39]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2680,32 +2680,32 @@ func (x *SosReportRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use SosReportRequest.ProtoReflect.Descriptor instead.
-func (*SosReportRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use ServerDiagnosticsRequest.ProtoReflect.Descriptor instead.
+func (*ServerDiagnosticsRequest) Descriptor() ([]byte, []int) {
 	return file_olivetin_api_v1_olivetin_proto_rawDescGZIP(), []int{39}
 }
 
-type SosReportResponse struct {
+type ServerDiagnosticsResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Alert         string                 `protobuf:"bytes,1,opt,name=alert,proto3" json:"alert,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *SosReportResponse) Reset() {
-	*x = SosReportResponse{}
+func (x *ServerDiagnosticsResponse) Reset() {
+	*x = ServerDiagnosticsResponse{}
 	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[40]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *SosReportResponse) String() string {
+func (x *ServerDiagnosticsResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*SosReportResponse) ProtoMessage() {}
+func (*ServerDiagnosticsResponse) ProtoMessage() {}
 
-func (x *SosReportResponse) ProtoReflect() protoreflect.Message {
+func (x *ServerDiagnosticsResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_olivetin_api_v1_olivetin_proto_msgTypes[40]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2717,12 +2717,12 @@ func (x *SosReportResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use SosReportResponse.ProtoReflect.Descriptor instead.
-func (*SosReportResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use ServerDiagnosticsResponse.ProtoReflect.Descriptor instead.
+func (*ServerDiagnosticsResponse) Descriptor() ([]byte, []int) {
 	return file_olivetin_api_v1_olivetin_proto_rawDescGZIP(), []int{40}
 }
 
-func (x *SosReportResponse) GetAlert() string {
+func (x *ServerDiagnosticsResponse) GetAlert() string {
 	if x != nil {
 		return x.Alert
 	}
@@ -4983,9 +4983,9 @@ const file_olivetin_api_v1_olivetin_proto_rawDesc = "" +
 	"\tusergroup\x18\x02 \x01(\tR\tusergroup\x12\x1a\n" +
 	"\bprovider\x18\x03 \x01(\tR\bprovider\x12\x12\n" +
 	"\x04acls\x18\x04 \x03(\tR\x04acls\x12\x10\n" +
-	"\x03sid\x18\x05 \x01(\tR\x03sid\"\x12\n" +
-	"\x10SosReportRequest\")\n" +
-	"\x11SosReportResponse\x12\x14\n" +
+	"\x03sid\x18\x05 \x01(\tR\x03sid\"\x1a\n" +
+	"\x18ServerDiagnosticsRequest\"1\n" +
+	"\x19ServerDiagnosticsResponse\x12\x14\n" +
 	"\x05alert\x18\x01 \x01(\tR\x05alert\"\x11\n" +
 	"\x0fDumpVarsRequest\"\xb2\x01\n" +
 	"\x10DumpVarsResponse\x12\x14\n" +
@@ -5117,7 +5117,7 @@ const file_olivetin_api_v1_olivetin_proto_rawDesc = "" +
 	"unique_key\x18\x01 \x01(\tR\tuniqueKey\x12\x12\n" +
 	"\x04type\x18\x02 \x01(\tR\x04type\"J\n" +
 	"\x14RestartActionRequest\x122\n" +
-	"\x15execution_tracking_id\x18\x01 \x01(\tR\x13executionTrackingId2\xd6\x13\n" +
+	"\x15execution_tracking_id\x18\x01 \x01(\tR\x13executionTrackingId2\xee\x13\n" +
 	"\x12OliveTinApiService\x12]\n" +
 	"\fGetDashboard\x12$.olivetin.api.v1.GetDashboardRequest\x1a%.olivetin.api.v1.GetDashboardResponse\"\x00\x12Z\n" +
 	"\vStartAction\x12#.olivetin.api.v1.StartActionRequest\x1a$.olivetin.api.v1.StartActionResponse\"\x00\x12o\n" +
@@ -5132,8 +5132,8 @@ const file_olivetin_api_v1_olivetin_proto_rawDesc = "" +
 	"\rGetActionLogs\x12%.olivetin.api.v1.GetActionLogsRequest\x1a&.olivetin.api.v1.GetActionLogsResponse\"\x00\x12l\n" +
 	"\x11GetExecutionQueue\x12).olivetin.api.v1.GetExecutionQueueRequest\x1a*.olivetin.api.v1.GetExecutionQueueResponse\"\x00\x12u\n" +
 	"\x14ValidateArgumentType\x12,.olivetin.api.v1.ValidateArgumentTypeRequest\x1a-.olivetin.api.v1.ValidateArgumentTypeResponse\"\x00\x12K\n" +
-	"\x06WhoAmI\x12\x1e.olivetin.api.v1.WhoAmIRequest\x1a\x1f.olivetin.api.v1.WhoAmIResponse\"\x00\x12T\n" +
-	"\tSosReport\x12!.olivetin.api.v1.SosReportRequest\x1a\".olivetin.api.v1.SosReportResponse\"\x00\x12Q\n" +
+	"\x06WhoAmI\x12\x1e.olivetin.api.v1.WhoAmIRequest\x1a\x1f.olivetin.api.v1.WhoAmIResponse\"\x00\x12l\n" +
+	"\x11ServerDiagnostics\x12).olivetin.api.v1.ServerDiagnosticsRequest\x1a*.olivetin.api.v1.ServerDiagnosticsResponse\"\x00\x12Q\n" +
 	"\bDumpVars\x12 .olivetin.api.v1.DumpVarsRequest\x1a!.olivetin.api.v1.DumpVarsResponse\"\x00\x12x\n" +
 	"\x15DumpPublicIdActionMap\x12-.olivetin.api.v1.DumpPublicIdActionMapRequest\x1a..olivetin.api.v1.DumpPublicIdActionMapResponse\"\x00\x12T\n" +
 	"\tGetReadyz\x12!.olivetin.api.v1.GetReadyzRequest\x1a\".olivetin.api.v1.GetReadyzResponse\"\x00\x12c\n" +
@@ -5200,8 +5200,8 @@ var file_olivetin_api_v1_olivetin_proto_goTypes = []any{
 	(*ExecutionStatusResponse)(nil),         // 36: olivetin.api.v1.ExecutionStatusResponse
 	(*WhoAmIRequest)(nil),                   // 37: olivetin.api.v1.WhoAmIRequest
 	(*WhoAmIResponse)(nil),                  // 38: olivetin.api.v1.WhoAmIResponse
-	(*SosReportRequest)(nil),                // 39: olivetin.api.v1.SosReportRequest
-	(*SosReportResponse)(nil),               // 40: olivetin.api.v1.SosReportResponse
+	(*ServerDiagnosticsRequest)(nil),        // 39: olivetin.api.v1.ServerDiagnosticsRequest
+	(*ServerDiagnosticsResponse)(nil),       // 40: olivetin.api.v1.ServerDiagnosticsResponse
 	(*DumpVarsRequest)(nil),                 // 41: olivetin.api.v1.DumpVarsRequest
 	(*DumpVarsResponse)(nil),                // 42: olivetin.api.v1.DumpVarsResponse
 	(*DebugBinding)(nil),                    // 43: olivetin.api.v1.DebugBinding
@@ -5307,7 +5307,7 @@ var file_olivetin_api_v1_olivetin_proto_depIdxs = []int32{
 	26, // 56: olivetin.api.v1.OliveTinApiService.GetExecutionQueue:input_type -> olivetin.api.v1.GetExecutionQueueRequest
 	30, // 57: olivetin.api.v1.OliveTinApiService.ValidateArgumentType:input_type -> olivetin.api.v1.ValidateArgumentTypeRequest
 	37, // 58: olivetin.api.v1.OliveTinApiService.WhoAmI:input_type -> olivetin.api.v1.WhoAmIRequest
-	39, // 59: olivetin.api.v1.OliveTinApiService.SosReport:input_type -> olivetin.api.v1.SosReportRequest
+	39, // 59: olivetin.api.v1.OliveTinApiService.ServerDiagnostics:input_type -> olivetin.api.v1.ServerDiagnosticsRequest
 	41, // 60: olivetin.api.v1.OliveTinApiService.DumpVars:input_type -> olivetin.api.v1.DumpVarsRequest
 	44, // 61: olivetin.api.v1.OliveTinApiService.DumpPublicIdActionMap:input_type -> olivetin.api.v1.DumpPublicIdActionMapRequest
 	46, // 62: olivetin.api.v1.OliveTinApiService.GetReadyz:input_type -> olivetin.api.v1.GetReadyzRequest
@@ -5333,7 +5333,7 @@ var file_olivetin_api_v1_olivetin_proto_depIdxs = []int32{
 	29, // 82: olivetin.api.v1.OliveTinApiService.GetExecutionQueue:output_type -> olivetin.api.v1.GetExecutionQueueResponse
 	31, // 83: olivetin.api.v1.OliveTinApiService.ValidateArgumentType:output_type -> olivetin.api.v1.ValidateArgumentTypeResponse
 	38, // 84: olivetin.api.v1.OliveTinApiService.WhoAmI:output_type -> olivetin.api.v1.WhoAmIResponse
-	40, // 85: olivetin.api.v1.OliveTinApiService.SosReport:output_type -> olivetin.api.v1.SosReportResponse
+	40, // 85: olivetin.api.v1.OliveTinApiService.ServerDiagnostics:output_type -> olivetin.api.v1.ServerDiagnosticsResponse
 	42, // 86: olivetin.api.v1.OliveTinApiService.DumpVars:output_type -> olivetin.api.v1.DumpVarsResponse
 	45, // 87: olivetin.api.v1.OliveTinApiService.DumpPublicIdActionMap:output_type -> olivetin.api.v1.DumpPublicIdActionMapResponse
 	47, // 88: olivetin.api.v1.OliveTinApiService.GetReadyz:output_type -> olivetin.api.v1.GetReadyzResponse

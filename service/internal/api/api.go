@@ -930,18 +930,18 @@ func (api *oliveTinAPI) WhoAmI(ctx ctx.Context, req *connect.Request[apiv1.WhoAm
 	return connect.NewResponse(res), nil
 }
 
-func (api *oliveTinAPI) SosReport(ctx ctx.Context, req *connect.Request[apiv1.SosReportRequest]) (*connect.Response[apiv1.SosReportResponse], error) {
+func (api *oliveTinAPI) ServerDiagnostics(ctx ctx.Context, req *connect.Request[apiv1.ServerDiagnosticsRequest]) (*connect.Response[apiv1.ServerDiagnosticsResponse], error) {
 	user := auth.UserFromApiCall(ctx, req, api.cfg)
 	redactVersion := !user.EffectivePolicy.ShowVersionNumber
-	sos := installationinfo.GetSosReport(redactVersion)
+	diagnostics := installationinfo.GetServerDiagnostics(redactVersion)
 
-	if !api.cfg.InsecureAllowDumpSos {
-		log.Info(sos)
-		sos = "Your SOS Report has been logged to OliveTin logs.\n\nIf you are in a safe network, you can temporarily set `insecureAllowDumpSos: true` in your config.yaml, restart OliveTin, and refresh this page - it will put the output directly in the browser."
+	if !api.cfg.InsecureAllowDumpServerDiagnostics {
+		log.Info(diagnostics)
+		diagnostics = "Your Server Diagnostics have been logged to OliveTin logs.\n\nIf you are in a safe network, you can temporarily set `insecureAllowDumpServerDiagnostics: true` in your config.yaml, restart OliveTin, and refresh this page - it will put the output directly in the browser."
 	}
 
-	ret := &apiv1.SosReportResponse{
-		Alert: sos,
+	ret := &apiv1.ServerDiagnosticsResponse{
+		Alert: diagnostics,
 	}
 
 	return connect.NewResponse(ret), nil

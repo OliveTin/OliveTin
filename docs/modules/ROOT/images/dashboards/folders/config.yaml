@@ -1,0 +1,33 @@
+---
+listenAddressSingleHTTPFrontend: 0.0.0.0:11337
+
+logLevel: "WARN"
+checkForUpdates: false
+showFooter: false
+
+actions:
+  - title: Action 1
+    shell: echo "action1"
+  - title: Action 2
+    shell: echo "action2"
+  - title: Action 3
+    shell: echo "action3"
+  - title: Action 4
+    shell: echo "action4"
+
+dashboards:
+  - title: My First Dashboard
+    contents:
+      - title: Fieldset 1
+        type: fieldset
+        contents:
+          - title: Folder 1
+            contents:
+              - title: Action 1
+              - title: Action 2
+              - title: Subfolder 2
+                contents:
+                  - title: Action 3
+          - title: Folder 2
+            contents:
+              - title: Action 4

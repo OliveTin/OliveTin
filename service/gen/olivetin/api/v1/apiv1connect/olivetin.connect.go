@@ -72,9 +72,9 @@ const (
 	// OliveTinApiServiceWhoAmIProcedure is the fully-qualified name of the OliveTinApiService's WhoAmI
 	// RPC.
 	OliveTinApiServiceWhoAmIProcedure = "/olivetin.api.v1.OliveTinApiService/WhoAmI"
-	// OliveTinApiServiceSosReportProcedure is the fully-qualified name of the OliveTinApiService's
-	// SosReport RPC.
-	OliveTinApiServiceSosReportProcedure = "/olivetin.api.v1.OliveTinApiService/SosReport"
+	// OliveTinApiServiceServerDiagnosticsProcedure is the fully-qualified name of the
+	// OliveTinApiService's ServerDiagnostics RPC.
+	OliveTinApiServiceServerDiagnosticsProcedure = "/olivetin.api.v1.OliveTinApiService/ServerDiagnostics"
 	// OliveTinApiServiceDumpVarsProcedure is the fully-qualified name of the OliveTinApiService's
 	// DumpVars RPC.
 	OliveTinApiServiceDumpVarsProcedure = "/olivetin.api.v1.OliveTinApiService/DumpVars"
@@ -127,7 +127,7 @@ type OliveTinApiServiceClient interface {
 	GetExecutionQueue(context.Context, *connect.Request[v1.GetExecutionQueueRequest]) (*connect.Response[v1.GetExecutionQueueResponse], error)
 	ValidateArgumentType(context.Context, *connect.Request[v1.ValidateArgumentTypeRequest]) (*connect.Response[v1.ValidateArgumentTypeResponse], error)
 	WhoAmI(context.Context, *connect.Request[v1.WhoAmIRequest]) (*connect.Response[v1.WhoAmIResponse], error)
-	SosReport(context.Context, *connect.Request[v1.SosReportRequest]) (*connect.Response[v1.SosReportResponse], error)
+	ServerDiagnostics(context.Context, *connect.Request[v1.ServerDiagnosticsRequest]) (*connect.Response[v1.ServerDiagnosticsResponse], error)
 	DumpVars(context.Context, *connect.Request[v1.DumpVarsRequest]) (*connect.Response[v1.DumpVarsResponse], error)
 	DumpPublicIdActionMap(context.Context, *connect.Request[v1.DumpPublicIdActionMapRequest]) (*connect.Response[v1.DumpPublicIdActionMapResponse], error)
 	GetReadyz(context.Context, *connect.Request[v1.GetReadyzRequest]) (*connect.Response[v1.GetReadyzResponse], error)
@@ -231,10 +231,10 @@ func NewOliveTinApiServiceClient(httpClient connect.HTTPClient, baseURL string, 
 			connect.WithSchema(oliveTinApiServiceMethods.ByName("WhoAmI")),
 			connect.WithClientOptions(opts...),
 		),
-		sosReport: connect.NewClient[v1.SosReportRequest, v1.SosReportResponse](
+		serverDiagnostics: connect.NewClient[v1.ServerDiagnosticsRequest, v1.ServerDiagnosticsResponse](
 			httpClient,
-			baseURL+OliveTinApiServiceSosReportProcedure,
-			connect.WithSchema(oliveTinApiServiceMethods.ByName("SosReport")),
+			baseURL+OliveTinApiServiceServerDiagnosticsProcedure,
+			connect.WithSchema(oliveTinApiServiceMethods.ByName("ServerDiagnostics")),
 			connect.WithClientOptions(opts...),
 		),
 		dumpVars: connect.NewClient[v1.DumpVarsRequest, v1.DumpVarsResponse](
@@ -327,7 +327,7 @@ type oliveTinApiServiceClient struct {
 	getExecutionQueue       *connect.Client[v1.GetExecutionQueueRequest, v1.GetExecutionQueueResponse]
 	validateArgumentType    *connect.Client[v1.ValidateArgumentTypeRequest, v1.ValidateArgumentTypeResponse]
 	whoAmI                  *connect.Client[v1.WhoAmIRequest, v1.WhoAmIResponse]
-	sosReport               *connect.Client[v1.SosReportRequest, v1.SosReportResponse]
+	serverDiagnostics       *connect.Client[v1.ServerDiagnosticsRequest, v1.ServerDiagnosticsResponse]
 	dumpVars                *connect.Client[v1.DumpVarsRequest, v1.DumpVarsResponse]
 	dumpPublicIdActionMap   *connect.Client[v1.DumpPublicIdActionMapRequest, v1.DumpPublicIdActionMapResponse]
 	getReadyz               *connect.Client[v1.GetReadyzRequest, v1.GetReadyzResponse]
@@ -407,9 +407,9 @@ func (c *oliveTinApiServiceClient) WhoAmI(ctx context.Context, req *connect.Requ
 	return c.whoAmI.CallUnary(ctx, req)
 }
 
-// SosReport calls olivetin.api.v1.OliveTinApiService.SosReport.
-func (c *oliveTinApiServiceClient) SosReport(ctx context.Context, req *connect.Request[v1.SosReportRequest]) (*connect.Response[v1.SosReportResponse], error) {
-	return c.sosReport.CallUnary(ctx, req)
+// ServerDiagnostics calls olivetin.api.v1.OliveTinApiService.ServerDiagnostics.
+func (c *oliveTinApiServiceClient) ServerDiagnostics(ctx context.Context, req *connect.Request[v1.ServerDiagnosticsRequest]) (*connect.Response[v1.ServerDiagnosticsResponse], error) {
+	return c.serverDiagnostics.CallUnary(ctx, req)
 }
 
 // DumpVars calls olivetin.api.v1.OliveTinApiService.DumpVars.
@@ -487,7 +487,7 @@ type OliveTinApiServiceHandler interface {
 	GetExecutionQueue(context.Context, *connect.Request[v1.GetExecutionQueueRequest]) (*connect.Response[v1.GetExecutionQueueResponse], error)
 	ValidateArgumentType(context.Context, *connect.Request[v1.ValidateArgumentTypeRequest]) (*connect.Response[v1.ValidateArgumentTypeResponse], error)
 	WhoAmI(context.Context, *connect.Request[v1.WhoAmIRequest]) (*connect.Response[v1.WhoAmIResponse], error)
-	SosReport(context.Context, *connect.Request[v1.SosReportRequest]) (*connect.Response[v1.SosReportResponse], error)
+	ServerDiagnostics(context.Context, *connect.Request[v1.ServerDiagnosticsRequest]) (*connect.Response[v1.ServerDiagnosticsResponse], error)
 	DumpVars(context.Context, *connect.Request[v1.DumpVarsRequest]) (*connect.Response[v1.DumpVarsResponse], error)
 	DumpPublicIdActionMap(context.Context, *connect.Request[v1.DumpPublicIdActionMapRequest]) (*connect.Response[v1.DumpPublicIdActionMapResponse], error)
 	GetReadyz(context.Context, *connect.Request[v1.GetReadyzRequest]) (*connect.Response[v1.GetReadyzResponse], error)
@@ -587,10 +587,10 @@ func NewOliveTinApiServiceHandler(svc OliveTinApiServiceHandler, opts ...connect
 		connect.WithSchema(oliveTinApiServiceMethods.ByName("WhoAmI")),
 		connect.WithHandlerOptions(opts...),
 	)
-	oliveTinApiServiceSosReportHandler := connect.NewUnaryHandler(
-		OliveTinApiServiceSosReportProcedure,
-		svc.SosReport,
-		connect.WithSchema(oliveTinApiServiceMethods.ByName("SosReport")),
+	oliveTinApiServiceServerDiagnosticsHandler := connect.NewUnaryHandler(
+		OliveTinApiServiceServerDiagnosticsProcedure,
+		svc.ServerDiagnostics,
+		connect.WithSchema(oliveTinApiServiceMethods.ByName("ServerDiagnostics")),
 		connect.WithHandlerOptions(opts...),
 	)
 	oliveTinApiServiceDumpVarsHandler := connect.NewUnaryHandler(
@@ -693,8 +693,8 @@ func NewOliveTinApiServiceHandler(svc OliveTinApiServiceHandler, opts ...connect
 			oliveTinApiServiceValidateArgumentTypeHandler.ServeHTTP(w, r)
 		case OliveTinApiServiceWhoAmIProcedure:
 			oliveTinApiServiceWhoAmIHandler.ServeHTTP(w, r)
-		case OliveTinApiServiceSosReportProcedure:
-			oliveTinApiServiceSosReportHandler.ServeHTTP(w, r)
+		case OliveTinApiServiceServerDiagnosticsProcedure:
+			oliveTinApiServiceServerDiagnosticsHandler.ServeHTTP(w, r)
 		case OliveTinApiServiceDumpVarsProcedure:
 			oliveTinApiServiceDumpVarsHandler.ServeHTTP(w, r)
 		case OliveTinApiServiceDumpPublicIdActionMapProcedure:
@@ -780,8 +780,8 @@ func (UnimplementedOliveTinApiServiceHandler) WhoAmI(context.Context, *connect.R
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("olivetin.api.v1.OliveTinApiService.WhoAmI is not implemented"))
 }
 
-func (UnimplementedOliveTinApiServiceHandler) SosReport(context.Context, *connect.Request[v1.SosReportRequest]) (*connect.Response[v1.SosReportResponse], error) {
-	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("olivetin.api.v1.OliveTinApiService.SosReport is not implemented"))
+func (UnimplementedOliveTinApiServiceHandler) ServerDiagnostics(context.Context, *connect.Request[v1.ServerDiagnosticsRequest]) (*connect.Response[v1.ServerDiagnosticsResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("olivetin.api.v1.OliveTinApiService.ServerDiagnostics is not implemented"))
 }
 
 func (UnimplementedOliveTinApiServiceHandler) DumpVars(context.Context, *connect.Request[v1.DumpVarsRequest]) (*connect.Response[v1.DumpVarsResponse], error) {

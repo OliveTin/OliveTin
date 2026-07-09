@@ -18,12 +18,12 @@ integration-tests/flakey-test-runs.jsonl
 service/flakey-test-runs.log
 service/flakey-test-runs.jsonl
 .vscode/
-webui/
+/webui/
 server.log
 OliveTin
 integration-tests/configs/authRequireGuestsToLogin/sessions.yaml
-webui
-webui.dev
+/webui
+/webui.dev
 sessions.yaml
 docs/build/
 build/

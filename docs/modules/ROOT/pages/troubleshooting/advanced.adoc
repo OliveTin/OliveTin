@@ -9,7 +9,7 @@ All these configuration options are `false` by default, and should be deleted fr
 
 [#dump-server-diagnostics]
 == Dump server diagnostics
-`InsecureAllowDumpSos: true` - will allow dumping xref:troubleshooting/server-diagnostics.adoc[server diagnostics] as plain text when visiting `http://server:1337/api/sosreport`
+`insecureAllowDumpServerDiagnostics: true` - will allow dumping xref:troubleshooting/server-diagnostics.adoc[server diagnostics] as plain text when visiting `http://server:1337/api/ServerDiagnostics`
 
 [#dump-action-map]
 == Dump Action Map

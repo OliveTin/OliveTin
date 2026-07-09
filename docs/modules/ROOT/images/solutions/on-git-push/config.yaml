@@ -1,0 +1,42 @@
+---
+listenAddressSingleHTTPFrontend: 0.0.0.0:11337
+
+logLevel: "WARN"
+checkForUpdates: false
+showFooter: false
+
+actions:
+  - title: ServerConfiguration Ansible
+    id: ServerConfiguration_Ansible
+    icon: <iconify-icon icon="simple-icons:ansible"></iconify-icon>
+    shell: echo "ansible configuration"
+
+  - title: ServerConfiguration Flux
+    id: ServerConfiguration_Flux
+    icon: <iconify-icon icon="simple-icons:flux"></iconify-icon>
+    shell: echo "flux configuration"
+
+  - title: ServerConfiguration Prom
+    id: ServerConfiguration_Prom
+    icon: <iconify-icon icon="simple-icons:prometheus"></iconify-icon>
+    shell: echo "prometheus configuration"
+
+  - title: Run on Git Push
+    id: gitops
+    icon: <iconify-icon icon="bi:git"></iconify-icon>
+    shell: |
+      echo "You just pushed commit $COMMIT to git, running action..."
+      date
+    arguments:
+      - name: commit
+        type: ascii
+
+dashboards:
+  - title: GitOps
+    contents:
+      - title: ServerConfiguration
+        type: fieldset
+        contents:
+          - title: ServerConfiguration Ansible
+          - title: ServerConfiguration Flux
+          - title: ServerConfiguration Prom

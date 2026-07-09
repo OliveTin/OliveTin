@@ -4,7 +4,7 @@
 It is possible to group actions together in a "group", which is not a directory, but is called
 a "fieldset". This is an example of a fieldset that contains two xref:dashboards/3-folders.adoc[Folders].
 
-image::fieldset.png[]
+image::dashboards/fieldsets/fieldset.png[]
 
 Fieldsets are defined under a xref:dashboards/intro.adoc[Dashboards] in your config.yaml.
 
@@ -38,5 +38,3 @@ dashboards:
           - title: Start {{ server.Name }}
           - title: Shutdown {{ server.Name }}
 ----
-
-

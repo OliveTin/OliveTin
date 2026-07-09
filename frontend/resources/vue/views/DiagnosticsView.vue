@@ -18,18 +18,18 @@
     </dl>
   </Section>
 
-  <Section :title="t('diagnostics.sos-report')">
-    <p>{{ t('diagnostics.sos-report-description') }}</p>
+  <Section :title="t('diagnostics.server-diagnostics')">
+    <p>{{ t('diagnostics.server-diagnostics-description') }}</p>
     <p>
-      <a href="https://docs.olivetin.app/troubleshooting/sosreport.html" target="_blank">{{ t('diagnostics.sos-report-docs') }}</a>
+      <a href="https://docs.olivetin.app/troubleshooting/server-diagnostics.html" target="_blank">{{ t('diagnostics.server-diagnostics-docs') }}</a>
     </p>
 
     <div role="toolbar">
-      <button @click="generateSosReport" :disabled="loading" class = "good">{{ t('diagnostics.generate-sos-report') }}</button>
-      <button @click="copySosReport" :disabled="!sosReport || loading" :class="sosReportCopied ? 'good' : ''">{{ sosReportCopied ? t('diagnostics.copied') : t('diagnostics.copy-to-clipboard') }}</button>
+      <button @click="generateServerDiagnostics" :disabled="loading" class = "good">{{ t('diagnostics.generate-server-diagnostics') }}</button>
+      <button @click="copyServerDiagnostics" :disabled="!serverDiagnostics || loading" :class="serverDiagnosticsCopied ? 'good' : ''">{{ serverDiagnosticsCopied ? t('diagnostics.copied') : t('diagnostics.copy-to-clipboard') }}</button>
     </div>
 
-    <textarea v-model="sosReport" readonly style="flex: 1; min-height: 200px; resize: vertical; width: 100%; box-sizing: border-box;"></textarea>
+    <textarea v-model="serverDiagnostics" readonly style="flex: 1; min-height: 200px; resize: vertical; width: 100%; box-sizing: border-box;"></textarea>
   </Section>
 
   <Section :title="t('diagnostics.browser-info')">
@@ -53,9 +53,9 @@ const { t, locale } = useI18n()
 
 const diagnostics = ref({})
 const loading = ref(false)
-const sosReport = ref('')
+const serverDiagnostics = ref('')
 const browserInfo = ref('')
-const sosReportCopied = ref(false)
+const serverDiagnosticsCopied = ref(false)
 const browserInfoCopied = ref(false)
 
 async function fetchDiagnostics() {
@@ -84,21 +84,21 @@ function formatKey(key) {
     .trim()
 }
 
-async function generateSosReport() {
-  const response = await window.client.sosReport()
+async function generateServerDiagnostics() {
+  const response = await window.client.serverDiagnostics()
   console.log("response", response)
-  sosReport.value = `\`\`\`\n${response.alert}\n\`\`\`\n`
+  serverDiagnostics.value = `\`\`\`\n${response.alert}\n\`\`\`\n`
 }
 
-async function copySosReport() {
+async function copyServerDiagnostics() {
   try {
-    await navigator.clipboard.writeText(sosReport.value)
-    sosReportCopied.value = true
+    await navigator.clipboard.writeText(serverDiagnostics.value)
+    serverDiagnosticsCopied.value = true
     setTimeout(() => {
-      sosReportCopied.value = false
+      serverDiagnosticsCopied.value = false
     }, 2000)
   } catch (err) {
-    console.error('Failed to copy SOS report to clipboard:', err)
+    console.error('Failed to copy Server Diagnostics to clipboard:', err)
   }
 }
 

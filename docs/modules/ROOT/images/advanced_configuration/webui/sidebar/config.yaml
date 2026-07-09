@@ -1,0 +1,30 @@
+---
+listenAddressSingleHTTPFrontend: 0.0.0.0:11337
+
+logLevel: "WARN"
+checkForUpdates: false
+showFooter: false
+
+sectionNavigationStyle: sidebar
+
+actions:
+  - title: Check disk space
+    icon: disk
+    shell: df -h /
+  - title: Setup easy SSH
+    icon: ssh
+    shell: echo ssh
+  - title: My Servers ping
+    icon: ping
+    shell: echo ping
+  - title: My Containers list
+    icon: disk
+    shell: echo list
+
+dashboards:
+  - title: My Servers
+    contents:
+      - title: My Servers ping
+  - title: My Containers
+    contents:
+      - title: My Containers list

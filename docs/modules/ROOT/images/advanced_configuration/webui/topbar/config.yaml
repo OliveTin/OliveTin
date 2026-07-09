@@ -1,0 +1,33 @@
+---
+listenAddressSingleHTTPFrontend: 0.0.0.0:11337
+
+logLevel: "WARN"
+checkForUpdates: false
+showFooter: false
+
+sectionNavigationStyle: topbar
+
+actions:
+  - title: Ping host
+    icon: ping
+    shell: ping -c 1 127.0.0.1
+  - title: Restart Docker Container
+    icon: restart
+    shell: echo restart
+  - title: Delete old backups
+    icon: ashtonished
+    shell: echo delete
+  - title: Server ping
+    icon: ping
+    shell: echo ping
+  - title: Container list
+    icon: disk
+    shell: echo list
+
+dashboards:
+  - title: My Servers
+    contents:
+      - title: Server ping
+  - title: My Containers
+    contents:
+      - title: Container list

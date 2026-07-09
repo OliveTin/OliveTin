@@ -282,9 +282,9 @@ message WhoAmIResponse {
     string sid = 5;
 }
 
-message SosReportRequest {}
+message ServerDiagnosticsRequest {}
 
-message SosReportResponse {
+message ServerDiagnosticsResponse {
 	string alert = 1;
 }
 
@@ -495,7 +495,7 @@ service OliveTinApiService {
 
 	rpc WhoAmI(WhoAmIRequest) returns (WhoAmIResponse) {}
 
-	rpc SosReport(SosReportRequest) returns (SosReportResponse) {}
+	rpc ServerDiagnostics(ServerDiagnosticsRequest) returns (ServerDiagnosticsResponse) {}
 
 	rpc DumpVars(DumpVarsRequest) returns (DumpVarsResponse) {}
 

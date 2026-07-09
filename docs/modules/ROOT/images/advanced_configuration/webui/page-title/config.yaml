@@ -1,0 +1,19 @@
+---
+listenAddressSingleHTTPFrontend: 0.0.0.0:11337
+
+logLevel: "WARN"
+checkForUpdates: false
+showFooter: false
+
+pageTitle: My OliveTin Instance
+
+actions:
+  - title: Ping the Internet
+    icon: ping
+    shell: ping -c 1 127.0.0.1
+  - title: Check disk space
+    icon: disk
+    shell: df -h /
+  - title: check dmesg logs
+    icon: logs
+    shell: dmesg | tail -n 1

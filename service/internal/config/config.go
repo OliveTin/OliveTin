@@ -160,71 +160,71 @@ type SecurityConfig struct {
 
 // Config is the global config used through the whole app.
 type Config struct {
-	UseSingleHTTPFrontend           bool                       `koanf:"useSingleHTTPFrontend"`
-	ThemeName                       string                     `koanf:"themeName"`
-	ThemeCacheDisabled              bool                       `koanf:"themeCacheDisabled"`
-	ListenAddressSingleHTTPFrontend string                     `koanf:"listenAddressSingleHTTPFrontend"`
-	ListenAddressWebUI              string                     `koanf:"listenAddressWebUI"`
-	ListenAddressRestActions        string                     `koanf:"listenAddressRestActions"`
-	ListenAddressPrometheus         string                     `koanf:"listenAddressPrometheus"`
-	ExternalRestAddress             string                     `koanf:"externalRestAddress"`
-	LogLevel                        string                     `koanf:"logLevel"`
-	LogDebugOptions                 LogDebugOptions            `koanf:"logDebugOptions"`
-	LogHistoryPageSize              int64                      `koanf:"logHistoryPageSize"`
-	ActionGroups                    map[string]*ActionGroup    `koanf:"actionGroups"`
-	Actions                         []*Action                  `koanf:"actions"`
-	Entities                        []*EntityFile              `koanf:"entities"`
-	Dashboards                      []*DashboardComponent      `koanf:"dashboards"`
-	CheckForUpdates                 bool                       `koanf:"checkForUpdates"`
-	PageTitle                       string                     `koanf:"pageTitle"`
-	ShowFooter                      bool                       `koanf:"showFooter"`
-	ShowNavigation                  bool                       `koanf:"showNavigation"`
-	ShowNewVersions                 bool                       `koanf:"showNewVersions"`
-	ShowNavigateOnStartIcons        bool                       `koanf:"showNavigateOnStartIcons"`
-	EnableCustomJs                  bool                       `koanf:"enableCustomJs"`
-	AuthJwtCookieName               string                     `koanf:"authJwtCookieName"`
-	AuthJwtHeader                   string                     `koanf:"authJwtHeader"`
-	AuthJwtAud                      string                     `koanf:"authJwtAud"`
-	AuthJwtDomain                   string                     `koanf:"authJwtDomain"`
-	AuthJwtCertsURL                 string                     `koanf:"authJwtCertsUrl"`
-	AuthJwtHmacSecret               string                     `koanf:"authJwtHmacSecret"` // mutually exclusive with pub key config fields
-	AuthJwtClaimUsername            string                     `koanf:"authJwtClaimUsername"`
-	AuthJwtClaimUserGroup           string                     `koanf:"authJwtClaimUserGroup"`
-	AuthJwtPubKeyPath               string                     `koanf:"authJwtPubKeyPath"` // will read pub key from file on disk
-	AuthHttpHeaderUsername          string                     `koanf:"authHttpHeaderUsername"`
-	AuthHttpHeaderUserGroup         string                     `koanf:"authHttpHeaderUserGroup"`
-	AuthHttpHeaderUserGroupSep      string                     `koanf:"authHttpHeaderUserGroupSep"`
-	AuthLocalUsers                  AuthLocalUsersConfig       `koanf:"authLocalUsers"`
-	AuthLoginUrl                    string                     `koanf:"authLoginUrl"`
-	AuthRequireGuestsToLogin        bool                       `koanf:"authRequireGuestsToLogin"`
-	AuthOAuth2RedirectURL           string                     `koanf:"authOAuth2RedirectUrl"`
-	AuthOAuth2Providers             map[string]*OAuth2Provider `koanf:"authOAuth2Providers"`
-	DefaultPermissions              PermissionsList            `koanf:"defaultPermissions"`
-	DefaultPolicy                   ConfigurationPolicy        `koanf:"defaultPolicy"`
-	AccessControlLists              []*AccessControlList       `koanf:"accessControlLists"`
-	WebUIDir                        string                     `koanf:"webUIDir"`
-	CronSupportForSeconds           bool                       `koanf:"cronSupportForSeconds"`
-	SectionNavigationStyle          string                     `koanf:"sectionNavigationStyle"`
-	DefaultOnClick                  string                     `koanf:"defaultOnClick"`
-	DefaultPopupOnStart             string                     `koanf:"defaultPopupOnStart"`
-	InsecureAllowDumpOAuth2UserData bool                       `koanf:"insecureAllowDumpOAuth2UserData"`
-	InsecureAllowDumpVars           bool                       `koanf:"insecureAllowDumpVars"`
-	InsecureAllowDumpSos            bool                       `koanf:"insecureAllowDumpSos"`
-	InsecureAllowDumpActionMap      bool                       `koanf:"insecureAllowDumpActionMap"`
-	InsecureAllowDumpJwtClaims      bool                       `koanf:"insecureAllowDumpJwtClaims"`
-	Prometheus                      PrometheusConfig           `koanf:"prometheus"`
-	Security                        SecurityConfig             `koanf:"security"`
-	SaveLogs                        SaveLogsConfig             `koanf:"saveLogs"`
-	ServiceLogs                     ServiceLogsConfig          `koanf:"serviceLogs"`
-	DefaultIconForActions           string                     `koanf:"defaultIconForActions"`
-	DefaultIconForDirectories       string                     `koanf:"defaultIconForDirectories"`
-	DefaultIconForBack              string                     `koanf:"defaultIconForBack"`
-	AdditionalNavigationLinks       []*NavigationLink          `koanf:"additionalNavigationLinks"`
-	ServiceHostMode                 string                     `koanf:"serviceHostMode"`
-	StyleMods                       []string                   `koanf:"styleMods"`
-	BannerMessage                   string                     `koanf:"bannerMessage"`
-	BannerCSS                       string                     `koanf:"bannerCss"`
-	Include                         string                     `koanf:"include"`
+	UseSingleHTTPFrontend              bool                       `koanf:"useSingleHTTPFrontend"`
+	ThemeName                          string                     `koanf:"themeName"`
+	ThemeCacheDisabled                 bool                       `koanf:"themeCacheDisabled"`
+	ListenAddressSingleHTTPFrontend    string                     `koanf:"listenAddressSingleHTTPFrontend"`
+	ListenAddressWebUI                 string                     `koanf:"listenAddressWebUI"`
+	ListenAddressRestActions           string                     `koanf:"listenAddressRestActions"`
+	ListenAddressPrometheus            string                     `koanf:"listenAddressPrometheus"`
+	ExternalRestAddress                string                     `koanf:"externalRestAddress"`
+	LogLevel                           string                     `koanf:"logLevel"`
+	LogDebugOptions                    LogDebugOptions            `koanf:"logDebugOptions"`
+	LogHistoryPageSize                 int64                      `koanf:"logHistoryPageSize"`
+	ActionGroups                       map[string]*ActionGroup    `koanf:"actionGroups"`
+	Actions                            []*Action                  `koanf:"actions"`
+	Entities                           []*EntityFile              `koanf:"entities"`
+	Dashboards                         []*DashboardComponent      `koanf:"dashboards"`
+	CheckForUpdates                    bool                       `koanf:"checkForUpdates"`
+	PageTitle                          string                     `koanf:"pageTitle"`
+	ShowFooter                         bool                       `koanf:"showFooter"`
+	ShowNavigation                     bool                       `koanf:"showNavigation"`
+	ShowNewVersions                    bool                       `koanf:"showNewVersions"`
+	ShowNavigateOnStartIcons           bool                       `koanf:"showNavigateOnStartIcons"`
+	EnableCustomJs                     bool                       `koanf:"enableCustomJs"`
+	AuthJwtCookieName                  string                     `koanf:"authJwtCookieName"`
+	AuthJwtHeader                      string                     `koanf:"authJwtHeader"`
+	AuthJwtAud                         string                     `koanf:"authJwtAud"`
+	AuthJwtDomain                      string                     `koanf:"authJwtDomain"`
+	AuthJwtCertsURL                    string                     `koanf:"authJwtCertsUrl"`
+	AuthJwtHmacSecret                  string                     `koanf:"authJwtHmacSecret"` // mutually exclusive with pub key config fields
+	AuthJwtClaimUsername               string                     `koanf:"authJwtClaimUsername"`
+	AuthJwtClaimUserGroup              string                     `koanf:"authJwtClaimUserGroup"`
+	AuthJwtPubKeyPath                  string                     `koanf:"authJwtPubKeyPath"` // will read pub key from file on disk
+	AuthHttpHeaderUsername             string                     `koanf:"authHttpHeaderUsername"`
+	AuthHttpHeaderUserGroup            string                     `koanf:"authHttpHeaderUserGroup"`
+	AuthHttpHeaderUserGroupSep         string                     `koanf:"authHttpHeaderUserGroupSep"`
+	AuthLocalUsers                     AuthLocalUsersConfig       `koanf:"authLocalUsers"`
+	AuthLoginUrl                       string                     `koanf:"authLoginUrl"`
+	AuthRequireGuestsToLogin           bool                       `koanf:"authRequireGuestsToLogin"`
+	AuthOAuth2RedirectURL              string                     `koanf:"authOAuth2RedirectUrl"`
+	AuthOAuth2Providers                map[string]*OAuth2Provider `koanf:"authOAuth2Providers"`
+	DefaultPermissions                 PermissionsList            `koanf:"defaultPermissions"`
+	DefaultPolicy                      ConfigurationPolicy        `koanf:"defaultPolicy"`
+	AccessControlLists                 []*AccessControlList       `koanf:"accessControlLists"`
+	WebUIDir                           string                     `koanf:"webUIDir"`
+	CronSupportForSeconds              bool                       `koanf:"cronSupportForSeconds"`
+	SectionNavigationStyle             string                     `koanf:"sectionNavigationStyle"`
+	DefaultOnClick                     string                     `koanf:"defaultOnClick"`
+	DefaultPopupOnStart                string                     `koanf:"defaultPopupOnStart"`
+	InsecureAllowDumpOAuth2UserData    bool                       `koanf:"insecureAllowDumpOAuth2UserData"`
+	InsecureAllowDumpVars              bool                       `koanf:"insecureAllowDumpVars"`
+	InsecureAllowDumpServerDiagnostics bool                       `koanf:"insecureAllowDumpServerDiagnostics"`
+	InsecureAllowDumpActionMap         bool                       `koanf:"insecureAllowDumpActionMap"`
+	InsecureAllowDumpJwtClaims         bool                       `koanf:"insecureAllowDumpJwtClaims"`
+	Prometheus                         PrometheusConfig           `koanf:"prometheus"`
+	Security                           SecurityConfig             `koanf:"security"`
+	SaveLogs                           SaveLogsConfig             `koanf:"saveLogs"`
+	ServiceLogs                        ServiceLogsConfig          `koanf:"serviceLogs"`
+	DefaultIconForActions              string                     `koanf:"defaultIconForActions"`
+	DefaultIconForDirectories          string                     `koanf:"defaultIconForDirectories"`
+	DefaultIconForBack                 string                     `koanf:"defaultIconForBack"`
+	AdditionalNavigationLinks          []*NavigationLink          `koanf:"additionalNavigationLinks"`
+	ServiceHostMode                    string                     `koanf:"serviceHostMode"`
+	StyleMods                          []string                   `koanf:"styleMods"`
+	BannerMessage                      string                     `koanf:"bannerMessage"`
+	BannerCSS                          string                     `koanf:"bannerCss"`
+	Include                            string                     `koanf:"include"`
 
 	sourceFiles []string
 }
@@ -324,7 +324,7 @@ func DefaultConfigWithBasePort(basePort int) *Config {
 	config.DefaultOnClick = "nothing"
 	config.DefaultPopupOnStart = "nothing"
 	config.InsecureAllowDumpVars = false
-	config.InsecureAllowDumpSos = false
+	config.InsecureAllowDumpServerDiagnostics = false
 	config.InsecureAllowDumpActionMap = false
 	config.InsecureAllowDumpJwtClaims = false
 	config.Prometheus.Enabled = false

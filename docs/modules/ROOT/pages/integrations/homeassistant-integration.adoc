@@ -2,38 +2,38 @@
 
 Integrating OliveTin with Home Assistant allows you to control OliveTin from your Home Assistant dashboard. Using the HACS integration is the recommended way to integrate OliveTin with Home Assistant. It is easy to set up and provides a seamless experience.
 
-If you are not familiar with HACs, it is a custom component for Home Assistant that allows you to install and manage custom integrations easily. It is similar to the Home Assistant Add-ons store but for integrations. 
+If you are not familiar with HACs, it is a custom component for Home Assistant that allows you to install and manage custom integrations easily. It is similar to the Home Assistant Add-ons store but for integrations.
 
 == Setup guide
 
 . link:https://hacs.xyz/docs/use/[Install HACS]
-. Go to HACS in your home assistant control panel. Click the "..." dropdown in the top right corner, and select "**Custom Repositories**". 
+. Go to HACS in your home assistant control panel. Click the "..." dropdown in the top right corner, and select "**Custom Repositories**".
 +
-image::hacs-dropdown.png[]
+image::integrations/hass/hacs-dropdown.png[]
 . In the dialog that pops up, add the custom repo as follows;
 +
-image::hacs-custom-repo.png[]
+image::integrations/hass/hacs-custom-repo.png[]
 +
 .. **Repository link**: https://github.com/OliveTin/OliveTin-HomeAssistant
 .. **Type**: Integration
 . Search for "OliveTin" in the HACS store, and download it. You will probably need to restart Home Assistant for it be registered correctly.
 +
-image::hacs-search.png[]
+image::integrations/hass/hacs-search.png[]
 +
-image::hacs-download.png[]
+image::integrations/hass/hacs-download.png[]
 . Go to "Settings" and open "Devices & Services"
 +
-image::hass-devices-and-services.png[]
+image::integrations/hass/hass-devices-and-services.png[]
 . Click "Add integration" and search for "OliveTin". Note that if it does not show up, you may need to restart Home Assistant.
 +
-image::hass-add-integration.png[]
+image::integrations/hass/hass-add-integration.png[]
 .. Select "OliveTin"
 .. Host: http://your-server:1337/api
 .. Username: <blank>
 .. Password: <blank>
-. Under "Configured", you should see OliveTin. Open it by clicking on the arrow. 
+. Under "Configured", you should see OliveTin. Open it by clicking on the arrow.
 +
-image:hass-configure-integration.png[]
+image::integrations/hass/hass-configure-integration.png[]
 . After configuring it, you should see buttons appear in Home Assistant;
 +
-image:hass-buttons.png[]
+image::integrations/hass/hass-buttons.png[]

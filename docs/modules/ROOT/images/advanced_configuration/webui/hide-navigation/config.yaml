@@ -1,0 +1,48 @@
+---
+listenAddressSingleHTTPFrontend: 0.0.0.0:11337
+
+logLevel: "WARN"
+checkForUpdates: false
+showFooter: false
+showNavigation: false
+
+actions:
+  - title: Ping the Internet
+    icon: ping
+    shell: ping -c 1 127.0.0.1
+  - title: Check disk space
+    icon: disk
+    shell: df -h
+  - title: check dmesg logs
+    icon: logs
+    shell: dmesg | tail -n 1
+  - title: date
+    icon: clock
+    shell: date
+  - title: Run backup script
+    icon: backup
+    shell: echo backup
+  - title: Ping host
+    icon: ping
+    shell: ping -c 1 127.0.0.1
+  - title: Restart Docker Container
+    icon: restart
+    shell: echo restart
+  - title: Delete old backups
+    icon: ashtonished
+    shell: echo delete
+  - title: Get OliveTin Theme
+    icon: theme
+    shell: echo theme
+  - title: Setup easy SSH
+    icon: ssh
+    shell: echo ssh
+  - title: Restart httpd on server1
+    icon: restart
+    shell: echo restart httpd
+  - title: Toggle GPIO light
+    icon: light
+    shell: echo toggle
+  - title: Run Automation Playbook
+    icon: robot
+    shell: echo ansible

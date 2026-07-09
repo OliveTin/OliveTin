@@ -1,0 +1,16 @@
+---
+listenAddressSingleHTTPFrontend: 0.0.0.0:11337
+
+logLevel: "WARN"
+checkForUpdates: false
+showFooter: false
+
+actions:
+  - title: Check disk space
+    icon: disk
+    onclick: execution-dialog
+    shell: |
+      echo "Filesystem      Size  Used Avail Use% Mounted on"
+      echo "/dev/mapper/fedora_mindstorm-root   99G   82G   12G  88% /"
+      echo "Filesystem      Size  Used Avail Use% Mounted on"
+      echo "/dev/mapper/fedora_mindstorm-root   99G   82G   12G  88% /"

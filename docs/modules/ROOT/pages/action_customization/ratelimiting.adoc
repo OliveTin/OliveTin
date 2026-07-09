@@ -19,12 +19,10 @@ actions:
 
 If you try to execute `date` more than 3 times in 5 minutes, you will get a log message in the UI that looks like this;
 
-image::maxRate.png[]
+image::action_customization/max-rate/maxRate.png[]
 
 Additionally, OliveTin will also output this to it's process log;
 
 ----
 INFO Blocked from executing. This action has run 3 out of 3 allowed times in the last 5m.  actionTitle="date"
 ----
-
-
