@@ -24,15 +24,15 @@ Note that when predefined choices are used, the argument type is ignored.
 
 This is what it looks like in the web interface;
 
-image::args4.png[]
+image::args/dropdown/dropdown.png[]
 
 Then finally, when you execute this command, it would look something like this (remember that this is just a basic "echo" command).
 
-image::args-choices-exec.png[]
+image::args/dropdown/dropdown-logs-list.png[]
 
 In the logs, you can then click on the log entry link to open the results;
 
-image::args/input/args3.png[]
+image::args/dropdown/dropdown-logs-detail.png[]
 
 [#args-dropdown-entities]
 == Using Entities in Dropdowns
@@ -60,7 +60,7 @@ entities:
 
 This is what it looks like in the web interface;
 
-image::args-choices-entities.png[]
+image::args/dropdown/dropdown-entities.png[]
 
 include::partial$args/reject-null.adoc[]
 
