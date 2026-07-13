@@ -7,6 +7,7 @@ import {
   takeScreenshotOnFailure,
   waitForArgumentFormReady,
   waitForLogsPage,
+  argumentFieldId,
 } from '../../lib/elements.js'
 
 describe('config: datetime', function () {
@@ -32,7 +33,7 @@ describe('config: datetime', function () {
     await waitForArgumentFormReady()
 
     // Find the datetime input field
-    const datetimeInput = await webdriver.findElement(By.id('datetime'))
+    const datetimeInput = await webdriver.findElement(By.id(argumentFieldId('datetime')))
 
     // Verify it's a datetime-local input type
     const inputType = await datetimeInput.getAttribute('type')
@@ -43,7 +44,7 @@ describe('config: datetime', function () {
     expect(step).to.equal('1', 'Step attribute should be 1')
 
     // Verify the label is present
-    const label = await webdriver.findElement(By.css('label[for="datetime"]'))
+    const label = await webdriver.findElement(By.css(`label[for="${argumentFieldId('datetime')}"]`))
     expect(await label.getText()).to.contain('Select a date and time')
   })
 
@@ -57,7 +58,7 @@ describe('config: datetime', function () {
     await waitForArgumentFormReady()
 
     // Find the datetime input field
-    const datetimeInput = await webdriver.findElement(By.id('datetime'))
+    const datetimeInput = await webdriver.findElement(By.id(argumentFieldId('datetime')))
 
     // Set a datetime value (format: YYYY-MM-DDTHH:mm)
     // datetime-local returns values without seconds, backend will add :00

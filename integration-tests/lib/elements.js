@@ -5,6 +5,15 @@ import { Condition } from 'selenium-webdriver'
 
 export const DEFAULT_UI_WAIT_MS = 3000
 
+// Keep Selenium helpers in lockstep with the frontend DOM id helpers.
+export {
+  ARGUMENT_FIELD_ID_PREFIX,
+  argumentFieldChoicesId,
+  argumentFieldId,
+  argumentFieldValidationElementId,
+  argumentFieldValueId
+} from '../../frontend/resources/vue/utils/argumentFieldIds.js'
+
 const executionDialogStatusBy = By.css('.execution-dialog-status')
 
 export async function getActionButtons () {

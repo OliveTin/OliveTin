@@ -19,14 +19,14 @@
         <template v-if="actionArguments.length > 0">
 
           <template v-for="arg in actionArguments" :key="arg.name">
-              <label v-if="arg.type !== 'checklist'" :for="arg.name">
+              <label v-if="arg.type !== 'checklist'" :for="argumentFieldId(arg.name)">
                 {{ formatLabel(arg.title) }}
               </label>
               <div v-else class="argument-label">
                 {{ formatLabel(arg.title) }}
               </div>
 
-              <datalist v-if="(arg.suggestions && Object.keys(arg.suggestions).length > 0) || getBrowserSuggestions(arg).length > 0" :id="`${arg.name}-choices`">
+              <datalist v-if="(arg.suggestions && Object.keys(arg.suggestions).length > 0) || getBrowserSuggestions(arg).length > 0" :id="argumentFieldChoicesId(arg.name)">
                 <option v-for="(suggestion, key) in arg.suggestions" :key="key" :value="key">
                   {{ suggestion }}
                 </option>
@@ -35,18 +35,18 @@
                 </option>
               </datalist>
 
-              <ChoiceCombobox v-if="getInputComponent(arg) === 'select'" :id="arg.name" :name="arg.name"
+              <ChoiceCombobox v-if="getInputComponent(arg) === 'select'" :id="argumentFieldId(arg.name)" :name="arg.name"
                 :choices="arg.choices" :model-value="getArgumentValue(arg)" :required="arg.required"
                 @update:model-value="handleChoiceUpdate(arg, $event)" />
 
-              <ChoiceChecklist v-else-if="arg.type === 'checklist'" :id="arg.name" :name="arg.name"
+              <ChoiceChecklist v-else-if="arg.type === 'checklist'" :name="arg.name"
                 :label="arg.title" :choices="arg.choices" :model-value="getArgumentValue(arg)" :required="arg.required"
                 @update:model-value="handleChoiceUpdate(arg, $event)" />
 
-              <component v-else :is="getInputComponent(arg)" :id="arg.name" :name="arg.name"
+              <component v-else :is="getInputComponent(arg)" :id="argumentFieldId(arg.name)" :name="arg.name"
                 :value="(arg.type === 'checkbox' || arg.type === 'confirmation') ? undefined : getArgumentValue(arg)"
                 :checked="(arg.type === 'checkbox' || arg.type === 'confirmation') ? getArgumentValue(arg) : undefined"
-                :list="(arg.suggestions || getBrowserSuggestions(arg).length > 0) ? `${arg.name}-choices` : undefined"
+                :list="(arg.suggestions || getBrowserSuggestions(arg).length > 0) ? argumentFieldChoicesId(arg.name) : undefined"
                 :type="getInputComponent(arg) !== 'select' ? getInputType(arg) : undefined"
                 :rows="arg.type === 'raw_string_multiline' ? 5 : undefined"
                 :step="arg.type === 'datetime' ? 1 : undefined" :pattern="getPattern(arg)"
@@ -90,6 +90,11 @@ import {
   actionRequiresJustification,
   applyArgumentTemplate
 } from '../utils/justificationTemplate.js'
+import {
+  argumentFieldChoicesId,
+  argumentFieldId,
+  argumentFieldValidationElementId
+} from '../utils/argumentFieldIds.js'
 import { getInitialArgumentValue, readPrefilledArgumentsFromNavigation } from '../utils/prefilledArguments.js'
 
 const router = useRouter()
@@ -274,11 +279,7 @@ function handleChange(arg, event) {
 }
 
 function getValidationElement(arg) {
-  if (arg.type === 'checklist') {
-    return document.getElementById(`${arg.name}-value`)
-  }
-
-  return document.getElementById(arg.name)
+  return document.getElementById(argumentFieldValidationElementId(arg))
 }
 
 function handleChoiceUpdate(arg, value) {

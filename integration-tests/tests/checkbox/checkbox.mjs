@@ -10,6 +10,7 @@ import {
   waitForArgumentFormPage,
   waitForLogsPage,
   waitForExecutionComplete,
+  argumentFieldId,
 } from '../../lib/elements.js'
 
 async function openCheckboxArgumentForm() {
@@ -21,7 +22,7 @@ async function openCheckboxArgumentForm() {
 }
 
 async function getCheckboxInput() {
-  return await webdriver.findElement(By.id('confirm'))
+  return await webdriver.findElement(By.id(argumentFieldId('confirm')))
 }
 
 async function submitCheckboxForm() {
@@ -75,7 +76,7 @@ describe('config: checkbox', function () {
     expect(await checkboxInput.getTagName()).to.equal('input')
     expect(await checkboxInput.getAttribute('type')).to.equal('checkbox')
 
-    const label = await webdriver.findElement(By.css('label[for="confirm"]'))
+    const label = await webdriver.findElement(By.css(`label[for="${argumentFieldId('confirm')}"]`))
     expect(await label.getText()).to.contain('Confirm option')
   })
 
