@@ -1,0 +1,28 @@
+---
+listenAddressSingleHTTPFrontend: 0.0.0.0:1337
+
+logLevel: "DEBUG"
+checkForUpdates: false
+defaultPopupOnStart: execution-dialog
+
+actions:
+  - title: Test content argument collision
+    exec:
+      - echo
+      - "Cmd input: {{ content }}"
+    icon: ping
+    arguments:
+      - name: content
+        title: Cmd input
+        type: raw_string_multiline
+        description: Argument name collides with the app-shell #content wrapper
+
+  - title: Test layout argument collision
+    exec:
+      - echo
+      - "Layout value: {{ layout }}"
+    icon: ping
+    arguments:
+      - name: layout
+        title: Layout text
+        type: ascii

@@ -31,7 +31,7 @@
     >
       <li
         v-for="(choice, index) in filteredChoices"
-        :id="`${listboxId}-option-${index}`"
+        :id="listboxOptionId(index)"
         :key="choice.value"
         role="option"
         :aria-selected="choice.value === modelValue"
@@ -56,6 +56,10 @@ import {
   choiceDisplayLabel,
   syncStateFromModelValue
 } from './choiceComboboxHelpers.js'
+import {
+  argumentFieldListboxId,
+  argumentFieldListboxOptionId
+} from '../utils/argumentFieldIds.js'
 
 const props = defineProps({
   id: {
@@ -91,15 +95,19 @@ const query = ref('')
 const isUserFiltering = ref(false)
 const highlightedIndex = ref(0)
 
-const listboxId = computed(() => `${props.id}-listbox`)
+const listboxId = computed(() => argumentFieldListboxId(props.name))
 
 const activeDescendantId = computed(() => {
   if (!isOpen.value || filteredChoices.value.length === 0) {
     return undefined
   }
 
-  return `${listboxId.value}-option-${highlightedIndex.value}`
+  return listboxOptionId(highlightedIndex.value)
 })
+
+function listboxOptionId (index) {
+  return argumentFieldListboxOptionId(props.name, index)
+}
 
 const placeholderText = computed(() => {
   if (props.required) {
