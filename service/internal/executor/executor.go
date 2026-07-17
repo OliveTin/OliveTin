@@ -846,6 +846,19 @@ func stepACLCheck(req *ExecutionRequest) bool {
 }
 
 func stepParseArgs(req *ExecutionRequest) bool {
+	if !prepareArgumentsForExecution(req) {
+		return false
+	}
+
+	ok := parseActionForExecution(req)
+	if ok {
+		copyStorableArgumentsToLogEntry(req)
+	}
+
+	return ok
+}
+
+func prepareArgumentsForExecution(req *ExecutionRequest) bool {
 	ensureArgumentMap(req)
 
 	if !hasBindingAndAction(req) {
@@ -856,14 +869,17 @@ func stepParseArgs(req *ExecutionRequest) bool {
 	if err := injectSystemArgs(req); err != nil {
 		return fail(req, err)
 	}
-	mangleInvalidArgumentValues(req)
-	copyStorableArgumentsToLogEntry(req)
 
+	mangleInvalidArgumentValues(req)
+	return true
+}
+
+func parseActionForExecution(req *ExecutionRequest) bool {
 	if hasExec(req) {
 		return handleExecBranch(req)
-	} else {
-		return handleShellBranch(req)
 	}
+
+	return handleShellBranch(req)
 }
 
 func handleExecBranch(req *ExecutionRequest) bool {

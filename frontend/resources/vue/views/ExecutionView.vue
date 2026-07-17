@@ -100,7 +100,11 @@ import { WorkoutRunIcon, Cancel02Icon, ArrowLeftIcon, DashboardSquare01Icon, Cop
 import { useRouter } from 'vue-router'
 import { buttonResults } from '../stores/buttonResults'
 import { requestReconnectNow } from '../../../js/websocket.js'
-import { needsArgumentForm } from '../utils/needsArgumentForm.js'
+import {
+  buildRerunPrefilledArguments,
+  buildRerunStartActionArgs,
+  rerunNeedsArgumentForm
+} from '../utils/rerunArguments.js'
 
 const router = useRouter()
 
@@ -224,16 +228,16 @@ async function rerunAction() {
 
   try {
     const binding = await window.client.getActionBinding({ bindingId })
-    if (needsArgumentForm(binding.action)) {
-      router.push(`/actionBinding/${bindingId}/argumentForm`)
+    if (rerunNeedsArgumentForm(binding.action, logEntry.value)) {
+      router.push({
+        path: `/actionBinding/${bindingId}/argumentForm`,
+        state: { prefilledArguments: buildRerunPrefilledArguments(logEntry.value) }
+      })
       return
     }
 
     requestReconnectNow()
-    const startActionArgs = {
-      bindingId: bindingId,
-      arguments: []
-    }
+    const startActionArgs = buildRerunStartActionArgs(bindingId, logEntry.value)
 
     const res = await window.client.startAction(startActionArgs)
     router.push(`/logs/${res.executionTrackingId}`)
