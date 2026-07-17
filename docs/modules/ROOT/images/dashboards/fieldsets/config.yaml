@@ -1,0 +1,25 @@
+---
+listenAddressSingleHTTPFrontend: 0.0.0.0:11337
+
+logLevel: "WARN"
+checkForUpdates: false
+showFooter: false
+
+actions:
+  - title: Placeholder 1
+    shell: echo "placeholder 1"
+  - title: Placeholder 2
+    shell: echo "placeholder 2"
+
+dashboards:
+  - title: My First Dashboard
+    contents:
+      - title: Fieldset 1
+        type: fieldset
+        contents:
+          - title: Folder 1
+            contents:
+              - title: Placeholder 1
+          - title: Folder 2
+            contents:
+              - title: Placeholder 2

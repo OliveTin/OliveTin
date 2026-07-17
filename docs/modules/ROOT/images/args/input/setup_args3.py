@@ -65,5 +65,15 @@ def run(driver):
 
     _wait_for_logs_page(driver)
     _wait_for_execution_complete(driver)
-
+    WebDriverWait(driver, 15).until(
+        lambda d: "Hello World"
+        in d.execute_script(
+            """
+            if (!window.terminal || !window.terminal.getBufferAsString) {
+              return '';
+            }
+            return window.terminal.getBufferAsString();
+            """
+        )
+    )
     time.sleep(0.2)

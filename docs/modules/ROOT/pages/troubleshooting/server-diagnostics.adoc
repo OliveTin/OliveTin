@@ -6,7 +6,7 @@ OliveTin has a useful feature to gather information about your installation when
 [source,yaml]
 .Example server diagnostics output
 ----
-### SOSREPORT START (copy all text to SOSREPORT END)
+### SERVER DIAGNOSTICS START (copy all text to SERVER DIAGNOSTICS END)
 # Build:
 commit: nocommit
 version: dev
@@ -23,7 +23,7 @@ lastbrowseruseragent: ""
 countofactions: 7
 loglevel: INFO
 
-### SOSREPORT END  (copy all text from SOSREPORT START)
+### SERVER DIAGNOSTICS END  (copy all text from SERVER DIAGNOSTICS START)
 ----
 
 The markers and field names above reflect what OliveTin prints; copy everything from the start marker through the end marker.
@@ -35,9 +35,9 @@ You can then copy and paste this text into a GitHub issue, discussion, Discord c
 
 OliveTin needs to be able to start and its API needs to be functional. Once OliveTin is started, open this URL in a browser (replace the host and port with yours):
 
-`http://myserver:1337/api/sosreport`
+`http://myserver:1337/api/ServerDiagnostics`
 
-The `/api/sosreport` path is the HTTP endpoint OliveTin uses for server diagnostics.
+The `/api/ServerDiagnostics` path is the HTTP endpoint OliveTin uses for server diagnostics.
 
 == Optional: Allow insecure (but easy) dumping to the browser
 
@@ -46,7 +46,7 @@ There is a configuration option you can set in your `config.yaml` that allows yo
 [source,yaml]
 .`config.yaml`
 ----
-InsecureAllowDumpSos: true
+insecureAllowDumpServerDiagnostics: true
 ----
 
 == Default: Diagnostics dump to logs
@@ -54,7 +54,7 @@ InsecureAllowDumpSos: true
 You should get a simple JSON message saying something like;
 
 ----
-alert: "Your SOS Report has been logged to OliveTin logs."
+alert: "Your Server Diagnostics have been logged to OliveTin logs."
 ----
 
 The exact wording may match your OliveTin version.
@@ -66,4 +66,3 @@ To find the diagnostics text depends on how you are running OliveTin. If you are
 == What if I cannot even get to the OliveTin API?
 
 OliveTin's web interface doesn't need to be working to get server diagnostics (the web interface and the API are separate). However, if OliveTin won't even start, or you cannot reach the API, then server diagnostics cannot be generated. Please specify that when you ask for help.
-

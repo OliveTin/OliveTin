@@ -3,6 +3,8 @@ import { expect } from 'chai'
 import { By, Condition } from 'selenium-webdriver'
 import {
   DEFAULT_UI_WAIT_MS,
+  argumentFieldChoicesId,
+  argumentFieldId,
   getRootAndWait,
   getActionButton,
   takeScreenshotOnFailure,
@@ -73,15 +75,15 @@ async function openArgumentForm() {
 }
 
 async function getTestInput() {
-  return await webdriver.findElement(By.id('testInput'))
+  return await webdriver.findElement(By.id(argumentFieldId('testInput')))
 }
 
 async function getTestInput2() {
-  return await webdriver.findElement(By.id('testInput2'))
+  return await webdriver.findElement(By.id(argumentFieldId('testInput2')))
 }
 
 async function getDatalistOptions(inputName = 'testInput') {
-  return await webdriver.findElements(By.css(`datalist#${inputName}-choices option`))
+  return await webdriver.findElements(By.css(`datalist#${argumentFieldChoicesId(inputName)} option`))
 }
 
 async function submitForm() {
@@ -118,14 +120,14 @@ describe('config: suggestionsBrowserKey', function () {
     expect(await input1.getTagName()).to.equal('input')
     expect(await input1.getAttribute('type')).to.equal('text')
 
-    const label1 = await webdriver.findElement(By.css('label[for="testInput"]'))
+    const label1 = await webdriver.findElement(By.css(`label[for="${argumentFieldId('testInput')}"]`))
     expect(await label1.getText()).to.contain('Test Input')
 
     const input2 = await getTestInput2()
     expect(await input2.getTagName()).to.equal('input')
     expect(await input2.getAttribute('type')).to.equal('text')
 
-    const label2 = await webdriver.findElement(By.css('label[for="testInput2"]'))
+    const label2 = await webdriver.findElement(By.css(`label[for="${argumentFieldId('testInput2')}"]`))
     expect(await label2.getText()).to.contain('Test Input 2')
   })
 
@@ -161,7 +163,7 @@ describe('config: suggestionsBrowserKey', function () {
 
     await openArgumentForm()
 
-    const datalist = await webdriver.findElement(By.id('testInput-choices'))
+    const datalist = await webdriver.findElement(By.id(argumentFieldChoicesId('testInput')))
     expect(datalist).to.not.be.null
 
     const options = await getDatalistOptions()
@@ -241,7 +243,7 @@ describe('config: suggestionsBrowserKey', function () {
 
     await openArgumentForm()
 
-    const datalist1 = await webdriver.findElement(By.id('testInput-choices'))
+    const datalist1 = await webdriver.findElement(By.id(argumentFieldChoicesId('testInput')))
     expect(datalist1).to.not.be.null
     const options1 = await getDatalistOptions('testInput')
     let foundInInput1 = false
@@ -254,7 +256,7 @@ describe('config: suggestionsBrowserKey', function () {
     }
     expect(foundInInput1).to.be.true
 
-    const datalist2 = await webdriver.findElement(By.id('testInput2-choices'))
+    const datalist2 = await webdriver.findElement(By.id(argumentFieldChoicesId('testInput2')))
     expect(datalist2).to.not.be.null
     const options2 = await getDatalistOptions('testInput2')
     let foundInInput2 = false

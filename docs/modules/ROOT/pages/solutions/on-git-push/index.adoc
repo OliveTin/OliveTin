@@ -1,7 +1,7 @@
 [#solution-on-git-push]
 = GitOps (run actions on Git Push)
 
-image::gitops.png[]
+image::solutions/on-git-push/gitops.png[]
 
 A really helpful thing to do with OliveTin is to have it run actions when you push to a Git repository. This is a great way to automate things like running tests, building your project, or deploying your code - this turns OliveTin into a powerful GitOps tool, or even a Continuous Integration tool.
 

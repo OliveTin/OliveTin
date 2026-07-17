@@ -1,0 +1,14 @@
+---
+listenAddressSingleHTTPFrontend: 0.0.0.0:11337
+
+logLevel: "WARN"
+checkForUpdates: false
+showFooter: false
+
+actions:
+  - title: Delete old backups
+    icon: ashtonished
+    shell: echo "Deleted old backups"
+    arguments:
+      - type: confirmation
+        title: Are you sure?!

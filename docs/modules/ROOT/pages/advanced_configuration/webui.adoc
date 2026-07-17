@@ -7,7 +7,7 @@ The OliveTin web UI is reasonably customizable - parts of the page that you don'
 
 You can customize the page title;
 
-image::page-title.png[]
+image::advanced_configuration/webui/page-title/page-title.png[]
 
 .`config.yaml`
 [source,yaml]
@@ -21,7 +21,7 @@ pageTitle: My OliveTin Instance
 You can choose to hide the navigation elements in OliveTin, to present a simplified user interface.
 
 .The default user interface with the sidebar shown
-image::defaultUiWithNav.png[]
+image::advanced_configuration/webui/with-navigation/with-navigation.png[]
 
 To have OliveTin hide these buttons, add `showNavigation: false` to your config.yaml;
 
@@ -36,7 +36,7 @@ actions:
 ----
 
 .The same user interface, but with the sidebar hidden (`showNavigation: false`)
-image::defaultUiHideNav.png[]
+image::advanced_configuration/webui/hide-navigation/hide-navigation.png[]
 
 [#show-navigate-on-start-icons]
 == Navigate-on-start icons on action buttons
@@ -65,13 +65,13 @@ showNavigateOnStartIcons: false
 
 `sectionNavigationStyle: sidebar` looks like this;
 
-image::sidebar.png[]
+image::advanced_configuration/webui/sidebar/sidebar.png[]
 
 === Topbar navigation style
 
 `sectionNavigationStyle: topbar` looks like this;
 
-image::topbar.png[]
+image::advanced_configuration/webui/topbar/topbar.png[]
 
 [#show-version-number]
 == Version number in the footer

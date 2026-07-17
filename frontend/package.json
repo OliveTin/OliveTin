@@ -10,7 +10,7 @@
 		"stylelint-config-standard": "^40.0.0"
 	},
 	"scripts": {
-		"test": "node --test resources/vue/components/*.test.mjs"
+		"test": "node --test resources/vue/components/*.test.mjs resources/vue/utils/*.test.mjs"
 	},
 	"author": "",
 	"parcelIgnore": [

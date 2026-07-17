@@ -1,0 +1,14 @@
+---
+listenAddressSingleHTTPFrontend: 0.0.0.0:11337
+
+logLevel: "WARN"
+checkForUpdates: false
+showFooter: false
+
+actions:
+  - title: date
+    shell: date
+    icon: clock
+    maxRate:
+      - limit: 3
+        duration: 5m

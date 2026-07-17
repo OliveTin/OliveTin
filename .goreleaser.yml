@@ -163,9 +163,13 @@ nfpms:
       - src: var/openrc/OliveTin
         dst: /etc/init.d/OliveTin
 
-      - src: webui/
-        dst: /var/www/olivetin/
-        type: tree
+      # Avoid type: tree for apk — nfpm writes GNU base-256 modes for walked
+      # dirs (ModeDir), which apk-tools rejects (#761 / goreleaser/nfpm#1112).
+      - src: webui/index.html
+        dst: /var/www/olivetin/index.html
+
+      - src: webui/assets/*
+        dst: /var/www/olivetin/assets/
 
       - src: config.yaml
         dst: /etc/OliveTin/config.yaml

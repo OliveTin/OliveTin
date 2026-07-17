@@ -1,5 +1,5 @@
 <template>
-  <div class="choice-checklist" :id="`${id}-wrapper`">
+  <div class="choice-checklist" :id="wrapperId">
     <div class="choice-checklist-controls">
       <button type="button" class="choice-checklist-control" @click="selectAll">
         Select all
@@ -14,10 +14,10 @@
         v-for="(choice, index) in choices"
         :key="choice.value"
         class="choice-checklist-item"
-        :for="`${id}-${index}`"
+        :for="optionId(index)"
       >
         <input
-          :id="`${id}-${index}`"
+          :id="optionId(index)"
           type="checkbox"
           :checked="isSelected(choice.value)"
           @change="handleToggle(choice.value)"
@@ -26,7 +26,7 @@
       </label>
     </fieldset>
     <input
-      :id="`${id}-value`"
+      :id="valueId"
       :name="name"
       type="text"
       class="visually-hidden choice-checklist-value"
@@ -47,12 +47,13 @@ import {
   parseChecklistValue,
   toggleChoice
 } from '../utils/choiceChecklistHelpers.js'
+import {
+  argumentFieldOptionId,
+  argumentFieldValueId,
+  argumentFieldWrapperId
+} from '../utils/argumentFieldIds.js'
 
 const props = defineProps({
-  id: {
-    type: String,
-    required: true
-  },
   name: {
     type: String,
     required: true
@@ -78,6 +79,12 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue'])
 
 const selectedValues = computed(() => parseChecklistValue(props.modelValue))
+const wrapperId = computed(() => argumentFieldWrapperId(props.name))
+const valueId = computed(() => argumentFieldValueId(props.name))
+
+function optionId (index) {
+  return argumentFieldOptionId(props.name, index)
+}
 
 function isSelected(value) {
   return selectedValues.value.includes(value)

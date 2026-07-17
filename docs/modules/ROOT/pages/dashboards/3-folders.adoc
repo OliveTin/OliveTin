@@ -4,7 +4,7 @@
 Folders (Directories) are a good way to group up actions in the same way that you would
 organize files on your computer into directories.
 
-image::folders.png[]
+image::dashboards/folders/folders.png[]
 
 You must first create a dashboard to use a directory, and then you "reference" actions that you
 want in that folder based on the action name. Anything without a "contents" property is treated
@@ -48,5 +48,3 @@ dashboards:
               - title: Action 4
 
 ----
-
-

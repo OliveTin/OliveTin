@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import {
-  buildArgumentFormQuery,
+  buildRerunPrefilledArguments,
   buildRerunStartActionArgs,
   hasMissingRerunArguments,
   logEntryArgumentsToStartActionArgs,
@@ -26,8 +26,8 @@ test('logEntryArgumentsToStartActionArgs maps proto arguments for StartAction', 
 test('hasMissingRerunArguments requires password fields to be re-entered', () => {
   const action = {
     arguments: [
-      { name: 'user', type: 'ascii_identifier', required: true },
-      { name: 'pass', type: 'password', required: true }
+      { name: 'user', type: 'ascii_identifier' },
+      { name: 'pass', type: 'password' }
     ]
   }
 
@@ -40,8 +40,8 @@ test('hasMissingRerunArguments requires password fields to be re-entered', () =>
 test('hasMissingRerunArguments requires very_dangerous_raw_string fields to be re-entered', () => {
   const action = {
     arguments: [
-      { name: 'host', type: 'ascii_identifier', required: true },
-      { name: 'payload', type: 'very_dangerous_raw_string', required: false }
+      { name: 'host', type: 'ascii_identifier' },
+      { name: 'payload', type: 'very_dangerous_raw_string' }
     ]
   }
 
@@ -51,9 +51,10 @@ test('hasMissingRerunArguments requires very_dangerous_raw_string fields to be r
   )
 })
 
-test('hasMissingRerunArguments detects missing required stored arguments', () => {
+test('hasMissingRerunArguments detects missing stored args without relying on required flag', () => {
+  // Proto ActionArgument has no `required` field — only defaultValue.
   const action = {
-    arguments: [{ name: 'host', type: 'ascii_identifier', required: true }]
+    arguments: [{ name: 'host', type: 'ascii_identifier' }]
   }
 
   assert.equal(hasMissingRerunArguments(action, []), true)
@@ -63,9 +64,40 @@ test('hasMissingRerunArguments detects missing required stored arguments', () =>
   )
 })
 
+test('hasMissingRerunArguments treats empty defaultValue as required', () => {
+  const action = {
+    arguments: [{ name: 'host', type: 'ascii_identifier', defaultValue: '' }]
+  }
+
+  assert.equal(hasMissingRerunArguments(action, []), true)
+})
+
+test('hasMissingRerunArguments allows args that have a defaultValue', () => {
+  const action = {
+    arguments: [{ name: 'host', type: 'ascii_identifier', defaultValue: 'example.com' }]
+  }
+
+  assert.equal(hasMissingRerunArguments(action, []), false)
+})
+
+test('hasMissingRerunArguments ignores confirmation and html args', () => {
+  const action = {
+    arguments: [
+      { name: 'confirm', type: 'confirmation' },
+      { name: 'help', type: 'html' },
+      { name: 'host', type: 'ascii_identifier' }
+    ]
+  }
+
+  assert.equal(
+    hasMissingRerunArguments(action, [{ name: 'host', value: 'db-1' }]),
+    false
+  )
+})
+
 test('rerunNeedsArgumentForm can start directly when stored args are complete', () => {
   const action = {
-    arguments: [{ name: 'host', type: 'ascii_identifier', required: true }]
+    arguments: [{ name: 'host', type: 'ascii_identifier' }]
   }
   const logEntry = {
     arguments: [{ name: 'host', value: 'db-1' }]
@@ -74,36 +106,36 @@ test('rerunNeedsArgumentForm can start directly when stored args are complete', 
   assert.equal(rerunNeedsArgumentForm(action, logEntry), false)
 })
 
-test('rerunNeedsArgumentForm opens the form when justification is missing', () => {
-  const action = { justification: ' ', arguments: [] }
+test('rerunNeedsArgumentForm always opens the form when justification is required', () => {
+  const action = {
+    justification: ' ',
+    arguments: [{ name: 'host', type: 'ascii_identifier' }]
+  }
+  const logEntry = {
+    arguments: [{ name: 'host', value: 'db-1' }],
+    justification: 'approved change'
+  }
 
+  assert.equal(rerunNeedsArgumentForm(action, logEntry), true)
   assert.equal(rerunNeedsArgumentForm(action, {}), true)
-  assert.equal(
-    rerunNeedsArgumentForm(action, { justification: 'approved change' }),
-    false
-  )
 })
 
-test('buildRerunStartActionArgs includes stored justification', () => {
+test('buildRerunStartActionArgs uses stored arguments without justification', () => {
   assert.deepEqual(
     buildRerunStartActionArgs('binding-1', {
       arguments: [{ name: 'host', value: 'db-1' }],
       justification: 'maintenance window'
-    }, {
-      justification: ' ',
-      arguments: [{ name: 'host', type: 'ascii_identifier' }]
     }),
     {
       bindingId: 'binding-1',
-      arguments: [{ name: 'host', value: 'db-1' }],
-      justification: 'maintenance window'
+      arguments: [{ name: 'host', value: 'db-1' }]
     }
   )
 })
 
-test('buildArgumentFormQuery prefills non-password stored arguments', () => {
+test('buildRerunPrefilledArguments maps stored args for history.state', () => {
   assert.deepEqual(
-    buildArgumentFormQuery({
+    buildRerunPrefilledArguments({
       arguments: [
         { name: 'host', value: 'db-1' },
         { name: 'port', value: '5432' }
@@ -114,4 +146,9 @@ test('buildArgumentFormQuery prefills non-password stored arguments', () => {
       port: '5432'
     }
   )
+})
+
+test('buildRerunPrefilledArguments returns empty object when nothing was stored', () => {
+  assert.deepEqual(buildRerunPrefilledArguments({}), {})
+  assert.deepEqual(buildRerunPrefilledArguments(undefined), {})
 })

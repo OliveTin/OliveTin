@@ -1219,21 +1219,21 @@ export declare type WhoAmIResponse = Message<"olivetin.api.v1.WhoAmIResponse"> &
 export declare const WhoAmIResponseSchema: GenMessage<WhoAmIResponse>;
 
 /**
- * @generated from message olivetin.api.v1.SosReportRequest
+ * @generated from message olivetin.api.v1.ServerDiagnosticsRequest
  */
-export declare type SosReportRequest = Message<"olivetin.api.v1.SosReportRequest"> & {
+export declare type ServerDiagnosticsRequest = Message<"olivetin.api.v1.ServerDiagnosticsRequest"> & {
 };
 
 /**
- * Describes the message olivetin.api.v1.SosReportRequest.
- * Use `create(SosReportRequestSchema)` to create a new message.
+ * Describes the message olivetin.api.v1.ServerDiagnosticsRequest.
+ * Use `create(ServerDiagnosticsRequestSchema)` to create a new message.
  */
-export declare const SosReportRequestSchema: GenMessage<SosReportRequest>;
+export declare const ServerDiagnosticsRequestSchema: GenMessage<ServerDiagnosticsRequest>;
 
 /**
- * @generated from message olivetin.api.v1.SosReportResponse
+ * @generated from message olivetin.api.v1.ServerDiagnosticsResponse
  */
-export declare type SosReportResponse = Message<"olivetin.api.v1.SosReportResponse"> & {
+export declare type ServerDiagnosticsResponse = Message<"olivetin.api.v1.ServerDiagnosticsResponse"> & {
   /**
    * @generated from field: string alert = 1;
    */
@@ -1241,10 +1241,10 @@ export declare type SosReportResponse = Message<"olivetin.api.v1.SosReportRespon
 };
 
 /**
- * Describes the message olivetin.api.v1.SosReportResponse.
- * Use `create(SosReportResponseSchema)` to create a new message.
+ * Describes the message olivetin.api.v1.ServerDiagnosticsResponse.
+ * Use `create(ServerDiagnosticsResponseSchema)` to create a new message.
  */
-export declare const SosReportResponseSchema: GenMessage<SosReportResponse>;
+export declare const ServerDiagnosticsResponseSchema: GenMessage<ServerDiagnosticsResponse>;
 
 /**
  * @generated from message olivetin.api.v1.DumpVarsRequest
@@ -2176,12 +2176,12 @@ export declare const OliveTinApiService: GenService<{
     output: typeof WhoAmIResponseSchema;
   },
   /**
-   * @generated from rpc olivetin.api.v1.OliveTinApiService.SosReport
+   * @generated from rpc olivetin.api.v1.OliveTinApiService.ServerDiagnostics
    */
-  sosReport: {
+  serverDiagnostics: {
     methodKind: "unary";
-    input: typeof SosReportRequestSchema;
-    output: typeof SosReportResponseSchema;
+    input: typeof ServerDiagnosticsRequestSchema;
+    output: typeof ServerDiagnosticsResponseSchema;
   },
   /**
    * @generated from rpc olivetin.api.v1.OliveTinApiService.DumpVars
@@ -2280,4 +2280,3 @@ export declare const OliveTinApiService: GenService<{
     output: typeof EntitySchema;
   },
 }>;
-

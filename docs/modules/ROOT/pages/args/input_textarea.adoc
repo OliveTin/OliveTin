@@ -18,4 +18,4 @@ actions:
 
 This renders like this;
 
-image::args-multiline-text.png[]
+image::args/textarea/multiline-text.png[]

@@ -31,11 +31,11 @@ Now that you have the URL to call to trigger your action, you can add this to yo
 
 That page assumes you will use the Home Assistant File Editor addon to edit your configuration.yaml. Install it from the Home Assistant addon store if you have not done so already;
 
-image::hassFileEditor.png[]
+image::integrations/hass/hassFileEditor.png[]
 
 The addon is started and added to the sidebar;
 
-image::hassFileEditorConfig.png[]
+image::integrations/hass/hassFileEditorConfig.png[]
 
 Here is an example of a `rest_command` that calls the action above:
 
@@ -55,7 +55,7 @@ You save the file, and restart Home Assistant to pick up the changes.
 
 Now that you have a `rest_command` set up to call your action, you can add a button to your Home Assistant dashboard to trigger the action. This is done by adding a `button` to your dashboard configuration.
 
-image::hassButtonSetup.png[]
+image::integrations/hass/hassButtonSetup.png[]
 
 Set the "Tap Action" to "Call Service" and select the `rest_command` you created earlier. You can also set the icon and name of the button to whatever you like.
 

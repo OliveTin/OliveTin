@@ -19,14 +19,17 @@ actions:
             value: photos
           - title: Music
             value: music
-        default: documents,photos
+        default: '["documents","photos"]'
 ----
+
+.Checklist argument form with Documents and Photos selected by default.
+image::args/checklist/checklist.png[]
 
 When the example above runs with Documents and Photos selected, the shell command becomes:
 
 [source,shell]
 ----
-echo "Backing up: documents,photos"
+echo "Backing up: [\"documents\",\"photos\"]"
 ----
 
 == Select all / Select none

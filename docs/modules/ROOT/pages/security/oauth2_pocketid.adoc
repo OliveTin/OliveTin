@@ -39,6 +39,7 @@ authOAuth2Providers:
     clientId: "[REDACTED]"
     clientSecret: "[REDACTED]"
     scopes:
+      - openid
       - profile
       - email
     usernameField: preferred_username

@@ -10,6 +10,24 @@ function isNonStorableArgumentType (type) {
   return nonStorableArgumentTypes.has(type)
 }
 
+function argumentSkipsValidation (type) {
+  return type === 'confirmation' || type === 'html'
+}
+
+/**
+ * Mirrors backend restartArgumentRequired: an argument needs a stored value
+ * when it is validated and has no default. Proto ActionArgument has no
+ * `required` field — only `defaultValue`.
+ */
+function rerunArgumentRequired (arg) {
+  if (argumentSkipsValidation(arg?.type)) {
+    return false
+  }
+
+  const defaultValue = arg?.defaultValue ?? ''
+  return defaultValue === ''
+}
+
 export function logEntryArgumentsToStartActionArgs (logEntry) {
   return (logEntry?.arguments ?? []).map((arg) => ({
     name: arg.name,
@@ -18,7 +36,9 @@ export function logEntryArgumentsToStartActionArgs (logEntry) {
 }
 
 export function rerunNeedsArgumentForm (action, logEntry) {
-  if (actionRequiresJustification(action?.justification) && !logEntry?.justification) {
+  // Always re-prompt when justification is required so each execution is
+  // explicitly justified rather than silently reusing a prior reason.
+  if (actionRequiresJustification(action?.justification)) {
     return true
   }
 
@@ -37,7 +57,7 @@ export function hasMissingRerunArguments (action, storedArgs) {
       return true
     }
 
-    if (arg.required && !stored.has(arg.name)) {
+    if (rerunArgumentRequired(arg) && !stored.has(arg.name)) {
       return true
     }
   }
@@ -45,25 +65,23 @@ export function hasMissingRerunArguments (action, storedArgs) {
   return false
 }
 
-export function buildArgumentFormQuery (logEntry) {
-  const query = {}
+/**
+ * Builds history.state.prefilledArguments for ArgumentForm (not URL query),
+ * matching ActionButton's prefill pattern and keeping values out of the URL.
+ */
+export function buildRerunPrefilledArguments (logEntry) {
+  const prefilled = {}
 
   for (const arg of logEntry?.arguments ?? []) {
-    query[arg.name] = arg.value
+    prefilled[arg.name] = arg.value
   }
 
-  return query
+  return prefilled
 }
 
-export function buildRerunStartActionArgs (bindingId, logEntry, action) {
-  const startActionArgs = {
+export function buildRerunStartActionArgs (bindingId, logEntry) {
+  return {
     bindingId,
     arguments: logEntryArgumentsToStartActionArgs(logEntry)
   }
-
-  if (actionRequiresJustification(action?.justification) && logEntry?.justification) {
-    startActionArgs.justification = logEntry.justification
-  }
-
-  return startActionArgs
 }

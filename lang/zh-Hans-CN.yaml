@@ -53,15 +53,15 @@ translations:
   logs.queue-position: "第 {position} 位"
   logs.queue-entity: 实体
   diagnostics.get-support: 获取支持
-  diagnostics.get-support-description: 如果您在使用 OliveTin 时遇到问题并希望提交支持请求，从本页面包含 sosreport 将非常有帮助。
+  diagnostics.get-support-description: 如果您在使用 OliveTin 时遇到问题并希望提交支持请求，从本页面包含服务器诊断将非常有帮助。
   diagnostics.where-to-find-help: 在哪里找到帮助
   diagnostics.ssh: SSH
   diagnostics.found-key: 找到密钥
   diagnostics.found-config: 找到配置
-  diagnostics.sos-report: SOS 报告
-  diagnostics.sos-report-description: 此部分允许您生成配置和环境的详细报告。在提交支持请求时包含此信息是个好主意。
-  diagnostics.sos-report-docs: sosreport 文档
-  diagnostics.generate-sos-report: 生成 SOS 报告
+  diagnostics.server-diagnostics: 服务器诊断
+  diagnostics.server-diagnostics-description: 此部分允许您生成配置和环境的详细报告。在提交支持请求时包含此信息是个好主意。
+  diagnostics.server-diagnostics-docs: 服务器诊断文档
+  diagnostics.generate-server-diagnostics: 生成服务器诊断
   diagnostics.browser-info: 浏览器信息
   diagnostics.browser-info-description: 此部分允许您生成浏览器信息的详细报告。这在排查浏览器特定问题时很有帮助。
   diagnostics.generate-browser-info: 生成浏览器信息

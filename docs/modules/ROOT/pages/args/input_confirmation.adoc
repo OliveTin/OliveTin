@@ -14,8 +14,6 @@ actions:
         title: Are you sure?!
 ----
 
-image::action-confirmation.png[]
+image::args/confirmation/confirmation.png[]
 
 Notice in the webui the "start" button is disabled.
-
-

@@ -1,0 +1,32 @@
+---
+listenAddressSingleHTTPFrontend: 0.0.0.0:11337
+
+logLevel: "WARN"
+checkForUpdates: false
+showFooter: false
+
+entities:
+  - file: entities/containers.json
+    name: container
+
+actions:
+  - title: Print a message
+    icon: smile
+    shell: echo "{{ message }}"
+    arguments:
+      - name: message
+        description: The message you want to print out.
+        choices:
+          - title: Hello
+            value: Hello there!
+          - title: Goodbye
+            value: Aww, goodbye. :-(
+  - title: restart container
+    shell: 'docker restart {{ containerToRestart }}'
+    arguments:
+      - name: containerToRestart
+        entity: container
+        title: Select Container
+        choices:
+          - value: '{{ container.Names }}'
+            title: '{{ container.Names }}'

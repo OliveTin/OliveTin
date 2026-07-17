@@ -1,13 +1,12 @@
-export function readPrefilledArgumentsFromNavigation() {
-	const state = window.history.state
-	if (state?.prefilledArguments && typeof state.prefilledArguments === 'object') {
-		return { ...state.prefilledArguments }
+export function readPrefilledArgumentsFromNavigation (historyState = globalThis.window?.history?.state) {
+	if (historyState?.prefilledArguments && typeof historyState.prefilledArguments === 'object') {
+		return { ...historyState.prefilledArguments }
 	}
 
 	return {}
 }
 
-export function getInitialArgumentValue(paramName, prefilledArguments = {}) {
+export function getInitialArgumentValue (paramName, prefilledArguments = {}, search = globalThis.window?.location?.search ?? '') {
 	const safePrefilledArguments = prefilledArguments && typeof prefilledArguments === 'object'
 		? prefilledArguments
 		: {}
@@ -16,6 +15,6 @@ export function getInitialArgumentValue(paramName, prefilledArguments = {}) {
 		return safePrefilledArguments[paramName]
 	}
 
-	const params = new URLSearchParams(window.location.search)
+	const params = new URLSearchParams(search)
 	return params.get(paramName)
 }

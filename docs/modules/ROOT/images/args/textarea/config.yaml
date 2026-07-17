@@ -1,0 +1,17 @@
+---
+listenAddressSingleHTTPFrontend: 0.0.0.0:11337
+
+logLevel: "WARN"
+checkForUpdates: false
+showFooter: false
+
+actions:
+  - title: Save text to file
+    shell: 'echo "{{ content }}" > file'
+    arguments:
+      - type: raw_string_multiline
+        name: content
+        title: Content
+        default: |
+          Line one of the message
+          Line two of the message
