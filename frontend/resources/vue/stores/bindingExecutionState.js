@@ -2,10 +2,13 @@ import { reactive } from 'vue'
 import { buttonResults } from './buttonResults.js'
 
 const INDICATOR_SHOW_DELAY_MS = 1000
+const PENDING_FLASH_TTL_MS = 5000
 
 export const bindingExecutionState = reactive({})
+export const pendingBindingFlash = reactive({})
 
 const pendingShowTimers = {}
+const pendingFlashExpireTimers = {}
 
 function cancelPendingShowTimer (bindingId) {
   const timer = pendingShowTimers[bindingId]
@@ -76,4 +79,56 @@ export function applyExecutionFinishedBindingState (logEntry) {
 
   cancelPendingShowTimer(logEntry.bindingId)
   recomputeBindingExecutionState(logEntry.bindingId)
+  recordPendingBindingFlash(logEntry)
+}
+
+function cancelPendingFlashExpireTimer (bindingId) {
+  const timer = pendingFlashExpireTimers[bindingId]
+  if (timer != null) {
+    clearTimeout(timer)
+    delete pendingFlashExpireTimers[bindingId]
+  }
+}
+
+export function recordPendingBindingFlash (logEntry) {
+  if (!logEntry?.bindingId || !logEntry.executionFinished) {
+    return
+  }
+
+  const bindingId = logEntry.bindingId
+  cancelPendingFlashExpireTimer(bindingId)
+
+  pendingBindingFlash[bindingId] = {
+    executionTrackingId: logEntry.executionTrackingId,
+    timedOut: logEntry.timedOut,
+    blocked: logEntry.blocked,
+    exitCode: logEntry.exitCode,
+    datetimeStarted: logEntry.datetimeStarted,
+    datetimeFinished: logEntry.datetimeFinished,
+    recordedAt: Date.now()
+  }
+
+  pendingFlashExpireTimers[bindingId] = setTimeout(() => {
+    delete pendingFlashExpireTimers[bindingId]
+    const current = pendingBindingFlash[bindingId]
+    if (current?.executionTrackingId === logEntry.executionTrackingId) {
+      delete pendingBindingFlash[bindingId]
+    }
+  }, PENDING_FLASH_TTL_MS)
+}
+
+export function consumePendingBindingFlash (bindingId) {
+  if (!bindingId || pendingBindingFlash[bindingId] === undefined) {
+    return null
+  }
+
+  const result = pendingBindingFlash[bindingId]
+  cancelPendingFlashExpireTimer(bindingId)
+  delete pendingBindingFlash[bindingId]
+
+  if (result.recordedAt && (Date.now() - result.recordedAt) > PENDING_FLASH_TTL_MS) {
+    return null
+  }
+
+  return result
 }

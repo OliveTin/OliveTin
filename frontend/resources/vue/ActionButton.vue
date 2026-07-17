@@ -36,7 +36,12 @@
 <script setup>
 import { buttonResults } from './stores/buttonResults'
 import { rateLimits } from './stores/rateLimits'
-import { bindingExecutionState, setBindingExecutionState } from './stores/bindingExecutionState'
+import {
+  bindingExecutionState,
+  pendingBindingFlash,
+  consumePendingBindingFlash,
+  setBindingExecutionState
+} from './stores/bindingExecutionState'
 import { connectionState } from './stores/connectionState'
 import { requestReconnectNow, applyExecutionLogEntry } from '../../js/websocket.js'
 import { useRouter } from 'vue-router'
@@ -90,6 +95,7 @@ const isComponentMounted = ref(true)
 
 // Animation classes
 const buttonClasses = ref([])
+const flashedTrackingIds = new Set()
 
 // Show navigate on start icons - defaults to true if not set
 const showNavigateOnStartIcons = computed(() => {
@@ -141,6 +147,18 @@ const executionIndicatorTitle = computed(() => {
 	}
 	return ''
 })
+
+function consumeAndFlashPendingResult () {
+	const id = bindingId.value
+	if (!id) {
+		return
+	}
+
+	const pending = consumePendingBindingFlash(id)
+	if (pending) {
+		onExecutionFinished(pending)
+	}
+}
 
 // Timestamps
 const updateIterationTimestamp = ref(0)
@@ -376,6 +394,20 @@ function onExecutionStarted(logEntry) {
 }
 
 function onExecutionFinished(logEntry) {
+  const trackingId = logEntry.executionTrackingId
+  if (trackingId) {
+	if (flashedTrackingIds.has(trackingId)) {
+	  return
+	}
+	flashedTrackingIds.add(trackingId)
+  }
+
+  // Local no-arg watches and the binding-scoped pending flash can both
+  // observe the same finished execution; consume so only one path flashes.
+  if (bindingId.value) {
+	consumePendingBindingFlash(bindingId.value)
+  }
+
   if (logEntry.timedOut) {
 	renderExecutionResult('action-timeout', 'Timed out')
   } else if (logEntry.blocked) {
@@ -383,7 +415,6 @@ function onExecutionFinished(logEntry) {
   } else if (logEntry.exitCode !== 0) {
 	renderExecutionResult('action-nonzero-exit', 'Exit code ' + logEntry.exitCode)
   } else {
-	const ellapsed = Math.ceil(new Date(logEntry.datetimeFinished) - new Date(logEntry.datetimeStarted)) / 1000
 	renderExecutionResult('action-success', 'Success!')
   }
 }
@@ -429,6 +460,17 @@ onMounted(() => {
 	  }
 	},
 	{ deep: true }
+  )
+
+  // Binding-scoped flash survives argument-form navigation/remount (#920).
+  watch(
+	() => pendingBindingFlash[bindingId.value],
+	(pending) => {
+	  if (pending) {
+		consumeAndFlashPendingResult()
+	  }
+	},
+	{ immediate: true }
   )
 })
 

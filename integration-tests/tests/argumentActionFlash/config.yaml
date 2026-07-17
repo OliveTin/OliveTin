@@ -1,0 +1,20 @@
+---
+listenAddressSingleHTTPFrontend: 0.0.0.0:1337
+
+logLevel: "DEBUG"
+checkForUpdates: false
+
+actions:
+  - title: Hello world
+    shell: echo {{ message }}
+    icon: ping
+    arguments:
+      - name: message
+        description: The message you want to print out on the shell.
+        title: Your Message
+        default: Hello World
+        type: ascii_sentence
+
+  - title: Simple action
+    shell: echo Hi
+    icon: ping
