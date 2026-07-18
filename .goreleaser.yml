@@ -182,6 +182,23 @@ nfpms:
       - src: var/manpage/OliveTin.1.gz
         dst: /usr/share/man/man1/OliveTin.1.gz
 
+# Sign and notarize darwin binaries via quill (no macOS runner required).
+# Skipped when MACOS_SIGN_P12 is unset so local/snapshot builds stay unsigned.
+notarize:
+  macos:
+    - enabled: '{{ isEnvSet "MACOS_SIGN_P12" }}'
+      ids:
+        - default
+      sign:
+        certificate: "{{.Env.MACOS_SIGN_P12}}"
+        password: "{{.Env.MACOS_SIGN_PASSWORD}}"
+      notarize:
+        issuer_id: "{{.Env.MACOS_NOTARY_ISSUER_ID}}"
+        key_id: "{{.Env.MACOS_NOTARY_KEY_ID}}"
+        key: "{{.Env.MACOS_NOTARY_KEY}}"
+        wait: true
+        timeout: 30m
+
 release:
   # Stay draft until the sign-windows job replaces unsigned Windows assets and undrafts.
   draft: true

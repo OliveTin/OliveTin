@@ -7,7 +7,7 @@ OliveTin signs release binaries on two platforms:
 
 ## macOS release signing
 
-Release builds can sign and notarize the `darwin` binaries using [quill](https://github.com/anchore/quill) via GoReleaser. This runs on the existing Linux CI runner; no macOS runner is required.
+Release builds can sign and notarize the `darwin` binaries using [quill](https://github.com/anchore/quill) via GoReleaser. This runs on the existing Linux CI runner; no macOS runner or Xcode is required.
 
 Signing is **optional**. If the GitHub secrets below are not all set, GoReleaser skips macOS signing and publishes unsigned binaries (the previous behaviour).
 
@@ -19,12 +19,41 @@ Signing is **optional**. If the GitHub secrets below are not all set, GoReleaser
 
 ### One-time setup
 
-#### 1. Create the signing certificate
+#### 1. Create the signing certificate (OpenSSL, no Mac/Xcode)
+
+Work in a private directory. Keep the private key offline and never commit it.
+
+```sh
+mkdir -p ~/apple-signing && cd ~/apple-signing
+chmod 700 .
+
+openssl genrsa -out developer_id_app.key 2048
+openssl req -new -key developer_id_app.key -out developer_id_app.csr \
+  -subj "/emailAddress=you@example.com/CN=Your Name/C=GB"
+```
 
 1. Open [Certificates, Identifiers & Profiles](https://developer.apple.com/account/resources/certificates/list).
-2. Create a certificate of type **Developer ID Application**.
-3. Download the `.cer` file and double-click it to add it to **Keychain Access** on a Mac.
-4. In Keychain Access, export the certificate as a **Personal Information Exchange (`.p12`)** file. You will set an export password — remember it; this becomes `MACOS_SIGN_PASSWORD`.
+2. Create a certificate of type **Developer ID Application**. Prefer **G2 Sub-CA** if the portal asks.
+3. Upload `developer_id_app.csr` and download the resulting `.cer` (often named `developerID_application.cer`).
+
+Build a `.p12` that includes Apple's Developer ID G2 intermediate:
+
+```sh
+curl -fsSLO https://www.apple.com/certificateauthority/DeveloperIDG2CA.cer
+
+openssl x509 -inform DER -in developerID_application.cer -out developerID_application.pem
+openssl x509 -inform DER -in DeveloperIDG2CA.cer -out DeveloperIDG2CA.pem
+
+# Export password becomes MACOS_SIGN_PASSWORD.
+# On OpenSSL 3 (e.g. Fedora), -legacy improves compatibility with some tooling:
+openssl pkcs12 -export -legacy \
+  -inkey developer_id_app.key \
+  -in developerID_application.pem \
+  -certfile DeveloperIDG2CA.pem \
+  -out Certificates.p12
+```
+
+If you already have a Mac with the certificate in Keychain Access, you can export a `.p12` from there instead; the OpenSSL path above is enough when you do not.
 
 #### 2. Create the notarization API key
 
@@ -55,7 +84,7 @@ In **Settings → Secrets and variables → Actions**, create:
 | `MACOS_NOTARY_KEY_ID` | Key ID from App Store Connect (e.g. `ABC123DEF4`) |
 | `MACOS_NOTARY_ISSUER_ID` | Issuer UUID from App Store Connect |
 
-All five must be present for signing to run. Any missing secret disables signing for that release.
+All five must be present for signing to run. GoReleaser enables the step when `MACOS_SIGN_P12` is set; missing companion secrets will fail that release.
 
 ### Renewal
 
