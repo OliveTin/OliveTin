@@ -52,6 +52,10 @@ func findDashboardByTitle(rr *DashboardRenderRequest, dashboardTitle string) *co
 }
 
 func renderDashboardIfValid(dashboard *config.DashboardComponent, rr *DashboardRenderRequest) *apiv1.Dashboard {
+	if !acl.IsAllowedViewDashboard(rr.cfg, rr.AuthenticatedUser, dashboard) {
+		return nil
+	}
+
 	if len(dashboard.Contents) == 0 {
 		logEmptyDashboard(dashboard.Title, rr.AuthenticatedUser.Username)
 		return nil
@@ -71,11 +75,19 @@ func renderDirectoryDashboard(rr *DashboardRenderRequest, dashboardTitle string)
 
 func findDirectoryComponent(rr *DashboardRenderRequest, title string) *config.DashboardComponent {
 	for _, dashboard := range rr.cfg.Dashboards {
-		if component := searchDirectoryInComponent(dashboard, title); component != nil {
+		if component := findDirectoryInRootIfAllowed(rr, dashboard, title); component != nil {
 			return component
 		}
 	}
 	return nil
+}
+
+func findDirectoryInRootIfAllowed(rr *DashboardRenderRequest, root *config.DashboardComponent, title string) *config.DashboardComponent {
+	if !acl.IsAllowedViewDashboard(rr.cfg, rr.AuthenticatedUser, root) {
+		return nil
+	}
+
+	return searchDirectoryInComponent(root, title)
 }
 
 func searchDirectoryInComponent(component *config.DashboardComponent, title string) *config.DashboardComponent {

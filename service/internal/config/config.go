@@ -289,6 +289,7 @@ type DashboardComponent struct {
 	Entity       string                `koanf:"entity"`
 	Icon         string                `koanf:"icon"`
 	CssClass     string                `koanf:"cssClass"`
+	Acls         []string              `koanf:"acls"`
 	InlineAction *Action               `koanf:"inlineAction"`
 	Contents     []*DashboardComponent `koanf:"contents"`
 }

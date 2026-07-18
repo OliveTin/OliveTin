@@ -74,7 +74,7 @@ defaultPermissions:
   logs: true
 ----
 
-In the example above, all users will start off with the permissions to only see action logs - but will not be able to view or execute actions. 
+In the example above, all users will start off with the permissions to only see action logs - but will not be able to view or execute actions.
 
 It is then possible to add an "admins" ACL on top of every action. In the example below, we define one extra ACL called "admins", which matches any users with the usergroup also called "admins". This ACL will then be applied to all actions, and will allow users in the "admins" usergroup to view and execute the action.
 
@@ -116,6 +116,48 @@ accessControlLists:
     addToEveryAction: true
 ```
 
+== ACLs and Dashboards
+
+Root dashboards can also list `acls`. This controls whether the **whole dashboard page** is visible (including `display` widgets and entity fieldsets), not just action buttons.
+
+* If a dashboard has **no** `acls` (or an empty list), it is unrestricted — anyone can see it in the side menu (subject to the usual “empty dashboard” hiding).
+* If a dashboard lists one or more `acls`, access uses the same allow-list rules as actions: a matching ACL that grants `view`, otherwise `defaultPermissions.view`.
+* `addToEveryAction` does **not** apply to dashboards. List the ACL on the dashboard explicitly when you want to restrict it.
+* Nested fieldsets and directories do not have their own `acls`; the root dashboard decision covers the whole page.
+
+Action `acls` still control individual buttons. Use dashboard `acls` when you need to hide a page that contains status or other non-action content from some users.
+
+[source,yaml]
+.`config.yaml`
+----
+defaultPermissions:
+  view: false
+  exec: false
+
+accessControlLists:
+  - name: admins
+    matchUsergroups:
+      - admins
+    permissions:
+      view: true
+      exec: true
+
+dashboards:
+  - title: Public tools
+    contents:
+      - title: Welcome
+        type: display
+
+  - title: Services
+    acls:
+      - admins
+    contents:
+      - title: 'Status: running'
+        type: display
+----
+
+In the example above, guests can open **Public tools**, but **Services** is hidden from the side menu and cannot be loaded by deep link.
+
 == ACL Matching - usernames and usergroups.
 
 You can match users based on their usergroup which is the most common, but it is also possible to match based on the user's username.
@@ -149,4 +191,3 @@ Now that you understand ACLs, here's how to implement them:
 * xref:security/local.adoc[Set up local users] - Create users for ACL matching
 * xref:security/oauth2.adoc[Configure OAuth2] - Set up OAuth2 for user groups
 * xref:security/design_choices.adoc[Security design recommendations] - Learn best practices for ACL design
-
