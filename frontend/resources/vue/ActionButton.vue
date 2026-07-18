@@ -247,10 +247,16 @@ function updateFromJson (json) {
   if (json.datetimeRateLimitExpires) {
     const date = new Date(json.datetimeRateLimitExpires.replace(' ', 'T'))
     rateLimitExpires.value = date.getTime() / 1000
+    if (bindingId.value) {
+      rateLimits[bindingId.value] = rateLimitExpires.value
+    }
     updateRateLimitStatus()
   } else if (json.datetimeRateLimitExpires === '') {
     // Explicitly clear if empty string
     rateLimitExpires.value = 0
+    if (bindingId.value) {
+      rateLimits[bindingId.value] = 0
+    }
     updateRateLimitStatus()
   }
 }
@@ -359,6 +365,15 @@ async function pollExecutionUntilDone (trackingId) {
   }
 }
 
+let stopButtonResultWatch = null
+
+function stopWatchingButtonResult () {
+  if (stopButtonResultWatch) {
+    stopButtonResultWatch()
+    stopButtonResultWatch = null
+  }
+}
+
 async function startAction (actionArgs) {
   buttonClasses.value = [] // Removes old animation classes
 
@@ -376,7 +391,8 @@ async function startAction (actionArgs) {
 
   console.log('Watching buttonResults for', startActionArgs.uniqueTrackingId)
 
-  watch(
+  stopWatchingButtonResult()
+  stopButtonResultWatch = watch(
     () => buttonResults[startActionArgs.uniqueTrackingId],
     (newResult, oldResult) => {
 	  onLogEntryChanged(newResult)
@@ -397,12 +413,18 @@ async function startAction (actionArgs) {
 	  await pollExecutionUntilDone(trackingId)
     }
   } catch (err) {
+    stopWatchingButtonResult()
     console.error('Failed to start action:', err)
   }
 }
 
 function onLogEntryChanged (logEntry) {
+  if (!logEntry) {
+    return
+  }
+
   if (logEntry.executionFinished) {
+    stopWatchingButtonResult()
     onExecutionFinished(logEntry)
   } else if (logEntry.queued && !logEntry.executionStarted) {
     onExecutionQueued(logEntry)

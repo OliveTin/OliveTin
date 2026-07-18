@@ -53,11 +53,11 @@ find-flakey-tests-inf:
 	go run ./scripts/find-flakey-tests-inf
 
 go-tools:
-	go install "github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest"
+	go install "github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.12.2"
 
 .PHONY: unittests unittests-fast find-flakey-tests find-flakey-tests-inf
 
 go-tools-all:
 	go install "github.com/bufbuild/buf/cmd/buf"
-	go install "github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest"
+	go install "github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.12.2"
 	go install "google.golang.org/protobuf/cmd/protoc-gen-go"

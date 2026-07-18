@@ -24,10 +24,15 @@
             @click="loginWithOAuth(provider)"
           >
             <span
-              v-if="provider.icon"
+              v-if="providerIcon(provider)"
               class="provider-icon"
-              v-html="provider.icon"
-            />
+            >
+              <iconify-icon
+                v-if="providerIcon(provider).kind === 'iconify'"
+                :icon="providerIcon(provider).id"
+              />
+              <span v-else>{{ providerIcon(provider).text }}</span>
+            </span>
             <span class="provider-name">Login with {{ provider.title }}</span>
           </button>
         </div>
@@ -95,6 +100,38 @@ const loginError = ref('')
 const hasOAuth = ref(false)
 const hasLocalLogin = ref(false)
 const oauthProviders = ref([])
+
+const trustedProviderIconifyIds = {
+  github: 'simple-icons:github',
+  google: 'simple-icons:google'
+}
+
+function providerIcon (provider) {
+  const raw = (provider?.icon || '').trim()
+  if (!raw) {
+    return null
+  }
+
+  const iconifyTagMatch = raw.match(/<iconify-icon\b[^>]*\bicon=["']([^"']+)["'][^>]*>/i)
+  if (iconifyTagMatch) {
+    return { kind: 'iconify', id: iconifyTagMatch[1] }
+  }
+
+  if (/^[a-z0-9-]+:[a-z0-9-]+$/i.test(raw)) {
+    return { kind: 'iconify', id: raw }
+  }
+
+  const trustedId = trustedProviderIconifyIds[provider.key]
+  if (trustedId && (raw.includes('<') || raw === provider.key)) {
+    return { kind: 'iconify', id: trustedId }
+  }
+
+  if (!raw.includes('<')) {
+    return { kind: 'text', text: raw }
+  }
+
+  return trustedId ? { kind: 'iconify', id: trustedId } : null
+}
 
 function loadLoginOptions () {
   // Use the init response data that was loaded in App.vue

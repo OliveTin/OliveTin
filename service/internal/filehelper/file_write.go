@@ -23,7 +23,12 @@ func WriteFile(filename string, out []byte) {
 			return
 		}
 
-		_ = handle.Close()
+		if err := handle.Close(); err != nil {
+			log.WithFields(log.Fields{
+				"error":    err,
+				"filename": filename,
+			}).Errorf("Failed to close %v", filename)
+		}
 	}
 
 	err := os.WriteFile(filename, out, 0600)

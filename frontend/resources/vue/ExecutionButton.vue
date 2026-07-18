@@ -24,6 +24,7 @@ export default {
       required: true
     }
   },
+  emits: ['show'],
   data () {
     return {
       trackingId: '',
@@ -51,11 +52,11 @@ export default {
       this.isWaiting = true
     },
 
-    show () {
+    async show () {
       this.$emit('show')
 
       if (window.executionDialog) {
-        window.executionDialog.reset()
+        await window.executionDialog.reset()
         window.executionDialog.show()
         window.executionDialog.fetchExecutionResult(this.trackingId)
       }
@@ -89,7 +90,10 @@ export default {
       // For execution button, we don't need to update classes as much
       // since it's a simpler component
       if (resultCssClass) {
-        this.$el.classList.add(resultCssClass)
+        const button = this.$el.querySelector('button')
+        if (button) {
+          button.classList.add(resultCssClass)
+        }
       }
     }
   }

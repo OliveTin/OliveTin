@@ -349,12 +349,12 @@ func getUserInfo(cfg *config.Config, client *http.Client, provider *config.OAuth
 		return ret
 	}
 
+	defer func() { _ = res.Body.Close() }()
+
 	if res.StatusCode != http.StatusOK {
 		log.Errorf("Failed to get user data: %v", res.StatusCode)
 		return ret
 	}
-
-	defer func() { _ = res.Body.Close() }()
 
 	contents, err := io.ReadAll(res.Body)
 

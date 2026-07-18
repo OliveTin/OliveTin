@@ -319,11 +319,13 @@ function getArgumentValue (arg) {
 function handleJustificationInput (event) {
   justificationValue.value = event.target.value
   justificationEditedManually.value = true
+  event.target.setCustomValidity('')
 }
 
 function handleInput (arg, event) {
   const value = event.target.type === 'checkbox' ? event.target.checked : event.target.value
   argValues.value[arg.name] = value
+  event.target.setCustomValidity('')
   updateUrlWithArg(arg.name, value)
   updateJustificationFromTemplate()
 }

@@ -1,6 +1,6 @@
 <template>
   <section
-    v-if="!dashboard && !initError"
+    v-if="!dashboard && !initError && !loadError"
     style="text-align: center; padding: 2em;"
   >
     <HugeiconsIcon
@@ -23,6 +23,19 @@
       Initialization Failed
     </h2>
     <p>{{ initError }}</p>
+    <p style="color: var(--fg2);">
+      Please check your configuration and try again.
+    </p>
+  </section>
+  <section
+    v-else-if="loadError"
+    style="text-align: center; padding: 2em;"
+    class="bad"
+  >
+    <h2 style="color: var(--error);">
+      Failed to Load Dashboard
+    </h2>
+    <p>{{ loadError }}</p>
     <p style="color: var(--fg2);">
       Please check your configuration and try again.
     </p>
@@ -135,6 +148,7 @@ const router = useRouter()
 const dashboard = ref(null)
 const loadingTime = ref(0)
 const initError = ref(null)
+const loadError = ref(null)
 let loadingTimer = null
 let checkInitInterval = null
 let dashboardRequestId = 0
@@ -194,8 +208,9 @@ async function getDashboard () {
     const pageTitle = window.initResponse?.pageTitle || 'OliveTin'
     document.title = ret.dashboard.title + ' - ' + pageTitle
 
-    // Clear any previous init error since we successfully loaded
+    // Clear any previous errors since we successfully loaded
     initError.value = null
+    loadError.value = null
 
     // Stop the loading timer once dashboard is loaded
     if (loadingTimer) {
@@ -210,9 +225,9 @@ async function getDashboard () {
       return
     }
 
-    // On error, provide a safe fallback state
     console.error('Failed to load dashboard', e)
-    dashboard.value = { title: title || 'Default', contents: [] }
+    dashboard.value = null
+    loadError.value = e.message || 'Failed to load dashboard'
     const pageTitle = window.initResponse?.pageTitle || 'OliveTin'
     document.title = 'Error - ' + pageTitle
 
@@ -221,14 +236,13 @@ async function getDashboard () {
       clearInterval(loadingTimer)
       loadingTimer = null
     }
-
-    // Set attribute even on error so tests can proceed
-    document.body.setAttribute('loaded-dashboard', title || 'error')
   }
 }
 
 function waitForInitAndLoadDashboard () {
   document.body.removeAttribute('loaded-dashboard')
+  loadError.value = null
+  dashboard.value = null
 
   if (loadingTimer) {
     clearInterval(loadingTimer)

@@ -202,10 +202,13 @@ func appendFile(path, content string) error {
 	if err != nil {
 		return err
 	}
-	defer func() { _ = file.Close() }()
 
-	_, err = file.WriteString(content)
-	return err
+	_, writeErr := file.WriteString(content)
+	closeErr := file.Close()
+	if writeErr != nil {
+		return writeErr
+	}
+	return closeErr
 }
 
 func newTestRunState() *testRunState {

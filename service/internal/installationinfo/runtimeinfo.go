@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type RuntimeInfo struct {
@@ -85,6 +87,14 @@ func getOsReleasePrettyName() string {
 		return ""
 	}
 
+	defer func() {
+		if closeErr := handle.Close(); closeErr != nil {
+			log.WithFields(log.Fields{
+				"error": closeErr,
+			}).Warn("Failed to close /etc/os-release")
+		}
+	}()
+
 	scanner := bufio.NewScanner(handle)
 	scanner.Split(bufio.ScanLines)
 
@@ -95,8 +105,6 @@ func getOsReleasePrettyName() string {
 			return line
 		}
 	}
-
-	_ = handle.Close()
 
 	return "notfound"
 }

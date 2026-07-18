@@ -15,11 +15,9 @@ linters:
     - staticcheck
     - unconvert
     - unused
-
-linters-settings:
-  gocyclo:
-    min-complexity: 5
-
-issues:
-  exclude-dirs:
-    - gen
+  settings:
+    gocyclo:
+      min-complexity: 5
+  exclusions:
+    paths:
+      - gen

@@ -117,9 +117,18 @@ async function fetchDiagnostics () {
 }
 
 async function generateServerDiagnostics () {
-  const response = await window.client.serverDiagnostics()
-  console.log('response', response)
-  serverDiagnostics.value = `\`\`\`\n${response.alert}\n\`\`\`\n`
+  loading.value = true
+
+  try {
+    const response = await window.client.serverDiagnostics()
+    console.log('response', response)
+    serverDiagnostics.value = `\`\`\`\n${response.alert}\n\`\`\`\n`
+  } catch (err) {
+    console.error('Failed to generate server diagnostics:', err)
+    serverDiagnostics.value = ''
+  } finally {
+    loading.value = false
+  }
 }
 
 async function copyServerDiagnostics () {

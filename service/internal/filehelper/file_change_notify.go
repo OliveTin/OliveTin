@@ -74,7 +74,11 @@ func watchPath(ctx *watchContext) {
 		return
 	}
 
-	defer func() { _ = watcher.Close() }()
+	defer func() {
+		if err := watcher.Close(); err != nil {
+			log.Errorf("Failed to close file watcher: %v", err)
+		}
+	}()
 
 	done := make(chan bool)
 
