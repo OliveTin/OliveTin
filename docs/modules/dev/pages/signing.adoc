@@ -2,14 +2,14 @@
 
 OliveTin signs release binaries on two platforms:
 
-* **macOS** — Developer ID + notarization via [quill](https://github.com/anchore/quill) inside GoReleaser (optional if secrets are missing).
+* **macOS** — Developer ID + notarization via [quill](https://github.com/anchore/quill) inside GoReleaser (optional only when `MACOS_SIGN_P12` is unset).
 * **Windows** — Authenticode via [SignPath Foundation](https://signpath.org/) in a separate GitHub Actions job (required before a draft release is published).
 
 ## macOS release signing
 
 Release builds can sign and notarize the `darwin` binaries using [quill](https://github.com/anchore/quill) via GoReleaser. This runs on the existing Linux CI runner; no macOS runner or Xcode is required.
 
-Signing is **optional**. If the GitHub secrets below are not all set, GoReleaser skips macOS signing and publishes unsigned binaries (the previous behaviour).
+Signing is **optional** only when `MACOS_SIGN_P12` is unset — GoReleaser then skips macOS signing and publishes unsigned binaries. When `MACOS_SIGN_P12` is set, the companion macOS secrets below are required or the release fails.
 
 ### Prerequisites
 
@@ -109,9 +109,9 @@ A signed and notarized binary should report `accepted` with `source=Notarized De
 
 ### Configuration reference
 
-- GoReleaser: `notarize.macos` in [`.goreleaser.yml`](.goreleaser.yml)
-- CI secrets: [`.github/workflows/build-and-release.yml`](.github/workflows/build-and-release.yml) (`release` step)
-- [GoReleaser notarization docs](https://goreleaser.com/customization/notarize/)
+- GoReleaser: `notarize.macos` in link:https://github.com/OliveTin/OliveTin/blob/main/.goreleaser.yml[`.goreleaser.yml`]
+- CI secrets: link:https://github.com/OliveTin/OliveTin/blob/main/.github/workflows/build-and-release.yml[`.github/workflows/build-and-release.yml`] (`release` step)
+- link:https://goreleaser.com/customization/notarize/[GoReleaser notarization docs]
 
 ## Windows release signing (SignPath)
 
@@ -148,10 +148,10 @@ Signing is **required** to publish. If SignPath secrets/vars are missing, `sign-
 
 In the SignPath project, create two artifact configurations with these slugs (must match CI). Paste the XML from the reference copies in this repo (SignPath does **not** load them automatically):
 
-* slug `windows-zip` ← [`signpath/windows-zip.xml`](../signpath/windows-zip.xml)
-* slug `windows-msi` ← [`signpath/windows-msi.xml`](../signpath/windows-msi.xml)
+* slug `windows-zip` ← link:https://github.com/OliveTin/OliveTin/blob/main/docs/modules/dev/signpath/windows-zip.xml[`signpath/windows-zip.xml`]
+* slug `windows-msi` ← link:https://github.com/OliveTin/OliveTin/blob/main/docs/modules/dev/signpath/windows-msi.xml[`signpath/windows-msi.xml`]
 
-Use **Custom** XML in the SignPath UI and paste the file contents. Do **not** use **Upload an artifact sample** on these `.xml` files — SignPath will treat them as XML documents to sign (`xml-file`), which is unavailable on the Foundation/Open Source plan. See [`signpath/README.md`](../signpath/README.md).
+Use **Custom** XML in the SignPath UI and paste the file contents. Do **not** use **Upload an artifact sample** on these `.xml` files — SignPath will treat them as XML documents to sign (`xml-file`), which is unavailable on the Foundation/Open Source plan. See link:https://github.com/OliveTin/OliveTin/blob/main/docs/modules/dev/signpath/README.md[`signpath/README.md`].
 
 #### 4. Add GitHub secrets and variables
 
@@ -188,9 +188,9 @@ signtool verify /pa OliveTin-windows-amd64.msi
 
 ### Configuration reference
 
-- Draft release: `release.draft: true` in [`.goreleaser.yml`](.goreleaser.yml)
-- CI job: `sign-windows` in [`.github/workflows/build-and-release.yml`](.github/workflows/build-and-release.yml)
-- Publish helper: [`var/windows/signpath-publish-signed.sh`](var/windows/signpath-publish-signed.sh)
-- SignPath artifact configs (reference only): [`signpath/windows-zip.xml`](../signpath/windows-zip.xml), [`signpath/windows-msi.xml`](../signpath/windows-msi.xml)
-- [SignPath GitHub Actions docs](https://docs.signpath.io/trusted-build-systems/github)
-- [SignPath artifact configuration examples](https://docs.signpath.io/artifact-configuration/examples)
+- Draft release: `release.draft: true` in link:https://github.com/OliveTin/OliveTin/blob/main/.goreleaser.yml[`.goreleaser.yml`]
+- CI job: `sign-windows` in link:https://github.com/OliveTin/OliveTin/blob/main/.github/workflows/build-and-release.yml[`.github/workflows/build-and-release.yml`]
+- Publish helper: link:https://github.com/OliveTin/OliveTin/blob/main/var/windows/signpath-publish-signed.sh[`var/windows/signpath-publish-signed.sh`]
+- SignPath artifact configs (reference only): link:https://github.com/OliveTin/OliveTin/blob/main/docs/modules/dev/signpath/windows-zip.xml[`signpath/windows-zip.xml`], link:https://github.com/OliveTin/OliveTin/blob/main/docs/modules/dev/signpath/windows-msi.xml[`signpath/windows-msi.xml`]
+- link:https://docs.signpath.io/trusted-build-systems/github[SignPath GitHub Actions docs]
+- link:https://docs.signpath.io/artifact-configuration/examples[SignPath artifact configuration examples]
