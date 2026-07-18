@@ -1,5 +1,8 @@
 <template>
-  <span v-if="showLimits" class="action-group-limit">
+  <span
+    v-if="showLimits"
+    class="action-group-limit"
+  >
     {{ t('logs.action-group-limits', { concurrent: maxConcurrent, queueSize }) }}
   </span>
 </template>

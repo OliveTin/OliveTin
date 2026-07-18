@@ -74,7 +74,7 @@ func watchPath(ctx *watchContext) {
 		return
 	}
 
-	defer watcher.Close()
+	defer func() { _ = watcher.Close() }()
 
 	done := make(chan bool)
 

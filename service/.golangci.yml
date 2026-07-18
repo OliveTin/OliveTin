@@ -1,0 +1,25 @@
+version: "2"
+
+run:
+  timeout: 5m
+  tests: true
+
+linters:
+  default: none
+  enable:
+    - errcheck
+    - gocritic
+    - gocyclo
+    - ineffassign
+    - misspell
+    - staticcheck
+    - unconvert
+    - unused
+
+linters-settings:
+  gocyclo:
+    min-complexity: 5
+
+issues:
+  exclude-dirs:
+    - gen

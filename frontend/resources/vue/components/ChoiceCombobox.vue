@@ -1,8 +1,11 @@
 <template>
-  <div class="choice-combobox" ref="rootRef">
+  <div
+    ref="rootRef"
+    class="choice-combobox"
+  >
     <input
-      ref="searchInputRef"
       :id="id"
+      ref="searchInputRef"
       type="text"
       class="choice-combobox-input"
       role="combobox"
@@ -17,12 +20,12 @@
       @input="handleSearchInput"
       @keydown="handleKeydown"
       @blur="handleBlur"
-    />
+    >
     <input
       :name="name"
       type="hidden"
       :value="modelValue"
-    />
+    >
     <ul
       v-if="isOpen && filteredChoices.length > 0"
       :id="listboxId"
@@ -44,7 +47,10 @@
         {{ choiceLabel(choice) }}
       </li>
     </ul>
-    <div v-else-if="isOpen && query" class="choice-combobox-list choice-combobox-empty">
+    <div
+      v-else-if="isOpen && query"
+      class="choice-combobox-list choice-combobox-empty"
+    >
       No matching options
     </div>
   </div>
@@ -140,11 +146,11 @@ watch([() => props.modelValue, () => props.choices], () => {
   }
 }, { immediate: true })
 
-function choiceLabel(choice) {
+function choiceLabel (choice) {
   return choiceDisplayLabel(choice)
 }
 
-function syncFromModelValue() {
+function syncFromModelValue () {
   const next = syncStateFromModelValue(props.choices, props.modelValue)
   query.value = next.query
 
@@ -153,12 +159,12 @@ function syncFromModelValue() {
   }
 }
 
-function selectedChoiceIndex(choices) {
+function selectedChoiceIndex (choices) {
   const index = choices.findIndex(choice => choice.value === props.modelValue)
   return index >= 0 ? index : 0
 }
 
-function openList() {
+function openList () {
   document.dispatchEvent(new CustomEvent(closeOthersEvent, { detail: { id: props.id } }))
   const wasClosed = !isOpen.value
   isOpen.value = true
@@ -167,23 +173,23 @@ function openList() {
   }
 }
 
-function closeList() {
+function closeList () {
   isOpen.value = false
   isUserFiltering.value = false
   syncFromModelValue()
 }
 
-function emitValue(value) {
+function emitValue (value) {
   emit('update:modelValue', value)
 }
 
-function selectChoice(choice) {
+function selectChoice (choice) {
   emitValue(choice.value)
   query.value = choiceLabel(choice)
   isOpen.value = false
 }
 
-function handleFocus() {
+function handleFocus () {
   if (!isOpen.value) {
     syncFromModelValue()
     isUserFiltering.value = false
@@ -192,14 +198,14 @@ function handleFocus() {
   openList()
 }
 
-function handleSearchInput(event) {
+function handleSearchInput (event) {
   isUserFiltering.value = true
   query.value = event.target.value
   openList()
   highlightedIndex.value = 0
 }
 
-function moveHighlight(delta) {
+function moveHighlight (delta) {
   if (filteredChoices.value.length === 0) {
     return
   }
@@ -218,7 +224,7 @@ function moveHighlight(delta) {
   highlightedIndex.value = nextIndex
 }
 
-function handleKeydown(event) {
+function handleKeydown (event) {
   if (event.key === 'ArrowDown') {
     event.preventDefault()
     const wasOpen = isOpen.value
@@ -258,17 +264,17 @@ function handleKeydown(event) {
   }
 }
 
-function handleBlur() {
+function handleBlur () {
   closeList()
 }
 
-function handleCloseOthers(event) {
+function handleCloseOthers (event) {
   if (event.detail.id !== props.id) {
     closeList()
   }
 }
 
-function handleOutsideMouseDown(event) {
+function handleOutsideMouseDown (event) {
   if (!isOpen.value || rootRef.value?.contains(event.target)) {
     return
   }

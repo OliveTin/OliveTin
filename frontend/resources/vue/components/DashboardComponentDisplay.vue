@@ -1,15 +1,18 @@
 <template>
-    <div class="display" :class="component.cssClass">
-        <div v-html="component.title" />
-    </div>
+  <div
+    class="display"
+    :class="component.cssClass"
+  >
+    <div v-html="component.title" />
+  </div>
 </template>
 
 <script setup>
-const props = defineProps({
-    component: {
-        type: Object,
-        required: true
-    }
+defineProps({
+  component: {
+    type: Object,
+    required: true
+  }
 })
 </script>
 

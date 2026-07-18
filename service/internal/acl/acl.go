@@ -134,7 +134,7 @@ func IsAllowedKill(cfg *config.Config, user *authpublic.AuthenticatedUser, actio
 	return aclCheck(Kill, cfg.DefaultPermissions.Kill, cfg, "isAllowedKill", user, action)
 }
 
-func isACLRelevantToAction(cfg *config.Config, actionAcls []string, acl *config.AccessControlList, user *authpublic.AuthenticatedUser) bool {
+func isACLRelevantToAction(actionAcls []string, acl *config.AccessControlList, user *authpublic.AuthenticatedUser) bool {
 	if !slices.Contains(user.Acls, acl.Name) {
 		// If the user does not have this ACL, then it is not relevant
 
@@ -156,7 +156,7 @@ func getRelevantAcls(cfg *config.Config, actionAcls []string, user *authpublic.A
 	var ret []*config.AccessControlList
 
 	for _, acl := range cfg.AccessControlLists {
-		if isACLRelevantToAction(cfg, actionAcls, acl, user) {
+		if isACLRelevantToAction(actionAcls, acl, user) {
 			ret = append(ret, acl)
 		}
 	}

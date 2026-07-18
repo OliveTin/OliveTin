@@ -1,13 +1,49 @@
 <template>
-    <div id = "breadcrumbs">
-        <template v-for="(link, index) in links" :key="link.name">
-            <router-link :to="link.href">{{ link.name }}</router-link>
-            <span v-if="index < links.length - 1" class="separator">
-                &raquo;
-            </span>
-        </template>
-    </div>
+  <div id="breadcrumbs">
+    <template
+      v-for="(link, index) in links"
+      :key="link.name"
+    >
+      <router-link :to="link.href">
+        {{ link.name }}
+      </router-link>
+      <span
+        v-if="index < links.length - 1"
+        class="separator"
+      >
+        &raquo;
+      </span>
+    </template>
+  </div>
 </template>
+
+<script setup>
+import { ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
+
+const route = useRoute()
+const links = ref([])
+
+watch(() => route.matched, (matched) => {
+  links.value = []
+  matched.forEach((record) => {
+    if (!record) return
+    if (record.meta && record.meta.breadcrumb) {
+      record.meta.breadcrumb.forEach((item) => {
+        links.value.push({
+          name: item.name,
+          href: item.href || record.path || '/'
+        })
+      })
+    } else if (record.name) {
+      links.value.push({
+        name: record.name,
+        href: record.path || '/'
+      })
+    }
+  })
+}, { immediate: true })
+</script>
 
 <style scoped>
 span {
@@ -26,34 +62,3 @@ a:hover {
 }
 
 </style>
-
-
-<script setup>
-    import { ref } from 'vue';
-    import { watch } from 'vue';
-    import { useRoute } from 'vue-router';
-
-    const route = useRoute();
-    const links = ref([]);
-
-    watch(() => route.matched, (matched) => {
-
-        links.value = [];
-        matched.forEach((record) => {
-            if (!record) return;
-            if (record.meta && record.meta.breadcrumb) {
-                record.meta.breadcrumb.forEach((item) => {
-                    links.value.push({
-                        name: item.name,
-                        href: item.href || record.path || '/'
-                    });
-                });
-            } else if (record.name) {
-                links.value.push({
-                    name: record.name,
-                    href: record.path || '/'
-                });
-            }
-        });
-    }, { immediate: true });
-</script>

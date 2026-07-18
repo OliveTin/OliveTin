@@ -1,33 +1,78 @@
 <template>
-  <Section title="Login to OliveTin" class="small">
+  <Section
+    title="Login to OliveTin"
+    class="small"
+  >
     <div class="login-form">
-      <div v-if="!hasOAuth && !hasLocalLogin" class="login-disabled">
+      <div
+        v-if="!hasOAuth && !hasLocalLogin"
+        class="login-disabled"
+      >
         <span>This server is not configured with either OAuth, or local users, so you cannot login.</span>
       </div>
 
-      <div v-if="hasOAuth" class="login-oauth2">
+      <div
+        v-if="hasOAuth"
+        class="login-oauth2"
+      >
         <h3>OAuth Login</h3>
         <div class="oauth-providers">
-          <button v-for="provider in oauthProviders" :key="provider.key" class="oauth-button"
-            @click="loginWithOAuth(provider)">
-            <span v-if="provider.icon" class="provider-icon" v-html="provider.icon"></span>
+          <button
+            v-for="provider in oauthProviders"
+            :key="provider.key"
+            class="oauth-button"
+            @click="loginWithOAuth(provider)"
+          >
+            <span
+              v-if="provider.icon"
+              class="provider-icon"
+              v-html="provider.icon"
+            />
             <span class="provider-name">Login with {{ provider.title }}</span>
           </button>
         </div>
       </div>
 
-      <div v-if="hasLocalLogin" class="login-local">
+      <div
+        v-if="hasLocalLogin"
+        class="login-local"
+      >
         <h3>Local Login</h3>
-        <form @submit.prevent="handleLocalLogin" class="local-login-form">
-          <div v-if="loginError" class="bad">
+        <form
+          class="local-login-form"
+          @submit.prevent="handleLocalLogin"
+        >
+          <div
+            v-if="loginError"
+            class="bad"
+          >
             {{ loginError }}
           </div>
 
-          <input id="username" v-model="username" type="text" name="username" autocomplete="username" required placeholder="Username" />
-          <input id="password" v-model="password" type="password" name="password" autocomplete="current-password" placeholder="Password"
-            required />
+          <input
+            id="username"
+            v-model="username"
+            type="text"
+            name="username"
+            autocomplete="username"
+            required
+            placeholder="Username"
+          >
+          <input
+            id="password"
+            v-model="password"
+            type="password"
+            name="password"
+            autocomplete="current-password"
+            placeholder="Password"
+            required
+          >
 
-          <button type="submit" :disabled="loading" class="login-button">
+          <button
+            type="submit"
+            :disabled="loading"
+            class="login-button"
+          >
             {{ loading ? 'Logging in...' : 'Login' }}
           </button>
         </form>
@@ -51,7 +96,7 @@ const hasOAuth = ref(false)
 const hasLocalLogin = ref(false)
 const oauthProviders = ref([])
 
-function loadLoginOptions() {
+function loadLoginOptions () {
   // Use the init response data that was loaded in App.vue
   if (window.initResponse) {
     hasOAuth.value = window.initResponse.oAuth2Providers && window.initResponse.oAuth2Providers.length > 0
@@ -65,7 +110,7 @@ function loadLoginOptions() {
   }
 }
 
-async function handleLocalLogin() {
+async function handleLocalLogin () {
   loading.value = true
   loginError.value = ''
 
@@ -83,7 +128,7 @@ async function handleLocalLogin() {
         window.initError = false
         window.initErrorMessage = ''
         window.initCompleted = true
-        
+
         // Update the header with new user info
         if (window.updateHeaderFromInit) {
           window.updateHeaderFromInit()
@@ -91,7 +136,7 @@ async function handleLocalLogin() {
       } catch (initErr) {
         console.error('Failed to reinitialize after login:', initErr)
       }
-      
+
       // Redirect to home page on successful login
       router.push('/')
     } else {
@@ -105,21 +150,21 @@ async function handleLocalLogin() {
   }
 }
 
-function loginWithOAuth(provider) {
+function loginWithOAuth (provider) {
   if (!provider.key) {
     console.error('OAuth provider missing key:', provider)
     return
   }
-  
+
   const providerKey = encodeURIComponent(provider.key)
   window.location.href = `/oauth/login?provider=${providerKey}`
 }
 
 onMounted(() => {
   loadLoginOptions()
-  
+
   // Also watch for when init response becomes available
-  const stopWatcher = watch(() => window.initResponse, () => {
+  watch(() => window.initResponse, () => {
     loadLoginOptions()
   }, { immediate: true })
 })

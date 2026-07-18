@@ -982,7 +982,7 @@ func validatedSystemArgs(req *ExecutionRequest) (map[string]string, error) {
 }
 
 func hasBindingAndAction(req *ExecutionRequest) bool {
-	return !(req.Binding == nil || req.Binding.Action == nil)
+	return req.Binding != nil && req.Binding.Action != nil
 }
 
 func hasExec(req *ExecutionRequest) bool {

@@ -46,7 +46,7 @@ TOOL_GROUPS: list[tuple[str, frozenset[str]]] = [
     ),
     (
         "Go codestyle (install via: make go-tools)",
-        frozenset({"gocyclo", "gocritic"}),
+        frozenset({"golangci-lint"}),
     ),
     (
         "Protocol buffers (install via: make -C service go-tools-all)",

@@ -9,87 +9,141 @@
           class="action-details-title-link"
           :title="titleTooltip"
         >
-          <ActionIconGlyph class="action-title-icon" :glyph="icon" />
-          <LogActionTitle v-if="logEntry" :action-title="title" :justification="logEntry.justification" />
+          <ActionIconGlyph
+            class="action-title-icon"
+            :glyph="icon"
+          />
+          <LogActionTitle
+            v-if="logEntry"
+            :action-title="title"
+            :justification="logEntry.justification"
+          />
           <span v-else>{{ title }}</span>
         </router-link>
         <template v-else>
-          <LogActionTitle v-if="logEntry" :action-title="title" :justification="logEntry.justification" />
+          <LogActionTitle
+            v-if="logEntry"
+            :action-title="title"
+            :justification="logEntry.justification"
+          />
           <span v-else>{{ title }}</span>
         </template>
       </span>
     </template>
     <template #toolbar>
-			<button
-				v-for="dashboard in backToDashboards"
-				:key="dashboard.path"
-				@click="goToDashboard(dashboard.path)"
-				:title="'Back to ' + dashboard.title"
-				class="button neutral"
-			>
-				<HugeiconsIcon :icon="DashboardSquare01Icon" />
-				{{ dashboard.title }}
-			</button>
-			<button v-if="backToDashboards.length === 0" @click="goBack" title="Go back" class="button neutral">
-				<HugeiconsIcon :icon="ArrowLeftIcon" />
-				Back
-			</button>
+      <button
+        v-for="dashboard in backToDashboards"
+        :key="dashboard.path"
+        :title="'Back to ' + dashboard.title"
+        class="button neutral"
+        @click="goToDashboard(dashboard.path)"
+      >
+        <HugeiconsIcon :icon="DashboardSquare01Icon" />
+        {{ dashboard.title }}
+      </button>
+      <button
+        v-if="backToDashboards.length === 0"
+        title="Go back"
+        class="button neutral"
+        @click="goBack"
+      >
+        <HugeiconsIcon :icon="ArrowLeftIcon" />
+        Back
+      </button>
     </template>
 
-		<div v-if="logEntry" class = "flex-row">
-				<dl class = "fg1">
-					<dt>Duration</dt>
-					<dd><span v-html="duration"></span></dd>
+    <div
+      v-if="logEntry"
+      class="flex-row"
+    >
+      <dl class="fg1">
+        <dt>Duration</dt>
+        <dd><span v-html="duration" /></dd>
 
-					<dt>Status</dt>
-					<dd class="execution-dialog-status">
-						<ActionStatusDisplay :log-entry="logEntry" :link-queued-status="true" />
-					</dd>
-				</dl>
+        <dt>Status</dt>
+        <dd class="execution-dialog-status">
+          <ActionStatusDisplay
+            :log-entry="logEntry"
+            :link-queued-status="true"
+          />
+        </dd>
+      </dl>
     </div>
 
-		<div v-if="notFound" class="error-message padded-content">
-			<h3>Execution Not Found</h3>
-			<p>{{ errorMessage }}</p>
-			<p>The execution with ID <code>{{ executionTrackingId }}</code> could not be found.</p>
-			<router-link to="/logs">View all logs</router-link> or <router-link to="/">return to home</router-link>.
-		</div>
+    <div
+      v-if="notFound"
+      class="error-message padded-content"
+    >
+      <h3>Execution Not Found</h3>
+      <p>{{ errorMessage }}</p>
+      <p>The execution with ID <code>{{ executionTrackingId }}</code> could not be found.</p>
+      <router-link to="/logs">
+        View all logs
+      </router-link> or <router-link to="/">
+        return to home
+      </router-link>.
+    </div>
 
     <div class="xterm-output-container">
       <div class="xterm-overlay-toolbar">
-        <button type="button" class="xterm-overlay-button" @click="copyOutput" title="Copy to clipboard">
+        <button
+          type="button"
+          class="xterm-overlay-button"
+          title="Copy to clipboard"
+          @click="copyOutput"
+        >
           <HugeiconsIcon :icon="Copy01Icon" />
         </button>
-        <button type="button" class="xterm-overlay-button" @click="toggleSize" title="Toggle fullscreen">
-          <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
-            <path fill="currentColor"
-                  d="M3 3h6v2H6.462l4.843 4.843l-1.415 1.414L5 6.367V9H3zm0 18h6v-2H6.376l4.929-4.928l-1.415-1.414L5 17.548V15H3zm12 0h6v-6h-2v2.524l-4.867-4.866l-1.414 1.414L17.647 19H15zm6-18h-6v2h2.562l-4.843 4.843l1.414 1.414L19 6.39V9h2z" />
+        <button
+          type="button"
+          class="xterm-overlay-button"
+          title="Toggle fullscreen"
+          @click="toggleSize"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="1em"
+            height="1em"
+            viewBox="0 0 24 24"
+          >
+            <path
+              fill="currentColor"
+              d="M3 3h6v2H6.462l4.843 4.843l-1.415 1.414L5 6.367V9H3zm0 18h6v-2H6.376l4.929-4.928l-1.415-1.414L5 17.548V15H3zm12 0h6v-6h-2v2.524l-4.867-4.866l-1.414 1.414L17.647 19H15zm6-18h-6v2h2.562l-4.843 4.843l1.414 1.414L19 6.39V9h2z"
+            />
           </svg>
         </button>
       </div>
-      <div ref="xtermOutput"></div>
+      <div ref="xtermOutput" />
     </div>
 
-			<br />
+    <br>
 
-			<div class="flex-row g1 buttons padded-content">
-				<div class = "fg1" />
+    <div class="flex-row g1 buttons padded-content">
+      <div class="fg1" />
 
-					<button :disabled="!canRerun" @click="rerunAction" title="Rerun">
-						<HugeiconsIcon :icon="WorkoutRunIcon" />
-						Rerun
-					</button>
-					<button :disabled="!canKill" @click="killAction" title="Kill" id = "execution-dialog-kill-action">
-						<HugeiconsIcon :icon="Cancel02Icon" />
-						Kill
-					</button>
-				</div>
-
-	</Section>
+      <button
+        :disabled="!canRerun"
+        title="Rerun"
+        @click="rerunAction"
+      >
+        <HugeiconsIcon :icon="WorkoutRunIcon" />
+        Rerun
+      </button>
+      <button
+        id="execution-dialog-kill-action"
+        :disabled="!canKill"
+        title="Kill"
+        @click="killAction"
+      >
+        <HugeiconsIcon :icon="Cancel02Icon" />
+        Kill
+      </button>
+    </div>
+  </Section>
 </template>
 
 <script setup>
-	import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
+import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import ActionIconGlyph from '../components/ActionIconGlyph.vue'
 import ActionStatusDisplay from '../components/ActionStatusDisplay.vue'
 import LogActionTitle from '../components/LogActionTitle.vue'
@@ -113,8 +167,8 @@ const xtermOutput = ref(null)
 
 const props = defineProps({
   executionTrackingId: {
-	type: String,
-	required: true
+    type: String,
+    required: true
   }
 })
 
@@ -138,7 +192,7 @@ const errorMessage = ref('')
 let executionTicker = null
 let terminal = null
 
-function initializeTerminal() {
+function initializeTerminal () {
   terminal = new OutputTerminal(executionTrackingId.value)
   terminal.open(xtermOutput.value)
   terminal.resize(80, 40)
@@ -146,7 +200,7 @@ function initializeTerminal() {
   window.terminal = terminal
 }
 
-function toggleSize() {
+function toggleSize () {
   if (!xtermOutput.value) {
     return
   }
@@ -162,7 +216,7 @@ function toggleSize() {
   }
 }
 
-async function copyOutput() {
+async function copyOutput () {
   const text = terminal?.getBufferAsString?.() || logEntry.value?.output || ''
   if (!text) {
     return
@@ -175,7 +229,7 @@ async function copyOutput() {
   }
 }
 
-async function reset() {
+async function reset () {
   executionSeconds.value = 0
   executionTrackingId.value = 'notset'
   hideBasics.value = false
@@ -195,31 +249,31 @@ async function reset() {
   errorMessage.value = ''
 
   if (terminal) {
-	await terminal.reset()
-	terminal.fit()
+    await terminal.reset()
+    terminal.fit()
   }
 }
 
-function show(actionButton) {
+function show (actionButton) {
   if (actionButton) {
-	icon.value = actionButton.glyph ?? ''
+    icon.value = actionButton.glyph ?? ''
   }
 
   canKill.value = true
 
   // Clear existing ticker
   if (executionTicker) {
-	clearInterval(executionTicker)
+    clearInterval(executionTicker)
   }
 
   executionSeconds.value = 0
   executionTick()
   executionTicker = setInterval(() => {
-	executionTick()
+    executionTick()
   }, 1000)
 }
 
-async function rerunAction() {
+async function rerunAction () {
   const bindingId = logEntry.value?.bindingId
   if (!logEntry.value || !bindingId) {
     console.error('Cannot rerun: no action ID available')
@@ -247,36 +301,36 @@ async function rerunAction() {
   }
 }
 
-async function killAction() {
+async function killAction () {
   if (!executionTrackingId.value || executionTrackingId.value === 'notset') {
-	return
+    return
   }
 
   const killActionArgs = {
-	executionTrackingId: executionTrackingId.value
+    executionTrackingId: executionTrackingId.value
   }
 
   try {
-	await window.client.killAction(killActionArgs)
+    await window.client.killAction(killActionArgs)
   } catch (err) {
-	console.error('Failed to kill action:', err)
+    console.error('Failed to kill action:', err)
   }
 }
 
-function executionTick() {
+function executionTick () {
   executionSeconds.value++
   updateDuration(null)
 }
 
-function hideEverythingApartFromOutput() {
+function hideEverythingApartFromOutput () {
   hideDetailsOnResult.value = true
   hideBasics.value = true
   hideDetailsOnResult.value = true
   hideBasics.value = true
 }
 
-async function fetchExecutionResult(executionTrackingIdParam) {
-  console.log("fetchExecutionResult", executionTrackingIdParam)
+async function fetchExecutionResult (executionTrackingIdParam) {
+  console.log('fetchExecutionResult', executionTrackingIdParam)
 
   executionTrackingId.value = executionTrackingIdParam
   notFound.value = false
@@ -284,50 +338,49 @@ async function fetchExecutionResult(executionTrackingIdParam) {
   backToDashboards.value = []
 
   const executionStatusArgs = {
-	executionTrackingId: executionTrackingId.value
+    executionTrackingId: executionTrackingId.value
   }
 
   try {
-	const executionStatusResult = await window.client.executionStatus(executionStatusArgs)
+    const executionStatusResult = await window.client.executionStatus(executionStatusArgs)
 
-	await renderExecutionResult(executionStatusResult)
+    await renderExecutionResult(executionStatusResult)
   } catch (err) {
-	// Check if it's a "not found" error (404 or similar)
-	if (err.status === 404 || err.code === 'NotFound' || err.message?.includes('not found')) {
+    // Check if it's a "not found" error (404 or similar)
+    if (err.status === 404 || err.code === 'NotFound' || err.message?.includes('not found')) {
 	  notFound.value = true
 	  errorMessage.value = err.message || 'The execution could not be found in the system.'
-	} else {
+    } else {
 	  renderError(err)
-	}
-	throw err
+    }
+    throw err
   }
 }
 
-function updateDuration(logEntryParam) {
+function updateDuration (logEntryParam) {
   logEntry.value = logEntryParam
   if (logEntry.value == null) {
-	duration.value = executionSeconds.value + ' seconds'
-	duration.value = duration.value
+    duration.value = executionSeconds.value + ' seconds'
   } else if (!logEntry.value.executionStarted) {
-	duration.value = logEntry.value.datetimeStarted + ' (request time). Not executed.'
+    duration.value = logEntry.value.datetimeStarted + ' (request time). Not executed.'
   } else if (logEntry.value.executionStarted && !logEntry.value.executionFinished) {
-	duration.value = logEntry.value.datetimeStarted
+    duration.value = logEntry.value.datetimeStarted
   } else {
-	let delta = ''
-	try {
+    let delta = ''
+    try {
 		  delta = (new Date(logEntry.value.datetimeFinished) - new Date(logEntry.value.datetimeStarted)) / 1000
 	  delta = new Intl.RelativeTimeFormat().format(delta, 'seconds').replace('in ', '').replace('ago', '')
-	} catch (e) {
+    } catch (e) {
 	  console.warn('Failed to calculate delta', e)
-	}
-	duration.value = logEntry.value.datetimeStarted + ' &rarr; ' + logEntry.value.datetimeFinished
-	if (delta !== '') {
+    }
+    duration.value = logEntry.value.datetimeStarted + ' &rarr; ' + logEntry.value.datetimeFinished
+    if (delta !== '') {
 	  duration.value += ' (' + delta + ')'
-	}
+    }
   }
 }
 
-async function renderExecutionResult(res) {
+async function renderExecutionResult (res) {
   logEntry.value = res.logEntry
   if (res.backToDashboards) {
     backToDashboards.value = res.backToDashboards.slice(0, 3)
@@ -335,12 +388,12 @@ async function renderExecutionResult(res) {
 
   // Clear ticker
   if (executionTicker) {
-	clearInterval(executionTicker)
+    clearInterval(executionTicker)
   }
   executionTicker = null
 
   if (hideDetailsOnResult.value) {
-	hideDetails.value = true
+    hideDetails.value = true
   }
 
   executionTrackingId.value = res.logEntry.executionTrackingId
@@ -355,41 +408,41 @@ async function renderExecutionResult(res) {
   updateDuration(res.logEntry)
 
   if (terminal) {
-	await terminal.reset()
-	await terminal.write(res.logEntry.output, () => {
+    await terminal.reset()
+    await terminal.write(res.logEntry.output, () => {
 	  terminal.fit()
-	})
+    })
   }
 }
 
-function renderError(err) {
+function renderError (err) {
   window.showBigError('execution-dlg-err', 'in the execution dialog', 'Failed to fetch execution result. ' + err, false)
 }
 
-function handleClose() {
+function handleClose () {
   if (executionTicker) {
-	clearInterval(executionTicker)
+    clearInterval(executionTicker)
   }
 
   executionTicker = null
 }
 
-function cleanup() {
+function cleanup () {
   if (executionTicker) {
-	clearInterval(executionTicker)
+    clearInterval(executionTicker)
   }
   executionTicker = null
   if (terminal != null) {
-	terminal.close()
+    terminal.close()
   }
   terminal = null
 }
 
-function goBack() {
+function goBack () {
   router.back()
 }
 
-function goToDashboard(path) {
+function goToDashboard (path) {
   router.push(path)
 }
 
@@ -409,16 +462,15 @@ onMounted(() => {
   fetchExecutionResult(props.executionTrackingId)
 
   watch(
-	() => buttonResults[props.executionTrackingId],
-	(newResult, oldResult) => {
+    () => buttonResults[props.executionTrackingId],
+    (newResult, oldResult) => {
 	  if (newResult) {
-		renderExecutionResult({
+        renderExecutionResult({
 		  logEntry: newResult
-		})
+        })
 	  }
-	}
+    }
   )
-
 })
 
 onBeforeUnmount(() => {

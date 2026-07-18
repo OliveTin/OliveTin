@@ -4,7 +4,7 @@ endef
 
 codestyle:
 	npm install
-	npx eslint --fix main.js js/*
+	npx eslint --fix main.js js/* resources/vue
 	npx stylelint style.css
 
 clean:

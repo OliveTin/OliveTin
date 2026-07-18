@@ -30,8 +30,7 @@ compile: compile-armhf compile-x64-lin compile-x64-win
 codestyle: go-tools
 	go fmt ./...
 	go vet ./...
-	gocyclo -over 4 internal
-	gocritic check ./...
+	golangci-lint run ./...
 
 test: unittests
 
@@ -54,13 +53,11 @@ find-flakey-tests-inf:
 	go run ./scripts/find-flakey-tests-inf
 
 go-tools:
-	go install "github.com/fzipp/gocyclo/cmd/gocyclo"
-	go install "github.com/go-critic/go-critic/cmd/gocritic"
+	go install "github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest"
 
 .PHONY: unittests unittests-fast find-flakey-tests find-flakey-tests-inf
 
 go-tools-all:
 	go install "github.com/bufbuild/buf/cmd/buf"
-	go install "github.com/fzipp/gocyclo/cmd/gocyclo"
-	go install "github.com/go-critic/go-critic/cmd/gocritic"
+	go install "github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest"
 	go install "google.golang.org/protobuf/cmd/protoc-gen-go"

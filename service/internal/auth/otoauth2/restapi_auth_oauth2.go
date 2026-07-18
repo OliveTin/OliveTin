@@ -354,7 +354,7 @@ func getUserInfo(cfg *config.Config, client *http.Client, provider *config.OAuth
 		return ret
 	}
 
-	defer res.Body.Close()
+	defer func() { _ = res.Body.Close() }()
 
 	contents, err := io.ReadAll(res.Body)
 
@@ -369,7 +369,7 @@ func getUserInfo(cfg *config.Config, client *http.Client, provider *config.OAuth
 		log.Debugf("OAuth2 User Data: %v+", string(contents))
 	}
 
-	err = json.Unmarshal([]byte(contents), &userData)
+	err = json.Unmarshal(contents, &userData)
 
 	if err != nil {
 		log.Errorf("Failed to unmarshal user data: %v", err)

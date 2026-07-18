@@ -1,6 +1,6 @@
 <template>
-  <div 
-    :id="`execution-${executionTrackingId}`"
+  <div
+    :id="`execution-${trackingId}`"
     class="execution-button"
   >
     <button
@@ -13,25 +13,26 @@
 </template>
 
 <script>
-//import { ExecutionFeedbackButton } from '../js/ExecutionFeedbackButton.js'
+// import { ExecutionFeedbackButton } from '../js/ExecutionFeedbackButton.js'
 
 export default {
   name: 'ExecutionButton',
-//  mixins: [ExecutionFeedbackButton],
+  //  mixins: [ExecutionFeedbackButton],
   props: {
     executionTrackingId: {
       type: String,
       required: true
     }
   },
-  data() {
+  data () {
     return {
+      trackingId: '',
       ellapsed: 0,
       isWaiting: true
     }
   },
   computed: {
-    buttonText() {
+    buttonText () {
       if (this.isWaiting) {
         return 'Executing...'
       } else {
@@ -39,33 +40,34 @@ export default {
       }
     }
   },
-  mounted() {
+  mounted () {
+    this.trackingId = this.executionTrackingId
     this.constructFromJson(this.executionTrackingId)
   },
   methods: {
-    constructFromJson(json) {
-      this.executionTrackingId = json
+    constructFromJson (json) {
+      this.trackingId = json
       this.ellapsed = 0
       this.isWaiting = true
     },
-    
-    show() {
+
+    show () {
       this.$emit('show')
-      
+
       if (window.executionDialog) {
         window.executionDialog.reset()
         window.executionDialog.show()
-        window.executionDialog.fetchExecutionResult(this.executionTrackingId)
+        window.executionDialog.fetchExecutionResult(this.trackingId)
       }
     },
-    
-    onExecStatusChanged() {
+
+    onExecStatusChanged () {
       this.isWaiting = false
       this.domTitle = this.ellapsed + 's'
     },
-    
+
     // Override from ExecutionFeedbackButton
-    onExecutionFinished(logEntry) {
+    onExecutionFinished (logEntry) {
       if (logEntry.timedOut) {
         this.renderExecutionResult('action-timeout', 'Timed out')
       } else if (logEntry.blocked) {
@@ -77,13 +79,13 @@ export default {
         this.renderExecutionResult('action-success', 'Success!')
       }
     },
-    
-    renderExecutionResult(resultCssClass, temporaryStatusMessage) {
+
+    renderExecutionResult (resultCssClass, temporaryStatusMessage) {
       this.updateDom(resultCssClass, '[' + temporaryStatusMessage + ']')
       this.onExecStatusChanged()
     },
-    
-    updateDom(resultCssClass, title) {
+
+    updateDom (resultCssClass, title) {
       // For execution button, we don't need to update classes as much
       // since it's a simpler component
       if (resultCssClass) {
@@ -138,4 +140,4 @@ export default {
   border-color: #c3e6cb;
   color: #155724;
 }
-</style> 
+</style>

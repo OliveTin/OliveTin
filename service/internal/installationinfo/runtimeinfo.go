@@ -96,7 +96,7 @@ func getOsReleasePrettyName() string {
 		}
 	}
 
-	handle.Close()
+	_ = handle.Close()
 
 	return "notfound"
 }

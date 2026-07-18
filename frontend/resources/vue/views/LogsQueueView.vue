@@ -1,19 +1,40 @@
 <template>
-  <Section :title="t('logs.queue-title')" :padding="false">
+  <Section
+    :title="t('logs.queue-title')"
+    :padding="false"
+  >
     <template #toolbar>
-      <router-link to="/logs" class="button neutral">
-        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
-          <path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8l8 8l1.41-1.41L7.83 13H20z"/>
+      <router-link
+        to="/logs"
+        class="button neutral"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="1em"
+          height="1em"
+          viewBox="0 0 24 24"
+        >
+          <path
+            fill="currentColor"
+            d="M20 11H7.83l5.59-5.59L12 4l-8 8l8 8l1.41-1.41L7.83 13H20z"
+          />
         </svg>
         {{ t('logs.back-to-list') }}
       </router-link>
     </template>
 
-    <p class="padding">{{ t('logs.queue-page-description') }}</p>
+    <p class="padding">
+      {{ t('logs.queue-page-description') }}
+    </p>
 
-    <div v-if="groups.length === 0 && !loading" class="empty-state padding">
+    <div
+      v-if="groups.length === 0 && !loading"
+      class="empty-state padding"
+    >
       <p>{{ t('logs.queue-empty') }}</p>
-      <router-link to="/logs">{{ t('logs.back-to-list') }}</router-link>
+      <router-link to="/logs">
+        {{ t('logs.back-to-list') }}
+      </router-link>
     </div>
   </Section>
 
@@ -24,7 +45,10 @@
   >
     <div class="section-header flex-row">
       <div class="fg1 queue-action-group-heading">
-        <ActionIconGlyph class="icon" :glyph="actionGroup.icon" />
+        <ActionIconGlyph
+          class="icon"
+          :glyph="actionGroup.icon"
+        />
         <h2>{{ displayActionGroupName(actionGroup.name) }}</h2>
       </div>
       <ActionGroupLimitsLabel
@@ -44,23 +68,34 @@
           </tr>
         </thead>
         <tbody>
-          <template v-for="action in actionGroup.actions" :key="`${actionGroup.name}:${action.bindingId}`">
+          <template
+            v-for="action in actionGroup.actions"
+            :key="`${actionGroup.name}:${action.bindingId}`"
+          >
             <tr
               v-for="(entry, index) in action.entries"
               :key="entry.executionTrackingId"
               class="log-row"
               :title="action.actionTitle"
             >
-              <td class="timestamp">{{ formatTimestamp(entry.datetimeStarted) }}</td>
+              <td class="timestamp">
+                {{ formatTimestamp(entry.datetimeStarted) }}
+              </td>
               <td>
-                <ActionIconGlyph class="icon" :glyph="action.actionIcon" />
+                <ActionIconGlyph
+                  class="icon"
+                  :glyph="action.actionIcon"
+                />
                 <router-link :to="`/logs/${entry.executionTrackingId}`">
                   <LogActionTitle
                     :action-title="action.actionTitle"
                     :justification="entry.justification"
                   />
                 </router-link>
-                <span v-if="action.entityPrefix" class="queue-entity annotation">
+                <span
+                  v-if="action.entityPrefix"
+                  class="queue-entity annotation"
+                >
                   {{ action.entityPrefix }}
                 </span>
               </td>
@@ -69,15 +104,28 @@
                   <span class="annotation-key">User:</span>
                   <span class="annotation-val">{{ entry.user }}</span>
                 </span>
-                <span v-if="entry.tags && entry.tags.length > 0" class="tag-list">
-                  <span v-for="tag in entry.tags" :key="tag" class="tag">{{ tag }}</span>
+                <span
+                  v-if="entry.tags && entry.tags.length > 0"
+                  class="tag-list"
+                >
+                  <span
+                    v-for="tag in entry.tags"
+                    :key="tag"
+                    class="tag"
+                  >{{ tag }}</span>
                 </span>
               </td>
               <td class="exit-code">
-                <span v-if="!entry.executionFinished" class="queue-position">
+                <span
+                  v-if="!entry.executionFinished"
+                  class="queue-position"
+                >
                   {{ t('logs.queue-position', { position: index + 1 }) }}
                 </span>
-                <ActionStatusDisplay :logEntry="entry" link-queued-status />
+                <ActionStatusDisplay
+                  :log-entry="entry"
+                  link-queued-status
+                />
               </td>
             </tr>
           </template>

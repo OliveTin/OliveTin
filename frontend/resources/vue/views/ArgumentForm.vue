@@ -1,5 +1,5 @@
 <template>
-  <section id = "argument-popup">
+  <section id="argument-popup">
     <div class="section-header">
       <h2>
         <span class="section-title-with-icon">
@@ -8,7 +8,11 @@
             :to="`/action/${bindingId}`"
             class="action-details-title-link"
           >
-            <ActionIconGlyph v-if="icon" class="action-title-icon" :glyph="icon" />
+            <ActionIconGlyph
+              v-if="icon"
+              class="action-title-icon"
+              :glyph="icon"
+            />
             {{ title }}
           </router-link>
         </span>
@@ -17,48 +21,96 @@
     <div class="section-content padding">
       <form @submit="handleSubmit">
         <template v-if="actionArguments.length > 0">
+          <template
+            v-for="arg in actionArguments"
+            :key="arg.name"
+          >
+            <label
+              v-if="arg.type !== 'checklist'"
+              :for="argumentFieldId(arg.name)"
+            >
+              {{ formatLabel(arg.title) }}
+            </label>
+            <div
+              v-else
+              class="argument-label"
+            >
+              {{ formatLabel(arg.title) }}
+            </div>
 
-          <template v-for="arg in actionArguments" :key="arg.name">
-              <label v-if="arg.type !== 'checklist'" :for="argumentFieldId(arg.name)">
-                {{ formatLabel(arg.title) }}
-              </label>
-              <div v-else class="argument-label">
-                {{ formatLabel(arg.title) }}
-              </div>
+            <datalist
+              v-if="(arg.suggestions && Object.keys(arg.suggestions).length > 0) || getBrowserSuggestions(arg).length > 0"
+              :id="argumentFieldChoicesId(arg.name)"
+            >
+              <option
+                v-for="(suggestion, key) in arg.suggestions"
+                :key="key"
+                :value="key"
+              >
+                {{ suggestion }}
+              </option>
+              <option
+                v-for="(suggestion, index) in getBrowserSuggestions(arg)"
+                :key="`browser-${index}`"
+                :value="suggestion"
+              >
+                {{ suggestion }}
+              </option>
+            </datalist>
 
-              <datalist v-if="(arg.suggestions && Object.keys(arg.suggestions).length > 0) || getBrowserSuggestions(arg).length > 0" :id="argumentFieldChoicesId(arg.name)">
-                <option v-for="(suggestion, key) in arg.suggestions" :key="key" :value="key">
-                  {{ suggestion }}
-                </option>
-                <option v-for="(suggestion, index) in getBrowserSuggestions(arg)" :key="`browser-${index}`" :value="suggestion">
-                  {{ suggestion }}
-                </option>
-              </datalist>
+            <ChoiceCombobox
+              v-if="getInputComponent(arg) === 'select'"
+              :id="argumentFieldId(arg.name)"
+              :name="arg.name"
+              :choices="arg.choices"
+              :model-value="getArgumentValue(arg)"
+              :required="arg.required"
+              @update:model-value="handleChoiceUpdate(arg, $event)"
+            />
 
-              <ChoiceCombobox v-if="getInputComponent(arg) === 'select'" :id="argumentFieldId(arg.name)" :name="arg.name"
-                :choices="arg.choices" :model-value="getArgumentValue(arg)" :required="arg.required"
-                @update:model-value="handleChoiceUpdate(arg, $event)" />
+            <ChoiceChecklist
+              v-else-if="arg.type === 'checklist'"
+              :name="arg.name"
+              :label="arg.title"
+              :choices="arg.choices"
+              :model-value="getArgumentValue(arg)"
+              :required="arg.required"
+              @update:model-value="handleChoiceUpdate(arg, $event)"
+            />
 
-              <ChoiceChecklist v-else-if="arg.type === 'checklist'" :name="arg.name"
-                :label="arg.title" :choices="arg.choices" :model-value="getArgumentValue(arg)" :required="arg.required"
-                @update:model-value="handleChoiceUpdate(arg, $event)" />
+            <component
+              :is="getInputComponent(arg)"
+              v-else
+              :id="argumentFieldId(arg.name)"
+              :name="arg.name"
+              :value="(arg.type === 'checkbox' || arg.type === 'confirmation') ? undefined : getArgumentValue(arg)"
+              :checked="(arg.type === 'checkbox' || arg.type === 'confirmation') ? getArgumentValue(arg) : undefined"
+              :list="(arg.suggestions || getBrowserSuggestions(arg).length > 0) ? argumentFieldChoicesId(arg.name) : undefined"
+              :type="getInputComponent(arg) !== 'select' ? getInputType(arg) : undefined"
+              :rows="arg.type === 'raw_string_multiline' ? 5 : undefined"
+              :step="arg.type === 'datetime' ? 1 : undefined"
+              :pattern="getPattern(arg)"
+              @input="handleInput(arg, $event)"
+              @change="handleChange(arg, $event)"
+            />
 
-              <component v-else :is="getInputComponent(arg)" :id="argumentFieldId(arg.name)" :name="arg.name"
-                :value="(arg.type === 'checkbox' || arg.type === 'confirmation') ? undefined : getArgumentValue(arg)"
-                :checked="(arg.type === 'checkbox' || arg.type === 'confirmation') ? getArgumentValue(arg) : undefined"
-                :list="(arg.suggestions || getBrowserSuggestions(arg).length > 0) ? argumentFieldChoicesId(arg.name) : undefined"
-                :type="getInputComponent(arg) !== 'select' ? getInputType(arg) : undefined"
-                :rows="arg.type === 'raw_string_multiline' ? 5 : undefined"
-                :step="arg.type === 'datetime' ? 1 : undefined" :pattern="getPattern(arg)"
-                @input="handleInput(arg, $event)" @change="handleChange(arg, $event)" />
-
-            <span class="argument-description" v-html="arg.description"></span>
+            <span
+              class="argument-description"
+              v-html="arg.description"
+            />
           </template>
         </template>
 
         <template v-if="justificationRequired">
           <label for="justification">Justification:</label>
-          <input id="justification" name="justification" type="text" :value="justificationValue" required @input="handleJustificationInput" />
+          <input
+            id="justification"
+            name="justification"
+            type="text"
+            :value="justificationValue"
+            required
+            @input="handleJustificationInput"
+          >
         </template>
 
         <div v-if="actionArguments.length === 0 && !justificationRequired">
@@ -66,10 +118,18 @@
         </div>
 
         <div class="buttons">
-          <button name="start" type="submit" :disabled="!formReady || (hasConfirmation && !confirmationChecked)">
+          <button
+            name="start"
+            type="submit"
+            :disabled="!formReady || (hasConfirmation && !confirmationChecked)"
+          >
             Start
           </button>
-          <button name="cancel" type="button" @click="handleCancel">
+          <button
+            name="cancel"
+            type="button"
+            @click="handleCancel"
+          >
             Cancel
           </button>
         </div>
@@ -103,7 +163,7 @@ const router = useRouter()
 const dialog = ref(null)
 const title = ref('')
 const icon = ref('')
-//const arguments = ref([])
+// const arguments = ref([])
 const argValues = ref({})
 const confirmationChecked = ref(false)
 const hasConfirmation = ref(false)
@@ -128,7 +188,7 @@ const props = defineProps({
 })
 
 // Methods
-async function setup() {
+async function setup () {
   formReady.value = false
   document.body.removeAttribute('loaded-argument-form')
 
@@ -155,32 +215,32 @@ async function setup() {
 
     // Initialize values from navigation state, query params, or defaults
     actionArguments.value.forEach(arg => {
-    if (arg.type === 'confirmation') {
-      hasConfirmation.value = true
-      const paramValue = getInitialArgumentValue(arg.name, prefilledArguments)
-      let checkedValue = false
-      if (paramValue !== null) {
-        checkedValue = paramValue === '1' || paramValue === 'true' || paramValue === true
-      } else if (arg.defaultValue !== undefined && arg.defaultValue !== '') {
-        checkedValue = arg.defaultValue === '1' || arg.defaultValue === 'true' || arg.defaultValue === true
-      }
-      argValues.value[arg.name] = checkedValue
-      confirmationChecked.value = checkedValue
-    } else {
-      const paramValue = getInitialArgumentValue(arg.name, prefilledArguments)
-      if (arg.type === 'checkbox') {
-        // For checkboxes, handle boolean default values properly
+      if (arg.type === 'confirmation') {
+        hasConfirmation.value = true
+        const paramValue = getInitialArgumentValue(arg.name, prefilledArguments)
+        let checkedValue = false
         if (paramValue !== null) {
-          argValues.value[arg.name] = paramValue === '1' || paramValue === 'true' || paramValue === true
+          checkedValue = paramValue === '1' || paramValue === 'true' || paramValue === true
         } else if (arg.defaultValue !== undefined && arg.defaultValue !== '') {
-          argValues.value[arg.name] = arg.defaultValue === '1' || arg.defaultValue === 'true' || arg.defaultValue === true
-        } else {
-          argValues.value[arg.name] = false
+          checkedValue = arg.defaultValue === '1' || arg.defaultValue === 'true' || arg.defaultValue === true
         }
+        argValues.value[arg.name] = checkedValue
+        confirmationChecked.value = checkedValue
       } else {
-        argValues.value[arg.name] = paramValue !== null ? paramValue : arg.defaultValue || ''
+        const paramValue = getInitialArgumentValue(arg.name, prefilledArguments)
+        if (arg.type === 'checkbox') {
+        // For checkboxes, handle boolean default values properly
+          if (paramValue !== null) {
+            argValues.value[arg.name] = paramValue === '1' || paramValue === 'true' || paramValue === true
+          } else if (arg.defaultValue !== undefined && arg.defaultValue !== '') {
+            argValues.value[arg.name] = arg.defaultValue === '1' || arg.defaultValue === 'true' || arg.defaultValue === true
+          } else {
+            argValues.value[arg.name] = false
+          }
+        } else {
+          argValues.value[arg.name] = paramValue !== null ? paramValue : arg.defaultValue || ''
+        }
       }
-    }
     })
 
     // Run initial validation on all fields after DOM is updated
@@ -202,7 +262,7 @@ async function setup() {
   }
 }
 
-function formatLabel(title) {
+function formatLabel (title) {
   const lastChar = title.charAt(title.length - 1)
   if (lastChar === '?' || lastChar === '.' || lastChar === ':') {
     return title
@@ -210,7 +270,7 @@ function formatLabel(title) {
   return title + ':'
 }
 
-function getInputComponent(arg) {
+function getInputComponent (arg) {
   if (arg.type === 'html') {
     return 'div'
   } else if (arg.type === 'raw_string_multiline') {
@@ -222,7 +282,7 @@ function getInputComponent(arg) {
   }
 }
 
-function getInputType(arg) {
+function getInputType (arg) {
   if (arg.type === 'html' || arg.type === 'raw_string_multiline' || arg.type === 'select') {
     return undefined
   }
@@ -242,33 +302,33 @@ function getInputType(arg) {
   return arg.type
 }
 
-function getPattern(arg) {
+function getPattern (arg) {
   if (arg.type && arg.type.startsWith('regex:')) {
     return arg.type.replace('regex:', '')
   }
   return undefined
 }
 
-function getArgumentValue(arg) {
+function getArgumentValue (arg) {
   if (arg.type === 'checkbox' || arg.type === 'confirmation') {
     return argValues.value[arg.name] === '1' || argValues.value[arg.name] === true || argValues.value[arg.name] === 'true'
   }
   return argValues.value[arg.name] || ''
 }
 
-function handleJustificationInput(event) {
+function handleJustificationInput (event) {
   justificationValue.value = event.target.value
   justificationEditedManually.value = true
 }
 
-function handleInput(arg, event) {
+function handleInput (arg, event) {
   const value = event.target.type === 'checkbox' ? event.target.checked : event.target.value
   argValues.value[arg.name] = value
   updateUrlWithArg(arg.name, value)
   updateJustificationFromTemplate()
 }
 
-function handleChange(arg, event) {
+function handleChange (arg, event) {
   if (arg.type === 'confirmation') {
     confirmationChecked.value = event.target.checked
     return
@@ -278,18 +338,18 @@ function handleChange(arg, event) {
   validateArgument(arg, event.target.value)
 }
 
-function getValidationElement(arg) {
+function getValidationElement (arg) {
   return document.getElementById(argumentFieldValidationElementId(arg))
 }
 
-function handleChoiceUpdate(arg, value) {
+function handleChoiceUpdate (arg, value) {
   argValues.value[arg.name] = value
   updateUrlWithArg(arg.name, value)
   validateArgument(arg, value)
   updateJustificationFromTemplate()
 }
 
-async function validateArgument(arg, value) {
+async function validateArgument (arg, value) {
   if (!arg.type || arg.type.startsWith('regex:')) {
     return
   }
@@ -316,7 +376,7 @@ async function validateArgument(arg, value) {
 
   try {
     const validateArgumentTypeArgs = {
-      value: value,
+      value,
       type: arg.type,
       bindingId: props.bindingId,
       argumentName: arg.name
@@ -348,7 +408,7 @@ async function validateArgument(arg, value) {
   }
 }
 
-function updateUrlWithArg(name, value) {
+function updateUrlWithArg (name, value) {
   if (name && value !== undefined) {
     const url = new URL(window.location.href)
 
@@ -363,7 +423,7 @@ function updateUrlWithArg(name, value) {
   }
 }
 
-function shouldSendArgument(arg) {
+function shouldSendArgument (arg) {
   if (!arg.name) {
     return false
   }
@@ -371,7 +431,7 @@ function shouldSendArgument(arg) {
   return arg.type !== 'html'
 }
 
-function formatArgumentValueForApi(arg, rawValue) {
+function formatArgumentValueForApi (arg, rawValue) {
   if (arg.type === 'checkbox' || arg.type === 'confirmation') {
     return rawValue === '1' || rawValue === true || rawValue === 'true' ? '1' : '0'
   }
@@ -387,7 +447,7 @@ function formatArgumentValueForApi(arg, rawValue) {
   return rawValue ?? ''
 }
 
-function getSelectedArgumentEntries() {
+function getSelectedArgumentEntries () {
   const entries = []
 
   for (const arg of actionArguments.value) {
@@ -404,17 +464,17 @@ function getSelectedArgumentEntries() {
   return entries
 }
 
-function getArgumentValues() {
+function getArgumentValues () {
   return getSelectedArgumentEntries().map(({ name, value }) => ({ name, value }))
 }
 
-function getArgumentMapForTemplate() {
+function getArgumentMapForTemplate () {
   return Object.fromEntries(
     getSelectedArgumentEntries().map(({ name, value }) => [name, value])
   )
 }
 
-function updateJustificationFromTemplate() {
+function updateJustificationFromTemplate () {
   if (!justificationTemplate.value || justificationEditedManually.value) {
     return
   }
@@ -422,7 +482,7 @@ function updateJustificationFromTemplate() {
   justificationValue.value = applyArgumentTemplate(justificationTemplate.value, getArgumentMapForTemplate())
 }
 
-function getUniqueId() {
+function getUniqueId () {
   if (window.isSecureContext) {
     return window.crypto.randomUUID()
   } else {
@@ -430,7 +490,7 @@ function getUniqueId() {
   }
 }
 
-function getBrowserSuggestions(arg) {
+function getBrowserSuggestions (arg) {
   if (!arg.suggestionsBrowserKey) {
     return []
   }
@@ -448,7 +508,7 @@ function getBrowserSuggestions(arg) {
   return []
 }
 
-function saveBrowserSuggestions() {
+function saveBrowserSuggestions () {
   for (const arg of actionArguments.value) {
     if (arg.suggestionsBrowserKey) {
       const value = argValues.value[arg.name]
@@ -484,7 +544,7 @@ function saveBrowserSuggestions() {
   }
 }
 
-async function startAction(actionArgs) {
+async function startAction (actionArgs) {
   const startActionArgs = {
     bindingId: props.bindingId,
     arguments: actionArgs,
@@ -506,7 +566,7 @@ async function startAction(actionArgs) {
   }
 }
 
-async function handleSubmit(event) {
+async function handleSubmit (event) {
   event.preventDefault()
 
   if (!formReady.value) {
@@ -568,24 +628,24 @@ async function handleSubmit(event) {
   }
 }
 
-function handleCancel() {
+function handleCancel () {
   router.back()
   clearBookmark()
 }
 
-function clearBookmark() {
+function clearBookmark () {
   window.history.replaceState({
     path: window.location.pathname
   }, '', window.location.pathname)
 }
 
-function show() {
+function show () {
   if (dialog.value) {
     dialog.value.showModal()
   }
 }
 
-function close() {
+function close () {
   if (dialog.value) {
     dialog.value.close()
   }
@@ -637,7 +697,6 @@ onUnmounted(() => {
 form {
   grid-template-columns: max-content auto auto;
 }
-
 
 .argument-description {
   font-size: 0.875rem;

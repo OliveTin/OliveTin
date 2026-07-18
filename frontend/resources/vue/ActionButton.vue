@@ -1,36 +1,73 @@
 <template>
-	<div :id="`actionButton-${bindingId}`" role="none" class="action-button" @contextmenu.prevent="openActionDetails">
-		<span
-			v-if="showExecutionIndicator"
-			class="execution-indicator"
-			:class="executionIndicatorClass"
-			:title="executionIndicatorTitle"
-			aria-hidden="true"
-		></span>
-		<button :id="`actionButtonInner-${bindingId}`" :title="title" :disabled="!canExec || isDisabled"
-													  :class="combinedClasses" @click="handleClick">
+  <div
+    :id="`actionButton-${bindingId}`"
+    role="none"
+    class="action-button"
+    @contextmenu.prevent="openActionDetails"
+  >
+    <span
+      v-if="showExecutionIndicator"
+      class="execution-indicator"
+      :class="executionIndicatorClass"
+      :title="executionIndicatorTitle"
+      aria-hidden="true"
+    />
+    <button
+      :id="`actionButtonInner-${bindingId}`"
+      :title="title"
+      :disabled="!canExec || isDisabled"
+      :class="combinedClasses"
+      @click="handleClick"
+    >
+      <div
+        v-if="showNavigateOnStartIcons"
+        class="navigate-on-start-container"
+      >
+        <div
+          v-if="navigateOnStart == 'pop'"
+          class="navigate-on-start"
+          title="Opens a popup dialog on start"
+        >
+          <HugeiconsIcon :icon="ComputerTerminal01Icon" />
+        </div>
+        <div
+          v-if="navigateOnStart == 'arg'"
+          class="navigate-on-start"
+          title="Opens an argument form on start"
+        >
+          <HugeiconsIcon :icon="TypeCursorIcon" />
+        </div>
+        <div
+          v-if="navigateOnStart == 'hist'"
+          class="navigate-on-start"
+          title="Opens action execution history on start"
+        >
+          <HugeiconsIcon :icon="WorkHistoryIcon" />
+        </div>
+        <div
+          v-if="navigateOnStart == ''"
+          class="navigate-on-start"
+          title="Run in the background"
+        >
+          <HugeiconsIcon :icon="WorkoutRunIcon" />
+        </div>
+      </div>
 
-			<div v-if="showNavigateOnStartIcons" class="navigate-on-start-container">
-				<div v-if="navigateOnStart == 'pop'" class="navigate-on-start" title="Opens a popup dialog on start">
-					<HugeiconsIcon :icon="ComputerTerminal01Icon" />
-				</div>
-				<div v-if="navigateOnStart == 'arg'" class="navigate-on-start" title="Opens an argument form on start">
-					<HugeiconsIcon :icon="TypeCursorIcon" />
-				</div>
-				<div v-if="navigateOnStart == 'hist'" class="navigate-on-start" title="Opens action execution history on start">
-					<HugeiconsIcon :icon="WorkHistoryIcon" />
-				</div>
-				<div v-if="navigateOnStart == ''" class="navigate-on-start" title="Run in the background">
-					<HugeiconsIcon :icon="WorkoutRunIcon" />
-				</div>
-			</div>
-
-			<ActionIconGlyph class="icon" :glyph="actionGlyph" />
-			<span class="title" aria-live="polite">{{ displayTitle }}
-			</span>
-			<span v-if="rateLimitMessage" class="rate-limit-message">{{ rateLimitMessage }}</span>
-		</button>
-	</div>
+      <ActionIconGlyph
+        class="icon"
+        :glyph="actionGlyph"
+      />
+      <span
+        class="title"
+        aria-live="polite"
+      >{{ displayTitle }}
+      </span>
+      <span
+        v-if="rateLimitMessage"
+        class="rate-limit-message"
+      >{{ rateLimitMessage }}</span>
+    </button>
+  </div>
 </template>
 
 <script setup>
@@ -59,18 +96,18 @@ const navigateOnStart = ref('')
 
 const props = defineProps({
   actionData: {
-	type: Object,
-	required: true
+    type: Object,
+    required: true
   },
   cssClass: {
-	type: String,
-	required: false,
-	default: ''
+    type: String,
+    required: false,
+    default: ''
   },
   prefilledArguments: {
-	type: Object,
-	required: false,
-	default: () => ({})
+    type: Object,
+    required: false,
+    default: () => ({})
   }
 })
 
@@ -84,7 +121,6 @@ const displayTitle = ref('')
 
 // State
 const isDisabled = ref(false)
-const showArgumentForm = ref(false)
 
 // Rate limiting
 const rateLimitExpires = ref(0)
@@ -99,7 +135,7 @@ const flashedTrackingIds = new Set()
 
 // Show navigate on start icons - defaults to true if not set
 const showNavigateOnStartIcons = computed(() => {
-	return window.initResponse?.showNavigateOnStartIcons ?? true
+  return window.initResponse?.showNavigateOnStartIcons ?? true
 })
 
 const actionGlyph = computed(() => props.actionData?.icon ?? '')
@@ -107,63 +143,63 @@ const glyph = ref('')
 
 // Combined classes including custom cssClass
 const combinedClasses = computed(() => {
-	const classes = [...buttonClasses.value]
-	if (props.cssClass) {
-		classes.push(props.cssClass)
-	}
-	return classes
+  const classes = [...buttonClasses.value]
+  if (props.cssClass) {
+    classes.push(props.cssClass)
+  }
+  return classes
 })
 
 const hasRunningInstance = computed(() => {
-	const id = bindingId.value
-	return !!(id && bindingExecutionState[id]?.hasRunning)
+  const id = bindingId.value
+  return !!(id && bindingExecutionState[id]?.hasRunning)
 })
 
 const hasQueuedInstance = computed(() => {
-	const id = bindingId.value
-	return !!(id && bindingExecutionState[id]?.hasQueued)
+  const id = bindingId.value
+  return !!(id && bindingExecutionState[id]?.hasQueued)
 })
 
 const showExecutionIndicator = computed(() => {
-	return hasRunningInstance.value || hasQueuedInstance.value
+  return hasRunningInstance.value || hasQueuedInstance.value
 })
 
 const executionIndicatorClass = computed(() => {
-	if (hasRunningInstance.value) {
-		return 'execution-indicator-running'
-	}
-	if (hasQueuedInstance.value) {
-		return 'execution-indicator-queued'
-	}
-	return ''
+  if (hasRunningInstance.value) {
+    return 'execution-indicator-running'
+  }
+  if (hasQueuedInstance.value) {
+    return 'execution-indicator-queued'
+  }
+  return ''
 })
 
 const executionIndicatorTitle = computed(() => {
-	if (hasRunningInstance.value) {
-		return 'Running'
-	}
-	if (hasQueuedInstance.value) {
-		return 'Queued'
-	}
-	return ''
+  if (hasRunningInstance.value) {
+    return 'Running'
+  }
+  if (hasQueuedInstance.value) {
+    return 'Queued'
+  }
+  return ''
 })
 
 function consumeAndFlashPendingResult () {
-	const id = bindingId.value
-	if (!id) {
-		return
-	}
+  const id = bindingId.value
+  if (!id) {
+    return
+  }
 
-	const pending = consumePendingBindingFlash(id)
-	if (pending) {
-		onExecutionFinished(pending)
-	}
+  const pending = consumePendingBindingFlash(id)
+  if (pending) {
+    onExecutionFinished(pending)
+  }
 }
 
 // Timestamps
 const updateIterationTimestamp = ref(0)
 
-function constructFromJson(json) {
+function constructFromJson (json) {
   updateIterationTimestamp.value = 0
 
   updateFromJson(json)
@@ -174,11 +210,11 @@ function constructFromJson(json) {
   popupOnStart.value = json.popupOnStart
 
   if (popupOnStart.value.includes('execution-dialog')) {
-	navigateOnStart.value = 'pop'
+    navigateOnStart.value = 'pop'
   } else if (popupOnStart.value === 'history') {
-	navigateOnStart.value = 'hist'
+    navigateOnStart.value = 'hist'
   } else if (needsArgumentForm(props.actionData)) {
-	navigateOnStart.value = 'arg'
+    navigateOnStart.value = 'arg'
   }
 
   isDisabled.value = !json.canExec
@@ -186,111 +222,111 @@ function constructFromJson(json) {
   glyph.value = json.icon ?? ''
   // Initialize rate limit from action data (parse datetime string)
   if (json.datetimeRateLimitExpires) {
-	const date = new Date(json.datetimeRateLimitExpires.replace(' ', 'T'))
-	rateLimitExpires.value = date.getTime() / 1000
+    const date = new Date(json.datetimeRateLimitExpires.replace(' ', 'T'))
+    rateLimitExpires.value = date.getTime() / 1000
   } else {
-	rateLimitExpires.value = 0
+    rateLimitExpires.value = 0
   }
   // Also initialize the store so the watch picks it up
   if (bindingId.value) {
-	rateLimits[bindingId.value] = rateLimitExpires.value
-	setBindingExecutionState(
+    rateLimits[bindingId.value] = rateLimitExpires.value
+    setBindingExecutionState(
 	  bindingId.value,
 	  !!json.hasRunningInstance,
 	  !!json.hasQueuedInstance
-	)
+    )
   }
   updateRateLimitStatus()
 }
 
-function updateFromJson(json) {
+function updateFromJson (json) {
   // Fields that should not be updated
   // title - as the callback URL relies on it
 
   // Update rate limiting if changed (parse datetime string)
   if (json.datetimeRateLimitExpires) {
-	const date = new Date(json.datetimeRateLimitExpires.replace(' ', 'T'))
-	rateLimitExpires.value = date.getTime() / 1000
-	updateRateLimitStatus()
+    const date = new Date(json.datetimeRateLimitExpires.replace(' ', 'T'))
+    rateLimitExpires.value = date.getTime() / 1000
+    updateRateLimitStatus()
   } else if (json.datetimeRateLimitExpires === '') {
-	// Explicitly clear if empty string
-	rateLimitExpires.value = 0
-	updateRateLimitStatus()
+    // Explicitly clear if empty string
+    rateLimitExpires.value = 0
+    updateRateLimitStatus()
   }
 }
 
-function updateRateLimitStatus() {
+function updateRateLimitStatus () {
   if (rateLimitExpires.value === 0) {
-	isRateLimited.value = false
-	rateLimitMessage.value = ''
-	if (rateLimitInterval.value) {
+    isRateLimited.value = false
+    rateLimitMessage.value = ''
+    if (rateLimitInterval.value) {
 	  clearInterval(rateLimitInterval.value)
 	  rateLimitInterval.value = null
-	}
-	return
+    }
+    return
   }
 
   const now = Math.floor(Date.now() / 1000)
   const expires = rateLimitExpires.value
 
   if (now >= expires) {
-	// Rate limit has expired
-	isRateLimited.value = false
-	rateLimitMessage.value = ''
-	rateLimitExpires.value = 0
-	if (rateLimitInterval.value) {
+    // Rate limit has expired
+    isRateLimited.value = false
+    rateLimitMessage.value = ''
+    rateLimitExpires.value = 0
+    if (rateLimitInterval.value) {
 	  clearInterval(rateLimitInterval.value)
 	  rateLimitInterval.value = null
-	}
+    }
   } else {
-	// Still rate limited
-	isRateLimited.value = true
-	const secondsRemaining = expires - now
-	rateLimitMessage.value = `Rate limited, available in ${secondsRemaining} second${secondsRemaining !== 1 ? 's' : ''}`
+    // Still rate limited
+    isRateLimited.value = true
+    const secondsRemaining = expires - now
+    rateLimitMessage.value = `Rate limited, available in ${secondsRemaining} second${secondsRemaining !== 1 ? 's' : ''}`
 
-	// Set up interval to update every second
-		if (!rateLimitInterval.value) {
+    // Set up interval to update every second
+    if (!rateLimitInterval.value) {
 	  rateLimitInterval.value = setInterval(() => {
-		updateRateLimitStatus()
+        updateRateLimitStatus()
 	  }, 1000)
-	}
+    }
   }
 }
 
-function openActionDetails() {
+function openActionDetails () {
   const id = props.actionData?.bindingId
   if (!id) {
-	return
+    return
   }
   router.push(`/action/${id}`)
 }
 
-async function handleClick() {
+async function handleClick () {
   if (popupOnStart.value === 'history') {
-	openActionDetails()
-	return
+    openActionDetails()
+    return
   }
   if (needsArgumentForm(props.actionData)) {
-	const bindingId = props.actionData.bindingId
-	const prefilled = props.prefilledArguments || {}
-	if (Object.keys(prefilled).length > 0) {
+    const bindingId = props.actionData.bindingId
+    const prefilled = props.prefilledArguments || {}
+    if (Object.keys(prefilled).length > 0) {
 	  router.push({
-		path: `/actionBinding/${bindingId}/argumentForm`,
-		state: { prefilledArguments: prefilled }
+        path: `/actionBinding/${bindingId}/argumentForm`,
+        state: { prefilledArguments: prefilled }
 	  })
-	} else {
+    } else {
 	  router.push(`/actionBinding/${bindingId}/argumentForm`)
-	}
+    }
   } else {
-	await startAction()
+    await startAction()
   }
 }
 
-function getUniqueId() {
+function getUniqueId () {
   if (window.isSecureContext) {
-	return window.crypto.randomUUID()
+    return window.crypto.randomUUID()
   } else {
-	return Date.now().toString()
+    return Date.now().toString()
   }
 }
 
@@ -323,122 +359,122 @@ async function pollExecutionUntilDone (trackingId) {
   }
 }
 
-async function startAction(actionArgs) {
+async function startAction (actionArgs) {
   buttonClasses.value = [] // Removes old animation classes
 
   if (actionArgs === undefined) {
-	actionArgs = []
+    actionArgs = []
   }
 
   // UUIDs are create client side, so that we can setup a "execution-button"
   // to track the execution before we send the request to the server.
   const startActionArgs = {
-	bindingId: props.actionData.bindingId,
-	arguments: actionArgs,
-	uniqueTrackingId: getUniqueId()
+    bindingId: props.actionData.bindingId,
+    arguments: actionArgs,
+    uniqueTrackingId: getUniqueId()
   }
 
   console.log('Watching buttonResults for', startActionArgs.uniqueTrackingId)
 
   watch(
-	() => buttonResults[startActionArgs.uniqueTrackingId],
-	(newResult, oldResult) => {
+    () => buttonResults[startActionArgs.uniqueTrackingId],
+    (newResult, oldResult) => {
 	  onLogEntryChanged(newResult)
-	}
+    }
   )
 
   requestReconnectNow()
 
   try {
-	const response = await window.client.startAction(startActionArgs)
-	const trackingId = response.executionTrackingId || startActionArgs.uniqueTrackingId
+    const response = await window.client.startAction(startActionArgs)
+    const trackingId = response.executionTrackingId || startActionArgs.uniqueTrackingId
 
-	if (popupOnStart.value && popupOnStart.value.includes('execution-dialog')) {
+    if (popupOnStart.value && popupOnStart.value.includes('execution-dialog')) {
 	  router.push(`/logs/${trackingId}`)
-	}
+    }
 
-	if (!connectionState.connected) {
+    if (!connectionState.connected) {
 	  await pollExecutionUntilDone(trackingId)
-	}
+    }
   } catch (err) {
-	console.error('Failed to start action:', err)
+    console.error('Failed to start action:', err)
   }
 }
 
-function onLogEntryChanged(logEntry) {
+function onLogEntryChanged (logEntry) {
   if (logEntry.executionFinished) {
-	onExecutionFinished(logEntry)
+    onExecutionFinished(logEntry)
   } else if (logEntry.queued && !logEntry.executionStarted) {
-	onExecutionQueued(logEntry)
+    onExecutionQueued(logEntry)
   } else {
-	onExecutionStarted(logEntry)
+    onExecutionStarted(logEntry)
   }
 }
 
-function onExecutionQueued(_logEntry) {
+function onExecutionQueued (_logEntry) {
   isDisabled.value = true
   updateDom('action-queued', '[Queued]')
 }
 
-function onExecutionStarted(logEntry) {
+function onExecutionStarted (logEntry) {
   if (
-	popupOnStart.value &&
+    popupOnStart.value &&
 	popupOnStart.value.includes('execution-dialog') &&
 	!shouldSuppressPopupOnStartNavigation(router)
   ) {
-	router.push(`/logs/${logEntry.executionTrackingId}`)
+    router.push(`/logs/${logEntry.executionTrackingId}`)
   }
 
   isDisabled.value = true
   updateDom(null, title.value)
 }
 
-function onExecutionFinished(logEntry) {
+function onExecutionFinished (logEntry) {
   const trackingId = logEntry.executionTrackingId
   if (trackingId) {
-	if (flashedTrackingIds.has(trackingId)) {
-	  return
-	}
-	flashedTrackingIds.add(trackingId)
+    if (flashedTrackingIds.has(trackingId)) {
+      return
+    }
+    flashedTrackingIds.add(trackingId)
   }
 
   // Local no-arg watches and the binding-scoped pending flash can both
   // observe the same finished execution; consume so only one path flashes.
   if (bindingId.value) {
-	consumePendingBindingFlash(bindingId.value)
+    consumePendingBindingFlash(bindingId.value)
   }
 
   if (logEntry.timedOut) {
-	renderExecutionResult('action-timeout', 'Timed out')
+    renderExecutionResult('action-timeout', 'Timed out')
   } else if (logEntry.blocked) {
-	renderExecutionResult('action-blocked', 'Blocked!')
+    renderExecutionResult('action-blocked', 'Blocked!')
   } else if (logEntry.exitCode !== 0) {
-	renderExecutionResult('action-nonzero-exit', 'Exit code ' + logEntry.exitCode)
+    renderExecutionResult('action-nonzero-exit', 'Exit code ' + logEntry.exitCode)
   } else {
-	renderExecutionResult('action-success', 'Success!')
+    renderExecutionResult('action-success', 'Success!')
   }
 }
 
-function renderExecutionResult(resultCssClass, temporaryStatusMessage) {
+function renderExecutionResult (resultCssClass, temporaryStatusMessage) {
   updateDom(resultCssClass, '[' + temporaryStatusMessage + ']')
   onExecStatusChanged()
 }
 
-function updateDom(resultCssClass, newTitle) {
+function updateDom (resultCssClass, newTitle) {
   if (resultCssClass == null) {
-	buttonClasses.value = []
+    buttonClasses.value = []
   } else {
-	buttonClasses.value = [resultCssClass]
+    buttonClasses.value = [resultCssClass]
   }
 
   displayTitle.value = newTitle
 }
 
-function onExecStatusChanged() {
+function onExecStatusChanged () {
   isDisabled.value = false
 
   setTimeout(() => {
-	updateDom(null, title.value)
+    updateDom(null, title.value)
   }, 2000)
 }
 
@@ -448,47 +484,47 @@ onMounted(() => {
   // Watch the central rate limit store for updates to this button's bindingId
   // Watch the entire rateLimits object to ensure reactivity with dynamic keys
   watch(
-	rateLimits,
-	() => {
+    rateLimits,
+    () => {
 	  const id = bindingId.value
 	  if (id && rateLimits[id] !== undefined) {
-		const newExpires = rateLimits[id]
-		if (newExpires !== rateLimitExpires.value) {
+        const newExpires = rateLimits[id]
+        if (newExpires !== rateLimitExpires.value) {
 		  rateLimitExpires.value = newExpires
 		  updateRateLimitStatus()
-		}
+        }
 	  }
-	},
-	{ deep: true }
+    },
+    { deep: true }
   )
 
   // Binding-scoped flash survives argument-form navigation/remount (#920).
   watch(
-	() => pendingBindingFlash[bindingId.value],
-	(pending) => {
+    () => pendingBindingFlash[bindingId.value],
+    (pending) => {
 	  if (pending) {
-		consumeAndFlashPendingResult()
+        consumeAndFlashPendingResult()
 	  }
-	},
-	{ immediate: true }
+    },
+    { immediate: true }
   )
 })
 
 onUnmounted(() => {
   isComponentMounted.value = false
   if (rateLimitInterval.value) {
-	clearInterval(rateLimitInterval.value)
-	rateLimitInterval.value = null
+    clearInterval(rateLimitInterval.value)
+    rateLimitInterval.value = null
   }
 })
 
 watch(
   () => props.actionData,
   (newData) => {
-	updateFromJson(newData)
-	if (newData?.icon !== undefined) {
+    updateFromJson(newData)
+    if (newData?.icon !== undefined) {
 	  glyph.value = newData.icon ?? ''
-	}
+    }
   },
   { deep: true }
 )

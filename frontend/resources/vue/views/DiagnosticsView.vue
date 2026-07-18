@@ -1,10 +1,14 @@
 <template>
   <Section :title="t('diagnostics.get-support')">
-    <p>{{ t('diagnostics.get-support-description') }}
+    <p>
+      {{ t('diagnostics.get-support-description') }}
     </p>
     <ul>
       <li>
-        <a href = "https://docs.olivetin.app/troubleshooting/wheretofindhelp.html" target="_blank">{{ t('diagnostics.where-to-find-help') }}</a>
+        <a
+          href="https://docs.olivetin.app/troubleshooting/wheretofindhelp.html"
+          target="_blank"
+        >{{ t('diagnostics.where-to-find-help') }}</a>
       </li>
     </ul>
   </Section>
@@ -21,26 +25,61 @@
   <Section :title="t('diagnostics.server-diagnostics')">
     <p>{{ t('diagnostics.server-diagnostics-description') }}</p>
     <p>
-      <a href="https://docs.olivetin.app/troubleshooting/server-diagnostics.html" target="_blank">{{ t('diagnostics.server-diagnostics-docs') }}</a>
+      <a
+        href="https://docs.olivetin.app/troubleshooting/server-diagnostics.html"
+        target="_blank"
+      >{{ t('diagnostics.server-diagnostics-docs') }}</a>
     </p>
 
     <div role="toolbar">
-      <button @click="generateServerDiagnostics" :disabled="loading" class = "good">{{ t('diagnostics.generate-server-diagnostics') }}</button>
-      <button @click="copyServerDiagnostics" :disabled="!serverDiagnostics || loading" :class="serverDiagnosticsCopied ? 'good' : ''">{{ serverDiagnosticsCopied ? t('diagnostics.copied') : t('diagnostics.copy-to-clipboard') }}</button>
+      <button
+        :disabled="loading"
+        class="good"
+        @click="generateServerDiagnostics"
+      >
+        {{ t('diagnostics.generate-server-diagnostics') }}
+      </button>
+      <button
+        :disabled="!serverDiagnostics || loading"
+        :class="serverDiagnosticsCopied ? 'good' : ''"
+        @click="copyServerDiagnostics"
+      >
+        {{ serverDiagnosticsCopied ? t('diagnostics.copied') : t('diagnostics.copy-to-clipboard') }}
+      </button>
     </div>
 
-    <textarea v-model="serverDiagnostics" readonly style="flex: 1; min-height: 200px; resize: vertical; width: 100%; box-sizing: border-box;"></textarea>
+    <textarea
+      v-model="serverDiagnostics"
+      readonly
+      style="flex: 1; min-height: 200px; resize: vertical; width: 100%; box-sizing: border-box;"
+    />
   </Section>
 
   <Section :title="t('diagnostics.browser-info')">
     <p>{{ t('diagnostics.browser-info-description') }}</p>
 
     <div role="toolbar">
-      <button @click="generateBrowserInfo" :disabled="loading" class = "good">{{ t('diagnostics.generate-browser-info') }}</button>
-      <button @click="copyBrowserInfo" :disabled="!browserInfo || loading" :class="browserInfoCopied ? 'good' : ''">{{ browserInfoCopied ? t('diagnostics.copied') : t('diagnostics.copy-to-clipboard') }}</button>
+      <button
+        :disabled="loading"
+        class="good"
+        @click="generateBrowserInfo"
+      >
+        {{ t('diagnostics.generate-browser-info') }}
+      </button>
+      <button
+        :disabled="!browserInfo || loading"
+        :class="browserInfoCopied ? 'good' : ''"
+        @click="copyBrowserInfo"
+      >
+        {{ browserInfoCopied ? t('diagnostics.copied') : t('diagnostics.copy-to-clipboard') }}
+      </button>
     </div>
 
-    <textarea v-model="browserInfo" readonly style="flex: 1; min-height: 200px; resize: vertical; width: 100%; box-sizing: border-box;"></textarea>
+    <textarea
+      v-model="browserInfo"
+      readonly
+      style="flex: 1; min-height: 200px; resize: vertical; width: 100%; box-sizing: border-box;"
+    />
   </Section>
 </template>
 
@@ -58,17 +97,17 @@ const browserInfo = ref('')
 const serverDiagnosticsCopied = ref(false)
 const browserInfoCopied = ref(false)
 
-async function fetchDiagnostics() {
+async function fetchDiagnostics () {
   loading.value = true
 
   try {
-    const response = await window.client.getDiagnostics();
+    const response = await window.client.getDiagnostics()
     diagnostics.value = {
       sshFoundKey: response.SshFoundKey,
       sshFoundConfig: response.SshFoundConfig
-    };
+    }
   } catch (err) {
-    console.error('Failed to fetch diagnostics:', err);
+    console.error('Failed to fetch diagnostics:', err)
     diagnostics.value = {
       sshFoundKey: t('diagnostics.unknown'),
       sshFoundConfig: t('diagnostics.unknown')
@@ -77,20 +116,13 @@ async function fetchDiagnostics() {
   loading.value = false
 }
 
-function formatKey(key) {
-  return key
-    .replace(/([A-Z])/g, ' $1')
-    .replace(/^./, str => str.toUpperCase())
-    .trim()
-}
-
-async function generateServerDiagnostics() {
+async function generateServerDiagnostics () {
   const response = await window.client.serverDiagnostics()
-  console.log("response", response)
+  console.log('response', response)
   serverDiagnostics.value = `\`\`\`\n${response.alert}\n\`\`\`\n`
 }
 
-async function copyServerDiagnostics() {
+async function copyServerDiagnostics () {
   try {
     await navigator.clipboard.writeText(serverDiagnostics.value)
     serverDiagnosticsCopied.value = true
@@ -102,7 +134,7 @@ async function copyServerDiagnostics() {
   }
 }
 
-async function generateBrowserInfo() {
+async function generateBrowserInfo () {
   loading.value = true
   try {
     let userAgentData = 'N/A'
@@ -159,7 +191,7 @@ async function generateBrowserInfo() {
       })(),
       hardwareConcurrency: navigator.hardwareConcurrency || 'N/A',
       maxTouchPoints: navigator.maxTouchPoints || 'N/A',
-      userAgentData: userAgentData
+      userAgentData
     }
 
     const showVersionNumber = window.initResponse?.effectivePolicy?.showVersionNumber ?? true
@@ -168,20 +200,20 @@ async function generateBrowserInfo() {
       : '[hidden]'
     const currentLanguage = locale.value || t('diagnostics.unknown')
 
-    let output = '';
-    output += `\`\`\`\n`
+    let output = ''
+    output += '```\n'
     output += '### BROWSER INFO START (copy all text to BROWSER INFO END)\n'
-    output += `# OliveTin Information\n`
+    output += '# OliveTin Information\n'
     output += `olivetinVersion: ${olivetinVersion}\n`
     output += `currentLanguage: ${currentLanguage}\n`
-    output += `\n# Browser Information\n`
+    output += '\n# Browser Information\n'
     output += `userAgent: ${info.userAgent}\n`
     output += `platform: ${info.platform}\n`
     output += `language: ${info.language}\n`
     output += `languages: ${info.languages}\n`
-    output += `\n# User Agent Data\n`
+    output += '\n# User Agent Data\n'
     output += `userAgentData:\n${info.userAgentData}\n`
-    output += `\n# Display Information\n`
+    output += '\n# Display Information\n'
     output += `screenWidth: ${info.screenWidth}\n`
     output += `screenHeight: ${info.screenHeight}\n`
     output += `screenColorDepth: ${info.screenColorDepth}\n`
@@ -189,18 +221,18 @@ async function generateBrowserInfo() {
     output += `viewportWidth: ${info.viewportWidth}\n`
     output += `viewportHeight: ${info.viewportHeight}\n`
     output += `devicePixelRatio: ${info.devicePixelRatio}\n`
-    output += `\n# Feature Support\n`
+    output += '\n# Feature Support\n'
     output += `cookieEnabled: ${info.cookieEnabled}\n`
     output += `localStorageEnabled: ${info.localStorageEnabled}\n`
     output += `sessionStorageEnabled: ${info.sessionStorageEnabled}\n`
     output += `onLine: ${info.onLine}\n`
     output += `hardwareConcurrency: ${info.hardwareConcurrency}\n`
     output += `maxTouchPoints: ${info.maxTouchPoints}\n`
-    output += `\n# Location & Time\n`
+    output += '\n# Location & Time\n'
     output += `timezone: ${info.timezone}\n`
     output += `timezoneOffset: ${info.timezoneOffset}\n`
-    output += `\n### BROWSER INFO END (copy all text from BROWSER INFO START)`
-    output += `\n\`\`\`\n`
+    output += '\n### BROWSER INFO END (copy all text from BROWSER INFO START)'
+    output += '\n```\n'
 
     browserInfo.value = output
   } finally {
@@ -208,7 +240,7 @@ async function generateBrowserInfo() {
   }
 }
 
-async function copyBrowserInfo() {
+async function copyBrowserInfo () {
   try {
     await navigator.clipboard.writeText(browserInfo.value)
     browserInfoCopied.value = true

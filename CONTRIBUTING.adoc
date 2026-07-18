@@ -43,6 +43,7 @@ choco install git go protoc make python nodejs-lts -y && pip install pre-commit
 git clone https://github.com/OliveTin/OliveTin.git
 cd OliveTin
 pre-commit install
+pre-commit install --hook-type pre-push
 
 # Step3: compile binary for current dev env (OS, ARCH)
 # `make proto` will also run `make go-tools`, which installs "buf". This binary

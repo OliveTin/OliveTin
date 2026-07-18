@@ -1,15 +1,28 @@
 <template>
-  <div class="choice-checklist" :id="wrapperId">
+  <div
+    :id="wrapperId"
+    class="choice-checklist"
+  >
     <div class="choice-checklist-controls">
-      <button type="button" class="choice-checklist-control" @click="selectAll">
+      <button
+        type="button"
+        class="choice-checklist-control"
+        @click="selectAll"
+      >
         Select all
       </button>
-      <button type="button" class="choice-checklist-control" @click="selectNone">
+      <button
+        type="button"
+        class="choice-checklist-control"
+        @click="selectNone"
+      >
         Select none
       </button>
     </div>
     <fieldset class="choice-checklist-fieldset">
-      <legend class="visually-hidden">{{ label || name }}</legend>
+      <legend class="visually-hidden">
+        {{ label || name }}
+      </legend>
       <label
         v-for="(choice, index) in choices"
         :key="choice.value"
@@ -21,7 +34,7 @@
           type="checkbox"
           :checked="isSelected(choice.value)"
           @change="handleToggle(choice.value)"
-        />
+        >
         <span>{{ choiceLabel(choice) }}</span>
       </label>
     </fieldset>
@@ -34,7 +47,7 @@
       :required="required"
       tabindex="-1"
       aria-hidden="true"
-    />
+    >
   </div>
 </template>
 
@@ -86,23 +99,23 @@ function optionId (index) {
   return argumentFieldOptionId(props.name, index)
 }
 
-function isSelected(value) {
+function isSelected (value) {
   return selectedValues.value.includes(value)
 }
 
-function emitSelection(selected) {
+function emitSelection (selected) {
   emit('update:modelValue', formatChecklistValue(selected))
 }
 
-function handleToggle(value) {
+function handleToggle (value) {
   emitSelection(toggleChoice(selectedValues.value, value))
 }
 
-function selectAll() {
+function selectAll () {
   emitSelection(allChoiceValues(props.choices))
 }
 
-function selectNone() {
+function selectNone () {
   emitSelection([])
 }
 </script>

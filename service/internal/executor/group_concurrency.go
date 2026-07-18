@@ -186,16 +186,6 @@ func (e *Executor) groupsHaveCapacityForQueued(req *ExecutionRequest) bool {
 	return true
 }
 
-func firstFullGroupName(e *Executor, req *ExecutionRequest) string {
-	for _, limit := range actionGroupLimits(req) {
-		if e.countActiveInGroup(limit.name) >= (limit.maxConcurrent + 1) {
-			return limit.name
-		}
-	}
-
-	return ""
-}
-
 func firstFullGroupNameLocked(e *Executor, req *ExecutionRequest) string {
 	for _, limit := range actionGroupLimits(req) {
 		if e.countActiveInGroupLocked(limit.name) >= (limit.maxConcurrent + 1) {

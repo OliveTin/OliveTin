@@ -1,8 +1,15 @@
 <template>
-    <button class="directory-button" :class="component.cssClass" @click="navigateToDirectory">
-        <span class="icon" v-html="unicodeIcon"></span>
-        <span class="title">{{ component.title }}</span>
-    </button>
+  <button
+    class="directory-button"
+    :class="component.cssClass"
+    @click="navigateToDirectory"
+  >
+    <span
+      class="icon"
+      v-html="unicodeIcon"
+    />
+    <span class="title">{{ component.title }}</span>
+  </button>
 </template>
 
 <script setup>
@@ -12,33 +19,33 @@ import { computed } from 'vue'
 const router = useRouter()
 
 const props = defineProps({
-    component: {
-        type: Object,
-        required: true
-    }
+  component: {
+    type: Object,
+    required: true
+  }
 })
 
-function getUnicodeIcon(icon) {
-    if (icon === '' || !icon) {
-        return '&#x1f4c1;' // Default folder icon
-    } else {
-        return unescape(icon)
-    }
+function getUnicodeIcon (icon) {
+  if (icon === '' || !icon) {
+    return '&#x1f4c1;' // Default folder icon
+  } else {
+    return unescape(icon)
+  }
 }
 
 const unicodeIcon = computed(() => {
-    return getUnicodeIcon(props.component.icon)
+  return getUnicodeIcon(props.component.icon)
 })
 
-function navigateToDirectory() {
-    const params = { title: props.component.title }
+function navigateToDirectory () {
+  const params = { title: props.component.title }
 
-    if (props.component.entityType && props.component.entityKey) {
-        params.entityType = props.component.entityType
-        params.entityKey = props.component.entityKey
-    }
+  if (props.component.entityType && props.component.entityKey) {
+    params.entityType = props.component.entityType
+    params.entityKey = props.component.entityKey
+  }
 
-    router.push({ name: 'Dashboard', params })
+  router.push({ name: 'Dashboard', params })
 }
 </script>
 
