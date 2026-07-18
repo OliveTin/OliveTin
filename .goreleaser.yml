@@ -187,8 +187,7 @@ nfpms:
 notarize:
   macos:
     - enabled: '{{ isEnvSet "MACOS_SIGN_P12" }}'
-      ids:
-        - default
+      # Defaults to project_name when omitted; must match builds[].id (also project_name).
       sign:
         certificate: "{{.Env.MACOS_SIGN_P12}}"
         password: "{{.Env.MACOS_SIGN_PASSWORD}}"
