@@ -1,0 +1,8 @@
+<artifact-configuration xmlns="http://signpath.io/artifact-configuration/v1">
+  <msi-file path="OliveTin-windows-amd64.msi">
+    <pe-file path="OliveTin.exe">
+      <authenticode-sign/>
+    </pe-file>
+    <authenticode-sign/>
+  </msi-file>
+</artifact-configuration>

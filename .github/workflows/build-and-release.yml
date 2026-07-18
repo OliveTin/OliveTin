@@ -37,6 +37,11 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      new_release_published: ${{ steps.release.outputs.new_release_published }}
+      new_release_git_tag: ${{ steps.release.outputs.new_release_git_tag }}
+      windows_zip_artifact_id: ${{ steps.upload-windows-zip.outputs.artifact-id }}
+      windows_msi_artifact_id: ${{ steps.upload-windows-msi.outputs.artifact-id }}
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -129,6 +134,7 @@ jobs:
         uses: docker/setup-buildx-action@v4
 
       - name: release
+        id: release
         if: github.ref_type != 'tag' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false)
         uses: cycjimmy/semantic-release-action@v5
         with:
@@ -140,9 +146,99 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.CONTAINER_TOKEN }}
           GH_TOKEN: ${{ secrets.CONTAINER_TOKEN }}
 
+      - name: Upload unsigned Windows zip for SignPath
+        id: upload-windows-zip
+        if: steps.release.outputs.new_release_published == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: unsigned-windows-zip
+          path: dist/OliveTin-windows-amd64.zip
+          if-no-files-found: error
+
+      - name: Upload unsigned Windows MSI for SignPath
+        id: upload-windows-msi
+        if: steps.release.outputs.new_release_published == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: unsigned-windows-msi
+          path: dist/OliveTin-windows-amd64.msi
+          if-no-files-found: error
+
       - name: Archive binaries
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
         uses: actions/upload-artifact@v7
         with:
           name: "OliveTin-snapshot-${{ env.DATE }}-${{ github.sha }}"
           path: dist/OliveTin*.*
+
+  sign-windows:
+    name: Sign Windows artifacts (SignPath)
+    needs: build
+    if: needs.build.outputs.new_release_published == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Require SignPath configuration
+        env:
+          SIGNPATH_API_TOKEN: ${{ secrets.SIGNPATH_API_TOKEN }}
+          SIGNPATH_ORGANIZATION_ID: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          SIGNPATH_PROJECT_SLUG: ${{ vars.SIGNPATH_PROJECT_SLUG }}
+          SIGNPATH_SIGNING_POLICY_SLUG: ${{ vars.SIGNPATH_SIGNING_POLICY_SLUG }}
+        run: |
+          missing=0
+          for name in SIGNPATH_API_TOKEN SIGNPATH_ORGANIZATION_ID SIGNPATH_PROJECT_SLUG SIGNPATH_SIGNING_POLICY_SLUG; do
+            if [[ -z "${!name}" ]]; then
+              echo "Missing required SignPath setting: ${name}" >&2
+              missing=1
+            fi
+          done
+          if [[ "${missing}" -ne 0 ]]; then
+            echo "Windows signing is required before a draft release can be published. Configure SignPath secrets/vars (see docs/modules/dev/pages/signing.adoc)." >&2
+            exit 1
+          fi
+
+      - name: Sign Windows zip
+        uses: signpath/github-action-submit-signing-request@v2
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: ${{ vars.SIGNPATH_SIGNING_POLICY_SLUG }}
+          artifact-configuration-slug: windows-zip
+          github-artifact-id: ${{ needs.build.outputs.windows_zip_artifact_id }}
+          wait-for-completion: true
+          output-artifact-directory: signed-windows-zip
+
+      - name: Sign Windows MSI
+        uses: signpath/github-action-submit-signing-request@v2
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: ${{ vars.SIGNPATH_SIGNING_POLICY_SLUG }}
+          artifact-configuration-slug: windows-msi
+          github-artifact-id: ${{ needs.build.outputs.windows_msi_artifact_id }}
+          wait-for-completion: true
+          output-artifact-directory: signed-windows-msi
+
+      - name: Publish signed Windows assets and undraft release
+        env:
+          GH_TOKEN: ${{ secrets.CONTAINER_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.CONTAINER_TOKEN }}
+        run: |
+          zip_path="$(find signed-windows-zip -type f -name 'OliveTin-windows-amd64.zip' | head -n 1)"
+          msi_path="$(find signed-windows-msi -type f -name 'OliveTin-windows-amd64.msi' | head -n 1)"
+          if [[ -z "${zip_path}" || -z "${msi_path}" ]]; then
+            echo "Signed Windows artifacts not found after SignPath:" >&2
+            find signed-windows-zip signed-windows-msi -type f >&2 || true
+            exit 1
+          fi
+          ./var/windows/signpath-publish-signed.sh \
+            "${{ needs.build.outputs.new_release_git_tag }}" \
+            "${zip_path}" \
+            "${msi_path}"

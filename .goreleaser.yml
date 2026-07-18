@@ -183,6 +183,8 @@ nfpms:
         dst: /usr/share/man/man1/OliveTin.1.gz
 
 release:
+  # Stay draft until the sign-windows job replaces unsigned Windows assets and undrafts.
+  draft: true
   extra_files:
     - glob: ./dist/OliveTin-windows-amd64.msi
   footer: |
