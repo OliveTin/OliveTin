@@ -1,12 +1,21 @@
 <template>
-  <Section :title="'Execution conditions: ' + actionTitle" :padding="false">
+  <Section
+    :title="'Execution conditions: ' + actionTitle"
+    :padding="false"
+  >
     <template #toolbar>
-      <router-link :to="{ name: 'ActionDetails', params: { actionId: route.params.actionId } }" class="button neutral">
+      <router-link
+        :to="{ name: 'ActionDetails', params: { actionId: route.params.actionId } }"
+        class="button neutral"
+      >
         Back to action details
       </router-link>
     </template>
 
-    <div v-if="action" class="padding content">
+    <div
+      v-if="action"
+      class="padding content"
+    >
       <p>
         These entries mirror the automatic triggers from your OliveTin configuration for this action.
         You can always run the action manually as well.
@@ -14,7 +23,12 @@
 
       <h3 class="exec-type-heading">
         On click
-        <a class="doc-link" :href="execConditionDocs.onDemand" target="_blank" rel="noopener noreferrer">Documentation</a>
+        <a
+          class="doc-link"
+          :href="execConditionDocs.onDemand"
+          target="_blank"
+          rel="noopener noreferrer"
+        >Documentation</a>
       </h3>
       <p>
         Manual execution from the web UI (dashboard or action details), or via the API (for example StartAction),
@@ -24,7 +38,12 @@
       <template v-if="action.execOnStartup">
         <h3 class="exec-type-heading">
           <code>execOnStartup</code>
-          <a class="doc-link" :href="execConditionDocs.startup" target="_blank" rel="noopener noreferrer">Documentation</a>
+          <a
+            class="doc-link"
+            :href="execConditionDocs.startup"
+            target="_blank"
+            rel="noopener noreferrer"
+          >Documentation</a>
         </h3>
         <p>Runs once when OliveTin starts.</p>
       </template>
@@ -32,37 +51,72 @@
       <template v-if="nonEmptyList(action.execOnCron)">
         <h3 class="exec-type-heading">
           <code>execOnCron</code>
-          <a class="doc-link" :href="execConditionDocs.cron" target="_blank" rel="noopener noreferrer">Documentation</a>
+          <a
+            class="doc-link"
+            :href="execConditionDocs.cron"
+            target="_blank"
+            rel="noopener noreferrer"
+          >Documentation</a>
         </h3>
         <ul>
-          <li v-for="(line, idx) in action.execOnCron" :key="'cron-' + idx"><code>{{ line }}</code></li>
+          <li
+            v-for="(line, idx) in action.execOnCron"
+            :key="'cron-' + idx"
+          >
+            <code>{{ line }}</code>
+          </li>
         </ul>
       </template>
 
       <template v-if="nonEmptyList(action.execOnFileCreatedInDir)">
         <h3 class="exec-type-heading">
           <code>execOnFileCreatedInDir</code>
-          <a class="doc-link" :href="execConditionDocs.fileCreated" target="_blank" rel="noopener noreferrer">Documentation</a>
+          <a
+            class="doc-link"
+            :href="execConditionDocs.fileCreated"
+            target="_blank"
+            rel="noopener noreferrer"
+          >Documentation</a>
         </h3>
         <ul>
-          <li v-for="(dir, idx) in action.execOnFileCreatedInDir" :key="'created-' + idx"><code>{{ dir }}</code></li>
+          <li
+            v-for="(dir, idx) in action.execOnFileCreatedInDir"
+            :key="'created-' + idx"
+          >
+            <code>{{ dir }}</code>
+          </li>
         </ul>
       </template>
 
       <template v-if="nonEmptyList(action.execOnFileChangedInDir)">
         <h3 class="exec-type-heading">
           <code>execOnFileChangedInDir</code>
-          <a class="doc-link" :href="execConditionDocs.fileChanged" target="_blank" rel="noopener noreferrer">Documentation</a>
+          <a
+            class="doc-link"
+            :href="execConditionDocs.fileChanged"
+            target="_blank"
+            rel="noopener noreferrer"
+          >Documentation</a>
         </h3>
         <ul>
-          <li v-for="(dir, idx) in action.execOnFileChangedInDir" :key="'changed-' + idx"><code>{{ dir }}</code></li>
+          <li
+            v-for="(dir, idx) in action.execOnFileChangedInDir"
+            :key="'changed-' + idx"
+          >
+            <code>{{ dir }}</code>
+          </li>
         </ul>
       </template>
 
       <template v-if="action.execOnCalendarFile">
         <h3 class="exec-type-heading">
           <code>execOnCalendarFile</code>
-          <a class="doc-link" :href="execConditionDocs.calendar" target="_blank" rel="noopener noreferrer">Documentation</a>
+          <a
+            class="doc-link"
+            :href="execConditionDocs.calendar"
+            target="_blank"
+            rel="noopener noreferrer"
+          >Documentation</a>
         </h3>
         <p><code>{{ action.execOnCalendarFile }}</code></p>
       </template>
@@ -70,10 +124,18 @@
       <template v-if="nonEmptyList(action.execOnWebhooks)">
         <h3 class="exec-type-heading">
           <code>execOnWebhook</code>
-          <a class="doc-link" :href="execConditionDocs.webhook" target="_blank" rel="noopener noreferrer">Documentation</a>
+          <a
+            class="doc-link"
+            :href="execConditionDocs.webhook"
+            target="_blank"
+            rel="noopener noreferrer"
+          >Documentation</a>
         </h3>
         <ul class="webhook-list">
-          <li v-for="(wh, idx) in action.execOnWebhooks" :key="'wh-' + idx">
+          <li
+            v-for="(wh, idx) in action.execOnWebhooks"
+            :key="'wh-' + idx"
+          >
             <span v-if="wh.template">template: <code>{{ wh.template }}</code></span>
             <span v-if="wh.matchPath"> · matchPath: <code>{{ wh.matchPath }}</code></span>
             <span v-if="nonEmptyObject(wh.matchHeaders)"> · matchHeaders: <code>{{ wh.matchHeaders }}</code></span>
@@ -83,14 +145,22 @@
         </ul>
       </template>
 
-      <p v-if="!hasConfiguredTriggers" class="muted">
+      <p
+        v-if="!hasConfiguredTriggers"
+        class="muted"
+      >
         This action has no automatic triggers in configuration besides on-demand execution.
       </p>
     </div>
 
-    <div v-else-if="!loading" class="padding empty-state">
+    <div
+      v-else-if="!loading"
+      class="padding empty-state"
+    >
       <p>Could not load this action.</p>
-      <router-link :to="{ name: 'Actions' }">Return to index</router-link>
+      <router-link :to="{ name: 'Actions' }">
+        Return to index
+      </router-link>
     </div>
   </Section>
 </template>
@@ -112,18 +182,18 @@ const execConditionDocs = {
   fileCreated: 'https://docs.olivetin.app/action_execution/onfilecreated.html',
   fileChanged: 'https://docs.olivetin.app/action_execution/onfilechanged.html',
   calendar: 'https://docs.olivetin.app/action_execution/oncalendar.html',
-  webhook: 'https://docs.olivetin.app/action_execution/onwebhook.html',
+  webhook: 'https://docs.olivetin.app/action_execution/onwebhook.html'
 }
 
-function nonEmptyList(list) {
+function nonEmptyList (list) {
   return Array.isArray(list) && list.length > 0
 }
 
-function nonEmptyObject(object) {
+function nonEmptyObject (object) {
   return object && Object.keys(object).length > 0
 }
 
-function webhookHasCondition(webhook) {
+function webhookHasCondition (webhook) {
   return webhook.template || webhook.matchPath || nonEmptyObject(webhook.matchHeaders) || nonEmptyObject(webhook.matchQuery)
 }
 
@@ -147,7 +217,7 @@ const hasConfiguredTriggers = computed(() => {
   return false
 })
 
-async function fetchAction() {
+async function fetchAction () {
   loading.value = true
   try {
     const actionId = route.params.actionId

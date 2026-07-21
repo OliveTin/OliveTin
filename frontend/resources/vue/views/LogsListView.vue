@@ -1,116 +1,212 @@
 <template>
-  <Section :title="t('logs.title')" :padding="false">
-      <template #toolbar>
-        <router-link to="/logs/queue" class="button neutral">
-          {{ t('logs.queue') }}
-        </router-link>
-        <router-link to="/logs/calendar" class="button neutral">
-          {{ t('logs.calendar') }}
-        </router-link>
-        <label class="input-with-icons">
-          <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
-            <path fill="currentColor"
-              d="m19.6 21l-6.3-6.3q-.75.6-1.725.95T9.5 16q-2.725 0-4.612-1.888T3 9.5t1.888-4.612T9.5 3t4.613 1.888T16 9.5q0 1.1-.35 2.075T14.7 13.3l6.3 6.3zM9.5 14q1.875 0 3.188-1.312T14 9.5t-1.312-3.187T9.5 5T6.313 6.313T5 9.5t1.313 3.188T9.5 14" />
-          </svg>
-          <input
-            :placeholder="t('logs.filter-placeholder')"
-            v-model="searchText"
-            list="logs-filter-suggestions"
-            :aria-invalid="filterError ? 'true' : 'false'"
+  <Section
+    :title="t('logs.title')"
+    :padding="false"
+  >
+    <template #toolbar>
+      <router-link
+        to="/logs/queue"
+        class="button neutral"
+      >
+        {{ t('logs.queue') }}
+      </router-link>
+      <router-link
+        to="/logs/calendar"
+        class="button neutral"
+      >
+        {{ t('logs.calendar') }}
+      </router-link>
+      <label class="input-with-icons">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="1em"
+          height="1em"
+          viewBox="0 0 24 24"
+        >
+          <path
+            fill="currentColor"
+            d="m19.6 21l-6.3-6.3q-.75.6-1.725.95T9.5 16q-2.725 0-4.612-1.888T3 9.5t1.888-4.612T9.5 3t4.613 1.888T16 9.5q0 1.1-.35 2.075T14.7 13.3l6.3 6.3zM9.5 14q1.875 0 3.188-1.312T14 9.5t-1.312-3.187T9.5 5T6.313 6.313T5 9.5t1.313 3.188T9.5 14"
           />
-          <datalist id="logs-filter-suggestions">
-            <option v-for="suggestion in filterSuggestions" :key="suggestion" :value="suggestion" />
-          </datalist>
-          <button :title="t('logs.clear-filter')" :disabled="!searchText" @click="clearSearch">
-            <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
-              <path fill="currentColor"
-                d="M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12z" />
-            </svg>
-          </button>
-        </label>
-      </template>
-
-      <div class="padding logs-intro">
-        <p>{{ t('logs.page-description') }}</p>
-        <details class="filter-help">
-          <summary>{{ t('logs.filter-help-title') }}</summary>
-          <p>{{ t('logs.filter-help-intro') }}</p>
-          <p>{{ t('logs.filter-help-fields') }}</p>
-          <p><code>{{ t('logs.filter-help-examples') }}</code></p>
-        </details>
-        <p v-if="filterError" class="filter-error" role="alert">{{ filterError }}</p>
-      </div>
-
-      <div v-show="logs.length > 0">
-        <table class="logs-table row-hover">
-          <thead>
-            <tr>
-              <th>
-                <div class="timestamp-header">
-                  <span>{{ t('logs.timestamp') }}</span>
-                  <span v-if="selectedDate" class="date-filter-indicator">
-                    <span class="date-filter-text">{{ formatDateFilter(selectedDate) }}</span>
-                    <button :title="t('logs.clear-date-filter')" @click="clearDateFilter" class="clear-date-button">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
-                        <path fill="currentColor"
-                          d="M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12z" />
-                      </svg>
-                    </button>
-                  </span>
-                </div>
-              </th>
-              <th>{{ t('logs.action') }}</th>
-              <th>{{ t('logs.metadata') }}</th>
-              <th>{{ t('logs.status') }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="log in logs" :key="log.executionTrackingId" class="log-row" :title="log.actionTitle">
-              <td class="timestamp">{{ formatTimestamp(log.datetimeStarted) }}</td>
-              <td>
-                <ActionIconGlyph class="icon" :glyph="log.actionIcon" />
-                <router-link :to="`/logs/${log.executionTrackingId}`">
-                  <LogActionTitle :action-title="log.actionTitle" :justification="log.justification" />
-                </router-link>
-              </td>
-              <td class="tags">
-                <span class="annotation">
-                  <span class="annotation-key">User:</span>
-                  <span class="annotation-val">{{ log.user }}</span>
-                </span>
-                <span v-if="log.tags && log.tags.length > 0" class="tag-list">
-                  <span v-for="tag in log.tags" :key="tag" class="tag">{{ tag }}</span>
-                </span>
-              </td>
-              <td class="exit-code">
-                <ActionStatusDisplay :logEntry="log" />
-              </td>
-            </tr>
-          </tbody>
-        </table>
-
-        <Pagination :pageSize="pageSize" :total="totalCount" :currentPage="currentPage" :page="currentPage" @page-change="handlePageChange" class = "padding"
-          @page-size-change="handlePageSizeChange" itemTitle="execution logs" />
-      </div>
-
-      <div v-show="logs.length === 0 && !loading && searchText && !filterError" class="empty-state padding">
-        <p>{{ t('logs.no-logs-for-filter') }}</p>
-        <button @click="clearSearch" class="button neutral">
-          {{ t('logs.clear-filter') }}
+        </svg>
+        <input
+          v-model="searchText"
+          :placeholder="t('logs.filter-placeholder')"
+          list="logs-filter-suggestions"
+          :aria-invalid="filterError ? 'true' : 'false'"
+        >
+        <datalist id="logs-filter-suggestions">
+          <option
+            v-for="suggestion in filterSuggestions"
+            :key="suggestion"
+            :value="suggestion"
+          />
+        </datalist>
+        <button
+          :title="t('logs.clear-filter')"
+          :disabled="!searchText"
+          @click="clearSearch"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="1em"
+            height="1em"
+            viewBox="0 0 24 24"
+          >
+            <path
+              fill="currentColor"
+              d="M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12z"
+            />
+          </svg>
         </button>
-      </div>
+      </label>
+    </template>
 
-      <div v-show="selectedDate && logs.length === 0 && !loading && !searchText" class="empty-state padding">
-        <p>{{ t('logs.no-logs-to-display') }} {{ formatDateFilter(selectedDate) }}.</p>
-        <button @click="clearDateFilter" class="button neutral">
-          {{ t('logs.clear-date-filter') }}
-        </button>
-      </div>
+    <div class="padding logs-intro">
+      <p>{{ t('logs.page-description') }}</p>
+      <details class="filter-help">
+        <summary>{{ t('logs.filter-help-title') }}</summary>
+        <p>{{ t('logs.filter-help-intro') }}</p>
+        <p>{{ t('logs.filter-help-fields') }}</p>
+        <p><code>{{ t('logs.filter-help-examples') }}</code></p>
+      </details>
+      <p
+        v-if="filterError"
+        class="filter-error"
+        role="alert"
+      >
+        {{ filterError }}
+      </p>
+    </div>
 
-      <div v-show="logs.length === 0 && !loading && !selectedDate && !searchText" class="empty-state padding">
-        <p>{{ t('logs.no-logs-to-display') }}</p>
-        <router-link to="/">{{ t('return-to-index') }}</router-link>
-      </div>
+    <div v-show="logs.length > 0">
+      <table class="logs-table row-hover">
+        <thead>
+          <tr>
+            <th>
+              <div class="timestamp-header">
+                <span>{{ t('logs.timestamp') }}</span>
+                <span
+                  v-if="selectedDate"
+                  class="date-filter-indicator"
+                >
+                  <span class="date-filter-text">{{ formatDateFilter(selectedDate) }}</span>
+                  <button
+                    :title="t('logs.clear-date-filter')"
+                    class="clear-date-button"
+                    @click="clearDateFilter"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="1em"
+                      height="1em"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        fill="currentColor"
+                        d="M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12z"
+                      />
+                    </svg>
+                  </button>
+                </span>
+              </div>
+            </th>
+            <th>{{ t('logs.action') }}</th>
+            <th>{{ t('logs.metadata') }}</th>
+            <th>{{ t('logs.status') }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            v-for="log in logs"
+            :key="log.executionTrackingId"
+            class="log-row"
+            :title="log.actionTitle"
+          >
+            <td class="timestamp">
+              {{ formatTimestamp(log.datetimeStarted) }}
+            </td>
+            <td>
+              <ActionIconGlyph
+                class="icon"
+                :glyph="log.actionIcon"
+              />
+              <router-link :to="`/logs/${log.executionTrackingId}`">
+                <LogActionTitle
+                  :action-title="log.actionTitle"
+                  :justification="log.justification"
+                />
+              </router-link>
+            </td>
+            <td class="tags">
+              <span class="annotation">
+                <span class="annotation-key">User:</span>
+                <span class="annotation-val">{{ log.user }}</span>
+              </span>
+              <span
+                v-if="log.tags && log.tags.length > 0"
+                class="tag-list"
+              >
+                <span
+                  v-for="tag in log.tags"
+                  :key="tag"
+                  class="tag"
+                >{{ tag }}</span>
+              </span>
+            </td>
+            <td class="exit-code">
+              <ActionStatusDisplay :log-entry="log" />
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <Pagination
+        :page-size="pageSize"
+        :total="totalCount"
+        :current-page="currentPage"
+        :page="currentPage"
+        class="padding"
+        item-title="execution logs"
+        @page-change="handlePageChange"
+        @page-size-change="handlePageSizeChange"
+      />
+    </div>
+
+    <div
+      v-show="logs.length === 0 && !loading && searchText && !filterError"
+      class="empty-state padding"
+    >
+      <p>{{ t('logs.no-logs-for-filter') }}</p>
+      <button
+        class="button neutral"
+        @click="clearSearch"
+      >
+        {{ t('logs.clear-filter') }}
+      </button>
+    </div>
+
+    <div
+      v-show="selectedDate && logs.length === 0 && !loading && !searchText"
+      class="empty-state padding"
+    >
+      <p>{{ t('logs.no-logs-to-display') }} {{ formatDateFilter(selectedDate) }}.</p>
+      <button
+        class="button neutral"
+        @click="clearDateFilter"
+      >
+        {{ t('logs.clear-date-filter') }}
+      </button>
+    </div>
+
+    <div
+      v-show="logs.length === 0 && !loading && !selectedDate && !searchText"
+      class="empty-state padding"
+    >
+      <p>{{ t('logs.no-logs-to-display') }}</p>
+      <router-link to="/">
+        {{ t('return-to-index') }}
+      </router-link>
+    </div>
   </Section>
 </template>
 
@@ -150,7 +246,7 @@ const filterSuggestions = [
 
 const { t } = useI18n()
 
-function updateDateFromRoute() {
+function updateDateFromRoute () {
   const dateParam = route.query.date
   if (dateParam) {
     selectedDate.value = dateParam
@@ -169,7 +265,7 @@ watch(searchText, () => {
   scheduleFetchLogs()
 })
 
-async function fetchLogs() {
+async function fetchLogs () {
   loading.value = true
   filterError.value = ''
   try {
@@ -206,7 +302,7 @@ async function fetchLogs() {
   }
 }
 
-function scheduleFetchLogs() {
+function scheduleFetchLogs () {
   if (fetchTimer) {
     clearTimeout(fetchTimer)
   }
@@ -215,18 +311,18 @@ function scheduleFetchLogs() {
   }, 400)
 }
 
-function clearSearch() {
+function clearSearch () {
   searchText.value = ''
 }
 
-function clearDateFilter() {
+function clearDateFilter () {
   selectedDate.value = null
   const query = { ...route.query }
   delete query.date
   router.push({ path: route.path, query })
 }
 
-function formatDateFilter(dateString) {
+function formatDateFilter (dateString) {
   try {
     const date = new Date(dateString + 'T00:00:00')
     return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
@@ -235,7 +331,7 @@ function formatDateFilter(dateString) {
   }
 }
 
-function formatTimestamp(timestamp) {
+function formatTimestamp (timestamp) {
   if (!timestamp) return 'Unknown'
   try {
     const date = new Date(timestamp)
@@ -245,18 +341,18 @@ function formatTimestamp(timestamp) {
   }
 }
 
-function handlePageChange(page) {
+function handlePageChange (page) {
   currentPage.value = page
   fetchLogs()
 }
 
-function handlePageSizeChange(newPageSize) {
+function handlePageSizeChange (newPageSize) {
   pageSize.value = newPageSize
   currentPage.value = 1
   fetchLogs()
 }
 
-function onExecutionEvent(evt) {
+function onExecutionEvent (evt) {
   const logEntry = getExecutionLogEntry(evt)
   if (!logEntry) {
     return

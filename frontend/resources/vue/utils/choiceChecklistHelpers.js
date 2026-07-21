@@ -1,8 +1,8 @@
-function parseLegacyChecklistValue(value) {
+function parseLegacyChecklistValue (value) {
   return value.split(',').map((segment) => segment.trim()).filter((segment) => segment !== '')
 }
 
-export function parseChecklistValue(value) {
+export function parseChecklistValue (value) {
   if (!value || value === '') {
     return []
   }
@@ -24,7 +24,7 @@ export function parseChecklistValue(value) {
   return parseLegacyChecklistValue(value)
 }
 
-export function formatChecklistValue(selected) {
+export function formatChecklistValue (selected) {
   if (!Array.isArray(selected) || selected.length === 0) {
     return ''
   }
@@ -32,7 +32,7 @@ export function formatChecklistValue(selected) {
   return JSON.stringify(selected)
 }
 
-export function toggleChoice(selected, value) {
+export function toggleChoice (selected, value) {
   const current = Array.isArray(selected) ? [...selected] : []
   const index = current.indexOf(value)
 
@@ -45,10 +45,10 @@ export function toggleChoice(selected, value) {
   return current
 }
 
-export function choiceLabel(choice) {
+export function choiceLabel (choice) {
   return choice.title || choice.value || ''
 }
 
-export function allChoiceValues(choices) {
+export function allChoiceValues (choices) {
   return choices.map((choice) => choice.value)
 }

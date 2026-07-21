@@ -1,27 +1,58 @@
 <template>
-  <Section title="User Information" class="small">
-    <div v-if="!isLoggedIn" class="user-not-logged-in">
+  <Section
+    title="User Information"
+    class="small"
+  >
+    <div
+      v-if="!isLoggedIn"
+      class="user-not-logged-in"
+    >
       <p>You are not currently logged in.</p>
-      <p>To access user settings and logout, please <router-link to="/login">log in</router-link>.</p>
+      <p>
+        To access user settings and logout, please <router-link to="/login">
+          log in
+        </router-link>.
+      </p>
     </div>
 
-    <div v-else class="user-control-panel">
+    <div
+      v-else
+      class="user-control-panel"
+    >
       <dl class="user-info">
         <dt>Username</dt>
         <dd>{{ username }}</dd>
-        <dt v-if="userProvider !== 'system'">Provider</dt>
-        <dd v-if="userProvider !== 'system'">{{ userProvider }}</dd>
-        <dt v-if="usergroup">Group</dt>
-        <dd v-if="usergroup">{{ usergroup }}</dd>
-        <dt v-if="acls && acls.length > 0">Matched ACLs</dt>
+        <dt v-if="userProvider !== 'system'">
+          Provider
+        </dt>
+        <dd v-if="userProvider !== 'system'">
+          {{ userProvider }}
+        </dd>
+        <dt v-if="usergroup">
+          Group
+        </dt>
+        <dd v-if="usergroup">
+          {{ usergroup }}
+        </dd>
+        <dt v-if="acls && acls.length > 0">
+          Matched ACLs
+        </dt>
         <dd v-if="acls && acls.length > 0">
-          <span class="acl-tag" v-for="(acl, idx) in acls" :key="`acl-${idx}`">{{ acl }}</span>
+          <span
+            v-for="(acl, idx) in acls"
+            :key="`acl-${idx}`"
+            class="acl-tag"
+          >{{ acl }}</span>
         </dd>
       </dl>
 
       <div class="user-actions">
         <div class="action-buttons">
-          <button @click="handleLogout" class="button bad" :disabled="loggingOut">
+          <button
+            class="button bad"
+            :disabled="loggingOut"
+            @click="handleLogout"
+          >
             {{ loggingOut ? 'Logging out...' : 'Logout' }}
           </button>
         </div>
@@ -31,7 +62,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import Section from 'picocrank/vue/components/Section.vue'
 
@@ -44,7 +75,7 @@ const usergroup = ref('')
 const loggingOut = ref(false)
 const acls = ref([])
 
-function updateUserInfo() {
+function updateUserInfo () {
   if (window.initResponse) {
     isLoggedIn.value = window.initResponse.authenticatedUser !== '' && window.initResponse.authenticatedUser !== 'guest'
     username.value = window.initResponse.authenticatedUser
@@ -53,7 +84,7 @@ function updateUserInfo() {
   }
 }
 
-async function fetchWhoAmI() {
+async function fetchWhoAmI () {
   try {
     const res = await window.client.whoAmI({})
     acls.value = res.acls || []
@@ -67,12 +98,12 @@ async function fetchWhoAmI() {
   }
 }
 
-async function handleLogout() {
+async function handleLogout () {
   loggingOut.value = true
-  
+
   try {
     await window.client.logout({})
-    
+
     // Re-initialize to get updated user context (should be guest)
     try {
       const initResponse = await window.client.init({})
@@ -80,7 +111,7 @@ async function handleLogout() {
       window.initError = false
       window.initErrorMessage = ''
       window.initCompleted = true
-      
+
       // Update the header with new user info
       if (window.updateHeaderFromInit) {
         window.updateHeaderFromInit()
@@ -88,7 +119,7 @@ async function handleLogout() {
     } catch (initErr) {
       console.error('Failed to reinitialize after logout:', initErr)
     }
-    
+
     // Redirect based on init response: if login is required, go to login page
     if (window.initResponse && window.initResponse.loginRequired) {
       router.push('/login')
@@ -102,13 +133,12 @@ async function handleLogout() {
   }
 }
 
-let watchInterval = null
+const watchInterval = null
 
 onMounted(() => {
   updateUserInfo()
   fetchWhoAmI()
-  
- })
+})
 
 onUnmounted(() => {
   if (watchInterval) {

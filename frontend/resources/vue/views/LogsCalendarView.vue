@@ -1,9 +1,23 @@
 <template>
-  <Section :title="t('logs.calendar-title')" :padding="false">
+  <Section
+    :title="t('logs.calendar-title')"
+    :padding="false"
+  >
     <template #toolbar>
-      <router-link to="/logs" class="button neutral">
-        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
-          <path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8l8 8l1.41-1.41L7.83 13H20z"/>
+      <router-link
+        to="/logs"
+        class="button neutral"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="1em"
+          height="1em"
+          viewBox="0 0 24 24"
+        >
+          <path
+            fill="currentColor"
+            d="M20 11H7.83l5.59-5.59L12 4l-8 8l8 8l1.41-1.41L7.83 13H20z"
+          />
         </svg>
         {{ t('logs.back-to-list') }}
       </router-link>
@@ -52,7 +66,7 @@ const calendarEvents = computed(() => {
     .map(log => {
       const startDate = new Date(log.datetimeStarted)
       let endDate = log.datetimeFinished ? new Date(log.datetimeFinished) : null
-      
+
       // Validate end date
       if (endDate && isNaN(endDate.getTime())) {
         endDate = null
@@ -62,8 +76,8 @@ const calendarEvents = computed(() => {
         id: log.executionTrackingId,
         title: log.actionTitle || 'Untitled Action',
         date: startDate,
-        startDate: startDate,
-        endDate: endDate,
+        startDate,
+        endDate,
         actionIcon: log.actionIcon,
         user: log.user,
         tags: log.tags,
@@ -72,44 +86,43 @@ const calendarEvents = computed(() => {
     })
 })
 
-async function fetchLogs() {
+async function fetchLogs () {
   loading.value = true
   error.value = null
-  
+
   try {
     // Currently fetches only the default page (startOffset: 0)
     // Multi-page fetching: loop through pages until no more logs or limit reached
     const allLogs = []
     let startOffset = BigInt(0)
     const maxLogs = 10000 // Reasonable limit to prevent excessive API calls
-    const pageSize = 100 // Typical page size, will be updated from API response
-    
+
     while (allLogs.length < maxLogs) {
       const args = {
-        "startOffset": startOffset,
+        startOffset
       }
 
       const response = await window.client.getLogs(args)
       const pageLogs = response.logs || []
-      
+
       // If no logs returned, we've reached the end
       if (pageLogs.length === 0) {
         break
       }
-      
+
       // Append logs from this page
       allLogs.push(...pageLogs)
-      
+
       // Update offset for next page
       const currentPageSize = Number(response.pageSize) || pageLogs.length
       startOffset += BigInt(currentPageSize)
-      
+
       // If we got fewer logs than the page size, we've reached the end
       if (pageLogs.length < currentPageSize) {
         break
       }
     }
-    
+
     logs.value = allLogs
   } catch (err) {
     console.error('Failed to fetch logs:', err)
@@ -120,14 +133,14 @@ async function fetchLogs() {
   }
 }
 
-function handleEventClick(event) {
+function handleEventClick (event) {
   // Navigate to the execution view when clicking on a calendar event
   if (event.id) {
     router.push(`/logs/${event.id}`)
   }
 }
 
-function handleDayClick(date) {
+function handleDayClick (date) {
   // Navigate to logs list filtered by the selected date
   // Format date as YYYY-MM-DD using local date components to avoid timezone issues
   const year = date.getFullYear()
@@ -137,7 +150,7 @@ function handleDayClick(date) {
   router.push({ path: '/logs', query: { date: dateString } })
 }
 
-function handleMonthChange(month, year) {
+function handleMonthChange (month, year) {
   currentMonthIndex.value = month
   currentYear.value = year
   // Optionally fetch logs for the new month if needed

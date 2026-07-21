@@ -1,33 +1,83 @@
 <template>
-  <Section title="Login to OliveTin" class="small">
+  <Section
+    title="Login to OliveTin"
+    class="small"
+  >
     <div class="login-form">
-      <div v-if="!hasOAuth && !hasLocalLogin" class="login-disabled">
+      <div
+        v-if="!hasOAuth && !hasLocalLogin"
+        class="login-disabled"
+      >
         <span>This server is not configured with either OAuth, or local users, so you cannot login.</span>
       </div>
 
-      <div v-if="hasOAuth" class="login-oauth2">
+      <div
+        v-if="hasOAuth"
+        class="login-oauth2"
+      >
         <h3>OAuth Login</h3>
         <div class="oauth-providers">
-          <button v-for="provider in oauthProviders" :key="provider.key" class="oauth-button"
-            @click="loginWithOAuth(provider)">
-            <span v-if="provider.icon" class="provider-icon" v-html="provider.icon"></span>
+          <button
+            v-for="provider in oauthProviders"
+            :key="provider.key"
+            class="oauth-button"
+            @click="loginWithOAuth(provider)"
+          >
+            <span
+              v-if="providerIcon(provider)"
+              class="provider-icon"
+            >
+              <iconify-icon
+                v-if="providerIcon(provider).kind === 'iconify'"
+                :icon="providerIcon(provider).id"
+              />
+              <span v-else>{{ providerIcon(provider).text }}</span>
+            </span>
             <span class="provider-name">Login with {{ provider.title }}</span>
           </button>
         </div>
       </div>
 
-      <div v-if="hasLocalLogin" class="login-local">
+      <div
+        v-if="hasLocalLogin"
+        class="login-local"
+      >
         <h3>Local Login</h3>
-        <form @submit.prevent="handleLocalLogin" class="local-login-form">
-          <div v-if="loginError" class="bad">
+        <form
+          class="local-login-form"
+          @submit.prevent="handleLocalLogin"
+        >
+          <div
+            v-if="loginError"
+            class="bad"
+          >
             {{ loginError }}
           </div>
 
-          <input id="username" v-model="username" type="text" name="username" autocomplete="username" required placeholder="Username" />
-          <input id="password" v-model="password" type="password" name="password" autocomplete="current-password" placeholder="Password"
-            required />
+          <input
+            id="username"
+            v-model="username"
+            type="text"
+            name="username"
+            autocomplete="username"
+            required
+            placeholder="Username"
+          >
+          <input
+            id="password"
+            v-model="password"
+            type="password"
+            name="password"
+            autocomplete="current-password"
+            placeholder="Password"
+            required
+          >
 
-          <button type="submit" :disabled="loading" class="login-button">
+          <button
+            type="submit"
+            :disabled="loading"
+            class="login-button"
+          >
             {{ loading ? 'Logging in...' : 'Login' }}
           </button>
         </form>
@@ -51,7 +101,39 @@ const hasOAuth = ref(false)
 const hasLocalLogin = ref(false)
 const oauthProviders = ref([])
 
-function loadLoginOptions() {
+const trustedProviderIconifyIds = {
+  github: 'simple-icons:github',
+  google: 'simple-icons:google'
+}
+
+function providerIcon (provider) {
+  const raw = (provider?.icon || '').trim()
+  if (!raw) {
+    return null
+  }
+
+  const iconifyTagMatch = raw.match(/<iconify-icon\b[^>]*\bicon=["']([^"']+)["'][^>]*>/i)
+  if (iconifyTagMatch) {
+    return { kind: 'iconify', id: iconifyTagMatch[1] }
+  }
+
+  if (/^[a-z0-9-]+:[a-z0-9-]+$/i.test(raw)) {
+    return { kind: 'iconify', id: raw }
+  }
+
+  const trustedId = trustedProviderIconifyIds[provider.key]
+  if (trustedId && (raw.includes('<') || raw === provider.key)) {
+    return { kind: 'iconify', id: trustedId }
+  }
+
+  if (!raw.includes('<')) {
+    return { kind: 'text', text: raw }
+  }
+
+  return trustedId ? { kind: 'iconify', id: trustedId } : null
+}
+
+function loadLoginOptions () {
   // Use the init response data that was loaded in App.vue
   if (window.initResponse) {
     hasOAuth.value = window.initResponse.oAuth2Providers && window.initResponse.oAuth2Providers.length > 0
@@ -65,7 +147,7 @@ function loadLoginOptions() {
   }
 }
 
-async function handleLocalLogin() {
+async function handleLocalLogin () {
   loading.value = true
   loginError.value = ''
 
@@ -83,7 +165,7 @@ async function handleLocalLogin() {
         window.initError = false
         window.initErrorMessage = ''
         window.initCompleted = true
-        
+
         // Update the header with new user info
         if (window.updateHeaderFromInit) {
           window.updateHeaderFromInit()
@@ -91,7 +173,7 @@ async function handleLocalLogin() {
       } catch (initErr) {
         console.error('Failed to reinitialize after login:', initErr)
       }
-      
+
       // Redirect to home page on successful login
       router.push('/')
     } else {
@@ -105,21 +187,21 @@ async function handleLocalLogin() {
   }
 }
 
-function loginWithOAuth(provider) {
+function loginWithOAuth (provider) {
   if (!provider.key) {
     console.error('OAuth provider missing key:', provider)
     return
   }
-  
+
   const providerKey = encodeURIComponent(provider.key)
   window.location.href = `/oauth/login?provider=${providerKey}`
 }
 
 onMounted(() => {
   loadLoginOptions()
-  
+
   // Also watch for when init response becomes available
-  const stopWatcher = watch(() => window.initResponse, () => {
+  watch(() => window.initResponse, () => {
     loadLoginOptions()
   }, { immediate: true })
 })

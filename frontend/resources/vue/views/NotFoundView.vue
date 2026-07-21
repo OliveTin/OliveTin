@@ -4,12 +4,18 @@
       <div class="not-found-content">
         <h1>404</h1>
         <h2>Page Not Found</h2>
-        
+
         <div class="actions">
-          <button class = "button good" @click="goToHome">
+          <button
+            class="button good"
+            @click="goToHome"
+          >
             Go to Home
           </button>
-          <button class="button neutral" @click="goBack">
+          <button
+            class="button neutral"
+            @click="goBack"
+          >
             Go Back
           </button>
         </div>
@@ -22,10 +28,10 @@
 export default {
   name: 'NotFoundView',
   methods: {
-    goBack() {
+    goBack () {
       this.$router.go(-1)
     },
-    goToHome() {
+    goToHome () {
       this.$router.push('/')
     }
   }
@@ -57,4 +63,4 @@ export default {
   color: #666;
   margin-bottom: 2rem;
 }
-</style> 
+</style>

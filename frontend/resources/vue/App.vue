@@ -1,126 +1,218 @@
 <template>
-    <Header :title="pageTitle" :logoUrl="logoUrl" @toggleSidebar="toggleSidebar" :sidebarEnabled="sidebarEnabled" :topBarEnabled="topbarEnabled" :navigation="navigation">
-        <template #toolbar>
-            <div id="banner" v-if="bannerMessage" :style="bannerCss">
-                <p>{{ bannerMessage }}</p>
-            </div>
-        </template>
+  <Header
+    :title="pageTitle"
+    :logo-url="logoUrl"
+    :sidebar-enabled="sidebarEnabled"
+    :top-bar-enabled="topbarEnabled"
+    :navigation="navigation"
+    @toggle-sidebar="toggleSidebar"
+  >
+    <template #toolbar>
+      <div
+        v-if="bannerMessage"
+        id="banner"
+        :style="bannerCss"
+      >
+        <p>{{ bannerMessage }}</p>
+      </div>
+    </template>
 
-        <template #user-info>
-            <ConnectionBanner />
-            <div class="flex-row user-info" style="gap: .5em;">
-                <span id="link-login" v-if="!isLoggedIn && showLoginLink"><router-link to="/login">{{ t('login-button') }}</router-link></span>
-                <router-link v-else to="/user" class="user-link" v-if="isLoggedIn">
-                    <span id="username-text">{{ username }}</span>
-                </router-link>
-                <HugeiconsIcon :icon="UserCircle02Icon" width = "1.5em" height = "1.5em" v-if="isLoggedIn" />
-            </div>
+    <template #user-info>
+      <ConnectionBanner />
+      <div
+        class="flex-row user-info"
+        style="gap: .5em;"
+      >
+        <span
+          v-if="!isLoggedIn && showLoginLink"
+          id="link-login"
+        ><router-link to="/login">{{ t('login-button') }}</router-link></span>
+        <router-link
+          v-else-if="isLoggedIn"
+          to="/user"
+          class="user-link"
+        >
+          <span id="username-text">{{ username }}</span>
+        </router-link>
+        <HugeiconsIcon
+          v-if="isLoggedIn"
+          :icon="UserCircle02Icon"
+          width="1.5em"
+          height="1.5em"
+        />
+      </div>
+    </template>
+  </Header>
 
-        </template>
-    </Header>
+  <div id="layout">
+    <Navigation ref="navigation">
+      <Sidebar
+        v-if="sidebarEnabled && showNavigation"
+        id="mainnav"
+        ref="sidebar"
+      />
+    </Navigation>
 
-    <div id="layout">
-        <Navigation ref="navigation">
-            <Sidebar ref="sidebar" id = "mainnav" v-if="sidebarEnabled && showNavigation"/>
-        </Navigation>
+    <div
+      id="content"
+      :initial-martial-complete="hasLoaded"
+    >
+      <main title="Main content">
+        <router-view :key="$route.fullPath" />
+      </main>
 
-		<div id="content" initial-martial-complete="{{ hasLoaded }}">
-            <main title="Main content">
-                <router-view :key="$route.fullPath" />
-            </main>
+      <footer
+        v-if="showFooter"
+        title="footer"
+      >
+        <p>
+          <img
+            title="application icon"
+            :src="logoUrl"
+            alt="OliveTin logo"
+            style="height: 1em;"
+            class="logo"
+          >
+          OliveTin <span v-if="showVersionNumber">{{ currentVersion }}</span>
+        </p>
+        <p>
+          <span>
+            <a
+              href="https://docs.olivetin.app"
+              target="_new"
+            >{{ t('docs') }}</a>
+          </span>
 
-            <footer title="footer" v-if="showFooter">
-                <p>
-                    <img title="application icon" :src="logoUrl" alt="OliveTin logo" style="height: 1em;" class="logo" />
-                    OliveTin <span v-if="showVersionNumber">{{ currentVersion }}</span>
-                </p>
-                <p>
-                    <span>
-                        <a href="https://docs.olivetin.app" target="_new">{{ t('docs') }}</a>
-                    </span>
+          <span>
+            <a
+              href="https://github.com/OliveTin/OliveTin/issues/new/choose"
+              target="_new"
+            >{{ t('raise-issue') }}</a>
+          </span>
 
-                    <span>
-                        <a href="https://github.com/OliveTin/OliveTin/issues/new/choose" target="_new">{{ t('raise-issue') }}</a>
-                    </span>
+          <span>
+            <a
+              href="#"
+              @click.prevent="openLanguageDialog"
+            >{{ currentLanguageName }}</a>
+          </span>
 
-                    <span>
-                        <a href="#" @click.prevent="openLanguageDialog">{{ currentLanguageName }}</a>
-                    </span>
-
-                    <span v-if="availableThemes.length > 1">
-                        <a href="#" @click.prevent="openThemeDialog">{{ currentThemeName }}</a>
-                    </span>
-                </p>
-                <p v-if="showVersionNumber">
-                    <a id="available-version" href="http://olivetin.app" target="_blank" hidden>?</a>
-                </p>
-            </footer>
-        </div>
+          <span v-if="availableThemes.length > 1">
+            <a
+              href="#"
+              @click.prevent="openThemeDialog"
+            >{{ currentThemeName }}</a>
+          </span>
+        </p>
+        <p v-if="showVersionNumber">
+          <a
+            id="available-version"
+            href="http://olivetin.app"
+            target="_blank"
+            hidden
+          >?</a>
+        </p>
+      </footer>
     </div>
+  </div>
 
-    <dialog ref="languageDialog" class="language-dialog" @click="handleLanguageDialogClick">
-        <div class="dialog-content" @click.stop>
-            <h2>{{ t('language-dialog.title') }}</h2>
-            <select v-model="selectedLanguage" @change="changeLanguage" class="language-select">
-                <option v-for="(name, code) in availableLanguages" :key="code" :value="code">
-                    {{ code === 'auto' ? name : `${name} (${code})` }}
-                </option>
-            </select>
-            <p class="browser-languages">
-                {{ t('language-dialog.browser-languages') }}:
-                <span v-if="browserLanguages.length > 0">{{ browserLanguages.join(', ') }}</span>
-                <span v-else>{{ t('language-dialog.not-available') }}</span>
-            </p>
-            <div class="dialog-buttons">
-                <button @click="closeLanguageDialog">{{ t('language-dialog.close') }}</button>
-            </div>
-        </div>
-    </dialog>
+  <dialog
+    ref="languageDialog"
+    class="language-dialog"
+    @click="handleLanguageDialogClick"
+  >
+    <div
+      class="dialog-content"
+      @click.stop
+    >
+      <h2>{{ t('language-dialog.title') }}</h2>
+      <select
+        v-model="selectedLanguage"
+        class="language-select"
+        @change="changeLanguage"
+      >
+        <option
+          v-for="(name, code) in availableLanguages"
+          :key="code"
+          :value="code"
+        >
+          {{ code === 'auto' ? name : `${name} (${code})` }}
+        </option>
+      </select>
+      <p class="browser-languages">
+        {{ t('language-dialog.browser-languages') }}:
+        <span v-if="browserLanguages.length > 0">{{ browserLanguages.join(', ') }}</span>
+        <span v-else>{{ t('language-dialog.not-available') }}</span>
+      </p>
+      <div class="dialog-buttons">
+        <button @click="closeLanguageDialog">
+          {{ t('language-dialog.close') }}
+        </button>
+      </div>
+    </div>
+  </dialog>
 
-    <dialog ref="themeDialog" class="theme-dialog" @click="handleThemeDialogClick">
-        <div class="dialog-content" @click.stop>
-            <h2>{{ t('theme-dialog.title') }}</h2>
-            <select v-model="selectedTheme" @change="changeTheme" class="language-select">
-                <option value="">{{ t('theme-dialog.default') }}</option>
-                <option v-for="theme in availableThemes" :key="theme" :value="theme">
-                    {{ theme }}
-                </option>
-            </select>
-            <div class="dialog-buttons">
-                <button @click="closeThemeDialog">{{ t('theme-dialog.close') }}</button>
-            </div>
-        </div>
-    </dialog>
+  <dialog
+    ref="themeDialog"
+    class="theme-dialog"
+    @click="handleThemeDialogClick"
+  >
+    <div
+      class="dialog-content"
+      @click.stop
+    >
+      <h2>{{ t('theme-dialog.title') }}</h2>
+      <select
+        v-model="selectedTheme"
+        class="language-select"
+        @change="changeTheme"
+      >
+        <option value="">
+          {{ t('theme-dialog.default') }}
+        </option>
+        <option
+          v-for="theme in availableThemes"
+          :key="theme"
+          :value="theme"
+        >
+          {{ theme }}
+        </option>
+      </select>
+      <div class="dialog-buttons">
+        <button @click="closeThemeDialog">
+          {{ t('theme-dialog.close') }}
+        </button>
+      </div>
+    </div>
+  </dialog>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
-import { useRouter } from 'vue-router';
-import Sidebar from 'picocrank/vue/components/Sidebar.vue';
-import Navigation from 'picocrank/vue/components/Navigation.vue';
-import Header from 'picocrank/vue/components/Header.vue';
-import ConnectionBanner from './components/ConnectionBanner.vue';
-import { connectEventStreamIfNeeded } from '../../js/websocket.js';
+import { ref, onMounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
+import Sidebar from 'picocrank/vue/components/Sidebar.vue'
+import Navigation from 'picocrank/vue/components/Navigation.vue'
+import Header from 'picocrank/vue/components/Header.vue'
+import ConnectionBanner from './components/ConnectionBanner.vue'
+import { connectEventStreamIfNeeded } from '../../js/websocket.js'
 import { HugeiconsIcon } from '@hugeicons/vue'
-import { Menu01Icon } from '@hugeicons/core-free-icons'
-import { UserCircle02Icon } from '@hugeicons/core-free-icons'
-import { DashboardSquare01Icon } from '@hugeicons/core-free-icons'
-import logoUrl from '../../OliveTinLogo.png';
-import { useI18n } from 'vue-i18n';
-import combinedTranslations from '../../../lang/combined_output.json';
-const { t, locale } = useI18n();
+import { UserCircle02Icon, DashboardSquare01Icon } from '@hugeicons/core-free-icons'
+import logoUrl from '../../OliveTinLogo.png'
+import { useI18n } from 'vue-i18n'
+import combinedTranslations from '../../../lang/combined_output.json'
+const { t } = useI18n()
 
-const router = useRouter();
+const router = useRouter()
 
-const sidebar = ref(null);
-const navigation = ref(null);
-const username = ref('notset');
-const isLoggedIn = ref(false);
-const currentVersion = ref('?');
-const pageTitle = ref('OliveTin');
-const bannerMessage = ref('');
-const bannerCss = ref('');
-const hasLoaded = ref(false);
+const sidebar = ref(null)
+const navigation = ref(null)
+const username = ref('notset')
+const isLoggedIn = ref(false)
+const currentVersion = ref('?')
+const pageTitle = ref('OliveTin')
+const bannerMessage = ref('')
+const bannerCss = ref('')
+const hasLoaded = ref(false)
 const showFooter = ref(true)
 const showNavigation = ref(true)
 const showLogs = ref(true)
@@ -144,279 +236,279 @@ const selectedTheme = ref(themePreference.value)
 
 // Available languages with display names
 const availableLanguages = {
-    'auto': 'Browser Language',
-    'en': 'English',
-    'de-DE': 'Deutsch',
-    'es-ES': 'Español',
-    'it-IT': 'Italiano',
-    'zh-Hans-CN': '简体中文'
+  auto: 'Browser Language',
+  en: 'English',
+  'de-DE': 'Deutsch',
+  'es-ES': 'Español',
+  'it-IT': 'Italiano',
+  'zh-Hans-CN': '简体中文'
 }
 
 // Computed property to get current language display name
 const currentLanguageName = computed(() => {
-    if (languagePreference.value === 'auto') {
-        return availableLanguages['auto']
-    }
+  if (languagePreference.value === 'auto') {
+    return availableLanguages.auto
+  }
 
-    return availableLanguages[languagePreference.value] || languagePreference.value
+  return availableLanguages[languagePreference.value] || languagePreference.value
 })
 
 // Computed property to get current theme display name
 const currentThemeName = computed(() => {
-    if (!themePreference.value || themePreference.value === '') {
-        return t('theme-dialog.default')
-    }
-    return themePreference.value
+  if (!themePreference.value || themePreference.value === '') {
+    return t('theme-dialog.default')
+  }
+  return themePreference.value
 })
 
 // Computed properties for navigation style
 const topbarEnabled = computed(() => {
-    return sectionNavigationStyle.value === 'topbar'
+  return sectionNavigationStyle.value === 'topbar'
 })
 
 const sidebarEnabled = computed(() => {
-    return sectionNavigationStyle.value !== 'topbar' && showNavigation.value
+  return sectionNavigationStyle.value !== 'topbar' && showNavigation.value
 })
 
-function normalizeBrowserLanguage() {
-    const available = Object.keys(combinedTranslations.messages || {})
+function normalizeBrowserLanguage () {
+  const available = Object.keys(combinedTranslations.messages || {})
 
-    if (navigator.languages && navigator.languages.length > 0) {
-        for (const candidate of navigator.languages) {
-            const lowerCandidate = candidate.toLowerCase()
+  if (navigator.languages && navigator.languages.length > 0) {
+    for (const candidate of navigator.languages) {
+      const lowerCandidate = candidate.toLowerCase()
 
-            // Try exact match (case-insensitive)
-            const exact = available.find(locale => locale.toLowerCase() === lowerCandidate)
-            if (exact) {
-                return exact
-            }
+      // Try exact match (case-insensitive)
+      const exact = available.find(locale => locale.toLowerCase() === lowerCandidate)
+      if (exact) {
+        return exact
+      }
 
-            // Try prefix match (e.g., "zh-CN" -> "zh-Hans-CN")
-            const prefix = available.find(locale => locale.toLowerCase().startsWith(lowerCandidate.split('-')[0] + '-'))
-            if (prefix) {
-                return prefix
-            }
-        }
+      // Try prefix match (e.g., "zh-CN" -> "zh-Hans-CN")
+      const prefix = available.find(locale => locale.toLowerCase().startsWith(lowerCandidate.split('-')[0] + '-'))
+      if (prefix) {
+        return prefix
+      }
     }
+  }
 
-    return 'en'
+  return 'en'
 }
 
-function toggleSidebar() {
-    if (sidebar.value && showNavigation.value) {
-        sidebar.value.toggle()
-    }
+function toggleSidebar () {
+  if (sidebar.value && showNavigation.value) {
+    sidebar.value.toggle()
+  }
 }
 
-function updateHeaderFromInit() {
-    if (!window.initResponse) {
-        return
-    }
+function updateHeaderFromInit () {
+  if (!window.initResponse) {
+    return
+  }
 
-    username.value = window.initResponse.authenticatedUser
-    isLoggedIn.value = window.initResponse.authenticatedUser !== '' && window.initResponse.authenticatedUser !== 'guest'
-    currentVersion.value = window.initResponse.currentVersion
-    pageTitle.value = window.initResponse.pageTitle || 'OliveTin'
-    bannerMessage.value = window.initResponse.bannerMessage || ''
-    bannerCss.value = window.initResponse.bannerCss || ''
-    showFooter.value = window.initResponse.showFooter
-    showNavigation.value = window.initResponse.showNavigation
-    showLogs.value = window.initResponse.showLogList
-    showDiagnostics.value = window.initResponse.showDiagnostics
-    showVersionNumber.value = window.initResponse.effectivePolicy?.showVersionNumber ?? true
-    sectionNavigationStyle.value = window.initResponse.sectionNavigationStyle || 'sidebar'
-    availableThemes.value = window.initResponse.availableThemes || []
+  username.value = window.initResponse.authenticatedUser
+  isLoggedIn.value = window.initResponse.authenticatedUser !== '' && window.initResponse.authenticatedUser !== 'guest'
+  currentVersion.value = window.initResponse.currentVersion
+  pageTitle.value = window.initResponse.pageTitle || 'OliveTin'
+  bannerMessage.value = window.initResponse.bannerMessage || ''
+  bannerCss.value = window.initResponse.bannerCss || ''
+  showFooter.value = window.initResponse.showFooter
+  showNavigation.value = window.initResponse.showNavigation
+  showLogs.value = window.initResponse.showLogList
+  showDiagnostics.value = window.initResponse.showDiagnostics
+  showVersionNumber.value = window.initResponse.effectivePolicy?.showVersionNumber ?? true
+  sectionNavigationStyle.value = window.initResponse.sectionNavigationStyle || 'sidebar'
+  availableThemes.value = window.initResponse.availableThemes || []
 
-    if (!window.initResponse.authLocalLogin && window.initResponse.oAuth2Providers.length === 0) {
-        showLoginLink.value = false
-    }
+  if (!window.initResponse.authLocalLogin && window.initResponse.oAuth2Providers.length === 0) {
+    showLoginLink.value = false
+  }
 
-    applyStyleMods()
-    loadCustomJsIfEnabled()
+  applyStyleMods()
+  loadCustomJsIfEnabled()
 
-    renderNavigation()
-    applyTheme()
+  renderNavigation()
+  applyTheme()
 
-    if (window.initResponse.loginRequired) {
-        connectEventStreamIfNeeded()
-        router.push('/login')
-        return
-    }
-
+  if (window.initResponse.loginRequired) {
     connectEventStreamIfNeeded()
+    router.push('/login')
+    return
+  }
+
+  connectEventStreamIfNeeded()
 }
 
-function renderNavigation() {
-    if (!navigation.value) {
-        return
-    }
+function renderNavigation () {
+  if (!navigation.value) {
+    return
+  }
 
-    const rootDashboards = window.initResponse?.rootDashboards || []
+  const rootDashboards = window.initResponse?.rootDashboards || []
 
-    if (typeof navigation.value.clear === 'function') {
-        navigation.value.clear()
-    }
+  if (typeof navigation.value.clear === 'function') {
+    navigation.value.clear()
+  }
 
-    for (const rootDashboard of rootDashboards) {
-        navigation.value.addNavigationLink({
-            id: rootDashboard,
-            name: rootDashboard,
-            title: rootDashboard,
-            path: rootDashboard === 'Actions' ? '/' : `/dashboards/${rootDashboard}`,
-            icon: DashboardSquare01Icon,
-        })
-    }
+  for (const rootDashboard of rootDashboards) {
+    navigation.value.addNavigationLink({
+      id: rootDashboard,
+      name: rootDashboard,
+      title: rootDashboard,
+      path: rootDashboard === 'Actions' ? '/' : `/dashboards/${rootDashboard}`,
+      icon: DashboardSquare01Icon
+    })
+  }
 
-    navigation.value.addSeparator()
-    navigation.value.addRouterLink('Entities', t('nav.entities'))
+  navigation.value.addSeparator()
+  navigation.value.addRouterLink('Entities', t('nav.entities'))
 
-    if (showLogs.value) {
-        navigation.value.addRouterLink('Logs', t('nav.logs'))
-    }
+  if (showLogs.value) {
+    navigation.value.addRouterLink('Logs', t('nav.logs'))
+  }
 
-    if (showDiagnostics.value) {
-        navigation.value.addRouterLink('Diagnostics', t('nav.diagnostics'))
-    }
+  if (showDiagnostics.value) {
+    navigation.value.addRouterLink('Diagnostics', t('nav.diagnostics'))
+  }
 }
 
-function openLanguageDialog() {
-    selectedLanguage.value = languagePreference.value
+function openLanguageDialog () {
+  selectedLanguage.value = languagePreference.value
 
-    if (typeof navigator !== 'undefined' && Array.isArray(navigator.languages)) {
-        browserLanguages.value = navigator.languages
-    } else {
-        browserLanguages.value = []
-    }
+  if (typeof navigator !== 'undefined' && Array.isArray(navigator.languages)) {
+    browserLanguages.value = navigator.languages
+  } else {
+    browserLanguages.value = []
+  }
 
-    if (languageDialog.value) {
-        languageDialog.value.showModal()
-    }
+  if (languageDialog.value) {
+    languageDialog.value.showModal()
+  }
 }
 
-function closeLanguageDialog() {
-    if (languageDialog.value) {
-        languageDialog.value.close()
-    }
+function closeLanguageDialog () {
+  if (languageDialog.value) {
+    languageDialog.value.close()
+  }
 }
 
-function changeLanguage() {
-    if (!window.i18n || !selectedLanguage.value) {
-        return
-    }
+function changeLanguage () {
+  if (!window.i18n || !selectedLanguage.value) {
+    return
+  }
 
-    if (selectedLanguage.value === 'auto') {
-        localStorage.removeItem('olivetin-language')
-        languagePreference.value = 'auto'
-        window.i18n.locale.value = normalizeBrowserLanguage()
-    } else {
-        window.i18n.locale.value = selectedLanguage.value
-        localStorage.setItem('olivetin-language', selectedLanguage.value)
-        languagePreference.value = selectedLanguage.value
-    }
+  if (selectedLanguage.value === 'auto') {
+    localStorage.removeItem('olivetin-language')
+    languagePreference.value = 'auto'
+    window.i18n.locale.value = normalizeBrowserLanguage()
+  } else {
+    window.i18n.locale.value = selectedLanguage.value
+    localStorage.setItem('olivetin-language', selectedLanguage.value)
+    languagePreference.value = selectedLanguage.value
+  }
 
-    // Update navigation with new translations
-    if (navigation.value) {
-        renderNavigation()
-    }
+  // Update navigation with new translations
+  if (navigation.value) {
+    renderNavigation()
+  }
 
+  closeLanguageDialog()
+}
+
+function handleLanguageDialogClick (event) {
+  // Close dialog when clicking on the backdrop
+  if (event.target === languageDialog.value) {
     closeLanguageDialog()
+  }
 }
 
-function handleLanguageDialogClick(event) {
-    // Close dialog when clicking on the backdrop
-    if (event.target === languageDialog.value) {
-        closeLanguageDialog()
-    }
+function openThemeDialog () {
+  selectedTheme.value = themePreference.value || ''
+
+  if (themeDialog.value) {
+    themeDialog.value.showModal()
+  }
 }
 
-function openThemeDialog() {
-    selectedTheme.value = themePreference.value || ''
-
-    if (themeDialog.value) {
-        themeDialog.value.showModal()
-    }
+function closeThemeDialog () {
+  if (themeDialog.value) {
+    themeDialog.value.close()
+  }
 }
 
-function closeThemeDialog() {
-    if (themeDialog.value) {
-        themeDialog.value.close()
-    }
+function changeTheme () {
+  if (!selectedTheme.value || selectedTheme.value === '') {
+    localStorage.removeItem('olivetin-theme')
+    themePreference.value = ''
+  } else {
+    localStorage.setItem('olivetin-theme', selectedTheme.value)
+    themePreference.value = selectedTheme.value
+  }
+
+  applyTheme()
+  closeThemeDialog()
 }
 
-function changeTheme() {
-    if (!selectedTheme.value || selectedTheme.value === '') {
-        localStorage.removeItem('olivetin-theme')
-        themePreference.value = ''
-    } else {
-        localStorage.setItem('olivetin-theme', selectedTheme.value)
-        themePreference.value = selectedTheme.value
-    }
+function applyTheme () {
+  let themeStyle = document.getElementById('theme-style')
 
-    applyTheme()
+  if (!themeStyle) {
+    themeStyle = document.createElement('style')
+    themeStyle.id = 'theme-style'
+    themeStyle.type = 'text/css'
+    document.head.appendChild(themeStyle)
+  }
+
+  // Load theme into @layer theme so it takes precedence over @layer components
+  if (themePreference.value && themePreference.value !== '') {
+    themeStyle.textContent = `@import url('/custom-webui/themes/${themePreference.value}/theme.css') layer(theme);`
+  } else {
+    themeStyle.textContent = '@import url(\'/theme.css\') layer(theme);'
+  }
+}
+
+function loadCustomJsIfEnabled () {
+  if (!window.initResponse?.enableCustomJs || document.getElementById('olivetin-custom-js')) {
+    return
+  }
+  const script = document.createElement('script')
+  script.src = '/custom-webui/custom.js'
+  script.async = true
+  script.id = 'olivetin-custom-js'
+  document.head.appendChild(script)
+}
+
+function applyStyleMods () {
+  if (!window.initResponse || !window.initResponse.styleMods) {
+    return
+  }
+
+  for (const styleMod of window.initResponse.styleMods) {
+    if (styleMod) {
+      document.body.classList.add(styleMod)
+    }
+  }
+}
+
+function handleThemeDialogClick (event) {
+  if (event.target === themeDialog.value) {
     closeThemeDialog()
-}
-
-function applyTheme() {
-    let themeStyle = document.getElementById('theme-style')
-
-    if (!themeStyle) {
-        themeStyle = document.createElement('style')
-        themeStyle.id = 'theme-style'
-        themeStyle.type = 'text/css'
-        document.head.appendChild(themeStyle)
-    }
-
-    // Load theme into @layer theme so it takes precedence over @layer components
-    if (themePreference.value && themePreference.value !== '') {
-        themeStyle.textContent = `@import url('/custom-webui/themes/${themePreference.value}/theme.css') layer(theme);`
-    } else {
-        themeStyle.textContent = `@import url('/theme.css') layer(theme);`
-    }
-}
-
-function loadCustomJsIfEnabled() {
-    if (!window.initResponse?.enableCustomJs || document.getElementById('olivetin-custom-js')) {
-        return
-    }
-    const script = document.createElement('script')
-    script.src = '/custom-webui/custom.js'
-    script.async = true
-    script.id = 'olivetin-custom-js'
-    document.head.appendChild(script)
-}
-
-function applyStyleMods() {
-    if (!window.initResponse || !window.initResponse.styleMods) {
-        return
-    }
-
-    for (const styleMod of window.initResponse.styleMods) {
-        if (styleMod) {
-            document.body.classList.add(styleMod)
-        }
-    }
-}
-
-function handleThemeDialogClick(event) {
-    if (event.target === themeDialog.value) {
-        closeThemeDialog()
-    }
+  }
 }
 
 window.updateHeaderFromInit = updateHeaderFromInit
 
 onMounted(() => {
-    updateHeaderFromInit()
+  updateHeaderFromInit()
 
-    // Initialize selected language from stored preference
-    selectedLanguage.value = languagePreference.value
+  // Initialize selected language from stored preference
+  selectedLanguage.value = languagePreference.value
 
-    // Initialize selected theme from stored preference
-    selectedTheme.value = themePreference.value || ''
+  // Initialize selected theme from stored preference
+  selectedTheme.value = themePreference.value || ''
 
-    if (typeof navigator !== 'undefined' && Array.isArray(navigator.languages)) {
-        browserLanguages.value = navigator.languages
-    }
+  if (typeof navigator !== 'undefined' && Array.isArray(navigator.languages)) {
+    browserLanguages.value = navigator.languages
+  }
 })
 </script>
 

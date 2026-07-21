@@ -1,130 +1,211 @@
 <template>
   <Section :padding="false">
-      <template #title>
-        <span class="section-title-with-icon">
-          Action Details:
-          <ActionIconGlyph v-if="action" class="action-title-icon" :glyph="action.icon" />
-          {{ actionTitle }}
-        </span>
-      </template>
-      <template #toolbar>
-        <div class="action-details-toolbar">
-          <button
-            v-for="dashboard in backToDashboards"
-            :key="dashboard.path"
-            @click="goToDashboard(dashboard.path)"
-            :title="'Back to ' + dashboard.title"
-            class="button neutral"
-          >
-            <HugeiconsIcon :icon="DashboardSquare01Icon" />
-            {{ dashboard.title }}
-          </button>
-          <button v-if="action" @click="startAction" title="Run this action" class="button neutral">
-            <HugeiconsIcon :icon="WorkoutRunIcon" />
-            Run
-          </button>
-          <router-link
-            v-if="action"
-            :to="{ name: 'ActionExecConditions', params: { actionId: route.params.actionId } }"
-            class="button neutral"
-            title="View configured automatic triggers and on-demand execution"
-          >
-            Execution conditions ({{ executionConditionCount }})
-          </router-link>
-        </div>
-      </template>
+    <template #title>
+      <span class="section-title-with-icon">
+        Action Details:
+        <ActionIconGlyph
+          v-if="action"
+          class="action-title-icon"
+          :glyph="action.icon"
+        />
+        {{ actionTitle }}
+      </span>
+    </template>
+    <template #toolbar>
+      <div class="action-details-toolbar">
+        <button
+          v-for="dashboard in backToDashboards"
+          :key="dashboard.path"
+          :title="'Back to ' + dashboard.title"
+          class="button neutral"
+          @click="goToDashboard(dashboard.path)"
+        >
+          <HugeiconsIcon :icon="DashboardSquare01Icon" />
+          {{ dashboard.title }}
+        </button>
+        <button
+          v-if="action"
+          title="Run this action"
+          class="button neutral"
+          @click="startAction"
+        >
+          <HugeiconsIcon :icon="WorkoutRunIcon" />
+          Run
+        </button>
+        <router-link
+          v-if="action"
+          :to="{ name: 'ActionExecConditions', params: { actionId: route.params.actionId } }"
+          class="button neutral"
+          title="View configured automatic triggers and on-demand execution"
+        >
+          Execution conditions ({{ executionConditionCount }})
+        </router-link>
+      </div>
+    </template>
 
-      <div class = "flex-row padding" v-if="action">
-        <div class = "fg1">
-          <dl>
-            <dt>Timeout</dt>
-            <dd>{{ action.timeout }} seconds</dd>
+    <div
+      v-if="action"
+      class="flex-row padding"
+    >
+      <div class="fg1">
+        <dl>
+          <dt>Timeout</dt>
+          <dd>{{ action.timeout }} seconds</dd>
 
-            <template v-if="actionGroups.length > 0">
-              <dt>
-                <router-link :to="{ name: 'LogsQueue' }" class="action-groups-link">Action groups</router-link>
-              </dt>
-              <dd>
-                <ul class="action-group-list">
-                  <li v-for="group in actionGroups" :key="group.name" class="action-group-row">
-                    <router-link :to="{ name: 'LogsQueue' }" class="action-groups-link action-group-name">{{ group.name }}</router-link><template v-if="group.maxConcurrent > 0 && group.queueSize > 0"> - </template><ActionGroupLimitsLabel
-                      :max-concurrent="group.maxConcurrent"
-                      :queue-size="group.queueSize"
-                    />
-                  </li>
-                </ul>
-              </dd>
-            </template>
-          </dl>
-          <p class = "fg1">
-            Execution history for this action. You can filter by execution tracking ID.
-          </p>
-        </div>
-        <div style = "align-self: start; text-align: right;">
-          <div class="filter-container">
-            <label class="input-with-icons">
-              <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
-                <path fill="currentColor"
-                  d="m19.6 21l-6.3-6.3q-.75.6-1.725.95T9.5 16q-2.725 0-4.612-1.888T3 9.5t1.888-4.612T9.5 3t4.613 1.888T16 9.5q0 1.1-.35 2.075T14.7 13.3l6.3 6.3zM9.5 14q1.875 0 3.188-1.312T14 9.5t-1.312-3.187T9.5 5T6.313 6.313T5 9.5t1.313 3.188T9.5 14" />
+          <template v-if="actionGroups.length > 0">
+            <dt>
+              <router-link
+                :to="{ name: 'LogsQueue' }"
+                class="action-groups-link"
+              >
+                Action groups
+              </router-link>
+            </dt>
+            <dd>
+              <ul class="action-group-list">
+                <li
+                  v-for="group in actionGroups"
+                  :key="group.name"
+                  class="action-group-row"
+                >
+                  <router-link
+                    :to="{ name: 'LogsQueue' }"
+                    class="action-groups-link action-group-name"
+                  >
+                    {{ group.name }}
+                  </router-link><template v-if="group.maxConcurrent > 0 && group.queueSize > 0">
+                    -
+                  </template><ActionGroupLimitsLabel
+                    :max-concurrent="group.maxConcurrent"
+                    :queue-size="group.queueSize"
+                  />
+                </li>
+              </ul>
+            </dd>
+          </template>
+        </dl>
+        <p class="fg1">
+          Execution history for this action. You can filter by execution tracking ID.
+        </p>
+      </div>
+      <div style="align-self: start; text-align: right;">
+        <div class="filter-container">
+          <label class="input-with-icons">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="1em"
+              height="1em"
+              viewBox="0 0 24 24"
+            >
+              <path
+                fill="currentColor"
+                d="m19.6 21l-6.3-6.3q-.75.6-1.725.95T9.5 16q-2.725 0-4.612-1.888T3 9.5t1.888-4.612T9.5 3t4.613 1.888T16 9.5q0 1.1-.35 2.075T14.7 13.3l6.3 6.3zM9.5 14q1.875 0 3.188-1.312T14 9.5t-1.312-3.187T9.5 5T6.313 6.313T5 9.5t1.313 3.188T9.5 14"
+              />
+            </svg>
+            <input
+              v-model="searchText"
+              placeholder="Filter current page"
+            >
+            <button
+              title="Clear search filter"
+              :disabled="!searchText"
+              @click="clearSearch"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="1em"
+                height="1em"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  fill="currentColor"
+                  d="M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12z"
+                />
               </svg>
-              <input placeholder="Filter current page" v-model="searchText" />
-              <button title="Clear search filter" :disabled="!searchText" @click="clearSearch">
-                <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24">
-                  <path fill="currentColor"
-                    d="M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12z" />
-                </svg>
-              </button>
-            </label>
-          </div>
+            </button>
+          </label>
         </div>
       </div>
+    </div>
 
-      <div v-show="filteredLogs.length > 0">
-        <table class="logs-table row-hover">
-          <thead>
-            <tr>
-              <th>Timestamp</th>
-              <th>Duration</th>
-              <th>Execution ID</th>
-              <th>Metadata</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="log in filteredLogs" :key="log.executionTrackingId" class="log-row" :title="log.actionTitle">
-              <td class="timestamp">{{ formatTimestamp(log.datetimeStarted) }}</td>
-              <td class="duration">{{ formatExecutionDuration(log) }}</td>
-              <td>
-                <router-link :to="`/logs/${log.executionTrackingId}`">
-                  <LogActionTitle :justification="log.justification">
-                    {{ log.executionTrackingId }}
-                  </LogActionTitle>
-                </router-link>
-              </td>
-              <td class="tags">
-                <span class="annotation">
-                  <span class="annotation-key">User:</span>
-                  <span class="annotation-val">{{ log.user }}</span>
-                </span>
-                <span v-if="log.tags && log.tags.length > 0" class="tag-list">
-                  <span v-for="tag in log.tags" :key="tag" class="tag">{{ tag }}</span>
-                </span>
-              </td>
-              <td class="exit-code">
-                <ActionStatusDisplay :logEntry="log" :link-queued-status="true" />
-              </td>
-            </tr>
-          </tbody>
-        </table>
+    <div v-show="filteredLogs.length > 0">
+      <table class="logs-table row-hover">
+        <thead>
+          <tr>
+            <th>Timestamp</th>
+            <th>Duration</th>
+            <th>Execution ID</th>
+            <th>Metadata</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            v-for="log in filteredLogs"
+            :key="log.executionTrackingId"
+            class="log-row"
+            :title="log.actionTitle"
+          >
+            <td class="timestamp">
+              {{ formatTimestamp(log.datetimeStarted) }}
+            </td>
+            <td class="duration">
+              {{ formatExecutionDuration(log) }}
+            </td>
+            <td>
+              <router-link :to="`/logs/${log.executionTrackingId}`">
+                <LogActionTitle :justification="log.justification">
+                  {{ log.executionTrackingId }}
+                </LogActionTitle>
+              </router-link>
+            </td>
+            <td class="tags">
+              <span class="annotation">
+                <span class="annotation-key">User:</span>
+                <span class="annotation-val">{{ log.user }}</span>
+              </span>
+              <span
+                v-if="log.tags && log.tags.length > 0"
+                class="tag-list"
+              >
+                <span
+                  v-for="tag in log.tags"
+                  :key="tag"
+                  class="tag"
+                >{{ tag }}</span>
+              </span>
+            </td>
+            <td class="exit-code">
+              <ActionStatusDisplay
+                :log-entry="log"
+                :link-queued-status="true"
+              />
+            </td>
+          </tr>
+        </tbody>
+      </table>
 
-        <Pagination :pageSize="pageSize" :total="totalCount" :currentPage="currentPage" :page="currentPage" @page-change="handlePageChange" class="padding"
-          @page-size-change="handlePageSizeChange" itemTitle="execution logs" />
-      </div>
+      <Pagination
+        :page-size="pageSize"
+        :total="totalCount"
+        :current-page="currentPage"
+        :page="currentPage"
+        class="padding"
+        item-title="execution logs"
+        @page-change="handlePageChange"
+        @page-size-change="handlePageSizeChange"
+      />
+    </div>
 
-      <div v-show="logs.length === 0 && !loading" class="empty-state">
-        <p>This action has no execution history.</p>
-        <router-link to="/">Return to index</router-link>
-      </div>
+    <div
+      v-show="logs.length === 0 && !loading"
+      class="empty-state"
+    >
+      <p>This action has no execution history.</p>
+      <router-link to="/">
+        Return to index
+      </router-link>
+    </div>
   </Section>
 </template>
 
@@ -174,16 +255,16 @@ const executionConditionCount = computed(() => countExecutionConditions(action.v
 
 const actionGroups = computed(() => action.value?.groups ?? [])
 
-async function fetchActionLogs() {
+async function fetchActionLogs () {
   loading.value = true
   try {
     const actionId = route.params.actionId
     const startOffset = (currentPage.value - 1) * pageSize.value
 
     const args = {
-      "actionId": actionId,
-      "startOffset": BigInt(startOffset),
-      "pageSize": BigInt(Number(pageSize.value)),
+      actionId,
+      startOffset: BigInt(startOffset),
+      pageSize: BigInt(Number(pageSize.value))
     }
 
     const response = await window.client.getActionLogs(args)
@@ -203,11 +284,11 @@ async function fetchActionLogs() {
   }
 }
 
-async function fetchAction() {
+async function fetchAction () {
   try {
     const actionId = route.params.actionId
     const args = {
-      "bindingId": actionId
+      bindingId: actionId
     }
     const response = await window.client.getActionBinding(args)
     action.value = response.action
@@ -219,11 +300,11 @@ async function fetchAction() {
   }
 }
 
-function goToDashboard(path) {
+function goToDashboard (path) {
   router.push(path)
 }
 
-function resetState() {
+function resetState () {
   action.value = null
   backToDashboards.value = []
   actionTitle.value = 'Action Details'
@@ -235,11 +316,11 @@ function resetState() {
   syncDurationTicker()
 }
 
-function clearSearch() {
+function clearSearch () {
   searchText.value = ''
 }
 
-function formatTimestamp(timestamp) {
+function formatTimestamp (timestamp) {
   if (!timestamp) return 'Unknown'
   try {
     const date = new Date(timestamp)
@@ -249,11 +330,11 @@ function formatTimestamp(timestamp) {
   }
 }
 
-function plural(n, singular, pluralForm) {
+function plural (n, singular, pluralForm) {
   return n === 1 ? `1 ${singular}` : `${n} ${pluralForm}`
 }
 
-function formatDurationSimple(ms) {
+function formatDurationSimple (ms) {
   if (!Number.isFinite(ms) || ms < 0) {
     return '—'
   }
@@ -274,7 +355,7 @@ function formatDurationSimple(ms) {
   return parts.join(' ')
 }
 
-function formatExecutionDuration(log) {
+function formatExecutionDuration (log) {
   // Reading durationClock keeps this column reactive while executions are in progress.
   const clock = durationClock.value
 
@@ -300,7 +381,7 @@ function formatExecutionDuration(log) {
   return formatDurationSimple(endMs - started.getTime())
 }
 
-function syncDurationTicker() {
+function syncDurationTicker () {
   if (durationTicker != null) {
     clearInterval(durationTicker)
     durationTicker = null
@@ -314,18 +395,18 @@ function syncDurationTicker() {
   }, 1000)
 }
 
-function handlePageChange(page) {
+function handlePageChange (page) {
   currentPage.value = page
   fetchActionLogs()
 }
 
-function handlePageSizeChange(newPageSize) {
+function handlePageSizeChange (newPageSize) {
   pageSize.value = newPageSize
   currentPage.value = 1
   fetchActionLogs()
 }
 
-async function startAction() {
+async function startAction () {
   if (!action.value || !action.value.bindingId) {
     console.error('Cannot start action: no binding ID')
     return
@@ -351,7 +432,7 @@ async function startAction() {
   }
 }
 
-function onExecutionEvent(evt) {
+function onExecutionEvent (evt) {
   const logEntry = getExecutionLogEntry(evt)
   if (!logEntry || logEntry.bindingId !== route.params.actionId) {
     return

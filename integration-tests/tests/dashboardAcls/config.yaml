@@ -1,0 +1,33 @@
+#
+# Integration Test Config: dashboardAcls
+#
+
+listenAddressSingleHTTPFrontend: 0.0.0.0:1337
+
+logLevel: "DEBUG"
+checkForUpdates: false
+
+defaultPermissions:
+  view: false
+  exec: false
+
+accessControlLists:
+  - name: admins
+    matchUsergroups:
+      - admins
+    permissions:
+      view: true
+      exec: true
+
+dashboards:
+  - title: Public tools
+    contents:
+      - title: Welcome guest
+        type: display
+
+  - title: Services
+    acls:
+      - admins
+    contents:
+      - title: 'Status: running'
+        type: display

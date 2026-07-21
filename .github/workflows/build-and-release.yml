@@ -156,8 +156,10 @@ jobs:
         if: steps.release.outputs.new_release_published == 'true'
         uses: actions/upload-artifact@v7
         with:
-          name: unsigned-windows-zip
+          # Upload as-is so SignPath receives OliveTin-windows-amd64.zip, not a wrapper zip.
+          # With archive: false, the artifact name is the filename (`name` is ignored).
           path: dist/OliveTin-windows-amd64.zip
+          archive: false
           if-no-files-found: error
 
       - name: Upload unsigned Windows MSI for SignPath
@@ -165,8 +167,8 @@ jobs:
         if: steps.release.outputs.new_release_published == 'true'
         uses: actions/upload-artifact@v7
         with:
-          name: unsigned-windows-msi
           path: dist/OliveTin-windows-amd64.msi
+          archive: false
           if-no-files-found: error
 
       - name: Archive binaries
@@ -205,7 +207,7 @@ jobs:
             fi
           done
           if [[ "${missing}" -ne 0 ]]; then
-            echo "Windows signing is required before a draft release can be published. Configure SignPath secrets/vars (see docs/modules/dev/pages/signing.adoc)." >&2
+            echo "SignPath secrets/vars are required to upload signed Windows assets. Configure them (see docs/modules/dev/pages/signing.adoc)." >&2
             exit 1
           fi
 
@@ -219,6 +221,8 @@ jobs:
           artifact-configuration-slug: windows-zip
           github-artifact-id: ${{ needs.build.outputs.windows_zip_artifact_id }}
           wait-for-completion: true
+          # Preserve the signed .zip/.msi files; default decompress would unpack the zip.
+          skip-decompress: true
           output-artifact-directory: signed-windows-zip
 
       - name: Sign Windows MSI
@@ -231,9 +235,10 @@ jobs:
           artifact-configuration-slug: windows-msi
           github-artifact-id: ${{ needs.build.outputs.windows_msi_artifact_id }}
           wait-for-completion: true
+          skip-decompress: true
           output-artifact-directory: signed-windows-msi
 
-      - name: Publish signed Windows assets and undraft release
+      - name: Upload signed Windows assets
         env:
           GH_TOKEN: ${{ secrets.CONTAINER_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.CONTAINER_TOKEN }}

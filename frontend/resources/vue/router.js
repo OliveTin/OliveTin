@@ -2,10 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 
 import Dashboard from './Dashboard.vue'
 
-import { Wrench01Icon } from '@hugeicons/core-free-icons'
-import { LeftToRightListDashIcon } from '@hugeicons/core-free-icons'
-import { CellsIcon } from '@hugeicons/core-free-icons'
-import { DashboardSquare01Icon } from '@hugeicons/core-free-icons'
+import { Wrench01Icon, LeftToRightListDashIcon, CellsIcon, DashboardSquare01Icon } from '@hugeicons/core-free-icons'
 
 const routes = [
   {
@@ -44,8 +41,8 @@ const routes = [
     meta: {
       title: 'Logs Calendar',
       breadcrumb: [
-        { name: "Logs", href: "/logs" },
-        { name: "Calendar" },
+        { name: 'Logs', href: '/logs' },
+        { name: 'Calendar' }
       ]
     }
   },
@@ -56,8 +53,8 @@ const routes = [
     meta: {
       title: 'Execution Queue',
       breadcrumb: [
-        { name: "Logs", href: "/logs" },
-        { name: "Queue" },
+        { name: 'Logs', href: '/logs' },
+        { name: 'Queue' }
       ]
     }
   },
@@ -78,8 +75,8 @@ const routes = [
     meta: {
       title: 'OliveTin - Entity Details',
       breadcrumb: [
-        { name: "Entities", href: "/entities" },
-        { name: "Entity Details" }
+        { name: 'Entities', href: '/entities' },
+        { name: 'Entity Details' }
       ]
     }
   },
@@ -91,8 +88,8 @@ const routes = [
     meta: {
       title: 'Execution',
       breadcrumb: [
-        { name: "Logs", href: "/logs" },
-        { name: "Execution" },
+        { name: 'Logs', href: '/logs' },
+        { name: 'Execution' }
       ]
     }
   },
@@ -104,8 +101,8 @@ const routes = [
     meta: {
       title: 'Action Details',
       breadcrumb: [
-        { name: "Actions", href: "/" },
-        { name: "Action Details" },
+        { name: 'Actions', href: '/' },
+        { name: 'Action Details' }
       ]
     }
   },
@@ -117,8 +114,8 @@ const routes = [
     meta: {
       title: 'Execution conditions',
       breadcrumb: [
-        { name: "Actions", href: "/" },
-        { name: "Execution conditions" },
+        { name: 'Actions', href: '/' },
+        { name: 'Execution conditions' }
       ]
     }
   },
@@ -155,7 +152,7 @@ const routes = [
 const router = createRouter({
   history: createWebHistory(),
   routes,
-  scrollBehavior(to, from, savedPosition) {
+  scrollBehavior (to, from, savedPosition) {
     if (savedPosition) {
       return savedPosition
     } else {
@@ -168,7 +165,7 @@ const router = createRouter({
 router.beforeEach((to) => {
   if (to.meta && to.meta.title) {
     const pageTitle = window.initResponse?.pageTitle || 'OliveTin'
-    document.title = to.meta.title + " - " + pageTitle
+    document.title = to.meta.title + ' - ' + pageTitle
   }
 })
 

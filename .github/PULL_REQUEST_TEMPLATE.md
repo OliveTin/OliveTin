@@ -18,6 +18,7 @@ Please put a X in the boxes as evidence of reading through the checklist.
   - [ ] I followed the "1 logical change" rule.
 - [ ] I have forked the project, and raised this PR on a feature branch.
 - [ ] I ran the `pre-commit` hooks, and my commit message was validated.
+- [ ] I installed the pre-push hook (`pre-commit install --hook-type pre-push`) and integration tests pass on push when relevant files changed.
 - [ ] `make -wC service compile` runs without any issues.
 - [ ] `make -wC service codestyle` runs without any issues.
 - [ ] `make -wC service unittests` runs without any issues.

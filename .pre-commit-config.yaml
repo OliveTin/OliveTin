@@ -38,32 +38,33 @@ repos:
         entry: make service-codestyle
         language: system
         pass_filenames: false
-        always_run: true
+        files: ^(service/|proto/|lang/|Makefile)
 
       - id: frontend-codestyle
         name: frontend-codestyle
         entry: make frontend-codestyle
         language: system
         pass_filenames: false
-        always_run: true
+        files: ^(frontend/|Makefile)
 
       - id: service-unittests
         name: service-unittests
         entry: make service-unittests
         language: system
         pass_filenames: false
-        always_run: true
+        files: ^(service/|proto/|lang/|Makefile)
 
       - id: service-build
         name: service-build
         entry: make service
         language: system
         pass_filenames: false
-        always_run: true
+        files: ^(service/|proto/|lang/|Makefile)
 
       - id: it
         name: integration-tests
         entry: make it
         language: system
         pass_filenames: false
-        always_run: true
+        stages: [pre-push]
+        files: ^(service/|frontend/|integration-tests/|proto/|Makefile)

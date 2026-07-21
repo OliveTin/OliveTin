@@ -1,7 +1,10 @@
 <template>
   <span class="log-action-title">
     <slot>{{ actionTitle }}</slot>
-    <span v-if="justification" class="log-justification">— {{ justification }}</span>
+    <span
+      v-if="justification"
+      class="log-justification"
+    >— {{ justification }}</span>
   </span>
 </template>
 

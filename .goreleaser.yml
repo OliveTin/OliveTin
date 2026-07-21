@@ -6,6 +6,7 @@ before:
     - make windows-resources VERSION={{ .Version }}
 
 builds:
+  # id defaults to project_name (OliveTin) — required for notarize.macos defaults.
   - skip: '{{ isEnvSet "GORELEASER_SKIP_BUILD" }}'
     env:
       - CGO_ENABLED=0
@@ -14,7 +15,6 @@ builds:
     dir: service
     goos:
       - linux
-      - windows
       - darwin
       - freebsd
 
@@ -33,19 +33,31 @@ builds:
       - goos: darwin
         goarch: arm # Mac does not work on [32bit] arm
 
-      - goos: windows
-        goarch: arm
+    ldflags:
+      - -s -w -X main.version={{.Version}} -X main.commit={{.ShortCommit}} -X main.date={{ .CommitDate }}
 
-      - goos: windows # Does anyone use Windows on arm64?
-        goarch: arm64
-
+  # Built and archived for SignPath, but excluded from the GitHub release upload.
+  - id: windows
+    skip: '{{ isEnvSet "GORELEASER_SKIP_BUILD" }}'
+    env:
+      - CGO_ENABLED=0
+    binary: OliveTin
+    main: .
+    dir: service
+    goos:
+      - windows
+    goarch:
+      - amd64
     ldflags:
       - -s -w -X main.version={{.Version}} -X main.commit={{.ShortCommit}} -X main.date={{ .CommitDate }}
 
 checksum:
   name_template: 'checksums.txt'
-  extra_files:
-    - glob: ./dist/OliveTin-windows-amd64.msi
+  # Exclude the windows archive; signed zip/MSI checksums are added after SignPath.
+  ids:
+    - default
+    - openrc
+
 snapshot:
   version_template: "{{ .Branch }}-{{ .ShortCommit }}"
 changelog:
@@ -73,7 +85,10 @@ changelog:
       - '^Merge branch'
 
 archives:
-  - formats: tar.gz
+  - id: default
+    ids:
+      - OliveTin
+    formats: tar.gz
     files:
       - config.yaml
       - LICENSE
@@ -85,9 +100,22 @@ archives:
       - var
     name_template: "{{ .ProjectName }}-{{ .Os }}-{{ .Arch }}{{ .Arm }}"
     wrap_in_directory: true
-    format_overrides:
-      - goos: windows
-        formats: zip
+
+  - id: windows
+    ids:
+      - windows
+    formats: zip
+    files:
+      - config.yaml
+      - LICENSE
+      - README.md
+      - src: Dockerfile.singlearch
+        dst: Dockerfile
+      - examples/backupScript.sh
+      - webui
+      - var
+    name_template: "{{ .ProjectName }}-{{ .Os }}-{{ .Arch }}{{ .Arm }}"
+    wrap_in_directory: true
 
 # dockers_v2: single multi-platform build with buildx; keeps default provenance + SBOM.
 # Replaces legacy dockers + docker_manifests (avoids "is a manifest list" when attestations are on).
@@ -187,8 +215,7 @@ nfpms:
 notarize:
   macos:
     - enabled: '{{ isEnvSet "MACOS_SIGN_P12" }}'
-      ids:
-        - default
+      # Defaults to project_name when omitted; must match builds[].id (also project_name).
       sign:
         certificate: "{{.Env.MACOS_SIGN_P12}}"
         password: "{{.Env.MACOS_SIGN_PASSWORD}}"
@@ -200,10 +227,11 @@ notarize:
         timeout: 30m
 
 release:
-  # Stay draft until the sign-windows job replaces unsigned Windows assets and undrafts.
-  draft: true
-  extra_files:
-    - glob: ./dist/OliveTin-windows-amd64.msi
+  # Publish immediately without Windows assets; sign-windows uploads signed zip/MSI later.
+  draft: false
+  ids:
+    - default
+    - openrc
   footer: |
     ## Container images (from GitHub)
 

@@ -15,8 +15,6 @@ func WriteFile(filename string, out []byte) {
 
 	if _, err := os.Stat(filename); os.IsNotExist(err) {
 		handle, err := os.Create(filename)
-		handle.Close()
-
 		if err != nil {
 			log.WithFields(log.Fields{
 				"error": err,
@@ -25,6 +23,12 @@ func WriteFile(filename string, out []byte) {
 			return
 		}
 
+		if err := handle.Close(); err != nil {
+			log.WithFields(log.Fields{
+				"error":    err,
+				"filename": filename,
+			}).Errorf("Failed to close %v", filename)
+		}
 	}
 
 	err := os.WriteFile(filename, out, 0600)

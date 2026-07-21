@@ -1,10 +1,22 @@
 <template>
-    <span id="connection-banner" v-if="connectionState.showDisconnectedBanner" class="inline-notification critical user-info-connection">
-        <span class="connection-banner-sr-only" role="status">{{ staticAnnouncement }}</span>
-        <span aria-hidden="true">
-            <a :href="websocketDocsUrl" target="_blank" rel="noopener noreferrer" class="connection-banner-link">{{ linkText }}</a>{{ bannerSuffix }}
-        </span>
+  <span
+    v-if="connectionState.showDisconnectedBanner"
+    id="connection-banner"
+    class="inline-notification critical user-info-connection"
+  >
+    <span
+      class="connection-banner-sr-only"
+      role="status"
+    >{{ staticAnnouncement }}</span>
+    <span aria-hidden="true">
+      <a
+        :href="websocketDocsUrl"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="connection-banner-link"
+      >{{ linkText }}</a>{{ bannerSuffix }}
     </span>
+  </span>
 </template>
 
 <script setup>
@@ -18,7 +30,7 @@ const websocketDocsUrl = 'https://docs.olivetin.app/troubleshooting/err-websocke
 
 const linkText = computed(() => t('disconnected-banner-link-text'))
 
-function formatShortRelative(ms) {
+function formatShortRelative (ms) {
   if (ms < 0) return '0s'
   const secs = Math.floor(ms / 1000)
   const mins = Math.floor(secs / 60)
@@ -28,7 +40,7 @@ function formatShortRelative(ms) {
   return `${secs}s`
 }
 
-function formatShortTime(ts) {
+function formatShortTime (ts) {
   if (ts == null) return '--:--'
   return new Date(ts).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
 }

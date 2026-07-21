@@ -1,13 +1,19 @@
 <template>
-  <div class="mre-container" :class="component.cssClass">
+  <div
+    class="mre-container"
+    :class="component.cssClass"
+  >
     <router-link
-        v-if="executionTrackingId"
-        :to="`/logs/${executionTrackingId}`"
-        class="mre-link"
+      v-if="executionTrackingId"
+      :to="`/logs/${executionTrackingId}`"
+      class="mre-link"
     >
-        <pre class="mre-output">{{ output }}</pre>
+      <pre class="mre-output">{{ output }}</pre>
     </router-link>
-    <pre v-else class="mre-output fg-important">{{ output }}</pre>
+    <pre
+      v-else
+      class="mre-output fg-important"
+    >{{ output }}</pre>
   </div>
 </template>
 
@@ -26,7 +32,7 @@ const output = ref('Waiting...')
 const executionTrackingId = ref(null)
 let unwatchButtonResults = null
 
-function updateFromLogEntry(logEntry) {
+function updateFromLogEntry (logEntry) {
   if (logEntry) {
     if (logEntry.output !== undefined) {
       output.value = logEntry.output
@@ -39,7 +45,7 @@ function updateFromLogEntry(logEntry) {
   }
 }
 
-async function fetchMostRecentExecution() {
+async function fetchMostRecentExecution () {
   if (!props.component.title) {
     output.value = 'Error: No action ID specified'
     executionTrackingId.value = null

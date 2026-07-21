@@ -8,6 +8,7 @@ import (
 	"github.com/knadh/koanf/providers/file"
 	"github.com/knadh/koanf/v2"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestUserLoadingFromConfig(t *testing.T) {
@@ -30,13 +31,13 @@ actions:
 
 	// Create temporary file
 	tmpFile, err := os.CreateTemp("", "test_config_*.yaml")
-	assert.NoError(t, err, "Should create temporary file")
-	defer os.Remove(tmpFile.Name())
+	require.NoError(t, err, "Should create temporary file")
+	defer func() { _ = os.Remove(tmpFile.Name()) }()
 
 	// Write test config to file
 	_, err = tmpFile.WriteString(testConfig)
-	assert.NoError(t, err, "Should write test config to file")
-	tmpFile.Close()
+	require.NoError(t, err, "Should write test config to file")
+	require.NoError(t, tmpFile.Close())
 
 	// Load config using koanf
 	k := koanf.New(".")
@@ -81,12 +82,12 @@ actions:
 `
 
 	tmpFile, err := os.CreateTemp("", "test_config_empty_*.yaml")
-	assert.NoError(t, err, "Should create temporary file")
-	defer os.Remove(tmpFile.Name())
+	require.NoError(t, err, "Should create temporary file")
+	defer func() { _ = os.Remove(tmpFile.Name()) }()
 
 	_, err = tmpFile.WriteString(testConfig)
-	assert.NoError(t, err, "Should write test config to file")
-	tmpFile.Close()
+	require.NoError(t, err, "Should write test config to file")
+	require.NoError(t, tmpFile.Close())
 
 	k := koanf.New(".")
 	err = k.Load(file.Provider(tmpFile.Name()), yaml.Parser())
@@ -116,12 +117,12 @@ actions:
 `
 
 	tmpFile, err := os.CreateTemp("", "test_config_disabled_*.yaml")
-	assert.NoError(t, err, "Should create temporary file")
-	defer os.Remove(tmpFile.Name())
+	require.NoError(t, err, "Should create temporary file")
+	defer func() { _ = os.Remove(tmpFile.Name()) }()
 
 	_, err = tmpFile.WriteString(testConfig)
-	assert.NoError(t, err, "Should write test config to file")
-	tmpFile.Close()
+	require.NoError(t, err, "Should write test config to file")
+	require.NoError(t, tmpFile.Close())
 
 	k := koanf.New(".")
 	err = k.Load(file.Provider(tmpFile.Name()), yaml.Parser())
@@ -147,12 +148,12 @@ actions:
 `
 
 	tmpFile, err := os.CreateTemp("", "test_config_no_auth_*.yaml")
-	assert.NoError(t, err, "Should create temporary file")
-	defer os.Remove(tmpFile.Name())
+	require.NoError(t, err, "Should create temporary file")
+	defer func() { _ = os.Remove(tmpFile.Name()) }()
 
 	_, err = tmpFile.WriteString(testConfig)
-	assert.NoError(t, err, "Should write test config to file")
-	tmpFile.Close()
+	require.NoError(t, err, "Should write test config to file")
+	require.NoError(t, tmpFile.Close())
 
 	k := koanf.New(".")
 	err = k.Load(file.Provider(tmpFile.Name()), yaml.Parser())

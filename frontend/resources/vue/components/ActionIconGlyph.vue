@@ -1,15 +1,21 @@
 <template>
-	<span class="action-icon-glyph">
-		<HugeiconsIcon
-			v-if="hugeiconsModel"
-			:icon="hugeiconsModel"
-			width="1em"
-			height="1em"
-			class="action-icon-glyph-svg"
-		/>
-		<span v-else-if="decodedTextGlyphIsHtml" v-html="decodedTextGlyph"></span>
-		<span v-else v-text="decodedTextGlyph"></span>
-	</span>
+  <span class="action-icon-glyph">
+    <HugeiconsIcon
+      v-if="hugeiconsModel"
+      :icon="hugeiconsModel"
+      width="1em"
+      height="1em"
+      class="action-icon-glyph-svg"
+    />
+    <span
+      v-else-if="decodedTextGlyphIsHtml"
+      v-html="decodedTextGlyph"
+    />
+    <span
+      v-else
+      v-text="decodedTextGlyph"
+    />
+  </span>
 </template>
 
 <script setup>
@@ -22,38 +28,38 @@ const hugeiconsPrefix = 'hugeicons:'
 
 /** Maps config values like hugeicons:CommandLineIcon to Hugeicons icon definitions. */
 const hugeiconsRegistry = {
-	CommandLineIcon,
+  CommandLineIcon
 }
 
 const props = defineProps({
-	glyph: {
-		type: String,
-		required: false,
-		default: '',
-	},
+  glyph: {
+    type: String,
+    required: false,
+    default: ''
+  }
 })
 
 const hugeiconsModel = computed(() => {
-	if (!props.glyph) {
-		return CommandLineIcon
-	}
+  if (!props.glyph) {
+    return CommandLineIcon
+  }
 
-	if (!props.glyph.startsWith(hugeiconsPrefix)) {
-		return null
-	}
+  if (!props.glyph.startsWith(hugeiconsPrefix)) {
+    return null
+  }
 
-	const name = props.glyph.slice(hugeiconsPrefix.length)
-	const iconModel = hugeiconsRegistry[name]
+  const name = props.glyph.slice(hugeiconsPrefix.length)
+  const iconModel = hugeiconsRegistry[name]
 
-	return iconModel ?? CommandLineIcon
+  return iconModel ?? CommandLineIcon
 })
 
 const decodedTextGlyph = computed(() => {
-	if (hugeiconsModel.value) {
-		return ''
-	}
+  if (hugeiconsModel.value) {
+    return ''
+  }
 
-	return decodeHtmlEntities(props.glyph)
+  return decodeHtmlEntities(props.glyph)
 })
 
 const decodedTextGlyphIsHtml = computed(() => glyphLooksLikeHtml(decodedTextGlyph.value))

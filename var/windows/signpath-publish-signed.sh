@@ -72,7 +72,8 @@ update_checksum() {
 update_checksum "${ZIP_NAME}"
 update_checksum "${MSI_NAME}"
 
-# Replace binaries first so a failed checksums upload leaves the draft recoverable.
+# Upload binaries first so a failed checksums upload can restore the previous file.
+# --clobber overwrites same-named assets (needed if the sign job is re-run).
 gh release upload "${TAG}" \
   "${DIST_DIR}/${ZIP_NAME}" \
   "${DIST_DIR}/${MSI_NAME}" \
@@ -87,6 +88,4 @@ if ! gh release upload "${TAG}" "${checksums_path}" --clobber; then
   exit 1
 fi
 
-gh release edit "${TAG}" --draft=false
-
-echo "Published signed ${ZIP_NAME} and ${MSI_NAME} on release ${TAG}"
+echo "Uploaded signed ${ZIP_NAME} and ${MSI_NAME} to release ${TAG}"
