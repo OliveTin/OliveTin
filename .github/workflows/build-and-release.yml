@@ -243,6 +243,11 @@ jobs:
           GH_TOKEN: ${{ secrets.CONTAINER_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.CONTAINER_TOKEN }}
         run: |
+          # SignPath may name the signed zip *.zip.zip (one compression level, bad Content-Disposition).
+          if [[ -f signed-windows-zip/OliveTin-windows-amd64.zip.zip ]]; then
+            mv signed-windows-zip/OliveTin-windows-amd64.zip.zip \
+              signed-windows-zip/OliveTin-windows-amd64.zip
+          fi
           zip_path="$(find signed-windows-zip -type f -name 'OliveTin-windows-amd64.zip' | head -n 1)"
           msi_path="$(find signed-windows-msi -type f -name 'OliveTin-windows-amd64.msi' | head -n 1)"
           if [[ -z "${zip_path}" || -z "${msi_path}" ]]; then

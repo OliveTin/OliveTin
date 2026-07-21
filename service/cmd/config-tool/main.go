@@ -82,8 +82,90 @@ func backupOriginalConfig(configPath string) {
 	log.Infof("Original config backed up to %s", originalConfigPath)
 }
 
+func passwordHashPreview(password string) string {
+	if len(password) > 20 {
+		return password[:20]
+	}
+
+	return password
+}
+
+func userDisplayName(username string, index int) string {
+	if username == "" {
+		return fmt.Sprintf("user[%d]", index)
+	}
+
+	return username
+}
+
+func copyUserMapWithPassword(userMap map[string]interface{}, hashedPassword string) map[string]interface{} {
+	newUserMap := make(map[string]interface{}, len(userMap)+1)
+	for key, value := range userMap {
+		newUserMap[key] = value
+	}
+	newUserMap["password"] = hashedPassword
+
+	return newUserMap
+}
+
+func resetPasswordInUserMap(userValue interface{}, index int, hashedPassword string) interface{} {
+	userMap, ok := userValue.(map[string]interface{})
+	if !ok {
+		log.Warnf("User entry at index %d is not a map, skipping", index)
+		return userValue
+	}
+
+	oldPassword, _ := userMap["password"].(string)
+	username, _ := userMap["username"].(string)
+	log.Infof("Reset password for user '%s' (old hash: %s...)", userDisplayName(username, index), passwordHashPreview(oldPassword))
+
+	return copyUserMapWithPassword(userMap, hashedPassword)
+}
+
+func resetPasswordsFromSlice(k *koanf.Koanf, usersSliceTyped []interface{}, hashedPassword string) {
+	newUsersSlice := make([]interface{}, len(usersSliceTyped))
+	for index, userValue := range usersSliceTyped {
+		newUsersSlice[index] = resetPasswordInUserMap(userValue, index, hashedPassword)
+	}
+
+	err := k.Set("authLocalUsers.users", newUsersSlice)
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err,
+		}).Fatalf("Error setting users")
+	}
+}
+
+func resetPasswordsFromConfig(k *koanf.Koanf, cfg *config.Config, hashedPassword string) {
+	for index, user := range cfg.AuthLocalUsers.Users {
+		key := "authLocalUsers.users." + strconv.Itoa(index) + ".password"
+		err := k.Set(key, hashedPassword)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"error": err,
+			}).Fatalf("Error setting user password")
+		}
+
+		log.Infof("Reset password for user '%s' (old hash: %s...)", user.Username, passwordHashPreview(user.Password))
+	}
+}
+
+func hasLocalUsers(cfg *config.Config) bool {
+	return cfg.AuthLocalUsers.Enabled && len(cfg.AuthLocalUsers.Users) > 0
+}
+
+func applyPasswordResets(k *koanf.Koanf, cfg *config.Config, hashedPassword string) {
+	usersSliceTyped, ok := k.Get("authLocalUsers.users").([]interface{})
+	if ok && len(usersSliceTyped) > 0 {
+		resetPasswordsFromSlice(k, usersSliceTyped, hashedPassword)
+		return
+	}
+
+	resetPasswordsFromConfig(k, cfg, hashedPassword)
+}
+
 func resetAllPasswords(k *koanf.Koanf, cfg *config.Config) {
-	if !cfg.AuthLocalUsers.Enabled || len(cfg.AuthLocalUsers.Users) == 0 {
+	if !hasLocalUsers(cfg) {
 		log.Info("No local users found, skipping password reset")
 		return
 	}
@@ -93,64 +175,7 @@ func resetAllPasswords(k *koanf.Koanf, cfg *config.Config) {
 		log.Fatalf("Error creating password hash: %v", err)
 	}
 
-	usersSlice := k.Get("authLocalUsers.users")
-	usersSliceTyped, ok := usersSlice.([]interface{})
-
-	if ok && len(usersSliceTyped) > 0 {
-		newUsersSlice := make([]interface{}, len(usersSliceTyped))
-		for index, userValue := range usersSliceTyped {
-			userMap, ok := userValue.(map[string]interface{})
-			if !ok {
-				log.Warnf("User entry at index %d is not a map, skipping", index)
-				newUsersSlice[index] = userValue
-				continue
-			}
-
-			oldPassword, _ := userMap["password"].(string)
-			username, _ := userMap["username"].(string)
-			if username == "" {
-				username = fmt.Sprintf("user[%d]", index)
-			}
-
-			newUserMap := make(map[string]interface{})
-			for k, v := range userMap {
-				newUserMap[k] = v
-			}
-			newUserMap["password"] = hashedPassword
-			newUsersSlice[index] = newUserMap
-
-			oldHashPreview := oldPassword
-			if len(oldPassword) > 20 {
-				oldHashPreview = oldPassword[:20]
-			}
-			log.Infof("Reset password for user '%s' (old hash: %s...)", username, oldHashPreview)
-		}
-		err = k.Set("authLocalUsers.users", newUsersSlice)
-
-		if err != nil {
-			log.WithFields(log.Fields{
-				"error": err,
-			}).Fatalf("Error setting users")
-		}
-	} else {
-		for index, user := range cfg.AuthLocalUsers.Users {
-			key := "authLocalUsers.users." + strconv.Itoa(index) + ".password"
-			err = k.Set(key, hashedPassword)
-
-			if err != nil {
-				log.WithFields(log.Fields{
-					"error": err,
-				}).Fatalf("Error setting user password")
-			}
-
-			oldHashPreview := user.Password
-			if len(oldHashPreview) > 20 {
-				oldHashPreview = oldHashPreview[:20]
-			}
-			log.Infof("Reset password for user '%s' (old hash: %s...)", user.Username, oldHashPreview)
-		}
-	}
-
+	applyPasswordResets(k, cfg, hashedPassword)
 	log.Infof("Reset %d password(s) to 'password'", len(cfg.AuthLocalUsers.Users))
 }
 
