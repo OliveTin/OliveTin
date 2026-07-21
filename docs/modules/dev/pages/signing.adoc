@@ -3,7 +3,7 @@
 OliveTin signs release binaries on two platforms:
 
 * **macOS** — Developer ID + notarization via [quill](https://github.com/anchore/quill) inside GoReleaser (optional only when `MACOS_SIGN_P12` is unset).
-* **Windows** — Authenticode via [SignPath Foundation](https://signpath.org/) in a separate GitHub Actions job (required before a draft release is published).
+* **Windows** — Authenticode via [SignPath Foundation](https://signpath.org/) in a separate GitHub Actions job (signed zip/MSI are uploaded after the release is published).
 
 ## macOS release signing
 
@@ -117,14 +117,14 @@ A signed and notarized binary should report `accepted` with `source=Notarized De
 
 Windows Authenticode signing uses [SignPath Foundation](https://signpath.org/) (free for qualifying open-source projects). It does **not** use GoReleaser Pro.
 
-GoReleaser creates a **draft** GitHub release with unsigned Windows assets. A separate `sign-windows` job submits those assets to SignPath, replaces them on the draft (including updated `checksums.txt`), then publishes the release.
+GoReleaser publishes a GitHub release **without** Windows zip/MSI assets. A separate `sign-windows` job submits the unsigned Windows files (as workflow artifacts) to SignPath, then uploads the signed zip/MSI and updates `checksums.txt` on the already-published release.
 
 Signed artifacts:
 
 * `OliveTin.exe` inside `OliveTin-windows-amd64.zip`
 * nested `OliveTin.exe` and the `OliveTin-windows-amd64.msi` installer (deep signing)
 
-Signing is **required** to publish. If SignPath secrets/vars are missing, `sign-windows` fails and the draft stays unpublished.
+If SignPath secrets/vars are missing or signing fails, the release still publishes; Windows assets are simply missing until a successful `sign-windows` run. Install URLs for the Windows zip may 404 until signing finishes.
 
 ### Prerequisites
 
@@ -168,9 +168,9 @@ In **Settings → Secrets and variables → Actions**:
 
 On a new semantic-release from `main`:
 
-1. GoReleaser publishes container images and creates a **draft** GitHub release (including unsigned Windows zip/MSI).
-2. The build job uploads those Windows files as GitHub Actions artifacts.
-3. The `sign-windows` job submits each artifact to SignPath, waits for completion, then runs `var/windows/signpath-publish-signed.sh` to clobber-upload signed files, refresh `checksums.txt`, and undraft the release.
+1. GoReleaser publishes container images and a GitHub release **without** Windows zip/MSI assets (those are built locally for SignPath only).
+2. The build job uploads the unsigned Windows files as GitHub Actions artifacts.
+3. The `sign-windows` job submits each artifact to SignPath, waits for completion, then runs `var/windows/signpath-publish-signed.sh` to upload the signed files and refresh `checksums.txt`.
 
 All jobs in this chain use GitHub-hosted runners (required by SignPath for OSS projects).
 
@@ -188,7 +188,7 @@ signtool verify /pa OliveTin-windows-amd64.msi
 
 ### Configuration reference
 
-- Draft release: `release.draft: true` in link:https://github.com/OliveTin/OliveTin/blob/main/.goreleaser.yml[`.goreleaser.yml`]
+- Release publish (no Windows assets initially): `release.draft: false` and `release.ids` in link:https://github.com/OliveTin/OliveTin/blob/main/.goreleaser.yml[`.goreleaser.yml`]
 - CI job: `sign-windows` in link:https://github.com/OliveTin/OliveTin/blob/main/.github/workflows/build-and-release.yml[`.github/workflows/build-and-release.yml`]
 - Publish helper: link:https://github.com/OliveTin/OliveTin/blob/main/var/windows/signpath-publish-signed.sh[`var/windows/signpath-publish-signed.sh`]
 - SignPath artifact configs (reference only): link:https://github.com/OliveTin/OliveTin/blob/main/docs/modules/dev/signpath/windows-zip.xml[`signpath/windows-zip.xml`], link:https://github.com/OliveTin/OliveTin/blob/main/docs/modules/dev/signpath/windows-msi.xml[`signpath/windows-msi.xml`]

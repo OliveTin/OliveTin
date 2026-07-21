@@ -207,7 +207,7 @@ jobs:
             fi
           done
           if [[ "${missing}" -ne 0 ]]; then
-            echo "Windows signing is required before a draft release can be published. Configure SignPath secrets/vars (see docs/modules/dev/pages/signing.adoc)." >&2
+            echo "SignPath secrets/vars are required to upload signed Windows assets. Configure them (see docs/modules/dev/pages/signing.adoc)." >&2
             exit 1
           fi
 
@@ -238,7 +238,7 @@ jobs:
           skip-decompress: true
           output-artifact-directory: signed-windows-msi
 
-      - name: Publish signed Windows assets and undraft release
+      - name: Upload signed Windows assets
         env:
           GH_TOKEN: ${{ secrets.CONTAINER_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.CONTAINER_TOKEN }}
