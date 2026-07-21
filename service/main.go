@@ -129,92 +129,97 @@ func getConfigPath(directory string) string {
 	return configPath
 }
 
+func configSearchDirectories(configDir string) []string {
+	directories := []string{configDir}
+
+	// Only load additional configs if not in integration test mode
+	absConfigDir, _ := filepath.Abs(configDir)
+	if strings.Contains(absConfigDir, "integration-tests") {
+		return directories
+	}
+
+	return append(directories,
+		servicehost.GetConfigFilePath(),
+		"/config", // For containers.
+		"/etc/OliveTin/",
+	)
+}
+
+func configPathExists(configPath string) bool {
+	_, err := os.Stat(configPath)
+	found := err == nil
+
+	log.WithFields(log.Fields{
+		"configPath": configPath,
+		"found":      found,
+	}).Debug("Checking base config path")
+
+	return found
+}
+
+func watchConfigFile(k *koanf.Koanf, f *file.File, configPath string) {
+	err := f.Watch(func(evt interface{}, err error) {
+		log.Infof("config file changed: %v", evt)
+
+		errLoad := k.Load(f, yaml.Parser())
+		if errLoad != nil {
+			log.WithFields(log.Fields{
+				"error": errLoad,
+			}).Fatalf("Error loading config file")
+		}
+
+		config.AppendSource(cfg, k, configPath)
+	})
+
+	if err != nil {
+		log.WithFields(log.Fields{
+			"error": err,
+		}).Fatalf("Error watching config file")
+	}
+}
+
+func loadAndWatchConfig(k *koanf.Koanf, configPath string) {
+	log.WithFields(log.Fields{
+		"configPath": configPath,
+	}).Info("Loading config from path")
+
+	f := file.Provider(configPath)
+
+	if err := k.Load(f, yaml.Parser()); err != nil {
+		log.Fatalf("error loading config from %s: %v", configPath, err)
+	}
+
+	watchConfigFile(k, f, configPath)
+}
+
+func findAndLoadBaseConfig(k *koanf.Koanf, directories []string) string {
+	for _, directory := range directories {
+		configPath := getConfigPath(directory)
+		if !configPathExists(configPath) {
+			continue
+		}
+
+		loadAndWatchConfig(k, configPath)
+		return configPath
+	}
+
+	return ""
+}
+
 func initConfig(configDir string) {
 	k := koanf.New(".")
 	err := k.Load(env.Provider(".", ".", nil), nil)
-
 	if err != nil {
 		log.WithFields(log.Fields{
 			"error": err,
 		}).Fatalf("Error loading environment variables")
 	}
 
-	directories := []string{
-		configDir,
-	}
-
-	// Only load additional configs if not in integration test mode
-	absConfigDir, _ := filepath.Abs(configDir)
-	if !strings.Contains(absConfigDir, "integration-tests") {
-		directories = append(directories,
-			servicehost.GetConfigFilePath(),
-			"/config", // For containers.
-			"/etc/OliveTin/",
-		)
-	}
-
-	var baseConfigPath string
-
-	for _, directory := range directories {
-		configPath := getConfigPath(directory)
-
-		found := true
-		if _, err := os.Stat(configPath); err != nil {
-			found = false
-		}
-
-		log.WithFields(log.Fields{
-			"configPath": configPath,
-			"found":      found,
-		}).Debug("Checking base config path")
-
-		if !found {
-			continue
-		}
-
-		if baseConfigPath == "" {
-			baseConfigPath = configPath
-		}
-
-		log.WithFields(log.Fields{
-			"configPath": configPath,
-		}).Info("Loading config from path")
-
-		f := file.Provider(configPath)
-
-		if err := k.Load(f, yaml.Parser()); err != nil {
-			log.Fatalf("error loading config from %s: %v", configPath, err)
-			os.Exit(1)
-		}
-
-		err := f.Watch(func(evt interface{}, err error) {
-			log.Infof("config file changed: %v", evt)
-
-			errLoad := k.Load(f, yaml.Parser())
-
-			if errLoad != nil {
-				log.WithFields(log.Fields{
-					"error": errLoad,
-				}).Fatalf("Error loading config file")
-			}
-
-			config.AppendSource(cfg, k, configPath)
-		})
-
-		if err != nil {
-			log.WithFields(log.Fields{
-				"error": err,
-			}).Fatalf("Error watching config file")
-		}
-
-		break
-	}
-
+	baseConfigPath := findAndLoadBaseConfig(k, configSearchDirectories(configDir))
 	cfg = config.DefaultConfigWithBasePort(getBasePort())
 
 	if baseConfigPath == "" {
 		log.Fatalf("No base config file found")
-		os.Exit(1)
 	}
 
 	config.AppendSource(cfg, k, baseConfigPath)
