@@ -52,14 +52,14 @@ properly, see step 6 — you can install it **as your own user (no root)** or
 
 ---
 
-## 3. Clear the Gatekeeper quarantine
+## 3. Gatekeeper and notarization
 
-Because the binary is downloaded from the internet and is **not notarized by
-Apple**, macOS Gatekeeper will block the first run with a message like
-*"OliveTin can't be opened because Apple cannot check it for malicious
-software."*
+Current release binaries are **Developer ID signed and notarized** by Apple.
+After extract, you should be able to run `./OliveTin` normally.
 
-Remove the quarantine attribute so it will run:
+If Gatekeeper still blocks an older (unsigned) build, or you see a prompt that
+Apple cannot check the binary for malicious software, clear the quarantine
+attribute:
 
 ```sh
 xattr -dr com.apple.quarantine ./OliveTin
@@ -356,9 +356,10 @@ tail -f /usr/local/var/log/olivetin.log
 **"Bad CPU type in executable"** — you downloaded the wrong architecture. Get
 the `arm64` build for Apple Silicon, `amd64` for Intel (see step 1).
 
-**Gatekeeper still blocks it** — re-run the `xattr -dr com.apple.quarantine`
-command in step 3, or approve the app under **System Settings → Privacy &
-Security**.
+**Gatekeeper still blocks it** — for older unsigned builds, re-run
+`xattr -dr com.apple.quarantine ./OliveTin` (see step 3), or approve the app
+under **System Settings → Privacy & Security**. Current signed releases should
+not need this.
 
 **It runs but the page won't load** — check that nothing else is using port
 1337 (`lsof -i :1337`), and that you're browsing to `http://` (not `https://`).

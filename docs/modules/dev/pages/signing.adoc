@@ -36,24 +36,39 @@ openssl req -new -key developer_id_app.key -out developer_id_app.csr \
 2. Create a certificate of type **Developer ID Application**. Prefer **G2 Sub-CA** if the portal asks.
 3. Upload `developer_id_app.csr` and download the resulting `.cer` (often named `developerID_application.cer`).
 
-Build a `.p12` that includes Apple's Developer ID G2 intermediate:
+Build a `.p12` that includes the **full** chain: leaf + Developer ID G2 intermediate + Apple Root CA.
+
+The Apple Root **must** be present. With only leaf + G2, quill embeds a designated requirement of the form `certificate root[field.1.2.840.113635.100.6.2.6]`. On macOS that resolves to Apple Root CA (which does not have that OID), so AMFI SIGKILLs the binary with `does not satisfy its designated Requirement` even though notarization still succeeds. A correct chain produces `certificate 1[...]` instead.
 
 ```sh
 curl -fsSLO https://www.apple.com/certificateauthority/DeveloperIDG2CA.cer
+curl -fsSLO https://www.apple.com/appleca/AppleIncRootCertificate.cer
 
 openssl x509 -inform DER -in developerID_application.cer -out developerID_application.pem
 openssl x509 -inform DER -in DeveloperIDG2CA.cer -out DeveloperIDG2CA.pem
+openssl x509 -inform DER -in AppleIncRootCertificate.cer -out AppleRootCA.pem
+
+# Chain file: intermediate then root (leaf is passed separately via -in).
+cat DeveloperIDG2CA.pem AppleRootCA.pem > chain.pem
 
 # Export password becomes MACOS_SIGN_PASSWORD.
 # On OpenSSL 3 (e.g. Fedora), -legacy improves compatibility with some tooling:
 openssl pkcs12 -export -legacy \
   -inkey developer_id_app.key \
   -in developerID_application.pem \
-  -certfile DeveloperIDG2CA.pem \
+  -certfile chain.pem \
   -out Certificates.p12
 ```
 
-If you already have a Mac with the certificate in Keychain Access, you can export a `.p12` from there instead; the OpenSSL path above is enough when you do not.
+Confirm the `.p12` has three certificates before base64-encoding:
+
+```sh
+openssl pkcs12 -in Certificates.p12 -nodes -passin pass:"$MACOS_SIGN_PASSWORD" 2>/dev/null \
+  | grep -c "BEGIN CERTIFICATE"
+# expect: 3
+```
+
+If you already have a Mac with the certificate in Keychain Access, you can export a `.p12` from there instead — include the full chain when exporting.
 
 #### 2. Create the notarization API key
 
@@ -90,7 +105,7 @@ All five must be present for signing to run. GoReleaser enables the step when `M
 
 | Item | Typical lifetime | What to do |
 |------|------------------|------------|
-| Developer ID Application certificate | ~5 years | Create a new certificate in the Apple portal, export a new `.p12`, update `MACOS_SIGN_P12` and `MACOS_SIGN_PASSWORD`. |
+| Developer ID Application certificate | ~5 years | Create a new certificate in the Apple portal, export a new **full-chain** `.p12` (leaf + G2 intermediate + Apple Root CA), update `MACOS_SIGN_P12` and `MACOS_SIGN_PASSWORD`. |
 | App Store Connect API key | Does not expire, but can be revoked | Create a new key if compromised or lost; update `MACOS_NOTARY_KEY`, `MACOS_NOTARY_KEY_ID`, and optionally `MACOS_NOTARY_ISSUER_ID`. |
 | Apple Developer Program | Annual subscription | Renew membership before it lapses; existing certificates stop working if the account is inactive. |
 
@@ -98,19 +113,31 @@ After updating secrets, the next release on `main` (via semantic-release) will u
 
 ### Verifying a signed release
 
-On a Mac, download a `OliveTin-darwin-*.tar.gz` release artifact and run:
+From any platform (no Mac required), check that quill did **not** emit the broken `certificate root[...]` designated requirement:
+
+```sh
+go install github.com/anchore/quill/cmd/quill@latest
+quill describe OliveTin-darwin-arm64/OliveTin
+```
+
+The requirements line must contain `certificate 1[field.1.2.840.113635.100.6.2.6]`. If it says `certificate root[field.1.2.840.113635.100.6.2.6]`, the `.p12` is missing Apple Root CA — rebuild it and update `MACOS_SIGN_P12`.
+
+On a Mac, also run:
 
 ```sh
 tar -xzf OliveTin-darwin-arm64.tar.gz
+codesign --verify --strict -vvvv OliveTin-darwin-arm64/OliveTin
 spctl -a -vv -t execute OliveTin-darwin-arm64/OliveTin
 ```
 
-A signed and notarized binary should report `accepted` with `source=Notarized Developer ID`.
+`codesign` should report both `valid on disk` and `satisfies its Designated Requirement`. `spctl` should report `accepted` with `source=Notarized Developer ID`.
 
 ### Configuration reference
 
 - GoReleaser: `notarize.macos` in link:https://github.com/OliveTin/OliveTin/blob/main/.goreleaser.yml[`.goreleaser.yml`]
 - CI secrets: link:https://github.com/OliveTin/OliveTin/blob/main/.github/workflows/build-and-release.yml[`.github/workflows/build-and-release.yml`] (`release` step)
+- CI preflight (3-cert P12): link:https://github.com/OliveTin/OliveTin/blob/main/var/macos/verify-macos-sign-p12.sh[`var/macos/verify-macos-sign-p12.sh`]
+- CI post-sign check (designated requirement): link:https://github.com/OliveTin/OliveTin/blob/main/var/macos/verify-signed-darwin.sh[`var/macos/verify-signed-darwin.sh`]
 - link:https://goreleaser.com/customization/notarize/[GoReleaser notarization docs]
 
 ## Windows release signing (SignPath)
