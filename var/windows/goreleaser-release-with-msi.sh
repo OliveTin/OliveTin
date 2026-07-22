@@ -51,3 +51,6 @@ done
 wait_for_stable_file "${ZIP_PATH}"
 "${SCRIPT_DIR}/build-msi.sh"
 wait "${goreleaser_pid}"
+
+# Fail the release job if macOS signing produced an unsatisfiable designated requirement.
+"${REPO_ROOT}/var/macos/verify-signed-darwin.sh"

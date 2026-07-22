@@ -11,5 +11,3 @@ asciidoc:
     toclevels: 2
 nav:
 - modules/ROOT/nav.adoc
-
-
