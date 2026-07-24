@@ -1,0 +1,79 @@
+schemaVersion: 1
+translations:
+  welcome: 歡迎使用 OliveTin
+  docs: 官方文件
+  raise-issue: 在 GitHub 上建立 Issue
+  nav.actions: 動作
+  nav.logs: 日誌
+  nav.entities: 實體
+  nav.diagnostics: 診斷
+  connected: 已連線
+  disconnected: 已斷線
+  reconnecting: 重新連線中…
+  disconnected-banner-announcement: 系統事件 WebSocket 已斷線。
+  disconnected-banner-link-text: "系統事件 WebSocket 已斷線"
+  disconnected-banner-suffix: " 自 {disconnectedSince} 起。將在 {reconnectIn} 後嘗試重新連線。"
+  disconnected-banner-suffix-reconnecting: " 自 {disconnectedSince} 起。嘗試重新連線中…"
+  login-button: 登入
+  logs.title: 日誌
+  logs.page-description: 這是已執行動作的日誌清單。請使用過濾條件欄位來搜尋關鍵字與運算式。
+  logs.filter-placeholder: 過濾日誌 (例如 !Update 或 Status != Completed)
+  logs.filter-help-title: 過濾語法
+  logs.filter-help-intro: 過濾器會在伺服器端針對您有權限檢視的項目進行篩選。您可以使用 and / or 來組合搜尋條件。
+  logs.filter-help-fields: "欄位：Status, Action, User, Output, Blocked, TimedOut, Running, ExitCode。運算子：==, !=, contains。在單一單字前加上 ! 前綴可排除相符的項目。"
+  logs.filter-help-examples: "範例：backup · !Update · Status != Completed · Status == Blocked · Action contains backup and Status == Completed"
+  logs.filter-error: 無法套用過濾運算式。
+  logs.no-logs-for-filter: 沒有符合目前過濾條件的日誌。
+  logs.timestamp: 時間戳記
+  logs.action: 動作
+  logs.metadata: 中繼資料
+  logs.status: 狀態
+  logs.no-logs-to-display: 目前沒有可顯示的日誌。
+  logs.timed-out: 執行逾時
+  logs.blocked: 已阻擋
+  logs.exit-code: 結束代碼
+  logs.completed: 已完成
+  logs.clear-filter: 清除搜尋過濾條件
+  logs.clear-date-filter: 清除日期過濾條件
+  logs.calendar: 日曆
+  logs.calendar-title: 日誌日曆
+  logs.back-to-list: 返回清單
+  logs.queue: 佇列
+  logs.queue-title: 執行佇列
+  logs.queue-page-description: 依動作群組分類的使用中與等待中執行項目。您無權檢視的項目將會被隱藏。
+  logs.queue-empty: 目前沒有使用中或等待中的執行項目。
+  logs.queue-default-group: 預設
+  logs.action-group-limits: "並行數：{concurrent}，佇列大小：{queueSize}"
+  logs.queue-group-active: "{active} 個使用中 (最大值 {max})"
+  logs.queue-group-active-unlimited: "{active} 個使用中"
+  logs.queue-waiting: 等待中
+  logs.queue-running: 執行中
+  logs.queue-position: "#{position}"
+  logs.queue-entity: 實體
+  logs.queue-action-details: 動作詳細資訊
+  diagnostics.get-support: 尋求技術支援
+  diagnostics.get-support-description: 如果您在使用 OliveTin 時遇到問題並希望提出支援請求，提供此頁面的「伺服器診斷資訊」將會有很大的幫助。
+  diagnostics.where-to-find-help: 哪裡可以尋求協助
+  diagnostics.ssh: SSH
+  diagnostics.found-key: 找到金鑰 (Key)
+  diagnostics.found-config: 找到設定檔 (Config)
+  diagnostics.server-diagnostics: 伺服器診斷
+  diagnostics.server-diagnostics-description: 此區塊可讓您產生詳細的設定與環境報告。建議在提出支援請求時附上此報告。
+  diagnostics.server-diagnostics-docs: 伺服器診斷官方文件
+  diagnostics.generate-server-diagnostics: 產生伺服器診斷資訊
+  diagnostics.browser-info: 瀏覽器資訊
+  diagnostics.browser-info-description: 此區塊可讓您產生瀏覽器資訊的詳細報告。這在排解特定瀏覽器問題時相當有幫助。
+  diagnostics.generate-browser-info: 產生瀏覽器資訊
+  diagnostics.copy-to-clipboard: 複製到剪貼簿
+  diagnostics.copied: 已複製！
+  diagnostics.unknown: 未知
+  diagnostics.useragent-data-error: 取得 userAgentData 時發生錯誤
+  return-to-index: 返回首頁
+  search-filter: 過濾目前頁面
+  language-dialog.title: 選擇語言
+  language-dialog.browser-languages: 瀏覽器語言
+  language-dialog.not-available: 無法使用
+  language-dialog.close: 關閉
+  theme-dialog.title: 選擇佈景主題
+  theme-dialog.default: 預設佈景主題
+  theme-dialog.close: 關閉
