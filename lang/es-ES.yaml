@@ -54,6 +54,17 @@ translations:
   diagnostics.get-support: Obtener soporte Obtener soporte
   diagnostics.get-support-description: Si tiene problemas con OliveTin y desea presentar una solicitud de soporte, sería muy útil incluir diagnósticos del servidor desde esta página.
   diagnostics.where-to-find-help: Dónde encontrar ayuda
+  diagnostics.config-issues: Configuration issues
+  diagnostics.config-issues-description: Problems detected in the current OliveTin configuration. Fix these in your config files and reload OliveTin.
+  diagnostics.config-issues-none: No configuration issues detected.
+  diagnostics.config-issue-severity: Severity
+  diagnostics.config-issue-code: Code
+  diagnostics.config-issue-message: Message
+  diagnostics.config-issue-action: Action
+  diagnostics.config-issue-argument: Argument
+  diagnostics.config-issue-config-file: Config file
+  diagnostics.config-issue-detail: Detail
+  diagnostics.config-issue-source: Source
   diagnostics.ssh: SSH
   diagnostics.found-key: Clave encontrada
   diagnostics.found-config: Configuración encontrada

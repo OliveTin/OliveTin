@@ -379,9 +379,21 @@ message LogoutResponse {
 message GetDiagnosticsRequest {
 }
 
+message ConfigIssue {
+	string severity = 1;
+	string code = 2;
+	string message = 3;
+	string action_id = 4;
+	string action_title = 5;
+	string argument_name = 6;
+	string source = 7;
+	string config_file = 8;
+}
+
 message GetDiagnosticsResponse {
 	string SshFoundKey = 1;
 	string SshFoundConfig = 2;
+	repeated ConfigIssue config_issues = 3;
 }
 
 message InitRequest {}
@@ -412,6 +424,7 @@ message InitResponse {
 	bool login_required = 23;
 	repeated string available_themes = 24; // List of available theme names
 	bool show_navigate_on_start_icons = 25;
+	int32 config_issue_count = 26;
 }
 
 message AdditionalLink {

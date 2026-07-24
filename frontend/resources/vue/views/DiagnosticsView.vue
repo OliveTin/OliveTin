@@ -1,4 +1,28 @@
 <template>
+  <Section :title="t('diagnostics.config-issues')">
+    <p>{{ t('diagnostics.config-issues-description') }}</p>
+
+    <p v-if="!loading && configIssues.length === 0">
+      {{ t('diagnostics.config-issues-none') }}
+    </p>
+
+    <Table
+      v-else
+      :data="configIssueRows"
+      :headers="configIssueHeaders"
+      :show-pagination="false"
+    >
+      <template #cell-severity="{ value }">
+        <div
+          class="tag"
+          :class="value === 'error' ? 'fg-bad' : 'fg-warning'"
+        >
+          {{ value }}
+        </div>
+      </template>
+    </Table>
+  </Section>
+
   <Section :title="t('diagnostics.get-support')">
     <p>
       {{ t('diagnostics.get-support-description') }}
@@ -84,18 +108,40 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import Section from 'picocrank/vue/components/Section.vue'
+import Table from 'picocrank/vue/components/Table.vue'
 import { useI18n } from 'vue-i18n'
 
 const { t, locale } = useI18n()
 
 const diagnostics = ref({})
+const configIssues = ref([])
 const loading = ref(false)
 const serverDiagnostics = ref('')
 const browserInfo = ref('')
 const serverDiagnosticsCopied = ref(false)
 const browserInfoCopied = ref(false)
+
+const configIssueHeaders = computed(() => [
+  { key: 'severity', label: t('diagnostics.config-issue-severity'), sortable: true, width: '7rem' },
+  { key: 'code', label: t('diagnostics.config-issue-code'), sortable: true, width: '12rem' },
+  { key: 'message', label: t('diagnostics.config-issue-message'), sortable: false },
+  { key: 'actionTitle', label: t('diagnostics.config-issue-action'), sortable: true, width: '10rem' },
+  { key: 'argumentName', label: t('diagnostics.config-issue-argument'), sortable: true, width: '8rem' },
+  { key: 'configFile', label: t('diagnostics.config-issue-config-file'), sortable: true, width: '14rem' },
+  { key: 'source', label: t('diagnostics.config-issue-detail'), sortable: false, width: '12rem' }
+])
+
+const configIssueRows = computed(() => configIssues.value.map((issue) => ({
+  severity: issue.severity || '',
+  code: issue.code || '',
+  message: issue.message || '',
+  actionTitle: issue.actionTitle || '',
+  argumentName: issue.argumentName || '',
+  configFile: issue.configFile || '',
+  source: issue.source || ''
+})))
 
 async function fetchDiagnostics () {
   loading.value = true
@@ -106,12 +152,14 @@ async function fetchDiagnostics () {
       sshFoundKey: response.SshFoundKey,
       sshFoundConfig: response.SshFoundConfig
     }
+    configIssues.value = response.configIssues || []
   } catch (err) {
     console.error('Failed to fetch diagnostics:', err)
     diagnostics.value = {
       sshFoundKey: t('diagnostics.unknown'),
       sshFoundConfig: t('diagnostics.unknown')
     }
+    configIssues.value = []
   }
   loading.value = false
 }
@@ -265,83 +313,3 @@ onMounted(() => {
   fetchDiagnostics()
 })
 </script>
-
-<style scoped>
-.diagnostics-view {
-  padding: 1rem;
-}
-
-.diagnostics-content {
-  max-width: 800px;
-  margin: 0 auto;
-}
-
-.note {
-  background: #f8f9fa;
-  border-left: 4px solid #007bff;
-  padding: 1rem;
-  margin-bottom: 1rem;
-  border-radius: 0 4px 4px 0;
-  font-size: 0.875rem;
-  color: #495057;
-}
-
-.note a {
-  color: #007bff;
-  text-decoration: none;
-}
-
-.note a:hover {
-  text-decoration: underline;
-}
-
-.diagnostics-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.diagnostics-table td {
-  padding: 0.75rem 1rem;
-  border-bottom: 1px solid #f1f3f4;
-}
-
-.diagnostics-table td:first-child {
-  font-weight: 500;
-  color: #495057;
-  background: #f8f9fa;
-}
-
-.diagnostics-table tr:last-child td {
-  border-bottom: none;
-}
-
-.error-list {
-  padding: 1rem;
-}
-
-.error-item {
-  background: #f8d7da;
-  color: #721c24;
-  padding: 0.75rem;
-  margin-bottom: 0.5rem;
-  border-radius: 4px;
-  border-left: 4px solid #dc3545;
-  font-family: monospace;
-  font-size: 0.875rem;
-}
-
-.error-item:last-child {
-  margin-bottom: 0;
-}
-
-.flex-col {
-  display: flex;
-  flex-direction: column;
-}
-
-.section-content {
-  display: flex;
-  flex-direction: column;
-  gap: 1em;
-}
-</style>
