@@ -1391,12 +1391,30 @@ func triggerLoop(req *ExecutionRequest) {
 }
 
 func stepSaveLog(req *ExecutionRequest) bool {
-	filename := fmt.Sprintf("%v.%v.%v", req.logEntry.ActionTitle, req.logEntry.DatetimeStarted.Unix(), req.logEntry.ExecutionTrackingID)
+	filename := fmt.Sprintf("%v.%v.%v", sanitizeLogFilename(req.logEntry.ActionTitle), req.logEntry.DatetimeStarted.Unix(), req.logEntry.ExecutionTrackingID)
 
 	saveLogResults(req, filename)
 	saveLogOutput(req, filename)
 
 	return true
+}
+
+// sanitizeLogFilename replaces characters that are unsafe in filenames so action
+// titles like "Create/update Report" do not create nested paths or fail to write.
+func sanitizeLogFilename(title string) string {
+	replacer := strings.NewReplacer(
+		"/", "_",
+		"\\", "_",
+		":", "_",
+		"*", "_",
+		"?", "_",
+		"\"", "_",
+		"<", "_",
+		">", "_",
+		"|", "_",
+	)
+
+	return replacer.Replace(title)
 }
 
 func firstNonEmpty(one, two string) string {

@@ -780,3 +780,93 @@ func (c *executionFinishedCollector) OnExecutionFinished(entry *InternalLogEntry
 func (c *executionFinishedCollector) OnOutputChunk(_ []byte, _ string) {}
 
 func (c *executionFinishedCollector) OnActionMapRebuilt() {}
+
+func TestSanitizeLogFilename(t *testing.T) {
+	tests := []struct {
+		title string
+		want  string
+	}{
+		{"Echo Test", "Echo Test"},
+		{"Create/update Monthly Report", "Create_update Monthly Report"},
+		{`path\with\backslashes`, "path_with_backslashes"},
+		{`a:b*c?d"e<f>g|h`, "a_b_c_d_e_f_g_h"},
+	}
+
+	for _, tt := range tests {
+		assert.Equal(t, tt.want, sanitizeLogFilename(tt.title), "title=%q", tt.title)
+	}
+}
+
+func TestStepSaveLogSanitizesSlashInTitle(t *testing.T) {
+	resultsDir := t.TempDir()
+	outputDir := t.TempDir()
+	started := time.Unix(1714333384, 0)
+	trackingID := "5e2dc9e5-b6b3-445b-bff9-c2082b0bbbb2"
+	title := "Create/update Monthly Report"
+
+	req := &ExecutionRequest{
+		Cfg: &config.Config{
+			SaveLogs: config.SaveLogsConfig{
+				ResultsDirectory: resultsDir,
+				OutputDirectory:  outputDir,
+			},
+		},
+		Binding: &ActionBinding{
+			Action: &config.Action{},
+		},
+		logEntry: &InternalLogEntry{
+			ActionTitle:         title,
+			DatetimeStarted:     started,
+			ExecutionTrackingID: trackingID,
+			Output:              "report ok",
+		},
+	}
+
+	assert.True(t, stepSaveLog(req))
+
+	expectedBase := "Create_update Monthly Report.1714333384." + trackingID
+	resultsPath := filepath.Join(resultsDir, expectedBase+".yaml")
+	outputPath := filepath.Join(outputDir, expectedBase+".log")
+
+	assert.FileExists(t, resultsPath)
+	assert.FileExists(t, outputPath)
+
+	resultsEntries, err := os.ReadDir(resultsDir)
+	assert.NoError(t, err)
+	assert.Len(t, resultsEntries, 1, "results file must be flat under resultsDirectory, not a subdirectory")
+
+	data, err := os.ReadFile(resultsPath)
+	assert.NoError(t, err)
+	assert.Contains(t, string(data), title, "YAML content keeps the original action title")
+
+	output, err := os.ReadFile(outputPath)
+	assert.NoError(t, err)
+	assert.Equal(t, "report ok", string(output))
+}
+
+func TestStepSaveLogKeepsSafeTitleFilename(t *testing.T) {
+	resultsDir := t.TempDir()
+	started := time.Unix(1714333384, 0)
+	trackingID := "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
+
+	req := &ExecutionRequest{
+		Cfg: &config.Config{
+			SaveLogs: config.SaveLogsConfig{
+				ResultsDirectory: resultsDir,
+			},
+		},
+		Binding: &ActionBinding{
+			Action: &config.Action{},
+		},
+		logEntry: &InternalLogEntry{
+			ActionTitle:         "Echo Test",
+			DatetimeStarted:     started,
+			ExecutionTrackingID: trackingID,
+		},
+	}
+
+	assert.True(t, stepSaveLog(req))
+
+	expectedPath := filepath.Join(resultsDir, "Echo Test.1714333384."+trackingID+".yaml")
+	assert.FileExists(t, expectedPath)
+}
