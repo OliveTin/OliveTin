@@ -17,6 +17,13 @@ translations:
   raise-issue: Segnala un problema su GitHub
   logs.title: Registri
   logs.page-description: Questa è una lista di registri delle azioni che sono state eseguite. Puoi filtrare la lista per titolo dell'azione.
+  logs.filter-placeholder: Filtra i registri (es. !Update o Status != Completed)
+  logs.filter-help-title: Sintassi del filtro
+  logs.filter-help-intro: I filtri vengono eseguiti sul server sulle voci che sei autorizzato a visualizzare. Combina i termini con and / or.
+  logs.filter-help-fields: "Campi: Status, Action, User, Output, Blocked, TimedOut, Running, ExitCode. Operatori: ==, !=, contains. Un prefisso ! su una singola parola esclude le voci corrispondenti."
+  logs.filter-help-examples: "Esempi: backup · !Update · Status != Completed · Status == Blocked · Action contains backup and Status == Completed"
+  logs.filter-error: Impossibile applicare l'espressione di filtro.
+  logs.no-logs-for-filter: Nessun registro corrisponde al filtro corrente.
   logs.timestamp: Date e ora
   logs.action: Azione
   logs.metadata: Metadati
@@ -43,7 +50,8 @@ translations:
   logs.queue-running: In esecuzione
   logs.queue-position: "#{position}"
   logs.queue-entity: Entità
-  diagnostics.get-support: Ottenere supporto
+  logs.queue-action-details: Dettagli azione
+  diagnostics.get-support: Ottenere supporto Ottenere supporto
   diagnostics.get-support-description: Se hai problemi con OliveTin e vuoi presentare una richiesta di supporto, sarebbe molto utile includere la diagnostica del server da questa pagina.
   diagnostics.where-to-find-help: Dove trovare aiuto
   diagnostics.ssh: SSH

@@ -17,6 +17,13 @@ translations:
   docs: 文档
   logs.title: 日志
   logs.page-description: 这是一个动作执行日志列表。您可以按动作标题过滤列表。
+  logs.filter-placeholder: 过滤日志（例如 !Update 或 Status != Completed）
+  logs.filter-help-title: 过滤语法
+  logs.filter-help-intro: 过滤器会在服务器端针对您有权限查看的条目进行筛选。您可以使用 and / or 来组合搜索条件。
+  logs.filter-help-fields: "字段：Status, Action, User, Output, Blocked, TimedOut, Running, ExitCode。运算符：==, !=, contains。在单个单词前加上 ! 前缀可排除匹配的条目。"
+  logs.filter-help-examples: "示例：backup · !Update · Status != Completed · Status == Blocked · Action contains backup and Status == Completed"
+  logs.filter-error: 无法应用过滤表达式。
+  logs.no-logs-for-filter: 没有符合当前过滤条件的日志。
   logs.timestamp: 时间戳
   logs.action: 动作
   logs.metadata: 元数据
@@ -52,7 +59,8 @@ translations:
   logs.queue-running: 运行中
   logs.queue-position: "第 {position} 位"
   logs.queue-entity: 实体
-  diagnostics.get-support: 获取支持
+  logs.queue-action-details: 动作详细信息
+  diagnostics.get-support: 获取支持 获取支持
   diagnostics.get-support-description: 如果您在使用 OliveTin 时遇到问题并希望提交支持请求，从本页面包含服务器诊断将非常有帮助。
   diagnostics.where-to-find-help: 在哪里找到帮助
   diagnostics.ssh: SSH
