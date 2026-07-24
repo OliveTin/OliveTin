@@ -34,11 +34,11 @@ tar -xzf OliveTin-darwin-arm64.tar.gz
 cd OliveTin-darwin-arm64
 ----
 
-== Remove the Gatekeeper quarantine
+== Gatekeeper and notarization
 
-The binary is downloaded from the internet and is not notarized by Apple, so on first run Gatekeeper blocks it with a message like _"OliveTin can't be opened because Apple cannot check it for malicious software."_
+Current release binaries are **Developer ID signed and notarized** by Apple. After extract, you should be able to run `./OliveTin` normally.
 
-Clear the quarantine attribute so it will run:
+If Gatekeeper still blocks an older (unsigned) build, or you see a prompt that Apple cannot check the binary for malicious software, clear the quarantine attribute:
 
 [source,shell]
 ----

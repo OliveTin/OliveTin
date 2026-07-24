@@ -2,7 +2,7 @@
 
 This option installs OliveTin as a launchd service, so it runs in the background and starts automatically. This is the macOS equivalent of running OliveTin as a Linux systemd service or a xref:install/windows_service.adoc[Windows service]. If you just want to run OliveTin as a regular application, follow the xref:install/macos.adoc[macOS install] instructions instead.
 
-Before continuing, complete the xref:install/macos.adoc[macOS install] steps (download, extract, and clear the Gatekeeper quarantine) and confirm OliveTin starts correctly by running `./OliveTin`.
+Before continuing, complete the xref:install/macos.adoc[macOS install] steps (download, extract, and confirm Gatekeeper allows the binary) and confirm OliveTin starts correctly by running `./OliveTin`.
 
 == Choose LaunchAgent or LaunchDaemon
 
