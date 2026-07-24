@@ -17,6 +17,13 @@ translations:
   docs: Documentación
   logs.title: Registros
   logs.page-description: Esta es una lista de registros de acciones que han sido ejecutadas. Puede filtrar la lista por título de acción.
+  logs.filter-placeholder: Filtrar registros (p. ej. !Update o Status != Completed)
+  logs.filter-help-title: Sintaxis del filtro
+  logs.filter-help-intro: Los filtros se ejecutan en el servidor sobre las entradas que puede ver. Combine términos con and / or.
+  logs.filter-help-fields: "Campos: Status, Action, User, Output, Blocked, TimedOut, Running, ExitCode. Operadores: ==, !=, contains. Un prefijo ! en una sola palabra excluye las entradas coincidentes."
+  logs.filter-help-examples: "Ejemplos: backup · !Update · Status != Completed · Status == Blocked · Action contains backup and Status == Completed"
+  logs.filter-error: No se pudo aplicar la expresión del filtro.
+  logs.no-logs-for-filter: Ningún registro coincide con el filtro actual.
   logs.timestamp: Marca de tiempo
   logs.action: Acción
   logs.metadata: Metadatos
@@ -43,7 +50,8 @@ translations:
   logs.queue-running: En ejecución
   logs.queue-position: "#{position}"
   logs.queue-entity: Entidad
-  diagnostics.get-support: Obtener soporte
+  logs.queue-action-details: Detalles de la acción
+  diagnostics.get-support: Obtener soporte Obtener soporte
   diagnostics.get-support-description: Si tiene problemas con OliveTin y desea presentar una solicitud de soporte, sería muy útil incluir diagnósticos del servidor desde esta página.
   diagnostics.where-to-find-help: Dónde encontrar ayuda
   diagnostics.ssh: SSH
