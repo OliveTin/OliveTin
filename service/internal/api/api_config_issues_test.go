@@ -31,8 +31,8 @@ func TestGetDiagnosticsReturnsConfigIssues(t *testing.T) {
 		},
 	}
 
-	ts, client := getNewTestServerAndClient(cfg)
-	defer ts.Close()
+	testServer, client := getNewTestServerAndClient(cfg)
+	defer testServer.Close()
 
 	res, err := client.GetDiagnostics(context.Background(), connect.NewRequest(&apiv1.GetDiagnosticsRequest{}))
 	require.NoError(t, err)
@@ -69,8 +69,8 @@ func TestInitHidesConfigIssueCountWithoutDiagnostics(t *testing.T) {
 		},
 	}
 
-	ts, client := getNewTestServerAndClient(cfg)
-	defer ts.Close()
+	testServer, client := getNewTestServerAndClient(cfg)
+	defer testServer.Close()
 
 	initRes, err := client.Init(context.Background(), connect.NewRequest(&apiv1.InitRequest{}))
 	require.NoError(t, err)
@@ -119,8 +119,8 @@ func TestConfigIssuesHideActionsWithoutViewPermission(t *testing.T) {
 	cfg.AuthHttpHeaderUsername = "X-Ot-User"
 	attachBrokenTemplateArgToSecretAction(cfg)
 
-	ts, client := getNewTestServerAndClient(cfg)
-	defer ts.Close()
+	testServer, client := getNewTestServerAndClient(cfg)
+	defer testServer.Close()
 
 	configissues.Report(configissues.Issue{
 		Severity: configissues.SeverityWarning,
@@ -157,8 +157,8 @@ func TestConfigIssuesHideRuntimeWatcherFailuresWithoutViewPermission(t *testing.
 	cfg, _, _ := buildViewPermissionTestConfig(t)
 	cfg.AuthHttpHeaderUsername = "X-Ot-User"
 
-	ts, client := getNewTestServerAndClient(cfg)
-	defer ts.Close()
+	testServer, client := getNewTestServerAndClient(cfg)
+	defer testServer.Close()
 
 	configissues.Report(configissues.Issue{
 		Severity:    configissues.SeverityError,

@@ -69,7 +69,9 @@ func watchAndLoadEntity(baseDir string, ef *config.EntityFile) {
 		p = filepath.Join(baseDir, p)
 		log.WithFields(log.Fields{"entityFile": p}).Debugf("Adding config dir to entity file path")
 	}
-	go filehelper.WatchFileWrite(p, func(filename string) { loadEntityFile(p, ef.Name) }, filehelper.WatchMeta{})
+	go filehelper.WatchFileWrite(p, func(filename string) { loadEntityFile(p, ef.Name) }, filehelper.WatchMeta{
+		ConfigFile: ef.SourceFile,
+	})
 	loadEntityFile(p, ef.Name)
 }
 
@@ -155,10 +157,23 @@ func loadEntityFileYaml(filename string, entityname string) {
 }
 
 func replaceEntitiesFromFile(entityname string, data []map[string]any) {
-	ClearEntitiesOfType(entityname)
+	rwmutex.Lock()
+	defer rwmutex.Unlock()
 
+	delete(entities, entityname)
+
+	if len(data) == 0 {
+		return
+	}
+
+	entities[entityname] = make(entityInstancesByKey, 0)
 	for i, mapp := range data {
-		AddEntity(entityname, fmt.Sprintf("%d", i), mapp)
+		entityKey := fmt.Sprintf("%d", i)
+		entities[entityname][entityKey] = &Entity{
+			Data:      mapp,
+			UniqueKey: entityKey,
+			Title:     findEntityTitle(mapp),
+		}
 	}
 }
 

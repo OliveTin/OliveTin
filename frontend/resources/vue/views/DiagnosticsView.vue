@@ -108,7 +108,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import Section from 'picocrank/vue/components/Section.vue'
 import Table from 'picocrank/vue/components/Table.vue'
 import { useI18n } from 'vue-i18n'
@@ -130,7 +130,7 @@ const configIssueHeaders = computed(() => [
   { key: 'actionTitle', label: t('diagnostics.config-issue-action'), sortable: true, width: '10rem' },
   { key: 'argumentName', label: t('diagnostics.config-issue-argument'), sortable: true, width: '8rem' },
   { key: 'configFile', label: t('diagnostics.config-issue-config-file'), sortable: true, width: '14rem' },
-  { key: 'source', label: t('diagnostics.config-issue-detail'), sortable: false, width: '12rem' }
+  { key: 'source', label: t('diagnostics.config-issue-source'), sortable: false, width: '12rem' }
 ])
 
 const configIssueRows = computed(() => configIssues.value.map((issue) => ({
@@ -311,5 +311,12 @@ async function copyBrowserInfo () {
 
 onMounted(() => {
   fetchDiagnostics()
+  window.addEventListener('EventConfigChanged', fetchDiagnostics)
+  window.addEventListener('EventEntityChanged', fetchDiagnostics)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('EventConfigChanged', fetchDiagnostics)
+  window.removeEventListener('EventEntityChanged', fetchDiagnostics)
 })
 </script>

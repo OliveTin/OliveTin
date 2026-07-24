@@ -114,7 +114,7 @@ func checklistNoChoicesIssue(action *config.Action, arg *config.ActionArgument) 
 }
 
 func checklistEntityChoicesIssue(action *config.Action, arg *config.ActionArgument) []configissues.Issue {
-	if arg.Entity == "" || len(arg.Choices) == 1 {
+	if arg.Entity == "" || len(arg.Choices) <= 1 {
 		return nil
 	}
 
@@ -127,7 +127,10 @@ func collectIncludeIssues(cfg *config.Config) []configissues.Issue {
 		return nil
 	}
 
-	includePath := filepath.Join(cfg.GetDir(), cfg.Include)
+	includePath := cfg.Include
+	if !filepath.IsAbs(includePath) {
+		includePath = filepath.Join(cfg.GetDir(), cfg.Include)
+	}
 	info, err := os.Stat(includePath)
 	if err != nil {
 		return []configissues.Issue{{
@@ -411,16 +414,30 @@ func watcherPathIssuesForAction(action *config.Action) []configissues.Issue {
 	}
 
 	out := make([]configissues.Issue, 0)
+	out = append(out, watcherCreatedDirIssues(action)...)
+	out = append(out, watcherChangedDirIssues(action)...)
+	out = append(out, watcherCalendarFileIssues(action)...)
+	return out
+}
+
+func watcherCreatedDirIssues(action *config.Action) []configissues.Issue {
+	out := make([]configissues.Issue, 0)
 	for _, dir := range action.ExecOnFileCreatedInDir {
 		out = append(out, watcherDirIssue(action, dir)...)
 	}
+	return out
+}
+
+func watcherChangedDirIssues(action *config.Action) []configissues.Issue {
+	out := make([]configissues.Issue, 0)
 	for _, dir := range action.ExecOnFileChangedInDir {
 		out = append(out, watcherDirIssue(action, dir)...)
 	}
-	if action.ExecOnCalendarFile != "" {
-		out = append(out, watcherFileIssue(action, action.ExecOnCalendarFile)...)
-	}
 	return out
+}
+
+func watcherCalendarFileIssues(action *config.Action) []configissues.Issue {
+	return watcherFileIssue(action, action.ExecOnCalendarFile)
 }
 
 func watcherPathIssuesForEntities(cfg *config.Config) []configissues.Issue {

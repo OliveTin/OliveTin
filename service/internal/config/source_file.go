@@ -1,6 +1,9 @@
 package config
 
-import "github.com/knadh/koanf/v2"
+import (
+	"github.com/knadh/koanf/v2"
+	log "github.com/sirupsen/logrus"
+)
 
 const sourceFileKey = "x-olivetin-source-file"
 
@@ -34,6 +37,15 @@ func stampSourceOnMap(item any, sourceFile string) {
 }
 
 func stampLoadedConfigSources(k *koanf.Koanf, configPath string) {
-	_ = k.Set("actions", stampSourceOnMaps(k.Get("actions"), configPath))
-	_ = k.Set("entities", stampSourceOnMaps(k.Get("entities"), configPath))
+	stampConfigKey(k, "actions", configPath)
+	stampConfigKey(k, "entities", configPath)
+}
+
+func stampConfigKey(k *koanf.Koanf, key, configPath string) {
+	if err := k.Set(key, stampSourceOnMaps(k.Get(key), configPath)); err != nil {
+		log.WithFields(log.Fields{
+			"key":        key,
+			"configPath": configPath,
+		}).Errorf("Failed to persist source stamps: %v", err)
+	}
 }

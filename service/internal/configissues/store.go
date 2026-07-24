@@ -97,9 +97,9 @@ func Report(issue Issue) {
 	storeMu.Lock()
 	defer storeMu.Unlock()
 
-	fp := issueFingerprint(issue)
+	issueFingerprintValue := issueFingerprint(issue)
 	for _, existing := range issues {
-		if issueFingerprint(existing) == fp {
+		if issueFingerprint(existing) == issueFingerprintValue {
 			return
 		}
 	}
