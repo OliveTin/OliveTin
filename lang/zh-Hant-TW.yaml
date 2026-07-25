@@ -54,6 +54,17 @@ translations:
   diagnostics.get-support: 尋求技術支援
   diagnostics.get-support-description: 如果您在使用 OliveTin 時遇到問題並希望提出支援請求，提供此頁面的「伺服器診斷資訊」將會有很大的幫助。
   diagnostics.where-to-find-help: 哪裡可以尋求協助
+  diagnostics.config-issues: 設定問題
+  diagnostics.config-issues-description: 目前 OliveTin 設定中偵測到的問題。請在設定檔中修正這些問題並重新載入 OliveTin。
+  diagnostics.config-issues-none: 未偵測到設定問題。
+  diagnostics.config-issue-severity: 嚴重程度
+  diagnostics.config-issue-code: 代碼
+  diagnostics.config-issue-message: 訊息
+  diagnostics.config-issue-action: 動作
+  diagnostics.config-issue-argument: 參數
+  diagnostics.config-issue-config-file: 設定檔
+  diagnostics.config-issue-detail: 詳細資料
+  diagnostics.config-issue-source: 來源
   diagnostics.ssh: SSH
   diagnostics.found-key: 找到金鑰 (Key)
   diagnostics.found-config: 找到設定檔 (Config)

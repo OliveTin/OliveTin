@@ -30,11 +30,16 @@ func AddListener(l func()) {
 }
 
 func SetupEntityFileWatchers(cfg *config.Config) {
-	baseDir := resolveEntitiesBaseDir(cfg.GetDir())
+	baseDir := ResolveEntitiesBaseDir(cfg.GetDir())
 	for i := range cfg.Entities { // #337 - iterate by key, not by value
 		ef := cfg.Entities[i]
 		watchAndLoadEntity(baseDir, ef)
 	}
+}
+
+// ResolveEntitiesBaseDir returns the directory used to resolve relative entity file paths.
+func ResolveEntitiesBaseDir(configDir string) string {
+	return resolveEntitiesBaseDir(configDir)
 }
 
 //gocyclo:ignore
@@ -64,15 +69,28 @@ func watchAndLoadEntity(baseDir string, ef *config.EntityFile) {
 		p = filepath.Join(baseDir, p)
 		log.WithFields(log.Fields{"entityFile": p}).Debugf("Adding config dir to entity file path")
 	}
-	go filehelper.WatchFileWrite(p, func(filename string) { loadEntityFile(p, ef.Name) })
+	go filehelper.WatchFileWrite(p, func(filename string) { loadEntityFile(p, ef.Name) }, filehelper.WatchMeta{
+		ConfigFile: ef.SourceFile,
+	})
 	loadEntityFile(p, ef.Name)
 }
 
 func loadEntityFile(filename string, entityname string) {
+	defer func() {
+		MarkEntityLoadAttempted(entityname)
+		notifyEntityListeners()
+	}()
+
 	if strings.HasSuffix(filename, ".json") {
 		loadEntityFileJson(filename, entityname)
-	} else {
-		loadEntityFileYaml(filename, entityname)
+		return
+	}
+	loadEntityFileYaml(filename, entityname)
+}
+
+func notifyEntityListeners() {
+	for _, l := range listeners {
+		l()
 	}
 }
 
@@ -86,6 +104,7 @@ func loadEntityFileJson(filename string, entityname string) {
 
 	if err != nil {
 		log.Errorf("ReadIn: %v", err)
+		ClearEntitiesOfType(entityname)
 		return
 	}
 
@@ -100,13 +119,14 @@ func loadEntityFileJson(filename string, entityname string) {
 
 		if err != nil {
 			log.Errorf("%v", err)
+			ClearEntitiesOfType(entityname)
 			return
 		}
 
 		data = append(data, d)
 	}
 
-	updateSvFromFile(entityname, data)
+	replaceEntitiesFromFile(entityname, data)
 }
 
 func loadEntityFileYaml(filename string, entityname string) {
@@ -119,6 +139,7 @@ func loadEntityFileYaml(filename string, entityname string) {
 
 	if err != nil {
 		log.Errorf("ReadIn: %v", err)
+		ClearEntitiesOfType(entityname)
 		return
 	}
 
@@ -128,21 +149,31 @@ func loadEntityFileYaml(filename string, entityname string) {
 
 	if err != nil {
 		log.Errorf("Unmarshal: %v", err)
+		ClearEntitiesOfType(entityname)
 		return
 	}
 
-	updateSvFromFile(entityname, data)
+	replaceEntitiesFromFile(entityname, data)
 }
 
-func updateSvFromFile(entityname string, data []map[string]any) {
-	ClearEntitiesOfType(entityname)
+func replaceEntitiesFromFile(entityname string, data []map[string]any) {
+	rwmutex.Lock()
+	defer rwmutex.Unlock()
 
-	for i, mapp := range data {
-		AddEntity(entityname, fmt.Sprintf("%d", i), mapp)
+	delete(entities, entityname)
+
+	if len(data) == 0 {
+		return
 	}
 
-	for _, l := range listeners {
-		l()
+	entities[entityname] = make(entityInstancesByKey, 0)
+	for i, mapp := range data {
+		entityKey := fmt.Sprintf("%d", i)
+		entities[entityname][entityKey] = &Entity{
+			Data:      mapp,
+			UniqueKey: entityKey,
+			Title:     findEntityTitle(mapp),
+		}
 	}
 }
 

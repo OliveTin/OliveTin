@@ -3,10 +3,12 @@ package executor
 import (
 	"crypto/sha256"
 	"fmt"
+	"strings"
 
-	config "github.com/OliveTin/OliveTin/internal/config"
+	"github.com/OliveTin/OliveTin/internal/config"
+	"github.com/OliveTin/OliveTin/internal/configcheck"
+	"github.com/OliveTin/OliveTin/internal/configissues"
 	"github.com/OliveTin/OliveTin/internal/entities"
-	log "github.com/sirupsen/logrus"
 )
 
 func (e *Executor) FindBindingByID(id string) *ActionBinding {
@@ -40,40 +42,54 @@ type RebuildActionMapRequest struct {
 	dashboardTargets *dashboardTargetIndex
 }
 
-func validateArgumentDefaults(cfg *config.Config) {
+func validateArgumentDefaults(cfg *config.Config) []configissues.Issue {
 	if cfg == nil {
-		return
+		return nil
 	}
+	out := make([]configissues.Issue, 0)
 	for _, action := range cfg.Actions {
-		validateActionArgumentDefaults(action)
+		out = append(out, validateActionArgumentDefaults(action)...)
 	}
+	return out
 }
 
-func validateActionArgumentDefaults(action *config.Action) {
+func validateActionArgumentDefaults(action *config.Action) []configissues.Issue {
 	if action == nil {
-		return
+		return nil
 	}
+	out := make([]configissues.Issue, 0)
 	for i := range action.Arguments {
-		validateArgumentDefault(action, &action.Arguments[i])
+		if issue := validateArgumentDefault(action, &action.Arguments[i]); issue != nil {
+			out = append(out, *issue)
+		}
 	}
+	return out
 }
 
-func validateArgumentDefault(action *config.Action, arg *config.ActionArgument) {
+func validateArgumentDefault(action *config.Action, arg *config.ActionArgument) *configissues.Issue {
 	if arg.Default == "" {
-		return
+		return nil
+	}
+	if strings.Contains(arg.Default, "{{") {
+		return nil
 	}
 	if err := ValidateArgument(arg, arg.Default, action); err != nil {
-		log.WithFields(log.Fields{
-			"actionTitle": action.Title,
-			"argName":     arg.Name,
-			"default":     arg.Default,
-			"error":       err,
-		}).Warn("Argument default value failed validation")
+		return &configissues.Issue{
+			Severity:     configissues.SeverityWarning,
+			Code:         configissues.CodeArgDefaultInvalid,
+			Message:      fmt.Sprintf("Argument default value failed validation: %v", err),
+			ActionID:     action.ID,
+			ActionTitle:  action.Title,
+			ArgumentName: arg.Name,
+			Source:       arg.Default,
+			ConfigFile:   action.SourceFile,
+		}
 	}
+	return nil
 }
 
 func (e *Executor) RebuildActionMap() {
-	validateArgumentDefaults(e.Cfg)
+	defaultIssues := validateArgumentDefaults(e.Cfg)
 
 	e.MapActionBindingsLock.Lock()
 
@@ -93,6 +109,8 @@ func (e *Executor) RebuildActionMap() {
 	}
 
 	e.MapActionBindingsLock.Unlock()
+
+	configcheck.Rebuild(e.Cfg, defaultIssues...)
 
 	for _, l := range e.copyListeners() {
 		l.OnActionMapRebuilt()

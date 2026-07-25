@@ -32,6 +32,6 @@ describe('config: empty dashboards are hidden', function () {
 
     const navigationLinks = await getNavigationLinks()
     expect(navigationLinks).to.not.be.empty
-    expect(navigationLinks.length).to.be.equal(4, 'Expected the nav to only have 4 links')
+    expect(navigationLinks.length).to.be.equal(3, 'Expected the nav to only have 3 links') // entities + logs + diagnostics
   })
 })

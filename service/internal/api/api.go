@@ -1200,6 +1200,7 @@ func (api *oliveTinAPI) GetDiagnostics(ctx ctx.Context, req *connect.Request[api
 	res := &apiv1.GetDiagnosticsResponse{
 		SshFoundKey:    installationinfo.Runtime.SshFoundKey,
 		SshFoundConfig: installationinfo.Runtime.SshFoundConfig,
+		ConfigIssues:   api.buildConfigIssuesForUser(user),
 	}
 	return connect.NewResponse(res), nil
 }
@@ -1242,6 +1243,7 @@ func (api *oliveTinAPI) Init(ctx ctx.Context, req *connect.Request[apiv1.InitReq
 		LoginRequired:             loginRequired,
 		AvailableThemes:           discoverAvailableThemes(api.cfg),
 		ShowNavigateOnStartIcons:  api.cfg.ShowNavigateOnStartIcons,
+		ConfigIssueCount:          configIssueCountForUser(api, user),
 	}
 
 	return connect.NewResponse(res), nil

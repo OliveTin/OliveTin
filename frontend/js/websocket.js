@@ -199,6 +199,11 @@ async function handleConfigChangedEvent (j) {
   window.dispatchEvent(j)
 }
 
+async function handleEntityChangedEvent (j) {
+  await refreshInitAfterConfigChange()
+  window.dispatchEvent(j)
+}
+
 const eventCaseToTypeName = {
   entityChanged: 'EventEntityChanged',
   configChanged: 'EventConfigChanged',
@@ -230,8 +235,12 @@ function handleEvent (msg) {
     case 'EventHeartbeat':
       break
     case 'EventOutputChunk':
-    case 'EventEntityChanged':
       window.dispatchEvent(j)
+      break
+    case 'EventEntityChanged':
+      handleEntityChangedEvent(j).catch((err) => {
+        console.error('EventEntityChanged handler failed:', err)
+      })
       break
     case 'EventExecutionFinished':
     case 'EventExecutionStarted':

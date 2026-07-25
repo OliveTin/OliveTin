@@ -345,8 +345,8 @@ function renderNavigation () {
 
   const rootDashboards = window.initResponse?.rootDashboards || []
 
-  if (typeof navigation.value.clear === 'function') {
-    navigation.value.clear()
+  if (typeof navigation.value.clearNavigationLinks === 'function') {
+    navigation.value.clearNavigationLinks()
   }
 
   for (const rootDashboard of rootDashboards) {
@@ -367,7 +367,10 @@ function renderNavigation () {
   }
 
   if (showDiagnostics.value) {
-    navigation.value.addRouterLink('Diagnostics', t('nav.diagnostics'))
+    const issueCount = window.initResponse?.configIssueCount || 0
+    navigation.value.addRouterLink('Diagnostics', t('nav.diagnostics'), {
+      count: issueCount
+    })
   }
 }
 

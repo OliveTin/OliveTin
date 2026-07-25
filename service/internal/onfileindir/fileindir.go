@@ -17,7 +17,7 @@ func WatchFilesInDirectory(cfg *config.Config, ex *executor.Executor) {
 			go func(act *config.Action, dir string) {
 				filehelper.WatchDirectoryCreate(dir, func(filename string) {
 					scheduleExec(act, cfg, ex, filename)
-				})
+				}, watchMetaForAction(act))
 			}(action, dirname)
 		}
 		for _, dirname := range action.ExecOnFileChangedInDir {
@@ -27,9 +27,17 @@ func WatchFilesInDirectory(cfg *config.Config, ex *executor.Executor) {
 			go func(act *config.Action, dir string) {
 				filehelper.WatchDirectoryWrite(dir, func(filename string) {
 					scheduleExec(act, cfg, ex, filename)
-				})
+				}, watchMetaForAction(act))
 			}(action, dirname)
 		}
+	}
+}
+
+func watchMetaForAction(action *config.Action) filehelper.WatchMeta {
+	return filehelper.WatchMeta{
+		ActionID:    action.ID,
+		ActionTitle: action.Title,
+		ConfigFile:  action.SourceFile,
 	}
 }
 
