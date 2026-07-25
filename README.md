@@ -87,7 +87,7 @@ OliveTin follows these principles:
 
 All documentation can be found at [docs.olivetin.app](https://docs.olivetin.app). This includes installation and usage guide, etc.
 
-You can find instructions in the docs on how to install as a **Linux package**, **Linux Container**, on **FreeBSD**, **Windows**, **MacOS** and other platforms, too!
+You can find instructions in the docs on how to install as a **Linux package**, **Linux Container**, on **FreeBSD**, **Windows**, **macOS** and other platforms, too!
 
 ## Donations & Sponsorship
 
