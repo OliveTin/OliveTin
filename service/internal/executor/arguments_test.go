@@ -812,6 +812,44 @@ func TestTypeSafetyCheckAsciiIdentifier(t *testing.T) {
 	}
 }
 
+func TestTypeSafetyCheckDnsName(t *testing.T) {
+	tests := []struct {
+		name     string
+		value    string
+		hasError bool
+	}{
+		{"Short name", "webserver", false},
+		{"Localhost", "localhost", false},
+		{"Simple domain", "example.com", false},
+		{"Host with subdomain", "webserver.example.com", false},
+		{"Deep subdomain", "a.b.c.example.co.uk", false},
+		{"Label starting with digit", "1host.example.com", false},
+		{"Trailing dot", "example.com.", false},
+		{"Punycode IDN", "xn--bcher-kva.example", false},
+		{"Underscore", "my_host.example.com", true},
+		{"Space", "example .com", true},
+		{"Leading hyphen label", "-host.example.com", true},
+		{"Trailing hyphen label", "host-.example.com", true},
+		{"Empty label", "example..com", true},
+		{"IP address", "192.168.1.1", true},
+		{"All numeric TLD", "example.123", true},
+		{"All numeric short name", "12345", true},
+		{"Special chars", "exam!ple.com", true},
+		{"Unicode label", "bücher.example.com", true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := TypeSafetyCheck("host", tt.value, "dnsname")
+			if tt.hasError {
+				assert.NotNil(t, err, "Expected error for value '%s'", tt.value)
+			} else {
+				assert.Nil(t, err, "Expected no error for value '%s', but got: %v", tt.value, err)
+			}
+		})
+	}
+}
+
 func TestTypeSafetyCheckShellSafeIdentifier(t *testing.T) {
 	tests := []struct {
 		name     string

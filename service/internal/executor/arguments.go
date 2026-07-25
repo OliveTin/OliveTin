@@ -24,6 +24,9 @@ var (
 		"shell_safe_identifier":     `^[a-zA-Z0-9@\.\_\+\-]+$`,
 		"ascii_sentence":            `^[a-zA-Z0-9\-\._, ]+$`,
 	}
+
+	dnsNameLabelPattern      = regexp.MustCompile(`^[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$`)
+	dnsNameAllNumericPattern = regexp.MustCompile(`^[0-9]+$`)
 )
 
 // parseExecArray parses all exec arguments in the action.
@@ -223,6 +226,8 @@ func TypeSafetyCheck(name string, value string, argumentType string) error {
 		return typeSafetyCheckUrl(value)
 	case "datetime":
 		return typeSafetyCheckDatetime(value)
+	case "dnsname":
+		return typeSafetyCheckDnsName(value)
 	}
 
 	return typeSafetyCheckRegex(name, value, argumentType)
@@ -301,6 +306,33 @@ func typeSafetyCheckEmail(value string) error {
 		log.WithField("type", "email").Debugf("Email argument type check failed")
 		return err
 	}
+	return nil
+}
+
+// typeSafetyCheckDnsName validates a DNS hostname (RFC 1123 LDH labels).
+// Accepts short names (e.g. webserver) and FQDNs (e.g. webserver.example.com).
+// An optional trailing dot is allowed.
+func typeSafetyCheckDnsName(value string) error {
+	hostname := strings.TrimSuffix(value, ".")
+	if hostname == "" || len(hostname) > 253 {
+		return fmt.Errorf("invalid dnsname length")
+	}
+
+	return typeSafetyCheckDnsNameLabels(strings.Split(hostname, "."))
+}
+
+func typeSafetyCheckDnsNameLabels(labels []string) error {
+	for _, label := range labels {
+		if !dnsNameLabelPattern.MatchString(label) {
+			return fmt.Errorf("invalid dnsname label %q", label)
+		}
+	}
+
+	tld := labels[len(labels)-1]
+	if dnsNameAllNumericPattern.MatchString(tld) {
+		return fmt.Errorf("dnsname top-level label must not be all-numeric")
+	}
+
 	return nil
 }
 

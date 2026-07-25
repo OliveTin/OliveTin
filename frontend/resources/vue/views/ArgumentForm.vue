@@ -291,7 +291,7 @@ function getInputType (arg) {
     return 'checkbox'
   }
 
-  if (arg.type === 'ascii_identifier' || arg.type === 'shell_safe_identifier' || arg.type === 'ascii' || arg.type === 'ascii_sentence') {
+  if (arg.type === 'ascii_identifier' || arg.type === 'dnsname' || arg.type === 'shell_safe_identifier' || arg.type === 'ascii' || arg.type === 'ascii_sentence') {
     return 'text'
   }
 
