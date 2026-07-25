@@ -60,7 +60,7 @@ translations:
   logs.queue-position: "第 {position} 位"
   logs.queue-entity: 实体
   logs.queue-action-details: 动作详细信息
-  diagnostics.get-support: 获取支持 获取支持
+  diagnostics.get-support: 获取支持
   diagnostics.get-support-description: 如果您在使用 OliveTin 时遇到问题并希望提交支持请求，从本页面包含服务器诊断将非常有帮助。
   diagnostics.where-to-find-help: 在哪里找到帮助
   diagnostics.config-issues: 配置问题

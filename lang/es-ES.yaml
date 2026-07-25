@@ -51,7 +51,7 @@ translations:
   logs.queue-position: "#{position}"
   logs.queue-entity: Entidad
   logs.queue-action-details: Detalles de la acción
-  diagnostics.get-support: Obtener soporte Obtener soporte
+  diagnostics.get-support: Obtener soporte
   diagnostics.get-support-description: Si tiene problemas con OliveTin y desea presentar una solicitud de soporte, sería muy útil incluir diagnósticos del servidor desde esta página.
   diagnostics.where-to-find-help: Dónde encontrar ayuda
   diagnostics.config-issues: Problemas de configuración
