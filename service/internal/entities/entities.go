@@ -104,7 +104,6 @@ func loadEntityFileJson(filename string, entityname string) {
 
 	if err != nil {
 		log.Errorf("ReadIn: %v", err)
-		ClearEntitiesOfType(entityname)
 		return
 	}
 
@@ -119,7 +118,6 @@ func loadEntityFileJson(filename string, entityname string) {
 
 		if err != nil {
 			log.Errorf("%v", err)
-			ClearEntitiesOfType(entityname)
 			return
 		}
 
@@ -139,7 +137,6 @@ func loadEntityFileYaml(filename string, entityname string) {
 
 	if err != nil {
 		log.Errorf("ReadIn: %v", err)
-		ClearEntitiesOfType(entityname)
 		return
 	}
 
@@ -149,7 +146,6 @@ func loadEntityFileYaml(filename string, entityname string) {
 
 	if err != nil {
 		log.Errorf("Unmarshal: %v", err)
-		ClearEntitiesOfType(entityname)
 		return
 	}
 

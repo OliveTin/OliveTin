@@ -790,6 +790,8 @@ func TestSanitizeLogFilename(t *testing.T) {
 		{"Create/update Monthly Report", "Create_update Monthly Report"},
 		{`path\with\backslashes`, "path_with_backslashes"},
 		{`a:b*c?d"e<f>g|h`, "a_b_c_d_e_f_g_h"},
+		{"has\x00nul", "has_nul"},
+		{"tab\there\nand\rreturn", "tab_here_and_return"},
 	}
 
 	for _, tt := range tests {
@@ -869,4 +871,79 @@ func TestStepSaveLogKeepsSafeTitleFilename(t *testing.T) {
 
 	expectedPath := filepath.Join(resultsDir, "Echo Test.1714333384."+trackingID+".yaml")
 	assert.FileExists(t, expectedPath)
+}
+
+func TestStepSaveLogSanitizesNULInTitle(t *testing.T) {
+	resultsDir := t.TempDir()
+	outputDir := t.TempDir()
+	started := time.Unix(1714333384, 0)
+	trackingID := "bbbbbbbb-cccc-dddd-eeee-ffffffffffff"
+	title := "Bad\x00Title"
+
+	req := &ExecutionRequest{
+		Cfg: &config.Config{
+			SaveLogs: config.SaveLogsConfig{
+				ResultsDirectory: resultsDir,
+				OutputDirectory:  outputDir,
+			},
+		},
+		Binding: &ActionBinding{
+			Action: &config.Action{},
+		},
+		logEntry: &InternalLogEntry{
+			ActionTitle:         title,
+			DatetimeStarted:     started,
+			ExecutionTrackingID: trackingID,
+			Output:              "nul ok",
+		},
+	}
+
+	assert.True(t, stepSaveLog(req))
+
+	expectedBase := "Bad_Title.1714333384." + trackingID
+	resultsPath := filepath.Join(resultsDir, expectedBase+".yaml")
+	outputPath := filepath.Join(outputDir, expectedBase+".log")
+
+	assert.FileExists(t, resultsPath)
+	assert.FileExists(t, outputPath)
+	assert.NotContains(t, resultsPath, "\x00")
+	assert.NotContains(t, outputPath, "\x00")
+
+	output, err := os.ReadFile(outputPath)
+	assert.NoError(t, err)
+	assert.Equal(t, "nul ok", string(output))
+}
+
+func TestStepSaveLogReturnsFalseWhenDependenciesMissing(t *testing.T) {
+	started := time.Unix(1714333384, 0)
+	valid := &ExecutionRequest{
+		Cfg: &config.Config{},
+		Binding: &ActionBinding{
+			Action: &config.Action{},
+		},
+		logEntry: &InternalLogEntry{
+			ActionTitle:         "Echo",
+			DatetimeStarted:     started,
+			ExecutionTrackingID: "cccccccc-dddd-eeee-ffff-000000000000",
+		},
+	}
+
+	assert.False(t, stepSaveLog(nil))
+	assert.False(t, stepSaveLog(&ExecutionRequest{}))
+
+	missingLog := *valid
+	missingLog.logEntry = nil
+	assert.False(t, stepSaveLog(&missingLog))
+
+	missingBinding := *valid
+	missingBinding.Binding = nil
+	assert.False(t, stepSaveLog(&missingBinding))
+
+	missingAction := *valid
+	missingAction.Binding = &ActionBinding{}
+	assert.False(t, stepSaveLog(&missingAction))
+
+	missingCfg := *valid
+	missingCfg.Cfg = nil
+	assert.False(t, stepSaveLog(&missingCfg))
 }

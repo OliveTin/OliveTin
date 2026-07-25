@@ -1391,6 +1391,11 @@ func triggerLoop(req *ExecutionRequest) {
 }
 
 func stepSaveLog(req *ExecutionRequest) bool {
+	if !canSaveExecutionLog(req) {
+		log.Warnf("Cannot save execution log; missing request, log entry, binding/action, or config")
+		return false
+	}
+
 	filename := fmt.Sprintf("%v.%v.%v", sanitizeLogFilename(req.logEntry.ActionTitle), req.logEntry.DatetimeStarted.Unix(), req.logEntry.ExecutionTrackingID)
 
 	saveLogResults(req, filename)
@@ -1399,10 +1404,14 @@ func stepSaveLog(req *ExecutionRequest) bool {
 	return true
 }
 
+func canSaveExecutionLog(req *ExecutionRequest) bool {
+	return req != nil && req.logEntry != nil && req.Binding != nil && req.Binding.Action != nil && req.Cfg != nil
+}
+
 // sanitizeLogFilename replaces characters that are unsafe in filenames so action
 // titles like "Create/update Report" do not create nested paths or fail to write.
 func sanitizeLogFilename(title string) string {
-	replacer := strings.NewReplacer(
+	oldnew := []string{
 		"/", "_",
 		"\\", "_",
 		":", "_",
@@ -1412,9 +1421,15 @@ func sanitizeLogFilename(title string) string {
 		"<", "_",
 		">", "_",
 		"|", "_",
-	)
+	}
 
-	return replacer.Replace(title)
+	// NUL and other C0 controls plus DEL are invalid or problematic in filenames.
+	for i := 0; i < 32; i++ {
+		oldnew = append(oldnew, string(rune(i)), "_")
+	}
+	oldnew = append(oldnew, "\x7f", "_")
+
+	return strings.NewReplacer(oldnew...).Replace(title)
 }
 
 func firstNonEmpty(one, two string) string {

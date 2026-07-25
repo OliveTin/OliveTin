@@ -1,6 +1,8 @@
 package entities
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -58,4 +60,35 @@ func TestGetEntityInstancesOrdered_emptyOrMissing(t *testing.T) {
 	ClearEntitiesOfType("empty_test")
 	ordered = GetEntityInstancesOrdered("empty_test")
 	assert.Nil(t, ordered)
+}
+
+func TestLoadEntityFile_preservesEntitiesOnTransientFailure(t *testing.T) {
+	const entityName = "preserve_on_fail"
+	ClearEntitiesOfType(entityName)
+	defer ClearEntitiesOfType(entityName)
+
+	dir := t.TempDir()
+	yamlPath := filepath.Join(dir, "hosts.yaml")
+	require.NoError(t, os.WriteFile(yamlPath, []byte("- title: kept\n"), 0o600))
+
+	loadEntityFile(yamlPath, entityName)
+	require.Len(t, GetEntityInstancesOrdered(entityName), 1)
+
+	loadEntityFile(filepath.Join(dir, "missing.yaml"), entityName)
+	require.Len(t, GetEntityInstancesOrdered(entityName), 1, "read failure should keep last good entities")
+
+	require.NoError(t, os.WriteFile(yamlPath, []byte("not: valid: yaml: ["), 0o600))
+	loadEntityFile(yamlPath, entityName)
+	require.Len(t, GetEntityInstancesOrdered(entityName), 1, "parse failure should keep last good entities")
+
+	jsonPath := filepath.Join(dir, "hosts.json")
+	require.NoError(t, os.WriteFile(jsonPath, []byte("{\"title\":\"json-kept\"}\n"), 0o600))
+	loadEntityFile(jsonPath, entityName)
+	require.Len(t, GetEntityInstancesOrdered(entityName), 1)
+
+	require.NoError(t, os.WriteFile(jsonPath, []byte("{bad json"), 0o600))
+	loadEntityFile(jsonPath, entityName)
+	ordered := GetEntityInstancesOrdered(entityName)
+	require.Len(t, ordered, 1, "JSON parse failure should keep last good entities")
+	assert.Equal(t, "json-kept", ordered[0].Title)
 }
