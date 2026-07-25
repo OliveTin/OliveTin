@@ -6,10 +6,6 @@ You will need approximately **10 minutes** to install OliveTin on almost every p
 
 You probably will need about **10-20 minutes** to understand how OliveTin configuration works, and to be able to write your first action to make it do something useful.
 
-== Where to find help
-
-include::partial$support.adoc[]
-
 == First step: where are you installing?
 
 * Linux
@@ -27,9 +23,17 @@ include::partial$support.adoc[]
 *** xref:install/docker_compose.adoc[Docker Compose]
 *** xref:install/helm.adoc[Kubernetes with Helm]
 *** xref:install/k8s.adoc[Kubernetes with Manifests]
-* xref:install/bsd.adoc[FreeBSD]
-* xref:install/windows.adoc[Windows]
-* xref:install/macos.adoc[MacOS]
+* xref:install/bsd.adoc[BSD]
+* Windows
+** xref:install/windows.adoc[Windows]
+** xref:install/windows.adoc[Windows Service]
+* macOS
+** xref:install/macos.adoc[macOS Desktop]
+** xref:install/macos.adoc[macOS Service]
+
+== Where to find help
+
+include::partial$support.adoc[]
 
 == What's Next?
 
