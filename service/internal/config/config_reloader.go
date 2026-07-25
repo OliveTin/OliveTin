@@ -50,6 +50,7 @@ func AppendSource(cfg *Config, k *koanf.Koanf, configPath string) {
 		return
 	}
 
+	applyStampedSourceFiles(k, cfg)
 	afterLoadFinalize(cfg, configPath)
 }
 

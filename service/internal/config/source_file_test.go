@@ -49,3 +49,32 @@ entities:
 	require.Len(t, cfg.Entities, 1)
 	assert.Equal(t, includePath, cfg.Entities[0].SourceFile)
 }
+
+func TestAppendSourceIgnoresUserProvidedSourceFile(t *testing.T) {
+	dir := t.TempDir()
+	basePath := filepath.Join(dir, "config.yaml")
+	require.NoError(t, os.WriteFile(basePath, []byte(`
+actions:
+  - title: Spoofed
+    shell: echo hi
+    x-olivetin-source-file: /tmp/fake-user-path.yaml
+entities:
+  - name: host
+    file: hosts.yaml
+    x-olivetin-source-file: /tmp/fake-entity-path.yaml
+`), 0o644))
+
+	k := koanf.New(".")
+	require.NoError(t, k.Load(file.Provider(basePath), yaml.Parser()))
+
+	cfg := config.DefaultConfig()
+	config.AppendSource(cfg, k, basePath)
+
+	require.Len(t, cfg.Actions, 1)
+	assert.Equal(t, basePath, cfg.Actions[0].SourceFile)
+	assert.NotEqual(t, "/tmp/fake-user-path.yaml", cfg.Actions[0].SourceFile)
+
+	require.Len(t, cfg.Entities, 1)
+	assert.Equal(t, basePath, cfg.Entities[0].SourceFile)
+	assert.NotEqual(t, "/tmp/fake-entity-path.yaml", cfg.Entities[0].SourceFile)
+}
