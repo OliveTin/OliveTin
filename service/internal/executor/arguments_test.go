@@ -523,8 +523,20 @@ func TestCheckShellArgumentSafetyWithConfirmation(t *testing.T) {
 	}
 
 	err := checkShellArgumentSafety(&a1)
-	assert.NotNil(t, err)
-	assert.Contains(t, err.Error(), "unsafe argument type 'confirmation'")
+	assert.Nil(t, err, "confirmation is constrained to 0/1 and is safe with shell")
+}
+
+func TestCheckShellArgumentSafetyWithUnnamedConfirmation(t *testing.T) {
+	a1 := config.Action{
+		Title: "Confirm shell unnamed",
+		Shell: "echo ok",
+		Arguments: []config.ActionArgument{
+			{Type: "confirmation", Title: "Are you sure?!"},
+		},
+	}
+
+	err := checkShellArgumentSafety(&a1)
+	assert.Nil(t, err)
 }
 
 func TestCheckShellArgumentSafetyWithChoicelessCheckbox(t *testing.T) {
@@ -930,8 +942,27 @@ func TestTypecheckActionArgumentConfirmation(t *testing.T) {
 	}
 	action := config.Action{Title: "Test"}
 
+	assert.Nil(t, typecheckActionArgument(&arg, "0", &action))
+	assert.Nil(t, typecheckActionArgument(&arg, "1", &action))
+
 	err := typecheckActionArgument(&arg, "any_value", &action)
-	assert.Nil(t, err, "Confirmation type should always pass validation")
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "must be \"0\" or \"1\"")
+
+	err = typecheckActionArgument(&arg, "", &action)
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "must be \"0\" or \"1\"")
+}
+
+func TestTypecheckActionArgumentUnnamedConfirmation(t *testing.T) {
+	arg := config.ActionArgument{
+		Type:  "confirmation",
+		Title: "Are you sure?!",
+	}
+	action := config.Action{Title: "Test"}
+
+	assert.Nil(t, typecheckActionArgument(&arg, "", &action))
+	assert.Nil(t, typecheckActionArgument(&arg, "ignored", &action))
 }
 
 func TestTypecheckActionArgumentHtmlWithoutName(t *testing.T) {

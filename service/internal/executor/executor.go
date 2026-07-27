@@ -1097,6 +1097,7 @@ func appendErrorToStderr(req *ExecutionRequest, err error) {
 
 type OutputStreamer struct {
 	Req    *ExecutionRequest
+	mu     sync.Mutex
 	output bytes.Buffer
 }
 
@@ -1105,10 +1106,31 @@ func (ost *OutputStreamer) Write(o []byte) (n int, err error) {
 		listener.OnOutputChunk(o, ost.Req.TrackingID)
 	}
 
-	return ost.output.Write(o)
+	ost.mu.Lock()
+	n, err = ost.output.Write(o)
+	outputSoFar := ""
+	if err == nil {
+		outputSoFar = ost.output.String()
+	}
+	ost.mu.Unlock()
+
+	if err != nil {
+		return n, err
+	}
+
+	// Keep the log entry's Output in sync while the command is still running so
+	// ExecutionStatus / mid-run result views can show output produced so far.
+	ost.Req.mutateLogEntry(func(entry *InternalLogEntry) {
+		entry.Output = outputSoFar
+	})
+
+	return n, nil
 }
 
 func (ost *OutputStreamer) String() string {
+	ost.mu.Lock()
+	defer ost.mu.Unlock()
+
 	return ost.output.String()
 }
 
@@ -1155,9 +1177,10 @@ func stepExec(req *ExecutionRequest) bool {
 	})
 	ctx.setProcess(cmd.Process)
 	waiterr := cmd.Wait()
+	finalOutput := streamer.String()
 	req.mutateLogEntry(func(entry *InternalLogEntry) {
 		entry.ExitCode = int32(commandExitCode(cmd))
-		entry.Output = streamer.String()
+		entry.Output = finalOutput
 	})
 
 	appendErrorToStderr(req, runerr)

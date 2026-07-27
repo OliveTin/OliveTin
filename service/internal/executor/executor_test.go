@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/OliveTin/OliveTin/internal/auth"
 	authpublic "github.com/OliveTin/OliveTin/internal/auth/authpublic"
@@ -946,4 +947,50 @@ func TestStepSaveLogReturnsFalseWhenDependenciesMissing(t *testing.T) {
 	missingCfg := *valid
 	missingCfg.Cfg = nil
 	assert.False(t, stepSaveLog(&missingCfg))
+}
+
+func TestLogEntryOutputAvailableWhileRunning(t *testing.T) {
+	cfg := config.DefaultConfig()
+	e := DefaultExecutor(cfg)
+	action := &config.Action{
+		Title: "Slow output",
+		Shell: "echo hello-mid-run; sleep 2",
+	}
+	cfg.Actions = append(cfg.Actions, action)
+	cfg.Sanitize()
+	e.RebuildActionMap()
+
+	binding := e.FindBindingWithNoEntity(action)
+	require.NotNil(t, binding)
+
+	wg, trackingID := e.ExecRequest(&ExecutionRequest{
+		Binding:           binding,
+		Cfg:               cfg,
+		AuthenticatedUser: auth.UserFromSystem(cfg, "testuser"),
+	})
+
+	var sawOutputWhileRunning bool
+	require.Eventually(t, func() bool {
+		snapshot, ok := e.SnapshotLog(trackingID)
+		if !ok {
+			return false
+		}
+		if snapshot.ExecutionFinished {
+			return false
+		}
+		if strings.Contains(snapshot.Output, "hello-mid-run") {
+			sawOutputWhileRunning = true
+			return true
+		}
+		return false
+	}, 2*time.Second, 10*time.Millisecond)
+
+	wg.Wait()
+
+	require.True(t, sawOutputWhileRunning, "expected Output to contain printed text before ExecutionFinished")
+
+	snapshot, ok := e.SnapshotLog(trackingID)
+	require.True(t, ok)
+	assert.True(t, snapshot.ExecutionFinished)
+	assert.Contains(t, snapshot.Output, "hello-mid-run")
 }

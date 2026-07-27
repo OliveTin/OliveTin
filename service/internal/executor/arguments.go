@@ -150,12 +150,7 @@ func redactExecArgs(execArgs []string, arguments []config.ActionArgument, argume
 }
 
 func argumentSkipsValidation(arg *config.ActionArgument) bool {
-	switch arg.Type {
-	case "confirmation", "html":
-		return true
-	default:
-		return false
-	}
+	return arg.Type == "html"
 }
 
 func typecheckActionArgument(arg *config.ActionArgument, value string, action *config.Action) error {
@@ -163,11 +158,29 @@ func typecheckActionArgument(arg *config.ActionArgument, value string, action *c
 		return nil
 	}
 
+	if arg.Type == "confirmation" {
+		return typecheckConfirmation(arg, value)
+	}
+
 	if arg.Name == "" {
 		return fmt.Errorf("argument name cannot be empty")
 	}
 
 	return typecheckActionArgumentFound(value, arg)
+}
+
+// typecheckConfirmation allows unnamed confirmation args as UI-only gates.
+// Named confirmation values are only ever "0" or "1", matching the web UI.
+func typecheckConfirmation(arg *config.ActionArgument, value string) error {
+	if arg.Name == "" {
+		return nil
+	}
+
+	if value == "0" || value == "1" {
+		return nil
+	}
+
+	return fmt.Errorf("argument %q of type confirmation must be \"0\" or \"1\"", arg.Name)
 }
 
 // ValidateArgument validates a single argument value using the same logic as the executor.
@@ -403,7 +416,6 @@ var shellUnsafeArgumentTypes = map[string]struct{}{
 	"very_dangerous_raw_string": {},
 	"password":                  {},
 	"html":                      {},
-	"confirmation":              {},
 }
 
 func isUnsafeShellArgumentType(arg *config.ActionArgument) bool {
