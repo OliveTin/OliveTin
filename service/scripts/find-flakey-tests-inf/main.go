@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+	"errors"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -312,9 +313,9 @@ func scanTestEvents(stdout io.Reader, state *testRunState) error {
 
 func finishTestCommand(cmd *exec.Cmd, state *testRunState) (int, runSummary, []testFailure, error) {
 	if err := cmd.Wait(); err != nil {
-		if exitErr, ok := err.(*exec.ExitError); ok {
+		if errExit, ok := errors.AsType[*exec.ExitError](err); ok {
 			state.finalizeFailureOutputs()
-			return exitErr.ExitCode(), state.summary, state.failures, nil
+			return errExit.ExitCode(), state.summary, state.failures, nil
 		}
 		return 1, state.summary, state.failures, err
 	}

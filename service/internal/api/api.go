@@ -311,7 +311,8 @@ func (api *oliveTinAPI) StartActionAndWait(ctx ctx.Context, req *connect.Request
 	user := auth.UserFromApiCall(ctx, req, api.cfg)
 	args := startActionArgumentsFromProto(req.Msg.Arguments)
 	justification := resolveStartJustification(binding.Action, binding, req.Msg.Justification, args)
-	if err := validateJustificationRequired(binding.Action, justification, user); err != nil {
+
+	if err = validateJustificationRequired(binding.Action, justification, user); err != nil {
 		return nil, connectInvalidJustification(err)
 	}
 

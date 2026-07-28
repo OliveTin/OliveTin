@@ -7,12 +7,19 @@ run:
 linters:
   default: none
   enable:
+    - bidichk
+    - bodyclose
+    - durationcheck
     - errcheck
+    - errorlint
     - gocritic
     - gocyclo
     - gosec
+    - govet
     - ineffassign
     - misspell
+    - nilerr
+    - noctx
     - staticcheck
     - unconvert
     - unused
@@ -22,6 +29,8 @@ linters:
     gosec:
       # Full gosec rule set (G101–G6xx), including Slowloris checks G112/G114.
       enable-all-rules: true
+    govet:
+      enable-all: true
   exclusions:
     paths:
       - gen

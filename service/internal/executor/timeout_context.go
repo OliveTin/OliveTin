@@ -5,6 +5,7 @@ import (
 	"os"
 	"sync"
 	"time"
+	"errors"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -55,7 +56,7 @@ func (tc *timeoutContext) setProcess(process *os.Process) {
 	tc.processMu.Unlock()
 
 	// If deadline already expired before process was set, kill now
-	if tc.Err() == context.DeadlineExceeded && process != nil {
+	if errors.Is(tc.Err(), context.DeadlineExceeded) && process != nil {
 		logEntry := &InternalLogEntry{Process: process}
 		if err := tc.executor.Kill(logEntry); err != nil {
 			log.WithFields(log.Fields{

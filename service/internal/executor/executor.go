@@ -22,6 +22,7 @@ import (
 	"regexp"
 	"strings"
 	"sync"
+	"errors"
 	"time"
 )
 
@@ -1186,7 +1187,7 @@ func stepExec(req *ExecutionRequest) bool {
 	appendErrorToStderr(req, runerr)
 	appendErrorToStderr(req, waiterr)
 
-	if ctx.Err() == context.DeadlineExceeded {
+	if errors.Is(ctx.Err(), context.DeadlineExceeded) {
 		log.WithFields(log.Fields{
 			"actionTitle": req.logEntry.ActionTitle,
 		}).Warnf("Action timed out")
@@ -1263,7 +1264,7 @@ func stepExecAfter(req *ExecutionRequest) bool {
 	appendErrorToStderr(req, runerr)
 	appendErrorToStderr(req, waiterr)
 
-	if ctx.Err() == context.DeadlineExceeded {
+	if errors.Is(ctx.Err(), context.DeadlineExceeded) {
 		req.mutateLogEntry(func(entry *InternalLogEntry) {
 			entry.Output += "Your shellAfterCompleted command timed out."
 		})
