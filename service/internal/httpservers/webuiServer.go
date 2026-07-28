@@ -35,18 +35,16 @@ func NewWebUIServer(cfg *config.Config) *webUIServer {
 }
 
 func (s *webUIServer) handleWebui(w http.ResponseWriter, r *http.Request) {
-	// dirName := path.Dir(r.URL.Path)
-
 	// Mangle requests for any path like /logs or /config to load the webui index.html
 	if path.Ext(r.URL.Path) == "" && r.URL.Path != "/" {
 		log.Debugf("Mangling request for %s to /index.html", r.URL.Path)
-
 		http.ServeFile(w, r, path.Join(s.webuiDir, "index.html"))
-	} else {
-		log.Tracef("Serving webui from %s for %s", s.webuiDir, r.URL.Path)
-		http.ServeFile(w, r, path.Join(s.webuiDir, r.URL.Path))
-		//		http.StripPrefix(dirName, http.FileServer(http.Dir(s.webuiDir))).ServeHTTP(w, r)
+		return
 	}
+
+	log.Tracef("Serving webui from %s for %s", s.webuiDir, r.URL.Path)
+	// http.Dir rejects path traversal; do not Join raw URL paths into ServeFile.
+	http.FileServer(http.Dir(s.webuiDir)).ServeHTTP(w, r)
 }
 
 func (s *webUIServer) findWebuiDir() string {
@@ -84,7 +82,7 @@ func (s *webUIServer) findCustomWebuiDir() string {
 func (s *webUIServer) setupCustomWebuiDir() {
 	dir := s.findCustomWebuiDir()
 
-	err := os.MkdirAll(path.Join(dir, "themes/"), 0775)
+	err := os.MkdirAll(path.Join(dir, "themes/"), 0o750)
 
 	if err != nil {
 		log.Warnf("Could not create themes directory: %v", err)

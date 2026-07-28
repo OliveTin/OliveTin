@@ -10,6 +10,7 @@ linters:
     - errcheck
     - gocritic
     - gocyclo
+    - gosec
     - ineffassign
     - misspell
     - staticcheck
@@ -18,6 +19,74 @@ linters:
   settings:
     gocyclo:
       min-complexity: 5
+    gosec:
+      # Full gosec rule set (G101–G6xx), including Slowloris checks G112/G114.
+      enable-all-rules: true
   exclusions:
     paths:
       - gen
+    rules:
+      # Noise / fixtures in tests and local tooling.
+      - path: _test\.go
+        linters:
+          - gosec
+      - path: scripts/
+        linters:
+          - gosec
+      - path: cmd/
+        linters:
+          - gosec
+
+      # OliveTin's purpose is controlled command execution from config.
+      - path: internal/executor/
+        text: "G204:"
+        linters:
+          - gosec
+
+      # Operator-configured filesystem paths (entity files, touch/write helpers, persisted logs).
+      - path: internal/entities/
+        text: "G304:"
+        linters:
+          - gosec
+      - path: internal/filehelper/
+        text: "G304:"
+        linters:
+          - gosec
+      - path: internal/configcheck/
+        text: "G304:"
+        linters:
+          - gosec
+      - path: internal/executor/
+        text: "G304:"
+        linters:
+          - gosec
+      - path: internal/auth/otjwt/
+        text: "G304:"
+        linters:
+          - gosec
+      - path: internal/httpservers/
+        text: "G304:"
+        linters:
+          - gosec
+
+      # Legacy GitHub webhook HMAC-SHA1 is still a supported authType.
+      - path: internal/webhooks/auth\.go
+        text: "G505:"
+        linters:
+          - gosec
+
+      # InsecureSkipVerify is an explicit OAuth2 provider config option.
+      - path: internal/auth/otoauth2/
+        text: "G402:"
+        linters:
+          - gosec
+
+      # Secure is set dynamically from TLS / ForceSecureCookies; gosec wants a literal true.
+      - text: "G124:"
+        linters:
+          - gosec
+
+      # Protobuf / process exit codes mapped into int32 fields.
+      - text: "G115:"
+        linters:
+          - gosec
