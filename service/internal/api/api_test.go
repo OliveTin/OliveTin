@@ -29,6 +29,8 @@ func getNewTestServerAndClient(injectedConfig *config.Config) (*httptest.Server,
 }
 
 func getNewTestServerAndClientWithExecutor(injectedConfig *config.Config, ex *executor.Executor) (*httptest.Server, apiv1connect.OliveTinApiServiceClient) {
+	ex.Cfg = injectedConfig
+
 	apiPath, apiHandler := GetNewHandler(ex)
 
 	mux := http.NewServeMux()
@@ -102,8 +104,6 @@ func TestGetActionsAndStart(t *testing.T) {
 
 	log.Infof("GetReadyz response: %v", respGetReady.Msg)
 
-	assert.Equal(t, true, true, "sayHello Failed")
-
 	//	assert.Equal(t, 1, len(respGb.Msg.Actions), "Got 1 action button back")
 
 	log.Printf("Response: %+v", respInit)
@@ -112,7 +112,7 @@ func TestGetActionsAndStart(t *testing.T) {
 		//		ActionId: "blat"
 	}))
 
-	assert.NotNil(t, err, "Error 404 after start action")
+	require.Error(t, err, "Error 404 after start action")
 	assert.Nil(t, respSa, "Nil response for non existing action")
 
 	defer conn.Close()
@@ -137,12 +137,12 @@ func TestGetEntities(t *testing.T) {
 
 	resp, err := client.GetEntities(context.Background(), connect.NewRequest(&apiv1.GetEntitiesRequest{}))
 
-	assert.NoError(t, err, "GetEntities should not return an error")
+	require.NoError(t, err, "GetEntities should not return an error")
 	assert.NotNil(t, resp, "GetEntities response should not be nil")
 	assert.NotNil(t, resp.Msg, "GetEntities response message should not be nil")
 
 	entityDefinitions := resp.Msg.EntityDefinitions
-	assert.Equal(t, 3, len(entityDefinitions), "Should return 3 entity definitions")
+	assert.Len(t, entityDefinitions, 3, "Should return 3 entity definitions")
 
 	validateEntityOrderAndStructure(t, entityDefinitions)
 	validateNoDuplicates(t, entityDefinitions)
@@ -151,6 +151,8 @@ func TestGetEntities(t *testing.T) {
 }
 
 func validateEntityListProperties(t *testing.T, client apiv1connect.OliveTinApiServiceClient) {
+	t.Helper()
+
 	resp, err := client.GetEntities(context.Background(), connect.NewRequest(&apiv1.GetEntitiesRequest{
 		EntityType: "server",
 		Page:       1,
@@ -185,21 +187,25 @@ func setupTestEntities() {
 }
 
 func validateEntityOrderAndStructure(t *testing.T, entityDefinitions []*apiv1.EntityDefinition) {
+	t.Helper()
+
 	assert.Equal(t, "application", entityDefinitions[0].Title, "First entity should be 'application' (alphabetically first)")
-	assert.Equal(t, 1, len(entityDefinitions[0].Instances), "Application should have 1 instance")
+	assert.Len(t, entityDefinitions[0].Instances, 1, "Application should have 1 instance")
 	assert.Equal(t, "webapp", entityDefinitions[0].Instances[0].UniqueKey, "Application instance should be 'webapp'")
 
 	assert.Equal(t, "database", entityDefinitions[1].Title, "Second entity should be 'database' (alphabetically second)")
-	assert.Equal(t, 2, len(entityDefinitions[1].Instances), "Database should have 2 instances")
+	assert.Len(t, entityDefinitions[1].Instances, 2, "Database should have 2 instances")
 	assert.Equal(t, "mysql", entityDefinitions[1].Instances[0].UniqueKey, "First database instance should be 'mysql' (alphabetically first)")
 	assert.Equal(t, "postgres", entityDefinitions[1].Instances[1].UniqueKey, "Second database instance should be 'postgres' (alphabetically second)")
 
 	assert.Equal(t, "server", entityDefinitions[2].Title, "Third entity should be 'server' (alphabetically third)")
-	assert.Equal(t, 0, len(entityDefinitions[2].Instances), "Server instances should not be included in bulk list response")
+	assert.Empty(t, entityDefinitions[2].Instances, "Server instances should not be included in bulk list response")
 	assert.Equal(t, int32(3), entityDefinitions[2].TotalInstances, "Server should report total instance count")
 }
 
 func validateNoDuplicates(t *testing.T, entityDefinitions []*apiv1.EntityDefinition) {
+	t.Helper()
+
 	instanceKeys := make(map[string]map[string]bool)
 	for _, def := range entityDefinitions {
 		instanceKeys[def.Title] = make(map[string]bool)
@@ -211,13 +217,15 @@ func validateNoDuplicates(t *testing.T, entityDefinitions []*apiv1.EntityDefinit
 }
 
 func validateConsistency(t *testing.T, client apiv1connect.OliveTinApiServiceClient, entityDefinitions []*apiv1.EntityDefinition) {
+	t.Helper()
+
 	resp2, err2 := client.GetEntities(context.Background(), connect.NewRequest(&apiv1.GetEntitiesRequest{}))
-	assert.NoError(t, err2, "Second GetEntities call should not return an error")
-	assert.Equal(t, len(entityDefinitions), len(resp2.Msg.EntityDefinitions), "Second call should return same number of entity definitions")
+	require.NoError(t, err2, "Second GetEntities call should not return an error")
+	assert.Len(t, entityDefinitions, len(resp2.Msg.EntityDefinitions), "Second call should return same number of entity definitions")
 
 	for i, def := range entityDefinitions {
 		assert.Equal(t, def.Title, resp2.Msg.EntityDefinitions[i].Title, "Entity order should be consistent across calls")
-		assert.Equal(t, len(def.Instances), len(resp2.Msg.EntityDefinitions[i].Instances), "Instance count should be consistent")
+		assert.Len(t, def.Instances, len(resp2.Msg.EntityDefinitions[i].Instances), "Instance count should be consistent")
 		for j, inst := range def.Instances {
 			assert.Equal(t, inst.UniqueKey, resp2.Msg.EntityDefinitions[i].Instances[j].UniqueKey, "Instance order should be consistent across calls")
 		}
@@ -376,6 +384,8 @@ func findBindingByTitle(ex *executor.Executor, title string) *executor.ActionBin
 }
 
 func testWithEntity(t *testing.T, binding *executor.ActionBinding, rr *DashboardRenderRequest, enabled bool, expectedCanExec bool, message string) {
+	t.Helper()
+
 	binding.Entity = &entities.Entity{
 		UniqueKey: "test-entity",
 		Data:      map[string]any{"enabled": enabled},
@@ -809,12 +819,12 @@ func TestRegisterStreamingClientEnforcesLimit(t *testing.T) {
 	}
 	close(overflow.heartbeatDone)
 	err := api.registerStreamingClient(overflow)
-	assert.ErrorIs(t, err, errEventStreamClientLimit)
-	assert.Equal(t, maxEventStreamClients, len(api.streamingClients))
+	require.ErrorIs(t, err, errEventStreamClientLimit)
+	assert.Len(t, api.streamingClients, maxEventStreamClients)
 
 	api.removeClient(clients[0])
 	require.NoError(t, api.registerStreamingClient(overflow))
-	assert.Equal(t, maxEventStreamClients, len(api.streamingClients))
+	assert.Len(t, api.streamingClients, maxEventStreamClients)
 
 	for _, client := range clients[1:] {
 		api.removeClient(client)

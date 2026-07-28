@@ -249,17 +249,17 @@ func loadAndMergeIncludedFile(k *koanf.Koanf, includePath, filename string) {
 	}).Info("Successfully loaded included config file")
 }
 
-func mergeFuncForSource(sourceFile string) func(src, dest map[string]interface{}) error {
-	return func(src map[string]interface{}, dest map[string]interface{}) error {
+func mergeFuncForSource(sourceFile string) func(src, dest map[string]any) error {
+	return func(src map[string]any, dest map[string]any) error {
 		return mergeFunc(src, dest, sourceFile)
 	}
 }
 
 // mergeActionsWhenBothExist merges actions when both src and dest have actions.
-func mergeActionsWhenBothExist(srcActions interface{}, destActions interface{}, dest map[string]interface{}, sourceFile string) {
+func mergeActionsWhenBothExist(srcActions any, destActions any, dest map[string]any, sourceFile string) {
 	stampSourceOnMaps(srcActions, sourceFile)
-	srcSlice, ok1 := srcActions.([]interface{})
-	destSlice, ok2 := destActions.([]interface{})
+	srcSlice, ok1 := srcActions.([]any)
+	destSlice, ok2 := destActions.([]any)
 	if ok1 && ok2 {
 		dest["actions"] = append(destSlice, srcSlice...)
 	} else {
@@ -268,7 +268,7 @@ func mergeActionsWhenBothExist(srcActions interface{}, destActions interface{}, 
 }
 
 // mergeActionsFromSource merges actions from source into destination.
-func mergeActionsFromSource(srcActions interface{}, dest map[string]interface{}, sourceFile string) {
+func mergeActionsFromSource(srcActions any, dest map[string]any, sourceFile string) {
 	if destActions, ok := dest["actions"]; ok {
 		mergeActionsWhenBothExist(srcActions, destActions, dest, sourceFile)
 	} else {
@@ -278,9 +278,9 @@ func mergeActionsFromSource(srcActions interface{}, dest map[string]interface{},
 }
 
 // mergeDashboardsWhenBothExist merges dashboards when both src and dest have dashboards.
-func mergeDashboardsWhenBothExist(srcDashboards interface{}, destDashboards interface{}, dest map[string]interface{}) {
-	srcSlice, ok1 := srcDashboards.([]interface{})
-	destSlice, ok2 := destDashboards.([]interface{})
+func mergeDashboardsWhenBothExist(srcDashboards any, destDashboards any, dest map[string]any) {
+	srcSlice, ok1 := srcDashboards.([]any)
+	destSlice, ok2 := destDashboards.([]any)
 	if ok1 && ok2 {
 		dest["dashboards"] = append(destSlice, srcSlice...)
 	} else {
@@ -289,7 +289,7 @@ func mergeDashboardsWhenBothExist(srcDashboards interface{}, destDashboards inte
 }
 
 // mergeDashboardsFromSource merges dashboards from source into destination.
-func mergeDashboardsFromSource(srcDashboards interface{}, dest map[string]interface{}) {
+func mergeDashboardsFromSource(srcDashboards any, dest map[string]any) {
 	if destDashboards, ok := dest["dashboards"]; ok {
 		mergeDashboardsWhenBothExist(srcDashboards, destDashboards, dest)
 	} else {
@@ -298,10 +298,10 @@ func mergeDashboardsFromSource(srcDashboards interface{}, dest map[string]interf
 }
 
 // mergeEntitiesWhenBothExist merges entities when both src and dest have entities.
-func mergeEntitiesWhenBothExist(srcEntities interface{}, destEntities interface{}, dest map[string]interface{}, sourceFile string) {
+func mergeEntitiesWhenBothExist(srcEntities any, destEntities any, dest map[string]any, sourceFile string) {
 	stampSourceOnMaps(srcEntities, sourceFile)
-	srcSlice, ok1 := srcEntities.([]interface{})
-	destSlice, ok2 := destEntities.([]interface{})
+	srcSlice, ok1 := srcEntities.([]any)
+	destSlice, ok2 := destEntities.([]any)
 	if ok1 && ok2 {
 		dest["entities"] = append(destSlice, srcSlice...)
 	} else {
@@ -310,7 +310,7 @@ func mergeEntitiesWhenBothExist(srcEntities interface{}, destEntities interface{
 }
 
 // mergeEntitiesFromSource merges entities from source into destination.
-func mergeEntitiesFromSource(srcEntities interface{}, dest map[string]interface{}, sourceFile string) {
+func mergeEntitiesFromSource(srcEntities any, dest map[string]any, sourceFile string) {
 	if destEntities, ok := dest["entities"]; ok {
 		mergeEntitiesWhenBothExist(srcEntities, destEntities, dest, sourceFile)
 	} else {
@@ -319,7 +319,7 @@ func mergeEntitiesFromSource(srcEntities interface{}, dest map[string]interface{
 	}
 }
 
-func mergeFunc(src map[string]interface{}, dest map[string]interface{}, sourceFile string) error {
+func mergeFunc(src map[string]any, dest map[string]any, sourceFile string) error {
 	if srcActions, ok := src["actions"]; ok {
 		mergeActionsFromSource(srcActions, dest, sourceFile)
 	}

@@ -90,7 +90,7 @@ func doRequest() string {
 
 	defer cancel()
 
-	req, err := http.NewRequestWithContext(ctx, "GET", "http://update-check.olivetin.app/versions.json", nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://update-check.olivetin.app/versions.json", nil)
 
 	if err != nil {
 		log.Errorf("Update check failed %v", err)

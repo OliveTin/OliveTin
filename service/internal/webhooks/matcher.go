@@ -123,8 +123,7 @@ func (m *WebhookMatcher) matchPathValue(matcher *JSONMatcher, jsonPath, expected
 }
 
 func (m *WebhookMatcher) compareValues(actual, expected string) bool {
-	if strings.HasPrefix(expected, "regex:") {
-		pattern := strings.TrimPrefix(expected, "regex:")
+	if pattern, hasRegex := strings.CutPrefix(expected, "regex:"); hasRegex {
 		matched, err := regexp.MatchString(pattern, actual)
 		if err != nil {
 			log.WithFields(log.Fields{

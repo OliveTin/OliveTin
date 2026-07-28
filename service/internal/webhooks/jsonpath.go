@@ -8,11 +8,11 @@ import (
 )
 
 type JSONMatcher struct {
-	payload interface{}
+	payload any
 }
 
 func NewJSONMatcher(payload []byte) (*JSONMatcher, error) {
-	var data interface{}
+	var data any
 	if err := json.Unmarshal(payload, &data); err != nil {
 		return nil, err
 	}
@@ -60,6 +60,6 @@ func (m *JSONMatcher) ExtractValue(pathExpr string) (string, error) {
 	return string(jsonBytes), nil
 }
 
-func (m *JSONMatcher) GetPayload() interface{} {
+func (m *JSONMatcher) GetPayload() any {
 	return m.payload
 }

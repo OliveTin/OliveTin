@@ -10,6 +10,7 @@ package entities
  */
 
 import (
+	"maps"
 	"sort"
 	"strconv"
 	"strings"
@@ -39,9 +40,8 @@ func GetEntities() EntitiesByClass {
 	for entityName, entityInstances := range entities {
 		copiedInstances := make(entityInstancesByKey, len(entityInstances))
 
-		for key, entity := range entityInstances {
-			copiedInstances[key] = entity
-		}
+		maps.Copy(copiedInstances, entityInstances)
+
 		copiedEntities[entityName] = copiedInstances
 	}
 
@@ -57,9 +57,8 @@ func GetEntityInstances(entityName string) entityInstancesByKey {
 	if entities, ok := entities[entityName]; ok {
 		copiedInstances := make(entityInstancesByKey, len(entities))
 
-		for key, entity := range entities {
-			copiedInstances[key] = entity
-		}
+		maps.Copy(copiedInstances, entities)
+
 		return copiedInstances
 	}
 

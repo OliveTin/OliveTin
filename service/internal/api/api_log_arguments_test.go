@@ -75,7 +75,7 @@ func waitForLogJustification(t *testing.T, ex *executor.Executor, trackingID, ex
 func TestExecutionStatusIncludesStoredArguments(t *testing.T) {
 	cfg := config.DefaultConfig()
 	cfg.Actions = []*config.Action{
-		argumentAction("Ping host", "echo {{ host }}", []config.ActionArgument{
+		argumentAction("Ping host with stored args", "echo {{ host }}", []config.ActionArgument{
 			{Name: "host", Type: "ascii_identifier"},
 		}),
 	}
@@ -236,7 +236,7 @@ func TestRestartActionRejectsIncompleteStoredArguments(t *testing.T) {
 func TestRestartActionRejectsMissingRequiredStoredArguments(t *testing.T) {
 	cfg := config.DefaultConfig()
 	cfg.Actions = []*config.Action{
-		argumentAction("Ping host", "echo {{ host }}", []config.ActionArgument{
+		argumentAction("Ping host - reject missing required stored arg", "echo {{ host }}", []config.ActionArgument{
 			{Name: "host", Type: "ascii_identifier"},
 		}),
 	}

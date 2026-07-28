@@ -346,7 +346,7 @@ func getUserInfo(cfg *config.Config, client *http.Client, provider *config.OAuth
 
 	defer cancel()
 
-	req, err := http.NewRequestWithContext(ctx, "GET", provider.WhoamiUrl, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, provider.WhoamiUrl, nil)
 
 	if err != nil {
 		log.Error("Could not construct user data request", err)

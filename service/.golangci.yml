@@ -9,6 +9,7 @@ linters:
   enable:
     - bidichk
     - bodyclose
+    - copyloopvar
     - durationcheck
     - errcheck
     - errorlint
@@ -18,11 +19,17 @@ linters:
     - govet
     - ineffassign
     - misspell
+#    - modernize
     - nilerr
     - noctx
+#    - promlinter
     - staticcheck
+#    - testifylint
+    - thelper
     - unconvert
+#    - unparam
     - unused
+    - usestdlibvars
   settings:
     gocyclo:
       min-complexity: 5

@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"maps"
 	"sort"
 	"strings"
 
@@ -35,9 +36,8 @@ func logEntryArgumentsToProto(args map[string]string) []*apiv1.StartActionArgume
 
 func copyStringMap(source map[string]string) map[string]string {
 	copied := make(map[string]string, len(source))
-	for key, value := range source {
-		copied[key] = value
-	}
+
+	maps.Copy(copied, source)
 
 	return copied
 }

@@ -807,13 +807,13 @@ func paginate(total int64, size int64, start int64) pageInfo {
 	if start < 0 {
 		start = 0
 	}
+
 	if start >= total {
 		return pageInfo{total: total, size: size, start: start, end: start, empty: true}
 	}
-	end := start + size
-	if end > total {
-		end = total
-	}
+
+	end := min(start+size, total)
+
 	return pageInfo{total: total, size: size, start: start, end: end, empty: false}
 }
 

@@ -13,7 +13,7 @@ func TestResolveLogDirectory(t *testing.T) {
 	baseDir := filepath.Join(t.TempDir(), "OliveTin")
 	absoluteDir := t.TempDir()
 
-	assert.Equal(t, "", resolveLogDirectory("", baseDir))
+	assert.Empty(t, resolveLogDirectory("", baseDir))
 	assert.Equal(t, absoluteDir, resolveLogDirectory(absoluteDir, baseDir))
 	assert.Equal(t, filepath.Join(baseDir, "logs", "service"), resolveLogDirectory("./logs/service", baseDir))
 	assert.Equal(t, "logs/service", resolveLogDirectory("logs/service", ""))

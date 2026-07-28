@@ -17,10 +17,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"os"
 	"os/exec"
 	"path"
 	"regexp"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -927,12 +929,7 @@ func keepArgument(name string, definedNames map[string]struct{}) bool {
 }
 
 func hasWebhookTag(req *ExecutionRequest) bool {
-	for _, tag := range req.Tags {
-		if tag == "webhook" {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(req.Tags, "webhook")
 }
 
 var systemArgumentDefinitions = []config.ActionArgument{
@@ -946,9 +943,7 @@ func injectSystemArgs(req *ExecutionRequest) error {
 		return err
 	}
 
-	for name, value := range args {
-		req.Arguments[name] = value
-	}
+	maps.Copy(req.Arguments, args)
 
 	return nil
 }
