@@ -39,6 +39,10 @@ linters:
       - path: _test\.go
         linters:
           - gosec
+      - path: _test\.go
+        text: "fieldalignment:"
+        linters:
+          - govet
       - path: scripts/
         linters:
           - gosec

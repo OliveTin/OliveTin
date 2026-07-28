@@ -5,7 +5,7 @@ import (
 	config "github.com/OliveTin/OliveTin/internal/config"
 	log "github.com/sirupsen/logrus"
 
-	"golang.org/x/exp/slices"
+	"slices"
 )
 
 type PermissionBits int
