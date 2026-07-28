@@ -5,7 +5,7 @@
   >
     <template #toolbar>
       <router-link
-        to="/logs"
+        :to="logsListLocation"
         class="button neutral"
       >
         <svg
@@ -44,6 +44,7 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import Calendar from 'picocrank/vue/components/Calendar.vue'
 import Section from 'picocrank/vue/components/Section.vue'
+import { loadStoredLogsFilter } from '../utils/logsFilterStorage.js'
 
 const router = useRouter()
 const { t } = useI18n()
@@ -53,6 +54,11 @@ const loading = ref(false)
 const error = ref(null)
 const currentMonthIndex = ref(new Date().getMonth())
 const currentYear = ref(new Date().getFullYear())
+
+const logsListLocation = computed(() => {
+  const filter = loadStoredLogsFilter()
+  return filter ? { path: '/logs', query: { filter } } : '/logs'
+})
 
 // Convert logs to calendar events format
 const calendarEvents = computed(() => {
@@ -147,7 +153,13 @@ function handleDayClick (date) {
   const month = String(date.getMonth() + 1).padStart(2, '0')
   const day = String(date.getDate()).padStart(2, '0')
   const dateString = `${year}-${month}-${day}`
-  router.push({ path: '/logs', query: { date: dateString } })
+  const query = { date: dateString }
+  const storedFilter = loadStoredLogsFilter()
+  if (storedFilter) {
+    query.filter = storedFilter
+  }
+
+  router.push({ path: '/logs', query })
 }
 
 function handleMonthChange (month, year) {

@@ -221,12 +221,24 @@ import ActionStatusDisplay from '../components/ActionStatusDisplay.vue'
 import ActionIconGlyph from '../components/ActionIconGlyph.vue'
 import LogActionTitle from '../components/LogActionTitle.vue'
 import { getExecutionLogEntry, updateLogEntryInList } from '../utils/executionLogEvents.js'
+import { loadStoredLogsFilter, storeLogsFilter } from '../utils/logsFilterStorage.js'
 
 const route = useRoute()
 const router = useRouter()
 
+function readInitialFilter () {
+  // Prefer ?filter= when present (e.g. calendar keeps it while adding ?date=).
+  // Otherwise restore from sessionStorage so sidebar / breadcrumb returns keep the filter.
+  if (typeof route.query.filter === 'string' && route.query.filter !== '') {
+    storeLogsFilter(route.query.filter)
+    return route.query.filter
+  }
+
+  return loadStoredLogsFilter()
+}
+
 const logs = ref([])
-const searchText = ref('')
+const searchText = ref(readInitialFilter())
 const pageSize = ref(10)
 const currentPage = ref(1)
 const loading = ref(false)
@@ -260,8 +272,9 @@ watch(() => route.query.date, () => {
   updateDateFromRoute()
 })
 
-watch(searchText, () => {
+watch(searchText, (value) => {
   currentPage.value = 1
+  storeLogsFilter(value)
   scheduleFetchLogs()
 })
 
@@ -313,6 +326,14 @@ function scheduleFetchLogs () {
 
 function clearSearch () {
   searchText.value = ''
+
+  if (route.query.filter == null) {
+    return
+  }
+
+  const query = { ...route.query }
+  delete query.filter
+  router.replace({ path: route.path, query })
 }
 
 function clearDateFilter () {
