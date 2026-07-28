@@ -37,13 +37,28 @@ func TestApplyPortEnvironmentOverrideUnsetLeavesConfig(t *testing.T) {
 }
 
 func TestApplyPortEnvironmentOverrideIgnoresInvalid(t *testing.T) {
-	t.Setenv("PORT", "not-a-port")
+	// parseEnvPort accepts only 1..65535; port 0 and out-of-range values are ignored.
+	cases := []struct {
+		name string
+		port string
+	}{
+		{name: "non-numeric", port: "not-a-port"},
+		{name: "above max", port: "65536"},
+		{name: "negative", port: "-1"},
+		{name: "zero ignored", port: "0"},
+	}
 
-	cfg := DefaultConfig()
-	cfg.ListenAddressSingleHTTPFrontend = "0.0.0.0:1337"
-	applyPortEnvironmentOverride(cfg)
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Setenv("PORT", tc.port)
 
-	assert.Equal(t, "0.0.0.0:1337", cfg.ListenAddressSingleHTTPFrontend)
+			cfg := DefaultConfig()
+			cfg.ListenAddressSingleHTTPFrontend = "0.0.0.0:1337"
+			applyPortEnvironmentOverride(cfg)
+
+			assert.Equal(t, "0.0.0.0:1337", cfg.ListenAddressSingleHTTPFrontend)
+		})
+	}
 }
 
 func TestApplyPortEnvironmentOverrideEmptyListenAddressDefaultsHost(t *testing.T) {
