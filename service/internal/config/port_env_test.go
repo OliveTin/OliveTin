@@ -45,3 +45,23 @@ func TestApplyPortEnvironmentOverrideIgnoresInvalid(t *testing.T) {
 
 	assert.Equal(t, "0.0.0.0:1337", cfg.ListenAddressSingleHTTPFrontend)
 }
+
+func TestApplyPortEnvironmentOverrideEmptyListenAddressDefaultsHost(t *testing.T) {
+	t.Setenv("PORT", "8080")
+
+	cfg := DefaultConfig()
+	cfg.ListenAddressSingleHTTPFrontend = ""
+	applyPortEnvironmentOverride(cfg)
+
+	assert.Equal(t, "0.0.0.0:8080", cfg.ListenAddressSingleHTTPFrontend)
+}
+
+func TestApplyPortEnvironmentOverrideRejectsMalformedListenAddress(t *testing.T) {
+	t.Setenv("PORT", "8080")
+
+	cfg := DefaultConfig()
+	cfg.ListenAddressSingleHTTPFrontend = "not-a-valid-address"
+	applyPortEnvironmentOverride(cfg)
+
+	assert.Equal(t, "not-a-valid-address", cfg.ListenAddressSingleHTTPFrontend)
+}

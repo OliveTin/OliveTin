@@ -53,7 +53,7 @@ Below is a detailed reference table.
 
 == PORT environment variable
 
-If the `PORT` environment variable is set at startup, OliveTin uses it as the listen port for `listenAddressSingleHTTPFrontend`, keeping the host from the config (default host `0.0.0.0`). This overrides an explicit port in `config.yaml`, which is useful on platforms that assign a port via `PORT` (for example Heroku or Cloud Run).
+If the `PORT` environment variable is set at startup, OliveTin uses it as the listen port for `listenAddressSingleHTTPFrontend` only, keeping the host from the config (default host `0.0.0.0`). This overrides an explicit port in `config.yaml`, which is useful on platforms that assign a port via `PORT` (for example Heroku or Cloud Run). Internal listen addresses (`listenAddressRestActions`, `listenAddressWebUI`, and so on) are not derived from `PORT`; configure those separately when needed.
 
 When `PORT` is not set, OliveTin uses `listenAddressSingleHTTPFrontend` from the config, or `0.0.0.0:1337` if that setting is omitted.
 

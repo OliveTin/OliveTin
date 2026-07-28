@@ -90,27 +90,28 @@ func afterLoadFinalize(cfg *Config, configPath string) {
 	}
 }
 
-// applyPortEnvironmentOverride sets the single HTTP frontend listen port from
-// $PORT when that environment variable is set. This runs after config unmarshal
-// so PORT wins over listenAddressSingleHTTPFrontend in config.yaml (common on
-// Heroku, Cloud Run, and similar hosts). When PORT is unset, the config value
-// or the default (1337) is left unchanged.
+// applyPortEnvironmentOverride lets the PORT environment variable take precedence
+// over the configured HTTP frontend port.
 func applyPortEnvironmentOverride(cfg *Config) {
 	envPort := strings.TrimSpace(os.Getenv("PORT"))
 	if envPort == "" {
 		return
 	}
 
-	port, err := strconv.Atoi(envPort)
-	if err != nil || port < 1 || port > 65535 {
-		log.WithFields(log.Fields{
-			"PORT":  envPort,
-			"error": err,
-		}).Error("Ignoring invalid PORT environment variable")
+	port, ok := parseEnvPort(envPort)
+	if !ok {
 		return
 	}
 
-	host := listenHostOrDefault(cfg.ListenAddressSingleHTTPFrontend)
+	host, ok := listenHostOrDefault(cfg.ListenAddressSingleHTTPFrontend)
+	if !ok {
+		log.WithFields(log.Fields{
+			"PORT":          envPort,
+			"listenAddress": cfg.ListenAddressSingleHTTPFrontend,
+		}).Error("Ignoring PORT environment variable because listenAddressSingleHTTPFrontend is invalid")
+		return
+	}
+
 	cfg.ListenAddressSingleHTTPFrontend = net.JoinHostPort(host, strconv.Itoa(port))
 
 	log.WithFields(log.Fields{
@@ -118,13 +119,34 @@ func applyPortEnvironmentOverride(cfg *Config) {
 	}).Info("Using PORT environment variable for single HTTP frontend listen address")
 }
 
-func listenHostOrDefault(listenAddress string) string {
-	host, _, err := net.SplitHostPort(listenAddress)
-	if err != nil || host == "" {
-		return "0.0.0.0"
+func parseEnvPort(envPort string) (int, bool) {
+	port, err := strconv.Atoi(envPort)
+	if err != nil || port < 1 || port > 65535 {
+		log.WithFields(log.Fields{
+			"PORT":  envPort,
+			"error": err,
+		}).Error("Ignoring invalid PORT environment variable")
+		return 0, false
 	}
 
-	return host
+	return port, true
+}
+
+func listenHostOrDefault(listenAddress string) (string, bool) {
+	if strings.TrimSpace(listenAddress) == "" {
+		return "0.0.0.0", true
+	}
+
+	host, _, err := net.SplitHostPort(listenAddress)
+	if err != nil {
+		return "", false
+	}
+
+	if host == "" {
+		return "0.0.0.0", true
+	}
+
+	return host, true
 }
 
 // buildIncludePath constructs the full path to the include directory.

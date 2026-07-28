@@ -28,7 +28,7 @@ When you come to create the config.yaml file, OliveTin will look for this in it'
 
 Because you are running outside of a container, you will also need to change the "internal" ports used by OliveTin so they are separate for all instances. OliveTin listens on 4 addresses (1 external, 3 internal) and needs 4 ports. You can read about these in the xref:reference/network-ports.adoc[network ports documentation].
 
-NOTE: If the `PORT` environment variable is set, OliveTin listens on that port for the single HTTP frontend (overriding `listenAddressSingleHTTPFrontend` in the config). When `PORT` is unset, the config value is used, or `1337` if that setting is omitted. `PORT` is also used as a base for the other internal listen addresses (+1, +2, …) when those are not set in the config. For example, if `PORT` is 2000, the single frontend starts on port 2000, the REST API on 2001, and so on.
+NOTE: If the `PORT` environment variable is set, OliveTin listens on that port for the single HTTP frontend only (overriding `listenAddressSingleHTTPFrontend` in the config, keeping the host from the config). When `PORT` is unset, the config value is used, or `0.0.0.0:1337` if that setting is omitted. `PORT` does not change the other internal listen addresses — set those explicitly in each instance's config as shown below.
 
 You could end up with a setup that looks like this;
 

@@ -275,8 +275,33 @@ watch(() => route.query.date, () => {
 watch(searchText, (value) => {
   currentPage.value = 1
   storeLogsFilter(value)
+  syncFilterToRoute(value)
   scheduleFetchLogs()
 })
+
+watch(() => route.query.filter, (filter) => {
+  const next = typeof filter === 'string' ? filter : ''
+  if (searchText.value === next) {
+    return
+  }
+  searchText.value = next
+})
+
+function syncFilterToRoute (value) {
+  const next = value || ''
+  const current = typeof route.query.filter === 'string' ? route.query.filter : ''
+  if (next === current) {
+    return
+  }
+
+  const query = { ...route.query }
+  if (next) {
+    query.filter = next
+  } else {
+    delete query.filter
+  }
+  router.replace({ path: route.path, query })
+}
 
 async function fetchLogs () {
   loading.value = true
@@ -326,14 +351,6 @@ function scheduleFetchLogs () {
 
 function clearSearch () {
   searchText.value = ''
-
-  if (route.query.filter == null) {
-    return
-  }
-
-  const query = { ...route.query }
-  delete query.filter
-  router.replace({ path: route.path, query })
 }
 
 function clearDateFilter () {
