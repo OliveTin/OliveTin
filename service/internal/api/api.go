@@ -1217,6 +1217,9 @@ func (api *oliveTinAPI) Init(ctx ctx.Context, req *connect.Request[apiv1.InitReq
 		currentVersion = installationinfo.Build.Version
 		availableVersion = installationinfo.Runtime.AvailableVersion
 	}
+
+	rootDashboardEntries := api.buildRootDashboardEntries(user, api.cfg.Dashboards)
+
 	res := &apiv1.InitResponse{
 		ShowFooter:                api.cfg.ShowFooter,
 		ShowNavigation:            api.cfg.ShowNavigation,
@@ -1232,7 +1235,8 @@ func (api *oliveTinAPI) Init(ctx ctx.Context, req *connect.Request[apiv1.InitReq
 		OAuth2Providers:           buildPublicOAuth2ProvidersList(api.cfg),
 		AdditionalLinks:           buildAdditionalLinks(api.cfg.AdditionalNavigationLinks),
 		StyleMods:                 api.cfg.StyleMods,
-		RootDashboards:            api.buildRootDashboards(user, api.cfg.Dashboards),
+		RootDashboards:            rootDashboardTitles(rootDashboardEntries),
+		RootDashboardEntries:      rootDashboardEntries,
 		AuthenticatedUser:         user.Username,
 		AuthenticatedUserProvider: user.Provider,
 		EffectivePolicy:           buildEffectivePolicy(user.EffectivePolicy),
@@ -1300,30 +1304,47 @@ func getValidThemeName(themesDir string, entry os.DirEntry) string {
 }
 
 func (api *oliveTinAPI) buildRootDashboards(user *authpublic.AuthenticatedUser, dashboards []*config.DashboardComponent) []string {
-	var rootDashboards []string
-	dashboardRenderRequest := api.createDashboardRenderRequest(user, "", "")
-
-	api.addDefaultDashboardIfNeeded(&rootDashboards, dashboardRenderRequest)
-	api.addCustomDashboards(&rootDashboards, dashboards, dashboardRenderRequest)
-
-	return rootDashboards
+	return rootDashboardTitles(api.buildRootDashboardEntries(user, dashboards))
 }
 
-func (api *oliveTinAPI) addDefaultDashboardIfNeeded(rootDashboards *[]string, rr *DashboardRenderRequest) {
+func rootDashboardTitles(entries []*apiv1.RootDashboard) []string {
+	titles := make([]string, 0, len(entries))
+
+	for _, entry := range entries {
+		titles = append(titles, entry.Title)
+	}
+
+	return titles
+}
+
+func (api *oliveTinAPI) buildRootDashboardEntries(user *authpublic.AuthenticatedUser, dashboards []*config.DashboardComponent) []*apiv1.RootDashboard {
+	var entries []*apiv1.RootDashboard
+	dashboardRenderRequest := api.createDashboardRenderRequest(user, "", "")
+
+	api.addDefaultDashboardEntryIfNeeded(&entries, dashboardRenderRequest)
+	api.addCustomDashboardEntries(&entries, dashboards, dashboardRenderRequest)
+
+	return entries
+}
+
+func (api *oliveTinAPI) addDefaultDashboardEntryIfNeeded(entries *[]*apiv1.RootDashboard, rr *DashboardRenderRequest) {
 	defaultDashboard := buildDefaultDashboard(rr)
 	if defaultDashboard != nil && len(defaultDashboard.Contents) > 0 {
 		log.Tracef("defaultDashboard: %+v", defaultDashboard.Contents)
-		*rootDashboards = append(*rootDashboards, "Actions")
+		*entries = append(*entries, &apiv1.RootDashboard{Title: "Actions"})
 	}
 }
 
-func (api *oliveTinAPI) addCustomDashboards(rootDashboards *[]string, dashboards []*config.DashboardComponent, rr *DashboardRenderRequest) {
+func (api *oliveTinAPI) addCustomDashboardEntries(entries *[]*apiv1.RootDashboard, dashboards []*config.DashboardComponent, rr *DashboardRenderRequest) {
 	for _, dashboard := range dashboards {
 		// We have to build the dashboard response instead of just looping over config.dashboards,
 		// because we need to check if the user has access to the dashboard
 		db := renderDashboard(rr, dashboard.Title)
 		if db != nil {
-			*rootDashboards = append(*rootDashboards, dashboard.Title)
+			*entries = append(*entries, &apiv1.RootDashboard{
+				Title:    dashboard.Title,
+				Category: dashboard.Category,
+			})
 		}
 	}
 }
