@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -10,7 +11,6 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
-	"errors"
 
 	log "github.com/sirupsen/logrus"
 )

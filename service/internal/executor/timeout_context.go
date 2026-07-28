@@ -2,10 +2,10 @@ package executor
 
 import (
 	"context"
+	"errors"
 	"os"
 	"sync"
 	"time"
-	"errors"
 
 	log "github.com/sirupsen/logrus"
 )

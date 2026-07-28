@@ -15,6 +15,7 @@ import (
 
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -22,7 +23,6 @@ import (
 	"regexp"
 	"strings"
 	"sync"
-	"errors"
 	"time"
 )
 
