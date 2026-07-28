@@ -449,6 +449,90 @@ func TestShellAfterCompletedUsesOutputEnvSafely(t *testing.T) {
 	assert.True(t, os.IsNotExist(err), "shellAfterCompleted must not execute injected commands from output")
 }
 
+func TestShellAfterCompletedBlocksArgumentsOutputInjection(t *testing.T) {
+	payload := func(injectedPath string) string {
+		return "x; touch " + injectedPath + "; #"
+	}
+
+	cases := []struct {
+		name string
+		sac  string
+	}{
+		{"legacy", "printf %s {{ output }}"},
+		{"legacy compact", "printf %s {{output}}"},
+		{"legacy extra spaces", "printf %s {{  output  }}"},
+		{"modern Arguments", "printf %s {{ .Arguments.output }}"},
+		{"modern compact", "printf %s {{.Arguments.output}}"},
+		{"modern exitCode still env", "printf %s {{ .Arguments.exitCode }}"},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := config.DefaultConfig()
+			e := DefaultExecutor(cfg)
+			injectedPath := filepath.Join(t.TempDir(), "injected")
+			mainPayload := payload(injectedPath)
+
+			a1 := &config.Action{
+				Title:               "sac-injection-" + tc.name,
+				Shell:               "printf %s \"" + mainPayload + "\"",
+				ShellAfterCompleted: tc.sac,
+			}
+			cfg.Actions = append(cfg.Actions, a1)
+			cfg.Sanitize()
+			e.RebuildActionMap()
+
+			req := ExecutionRequest{
+				AuthenticatedUser: auth.UserFromSystem(cfg, "cron"),
+				Cfg:               cfg,
+				Binding:           e.FindBindingWithNoEntity(a1),
+			}
+			wg, _ := e.ExecRequest(&req)
+			wg.Wait()
+
+			_, err := os.Stat(injectedPath)
+			assert.True(t, os.IsNotExist(err), "shellAfterCompleted must not execute injected commands via %q", tc.sac)
+		})
+	}
+}
+
+func TestSubstituteShellAfterCompletedEnvRefs(t *testing.T) {
+	cases := []struct {
+		in   string
+		want string
+	}{
+		{`printf %s {{ output }}`, `printf %s "$OUTPUT"`},
+		{`printf %s {{output}}`, `printf %s "$OUTPUT"`},
+		{`printf %s {{  output  }}`, `printf %s "$OUTPUT"`},
+		{`printf %s {{ .Arguments.output }}`, `printf %s "$OUTPUT"`},
+		{`printf %s {{.Arguments.output}}`, `printf %s "$OUTPUT"`},
+		{`echo {{ exitCode }}`, `echo "$EXITCODE"`},
+		{`echo {{ .Arguments.exitCode }}`, `echo "$EXITCODE"`},
+		{`echo {{  .Arguments.exitCode  }}`, `echo "$EXITCODE"`},
+	}
+
+	for _, tc := range cases {
+		assert.Equal(t, tc.want, substituteShellAfterCompletedEnvRefs(tc.in))
+	}
+}
+
+func TestShellAfterTemplateArgsOmitsOutputAndExitCode(t *testing.T) {
+	args := map[string]string{
+		"output":                 "evil; id",
+		"exitCode":               "1",
+		"ot_username":            "alice",
+		"ot_executionTrackingId": "track-1",
+	}
+
+	templateArgs := shellAfterTemplateArgs(args)
+
+	assert.NotContains(t, templateArgs, "output")
+	assert.NotContains(t, templateArgs, "exitCode")
+	assert.Equal(t, "alice", templateArgs["ot_username"])
+	assert.Equal(t, "track-1", templateArgs["ot_executionTrackingId"])
+	assert.Equal(t, "evil; id", args["output"], "env args map must keep output for OUTPUT=")
+}
+
 func TestFilterToDefinedArgumentsOnly(t *testing.T) {
 	req := newExecRequest()
 	req.Binding.Action = &config.Action{

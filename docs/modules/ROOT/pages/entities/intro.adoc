@@ -11,6 +11,8 @@ Entities are just loaded from files on disk, OliveTin will also watch these file
 
 Entity data files can contain any fields you need. Those values are available in action templates as `{{ .CurrentEntity.field }}` — for example, `{{ .CurrentEntity.status }}` or `{{ .CurrentEntity.hostname }}`.
 
+Entity field values are **not** sanitized for shell safety. If you substitute them into `shell` or `shellAfterCompleted`, OliveTin assumes the entity files are server-controlled and that you accept responsibility for that data. See xref:action_execution/shellvsexec.adoc#shell-entity-env-trust[Entity and .Env values are not shell-sanitized].
+
 To control which fields appear in the Entities page table and entity details view, configure `properties` on the entity definition in `config.yaml`. See xref:entities/properties.adoc[Entity properties] for details.
 
 [source,yaml]

@@ -7,7 +7,7 @@ OliveTin provides a dedicated webhook endpoint at `/webhooks` that can receive w
 
 == Basic Configuration
 
-To configure an action to run on a webhook, add the `execOnWebhook` property to your action:
+To configure an action to run on a webhook, add the `execOnWebhook` property to your action. Webhook-triggered actions **must** use `exec:` (not `shell:` or `shellAfterCompleted`).
 
 [source,yaml]
 .`config.yaml`
@@ -15,7 +15,8 @@ To configure an action to run on a webhook, add the `execOnWebhook` property to 
 actions:
   - title: Deploy Application
     id: deploy
-    shell: /opt/scripts/deploy.sh
+    exec:
+      - /opt/scripts/deploy.sh
     execOnWebhook:
       - matchHeaders:
           X-Event-Type: deploy
@@ -51,7 +52,9 @@ Match webhooks based on HTTP header values:
 ----
 actions:
   - title: Process Event
-    shell: echo "Processing event"
+    exec:
+      - echo
+      - "Processing event"
     execOnWebhook:
       - matchHeaders:
           X-Event-Type: my-event
@@ -68,7 +71,9 @@ Match webhooks based on URL query parameters:
 ----
 actions:
   - title: Process Request
-    shell: echo "Processing request for {{ service }}"
+    exec:
+      - echo
+      - "Processing request for {{ service }}"
     arguments:
       - name: service
         type: ascii
@@ -88,7 +93,9 @@ Match webhooks based on values in the JSON request body using JSONPath expressio
 ----
 actions:
   - title: Handle Push Event
-    shell: echo "Push to {{ branch }}"
+    exec:
+      - echo
+      - "Push to {{ branch }}"
     arguments:
       - name: branch
         type: ascii
@@ -112,7 +119,9 @@ Header and query parameter values can use regex patterns by prefixing with `rege
 ----
 actions:
   - title: Handle Multiple Events
-    shell: echo "Handling event"
+    exec:
+      - echo
+      - "Handling event"
     execOnWebhook:
       - matchHeaders:
           X-Event-Type: "regex:^(push|pull_request|release)$"
@@ -126,7 +135,9 @@ You can combine multiple match criteria. All criteria must match for the webhook
 ----
 actions:
   - title: Production Deploy
-    shell: /opt/scripts/deploy.sh production
+    exec:
+      - /opt/scripts/deploy.sh
+      - production
     execOnWebhook:
       - matchHeaders:
           X-Event-Type: deploy
@@ -143,9 +154,10 @@ You can extract values from the webhook payload and pass them as arguments to yo
 ----
 actions:
   - title: Deploy Version
-    shell: |
-      echo "Deploying version {{ version }} to {{ environment }}"
-      /opt/scripts/deploy.sh "{{ version }}" "{{ environment }}"
+    exec:
+      - /opt/scripts/deploy.sh
+      - "{{ version }}"
+      - "{{ environment }}"
     arguments:
       - name: version
         type: ascii
@@ -176,7 +188,9 @@ For example, to access the `X-Request-Id` header in your action:
 ----
 actions:
   - title: Log Request
-    shell: echo "Request ID: {{ webhook_header_x-request-id }}"
+    exec:
+      - echo
+      - "Request ID: {{ webhook_header_x-request-id }}"
     arguments:
       - name: webhook_header_x-request-id
         type: ascii
@@ -278,7 +292,8 @@ An action can have multiple webhook configurations. The action will be triggered
 ----
 actions:
   - title: Deploy
-    shell: /opt/scripts/deploy.sh
+    exec:
+      - /opt/scripts/deploy.sh
     execOnWebhook:
       - matchHeaders:
           X-Event-Type: deploy-manual

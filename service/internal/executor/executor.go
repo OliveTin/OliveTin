@@ -1290,21 +1290,32 @@ func shellAfterCompletedAction(req *ExecutionRequest) (*config.Action, bool) {
 	return req.Binding.Action, true
 }
 
+// Matches legacy and modern template forms for shellAfterCompleted output/exitCode,
+// including optional .Arguments. prefix and flexible whitespace. These must become
+// quoted env refs before template execution so command output cannot inject into sh -c.
+var (
+	shellAfterOutputRef   = regexp.MustCompile(`\{\{\s*(?:\.Arguments\.)?output\s*\}\}`)
+	shellAfterExitCodeRef = regexp.MustCompile(`\{\{\s*(?:\.Arguments\.)?exitCode\s*\}\}`)
+)
+
 func substituteShellAfterCompletedEnvRefs(command string) string {
-	replacements := []struct{ old, new string }{
-		{"{{ output }}", `"$OUTPUT"`},
-		{"{{output}}", `"$OUTPUT"`},
-		{"{{ exitCode }}", `"$EXITCODE"`},
-		{"{{exitCode}}", `"$EXITCODE"`},
-		{"{{ exitCode}}", `"$EXITCODE"`},
-		{"{{exitCode }}", `"$EXITCODE"`},
-	}
-
-	for _, replacement := range replacements {
-		command = strings.ReplaceAll(command, replacement.old, replacement.new)
-	}
-
+	// $$ is required: regexp replacements treat $ as submatch expansion.
+	command = shellAfterOutputRef.ReplaceAllString(command, `"$$OUTPUT"`)
+	command = shellAfterExitCodeRef.ReplaceAllString(command, `"$$EXITCODE"`)
 	return command
+}
+
+// shellAfterTemplateArgs omits output/exitCode so templates cannot expand them
+// raw. Those values are only provided as OUTPUT/EXITCODE process environment.
+func shellAfterTemplateArgs(args map[string]string) map[string]string {
+	templateArgs := make(map[string]string, len(args))
+	for name, value := range args {
+		if name == "output" || name == "exitCode" {
+			continue
+		}
+		templateArgs[name] = value
+	}
+	return templateArgs
 }
 
 func parseShellAfterCompletedCommand(req *ExecutionRequest, commandTemplate string, args map[string]string) (string, error) {
@@ -1338,7 +1349,7 @@ func buildShellAfterCommand(ctx context.Context, req *ExecutionRequest, stdout, 
 	}
 
 	commandTemplate := substituteShellAfterCompletedEnvRefs(action.ShellAfterCompleted)
-	finalParsedCommand, err := parseShellAfterCompletedCommand(req, commandTemplate, args)
+	finalParsedCommand, err := parseShellAfterCompletedCommand(req, commandTemplate, shellAfterTemplateArgs(args))
 	if err != nil {
 		return nil, nil, err
 	}

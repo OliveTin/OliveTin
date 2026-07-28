@@ -10,6 +10,8 @@ In OliveTin 3k, use dotted names for template context variables:
 * `{{ .Env.VAR_NAME }}` — process environment (see xref:advanced_configuration/config_envs.adoc#using-env-in-template-replacements[Using .Env in template replacements])
 * `{{ .OliveTin.Build.Version }}` and related build/runtime fields
 
+IMPORTANT: Unlike argument values, `.CurrentEntity` and `.Env` are **not** sanitized for shell safety when used in `shell` or `shellAfterCompleted`. They are treated as server-controlled data; the config author is responsible for that trust. See xref:action_execution/shellvsexec.adoc#shell-entity-env-trust[Entity and .Env values are not shell-sanitized].
+
 In OliveTin 2k, argument and execution-request placeholders used the shorter form (for example, `{{ message }}` instead of `{{ .Arguments.message }}`).
 
 [#json-encoding]
