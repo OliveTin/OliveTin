@@ -128,7 +128,8 @@ func RestartArgumentsIncomplete(action *config.Action, entity *entities.Entity, 
 }
 
 func restartArgumentRequired(arg *config.ActionArgument, entity *entities.Entity) bool {
-	if argumentSkipsValidation(arg) {
+	// confirmation is a UI gate; html skips validation. Neither needs a stored value to restart.
+	if argumentSkipsValidation(arg) || arg.Type == "confirmation" {
 		return false
 	}
 

@@ -24,6 +24,9 @@ var (
 		"shell_safe_identifier":     `^[a-zA-Z0-9@\.\_\+\-]+$`,
 		"ascii_sentence":            `^[a-zA-Z0-9\-\._, ]+$`,
 	}
+
+	dnsNameLabelPattern      = regexp.MustCompile(`^[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$`)
+	dnsNameAllNumericPattern = regexp.MustCompile(`^[0-9]+$`)
 )
 
 // parseExecArray parses all exec arguments in the action.
@@ -147,12 +150,7 @@ func redactExecArgs(execArgs []string, arguments []config.ActionArgument, argume
 }
 
 func argumentSkipsValidation(arg *config.ActionArgument) bool {
-	switch arg.Type {
-	case "confirmation", "html":
-		return true
-	default:
-		return false
-	}
+	return arg.Type == "html"
 }
 
 func typecheckActionArgument(arg *config.ActionArgument, value string, action *config.Action) error {
@@ -160,11 +158,29 @@ func typecheckActionArgument(arg *config.ActionArgument, value string, action *c
 		return nil
 	}
 
+	if arg.Type == "confirmation" {
+		return typecheckConfirmation(arg, value)
+	}
+
 	if arg.Name == "" {
 		return fmt.Errorf("argument name cannot be empty")
 	}
 
 	return typecheckActionArgumentFound(value, arg)
+}
+
+// typecheckConfirmation allows unnamed confirmation args as UI-only gates.
+// Named confirmation values are only ever "0" or "1", matching the web UI.
+func typecheckConfirmation(arg *config.ActionArgument, value string) error {
+	if arg.Name == "" {
+		return nil
+	}
+
+	if value == "0" || value == "1" {
+		return nil
+	}
+
+	return fmt.Errorf("argument %q of type confirmation must be \"0\" or \"1\"", arg.Name)
 }
 
 // ValidateArgument validates a single argument value using the same logic as the executor.
@@ -223,6 +239,8 @@ func TypeSafetyCheck(name string, value string, argumentType string) error {
 		return typeSafetyCheckUrl(value)
 	case "datetime":
 		return typeSafetyCheckDatetime(value)
+	case "dnsname":
+		return typeSafetyCheckDnsName(value)
 	}
 
 	return typeSafetyCheckRegex(name, value, argumentType)
@@ -304,6 +322,33 @@ func typeSafetyCheckEmail(value string) error {
 	return nil
 }
 
+// typeSafetyCheckDnsName validates a DNS hostname (RFC 1123 LDH labels).
+// Accepts short names (e.g. webserver) and FQDNs (e.g. webserver.example.com).
+// An optional trailing dot is allowed.
+func typeSafetyCheckDnsName(value string) error {
+	hostname := strings.TrimSuffix(value, ".")
+	if hostname == "" || len(hostname) > 253 {
+		return fmt.Errorf("invalid dnsname length")
+	}
+
+	return typeSafetyCheckDnsNameLabels(strings.Split(hostname, "."))
+}
+
+func typeSafetyCheckDnsNameLabels(labels []string) error {
+	for _, label := range labels {
+		if !dnsNameLabelPattern.MatchString(label) {
+			return fmt.Errorf("invalid dnsname label %q", label)
+		}
+	}
+
+	tld := labels[len(labels)-1]
+	if dnsNameAllNumericPattern.MatchString(tld) {
+		return fmt.Errorf("dnsname top-level label must not be all-numeric")
+	}
+
+	return nil
+}
+
 func typeSafetyCheckDatetime(value string) error {
 	_, err := time.Parse("2006-01-02T15:04:05", value)
 
@@ -371,7 +416,6 @@ var shellUnsafeArgumentTypes = map[string]struct{}{
 	"very_dangerous_raw_string": {},
 	"password":                  {},
 	"html":                      {},
-	"confirmation":              {},
 }
 
 func isUnsafeShellArgumentType(arg *config.ActionArgument) bool {

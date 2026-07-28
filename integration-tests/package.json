@@ -12,11 +12,11 @@
   "license": "AGPL-3.0-only",
   "devDependencies": {
     "chai": "^6.2.2",
-    "eslint": "^10.6.0",
+    "eslint": "^10.8.0",
     "mocha": "^11.7.6",
-    "selenium-webdriver": "^4.45.0"
+    "selenium-webdriver": "^4.46.0"
   },
   "dependencies": {
-    "wait-on": "^9.0.10"
+    "wait-on": "^9.1.0"
   }
 }

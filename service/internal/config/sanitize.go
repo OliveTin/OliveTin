@@ -5,6 +5,7 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/OliveTin/OliveTin/internal/configissues"
 	"github.com/OliveTin/OliveTin/internal/env"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
@@ -29,7 +30,6 @@ func (cfg *Config) Sanitize() {
 	cfg.sanitizeDashboardsForInlineActions()
 
 	cfg.sanitizeActionGroups()
-	cfg.sanitizeActionGroupReferences()
 	cfg.sanitizeEntities()
 
 	if err := cfg.validateReservedActionArgumentNames(); err != nil {
@@ -238,7 +238,7 @@ func (action *Action) sanitize(cfg *Config) {
 	action.Groups = dedupeStrings(action.Groups)
 
 	for idx := range action.Arguments {
-		action.Arguments[idx].sanitize()
+		action.Arguments[idx].sanitize(action)
 	}
 }
 
@@ -283,14 +283,6 @@ func (cfg *Config) sanitizeActionGroups() {
 	}
 }
 
-func (cfg *Config) sanitizeActionGroupReferences() {
-	for _, action := range cfg.Actions {
-		for _, groupName := range action.Groups {
-			cfg.warnInvalidActionGroupReference(action, groupName)
-		}
-	}
-}
-
 func (cfg *Config) sanitizeEntities() {
 	for _, entityFile := range cfg.Entities {
 		if entityFile == nil {
@@ -307,24 +299,6 @@ func sanitizeEntityProperties(entityFile *EntityFile) {
 		if entityFile.Properties[idx].Title == "" {
 			entityFile.Properties[idx].Title = entityFile.Properties[idx].Name
 		}
-	}
-}
-
-func (cfg *Config) warnInvalidActionGroupReference(action *Action, groupName string) {
-	group, found := cfg.ActionGroups[groupName]
-	if !found {
-		log.WithFields(log.Fields{
-			"actionTitle": action.Title,
-			"groupName":   groupName,
-		}).Warn("Action references unknown action group")
-		return
-	}
-
-	if group == nil || group.MaxConcurrent < 1 {
-		log.WithFields(log.Fields{
-			"actionTitle": action.Title,
-			"groupName":   groupName,
-		}).Warn("Action references action group that will not be enforced at runtime")
 	}
 }
 
@@ -505,7 +479,7 @@ func (cfg *Config) sanitizeOnClickDefaults() {
 	cfg.DefaultPopupOnStart = cfg.DefaultOnClick
 }
 
-func (arg *ActionArgument) sanitize() {
+func (arg *ActionArgument) sanitize(action *Action) {
 	if arg.Title == "" {
 		arg.Title = arg.Name
 	}
@@ -516,45 +490,24 @@ func (arg *ActionArgument) sanitize() {
 		}
 	}
 
-	arg.sanitizeNoType()
-	arg.sanitizeChecklist()
-
-	// Default value validation runs in executor at config load (validateArgumentDefaults).
+	arg.sanitizeNoType(action)
+	// Checklist configuration problems are reported by configcheck.
 }
 
-func (arg *ActionArgument) sanitizeChecklist() {
-	if arg.Type != "checklist" {
-		return
-	}
-
-	arg.warnMissingChecklistChoices()
-	arg.warnInvalidChecklistEntityTemplate()
-}
-
-func (arg *ActionArgument) warnMissingChecklistChoices() {
-	if len(arg.Choices) == 0 {
-		log.WithFields(log.Fields{
-			"arg": arg.Name,
-		}).Warn("Checklist argument has no choices defined")
-	}
-}
-
-func (arg *ActionArgument) warnInvalidChecklistEntityTemplate() {
-	if arg.Entity == "" || len(arg.Choices) == 1 {
-		return
-	}
-
-	log.WithFields(log.Fields{
-		"arg":    arg.Name,
-		"entity": arg.Entity,
-	}).Warn("Checklist argument with entity should define exactly one choice template")
-}
-
-func (arg *ActionArgument) sanitizeNoType() {
+func (arg *ActionArgument) sanitizeNoType(action *Action) {
 	if len(arg.Choices) == 0 && arg.Type == "" {
-		log.WithFields(log.Fields{
-			"arg": arg.Name,
-		}).Warn("Argument type isn't set, will default to 'ascii' but this may not be safe. You should set a type specifically.")
+		issue := configissues.Issue{
+			Severity:     configissues.SeverityWarning,
+			Code:         configissues.CodeArgTypeUnset,
+			Message:      "Argument type isn't set, will default to 'ascii' but this may not be safe",
+			ArgumentName: arg.Name,
+		}
+		if action != nil {
+			issue.ActionID = action.ID
+			issue.ActionTitle = action.Title
+			issue.ConfigFile = action.SourceFile
+		}
+		configissues.ReportSticky(issue)
 		arg.Type = "ascii"
 	}
 }

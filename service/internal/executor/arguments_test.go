@@ -523,8 +523,20 @@ func TestCheckShellArgumentSafetyWithConfirmation(t *testing.T) {
 	}
 
 	err := checkShellArgumentSafety(&a1)
-	assert.NotNil(t, err)
-	assert.Contains(t, err.Error(), "unsafe argument type 'confirmation'")
+	assert.Nil(t, err, "confirmation is constrained to 0/1 and is safe with shell")
+}
+
+func TestCheckShellArgumentSafetyWithUnnamedConfirmation(t *testing.T) {
+	a1 := config.Action{
+		Title: "Confirm shell unnamed",
+		Shell: "echo ok",
+		Arguments: []config.ActionArgument{
+			{Type: "confirmation", Title: "Are you sure?!"},
+		},
+	}
+
+	err := checkShellArgumentSafety(&a1)
+	assert.Nil(t, err)
 }
 
 func TestCheckShellArgumentSafetyWithChoicelessCheckbox(t *testing.T) {
@@ -812,6 +824,44 @@ func TestTypeSafetyCheckAsciiIdentifier(t *testing.T) {
 	}
 }
 
+func TestTypeSafetyCheckDnsName(t *testing.T) {
+	tests := []struct {
+		name     string
+		value    string
+		hasError bool
+	}{
+		{"Short name", "webserver", false},
+		{"Localhost", "localhost", false},
+		{"Simple domain", "example.com", false},
+		{"Host with subdomain", "webserver.example.com", false},
+		{"Deep subdomain", "a.b.c.example.co.uk", false},
+		{"Label starting with digit", "1host.example.com", false},
+		{"Trailing dot", "example.com.", false},
+		{"Punycode IDN", "xn--bcher-kva.example", false},
+		{"Underscore", "my_host.example.com", true},
+		{"Space", "example .com", true},
+		{"Leading hyphen label", "-host.example.com", true},
+		{"Trailing hyphen label", "host-.example.com", true},
+		{"Empty label", "example..com", true},
+		{"IP address", "192.168.1.1", true},
+		{"All numeric TLD", "example.123", true},
+		{"All numeric short name", "12345", true},
+		{"Special chars", "exam!ple.com", true},
+		{"Unicode label", "bücher.example.com", true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := TypeSafetyCheck("host", tt.value, "dnsname")
+			if tt.hasError {
+				assert.NotNil(t, err, "Expected error for value '%s'", tt.value)
+			} else {
+				assert.Nil(t, err, "Expected no error for value '%s', but got: %v", tt.value, err)
+			}
+		})
+	}
+}
+
 func TestTypeSafetyCheckShellSafeIdentifier(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -892,8 +942,27 @@ func TestTypecheckActionArgumentConfirmation(t *testing.T) {
 	}
 	action := config.Action{Title: "Test"}
 
+	assert.Nil(t, typecheckActionArgument(&arg, "0", &action))
+	assert.Nil(t, typecheckActionArgument(&arg, "1", &action))
+
 	err := typecheckActionArgument(&arg, "any_value", &action)
-	assert.Nil(t, err, "Confirmation type should always pass validation")
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "must be \"0\" or \"1\"")
+
+	err = typecheckActionArgument(&arg, "", &action)
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "must be \"0\" or \"1\"")
+}
+
+func TestTypecheckActionArgumentUnnamedConfirmation(t *testing.T) {
+	arg := config.ActionArgument{
+		Type:  "confirmation",
+		Title: "Are you sure?!",
+	}
+	action := config.Action{Title: "Test"}
+
+	assert.Nil(t, typecheckActionArgument(&arg, "", &action))
+	assert.Nil(t, typecheckActionArgument(&arg, "ignored", &action))
 }
 
 func TestTypecheckActionArgumentHtmlWithoutName(t *testing.T) {

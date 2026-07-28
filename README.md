@@ -10,7 +10,7 @@
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/5050/badge)](https://bestpractices.coreinfrastructure.org/projects/5050)
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/Olivetin/OliveTin)](https://goreportcard.com/report/github.com/OliveTin/OliveTin)
-[![AI Autonomy Level](https://img.shields.io/badge/AI%20Autonomy-Level%201%20of%205%20(assistance--only)-blue)](https://blog.jread.com/posts/ai-levels-of-autonomy-in-software-engineering/)
+[![AI Autonomy Level](https://img.shields.io/badge/AI%20Autonomy-Level%202%20of%205%20(pair--programmer)-blue)](https://blog.jread.com/posts/ai-levels-of-autonomy-in-software-engineering/)
 
 [OliveTin 2k to 3k upgrade guide](https://docs.olivetin.app/upgrade/2k3k.html)
 </div>
@@ -80,11 +80,17 @@ OliveTin follows these principles:
 * **Open Source & Free Software**: following the [Open Source Definition](https://opensource.org/osd) and the [Free Software Definition](https://www.gnu.org/philosophy/free-sw.html). All code and assets are available under the [AGPL-3.0 License](LICENSE).
 * **Independent**: No company owns the code or is responsible for the projects' governance.
 * **Inclusive**: No "core", "pro", "premium" or "enterprise" version. The only version is the one you can download and run, and it has all the features.
-* **Invisible**: No usage tracking, no user tracking, no ads, and no telemetry. 
+* **Invisible**: No usage tracking, no user tracking, no ads, and no telemetry.
 * **Internal**: No internet connection required for any functionality.
 
 ## Documentation
 
 All documentation can be found at [docs.olivetin.app](https://docs.olivetin.app). This includes installation and usage guide, etc.
 
-You can find instructions in the docs on how to install as a **Linux package**, **Linux Container**, on **FreeBSD**, **Windows**, **MacOS** and other platforms, too!
+You can find instructions in the docs on how to install as a **Linux package**, **Linux Container**, on **FreeBSD**, **Windows**, **macOS** and other platforms, too!
+
+## Donations & Sponsorship
+
+OliveTin does not accept monetary donations or sponsorship. See [Donations & Sponsorship](https://docs.olivetin.app/reference/donations_and_sponsorship.html) for the full explanation.
+
+* Free code signing provided by [SignPath.io](https://about.signpath.io/), certificate by [SignPath Foundation](https://signpath.org/).

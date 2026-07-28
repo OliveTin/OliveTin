@@ -29,6 +29,8 @@ actions:
 
 From the above example, you can see there There are two types of logs - **results (.yaml)** and **output (.log)**
 
+Filenames are built from the action title, a unix timestamp, and the execution tracking ID. Characters that are unsafe in filenames (for example `/` and `\`) are replaced with `_` so titles like `Create/update Monthly Report` still write a single file. The original title is unchanged inside the results YAML.
+
 * **Results (.yaml)** - this captures almost everything that OliveTin knows about the action and looks like this.
 +
 [source,yaml]

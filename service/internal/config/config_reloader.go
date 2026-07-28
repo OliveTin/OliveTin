@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -8,6 +9,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/OliveTin/OliveTin/internal/configissues"
 	"github.com/go-viper/mapstructure/v2"
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/knadh/koanf/providers/file"
@@ -40,12 +42,15 @@ func AppendSource(cfg *Config, k *koanf.Koanf, configPath string) {
 		"configPath": configPath,
 	}).Info("Appending cfg source")
 
+	configissues.BeginConfigLoad()
+	stampLoadedConfigSources(k, configPath)
 	loadIncludedConfigsFromDir(k, configPath)
 
 	if !unmarshalRoot(k, cfg) {
 		return
 	}
 
+	applyStampedSourceFiles(k, cfg)
 	afterLoadFinalize(cfg, configPath)
 }
 
@@ -172,7 +177,7 @@ func listYamlFiles(includePath string) ([]string, bool) {
 func loadAndMergeIncludedFile(k *koanf.Koanf, includePath, filename string) {
 	filePath := filepath.Join(includePath, filename)
 
-	if err := k.Load(file.Provider(filePath), yaml.Parser(), koanf.WithMergeFunc(mergeFunc)); err != nil {
+	if err := k.Load(file.Provider(filePath), yaml.Parser(), koanf.WithMergeFunc(mergeFuncForSource(filePath))); err != nil {
 		log.Errorf("Error loading included config file %s: %v", filePath, err)
 		return
 	}
@@ -182,8 +187,15 @@ func loadAndMergeIncludedFile(k *koanf.Koanf, includePath, filename string) {
 	}).Info("Successfully loaded included config file")
 }
 
+func mergeFuncForSource(sourceFile string) func(src, dest map[string]interface{}) error {
+	return func(src map[string]interface{}, dest map[string]interface{}) error {
+		return mergeFunc(src, dest, sourceFile)
+	}
+}
+
 // mergeActionsWhenBothExist merges actions when both src and dest have actions.
-func mergeActionsWhenBothExist(srcActions interface{}, destActions interface{}, dest map[string]interface{}) {
+func mergeActionsWhenBothExist(srcActions interface{}, destActions interface{}, dest map[string]interface{}, sourceFile string) {
+	stampSourceOnMaps(srcActions, sourceFile)
 	srcSlice, ok1 := srcActions.([]interface{})
 	destSlice, ok2 := destActions.([]interface{})
 	if ok1 && ok2 {
@@ -194,10 +206,11 @@ func mergeActionsWhenBothExist(srcActions interface{}, destActions interface{}, 
 }
 
 // mergeActionsFromSource merges actions from source into destination.
-func mergeActionsFromSource(srcActions interface{}, dest map[string]interface{}) {
+func mergeActionsFromSource(srcActions interface{}, dest map[string]interface{}, sourceFile string) {
 	if destActions, ok := dest["actions"]; ok {
-		mergeActionsWhenBothExist(srcActions, destActions, dest)
+		mergeActionsWhenBothExist(srcActions, destActions, dest, sourceFile)
 	} else {
+		stampSourceOnMaps(srcActions, sourceFile)
 		dest["actions"] = srcActions
 	}
 }
@@ -223,7 +236,8 @@ func mergeDashboardsFromSource(srcDashboards interface{}, dest map[string]interf
 }
 
 // mergeEntitiesWhenBothExist merges entities when both src and dest have entities.
-func mergeEntitiesWhenBothExist(srcEntities interface{}, destEntities interface{}, dest map[string]interface{}) {
+func mergeEntitiesWhenBothExist(srcEntities interface{}, destEntities interface{}, dest map[string]interface{}, sourceFile string) {
+	stampSourceOnMaps(srcEntities, sourceFile)
 	srcSlice, ok1 := srcEntities.([]interface{})
 	destSlice, ok2 := destEntities.([]interface{})
 	if ok1 && ok2 {
@@ -234,17 +248,18 @@ func mergeEntitiesWhenBothExist(srcEntities interface{}, destEntities interface{
 }
 
 // mergeEntitiesFromSource merges entities from source into destination.
-func mergeEntitiesFromSource(srcEntities interface{}, dest map[string]interface{}) {
+func mergeEntitiesFromSource(srcEntities interface{}, dest map[string]interface{}, sourceFile string) {
 	if destEntities, ok := dest["entities"]; ok {
-		mergeEntitiesWhenBothExist(srcEntities, destEntities, dest)
+		mergeEntitiesWhenBothExist(srcEntities, destEntities, dest, sourceFile)
 	} else {
+		stampSourceOnMaps(srcEntities, sourceFile)
 		dest["entities"] = srcEntities
 	}
 }
 
-func mergeFunc(src map[string]interface{}, dest map[string]interface{}) error {
+func mergeFunc(src map[string]interface{}, dest map[string]interface{}, sourceFile string) error {
 	if srcActions, ok := src["actions"]; ok {
-		mergeActionsFromSource(srcActions, dest)
+		mergeActionsFromSource(srcActions, dest, sourceFile)
 	}
 
 	if srcDashboards, ok := src["dashboards"]; ok {
@@ -252,7 +267,7 @@ func mergeFunc(src map[string]interface{}, dest map[string]interface{}) error {
 	}
 
 	if srcEntities, ok := src["entities"]; ok {
-		mergeEntitiesFromSource(srcEntities, dest)
+		mergeEntitiesFromSource(srcEntities, dest, sourceFile)
 	}
 
 	return nil
@@ -285,7 +300,12 @@ func envDecodeHookFunc(from reflect.Type, to reflect.Type, data any) (any, error
 		val, set := os.LookupEnv(key)
 		log.Debugf("Environment variable %q: set=%v, value=%q", key, set, val)
 		if !set {
-			log.Warnf("Config file references unset environment variable: \"%s\"", key)
+			configissues.ReportSticky(configissues.Issue{
+				Severity: configissues.SeverityWarning,
+				Code:     configissues.CodeEnvUnset,
+				Message:  fmt.Sprintf("Config file references unset environment variable %q", key),
+				Source:   key,
+			})
 		}
 		return val
 	})

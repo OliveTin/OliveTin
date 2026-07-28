@@ -219,6 +219,25 @@ func ParseTemplateOfActionBeforeExec(source string, ent *entities.Entity) string
 	return result
 }
 
+// CheckActionTemplateParses migrates legacy template syntax and reports parse
+// errors only (execution against entity/argument data is not attempted).
+func CheckActionTemplateParses(source string) error {
+	if source == "" {
+		return nil
+	}
+
+	source = migrateLegacyArgumentNames(source)
+	source = migrateLegacyEntityProperties(source)
+
+	clone, err := tpl.Clone()
+	if err != nil {
+		return err
+	}
+
+	_, err = clone.Parse(source)
+	return err
+}
+
 /*
 func ParseTemplateBoolWith(source string, ent *entities.Entity) bool {
 	source = strings.TrimSpace(source)

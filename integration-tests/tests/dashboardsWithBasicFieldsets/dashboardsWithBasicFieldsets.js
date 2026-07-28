@@ -32,7 +32,7 @@ describe('config: dashboards with basic fieldsets', function () {
     await openSidebar()
 
     const navigationLinks = await getNavigationLinks()
-    assert.equal(navigationLinks.length, 5, 'Expected the nav to only have 5 links') // test dashboard + logs + diagnostics + entities + separator
+    assert.equal(navigationLinks.length, 4, 'Expected the nav to only have 4 links') // test dashboard + entities + logs + diagnostics
 
     const firstLink = await navigationLinks[0]
 
@@ -44,7 +44,7 @@ describe('config: dashboards with basic fieldsets', function () {
     // Check that we have the expected number of fieldsets
     const dashboardRows = await webdriver.findElements(By.css('.dashboard-row'))
     expect(dashboardRows).to.have.length(3, 'Expected 3 dashboard rows total')
-    
+
     // Check that we have fieldsets with the expected titles
     const fieldsetTitles = []
     for (let i = 0; i < dashboardRows.length; i++) {
@@ -54,7 +54,7 @@ describe('config: dashboards with basic fieldsets', function () {
         fieldsetTitles.push(title)
       }
     }
-    
+
     // We should have fieldsets for: Fieldset 1, Fieldset 2, and Actions fieldsets
     expect(fieldsetTitles).to.include('Fieldset 1')
     expect(fieldsetTitles).to.include('Fieldset 2')

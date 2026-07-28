@@ -1097,6 +1097,7 @@ func appendErrorToStderr(req *ExecutionRequest, err error) {
 
 type OutputStreamer struct {
 	Req    *ExecutionRequest
+	mu     sync.Mutex
 	output bytes.Buffer
 }
 
@@ -1105,10 +1106,31 @@ func (ost *OutputStreamer) Write(o []byte) (n int, err error) {
 		listener.OnOutputChunk(o, ost.Req.TrackingID)
 	}
 
-	return ost.output.Write(o)
+	ost.mu.Lock()
+	n, err = ost.output.Write(o)
+	outputSoFar := ""
+	if err == nil {
+		outputSoFar = ost.output.String()
+	}
+	ost.mu.Unlock()
+
+	if err != nil {
+		return n, err
+	}
+
+	// Keep the log entry's Output in sync while the command is still running so
+	// ExecutionStatus / mid-run result views can show output produced so far.
+	ost.Req.mutateLogEntry(func(entry *InternalLogEntry) {
+		entry.Output = outputSoFar
+	})
+
+	return n, nil
 }
 
 func (ost *OutputStreamer) String() string {
+	ost.mu.Lock()
+	defer ost.mu.Unlock()
+
 	return ost.output.String()
 }
 
@@ -1155,9 +1177,10 @@ func stepExec(req *ExecutionRequest) bool {
 	})
 	ctx.setProcess(cmd.Process)
 	waiterr := cmd.Wait()
+	finalOutput := streamer.String()
 	req.mutateLogEntry(func(entry *InternalLogEntry) {
 		entry.ExitCode = int32(commandExitCode(cmd))
-		entry.Output = streamer.String()
+		entry.Output = finalOutput
 	})
 
 	appendErrorToStderr(req, runerr)
@@ -1391,12 +1414,45 @@ func triggerLoop(req *ExecutionRequest) {
 }
 
 func stepSaveLog(req *ExecutionRequest) bool {
-	filename := fmt.Sprintf("%v.%v.%v", req.logEntry.ActionTitle, req.logEntry.DatetimeStarted.Unix(), req.logEntry.ExecutionTrackingID)
+	if !canSaveExecutionLog(req) {
+		log.Warnf("Cannot save execution log; missing request, log entry, binding/action, or config")
+		return false
+	}
+
+	filename := fmt.Sprintf("%v.%v.%v", sanitizeLogFilename(req.logEntry.ActionTitle), req.logEntry.DatetimeStarted.Unix(), req.logEntry.ExecutionTrackingID)
 
 	saveLogResults(req, filename)
 	saveLogOutput(req, filename)
 
 	return true
+}
+
+func canSaveExecutionLog(req *ExecutionRequest) bool {
+	return req != nil && req.logEntry != nil && req.Binding != nil && req.Binding.Action != nil && req.Cfg != nil
+}
+
+// sanitizeLogFilename replaces characters that are unsafe in filenames so action
+// titles like "Create/update Report" do not create nested paths or fail to write.
+func sanitizeLogFilename(title string) string {
+	oldnew := []string{
+		"/", "_",
+		"\\", "_",
+		":", "_",
+		"*", "_",
+		"?", "_",
+		"\"", "_",
+		"<", "_",
+		">", "_",
+		"|", "_",
+	}
+
+	// NUL and other C0 controls plus DEL are invalid or problematic in filenames.
+	for i := 0; i < 32; i++ {
+		oldnew = append(oldnew, string(rune(i)), "_")
+	}
+	oldnew = append(oldnew, "\x7f", "_")
+
+	return strings.NewReplacer(oldnew...).Replace(title)
 }
 
 func firstNonEmpty(one, two string) string {

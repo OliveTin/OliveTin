@@ -3,6 +3,8 @@
 
 The `confirmation` type argument is a special argument type, which simply disables the "Start" button until a checkbox is ticked. This can be useful if you have an action with no other arguments, but you want to prevent accidental button-clicks starting the action.
 
+Confirmation arguments are usually left unnamed, so nothing is substituted into the command. If you do give the argument a `name`, the only allowed values are `0` (unchecked) and `1` (checked), so confirmation is safe to use with `shell:` actions.
+
 [source,yaml]
 ----
 actions:

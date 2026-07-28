@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/OliveTin/OliveTin/internal/auth"
 	authpublic "github.com/OliveTin/OliveTin/internal/auth/authpublic"
@@ -780,3 +781,216 @@ func (c *executionFinishedCollector) OnExecutionFinished(entry *InternalLogEntry
 func (c *executionFinishedCollector) OnOutputChunk(_ []byte, _ string) {}
 
 func (c *executionFinishedCollector) OnActionMapRebuilt() {}
+
+func TestSanitizeLogFilename(t *testing.T) {
+	tests := []struct {
+		title string
+		want  string
+	}{
+		{"Echo Test", "Echo Test"},
+		{"Create/update Monthly Report", "Create_update Monthly Report"},
+		{`path\with\backslashes`, "path_with_backslashes"},
+		{`a:b*c?d"e<f>g|h`, "a_b_c_d_e_f_g_h"},
+		{"has\x00nul", "has_nul"},
+		{"tab\there\nand\rreturn", "tab_here_and_return"},
+	}
+
+	for _, tt := range tests {
+		assert.Equal(t, tt.want, sanitizeLogFilename(tt.title), "title=%q", tt.title)
+	}
+}
+
+func TestStepSaveLogSanitizesSlashInTitle(t *testing.T) {
+	resultsDir := t.TempDir()
+	outputDir := t.TempDir()
+	started := time.Unix(1714333384, 0)
+	trackingID := "5e2dc9e5-b6b3-445b-bff9-c2082b0bbbb2"
+	title := "Create/update Monthly Report"
+
+	req := &ExecutionRequest{
+		Cfg: &config.Config{
+			SaveLogs: config.SaveLogsConfig{
+				ResultsDirectory: resultsDir,
+				OutputDirectory:  outputDir,
+			},
+		},
+		Binding: &ActionBinding{
+			Action: &config.Action{},
+		},
+		logEntry: &InternalLogEntry{
+			ActionTitle:         title,
+			DatetimeStarted:     started,
+			ExecutionTrackingID: trackingID,
+			Output:              "report ok",
+		},
+	}
+
+	assert.True(t, stepSaveLog(req))
+
+	expectedBase := "Create_update Monthly Report.1714333384." + trackingID
+	resultsPath := filepath.Join(resultsDir, expectedBase+".yaml")
+	outputPath := filepath.Join(outputDir, expectedBase+".log")
+
+	assert.FileExists(t, resultsPath)
+	assert.FileExists(t, outputPath)
+
+	resultsEntries, err := os.ReadDir(resultsDir)
+	assert.NoError(t, err)
+	assert.Len(t, resultsEntries, 1, "results file must be flat under resultsDirectory, not a subdirectory")
+
+	data, err := os.ReadFile(resultsPath)
+	assert.NoError(t, err)
+	assert.Contains(t, string(data), title, "YAML content keeps the original action title")
+
+	output, err := os.ReadFile(outputPath)
+	assert.NoError(t, err)
+	assert.Equal(t, "report ok", string(output))
+}
+
+func TestStepSaveLogKeepsSafeTitleFilename(t *testing.T) {
+	resultsDir := t.TempDir()
+	started := time.Unix(1714333384, 0)
+	trackingID := "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
+
+	req := &ExecutionRequest{
+		Cfg: &config.Config{
+			SaveLogs: config.SaveLogsConfig{
+				ResultsDirectory: resultsDir,
+			},
+		},
+		Binding: &ActionBinding{
+			Action: &config.Action{},
+		},
+		logEntry: &InternalLogEntry{
+			ActionTitle:         "Echo Test",
+			DatetimeStarted:     started,
+			ExecutionTrackingID: trackingID,
+		},
+	}
+
+	assert.True(t, stepSaveLog(req))
+
+	expectedPath := filepath.Join(resultsDir, "Echo Test.1714333384."+trackingID+".yaml")
+	assert.FileExists(t, expectedPath)
+}
+
+func TestStepSaveLogSanitizesNULInTitle(t *testing.T) {
+	resultsDir := t.TempDir()
+	outputDir := t.TempDir()
+	started := time.Unix(1714333384, 0)
+	trackingID := "bbbbbbbb-cccc-dddd-eeee-ffffffffffff"
+	title := "Bad\x00Title"
+
+	req := &ExecutionRequest{
+		Cfg: &config.Config{
+			SaveLogs: config.SaveLogsConfig{
+				ResultsDirectory: resultsDir,
+				OutputDirectory:  outputDir,
+			},
+		},
+		Binding: &ActionBinding{
+			Action: &config.Action{},
+		},
+		logEntry: &InternalLogEntry{
+			ActionTitle:         title,
+			DatetimeStarted:     started,
+			ExecutionTrackingID: trackingID,
+			Output:              "nul ok",
+		},
+	}
+
+	assert.True(t, stepSaveLog(req))
+
+	expectedBase := "Bad_Title.1714333384." + trackingID
+	resultsPath := filepath.Join(resultsDir, expectedBase+".yaml")
+	outputPath := filepath.Join(outputDir, expectedBase+".log")
+
+	assert.FileExists(t, resultsPath)
+	assert.FileExists(t, outputPath)
+	assert.NotContains(t, resultsPath, "\x00")
+	assert.NotContains(t, outputPath, "\x00")
+
+	output, err := os.ReadFile(outputPath)
+	assert.NoError(t, err)
+	assert.Equal(t, "nul ok", string(output))
+}
+
+func TestStepSaveLogReturnsFalseWhenDependenciesMissing(t *testing.T) {
+	started := time.Unix(1714333384, 0)
+	valid := &ExecutionRequest{
+		Cfg: &config.Config{},
+		Binding: &ActionBinding{
+			Action: &config.Action{},
+		},
+		logEntry: &InternalLogEntry{
+			ActionTitle:         "Echo",
+			DatetimeStarted:     started,
+			ExecutionTrackingID: "cccccccc-dddd-eeee-ffff-000000000000",
+		},
+	}
+
+	assert.False(t, stepSaveLog(nil))
+	assert.False(t, stepSaveLog(&ExecutionRequest{}))
+
+	missingLog := *valid
+	missingLog.logEntry = nil
+	assert.False(t, stepSaveLog(&missingLog))
+
+	missingBinding := *valid
+	missingBinding.Binding = nil
+	assert.False(t, stepSaveLog(&missingBinding))
+
+	missingAction := *valid
+	missingAction.Binding = &ActionBinding{}
+	assert.False(t, stepSaveLog(&missingAction))
+
+	missingCfg := *valid
+	missingCfg.Cfg = nil
+	assert.False(t, stepSaveLog(&missingCfg))
+}
+
+func TestLogEntryOutputAvailableWhileRunning(t *testing.T) {
+	cfg := config.DefaultConfig()
+	e := DefaultExecutor(cfg)
+	action := &config.Action{
+		Title: "Slow output",
+		Shell: "echo hello-mid-run; sleep 2",
+	}
+	cfg.Actions = append(cfg.Actions, action)
+	cfg.Sanitize()
+	e.RebuildActionMap()
+
+	binding := e.FindBindingWithNoEntity(action)
+	require.NotNil(t, binding)
+
+	wg, trackingID := e.ExecRequest(&ExecutionRequest{
+		Binding:           binding,
+		Cfg:               cfg,
+		AuthenticatedUser: auth.UserFromSystem(cfg, "testuser"),
+	})
+
+	var sawOutputWhileRunning bool
+	require.Eventually(t, func() bool {
+		snapshot, ok := e.SnapshotLog(trackingID)
+		if !ok {
+			return false
+		}
+		if snapshot.ExecutionFinished {
+			return false
+		}
+		if strings.Contains(snapshot.Output, "hello-mid-run") {
+			sawOutputWhileRunning = true
+			return true
+		}
+		return false
+	}, 2*time.Second, 10*time.Millisecond)
+
+	wg.Wait()
+
+	require.True(t, sawOutputWhileRunning, "expected Output to contain printed text before ExecutionFinished")
+
+	snapshot, ok := e.SnapshotLog(trackingID)
+	require.True(t, ok)
+	assert.True(t, snapshot.ExecutionFinished)
+	assert.Contains(t, snapshot.Output, "hello-mid-run")
+}

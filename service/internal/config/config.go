@@ -39,6 +39,8 @@ type Action struct {
 	EnabledExpression      string           `koanf:"enabledExpression"`
 	Groups                 []string         `koanf:"groups"`
 	Justification          string           `koanf:"justification"`
+	// SourceFile is set by OliveTin when loading config (not user YAML).
+	SourceFile string `koanf:"-"`
 }
 
 func (action *Action) RequiresJustification() bool {
@@ -110,6 +112,8 @@ type EntityFile struct {
 	Name       string           `koanf:"name"`
 	Icon       string           `koanf:"icon"`
 	Properties []EntityProperty `koanf:"properties"`
+	// SourceFile is set by OliveTin when loading config (not user YAML).
+	SourceFile string `koanf:"-"`
 }
 
 // EntityProperty defines a column shown when listing entity instances in the UI.

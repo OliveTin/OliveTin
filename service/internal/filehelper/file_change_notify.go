@@ -1,12 +1,14 @@
 package filehelper
 
 import (
-	"github.com/fsnotify/fsnotify"
-	log "github.com/sirupsen/logrus"
+	"fmt"
 	"path/filepath"
+	"sync"
 	"time"
 
-	"sync"
+	"github.com/OliveTin/OliveTin/internal/configissues"
+	"github.com/fsnotify/fsnotify"
+	log "github.com/sirupsen/logrus"
 )
 
 var (
@@ -28,33 +30,44 @@ const (
 	debounceDelay = 300 * time.Millisecond
 )
 
+// WatchMeta attaches action context to watcher setup failures so Diagnostics
+// can apply the same action view ACL as other configuration issues.
+type WatchMeta struct {
+	ActionID    string
+	ActionTitle string
+	ConfigFile  string
+}
+
 type watchContext struct {
 	filename        string
 	filedir         string
 	callback        func(filename string)
 	interestedEvent fsnotify.Op
 	event           *fsnotify.Event
+	meta            WatchMeta
 }
 
-func WatchDirectoryCreate(fullpath string, callback func(filename string)) {
+func WatchDirectoryCreate(fullpath string, callback func(filename string), meta WatchMeta) {
 	watchPath(&watchContext{
 		filedir:         fullpath,
 		filename:        "",
 		callback:        callback,
 		interestedEvent: fsnotify.Create,
+		meta:            meta,
 	})
 }
 
-func WatchDirectoryWrite(fullpath string, callback func(filename string)) {
+func WatchDirectoryWrite(fullpath string, callback func(filename string), meta WatchMeta) {
 	watchPath(&watchContext{
 		filedir:         fullpath,
 		filename:        "",
 		callback:        callback,
 		interestedEvent: fsnotify.Write,
+		meta:            meta,
 	})
 }
 
-func WatchFileWrite(fullpath string, callback func(filename string)) {
+func WatchFileWrite(fullpath string, callback func(filename string), meta WatchMeta) {
 	filename := filepath.Base(fullpath)
 	filedir := filepath.Dir(fullpath)
 
@@ -63,69 +76,94 @@ func WatchFileWrite(fullpath string, callback func(filename string)) {
 		filename:        filename,
 		callback:        callback,
 		interestedEvent: fsnotify.Write,
+		meta:            meta,
 	})
 }
 
 func watchPath(ctx *watchContext) {
 	watcher, err := fsnotify.NewWatcher()
-
 	if err != nil {
-		log.Errorf("Could not watch for files being created: %v", err)
+		reportWatcherFailure(ctx, err)
 		return
 	}
 
-	defer func() {
-		if err := watcher.Close(); err != nil {
-			log.Errorf("Failed to close file watcher: %v", err)
-		}
-	}()
+	defer closeWatcher(watcher)
 
-	done := make(chan bool)
-
-	go func() {
-		for {
-			processEvent(ctx, watcher)
-		}
-	}()
-
-	err = watcher.Add(ctx.filedir)
-
-	if err != nil {
-		log.Errorf("Could not create watcher: %v", err)
+	if err := watcher.Add(ctx.filedir); err != nil {
+		reportWatcherFailure(ctx, err)
+		return
 	}
 
-	<-done
+	for processEvent(ctx, watcher) {
+	}
 }
 
-func processEvent(ctx *watchContext, watcher *fsnotify.Watcher) {
+func closeWatcher(watcher *fsnotify.Watcher) {
+	if err := watcher.Close(); err != nil {
+		log.Errorf("Failed to close file watcher: %v", err)
+	}
+}
+
+func watchTarget(ctx *watchContext) string {
+	if ctx.filename == "" {
+		return ctx.filedir
+	}
+	return filepath.Join(ctx.filedir, ctx.filename)
+}
+
+func reportWatcherFailure(ctx *watchContext, err error) {
+	path := watchTarget(ctx)
+	message := fmt.Sprintf("Could not create watcher for %q: %v", path, err)
+	configissues.Report(configissues.Issue{
+		Severity:    configissues.SeverityError,
+		Code:        configissues.CodeWatcherPath,
+		Message:     message,
+		ActionID:    ctx.meta.ActionID,
+		ActionTitle: ctx.meta.ActionTitle,
+		Source:      path,
+		ConfigFile:  ctx.meta.ConfigFile,
+	})
+}
+
+// processEvent waits for one watcher event. It returns false when the watcher
+// channels are closed so the caller can stop looping.
+func processEvent(ctx *watchContext, watcher *fsnotify.Watcher) bool {
 	select {
 	case event, ok := <-watcher.Events:
-		ctx.event = &event
-
-		if !consumeEvent(ok, ctx) {
-			return
-		}
-
-		break
-	case err := <-watcher.Errors:
-		log.Errorf("Error in fsnotify: %v", err)
-		return
+		return handleWatcherEvent(ctx, event, ok)
+	case err, ok := <-watcher.Errors:
+		return handleWatcherError(ctx, err, ok)
 	}
 }
 
-func consumeEvent(ok bool, ctx *watchContext) bool {
+func handleWatcherEvent(ctx *watchContext, event fsnotify.Event, ok bool) bool {
 	if !ok {
 		return false
 	}
+	ctx.event = &event
+	consumeEvent(ctx)
+	return true
+}
 
+func handleWatcherError(ctx *watchContext, err error, ok bool) bool {
+	if !ok {
+		return false
+	}
+	if err != nil {
+		log.WithFields(log.Fields{
+			"path": watchTarget(ctx),
+		}).Errorf("Error in fsnotify: %v", err)
+	}
+	return true
+}
+
+func consumeEvent(ctx *watchContext) {
 	if ctx.filename != "" && filepath.Base(ctx.event.Name) != ctx.filename {
 		log.Tracef("fsnotify irreleventa event different file %+v", ctx.event)
-		return true
+		return
 	}
 
 	consumeRelevantEvents(ctx)
-
-	return true
 }
 
 func consumeRelevantEvents(ctx *watchContext) {
