@@ -43,6 +43,11 @@ type oliveTinAPI struct {
 	streamingClientsMutex sync.RWMutex
 }
 
+// Caps concurrent EventStream connections to limit memory/FD/goroutine exhaustion.
+const maxEventStreamClients = 16
+
+var errEventStreamClientLimit = errors.New("too many concurrent event stream clients")
+
 // This is used to avoid race conditions when iterating over the connectedClients map.
 // and holds the lock for as minimal time as possible to avoid blocking the API for too long.
 func (api *oliveTinAPI) copyOfStreamingClients() []*streamingClient {
@@ -1028,13 +1033,13 @@ func (api *oliveTinAPI) EventStream(ctx ctx.Context, req *connect.Request[apiv1.
 		heartbeatDone:     make(chan struct{}),
 	}
 
+	if err := api.registerStreamingClient(client); err != nil {
+		return connect.NewError(connect.CodeResourceExhausted, err)
+	}
+
 	log.WithFields(log.Fields{
 		"authenticatedUser": user.Username,
 	}).Debugf("EventStream: client connected")
-
-	api.streamingClientsMutex.Lock()
-	api.streamingClients[client] = struct{}{}
-	api.streamingClientsMutex.Unlock()
 
 	go api.sendEventStreamHeartbeats(client)
 
@@ -1051,6 +1056,21 @@ func (api *oliveTinAPI) EventStream(ctx ctx.Context, req *connect.Request[apiv1.
 
 	log.Infof("EventStream: client disconnected")
 
+	return nil
+}
+
+func (api *oliveTinAPI) registerStreamingClient(client *streamingClient) error {
+	api.streamingClientsMutex.Lock()
+	defer api.streamingClientsMutex.Unlock()
+
+	if len(api.streamingClients) >= maxEventStreamClients {
+		log.WithFields(log.Fields{
+			"limit": maxEventStreamClients,
+		}).Warn("EventStream: rejecting client; concurrent client limit reached")
+		return errEventStreamClientLimit
+	}
+
+	api.streamingClients[client] = struct{}{}
 	return nil
 }
 

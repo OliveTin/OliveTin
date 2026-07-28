@@ -782,6 +782,46 @@ func TestEventStreamACLNoLeakToUnauthorizedUser(t *testing.T) {
 	assertEventStreamAdminReceivesSecretActionEvents(t, adminEvents)
 }
 
+func TestRegisterStreamingClientEnforcesLimit(t *testing.T) {
+	cfg := config.DefaultConfig()
+	ex := executor.DefaultExecutor(cfg)
+	api := newServer(ex)
+	user := &authpublic.AuthenticatedUser{Username: "limit-test"}
+
+	clients := make([]*streamingClient, 0, maxEventStreamClients)
+	for i := 0; i < maxEventStreamClients; i++ {
+		client := &streamingClient{
+			channel:           make(chan *apiv1.EventStreamResponse, 1),
+			AuthenticatedUser: user,
+			heartbeatStop:     make(chan struct{}),
+			heartbeatDone:     make(chan struct{}),
+		}
+		close(client.heartbeatDone)
+		require.NoError(t, api.registerStreamingClient(client))
+		clients = append(clients, client)
+	}
+
+	overflow := &streamingClient{
+		channel:           make(chan *apiv1.EventStreamResponse, 1),
+		AuthenticatedUser: user,
+		heartbeatStop:     make(chan struct{}),
+		heartbeatDone:     make(chan struct{}),
+	}
+	close(overflow.heartbeatDone)
+	err := api.registerStreamingClient(overflow)
+	assert.ErrorIs(t, err, errEventStreamClientLimit)
+	assert.Equal(t, maxEventStreamClients, len(api.streamingClients))
+
+	api.removeClient(clients[0])
+	require.NoError(t, api.registerStreamingClient(overflow))
+	assert.Equal(t, maxEventStreamClients, len(api.streamingClients))
+
+	for _, client := range clients[1:] {
+		api.removeClient(client)
+	}
+	api.removeClient(overflow)
+}
+
 func addEventStreamTestClients(t *testing.T, api *oliveTinAPI, lowUser, adminUser *authpublic.AuthenticatedUser) (*streamingClient, *streamingClient) {
 	t.Helper()
 	clientLow := &streamingClient{
