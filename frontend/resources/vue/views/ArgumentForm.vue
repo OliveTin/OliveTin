@@ -89,10 +89,12 @@
               @change="handleChange(arg, $event)"
             />
 
+            <!-- eslint-disable vue/no-v-html -- intentional: argument description is documented as raw HTML -->
             <span
               class="argument-description"
               v-html="arg.description"
             />
+            <!-- eslint-enable vue/no-v-html -->
           </template>
         </template>
 

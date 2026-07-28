@@ -3,7 +3,9 @@
     class="display"
     :class="component.cssClass"
   >
+    <!-- eslint-disable vue/no-v-html -- intentional: type display titles are trusted config HTML (hackable dashboards) -->
     <div v-html="component.title" />
+    <!-- eslint-enable vue/no-v-html -->
   </div>
 </template>
 

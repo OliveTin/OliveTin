@@ -23,6 +23,9 @@ service-codestyle:
 frontend-codestyle:
 	$(MAKE) -wC frontend codestyle
 
+frontend-unittests:
+	$(MAKE) -wC frontend unittests
+
 it:
 	$(MAKE) -wC integration-tests
 

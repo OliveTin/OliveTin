@@ -4,10 +4,12 @@
     :class="component.cssClass"
     @click="navigateToDirectory"
   >
+    <!-- eslint-disable vue/no-v-html -- intentional: directory icons from config (HTML entities / markup) -->
     <span
       class="icon"
       v-html="unicodeIcon"
     />
+    <!-- eslint-enable vue/no-v-html -->
     <span class="title">{{ component.title }}</span>
   </button>
 </template>

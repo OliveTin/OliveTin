@@ -32,6 +32,8 @@ actions:
         type: ascii_sentence
 ----
 
+`description` is optional help text under the field. It is rendered as raw HTML; see xref:args/intro.adoc#arg-descriptions[Argument descriptions].
+
 This will give you a normal button, like this;
 
 image::args/input/args1.png[]

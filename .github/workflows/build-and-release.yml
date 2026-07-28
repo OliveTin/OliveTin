@@ -104,6 +104,9 @@ jobs:
       - name: unit tests
         run: make -w service-unittests
 
+      - name: frontend unit tests
+        run: make -w frontend-unittests
+
       - name: build service
         run: make -w service
 
