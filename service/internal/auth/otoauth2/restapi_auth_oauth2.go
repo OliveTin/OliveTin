@@ -22,9 +22,9 @@ import (
 
 type OAuth2Handler struct {
 	cfg                 *config.Config
-	mu                  sync.RWMutex
 	registeredStates    map[string]*oauth2State
 	registeredProviders map[string]*oauth2.Config
+	mu                  sync.RWMutex
 }
 
 func NewOAuth2Handler(cfg *config.Config) *OAuth2Handler {
@@ -58,11 +58,11 @@ func NewOAuth2Handler(cfg *config.Config) *OAuth2Handler {
 }
 
 type oauth2State struct {
+	createdAt      time.Time
 	providerConfig *oauth2.Config
 	providerName   string
 	Username       string
 	Usergroup      string
-	createdAt      time.Time
 }
 
 const (

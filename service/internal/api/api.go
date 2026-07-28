@@ -63,9 +63,9 @@ func (api *oliveTinAPI) copyOfStreamingClients() []*streamingClient {
 type streamingClient struct {
 	channel           chan *apiv1.EventStreamResponse
 	AuthenticatedUser *authpublic.AuthenticatedUser
-	heartbeatStopOnce sync.Once
 	heartbeatStop     chan struct{}
 	heartbeatDone     chan struct{}
+	heartbeatStopOnce sync.Once
 }
 
 func (c *streamingClient) stopHeartbeat() {

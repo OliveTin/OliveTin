@@ -10,8 +10,8 @@ func Test_parseUsergroupLine(t *testing.T) {
 	tests := []struct {
 		name           string
 		usergroupLine  string
-		expectedGroups []string
 		sep            string
+		expectedGroups []string
 	}{
 		{
 			name:           "Default separator (space)",

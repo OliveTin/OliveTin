@@ -226,9 +226,9 @@ func validateConsistency(t *testing.T, client apiv1connect.OliveTinApiServiceCli
 
 func TestEvaluateEnabledExpression(t *testing.T) {
 	tests := []struct {
+		entity         *entities.Entity
 		name           string
 		expression     string
-		entity         *entities.Entity
 		expectedResult bool
 	}{
 		{

@@ -5,12 +5,12 @@ type Record struct {
 	Status   string
 	Action   string
 	User     string
+	Output   string
 	Tags     []string
+	ExitCode int32
 	Blocked  bool
 	TimedOut bool
 	Running  bool
-	ExitCode int32
-	Output   string
 }
 
 // StatusLabel matches the status text shown in the web UI.

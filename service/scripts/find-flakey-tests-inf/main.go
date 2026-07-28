@@ -42,20 +42,20 @@ type runSummary struct {
 }
 
 type jsonlRecord struct {
-	Run            int           `json:"run"`
 	Timestamp      string        `json:"timestamp"`
+	FailureDetails []testFailure `json:"failureDetails"`
+	Run            int           `json:"run"`
 	ExitCode       int           `json:"exitCode"`
 	DurationMs     int64         `json:"durationMs"`
 	Passes         int           `json:"passes"`
 	Failures       int           `json:"failures"`
 	Skipped        int           `json:"skipped"`
-	FailureDetails []testFailure `json:"failureDetails"`
 }
 
 type testRunState struct {
-	summary       runSummary
-	failures      []testFailure
 	failureOutput map[string]*strings.Builder
+	failures      []testFailure
+	summary       runSummary
 }
 
 func initLog() {

@@ -25,9 +25,9 @@ type DashboardRenderRequest struct {
 	AuthenticatedUser   *authpublic.AuthenticatedUser
 	cfg                 *config.Config
 	ex                  *executor.Executor
+	activeBindingStates map[string]bindingActiveState
 	EntityType          string
 	EntityKey           string
-	activeBindingStates map[string]bindingActiveState
 }
 
 func activeBindingID(entry *executor.InternalLogEntry) string {

@@ -40,53 +40,46 @@ func isValidTrackingID(id string) bool {
 }
 
 type ActionBinding struct {
-	ID           string
 	Action       *config.Action
 	Entity       *entities.Entity
-	ConfigOrder  int
+	ID           string
 	OnDashboards []DashboardNavigationTarget
+	ConfigOrder  int
 }
 
 // Executor represents a helper class for executing commands. It's main method
 // is ExecRequest
 type Executor struct {
 	logs                  map[string]*InternalLogEntry
-	logsTrackingIdsByDate []string
 	LogsByBindingId       map[string][]*InternalLogEntry
-
-	logmutex sync.RWMutex
-
 	MapActionBindings     map[string]*ActionBinding
+	Cfg                   *config.Config
+	logsTrackingIdsByDate []string
+	listeners             []listener
+	chainOfCommand        []executorStepFunc
+	groupQueue            []*queuedExecution
+	logmutex              sync.RWMutex
 	MapActionBindingsLock sync.RWMutex
-
-	Cfg *config.Config
-
-	listeners   []listener
-	listenersMu sync.RWMutex
-
-	chainOfCommand []executorStepFunc
-
-	groupQueue   []*queuedExecution
-	groupQueueMu sync.Mutex
+	listenersMu           sync.RWMutex
+	groupQueueMu          sync.Mutex
 }
 
 // ExecutionRequest is a request to execute an action. It's passed to an
 // Executor. They're created from the api.
 type ExecutionRequest struct {
-	Binding           *ActionBinding
-	Arguments         map[string]string
-	TrackingID        string
-	Tags              []string
-	Cfg               *config.Config
-	AuthenticatedUser *authpublic.AuthenticatedUser
-	TriggerDepth      int
-	Justification     string
-
+	Arguments               map[string]string
+	Binding                 *ActionBinding
+	Cfg                     *config.Config
+	AuthenticatedUser       *authpublic.AuthenticatedUser
+	executor                *Executor
 	logEntry                *InternalLogEntry
 	finalParsedCommand      string
+	TrackingID              string
+	Justification           string
+	Tags                    []string
 	execArgs                []string
+	TriggerDepth            int
 	useDirectExec           bool
-	executor                *Executor
 	skipRequestRegistration bool
 }
 
@@ -104,12 +97,12 @@ func (req *ExecutionRequest) mutateLogEntry(mutator func(*InternalLogEntry)) {
 
 // LogEntrySnapshot is a copy of selected log entry fields for race-safe reads.
 type LogEntrySnapshot struct {
+	Output            string
+	ExitCode          int32
 	Queued            bool
 	Blocked           bool
 	ExecutionStarted  bool
 	ExecutionFinished bool
-	ExitCode          int32
-	Output            string
 }
 
 // SnapshotLog returns a copy of selected log entry fields under read lock.
@@ -136,34 +129,28 @@ func (e *Executor) SnapshotLog(trackingID string) (LogEntrySnapshot, bool) {
 // state of execution (even if the command is not executed). It's designed to be
 // easily serializable.
 type InternalLogEntry struct {
-	Binding             *ActionBinding
 	DatetimeStarted     time.Time
 	DatetimeFinished    time.Time
-	Output              string
-	TimedOut            bool
-	Blocked             bool
-	Queued              bool
-	QueuedForGroup      string
-	ExitCode            int32
-	Tags                []string
-	ExecutionStarted    bool
-	ExecutionFinished   bool
-	ExecutionTrackingID string
+	Binding             *ActionBinding
 	Process             *os.Process
+	Arguments           map[string]string
+	ExecutionTrackingID string
+	Justification       string
+	QueuedForGroup      string
+	ActionIcon          string
+	ActionTitle         string
+	ActionConfigTitle   string
+	Output              string
 	Username            string
-	Index               int64
 	EntityPrefix        string
-	ActionConfigTitle   string // This is the title of the action as defined in the config, not the final parsed title.
-
-	/*
-		The following 3 properties are obviously on Action normally, but it's useful
-		that logs are lightweight (so we don't need to have an action associated to
-		logs, etc. Therefore, we duplicate those values here.
-	*/
-	ActionTitle   string
-	ActionIcon    string
-	Justification string
-	Arguments     map[string]string
+	Tags                []string
+	Index               int64
+	ExitCode            int32
+	Blocked             bool
+	ExecutionFinished   bool
+	ExecutionStarted    bool
+	Queued              bool
+	TimedOut            bool
 }
 
 // .Binding can be nil, so we need to handle that.
@@ -1098,8 +1085,8 @@ func appendErrorToStderr(req *ExecutionRequest, err error) {
 
 type OutputStreamer struct {
 	Req    *ExecutionRequest
-	mu     sync.Mutex
 	output bytes.Buffer
+	mu     sync.Mutex
 }
 
 func (ost *OutputStreamer) Write(o []byte) (n int, err error) {

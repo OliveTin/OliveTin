@@ -981,12 +981,12 @@ func TestTypecheckActionArgumentHtmlWithoutName(t *testing.T) {
 
 func TestParseCommandForReplacements(t *testing.T) {
 	tests := []struct {
+		values         map[string]string
 		name           string
 		shellCommand   string
-		values         map[string]string
 		expectedOutput string
-		expectError    bool
 		errorContains  string
+		expectError    bool
 	}{
 		{
 			name:           "Simple replacement",
@@ -1052,10 +1052,10 @@ func TestParseCommandForReplacements(t *testing.T) {
 
 func TestArgumentChoicesValidation(t *testing.T) {
 	tests := []struct {
-		name        string
 		req         *ExecutionRequest
-		expectError bool
+		name        string
 		description string
+		expectError bool
 	}{
 		{
 			name: "Valid choice",

@@ -39,12 +39,12 @@ type WatchMeta struct {
 }
 
 type watchContext struct {
-	filename        string
-	filedir         string
 	callback        func(filename string)
-	interestedEvent fsnotify.Op
 	event           *fsnotify.Event
 	meta            WatchMeta
+	filename        string
+	filedir         string
+	interestedEvent fsnotify.Op
 }
 
 func WatchDirectoryCreate(fullpath string, callback func(filename string), meta WatchMeta) {

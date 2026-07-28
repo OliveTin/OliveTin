@@ -13,9 +13,9 @@ import (
 )
 
 type versionMapType struct {
-	ApiVersion int
-	Latest     string
 	History    map[string]string
+	Latest     string
+	ApiVersion int
 }
 
 // StartUpdateChecker will start a job that runs periodically, checking

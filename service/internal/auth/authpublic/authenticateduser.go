@@ -10,15 +10,12 @@ import (
 
 // User represents a person.
 type AuthenticatedUser struct {
-	Username      string
-	UsergroupLine string
-
-	Provider string
-	SID      string
-
-	Acls []string
-
 	EffectivePolicy *config.ConfigurationPolicy
+	Username        string
+	UsergroupLine   string
+	Provider        string
+	SID             string
+	Acls            []string
 }
 
 func (u *AuthenticatedUser) IsGuest() bool {

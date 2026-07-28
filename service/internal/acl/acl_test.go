@@ -9,10 +9,10 @@ import (
 func Test_hasGroupsMatch(t *testing.T) {
 	tests := []struct {
 		name               string
-		aclMatchUsergroups []string
 		usergroupLine      string
-		matches            bool
 		sep                string
+		aclMatchUsergroups []string
+		matches            bool
 	}{
 		{
 			name:               "No groups match",
