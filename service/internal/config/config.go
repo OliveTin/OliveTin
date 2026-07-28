@@ -289,6 +289,7 @@ type LogDebugOptions struct {
 
 type DashboardComponent struct {
 	Title        string                `koanf:"title"`
+	Category     string                `koanf:"category"`
 	Type         string                `koanf:"type"`
 	Entity       string                `koanf:"entity"`
 	Icon         string                `koanf:"icon"`

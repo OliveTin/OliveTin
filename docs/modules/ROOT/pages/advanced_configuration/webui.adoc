@@ -67,6 +67,8 @@ showNavigateOnStartIcons: false
 
 image::advanced_configuration/webui/sidebar/sidebar.png[]
 
+Root dashboards can optionally set a `category` field so the sidebar groups them under collapsible headings. See xref:dashboards/intro.adoc#categorize-dashboards-in-the-sidebar[Categorize dashboards in the sidebar].
+
 === Topbar navigation style
 
 `sectionNavigationStyle: topbar` looks like this;

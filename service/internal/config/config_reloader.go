@@ -2,11 +2,13 @@ package config
 
 import (
 	"fmt"
+	"net"
 	"os"
 	"path/filepath"
 	"reflect"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/OliveTin/OliveTin/internal/configissues"
@@ -81,10 +83,48 @@ func afterLoadFinalize(cfg *Config, configPath string) {
 
 	cfg.SetDir(filepath.Dir(configPath))
 	cfg.Sanitize()
+	applyPortEnvironmentOverride(cfg)
 
 	for _, l := range listeners {
 		l()
 	}
+}
+
+// applyPortEnvironmentOverride sets the single HTTP frontend listen port from
+// $PORT when that environment variable is set. This runs after config unmarshal
+// so PORT wins over listenAddressSingleHTTPFrontend in config.yaml (common on
+// Heroku, Cloud Run, and similar hosts). When PORT is unset, the config value
+// or the default (1337) is left unchanged.
+func applyPortEnvironmentOverride(cfg *Config) {
+	envPort := strings.TrimSpace(os.Getenv("PORT"))
+	if envPort == "" {
+		return
+	}
+
+	port, err := strconv.Atoi(envPort)
+	if err != nil || port < 1 || port > 65535 {
+		log.WithFields(log.Fields{
+			"PORT":  envPort,
+			"error": err,
+		}).Error("Ignoring invalid PORT environment variable")
+		return
+	}
+
+	host := listenHostOrDefault(cfg.ListenAddressSingleHTTPFrontend)
+	cfg.ListenAddressSingleHTTPFrontend = net.JoinHostPort(host, strconv.Itoa(port))
+
+	log.WithFields(log.Fields{
+		"address": cfg.ListenAddressSingleHTTPFrontend,
+	}).Info("Using PORT environment variable for single HTTP frontend listen address")
+}
+
+func listenHostOrDefault(listenAddress string) string {
+	host, _, err := net.SplitHostPort(listenAddress)
+	if err != nil || host == "" {
+		return "0.0.0.0"
+	}
+
+	return host
 }
 
 // buildIncludePath constructs the full path to the include directory.

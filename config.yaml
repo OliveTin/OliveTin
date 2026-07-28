@@ -2,7 +2,8 @@
 # one port (this is called the "Single HTTP Frontend") and means you just need
 # one open port in the container/firewalls/etc.
 #
-# Listen on all addresses available, port 1337
+# Listen on all addresses available, port 1337.
+# If the PORT environment variable is set, it overrides this port (host is kept).
 listenAddressSingleHTTPFrontend: 0.0.0.0:1337
 
 # Choose from INFO (default), WARN and DEBUG
@@ -352,8 +353,10 @@ actionGroups:
 #
 # Docs: https://docs.olivetin.app/dashboards/intro.html
 dashboards:
-  # Top level items are dashboards.
+  # Top level items are dashboards. Optional `category` groups them under
+  # collapsible headings in the sidebar (same label = same group).
   - title: My Servers
+    category: Infrastructure
     contents:
       - title: All Servers
         type: fieldset
@@ -399,8 +402,10 @@ dashboards:
             contents:
               - title: '{{ server.name }} Print server name'
 
-  # This is the second dashboard.
+  # Second dashboard — same category as My Servers, so both appear under
+  # "Infrastructure" in the sidebar.
   - title: My Containers
+    category: Infrastructure
     contents:
       - title: 'Container {{ .CurrentEntity.Names }} ({{ .CurrentEntity.Image }})'
         entity: container

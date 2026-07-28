@@ -5,6 +5,7 @@ translations:
   nav.logs: Protokolle
   nav.entities: Entitäten
   nav.diagnostics: Diagnostik
+  nav.system: System
   connected: Verbunden
   disconnected: Getrennt
   reconnecting: Verbinde erneut…

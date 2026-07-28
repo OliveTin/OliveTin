@@ -5,6 +5,7 @@ translations:
   nav.logs: Registri
   nav.entities: Entità
   nav.diagnostics: Diagnostica
+  nav.system: Sistema
   docs: Documentazione
   connected: Connesso
   disconnected: Disconnesso

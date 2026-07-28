@@ -5,6 +5,7 @@ translations:
   nav.logs: 日志
   nav.entities: 实体
   nav.diagnostics: 诊断
+  nav.system: 系统
   connected: 已连接
   disconnected: 已断开连接
   reconnecting: 正在重新连接…
