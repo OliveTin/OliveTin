@@ -342,7 +342,18 @@ type UserInfo struct {
 func getUserInfo(cfg *config.Config, client *http.Client, provider *config.OAuth2Provider) *UserInfo {
 	ret := &UserInfo{}
 
-	res, err := client.Get(provider.WhoamiUrl)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, "GET", provider.WhoamiUrl, nil)
+
+	if err != nil {
+		log.Error("Could not construct user data request", err)
+		return ret
+	}
+
+	res, err := http.DefaultClient.Do(req)
 
 	if err != nil {
 		log.Errorf("Failed to get user data: %v", err)

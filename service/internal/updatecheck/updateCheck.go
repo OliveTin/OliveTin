@@ -1,6 +1,7 @@
 package updatecheck
 
 import (
+	"context"
 	"encoding/json"
 	"github.com/Masterminds/semver"
 	config "github.com/OliveTin/OliveTin/internal/config"
@@ -10,6 +11,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"time"
 )
 
 type versionMapType struct {
@@ -84,7 +86,11 @@ func parseIfVersionIsLater(currentString string, latestString string) string {
 }
 
 func doRequest() string {
-	req, err := http.NewRequest("GET", "http://update-check.olivetin.app/versions.json", nil)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, "GET", "http://update-check.olivetin.app/versions.json", nil)
 
 	if err != nil {
 		log.Errorf("Update check failed %v", err)

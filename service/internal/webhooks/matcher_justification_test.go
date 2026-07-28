@@ -12,7 +12,7 @@ import (
 
 func TestExtractJustificationFromWebhookBody(t *testing.T) {
 	body := []byte(`{"message":"deploy production","repo":"my-app"}`)
-	req, err := http.NewRequest(http.MethodPost, "/webhooks/deploy", nil)
+	req, err := http.NewRequestWithContext(t.Context(), http.MethodPost, "/webhooks/deploy", nil)
 	require.NoError(t, err)
 
 	matcher := NewWebhookMatcher(config.WebhookConfig{
@@ -25,7 +25,7 @@ func TestExtractJustificationFromWebhookBody(t *testing.T) {
 }
 
 func TestExtractJustificationEmptyWhenNotConfigured(t *testing.T) {
-	req, err := http.NewRequest(http.MethodPost, "/webhooks/deploy", nil)
+	req, err := http.NewRequestWithContext(t.Context(), http.MethodPost, "/webhooks/deploy", nil)
 	require.NoError(t, err)
 
 	matcher := NewWebhookMatcher(config.WebhookConfig{}, req, []byte(`{}`))

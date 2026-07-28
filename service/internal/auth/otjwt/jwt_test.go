@@ -132,7 +132,14 @@ func testJwkValidationWithAudience(t *testing.T, expire int64, expectCode int, c
 	defer srv.Close()
 
 	res := makeJWTRequest(t, srv, tokenStr)
+
 	verifyJWTResponse(t, res, expectCode)
+
+	err := res.Body.Close()
+
+	if err != nil {
+		t.Error("Could not close response body", err)
+	}
 }
 
 func TestJWTSignatureVerificationSucceeds(t *testing.T) {
@@ -167,7 +174,7 @@ func createJWTTokenWithGroups(t *testing.T, privateKey *rsa.PrivateKey, groups i
 }
 
 func makeJWTRequest(t *testing.T, srv *httptest.Server, tokenStr string) *http.Response {
-	req, err := http.NewRequest("GET", srv.URL, nil)
+	req, err := http.NewRequestWithContext(t.Context(), "GET", srv.URL, nil)
 	if err != nil {
 		t.Fatalf("failed to create request: %v", err)
 	}
@@ -177,6 +184,7 @@ func makeJWTRequest(t *testing.T, srv *httptest.Server, tokenStr string) *http.R
 	if err != nil {
 		t.Fatalf("Client err: %+v", err)
 	}
+
 	return res
 }
 

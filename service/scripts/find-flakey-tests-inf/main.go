@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -323,7 +324,11 @@ func finishTestCommand(cmd *exec.Cmd, state *testRunState) (int, runSummary, []t
 }
 
 func runTestsOnce(rootDir string) (int, runSummary, []testFailure, error) {
-	cmd := exec.Command("go", "test", "./...", "-count=1", "-json")
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+
+	defer cancel()
+
+	cmd := exec.CommandContext(ctx, "go", "test", "./...", "-count=1", "-json")
 	cmd.Dir = rootDir
 
 	stdout, err := cmd.StdoutPipe()

@@ -56,7 +56,7 @@ func TestHandleOAuthLoginRejectsWhenStateMapFull(t *testing.T) {
 		}
 	}
 
-	req := httptest.NewRequest(http.MethodGet, "/oauth/login?provider=test", nil)
+	req := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/oauth/login?provider=test", nil)
 	rec := httptest.NewRecorder()
 
 	h.HandleOAuthLogin(rec, req)
