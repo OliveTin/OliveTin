@@ -15,8 +15,8 @@ actions:
 
 When running shellAfterCompleted, you *cannot* use user-defined argument values - they are not passed to the command. However the following special arguments are defined;
 
-* `{{ exitCode }}` / `{{ .Arguments.exitCode }}` - The exit code of the previous command. OliveTin rewrites these placeholders to the quoted `"$EXITCODE"` environment reference when running `shellAfterCompleted`, so shell metacharacters in the value cannot break quoting.
-* `{{ output }}` / `{{ .Arguments.output }}` - The standard output of the previous command. OliveTin rewrites these placeholders to the quoted `"$OUTPUT"` environment reference, so shell metacharacters in command output cannot be executed. You can also reference `$OUTPUT` directly in your `shellAfterCompleted` command. Do not place these placeholders inside single-quoted shell arguments; single quotes prevent `$OUTPUT` and `$EXITCODE` from expanding after substitution.
+* `{{ exitCode }}` / `{{ .Arguments.exitCode }}` - The exit code of the previous command. OliveTin rewrites these placeholders to the quoted `"$EXITCODE"` environment reference when running `shellAfterCompleted`, so shell metacharacters in the value cannot break quoting. Placeholders inside single-quoted shell arguments are rewritten so the environment reference can still expand.
+* `{{ output }}` / `{{ .Arguments.output }}` - The standard output of the previous command. OliveTin rewrites these placeholders to the quoted `"$OUTPUT"` environment reference, so shell metacharacters in command output cannot be executed. You can also reference `$OUTPUT` directly in your `shellAfterCompleted` command. Placeholders inside single-quoted shell arguments are rewritten so the environment reference can still expand.
 * `{{ .Arguments.ot_executionTrackingId }}` - The unique execution tracking id for this execution (version 3k; in 2k use `{{ ot_executionTrackingId }}`)
 * `{{ .Arguments.ot_username }}` - The username of the user who started the execution (version 3k; in 2k use `{{ ot_username }}`). May be `guest` or `cron` for unauthenticated or automated runs.
 

@@ -43,7 +43,6 @@ type oliveTinAPI struct {
 	streamingClientsMutex sync.RWMutex
 }
 
-// Caps concurrent EventStream connections to limit memory/FD/goroutine exhaustion.
 const maxEventStreamClients = 16
 
 var errEventStreamClientLimit = errors.New("too many concurrent event stream clients")
@@ -1360,8 +1359,8 @@ func (api *oliveTinAPI) addCustomDashboardEntries(entries *[]*apiv1.RootDashboar
 	for _, dashboard := range dashboards {
 		// We have to build the dashboard response instead of just looping over config.dashboards,
 		// because we need to check if the user has access to the dashboard
-		db := renderDashboard(rr, dashboard.Title)
-		if db != nil {
+		renderedDashboard := renderDashboard(rr, dashboard.Title)
+		if renderedDashboard != nil {
 			*entries = append(*entries, &apiv1.RootDashboard{
 				Title:    dashboard.Title,
 				Category: dashboard.Category,

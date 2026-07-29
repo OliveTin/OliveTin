@@ -358,7 +358,7 @@ func TestArgumentNotProvided(t *testing.T) {
 	out, err := parseActionArguments(req)
 
 	assert.Empty(t, out)
-	assert.Equal(t, "required arg not provided: personName", err.Error())
+	require.EqualError(t, err, "required arg not provided: personName")
 }
 
 func TestExecArrayParsing(t *testing.T) {

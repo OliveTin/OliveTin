@@ -17,6 +17,7 @@ import (
 	config "github.com/OliveTin/OliveTin/internal/config"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func generateRSAKeyPair(t *testing.T) (*rsa.PrivateKey, []byte) {
@@ -116,7 +117,8 @@ func verifyJWTResponse(t *testing.T, res *http.Response, expectCode int) {
 
 	defer func() { _ = res.Body.Close() }()
 	assert.Equal(t, expectCode, res.StatusCode)
-	body, _ := io.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
+	require.NoError(t, err, "reading JWT response body")
 	t.Logf("Response body: %s", string(body))
 }
 
@@ -145,15 +147,9 @@ func testJwkValidationWithAudience(t *testing.T, expire int64, expectCode int, c
 	srv := httptest.NewServer(handler)
 	defer srv.Close()
 
-	res := makeJWTRequest(t, srv, tokenStr)
+	res := makeJWTRequest(t, srv, tokenStr) //nolint:bodyclose // closed by verifyJWTResponse
 
 	verifyJWTResponse(t, res, expectCode)
-
-	err := res.Body.Close()
-
-	if err != nil {
-		t.Error("Could not close response body", err)
-	}
 }
 
 func TestJWTSignatureVerificationSucceeds(t *testing.T) {
@@ -238,10 +234,6 @@ func TestJWTHeader(t *testing.T) {
 	srv := httptest.NewServer(mux)
 	defer srv.Close()
 
-	res := makeJWTRequest(t, srv, tokenStr)
-	defer func() { _ = res.Body.Close() }()
-
-	assert.Equal(t, http.StatusOK, res.StatusCode)
-	body, _ := io.ReadAll(res.Body)
-	t.Logf("Response body: %s", string(body))
+	res := makeJWTRequest(t, srv, tokenStr) //nolint:bodyclose // closed by verifyJWTResponse
+	verifyJWTResponse(t, res, http.StatusOK)
 }

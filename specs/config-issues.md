@@ -8,7 +8,7 @@ Operators should see configuration problems in Diagnostics instead of only in se
 
 ## When issues are rebuilt
 
-The issue list is cleared and rebuilt when the action map is rebuilt. That happens after configuration load or reload, and after entity data changes. Some load-time findings that cannot be re-derived after decode (for example unset environment variables already expanded away) are kept across rebuilds until the next configuration load begins.
+The issue list is cleared and rebuilt when configuration is loaded or reloaded, and when entity data changes. Some findings that can only be detected while configuration is first being loaded (for example references to unset environment variables that are expanded away during that load) are kept across later rebuilds until the next configuration load begins.
 
 ## What is collected
 
@@ -16,7 +16,7 @@ Issues include:
 
 - Unknown or unenforced action group references
 - Checklist arguments with missing or invalid choice templates
-- Arguments whose type was left unset (defaulted to ascii)
+- Arguments whose type was left unset (defaulted to a generic text type)
 - Unset environment variables referenced from configuration
 - Missing or invalid include directories
 - Argument default or choice templates that fail to parse
@@ -29,7 +29,7 @@ Issues include:
 
 Each issue has a severity of warning or error, a stable code, a human-readable message, and optional context such as action title, argument name, configuration source file, or detail value.
 
-When the issue list is rebuilt, OliveTin logs only newly appeared issues so startup does not repeat the same warning for every action-map rebuild.
+When the issue list is rebuilt, OliveTin logs only newly appeared issues so startup does not repeat the same warning for every rebuild.
 
 When configuration is loaded from a base file and an include directory, OliveTin records which file defined each action and entity declaration. That path is shown as the configuration source file when available. Some issues (for example unset environment variables) may not have a specific file. Entity data file problems also show the entity data path in the detail column.
 
@@ -45,6 +45,6 @@ Users who are not allowed to view Diagnostics cannot retrieve the issue list.
 
 When Diagnostics is visible and at least one configuration issue exists that the user is allowed to see, the Diagnostics navigation link shows a count badge with the number of those issues. The badge clears when the visible issue count becomes zero after a configuration or entity refresh.
 
-## Init count
+## Startup count
 
-The Init response includes the configuration issue count for users who may view Diagnostics, using the same per-user filtering as the Diagnostics list. For other users the count is zero.
+When the web UI starts, users who may view Diagnostics receive the same filtered configuration issue count used for the Diagnostics list and navigation badge. For other users the count is zero.

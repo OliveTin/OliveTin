@@ -28,7 +28,7 @@ When building the sidebar:
 3. Within a category, dashboards keep the order they appear in the configuration among visible dashboards in that category.
 4. After all dashboard links, a **System** category lists Entities, Logs, and Diagnostics (each only when the user is allowed to see that item). If none of those links are visible, the System category is omitted.
 
-The default Actions dashboard, when present, is uncategorized unless configuration gives it a category (it is not a configured root entry, so it stays uncategorized).
+The default Actions dashboard, when present, is always uncategorized.
 
 ## 4. Navigation style
 

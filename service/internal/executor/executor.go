@@ -49,8 +49,6 @@ type ActionBinding struct {
 	ConfigOrder  int
 }
 
-// Executor represents a helper class for executing commands. It's main method
-// is ExecRequest
 type Executor struct {
 	logs                  map[string]*InternalLogEntry
 	LogsByBindingId       map[string][]*InternalLogEntry
@@ -1282,10 +1280,73 @@ var (
 )
 
 func substituteShellAfterCompletedEnvRefs(command string) string {
-	// $$ is required: regexp replacements treat $ as submatch expansion.
-	command = shellAfterOutputRef.ReplaceAllString(command, `"$$OUTPUT"`)
-	command = shellAfterExitCodeRef.ReplaceAllString(command, `"$$EXITCODE"`)
+	command = replaceShellAfterEnvRef(command, shellAfterOutputRef, "$OUTPUT")
+	command = replaceShellAfterEnvRef(command, shellAfterExitCodeRef, "$EXITCODE")
 	return command
+}
+
+func replaceShellAfterEnvRef(command string, pattern *regexp.Regexp, envRef string) string {
+	matches := pattern.FindAllStringIndex(command, -1)
+	for i := len(matches) - 1; i >= 0; i-- {
+		start, end := matches[i][0], matches[i][1]
+		replacement := `"` + envRef + `"`
+		if shellPosInsideSingleQuotes(command, start) {
+			// Break out of single quotes so the env ref can expand at runtime.
+			replacement = `'` + replacement + `'`
+		}
+		command = command[:start] + replacement + command[end:]
+	}
+	return command
+}
+
+func shellPosInsideSingleQuotes(command string, pos int) bool {
+	inSingle := false
+	inDouble := false
+	i := 0
+
+	for i < pos {
+		inSingle, inDouble, i = advanceShellQuoteState(command, i, pos, inSingle, inDouble)
+	}
+
+	return inSingle
+}
+
+func advanceShellQuoteState(command string, i, pos int, inSingle, inDouble bool) (bool, bool, int) {
+	if inSingle {
+		return advanceInsideSingleQuote(command, i, inSingle, inDouble)
+	}
+	if inDouble {
+		return advanceInsideDoubleQuote(command, i, pos, inSingle, inDouble)
+	}
+	return advanceOutsideQuotes(command, i, inSingle, inDouble)
+}
+
+func advanceInsideSingleQuote(command string, i int, inSingle, inDouble bool) (bool, bool, int) {
+	if command[i] == '\'' {
+		return false, inDouble, i + 1
+	}
+	return inSingle, inDouble, i + 1
+}
+
+func advanceInsideDoubleQuote(command string, i, pos int, inSingle, inDouble bool) (bool, bool, int) {
+	if command[i] == '\\' && i+1 < pos {
+		return inSingle, inDouble, i + 2
+	}
+	if command[i] == '"' {
+		return inSingle, false, i + 1
+	}
+	return inSingle, inDouble, i + 1
+}
+
+func advanceOutsideQuotes(command string, i int, inSingle, inDouble bool) (bool, bool, int) {
+	switch command[i] {
+	case '\'':
+		return true, inDouble, i + 1
+	case '"':
+		return inSingle, true, i + 1
+	default:
+		return inSingle, inDouble, i + 1
+	}
 }
 
 // shellAfterTemplateArgs omits output/exitCode so templates cannot expand them

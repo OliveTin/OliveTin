@@ -53,7 +53,17 @@ linters:
       - path: scripts/
         linters:
           - gosec
-      - path: cmd/
+      # Local config-tool CLI: operator-supplied path and 0644 config backups.
+      - path: cmd/config-tool/main\.go
+        text: "G304:"
+        linters:
+          - gosec
+      - path: cmd/config-tool/main\.go
+        text: "G306:"
+        linters:
+          - gosec
+      - path: cmd/config-tool/main\.go
+        text: "G703:"
         linters:
           - gosec
 
@@ -102,11 +112,33 @@ linters:
           - gosec
 
       # Secure is set dynamically from TLS / ForceSecureCookies; gosec wants a literal true.
-      - text: "G124:"
+      - path: internal/api/api\.go
+        text: "G124:"
+        linters:
+          - gosec
+      - path: internal/auth/otoauth2/
+        text: "G124:"
         linters:
           - gosec
 
-      # Protobuf / process exit codes mapped into int32 fields.
-      - text: "G115:"
+      # Protobuf / process exit codes and collection sizes mapped into int32 fields.
+      - path: internal/api/apiActions\.go
+        text: "G115:"
+        linters:
+          - gosec
+      - path: internal/api/api_entities_list\.go
+        text: "G115:"
+        linters:
+          - gosec
+      - path: internal/api/api_queue\.go
+        text: "G115:"
+        linters:
+          - gosec
+      - path: internal/api/config_issues\.go
+        text: "G115:"
+        linters:
+          - gosec
+      - path: internal/executor/executor\.go
+        text: "G115:"
         linters:
           - gosec

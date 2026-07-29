@@ -138,11 +138,11 @@ func TestGetEntities(t *testing.T) {
 	resp, err := client.GetEntities(context.Background(), connect.NewRequest(&apiv1.GetEntitiesRequest{}))
 
 	require.NoError(t, err, "GetEntities should not return an error")
-	assert.NotNil(t, resp, "GetEntities response should not be nil")
-	assert.NotNil(t, resp.Msg, "GetEntities response message should not be nil")
+	require.NotNil(t, resp, "GetEntities response should not be nil")
+	require.NotNil(t, resp.Msg, "GetEntities response message should not be nil")
 
 	entityDefinitions := resp.Msg.EntityDefinitions
-	assert.Len(t, entityDefinitions, 3, "Should return 3 entity definitions")
+	require.Len(t, entityDefinitions, 3, "Should return 3 entity definitions")
 
 	validateEntityOrderAndStructure(t, entityDefinitions)
 	validateNoDuplicates(t, entityDefinitions)
@@ -189,6 +189,8 @@ func setupTestEntities() {
 func validateEntityOrderAndStructure(t *testing.T, entityDefinitions []*apiv1.EntityDefinition) {
 	t.Helper()
 
+	require.GreaterOrEqual(t, len(entityDefinitions), 3, "Need at least three entity definitions before indexing")
+
 	assert.Equal(t, "application", entityDefinitions[0].Title, "First entity should be 'application' (alphabetically first)")
 	assert.Len(t, entityDefinitions[0].Instances, 1, "Application should have 1 instance")
 	assert.Equal(t, "webapp", entityDefinitions[0].Instances[0].UniqueKey, "Application instance should be 'webapp'")
@@ -221,11 +223,12 @@ func validateConsistency(t *testing.T, client apiv1connect.OliveTinApiServiceCli
 
 	resp2, err2 := client.GetEntities(context.Background(), connect.NewRequest(&apiv1.GetEntitiesRequest{}))
 	require.NoError(t, err2, "Second GetEntities call should not return an error")
-	assert.Len(t, entityDefinitions, len(resp2.Msg.EntityDefinitions), "Second call should return same number of entity definitions")
+	require.NotNil(t, resp2.Msg)
+	require.Len(t, resp2.Msg.EntityDefinitions, len(entityDefinitions), "Second call should return same number of entity definitions")
 
 	for i, def := range entityDefinitions {
 		assert.Equal(t, def.Title, resp2.Msg.EntityDefinitions[i].Title, "Entity order should be consistent across calls")
-		assert.Len(t, def.Instances, len(resp2.Msg.EntityDefinitions[i].Instances), "Instance count should be consistent")
+		require.Len(t, resp2.Msg.EntityDefinitions[i].Instances, len(def.Instances), "Instance count should be consistent")
 		for j, inst := range def.Instances {
 			assert.Equal(t, inst.UniqueKey, resp2.Msg.EntityDefinitions[i].Instances[j].UniqueKey, "Instance order should be consistent across calls")
 		}

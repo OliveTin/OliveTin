@@ -449,6 +449,45 @@ func TestShellAfterCompletedUsesOutputEnvSafely(t *testing.T) {
 	assert.True(t, os.IsNotExist(err), "shellAfterCompleted must not execute injected commands from output")
 }
 
+func TestShellAfterCompletedExpandsQuotedPlaceholders(t *testing.T) {
+	cases := []struct {
+		name string
+		sac  string
+	}{
+		{"legacy single-quoted", `printf '%s' '{{ output }}'`},
+		{"modern single-quoted", `printf '%s' '{{ .Arguments.output }}'`},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := config.DefaultConfig()
+			executor := DefaultExecutor(cfg)
+			mainOutput := "quoted-output-ok"
+
+			action := &config.Action{
+				Title:               "sac-quoted-" + tc.name,
+				Shell:               "printf %s \"" + mainOutput + "\"",
+				ShellAfterCompleted: tc.sac,
+			}
+			cfg.Actions = append(cfg.Actions, action)
+			cfg.Sanitize()
+			executor.RebuildActionMap()
+
+			req := ExecutionRequest{
+				AuthenticatedUser: auth.UserFromSystem(cfg, "cron"),
+				Cfg:               cfg,
+				Binding:           executor.FindBindingWithNoEntity(action),
+			}
+			wg, _ := executor.ExecRequest(&req)
+			wg.Wait()
+
+			require.NotNil(t, req.logEntry)
+			assert.Equal(t, int32(0), req.logEntry.ExitCode)
+			assert.Contains(t, req.logEntry.Output, "OliveTin::shellAfterCompleted stdout\n"+mainOutput)
+		})
+	}
+}
+
 func TestShellAfterCompletedBlocksArgumentsOutputInjection(t *testing.T) {
 	payload := func(injectedPath string) string {
 		return "x; touch " + injectedPath + "; #"
@@ -469,25 +508,25 @@ func TestShellAfterCompletedBlocksArgumentsOutputInjection(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			cfg := config.DefaultConfig()
-			e := DefaultExecutor(cfg)
+			executor := DefaultExecutor(cfg)
 			injectedPath := filepath.Join(t.TempDir(), "injected")
 			mainPayload := payload(injectedPath)
 
-			a1 := &config.Action{
+			action := &config.Action{
 				Title:               "sac-injection-" + tc.name,
 				Shell:               "printf %s \"" + mainPayload + "\"",
 				ShellAfterCompleted: tc.sac,
 			}
-			cfg.Actions = append(cfg.Actions, a1)
+			cfg.Actions = append(cfg.Actions, action)
 			cfg.Sanitize()
-			e.RebuildActionMap()
+			executor.RebuildActionMap()
 
 			req := ExecutionRequest{
 				AuthenticatedUser: auth.UserFromSystem(cfg, "cron"),
 				Cfg:               cfg,
-				Binding:           e.FindBindingWithNoEntity(a1),
+				Binding:           executor.FindBindingWithNoEntity(action),
 			}
-			wg, _ := e.ExecRequest(&req)
+			wg, _ := executor.ExecRequest(&req)
 			wg.Wait()
 
 			_, err := os.Stat(injectedPath)
@@ -509,6 +548,10 @@ func TestSubstituteShellAfterCompletedEnvRefs(t *testing.T) {
 		{`echo {{ exitCode }}`, `echo "$EXITCODE"`},
 		{`echo {{ .Arguments.exitCode }}`, `echo "$EXITCODE"`},
 		{`echo {{  .Arguments.exitCode  }}`, `echo "$EXITCODE"`},
+		{`printf '%s' '{{ output }}'`, `printf '%s' ''"$OUTPUT"''`},
+		{`printf '%s' '{{ .Arguments.output }}'`, `printf '%s' ''"$OUTPUT"''`},
+		{`printf '%s' '{{ exitCode }}'`, `printf '%s' ''"$EXITCODE"''`},
+		{`printf '%s' '{{ .Arguments.exitCode }}'`, `printf '%s' ''"$EXITCODE"''`},
 	}
 
 	for _, tc := range cases {

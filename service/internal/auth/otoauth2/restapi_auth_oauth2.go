@@ -353,7 +353,7 @@ func getUserInfo(cfg *config.Config, client *http.Client, provider *config.OAuth
 		return ret
 	}
 
-	res, err := http.DefaultClient.Do(req)
+	res, err := client.Do(req)
 
 	if err != nil {
 		log.Errorf("Failed to get user data: %v", err)

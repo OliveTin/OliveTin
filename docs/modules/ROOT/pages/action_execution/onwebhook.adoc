@@ -81,9 +81,11 @@ actions:
       - matchQuery:
           action: deploy
           env: production
+        extract:
+          service: "$.service"
 ----
 
-A request to `/webhooks?action=deploy&env=production` would match this action.
+A request to `/webhooks?action=deploy&env=production` with a JSON body containing `"service"` would match this action and pass that field into the `service` argument.
 
 === Match by JSON Body Path
 
@@ -101,6 +103,8 @@ actions:
         type: ascii
     execOnWebhook:
       - matchPath: "$.event_type=push"
+        extract:
+          branch: "$.branch"
 ----
 
 The `matchPath` format is `jsonpath=value`. You can also just specify a JSONPath without a value to match if the path exists:
@@ -190,7 +194,7 @@ actions:
   - title: Log Request
     exec:
       - echo
-      - "Request ID: {{ webhook_header_x-request-id }}"
+      - 'Request ID: {{ index .Arguments "webhook_header_x-request-id" }}'
     arguments:
       - name: webhook_header_x-request-id
         type: ascii
@@ -198,6 +202,8 @@ actions:
       - matchHeaders:
           X-Event-Type: log
 ----
+
+Header names that contain hyphens become argument keys with the same hyphens (for example `webhook_header_x-request-id`). Use the `index` map-lookup form shown above, because Go templates treat hyphens in bare identifiers as subtraction.
 
 == Webhook Authentication
 
