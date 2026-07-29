@@ -74,7 +74,7 @@ actions:
     icon: backup
     onclick: execution-dialog
     # https://docs.olivetin.app/action_execution/oncalendar.html
-    execOnCalendarFile: examples/demo-olivetin-calendar.yaml
+    # execOnCalendarFile: examples/demo-olivetin-calendar.yaml
 
   - title: Verify backup archive
     shell: sleep 3 && echo "Backup archive verified"
@@ -146,7 +146,7 @@ actions:
         title: Are you sure?!
 
   # Checklist arguments let users pick multiple predefined options. Selected
-  # values are passed to the action as a comma-separated string.
+  # values are passed to the action as a JSON array string.
   #
   # Docs: https://docs.olivetin.app/args/input_checklist.html
   - title: Backup selected directories
@@ -166,7 +166,7 @@ actions:
             value: music
           - title: Videos
             value: videos
-        default: documents,photos
+        default: '["documents","photos"]'
 
   # This is an action that runs a script included with OliveTin, that will
   # download themes. You will still need to set theme "themeName" in your config.
@@ -263,8 +263,8 @@ actions:
     icon: ping
     # https://docs.olivetin.app/action_execution/onfilecreated.html
     # mkdir -p /tmp/olivetin-demo-file-created
-    execOnFileCreatedInDir:
-      - /tmp/olivetin-demo-file-created
+    # execOnFileCreatedInDir:
+    #   - /tmp/olivetin-demo-file-created
 
   - title: Start {{ .CurrentEntity.Names }}
     icon: box
