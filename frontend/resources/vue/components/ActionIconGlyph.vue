@@ -7,10 +7,12 @@
       height="1em"
       class="action-icon-glyph-svg"
     />
+    <!-- eslint-disable vue/no-v-html -- intentional: action icons may use HTML / custom-webui <img> -->
     <span
       v-else-if="decodedTextGlyphIsHtml"
       v-html="decodedTextGlyph"
     />
+    <!-- eslint-enable vue/no-v-html -->
     <span
       v-else
       v-text="decodedTextGlyph"

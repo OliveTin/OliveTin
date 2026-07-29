@@ -158,7 +158,7 @@ func configPathExists(configPath string) bool {
 }
 
 func watchConfigFile(k *koanf.Koanf, f *file.File, configPath string) {
-	err := f.Watch(func(evt interface{}, err error) {
+	err := f.Watch(func(evt any, err error) {
 		log.Infof("config file changed: %v", evt)
 
 		errLoad := k.Load(f, yaml.Parser())

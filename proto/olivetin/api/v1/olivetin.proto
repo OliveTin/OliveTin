@@ -425,6 +425,12 @@ message InitResponse {
 	repeated string available_themes = 24; // List of available theme names
 	bool show_navigate_on_start_icons = 25;
 	int32 config_issue_count = 26;
+	repeated RootDashboard root_dashboard_entries = 27;
+}
+
+message RootDashboard {
+	string title = 1;
+	string category = 2;
 }
 
 message AdditionalLink {

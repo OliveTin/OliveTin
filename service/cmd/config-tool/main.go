@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -98,18 +99,18 @@ func userDisplayName(username string, index int) string {
 	return username
 }
 
-func copyUserMapWithPassword(userMap map[string]interface{}, hashedPassword string) map[string]interface{} {
-	newUserMap := make(map[string]interface{}, len(userMap)+1)
-	for key, value := range userMap {
-		newUserMap[key] = value
-	}
+func copyUserMapWithPassword(userMap map[string]any, hashedPassword string) map[string]any {
+	newUserMap := make(map[string]any, len(userMap)+1)
+
+	maps.Copy(newUserMap, userMap)
+
 	newUserMap["password"] = hashedPassword
 
 	return newUserMap
 }
 
-func resetPasswordInUserMap(userValue interface{}, index int, hashedPassword string) interface{} {
-	userMap, ok := userValue.(map[string]interface{})
+func resetPasswordInUserMap(userValue any, index int, hashedPassword string) any {
+	userMap, ok := userValue.(map[string]any)
 	if !ok {
 		log.Warnf("User entry at index %d is not a map, skipping", index)
 		return userValue
@@ -122,8 +123,8 @@ func resetPasswordInUserMap(userValue interface{}, index int, hashedPassword str
 	return copyUserMapWithPassword(userMap, hashedPassword)
 }
 
-func resetPasswordsFromSlice(k *koanf.Koanf, usersSliceTyped []interface{}, hashedPassword string) {
-	newUsersSlice := make([]interface{}, len(usersSliceTyped))
+func resetPasswordsFromSlice(k *koanf.Koanf, usersSliceTyped []any, hashedPassword string) {
+	newUsersSlice := make([]any, len(usersSliceTyped))
 	for index, userValue := range usersSliceTyped {
 		newUsersSlice[index] = resetPasswordInUserMap(userValue, index, hashedPassword)
 	}
@@ -155,7 +156,7 @@ func hasLocalUsers(cfg *config.Config) bool {
 }
 
 func applyPasswordResets(k *koanf.Koanf, cfg *config.Config, hashedPassword string) {
-	usersSliceTyped, ok := k.Get("authLocalUsers.users").([]interface{})
+	usersSliceTyped, ok := k.Get("authLocalUsers.users").([]any)
 	if ok && len(usersSliceTyped) > 0 {
 		resetPasswordsFromSlice(k, usersSliceTyped, hashedPassword)
 		return

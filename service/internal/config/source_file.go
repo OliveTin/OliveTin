@@ -15,7 +15,7 @@ func stampSourceOnMaps(raw any, sourceFile string) any {
 		return raw
 	}
 
-	items, ok := raw.([]interface{})
+	items, ok := raw.([]any)
 	if !ok {
 		return raw
 	}
@@ -27,7 +27,7 @@ func stampSourceOnMaps(raw any, sourceFile string) any {
 }
 
 func stampSourceOnMap(item any, sourceFile string) {
-	m, ok := item.(map[string]interface{})
+	m, ok := item.(map[string]any)
 	if !ok {
 		return
 	}
@@ -74,7 +74,7 @@ func sourcePathAt(paths []string, index int) string {
 }
 
 func stampedSourcePaths(raw any) []string {
-	items, ok := raw.([]interface{})
+	items, ok := raw.([]any)
 	if !ok {
 		return nil
 	}
@@ -87,7 +87,7 @@ func stampedSourcePaths(raw any) []string {
 }
 
 func stampedSourceFromMap(item any) string {
-	m, ok := item.(map[string]interface{})
+	m, ok := item.(map[string]any)
 	if !ok {
 		return ""
 	}

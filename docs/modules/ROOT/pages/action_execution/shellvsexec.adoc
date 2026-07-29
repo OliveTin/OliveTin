@@ -1,13 +1,25 @@
 = Shell vs Exec
 
-OliveTin supports two different methods to run commands: `shell` and `exec`. The difference between these two is that "shell" accepts strings, and will wrap that whole command in a shell with "bash -c". Exec uses a syscall directly to execute commands.
+OliveTin supports two different methods to run commands: `shell` and `exec`. The difference between these two is that "shell" accepts a single string and runs it via the system shell (`sh -c` on Unix; `cmd /C` on Windows). Exec passes an argument vector directly to the operating system without invoking a shell.
 
 * **Shell** is more flexible, because it allows you to chain commands (eg, using &&) and redirect or pipe output (eg: ">" or "|").
 * **Exec** is more secure, because it does not invoke a shell, and thus avoids shell injection attacks.
 
-Shell can be safe and secure with simple argument types (like ascii_identifier), but some argument types like URL can contain basically any character - /, :, ?, &, etc - which can lead to shell injection vulnerabilities while still being a valid URL.
+Shell can be safe and secure with simple argument types (like `ascii_identifier`), but some argument types like `url` can contain characters such as `/`, `:`, `?`, and `&` which can lead to shell injection vulnerabilities while still being a valid URL.
 
-OliveTin will try and prevent you from using dangerous characters in shell commands (eg, URL is no longer permitted with Shell).
+OliveTin blocks unsafe argument types from being used with `shell:` (for example `url`, `email`, `password`, `regex:...`, and raw string types). See xref:args/types.adoc#shell-blocked-arg-types[Types that cannot be used with shell]. Prefer `exec:` when in doubt.
+
+[#shell-entity-env-trust]
+== Entity and `.Env` values are not shell-sanitized
+
+User-supplied **argument** values are type-checked (and some types are blocked with `shell`) to reduce shell injection risk. That protection does **not** apply to:
+
+* Entity fields — `{{ .CurrentEntity.field }}` (and legacy forms such as `{{ server.hostname }}`)
+* Process environment — `{{ .Env.VAR_NAME }}`
+
+Those values are substituted into `shell` / `shellAfterCompleted` as-is. OliveTin assumes they are **server-controlled** (entity files and the OliveTin process environment under the operator's control). The author of the config is responsible for ensuring that data is trustworthy, or for using `exec` and careful quoting when it might not be.
+
+Webhooks cannot use `shell:` or `shellAfterCompleted`; webhook-triggered actions must use `exec:` only. See xref:action_execution/onwebhook.adoc[Execute on webhook].
 
 The way that you specify these two types of execution is different - `shell` expects a single string, while `exec` expects a list of strings (the first being the command, the rest being the arguments).
 

@@ -3,18 +3,23 @@
 
 OliveTin supports multi-line text inputs, which can be useful for longer messages or scripts. You should set your argument `type` to `raw_string_multiline` to use these.
 
-As the name implies, textareas are raw, and are NOT validated by any regex.
+As the name implies, textareas are raw, and are NOT validated by any regex. For that reason they **cannot** be used with `shell:` — use `exec:` so the value is a separate argv element.
 
 [source,yaml]
 .`config.yaml`
 ----
 actions:
   - title: Save text to file
-    shell: echo "$CONTENT" > file
+    exec:
+      - /bin/sh
+      - -c
+      - echo "$CONTENT" > file
     arguments:
       - type: raw_string_multiline
         name: content
 ----
+
+In that `exec:` example, `$CONTENT` comes from the process environment (OliveTin exports each argument as an uppercase env var), not from shell-string interpolation of the argument into `shell:`.
 
 This renders like this;
 

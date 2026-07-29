@@ -14,6 +14,7 @@ import (
 	"net/url"
 	"path"
 	"strings"
+	"time"
 
 	"github.com/OliveTin/OliveTin/internal/api"
 	"github.com/OliveTin/OliveTin/internal/auth"
@@ -153,8 +154,12 @@ func StartFrontendMux(cfg *config.Config, ex *executor.Executor) {
 	}
 
 	srv := &http.Server{
-		Addr:    cfg.ListenAddressSingleHTTPFrontend,
-		Handler: securityHeadersMiddleware(cfg, mux),
+		Addr:              cfg.ListenAddressSingleHTTPFrontend,
+		Handler:           securityHeadersMiddleware(cfg, mux),
+		ReadHeaderTimeout: 10 * time.Second,
+		ReadTimeout:       30 * time.Second,
+		IdleTimeout:       120 * time.Second,
+		// WriteTimeout intentionally unset: EventStream and StartActionAndWait need long-lived writes.
 	}
 
 	log.Fatal(srv.ListenAndServe())

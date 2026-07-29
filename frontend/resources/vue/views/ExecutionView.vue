@@ -58,7 +58,7 @@
     >
       <dl class="fg1">
         <dt>Duration</dt>
-        <dd><span v-html="duration" /></dd>
+        <dd>{{ duration }}</dd>
 
         <dt>Status</dt>
         <dd class="execution-dialog-status">
@@ -373,7 +373,7 @@ function updateDuration (logEntryParam) {
     } catch (e) {
 	  console.warn('Failed to calculate delta', e)
     }
-    duration.value = logEntry.value.datetimeStarted + ' &rarr; ' + logEntry.value.datetimeFinished
+    duration.value = logEntry.value.datetimeStarted + ' → ' + logEntry.value.datetimeFinished
     if (delta !== '') {
 	  duration.value += ' (' + delta + ')'
     }

@@ -21,7 +21,7 @@ func TestCheckUserFromLocalBearerApiKey_Match_LowercaseBearerScheme(t *testing.T
 		ApiKey:    "secret-api-key",
 	}}
 
-	req := httptest.NewRequest("POST", "/", nil)
+	req := httptest.NewRequestWithContext(t.Context(), "POST", "/", nil)
 	req.Header.Set("Authorization", "bearer secret-api-key")
 
 	ctx := &authpublic.AuthCheckingContext{Request: req, Config: cfg}
@@ -43,7 +43,7 @@ func TestCheckUserFromLocalBearerApiKey_Match(t *testing.T) {
 		ApiKey:    "secret-api-key",
 	}}
 
-	req := httptest.NewRequest("POST", "/", nil)
+	req := httptest.NewRequestWithContext(t.Context(), "POST", "/", nil)
 	req.Header.Set("Authorization", "Bearer secret-api-key")
 
 	ctx := &authpublic.AuthCheckingContext{Request: req, Config: cfg}
@@ -64,7 +64,7 @@ func TestCheckUserFromLocalBearerApiKey_WrongKey(t *testing.T) {
 		ApiKey:   "secret-api-key",
 	}}
 
-	req := httptest.NewRequest("POST", "/", nil)
+	req := httptest.NewRequestWithContext(t.Context(), "POST", "/", nil)
 	req.Header.Set("Authorization", "Bearer wrong")
 
 	ctx := &authpublic.AuthCheckingContext{Request: req, Config: cfg}
@@ -81,7 +81,7 @@ func TestCheckUserFromLocalBearerApiKey_DisabledLocalUsers(t *testing.T) {
 		ApiKey:   "secret-api-key",
 	}}
 
-	req := httptest.NewRequest("POST", "/", nil)
+	req := httptest.NewRequestWithContext(t.Context(), "POST", "/", nil)
 	req.Header.Set("Authorization", "Bearer secret-api-key")
 
 	ctx := &authpublic.AuthCheckingContext{Request: req, Config: cfg}
@@ -98,7 +98,7 @@ func TestCheckUserFromLocalBearerApiKey_NoBearerPrefix(t *testing.T) {
 		ApiKey:   "secret-api-key",
 	}}
 
-	req := httptest.NewRequest("POST", "/", nil)
+	req := httptest.NewRequestWithContext(t.Context(), "POST", "/", nil)
 	req.Header.Set("Authorization", "secret-api-key")
 
 	ctx := &authpublic.AuthCheckingContext{Request: req, Config: cfg}

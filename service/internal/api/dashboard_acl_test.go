@@ -68,6 +68,61 @@ func TestDashboardAclsRootNavAndGetDashboard(t *testing.T) {
 	assert.Equal(t, "Services", db.Title)
 }
 
+func TestRootDashboardEntriesIncludeCategory(t *testing.T) {
+	cfg := config.DefaultConfig()
+	cfg.Dashboards = []*config.DashboardComponent{
+		{
+			Title:    "Misc Tools",
+			Contents: []*config.DashboardComponent{{Title: "Hello", Type: "display"}},
+		},
+		{
+			Title:    "My Servers",
+			Category: "Infrastructure",
+			Contents: []*config.DashboardComponent{{Title: "Ping", Type: "display"}},
+		},
+		{
+			Title:    "Status Board",
+			Category: "Monitoring",
+			Contents: []*config.DashboardComponent{{Title: "Uptime", Type: "display"}},
+		},
+		{
+			Title:    "My Containers",
+			Category: "Infrastructure",
+			Contents: []*config.DashboardComponent{{Title: "Restart", Type: "display"}},
+		},
+	}
+
+	ex := executor.DefaultExecutor(cfg)
+	api := newServer(ex)
+	user := &authpublic.AuthenticatedUser{Username: "guest", Provider: "system"}
+	user.BuildUserAcls(cfg)
+
+	entries := api.buildRootDashboardEntries(user, cfg.Dashboards)
+	require.Len(t, entries, 4)
+	assert.Equal(t, []string{"Misc Tools", "My Servers", "Status Board", "My Containers"}, rootDashboardTitles(entries))
+	assert.Equal(t, "", entries[0].Category)
+	assert.Equal(t, "Infrastructure", entries[1].Category)
+	assert.Equal(t, "Monitoring", entries[2].Category)
+	assert.Equal(t, "Infrastructure", entries[3].Category)
+}
+
+func TestRootDashboardEntriesOmitAclHiddenCategories(t *testing.T) {
+	cfg := buildDashboardAclTestConfig()
+	cfg.Dashboards[0].Category = "Public"
+	cfg.Dashboards[1].Category = "Admin only"
+
+	ex := executor.DefaultExecutor(cfg)
+	api := newServer(ex)
+
+	guest := &authpublic.AuthenticatedUser{Username: "guest", Provider: "system"}
+	guest.BuildUserAcls(cfg)
+
+	entries := api.buildRootDashboardEntries(guest, cfg.Dashboards)
+	require.Len(t, entries, 1)
+	assert.Equal(t, "Public tools", entries[0].Title)
+	assert.Equal(t, "Public", entries[0].Category)
+}
+
 func TestDashboardAclsNestedDirectoryDeepLink(t *testing.T) {
 	cfg := buildDashboardAclTestConfig()
 	cfg.Dashboards = []*config.DashboardComponent{

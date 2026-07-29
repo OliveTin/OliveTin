@@ -15,11 +15,14 @@ import (
 
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
+	"maps"
 	"os"
 	"os/exec"
 	"path"
 	"regexp"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -39,53 +42,44 @@ func isValidTrackingID(id string) bool {
 }
 
 type ActionBinding struct {
-	ID           string
 	Action       *config.Action
 	Entity       *entities.Entity
-	ConfigOrder  int
+	ID           string
 	OnDashboards []DashboardNavigationTarget
+	ConfigOrder  int
 }
 
-// Executor represents a helper class for executing commands. It's main method
-// is ExecRequest
 type Executor struct {
 	logs                  map[string]*InternalLogEntry
-	logsTrackingIdsByDate []string
 	LogsByBindingId       map[string][]*InternalLogEntry
-
-	logmutex sync.RWMutex
-
 	MapActionBindings     map[string]*ActionBinding
+	Cfg                   *config.Config
+	logsTrackingIdsByDate []string
+	listeners             []listener
+	chainOfCommand        []executorStepFunc
+	groupQueue            []*queuedExecution
+	logmutex              sync.RWMutex
 	MapActionBindingsLock sync.RWMutex
-
-	Cfg *config.Config
-
-	listeners   []listener
-	listenersMu sync.RWMutex
-
-	chainOfCommand []executorStepFunc
-
-	groupQueue   []*queuedExecution
-	groupQueueMu sync.Mutex
+	listenersMu           sync.RWMutex
+	groupQueueMu          sync.Mutex
 }
 
 // ExecutionRequest is a request to execute an action. It's passed to an
 // Executor. They're created from the api.
 type ExecutionRequest struct {
-	Binding           *ActionBinding
-	Arguments         map[string]string
-	TrackingID        string
-	Tags              []string
-	Cfg               *config.Config
-	AuthenticatedUser *authpublic.AuthenticatedUser
-	TriggerDepth      int
-	Justification     string
-
+	Arguments               map[string]string
+	Binding                 *ActionBinding
+	Cfg                     *config.Config
+	AuthenticatedUser       *authpublic.AuthenticatedUser
+	executor                *Executor
 	logEntry                *InternalLogEntry
 	finalParsedCommand      string
+	TrackingID              string
+	Justification           string
+	Tags                    []string
 	execArgs                []string
+	TriggerDepth            int
 	useDirectExec           bool
-	executor                *Executor
 	skipRequestRegistration bool
 }
 
@@ -103,12 +97,12 @@ func (req *ExecutionRequest) mutateLogEntry(mutator func(*InternalLogEntry)) {
 
 // LogEntrySnapshot is a copy of selected log entry fields for race-safe reads.
 type LogEntrySnapshot struct {
+	Output            string
+	ExitCode          int32
 	Queued            bool
 	Blocked           bool
 	ExecutionStarted  bool
 	ExecutionFinished bool
-	ExitCode          int32
-	Output            string
 }
 
 // SnapshotLog returns a copy of selected log entry fields under read lock.
@@ -135,34 +129,28 @@ func (e *Executor) SnapshotLog(trackingID string) (LogEntrySnapshot, bool) {
 // state of execution (even if the command is not executed). It's designed to be
 // easily serializable.
 type InternalLogEntry struct {
-	Binding             *ActionBinding
 	DatetimeStarted     time.Time
 	DatetimeFinished    time.Time
-	Output              string
-	TimedOut            bool
-	Blocked             bool
-	Queued              bool
-	QueuedForGroup      string
-	ExitCode            int32
-	Tags                []string
-	ExecutionStarted    bool
-	ExecutionFinished   bool
-	ExecutionTrackingID string
+	Binding             *ActionBinding
 	Process             *os.Process
+	Arguments           map[string]string
+	ExecutionTrackingID string
+	Justification       string
+	QueuedForGroup      string
+	ActionIcon          string
+	ActionTitle         string
+	ActionConfigTitle   string
+	Output              string
 	Username            string
-	Index               int64
 	EntityPrefix        string
-	ActionConfigTitle   string // This is the title of the action as defined in the config, not the final parsed title.
-
-	/*
-		The following 3 properties are obviously on Action normally, but it's useful
-		that logs are lightweight (so we don't need to have an action associated to
-		logs, etc. Therefore, we duplicate those values here.
-	*/
-	ActionTitle   string
-	ActionIcon    string
-	Justification string
-	Arguments     map[string]string
+	Tags                []string
+	Index               int64
+	ExitCode            int32
+	Blocked             bool
+	ExecutionFinished   bool
+	ExecutionStarted    bool
+	Queued              bool
+	TimedOut            bool
 }
 
 // .Binding can be nil, so we need to handle that.
@@ -939,12 +927,7 @@ func keepArgument(name string, definedNames map[string]struct{}) bool {
 }
 
 func hasWebhookTag(req *ExecutionRequest) bool {
-	for _, tag := range req.Tags {
-		if tag == "webhook" {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(req.Tags, "webhook")
 }
 
 var systemArgumentDefinitions = []config.ActionArgument{
@@ -958,9 +941,7 @@ func injectSystemArgs(req *ExecutionRequest) error {
 		return err
 	}
 
-	for name, value := range args {
-		req.Arguments[name] = value
-	}
+	maps.Copy(req.Arguments, args)
 
 	return nil
 }
@@ -1097,8 +1078,8 @@ func appendErrorToStderr(req *ExecutionRequest, err error) {
 
 type OutputStreamer struct {
 	Req    *ExecutionRequest
-	mu     sync.Mutex
 	output bytes.Buffer
+	mu     sync.Mutex
 }
 
 func (ost *OutputStreamer) Write(o []byte) (n int, err error) {
@@ -1186,7 +1167,7 @@ func stepExec(req *ExecutionRequest) bool {
 	appendErrorToStderr(req, runerr)
 	appendErrorToStderr(req, waiterr)
 
-	if ctx.Err() == context.DeadlineExceeded {
+	if errors.Is(ctx.Err(), context.DeadlineExceeded) {
 		log.WithFields(log.Fields{
 			"actionTitle": req.logEntry.ActionTitle,
 		}).Warnf("Action timed out")
@@ -1263,7 +1244,7 @@ func stepExecAfter(req *ExecutionRequest) bool {
 	appendErrorToStderr(req, runerr)
 	appendErrorToStderr(req, waiterr)
 
-	if ctx.Err() == context.DeadlineExceeded {
+	if errors.Is(ctx.Err(), context.DeadlineExceeded) {
 		req.mutateLogEntry(func(entry *InternalLogEntry) {
 			entry.Output += "Your shellAfterCompleted command timed out."
 		})
@@ -1290,21 +1271,95 @@ func shellAfterCompletedAction(req *ExecutionRequest) (*config.Action, bool) {
 	return req.Binding.Action, true
 }
 
+// Matches legacy and modern template forms for shellAfterCompleted output/exitCode,
+// including optional .Arguments. prefix and flexible whitespace. These must become
+// quoted env refs before template execution so command output cannot inject into sh -c.
+var (
+	shellAfterOutputRef   = regexp.MustCompile(`\{\{\s*(?:\.Arguments\.)?output\s*\}\}`)
+	shellAfterExitCodeRef = regexp.MustCompile(`\{\{\s*(?:\.Arguments\.)?exitCode\s*\}\}`)
+)
+
 func substituteShellAfterCompletedEnvRefs(command string) string {
-	replacements := []struct{ old, new string }{
-		{"{{ output }}", `"$OUTPUT"`},
-		{"{{output}}", `"$OUTPUT"`},
-		{"{{ exitCode }}", `"$EXITCODE"`},
-		{"{{exitCode}}", `"$EXITCODE"`},
-		{"{{ exitCode}}", `"$EXITCODE"`},
-		{"{{exitCode }}", `"$EXITCODE"`},
-	}
-
-	for _, replacement := range replacements {
-		command = strings.ReplaceAll(command, replacement.old, replacement.new)
-	}
-
+	command = replaceShellAfterEnvRef(command, shellAfterOutputRef, "$OUTPUT")
+	command = replaceShellAfterEnvRef(command, shellAfterExitCodeRef, "$EXITCODE")
 	return command
+}
+
+func replaceShellAfterEnvRef(command string, pattern *regexp.Regexp, envRef string) string {
+	matches := pattern.FindAllStringIndex(command, -1)
+	for i := len(matches) - 1; i >= 0; i-- {
+		start, end := matches[i][0], matches[i][1]
+		replacement := `"` + envRef + `"`
+		if shellPosInsideSingleQuotes(command, start) {
+			// Break out of single quotes so the env ref can expand at runtime.
+			replacement = `'` + replacement + `'`
+		}
+		command = command[:start] + replacement + command[end:]
+	}
+	return command
+}
+
+func shellPosInsideSingleQuotes(command string, pos int) bool {
+	inSingle := false
+	inDouble := false
+	i := 0
+
+	for i < pos {
+		inSingle, inDouble, i = advanceShellQuoteState(command, i, pos, inSingle, inDouble)
+	}
+
+	return inSingle
+}
+
+func advanceShellQuoteState(command string, i, pos int, inSingle, inDouble bool) (bool, bool, int) {
+	if inSingle {
+		return advanceInsideSingleQuote(command, i, inSingle, inDouble)
+	}
+	if inDouble {
+		return advanceInsideDoubleQuote(command, i, pos, inSingle, inDouble)
+	}
+	return advanceOutsideQuotes(command, i, inSingle, inDouble)
+}
+
+func advanceInsideSingleQuote(command string, i int, inSingle, inDouble bool) (bool, bool, int) {
+	if command[i] == '\'' {
+		return false, inDouble, i + 1
+	}
+	return inSingle, inDouble, i + 1
+}
+
+func advanceInsideDoubleQuote(command string, i, pos int, inSingle, inDouble bool) (bool, bool, int) {
+	if command[i] == '\\' && i+1 < pos {
+		return inSingle, inDouble, i + 2
+	}
+	if command[i] == '"' {
+		return inSingle, false, i + 1
+	}
+	return inSingle, inDouble, i + 1
+}
+
+func advanceOutsideQuotes(command string, i int, inSingle, inDouble bool) (bool, bool, int) {
+	switch command[i] {
+	case '\'':
+		return true, inDouble, i + 1
+	case '"':
+		return inSingle, true, i + 1
+	default:
+		return inSingle, inDouble, i + 1
+	}
+}
+
+// shellAfterTemplateArgs omits output/exitCode so templates cannot expand them
+// raw. Those values are only provided as OUTPUT/EXITCODE process environment.
+func shellAfterTemplateArgs(args map[string]string) map[string]string {
+	templateArgs := make(map[string]string, len(args))
+	for name, value := range args {
+		if name == "output" || name == "exitCode" {
+			continue
+		}
+		templateArgs[name] = value
+	}
+	return templateArgs
 }
 
 func parseShellAfterCompletedCommand(req *ExecutionRequest, commandTemplate string, args map[string]string) (string, error) {
@@ -1338,7 +1393,7 @@ func buildShellAfterCommand(ctx context.Context, req *ExecutionRequest, stdout, 
 	}
 
 	commandTemplate := substituteShellAfterCompletedEnvRefs(action.ShellAfterCompleted)
-	finalParsedCommand, err := parseShellAfterCompletedCommand(req, commandTemplate, args)
+	finalParsedCommand, err := parseShellAfterCompletedCommand(req, commandTemplate, shellAfterTemplateArgs(args))
 	if err != nil {
 		return nil, nil, err
 	}

@@ -7,17 +7,138 @@ run:
 linters:
   default: none
   enable:
+    - bidichk
+    - bodyclose
+    - copyloopvar
+    - durationcheck
     - errcheck
+    - errorlint
     - gocritic
     - gocyclo
+    - gosec
+    - govet
     - ineffassign
     - misspell
+#    - modernize
+    - nilerr
+    - noctx
+#    - promlinter
     - staticcheck
+#    - testifylint
+    - thelper
     - unconvert
+#    - unparam
     - unused
+    - usestdlibvars
   settings:
     gocyclo:
       min-complexity: 5
+    gosec:
+      # Full gosec rule set (G101–G6xx), including Slowloris checks G112/G114.
+      enable-all-rules: true
+    govet:
+      enable-all: true
   exclusions:
     paths:
       - gen
+    rules:
+      # Noise / fixtures in tests and local tooling.
+      - path: _test\.go
+        linters:
+          - gosec
+      - path: _test\.go
+        text: "fieldalignment:"
+        linters:
+          - govet
+      - path: scripts/
+        linters:
+          - gosec
+      # Local config-tool CLI: operator-supplied path and 0644 config backups.
+      - path: cmd/config-tool/main\.go
+        text: "G304:"
+        linters:
+          - gosec
+      - path: cmd/config-tool/main\.go
+        text: "G306:"
+        linters:
+          - gosec
+      - path: cmd/config-tool/main\.go
+        text: "G703:"
+        linters:
+          - gosec
+
+      # OliveTin's purpose is controlled command execution from config.
+      - path: internal/executor/
+        text: "G204:"
+        linters:
+          - gosec
+
+      # Operator-configured filesystem paths (entity files, touch/write helpers, persisted logs).
+      - path: internal/entities/
+        text: "G304:"
+        linters:
+          - gosec
+      - path: internal/filehelper/
+        text: "G304:"
+        linters:
+          - gosec
+      - path: internal/configcheck/
+        text: "G304:"
+        linters:
+          - gosec
+      - path: internal/executor/
+        text: "G304:"
+        linters:
+          - gosec
+      - path: internal/auth/otjwt/
+        text: "G304:"
+        linters:
+          - gosec
+      - path: internal/httpservers/
+        text: "G304:"
+        linters:
+          - gosec
+
+      # Legacy GitHub webhook HMAC-SHA1 is still a supported authType.
+      - path: internal/webhooks/auth\.go
+        text: "G505:"
+        linters:
+          - gosec
+
+      # InsecureSkipVerify is an explicit OAuth2 provider config option.
+      - path: internal/auth/otoauth2/
+        text: "G402:"
+        linters:
+          - gosec
+
+      # Secure is set dynamically from TLS / ForceSecureCookies; gosec wants a literal true.
+      - path: internal/api/api\.go
+        text: "G124:"
+        linters:
+          - gosec
+      - path: internal/auth/otoauth2/
+        text: "G124:"
+        linters:
+          - gosec
+
+      # Protobuf / process exit codes and collection sizes mapped into int32 fields.
+      - path: internal/api/apiActions\.go
+        text: "G115:"
+        linters:
+          - gosec
+      - path: internal/api/api_entities_list\.go
+        text: "G115:"
+        linters:
+          - gosec
+      - path: internal/api/api_queue\.go
+        text: "G115:"
+        linters:
+          - gosec
+      - path: internal/api/config_issues\.go
+        text: "G115:"
+        linters:
+          - gosec
+      - path: internal/executor/executor\.go
+        text: "G115:"
+        linters:
+          - gosec

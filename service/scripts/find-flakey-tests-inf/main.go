@@ -2,7 +2,9 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -41,20 +43,20 @@ type runSummary struct {
 }
 
 type jsonlRecord struct {
-	Run            int           `json:"run"`
 	Timestamp      string        `json:"timestamp"`
+	FailureDetails []testFailure `json:"failureDetails"`
+	Run            int           `json:"run"`
 	ExitCode       int           `json:"exitCode"`
 	DurationMs     int64         `json:"durationMs"`
 	Passes         int           `json:"passes"`
 	Failures       int           `json:"failures"`
 	Skipped        int           `json:"skipped"`
-	FailureDetails []testFailure `json:"failureDetails"`
 }
 
 type testRunState struct {
-	summary       runSummary
-	failures      []testFailure
 	failureOutput map[string]*strings.Builder
+	failures      []testFailure
+	summary       runSummary
 }
 
 func initLog() {
@@ -312,9 +314,9 @@ func scanTestEvents(stdout io.Reader, state *testRunState) error {
 
 func finishTestCommand(cmd *exec.Cmd, state *testRunState) (int, runSummary, []testFailure, error) {
 	if err := cmd.Wait(); err != nil {
-		if exitErr, ok := err.(*exec.ExitError); ok {
+		if errExit, ok := errors.AsType[*exec.ExitError](err); ok {
 			state.finalizeFailureOutputs()
-			return exitErr.ExitCode(), state.summary, state.failures, nil
+			return errExit.ExitCode(), state.summary, state.failures, nil
 		}
 		return 1, state.summary, state.failures, err
 	}
@@ -322,7 +324,11 @@ func finishTestCommand(cmd *exec.Cmd, state *testRunState) (int, runSummary, []t
 }
 
 func runTestsOnce(rootDir string) (int, runSummary, []testFailure, error) {
-	cmd := exec.Command("go", "test", "./...", "-count=1", "-json")
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+
+	defer cancel()
+
+	cmd := exec.CommandContext(ctx, "go", "test", "./...", "-count=1", "-json")
 	cmd.Dir = rootDir
 
 	stdout, err := cmd.StdoutPipe()

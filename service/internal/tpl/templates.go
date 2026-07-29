@@ -44,7 +44,7 @@ type generalTemplateContext struct {
 }
 
 type actionTemplateContext struct {
-	CurrentEntity interface{}
+	CurrentEntity any
 	Arguments     map[string]string
 
 	// These are deliberately repeated because embedding structs

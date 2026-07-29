@@ -16,7 +16,6 @@ type RuntimeInfo struct {
 	OS                   string
 	OSReleasePrettyName  string
 	Arch                 string
-	InContainer          bool
 	LastBrowserUserAgent string
 	User                 string
 	Uid                  string
@@ -25,6 +24,7 @@ type RuntimeInfo struct {
 	AvailableVersion     string
 	WebuiDirectory       string
 	ThemesDirectory      string
+	InContainer          bool
 }
 
 var Runtime = &RuntimeInfo{

@@ -38,3 +38,6 @@ jobs:
 
       - name: frontend
         run: make -wC frontend codestyle
+
+      - name: frontend unit tests
+        run: make -wC frontend unittests

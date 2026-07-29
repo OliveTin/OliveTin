@@ -22,9 +22,9 @@ import (
 
 type OAuth2Handler struct {
 	cfg                 *config.Config
-	mu                  sync.RWMutex
 	registeredStates    map[string]*oauth2State
 	registeredProviders map[string]*oauth2.Config
+	mu                  sync.RWMutex
 }
 
 func NewOAuth2Handler(cfg *config.Config) *OAuth2Handler {
@@ -58,11 +58,11 @@ func NewOAuth2Handler(cfg *config.Config) *OAuth2Handler {
 }
 
 type oauth2State struct {
+	createdAt      time.Time
 	providerConfig *oauth2.Config
 	providerName   string
 	Username       string
 	Usergroup      string
-	createdAt      time.Time
 }
 
 const (
@@ -342,7 +342,18 @@ type UserInfo struct {
 func getUserInfo(cfg *config.Config, client *http.Client, provider *config.OAuth2Provider) *UserInfo {
 	ret := &UserInfo{}
 
-	res, err := client.Get(provider.WhoamiUrl)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, provider.WhoamiUrl, nil)
+
+	if err != nil {
+		log.Error("Could not construct user data request", err)
+		return ret
+	}
+
+	res, err := client.Do(req)
 
 	if err != nil {
 		log.Errorf("Failed to get user data: %v", err)

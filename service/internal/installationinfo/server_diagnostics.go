@@ -13,8 +13,6 @@ var (
 )
 
 type serverDiagnosticsConfig struct {
-	CountOfActions                  int
-	CountOfDashboards               int
 	LogLevel                        string
 	ListenAddressSingleHTTPFrontend string
 	ListenAddressWebUI              string
@@ -23,6 +21,8 @@ type serverDiagnosticsConfig struct {
 	TimeNow                         string
 	ConfigDirectory                 string
 	WebuiDirectory                  string
+	CountOfActions                  int
+	CountOfDashboards               int
 }
 
 func configToServerDiagnostics(cfg *config.Config) *serverDiagnosticsConfig {

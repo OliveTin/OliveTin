@@ -5,6 +5,7 @@ translations:
   nav.logs: Registros
   nav.entities: Entidades
   nav.diagnostics: Diagnósticos
+  nav.system: Sistema
   connected: Conectado
   disconnected: Desconectado
   reconnecting: Reconectando…

@@ -10,7 +10,7 @@ import (
 	entities "github.com/OliveTin/OliveTin/internal/entities"
 	"github.com/OliveTin/OliveTin/internal/tpl"
 	log "github.com/sirupsen/logrus"
-	"golang.org/x/exp/slices"
+	"slices"
 )
 
 func renderDashboard(rr *DashboardRenderRequest, dashboardTitle string) *apiv1.Dashboard {

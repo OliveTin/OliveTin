@@ -10,6 +10,24 @@ Examples of valid argument names are `{{ personName }}`, `{{ customer_number }}`
 * numbers are allowed (argument names can also start with numbers)
 * all other characters are invalid for argument names.
 
+[#arg-descriptions]
+== Argument descriptions
+
+Each argument can include a `description:` shown under the field on the argument form. OliveTin renders that value as **raw HTML**, so you can use markup such as links, line breaks, or emphasis:
+
+[source,yaml]
+----
+arguments:
+  - name: host
+    title: Hostname
+    type: ascii_identifier
+    description: |
+      Enter a host OliveTin can reach.
+      See the <a href="https://example.com/docs" target="_blank" rel="noopener noreferrer">network guide</a>.
+----
+
+Treat `description` as trusted markup that you control (the same trust model as xref:dashboards/4-displays.adoc[dashboard displays]). Do not put untrusted or entity-derived strings into it without careful escaping.
+
 == What's Next?
 
 Now that you understand how arguments work, explore the different argument types and features:

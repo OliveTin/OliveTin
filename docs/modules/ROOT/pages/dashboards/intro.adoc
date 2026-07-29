@@ -82,6 +82,39 @@ dashboards:
           - title: '{{ server.name }} Power Off'
 ----
 
+[#categorize-dashboards-in-the-sidebar]
+== Categorize dashboards in the sidebar
+
+When you have several root dashboards, you can group them under collapsible category headings in the sidebar with an optional `category` field on each root dashboard:
+
+[source,yaml]
+.`config.yaml`
+----
+dashboards:
+  - title: My Servers
+    category: Infrastructure
+    contents:
+      - title: Ping All Servers
+
+  - title: My Containers
+    category: Infrastructure
+    contents:
+      - title: Restart nginx
+
+  - title: Status Board
+    category: Monitoring
+    contents:
+      - title: Show uptime
+
+  - title: Misc Tools
+    contents:
+      - title: Hello World
+----
+
+Dashboards that share the same `category` value are grouped together. Category order follows the first time each category appears in the config among dashboards the user can see. Dashboards without a `category` appear above the category sections. Nested items under `contents` do not use `category`.
+
+Categories are shown when `sectionNavigationStyle` is `sidebar` (the default). See xref:advanced_configuration/webui.adoc#section-navgiation-style[Section Navigation Style].
+
 == What's Next?
 
 Now that you understand dashboards, explore these related features:

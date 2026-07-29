@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 	"text/template"
 
@@ -179,13 +180,7 @@ func (cfg *Config) inlineActionExists(action *Action) bool {
 }
 
 func (cfg *Config) inlineActionPointerExists(action *Action) bool {
-	for _, existingAction := range cfg.Actions {
-		if existingAction == action {
-			return true
-		}
-	}
-
-	return false
+	return slices.Contains(cfg.Actions, action)
 }
 
 func (cfg *Config) inlineActionIDExists(action *Action) bool {
@@ -400,7 +395,7 @@ func expandEnvTemplate(source string) string {
 		return source
 	}
 	var b strings.Builder
-	if err := t.Execute(&b, map[string]interface{}{"Env": env.BuildEnvMap()}); err != nil {
+	if err := t.Execute(&b, map[string]any{"Env": env.BuildEnvMap()}); err != nil {
 		log.WithFields(log.Fields{"error": err}).Debug("Env template execute failed, using literal")
 		return source
 	}

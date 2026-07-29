@@ -23,6 +23,9 @@ service-codestyle:
 frontend-codestyle:
 	$(MAKE) -wC frontend codestyle
 
+frontend-unittests:
+	$(MAKE) -wC frontend unittests
+
 it:
 	$(MAKE) -wC integration-tests
 
@@ -76,4 +79,4 @@ config-tool:
 devcheck:
 	python3 scripts/devcheck.py $(ARGS)
 
-.PHONY: proto service windows-resources windows-msi devcheck
+.PHONY: proto service windows-resources windows-msi frontend-unittests devcheck

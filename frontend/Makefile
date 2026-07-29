@@ -7,6 +7,9 @@ codestyle:
 	npx eslint --fix main.js js/* resources/vue
 	npx stylelint style.css
 
+unittests: deps
+	npm test
+
 clean:
 	$(call delete-files,dist)
 
@@ -18,4 +21,4 @@ build:
 
 dist: deps clean build
 
-.PHONY: codestyle
+.PHONY: codestyle unittests

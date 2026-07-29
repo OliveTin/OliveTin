@@ -125,11 +125,11 @@ const browserInfoCopied = ref(false)
 
 const configIssueHeaders = computed(() => [
   { key: 'severity', label: t('diagnostics.config-issue-severity'), sortable: true, width: '7rem' },
+  { key: 'configFile', label: t('diagnostics.config-issue-config-file'), sortable: true, width: '14rem' },
   { key: 'code', label: t('diagnostics.config-issue-code'), sortable: true, width: '12rem' },
   { key: 'message', label: t('diagnostics.config-issue-message'), sortable: false },
   { key: 'actionTitle', label: t('diagnostics.config-issue-action'), sortable: true, width: '10rem' },
   { key: 'argumentName', label: t('diagnostics.config-issue-argument'), sortable: true, width: '8rem' },
-  { key: 'configFile', label: t('diagnostics.config-issue-config-file'), sortable: true, width: '14rem' },
   { key: 'source', label: t('diagnostics.config-issue-source'), sortable: false, width: '12rem' }
 ])
 

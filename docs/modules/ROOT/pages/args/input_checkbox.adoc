@@ -3,6 +3,8 @@
 
 The `checkbox` type argument is a simple checkbox that can be used to toggle a boolean value. It can be especially useful to pass flags to your actions.
 
+Define `choices` for the checked/unchecked values. A checkbox **without** choices is not allowed with `shell:` (use `exec:` instead).
+
 [source,yaml]
 ----
 actions:

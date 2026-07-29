@@ -43,6 +43,10 @@ type oliveTinAPI struct {
 	streamingClientsMutex sync.RWMutex
 }
 
+const maxEventStreamClients = 16
+
+var errEventStreamClientLimit = errors.New("too many concurrent event stream clients")
+
 // This is used to avoid race conditions when iterating over the connectedClients map.
 // and holds the lock for as minimal time as possible to avoid blocking the API for too long.
 func (api *oliveTinAPI) copyOfStreamingClients() []*streamingClient {
@@ -58,9 +62,9 @@ func (api *oliveTinAPI) copyOfStreamingClients() []*streamingClient {
 type streamingClient struct {
 	channel           chan *apiv1.EventStreamResponse
 	AuthenticatedUser *authpublic.AuthenticatedUser
-	heartbeatStopOnce sync.Once
 	heartbeatStop     chan struct{}
 	heartbeatDone     chan struct{}
+	heartbeatStopOnce sync.Once
 }
 
 func (c *streamingClient) stopHeartbeat() {
@@ -306,7 +310,8 @@ func (api *oliveTinAPI) StartActionAndWait(ctx ctx.Context, req *connect.Request
 	user := auth.UserFromApiCall(ctx, req, api.cfg)
 	args := startActionArgumentsFromProto(req.Msg.Arguments)
 	justification := resolveStartJustification(binding.Action, binding, req.Msg.Justification, args)
-	if err := validateJustificationRequired(binding.Action, justification, user); err != nil {
+
+	if err = validateJustificationRequired(binding.Action, justification, user); err != nil {
 		return nil, connectInvalidJustification(err)
 	}
 
@@ -801,13 +806,13 @@ func paginate(total int64, size int64, start int64) pageInfo {
 	if start < 0 {
 		start = 0
 	}
+
 	if start >= total {
 		return pageInfo{total: total, size: size, start: start, end: start, empty: true}
 	}
-	end := start + size
-	if end > total {
-		end = total
-	}
+
+	end := min(start+size, total)
+
 	return pageInfo{total: total, size: size, start: start, end: end, empty: false}
 }
 
@@ -1028,13 +1033,13 @@ func (api *oliveTinAPI) EventStream(ctx ctx.Context, req *connect.Request[apiv1.
 		heartbeatDone:     make(chan struct{}),
 	}
 
+	if err := api.registerStreamingClient(client); err != nil {
+		return connect.NewError(connect.CodeResourceExhausted, err)
+	}
+
 	log.WithFields(log.Fields{
 		"authenticatedUser": user.Username,
 	}).Debugf("EventStream: client connected")
-
-	api.streamingClientsMutex.Lock()
-	api.streamingClients[client] = struct{}{}
-	api.streamingClientsMutex.Unlock()
 
 	go api.sendEventStreamHeartbeats(client)
 
@@ -1051,6 +1056,21 @@ func (api *oliveTinAPI) EventStream(ctx ctx.Context, req *connect.Request[apiv1.
 
 	log.Infof("EventStream: client disconnected")
 
+	return nil
+}
+
+func (api *oliveTinAPI) registerStreamingClient(client *streamingClient) error {
+	api.streamingClientsMutex.Lock()
+	defer api.streamingClientsMutex.Unlock()
+
+	if len(api.streamingClients) >= maxEventStreamClients {
+		log.WithFields(log.Fields{
+			"limit": maxEventStreamClients,
+		}).Warn("EventStream: rejecting client; concurrent client limit reached")
+		return errEventStreamClientLimit
+	}
+
+	api.streamingClients[client] = struct{}{}
 	return nil
 }
 
@@ -1217,6 +1237,9 @@ func (api *oliveTinAPI) Init(ctx ctx.Context, req *connect.Request[apiv1.InitReq
 		currentVersion = installationinfo.Build.Version
 		availableVersion = installationinfo.Runtime.AvailableVersion
 	}
+
+	rootDashboardEntries := api.buildRootDashboardEntries(user, api.cfg.Dashboards)
+
 	res := &apiv1.InitResponse{
 		ShowFooter:                api.cfg.ShowFooter,
 		ShowNavigation:            api.cfg.ShowNavigation,
@@ -1232,7 +1255,8 @@ func (api *oliveTinAPI) Init(ctx ctx.Context, req *connect.Request[apiv1.InitReq
 		OAuth2Providers:           buildPublicOAuth2ProvidersList(api.cfg),
 		AdditionalLinks:           buildAdditionalLinks(api.cfg.AdditionalNavigationLinks),
 		StyleMods:                 api.cfg.StyleMods,
-		RootDashboards:            api.buildRootDashboards(user, api.cfg.Dashboards),
+		RootDashboards:            rootDashboardTitles(rootDashboardEntries),
+		RootDashboardEntries:      rootDashboardEntries,
 		AuthenticatedUser:         user.Username,
 		AuthenticatedUserProvider: user.Provider,
 		EffectivePolicy:           buildEffectivePolicy(user.EffectivePolicy),
@@ -1300,30 +1324,47 @@ func getValidThemeName(themesDir string, entry os.DirEntry) string {
 }
 
 func (api *oliveTinAPI) buildRootDashboards(user *authpublic.AuthenticatedUser, dashboards []*config.DashboardComponent) []string {
-	var rootDashboards []string
-	dashboardRenderRequest := api.createDashboardRenderRequest(user, "", "")
-
-	api.addDefaultDashboardIfNeeded(&rootDashboards, dashboardRenderRequest)
-	api.addCustomDashboards(&rootDashboards, dashboards, dashboardRenderRequest)
-
-	return rootDashboards
+	return rootDashboardTitles(api.buildRootDashboardEntries(user, dashboards))
 }
 
-func (api *oliveTinAPI) addDefaultDashboardIfNeeded(rootDashboards *[]string, rr *DashboardRenderRequest) {
+func rootDashboardTitles(entries []*apiv1.RootDashboard) []string {
+	titles := make([]string, 0, len(entries))
+
+	for _, entry := range entries {
+		titles = append(titles, entry.Title)
+	}
+
+	return titles
+}
+
+func (api *oliveTinAPI) buildRootDashboardEntries(user *authpublic.AuthenticatedUser, dashboards []*config.DashboardComponent) []*apiv1.RootDashboard {
+	var entries []*apiv1.RootDashboard
+	dashboardRenderRequest := api.createDashboardRenderRequest(user, "", "")
+
+	api.addDefaultDashboardEntryIfNeeded(&entries, dashboardRenderRequest)
+	api.addCustomDashboardEntries(&entries, dashboards, dashboardRenderRequest)
+
+	return entries
+}
+
+func (api *oliveTinAPI) addDefaultDashboardEntryIfNeeded(entries *[]*apiv1.RootDashboard, rr *DashboardRenderRequest) {
 	defaultDashboard := buildDefaultDashboard(rr)
 	if defaultDashboard != nil && len(defaultDashboard.Contents) > 0 {
 		log.Tracef("defaultDashboard: %+v", defaultDashboard.Contents)
-		*rootDashboards = append(*rootDashboards, "Actions")
+		*entries = append(*entries, &apiv1.RootDashboard{Title: "Actions"})
 	}
 }
 
-func (api *oliveTinAPI) addCustomDashboards(rootDashboards *[]string, dashboards []*config.DashboardComponent, rr *DashboardRenderRequest) {
+func (api *oliveTinAPI) addCustomDashboardEntries(entries *[]*apiv1.RootDashboard, dashboards []*config.DashboardComponent, rr *DashboardRenderRequest) {
 	for _, dashboard := range dashboards {
 		// We have to build the dashboard response instead of just looping over config.dashboards,
 		// because we need to check if the user has access to the dashboard
-		db := renderDashboard(rr, dashboard.Title)
-		if db != nil {
-			*rootDashboards = append(*rootDashboards, dashboard.Title)
+		renderedDashboard := renderDashboard(rr, dashboard.Title)
+		if renderedDashboard != nil {
+			*entries = append(*entries, &apiv1.RootDashboard{
+				Title:    dashboard.Title,
+				Category: dashboard.Category,
+			})
 		}
 	}
 }

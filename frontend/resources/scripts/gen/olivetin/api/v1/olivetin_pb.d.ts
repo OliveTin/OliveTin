@@ -1890,6 +1890,11 @@ export declare type InitResponse = Message<"olivetin.api.v1.InitResponse"> & {
    * @generated from field: int32 config_issue_count = 26;
    */
   configIssueCount: number;
+
+  /**
+   * @generated from field: repeated olivetin.api.v1.RootDashboard root_dashboard_entries = 27;
+   */
+  rootDashboardEntries: RootDashboard[];
 };
 
 /**
@@ -1897,6 +1902,27 @@ export declare type InitResponse = Message<"olivetin.api.v1.InitResponse"> & {
  * Use `create(InitResponseSchema)` to create a new message.
  */
 export declare const InitResponseSchema: GenMessage<InitResponse>;
+
+/**
+ * @generated from message olivetin.api.v1.RootDashboard
+ */
+export declare type RootDashboard = Message<"olivetin.api.v1.RootDashboard"> & {
+  /**
+   * @generated from field: string title = 1;
+   */
+  title: string;
+
+  /**
+   * @generated from field: string category = 2;
+   */
+  category: string;
+};
+
+/**
+ * Describes the message olivetin.api.v1.RootDashboard.
+ * Use `create(RootDashboardSchema)` to create a new message.
+ */
+export declare const RootDashboardSchema: GenMessage<RootDashboard>;
 
 /**
  * @generated from message olivetin.api.v1.AdditionalLink

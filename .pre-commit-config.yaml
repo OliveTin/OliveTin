@@ -47,6 +47,13 @@ repos:
         pass_filenames: false
         files: ^(frontend/|Makefile)
 
+      - id: frontend-unittests
+        name: frontend-unittests
+        entry: make frontend-unittests
+        language: system
+        pass_filenames: false
+        files: ^(frontend/|Makefile)
+
       - id: service-unittests
         name: service-unittests
         entry: make service-unittests

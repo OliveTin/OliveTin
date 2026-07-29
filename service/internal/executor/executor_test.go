@@ -449,6 +449,133 @@ func TestShellAfterCompletedUsesOutputEnvSafely(t *testing.T) {
 	assert.True(t, os.IsNotExist(err), "shellAfterCompleted must not execute injected commands from output")
 }
 
+func TestShellAfterCompletedExpandsQuotedPlaceholders(t *testing.T) {
+	cases := []struct {
+		name string
+		sac  string
+	}{
+		{"legacy single-quoted", `printf '%s' '{{ output }}'`},
+		{"modern single-quoted", `printf '%s' '{{ .Arguments.output }}'`},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := config.DefaultConfig()
+			executor := DefaultExecutor(cfg)
+			mainOutput := "quoted-output-ok"
+
+			action := &config.Action{
+				Title:               "sac-quoted-" + tc.name,
+				Shell:               "printf %s \"" + mainOutput + "\"",
+				ShellAfterCompleted: tc.sac,
+			}
+			cfg.Actions = append(cfg.Actions, action)
+			cfg.Sanitize()
+			executor.RebuildActionMap()
+
+			req := ExecutionRequest{
+				AuthenticatedUser: auth.UserFromSystem(cfg, "cron"),
+				Cfg:               cfg,
+				Binding:           executor.FindBindingWithNoEntity(action),
+			}
+			wg, _ := executor.ExecRequest(&req)
+			wg.Wait()
+
+			require.NotNil(t, req.logEntry)
+			assert.Equal(t, int32(0), req.logEntry.ExitCode)
+			assert.Contains(t, req.logEntry.Output, "OliveTin::shellAfterCompleted stdout\n"+mainOutput)
+		})
+	}
+}
+
+func TestShellAfterCompletedBlocksArgumentsOutputInjection(t *testing.T) {
+	payload := func(injectedPath string) string {
+		return "x; touch " + injectedPath + "; #"
+	}
+
+	cases := []struct {
+		name string
+		sac  string
+	}{
+		{"legacy", "printf %s {{ output }}"},
+		{"legacy compact", "printf %s {{output}}"},
+		{"legacy extra spaces", "printf %s {{  output  }}"},
+		{"modern Arguments", "printf %s {{ .Arguments.output }}"},
+		{"modern compact", "printf %s {{.Arguments.output}}"},
+		{"modern exitCode still env", "printf %s {{ .Arguments.exitCode }}"},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := config.DefaultConfig()
+			executor := DefaultExecutor(cfg)
+			injectedPath := filepath.Join(t.TempDir(), "injected")
+			mainPayload := payload(injectedPath)
+
+			action := &config.Action{
+				Title:               "sac-injection-" + tc.name,
+				Shell:               "printf %s \"" + mainPayload + "\"",
+				ShellAfterCompleted: tc.sac,
+			}
+			cfg.Actions = append(cfg.Actions, action)
+			cfg.Sanitize()
+			executor.RebuildActionMap()
+
+			req := ExecutionRequest{
+				AuthenticatedUser: auth.UserFromSystem(cfg, "cron"),
+				Cfg:               cfg,
+				Binding:           executor.FindBindingWithNoEntity(action),
+			}
+			wg, _ := executor.ExecRequest(&req)
+			wg.Wait()
+
+			_, err := os.Stat(injectedPath)
+			assert.True(t, os.IsNotExist(err), "shellAfterCompleted must not execute injected commands via %q", tc.sac)
+		})
+	}
+}
+
+func TestSubstituteShellAfterCompletedEnvRefs(t *testing.T) {
+	cases := []struct {
+		in   string
+		want string
+	}{
+		{`printf %s {{ output }}`, `printf %s "$OUTPUT"`},
+		{`printf %s {{output}}`, `printf %s "$OUTPUT"`},
+		{`printf %s {{  output  }}`, `printf %s "$OUTPUT"`},
+		{`printf %s {{ .Arguments.output }}`, `printf %s "$OUTPUT"`},
+		{`printf %s {{.Arguments.output}}`, `printf %s "$OUTPUT"`},
+		{`echo {{ exitCode }}`, `echo "$EXITCODE"`},
+		{`echo {{ .Arguments.exitCode }}`, `echo "$EXITCODE"`},
+		{`echo {{  .Arguments.exitCode  }}`, `echo "$EXITCODE"`},
+		{`printf '%s' '{{ output }}'`, `printf '%s' ''"$OUTPUT"''`},
+		{`printf '%s' '{{ .Arguments.output }}'`, `printf '%s' ''"$OUTPUT"''`},
+		{`printf '%s' '{{ exitCode }}'`, `printf '%s' ''"$EXITCODE"''`},
+		{`printf '%s' '{{ .Arguments.exitCode }}'`, `printf '%s' ''"$EXITCODE"''`},
+	}
+
+	for _, tc := range cases {
+		assert.Equal(t, tc.want, substituteShellAfterCompletedEnvRefs(tc.in))
+	}
+}
+
+func TestShellAfterTemplateArgsOmitsOutputAndExitCode(t *testing.T) {
+	args := map[string]string{
+		"output":                 "evil; id",
+		"exitCode":               "1",
+		"ot_username":            "alice",
+		"ot_executionTrackingId": "track-1",
+	}
+
+	templateArgs := shellAfterTemplateArgs(args)
+
+	assert.NotContains(t, templateArgs, "output")
+	assert.NotContains(t, templateArgs, "exitCode")
+	assert.Equal(t, "alice", templateArgs["ot_username"])
+	assert.Equal(t, "track-1", templateArgs["ot_executionTrackingId"])
+	assert.Equal(t, "evil; id", args["output"], "env args map must keep output for OUTPUT=")
+}
+
 func TestFilterToDefinedArgumentsOnly(t *testing.T) {
 	req := newExecRequest()
 	req.Binding.Action = &config.Action{

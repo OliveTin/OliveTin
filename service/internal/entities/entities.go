@@ -69,7 +69,7 @@ func watchAndLoadEntity(baseDir string, ef *config.EntityFile) {
 		p = filepath.Join(baseDir, p)
 		log.WithFields(log.Fields{"entityFile": p}).Debugf("Adding config dir to entity file path")
 	}
-	go filehelper.WatchFileWrite(p, func(filename string) { loadEntityFile(p, ef.Name) }, filehelper.WatchMeta{
+	go filehelper.WatchFileWrite(p, func(_ string) { loadEntityFile(p, ef.Name) }, filehelper.WatchMeta{
 		ConfigFile: ef.SourceFile,
 	})
 	loadEntityFile(p, ef.Name)

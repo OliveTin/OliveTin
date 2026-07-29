@@ -338,39 +338,109 @@ function updateHeaderFromInit () {
   connectEventStreamIfNeeded()
 }
 
+function getRootDashboardEntries () {
+  const entries = window.initResponse?.rootDashboardEntries
+
+  if (entries && entries.length > 0) {
+    return entries.map((entry) => ({
+      title: entry.title,
+      category: entry.category || ''
+    }))
+  }
+
+  return (window.initResponse?.rootDashboards || []).map((title) => ({
+    title,
+    category: ''
+  }))
+}
+
+function addDashboardNavLink (title) {
+  navigation.value.addNavigationLink({
+    id: title,
+    name: title,
+    title,
+    path: title === 'Actions' ? '/' : `/dashboards/${title}`,
+    icon: DashboardSquare01Icon
+  })
+}
+
+function addCategorizedDashboardLinks (entries) {
+  const categoryOrder = []
+  const byCategory = new Map()
+
+  for (const entry of entries) {
+    const category = entry.category.trim()
+
+    if (!byCategory.has(category)) {
+      byCategory.set(category, [])
+      categoryOrder.push(category)
+    }
+
+    byCategory.get(category).push(entry.title)
+  }
+
+  for (const category of categoryOrder) {
+    navigation.value.addSection(category)
+
+    for (const title of byCategory.get(category)) {
+      addDashboardNavLink(title)
+    }
+  }
+}
+
 function renderNavigation () {
   if (!navigation.value) {
     return
   }
 
-  const rootDashboards = window.initResponse?.rootDashboards || []
-
   if (typeof navigation.value.clearNavigationLinks === 'function') {
     navigation.value.clearNavigationLinks()
   }
 
-  for (const rootDashboard of rootDashboards) {
-    navigation.value.addNavigationLink({
-      id: rootDashboard,
-      name: rootDashboard,
-      title: rootDashboard,
-      path: rootDashboard === 'Actions' ? '/' : `/dashboards/${rootDashboard}`,
-      icon: DashboardSquare01Icon
-    })
+  const entries = getRootDashboardEntries()
+  const uncategorized = entries.filter((entry) => !entry.category.trim())
+  const categorized = entries.filter((entry) => entry.category.trim())
+
+  for (const entry of uncategorized) {
+    addDashboardNavLink(entry.title)
   }
 
-  navigation.value.addSeparator()
-  navigation.value.addRouterLink('Entities', t('nav.entities'))
+  addCategorizedDashboardLinks(categorized)
+  addSystemNavLinks()
+}
+
+function addSystemNavLinks () {
+  const systemLinks = []
+
+  systemLinks.push({
+    routeName: 'Entities',
+    title: t('nav.entities')
+  })
 
   if (showLogs.value) {
-    navigation.value.addRouterLink('Logs', t('nav.logs'))
+    systemLinks.push({
+      routeName: 'Logs',
+      title: t('nav.logs')
+    })
   }
 
   if (showDiagnostics.value) {
     const issueCount = window.initResponse?.configIssueCount || 0
-    navigation.value.addRouterLink('Diagnostics', t('nav.diagnostics'), {
-      count: issueCount
+    systemLinks.push({
+      routeName: 'Diagnostics',
+      title: t('nav.diagnostics'),
+      options: { count: issueCount }
     })
+  }
+
+  if (systemLinks.length === 0) {
+    return
+  }
+
+  navigation.value.addSection(t('nav.system'))
+
+  for (const link of systemLinks) {
+    navigation.value.addRouterLink(link.routeName, link.title, link.options || {})
   }
 }
 

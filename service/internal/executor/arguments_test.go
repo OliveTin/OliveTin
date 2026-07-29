@@ -12,16 +12,17 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestSanitizeUnsafe(t *testing.T) {
-	assert.Nil(t, TypeSafetyCheck("", "_zomg_ c:/ haxxor ' bobby tables && rm -rf ", "very_dangerous_raw_string"))
+	require.NoError(t, TypeSafetyCheck("", "_zomg_ c:/ haxxor ' bobby tables && rm -rf ", "very_dangerous_raw_string"))
 }
 
 func TestSanitizeUnimplemented(t *testing.T) {
 	err := TypeSafetyCheck("", "I am a happy little argument", "greeting_type")
 
-	assert.NotNil(t, err, "Test an argument type that does not exist")
+	require.Error(t, err, "Test an argument type that does not exist")
 }
 
 func TestValidateArgumentCheckboxDefaultValues(t *testing.T) {
@@ -35,10 +36,10 @@ func TestValidateArgumentCheckboxDefaultValues(t *testing.T) {
 
 	// Default checkbox values without choices should accept "1" and "0"
 	err := ValidateArgument(&arg, "1", &action)
-	assert.Nil(t, err, "Expected checkbox value \"1\" to be accepted without choices")
+	require.NoError(t, err, "Expected checkbox value \"1\" to be accepted without choices")
 
 	err = ValidateArgument(&arg, "0", &action)
-	assert.Nil(t, err, "Expected checkbox value \"0\" to be accepted without choices")
+	require.NoError(t, err, "Expected checkbox value \"0\" to be accepted without choices")
 }
 
 func TestMangleCheckboxValueWithChoices(t *testing.T) {
@@ -105,14 +106,14 @@ func TestValidateArgumentCheckboxWithChoices(t *testing.T) {
 
 	// Titles should be accepted once mangled to their values
 	err := ValidateArgument(&arg, "Enabled", &action)
-	assert.Nil(t, err, "Expected checkbox title \"Enabled\" to be accepted after mangling to choice value")
+	require.NoError(t, err, "Expected checkbox title \"Enabled\" to be accepted after mangling to choice value")
 
 	err = ValidateArgument(&arg, "Disabled", &action)
-	assert.Nil(t, err, "Expected checkbox title \"Disabled\" to be accepted after mangling to choice value")
+	require.NoError(t, err, "Expected checkbox title \"Disabled\" to be accepted after mangling to choice value")
 
 	// Unknown titles should be rejected because they do not match any choice value
 	err = ValidateArgument(&arg, "Maybe", &action)
-	assert.NotNil(t, err, "Expected unknown checkbox title to be rejected against choices")
+	require.Error(t, err, "Expected unknown checkbox title to be rejected against choices")
 }
 
 func checklistTestArg() config.ActionArgument {
@@ -134,13 +135,13 @@ func TestValidateArgumentChecklistSelections(t *testing.T) {
 	action := config.Action{Title: "Test checklist"}
 
 	err := ValidateArgument(&arg, "documents", &action)
-	assert.Nil(t, err)
+	require.NoError(t, err)
 
 	err = ValidateArgument(&arg, `["documents","photos"]`, &action)
-	assert.Nil(t, err)
+	require.NoError(t, err)
 
 	err = ValidateArgument(&arg, `["documents","unknown"]`, &action)
-	assert.NotNil(t, err)
+	require.Error(t, err)
 }
 
 func TestValidateArgumentChecklistTitleMangling(t *testing.T) {
@@ -150,7 +151,7 @@ func TestValidateArgumentChecklistTitleMangling(t *testing.T) {
 	action := config.Action{Title: "Test checklist title mangling"}
 
 	err := ValidateArgument(&arg, `["Documents","Photos"]`, &action)
-	assert.Nil(t, err)
+	require.NoError(t, err)
 }
 
 func TestValidateArgumentChecklistEmptySelection(t *testing.T) {
@@ -160,11 +161,11 @@ func TestValidateArgumentChecklistEmptySelection(t *testing.T) {
 	action := config.Action{Title: "Test checklist empty"}
 
 	err := ValidateArgument(&arg, "", &action)
-	assert.Nil(t, err)
+	require.NoError(t, err)
 
 	arg.RejectNull = true
 	err = ValidateArgument(&arg, "", &action)
-	assert.NotNil(t, err)
+	require.Error(t, err)
 }
 
 func TestValidateArgumentChecklistWithoutChoices(t *testing.T) {
@@ -177,7 +178,7 @@ func TestValidateArgumentChecklistWithoutChoices(t *testing.T) {
 	action := config.Action{Title: "Test checklist without choices"}
 
 	err := ValidateArgument(&arg, "documents", &action)
-	assert.NotNil(t, err)
+	require.Error(t, err)
 }
 
 func TestValidateArgumentChecklistRejectsEmptySegment(t *testing.T) {
@@ -187,7 +188,7 @@ func TestValidateArgumentChecklistRejectsEmptySegment(t *testing.T) {
 	action := config.Action{Title: "Test checklist empty segment"}
 
 	err := ValidateArgument(&arg, `["documents","","photos"]`, &action)
-	assert.NotNil(t, err)
+	require.Error(t, err)
 }
 
 func TestMangleArgumentValueChecklist(t *testing.T) {
@@ -223,13 +224,13 @@ func TestValidateArgumentChecklistEntitySelections(t *testing.T) {
 	action := config.Action{Title: "Test checklist entity"}
 
 	err := ValidateArgument(&arg, "attic", &action)
-	assert.Nil(t, err)
+	require.NoError(t, err)
 
 	err = ValidateArgument(&arg, `["attic","basement"]`, &action)
-	assert.Nil(t, err)
+	require.NoError(t, err)
 
 	err = ValidateArgument(&arg, `["attic","unknown"]`, &action)
-	assert.NotNil(t, err)
+	require.Error(t, err)
 }
 
 func TestMangleArgumentValueChecklistEntityTitles(t *testing.T) {
@@ -274,7 +275,7 @@ func TestParseActionArgumentsChecklistEmptySelection(t *testing.T) {
 	mangleInvalidArgumentValues(req)
 	out, err := parseActionArguments(req)
 
-	assert.Nil(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, "echo 'Selected segments: '", out)
 }
 
@@ -307,13 +308,13 @@ func TestArgumentValueNullable(t *testing.T) {
 	out, err := parseActionArguments(req)
 
 	assert.Equal(t, "echo 'Releasing  hounds'", out)
-	assert.Nil(t, err)
+	require.NoError(t, err)
 
 	req.Binding.Action.Arguments[0].RejectNull = true
 
 	_, err = parseActionArguments(req)
 
-	assert.NotNil(t, err)
+	require.Error(t, err)
 }
 
 func TestArgumentNameNumbers(t *testing.T) {
@@ -336,7 +337,7 @@ func TestArgumentNameNumbers(t *testing.T) {
 	out, err := parseActionArguments(req)
 
 	assert.Equal(t, "echo 'Tickling Fred'", out)
-	assert.Nil(t, err)
+	require.NoError(t, err)
 }
 
 func TestArgumentNotProvided(t *testing.T) {
@@ -356,8 +357,8 @@ func TestArgumentNotProvided(t *testing.T) {
 
 	out, err := parseActionArguments(req)
 
-	assert.Equal(t, "", out)
-	assert.Equal(t, err.Error(), "required arg not provided: personName")
+	assert.Empty(t, out)
+	require.EqualError(t, err, "required arg not provided: personName")
 }
 
 func TestExecArrayParsing(t *testing.T) {
@@ -372,7 +373,7 @@ func TestExecArrayParsing(t *testing.T) {
 
 	out, err := parseActionExec(req.Arguments, req.Binding.Action, req.Binding.Entity)
 
-	assert.Nil(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, []string{"ls", "-alh"}, out)
 }
 
@@ -394,7 +395,7 @@ func TestExecArrayWithTemplateReplacement(t *testing.T) {
 
 	out, err := parseActionExec(values, &a1, nil)
 
-	assert.Nil(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, []string{"ls", "-alh", "tmp"}, out)
 }
 
@@ -411,7 +412,7 @@ func TestCheckShellArgumentSafetyWithURL(t *testing.T) {
 	}
 
 	err := checkShellArgumentSafety(&a1)
-	assert.NotNil(t, err)
+	require.Error(t, err)
 	assert.Contains(t, err.Error(), "unsafe argument type 'url' cannot be used with Shell execution")
 	assert.Contains(t, err.Error(), "https://docs.olivetin.app/action_execution/shellvsexec.html")
 }
@@ -429,7 +430,7 @@ func TestCheckShellArgumentSafetyWithEmail(t *testing.T) {
 	}
 
 	err := checkShellArgumentSafety(&a1)
-	assert.NotNil(t, err)
+	require.Error(t, err)
 	assert.Contains(t, err.Error(), "unsafe argument type 'email' cannot be used with Shell execution")
 }
 
@@ -446,7 +447,7 @@ func TestCheckShellArgumentSafetyWithExec(t *testing.T) {
 	}
 
 	err := checkShellArgumentSafety(&a1)
-	assert.Nil(t, err)
+	require.NoError(t, err)
 }
 
 func TestCheckShellArgumentSafetyWithSafeTypes(t *testing.T) {
@@ -462,7 +463,7 @@ func TestCheckShellArgumentSafetyWithSafeTypes(t *testing.T) {
 	}
 
 	err := checkShellArgumentSafety(&a1)
-	assert.Nil(t, err)
+	require.NoError(t, err)
 }
 
 func TestCheckShellArgumentSafetyWithPassword(t *testing.T) {
@@ -478,7 +479,7 @@ func TestCheckShellArgumentSafetyWithPassword(t *testing.T) {
 	}
 
 	err := checkShellArgumentSafety(&a1)
-	assert.NotNil(t, err)
+	require.Error(t, err)
 	assert.Contains(t, err.Error(), "unsafe argument type 'password' cannot be used with Shell execution")
 	assert.Contains(t, err.Error(), "https://docs.olivetin.app/action_execution/shellvsexec.html")
 }
@@ -496,7 +497,7 @@ func TestCheckShellArgumentSafetyWithPasswordAndExec(t *testing.T) {
 	}
 
 	err := checkShellArgumentSafety(&a1)
-	assert.Nil(t, err)
+	require.NoError(t, err)
 }
 
 func TestCheckShellArgumentSafetyWithHTML(t *testing.T) {
@@ -509,7 +510,7 @@ func TestCheckShellArgumentSafetyWithHTML(t *testing.T) {
 	}
 
 	err := checkShellArgumentSafety(&a1)
-	assert.NotNil(t, err)
+	require.Error(t, err)
 	assert.Contains(t, err.Error(), "unsafe argument type 'html'")
 }
 
@@ -523,7 +524,7 @@ func TestCheckShellArgumentSafetyWithConfirmation(t *testing.T) {
 	}
 
 	err := checkShellArgumentSafety(&a1)
-	assert.Nil(t, err, "confirmation is constrained to 0/1 and is safe with shell")
+	require.NoError(t, err, "confirmation is constrained to 0/1 and is safe with shell")
 }
 
 func TestCheckShellArgumentSafetyWithUnnamedConfirmation(t *testing.T) {
@@ -536,7 +537,7 @@ func TestCheckShellArgumentSafetyWithUnnamedConfirmation(t *testing.T) {
 	}
 
 	err := checkShellArgumentSafety(&a1)
-	assert.Nil(t, err)
+	require.NoError(t, err)
 }
 
 func TestCheckShellArgumentSafetyWithChoicelessCheckbox(t *testing.T) {
@@ -549,7 +550,7 @@ func TestCheckShellArgumentSafetyWithChoicelessCheckbox(t *testing.T) {
 	}
 
 	err := checkShellArgumentSafety(&a1)
-	assert.NotNil(t, err)
+	require.Error(t, err)
 	assert.Contains(t, err.Error(), "unsafe argument type 'checkbox'")
 }
 
@@ -563,20 +564,20 @@ func TestCheckShellArgumentSafetyWithCustomRegex(t *testing.T) {
 	}
 
 	err := checkShellArgumentSafety(&a1)
-	assert.NotNil(t, err)
+	require.Error(t, err)
 	assert.Contains(t, err.Error(), "unsafe argument type 'regex:[a-zA-Z0-9.-]+'")
 }
 
 func TestTypeSafetyCheckUrl(t *testing.T) {
-	assert.Nil(t, TypeSafetyCheck("test1", "http://google.com", "url"), "Test URL: google.com")
-	assert.Nil(t, TypeSafetyCheck("test2", "http://technowax.net:80?foo=bar", "url"), "Test URL: technowax.net with query arguments")
-	assert.Nil(t, TypeSafetyCheck("test3", "http://localhost:80?foo=bar", "url"), "Test URL: localhost with query arguments")
-	assert.Nil(t, TypeSafetyCheck("test7", "https://example.com/path", "url"), "Test URL: https scheme")
-	assert.NotNil(t, TypeSafetyCheck("test4", "http://lo  host:80", "url"), "Test a badly formed URL")
-	assert.NotNil(t, TypeSafetyCheck("test5", "12345", "url"), "Test a badly formed URL")
-	assert.NotNil(t, TypeSafetyCheck("test6", "_!23;", "url"), "Test a badly formed URL")
-	assert.NotNil(t, TypeSafetyCheck("test8", "file:///etc/passwd", "url"), "file:// scheme must be rejected")
-	assert.NotNil(t, TypeSafetyCheck("test9", "gopher://example.com", "url"), "gopher:// scheme must be rejected")
+	require.NoError(t, TypeSafetyCheck("test1", "http://google.com", "url"), "Test URL: google.com")
+	require.NoError(t, TypeSafetyCheck("test2", "http://technowax.net:80?foo=bar", "url"), "Test URL: technowax.net with query arguments")
+	require.NoError(t, TypeSafetyCheck("test3", "http://localhost:80?foo=bar", "url"), "Test URL: localhost with query arguments")
+	require.NoError(t, TypeSafetyCheck("test7", "https://example.com/path", "url"), "Test URL: https scheme")
+	require.Error(t, TypeSafetyCheck("test4", "http://lo  host:80", "url"), "Test a badly formed URL")
+	require.Error(t, TypeSafetyCheck("test5", "12345", "url"), "Test a badly formed URL")
+	require.Error(t, TypeSafetyCheck("test6", "_!23;", "url"), "Test a badly formed URL")
+	require.Error(t, TypeSafetyCheck("test8", "file:///etc/passwd", "url"), "file:// scheme must be rejected")
+	require.Error(t, TypeSafetyCheck("test9", "gopher://example.com", "url"), "gopher:// scheme must be rejected")
 }
 
 func TestTypeSafetyCheckRegex(t *testing.T) {
@@ -622,9 +623,9 @@ func TestTypeSafetyCheckRegex(t *testing.T) {
 			err := typeSafetyCheckRegex(tt.field, tt.value, tt.pattern)
 
 			if tt.hasError {
-				assert.NotNil(t, err, "Expected error for value %s with pattern %s, but got no error", tt.value, tt.pattern)
+				require.Error(t, err, "Expected error for value %s with pattern %s, but got no error", tt.value, tt.pattern)
 			} else {
-				assert.Nil(t, err, "Expected no error for value %s with pattern %s, but got error: %v", tt.value, tt.pattern, err)
+				require.NoError(t, err, "Expected no error for value %s with pattern %s, but got error: %v", tt.value, tt.pattern, err)
 			}
 		})
 	}
@@ -687,9 +688,9 @@ func TestTypeSafetyCheckEmail(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			err := TypeSafetyCheck(tt.field, tt.value, "email")
 			if tt.hasError {
-				assert.NotNil(t, err, "Expected error for value '%s'", tt.value)
+				require.Error(t, err, "Expected error for value '%s'", tt.value)
 			} else {
-				assert.Nil(t, err, "Expected no error for value '%s', but got: %v", tt.value, err)
+				require.NoError(t, err, "Expected no error for value '%s', but got: %v", tt.value, err)
 			}
 		})
 	}
@@ -716,9 +717,9 @@ func TestTypeSafetyCheckDatetime(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			err := TypeSafetyCheck(tt.field, tt.value, "datetime")
 			if tt.hasError {
-				assert.NotNil(t, err, "Expected error for value '%s'", tt.value)
+				require.Error(t, err, "Expected error for value '%s'", tt.value)
 			} else {
-				assert.Nil(t, err, "Expected no error for value '%s', but got: %v", tt.value, err)
+				require.NoError(t, err, "Expected no error for value '%s', but got: %v", tt.value, err)
 			}
 		})
 	}
@@ -740,7 +741,7 @@ func TestTypeSafetyCheckRawStringMultiline(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := TypeSafetyCheck(tt.field, tt.value, "raw_string_multiline")
-			assert.Nil(t, err, "raw_string_multiline should accept any value")
+			require.NoError(t, err, "raw_string_multiline should accept any value")
 		})
 	}
 }
@@ -772,6 +773,8 @@ func TestTypeSafetyCheckUnicodeIdentifier(t *testing.T) {
 }
 
 func validateTypeSafetyResult(t *testing.T, value string, expectsError bool, err error) {
+	t.Helper()
+
 	if expectsError {
 		assertErrorExpected(t, value, err)
 	} else {
@@ -780,6 +783,8 @@ func validateTypeSafetyResult(t *testing.T, value string, expectsError bool, err
 }
 
 func assertErrorExpected(t *testing.T, value string, err error) {
+	t.Helper()
+
 	if err == nil {
 		t.Errorf("Expected error for value '%s', but got none", value)
 	} else {
@@ -788,6 +793,8 @@ func assertErrorExpected(t *testing.T, value string, err error) {
 }
 
 func assertNoErrorExpected(t *testing.T, value string, err error) {
+	t.Helper()
+
 	if err != nil {
 		t.Errorf("Expected no error for value '%s', but got: %v", value, err)
 	} else {
@@ -816,9 +823,9 @@ func TestTypeSafetyCheckAsciiIdentifier(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			err := TypeSafetyCheck(tt.field, tt.value, "ascii_identifier")
 			if tt.hasError {
-				assert.NotNil(t, err, "Expected error for value '%s'", tt.value)
+				require.Error(t, err, "Expected error for value '%s'", tt.value)
 			} else {
-				assert.Nil(t, err, "Expected no error for value '%s', but got: %v", tt.value, err)
+				require.NoError(t, err, "Expected no error for value '%s', but got: %v", tt.value, err)
 			}
 		})
 	}
@@ -854,9 +861,9 @@ func TestTypeSafetyCheckDnsName(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			err := TypeSafetyCheck("host", tt.value, "dnsname")
 			if tt.hasError {
-				assert.NotNil(t, err, "Expected error for value '%s'", tt.value)
+				require.Error(t, err, "Expected error for value '%s'", tt.value)
 			} else {
-				assert.Nil(t, err, "Expected no error for value '%s', but got: %v", tt.value, err)
+				require.NoError(t, err, "Expected no error for value '%s', but got: %v", tt.value, err)
 			}
 		})
 	}
@@ -886,9 +893,9 @@ func TestTypeSafetyCheckShellSafeIdentifier(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			err := TypeSafetyCheck("username", tt.value, "shell_safe_identifier")
 			if tt.hasError {
-				assert.NotNil(t, err, "Expected error for value '%s'", tt.value)
+				require.Error(t, err, "Expected error for value '%s'", tt.value)
 			} else {
-				assert.Nil(t, err, "Expected no error for value '%s', but got: %v", tt.value, err)
+				require.NoError(t, err, "Expected no error for value '%s', but got: %v", tt.value, err)
 			}
 		})
 	}
@@ -915,9 +922,9 @@ func TestTypeSafetyCheckAsciiSentence(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			err := TypeSafetyCheck(tt.field, tt.value, "ascii_sentence")
 			if tt.hasError {
-				assert.NotNil(t, err, "Expected error for value '%s'", tt.value)
+				require.Error(t, err, "Expected error for value '%s'", tt.value)
 			} else {
-				assert.Nil(t, err, "Expected no error for value '%s', but got: %v", tt.value, err)
+				require.NoError(t, err, "Expected no error for value '%s', but got: %v", tt.value, err)
 			}
 		})
 	}
@@ -928,10 +935,9 @@ func TestTypecheckActionArgumentEmptyName(t *testing.T) {
 		Name: "",
 		Type: "ascii",
 	}
-	action := config.Action{Title: "Test"}
 
-	err := typecheckActionArgument(&arg, "test", &action)
-	assert.NotNil(t, err)
+	err := typecheckActionArgument(&arg, "test")
+	require.Error(t, err)
 	assert.Contains(t, err.Error(), "argument name cannot be empty")
 }
 
@@ -940,17 +946,16 @@ func TestTypecheckActionArgumentConfirmation(t *testing.T) {
 		Name: "confirm",
 		Type: "confirmation",
 	}
-	action := config.Action{Title: "Test"}
 
-	assert.Nil(t, typecheckActionArgument(&arg, "0", &action))
-	assert.Nil(t, typecheckActionArgument(&arg, "1", &action))
+	require.NoError(t, typecheckActionArgument(&arg, "0"))
+	require.NoError(t, typecheckActionArgument(&arg, "1"))
 
-	err := typecheckActionArgument(&arg, "any_value", &action)
-	assert.NotNil(t, err)
+	err := typecheckActionArgument(&arg, "any_value")
+	require.Error(t, err)
 	assert.Contains(t, err.Error(), "must be \"0\" or \"1\"")
 
-	err = typecheckActionArgument(&arg, "", &action)
-	assert.NotNil(t, err)
+	err = typecheckActionArgument(&arg, "")
+	require.Error(t, err)
 	assert.Contains(t, err.Error(), "must be \"0\" or \"1\"")
 }
 
@@ -959,10 +964,9 @@ func TestTypecheckActionArgumentUnnamedConfirmation(t *testing.T) {
 		Type:  "confirmation",
 		Title: "Are you sure?!",
 	}
-	action := config.Action{Title: "Test"}
 
-	assert.Nil(t, typecheckActionArgument(&arg, "", &action))
-	assert.Nil(t, typecheckActionArgument(&arg, "ignored", &action))
+	require.NoError(t, typecheckActionArgument(&arg, ""))
+	require.NoError(t, typecheckActionArgument(&arg, "ignored"))
 }
 
 func TestTypecheckActionArgumentHtmlWithoutName(t *testing.T) {
@@ -976,17 +980,17 @@ func TestTypecheckActionArgumentHtmlWithoutName(t *testing.T) {
 	}
 
 	err := validateArguments(map[string]string{}, &action)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 }
 
 func TestParseCommandForReplacements(t *testing.T) {
 	tests := []struct {
+		values         map[string]string
 		name           string
 		shellCommand   string
-		values         map[string]string
 		expectedOutput string
-		expectError    bool
 		errorContains  string
+		expectError    bool
 	}{
 		{
 			name:           "Simple replacement",
@@ -1038,12 +1042,12 @@ func TestParseCommandForReplacements(t *testing.T) {
 			output, err := tpl.ParseTemplateWithActionContext(tt.shellCommand, nil, tt.values)
 
 			if tt.expectError {
-				assert.NotNil(t, err, "Expected error but got none")
+				require.Error(t, err, "Expected error but got none")
 				if tt.errorContains != "" {
 					assert.Contains(t, err.Error(), tt.errorContains)
 				}
 			} else {
-				assert.Nil(t, err, "Expected no error but got: %v", err)
+				require.NoError(t, err, "Expected no error but got: %v", err)
 				assert.Equal(t, tt.expectedOutput, output)
 			}
 		})
@@ -1052,10 +1056,10 @@ func TestParseCommandForReplacements(t *testing.T) {
 
 func TestArgumentChoicesValidation(t *testing.T) {
 	tests := []struct {
-		name        string
 		req         *ExecutionRequest
-		expectError bool
+		name        string
 		description string
+		expectError bool
 	}{
 		{
 			name: "Valid choice",
@@ -1136,10 +1140,10 @@ func TestArgumentChoicesValidation(t *testing.T) {
 			_, err := parseActionArguments(tt.req)
 
 			if tt.expectError {
-				assert.NotNil(t, err, tt.description)
+				require.Error(t, err, tt.description)
 				assert.Contains(t, err.Error(), "predefined choices")
 			} else {
-				assert.Nil(t, err, tt.description)
+				require.NoError(t, err, tt.description)
 			}
 		})
 	}
@@ -1161,7 +1165,7 @@ func TestTypeSafetyCheckVeryDangerousRawString(t *testing.T) {
 	for _, value := range tests {
 		t.Run(fmt.Sprintf("Value: %s", value), func(t *testing.T) {
 			err := TypeSafetyCheck("test", value, "very_dangerous_raw_string")
-			assert.Nil(t, err, "very_dangerous_raw_string should accept any value including: %s", value)
+			require.NoError(t, err, "very_dangerous_raw_string should accept any value including: %s", value)
 		})
 	}
 }
@@ -1186,7 +1190,7 @@ func TestParseActionArgumentsWithEntityPrefix(t *testing.T) {
 
 	// Test with entity prefix
 	output, err := parseActionArguments(req)
-	assert.Nil(t, err)
+	require.NoError(t, err)
 	assert.Contains(t, output, "testuser")
 }
 
@@ -1227,9 +1231,9 @@ func TestComplexRegexPatterns(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			err := typeSafetyCheckRegex("test", tt.value, tt.pattern)
 			if tt.hasError {
-				assert.NotNil(t, err)
+				require.Error(t, err)
 			} else {
-				assert.Nil(t, err)
+				require.NoError(t, err)
 			}
 		})
 	}

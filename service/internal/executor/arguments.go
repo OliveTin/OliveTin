@@ -67,7 +67,7 @@ func parseExecSegment(arg string, values map[string]string, entity *entities.Ent
 
 func validateArguments(values map[string]string, action *config.Action) error {
 	for _, arg := range action.Arguments {
-		if err := typecheckActionArgument(&arg, values[arg.Name], action); err != nil {
+		if err := typecheckActionArgument(&arg, values[arg.Name]); err != nil {
 			return err
 		}
 		log.WithFields(log.Fields{"name": arg.Name, "value": values[arg.Name]}).Debugf("Arg assigned")
@@ -90,7 +90,7 @@ func parseActionArguments(req *ExecutionRequest) (string, error) {
 		argName := arg.Name
 		argValue := req.Arguments[argName]
 
-		err := typecheckActionArgument(&arg, argValue, req.Binding.Action)
+		err := typecheckActionArgument(&arg, argValue)
 
 		if err != nil {
 			return "", err
@@ -153,7 +153,7 @@ func argumentSkipsValidation(arg *config.ActionArgument) bool {
 	return arg.Type == "html"
 }
 
-func typecheckActionArgument(arg *config.ActionArgument, value string, action *config.Action) error {
+func typecheckActionArgument(arg *config.ActionArgument, value string) error {
 	if argumentSkipsValidation(arg) {
 		return nil
 	}
@@ -199,7 +199,7 @@ func ValidateArgument(arg *config.ActionArgument, value string, action *config.A
 	mangledValue := MangleArgumentValue(arg, value, action.Title)
 
 	// Use the same validation path as the executor
-	return typecheckActionArgument(arg, mangledValue, action)
+	return typecheckActionArgument(arg, mangledValue)
 }
 
 func typecheckActionArgumentFound(value string, arg *config.ActionArgument) error {

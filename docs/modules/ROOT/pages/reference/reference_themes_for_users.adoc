@@ -8,11 +8,11 @@ You can look for themes on the link:http://www.olivetin.app/themes/[OliveTin The
 There are 3 ways to install a theme;
 
 
-If running inside a Docker container: 
+If running inside a Docker container:
 
 1. Use the `olivetin-get-theme` command to easily Git clone the theme into your `custom-webui/themes/` directory.
 
-If running without using containers: 
+If running without using containers:
 
 1. Download the theme .zip and copy it across to your `custom-webui/themes/` directory.
 2. Git Clone the theme into your `custom-webui/themes/` directory.
@@ -22,11 +22,14 @@ If running without using containers:
 
 The default OliveTin configuration comes with an action to get new OliveTin themes. If you deleted it from your configuration, you can add it back in by adding the following to your `config.yaml` file;
 
-[source,bash]
+[source,yaml]
 ----
 actions:
   - title: Get OliveTin Theme
-    shell: olivetin-get-theme {{ themeGitRepo }} {{ themeFolderName }}
+    exec:
+      - olivetin-get-theme
+      - "{{ themeGitRepo }}"
+      - "{{ themeFolderName }}"
     icon: theme
     arguments:
       - name: themeGitRepo
@@ -93,4 +96,3 @@ body {
 Profit.
 
 Check out xref:reference/reference_themes_for_developers.adoc[Themes for Developers] for more information on how to develop themes.
-

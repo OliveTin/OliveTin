@@ -4,17 +4,12 @@
       <h2>
         <span class="section-title-with-icon">
           Start action:
-          <router-link
-            :to="`/action/${bindingId}`"
-            class="action-details-title-link"
-          >
-            <ActionIconGlyph
-              v-if="icon"
-              class="action-title-icon"
-              :glyph="icon"
-            />
-            {{ title }}
-          </router-link>
+          <ActionIconGlyph
+            v-if="icon"
+            class="action-title-icon"
+            :glyph="icon"
+          />
+          {{ title }}
         </span>
       </h2>
     </div>
@@ -94,10 +89,12 @@
               @change="handleChange(arg, $event)"
             />
 
+            <!-- eslint-disable vue/no-v-html -- intentional: argument description is documented as raw HTML -->
             <span
               class="argument-description"
               v-html="arg.description"
             />
+            <!-- eslint-enable vue/no-v-html -->
           </template>
         </template>
 
@@ -682,18 +679,6 @@ onUnmounted(() => {
 
 .action-title-icon {
   font-size: 1.5rem;
-}
-
-.action-details-title-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: var(--link-color, #0066cc);
-  text-decoration: underline;
-}
-
-.action-details-title-link:hover {
-  color: var(--link-hover-color, #004499);
 }
 
 form {

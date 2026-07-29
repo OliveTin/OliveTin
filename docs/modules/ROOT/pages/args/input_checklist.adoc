@@ -1,7 +1,7 @@
 [#checklist]
 = Input: Checklist
 
-The `checklist` type argument renders multiple checkboxes from predefined `choices`. Users can select one or more options, and the selected values are passed to your action as a comma-separated string.
+The `checklist` type argument renders multiple checkboxes from predefined `choices`. Users can select one or more options, and the selected values are passed to your action as a **JSON array string** (for example `["documents","photos"]`). Legacy comma-separated values are rejected.
 
 [source,yaml]
 ----
@@ -53,7 +53,7 @@ arguments:
 
 == Choice values
 
-Choice `value` fields must not contain commas, because commas are used to join multiple selections together.
+Choice `value` fields may contain commas; selections are encoded as JSON, not joined with commas.
 
 Each `title` is shown in the web interface. If a submitted segment matches a choice `title`, OliveTin maps it to the corresponding `value` before validation, matching the behaviour of xref:args/input_checkbox.adoc[checkbox] arguments with choices.
 
@@ -80,4 +80,4 @@ entities:
     name: container
 ----
 
-OliveTin expands the template once per entity instance and renders each result as a checkbox. Selected values are still passed as a comma-separated string.
+OliveTin expands the template once per entity instance and renders each result as a checkbox. Selected values are still passed as a JSON array string.

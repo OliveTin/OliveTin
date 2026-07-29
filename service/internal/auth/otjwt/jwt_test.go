@@ -17,9 +17,12 @@ import (
 	config "github.com/OliveTin/OliveTin/internal/config"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func generateRSAKeyPair(t *testing.T) (*rsa.PrivateKey, []byte) {
+	t.Helper()
+
 	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		t.Fatalf("failed to generate RSA key: %v", err)
@@ -42,6 +45,8 @@ func generateRSAKeyPair(t *testing.T) (*rsa.PrivateKey, []byte) {
 }
 
 func createKeys(t *testing.T) (*rsa.PrivateKey, string) {
+	t.Helper()
+
 	tmpFile, err := os.CreateTemp(os.TempDir(), "olivetin-jwt-")
 	if err != nil {
 		t.Fatalf("failed to create temp file: %v", err)
@@ -66,6 +71,8 @@ func newMux() *http.ServeMux {
 }
 
 func createJWTTokenWithExpirationAndAudience(t *testing.T, privateKey *rsa.PrivateKey, expire int64, audience string) string {
+	t.Helper()
+
 	token := jwt.New(jwt.SigningMethodRS256)
 	claims := token.Claims.(jwt.MapClaims)
 	claims["nbf"] = time.Now().Unix() - 1000
@@ -84,6 +91,8 @@ func createJWTTokenWithExpirationAndAudience(t *testing.T, privateKey *rsa.Priva
 }
 
 func setupJWTTestHandler(t *testing.T, cfg *config.Config) http.Handler {
+	t.Helper()
+
 	mux := newMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		context := &authpublic.AuthCheckingContext{
@@ -93,7 +102,7 @@ func setupJWTTestHandler(t *testing.T, cfg *config.Config) http.Handler {
 		user := CheckUserFromJwtHeader(context)
 
 		if user == nil {
-			w.WriteHeader(403)
+			w.WriteHeader(http.StatusForbidden)
 			return
 		}
 
@@ -104,17 +113,24 @@ func setupJWTTestHandler(t *testing.T, cfg *config.Config) http.Handler {
 }
 
 func verifyJWTResponse(t *testing.T, res *http.Response, expectCode int) {
+	t.Helper()
+
 	defer func() { _ = res.Body.Close() }()
 	assert.Equal(t, expectCode, res.StatusCode)
-	body, _ := io.ReadAll(res.Body)
+	body, err := io.ReadAll(res.Body)
+	require.NoError(t, err, "reading JWT response body")
 	t.Logf("Response body: %s", string(body))
 }
 
 func testJwkValidation(t *testing.T, expire int64, expectCode int) {
+	t.Helper()
+
 	testJwkValidationWithAudience(t, expire, expectCode, "", "")
 }
 
 func testJwkValidationWithAudience(t *testing.T, expire int64, expectCode int, configAudience, tokenAudience string) {
+	t.Helper()
+
 	privateKey, publicKeyPath := createKeys(t)
 	defer func() { _ = os.Remove(publicKeyPath) }()
 
@@ -131,27 +147,30 @@ func testJwkValidationWithAudience(t *testing.T, expire int64, expectCode int, c
 	srv := httptest.NewServer(handler)
 	defer srv.Close()
 
-	res := makeJWTRequest(t, srv, tokenStr)
+	res := makeJWTRequest(t, srv, tokenStr) //nolint:bodyclose // closed by verifyJWTResponse
+
 	verifyJWTResponse(t, res, expectCode)
 }
 
 func TestJWTSignatureVerificationSucceeds(t *testing.T) {
-	testJwkValidation(t, 1000, 200)
+	testJwkValidation(t, 1000, http.StatusOK)
 }
 
 func TestJWTSignatureVerificationFails(t *testing.T) {
-	testJwkValidation(t, -500, 403)
+	testJwkValidation(t, -500, http.StatusForbidden)
 }
 
 func TestJWTAudienceValidationRejectsWrongAudience(t *testing.T) {
-	testJwkValidationWithAudience(t, 1000, 403, "expected-audience", "wrong-audience")
+	testJwkValidationWithAudience(t, 1000, http.StatusForbidden, "expected-audience", "wrong-audience")
 }
 
 func TestJWTAudienceValidationAcceptsCorrectAudience(t *testing.T) {
-	testJwkValidationWithAudience(t, 1000, 200, "expected-audience", "expected-audience")
+	testJwkValidationWithAudience(t, 1000, http.StatusOK, "expected-audience", "expected-audience")
 }
 
-func createJWTTokenWithGroups(t *testing.T, privateKey *rsa.PrivateKey, groups interface{}) string {
+func createJWTTokenWithGroups(t *testing.T, privateKey *rsa.PrivateKey, groups any) string {
+	t.Helper()
+
 	token := jwt.New(jwt.SigningMethodRS256)
 	claims := token.Claims.(jwt.MapClaims)
 	claims["nbf"] = time.Now().Unix() - 1000
@@ -167,7 +186,9 @@ func createJWTTokenWithGroups(t *testing.T, privateKey *rsa.PrivateKey, groups i
 }
 
 func makeJWTRequest(t *testing.T, srv *httptest.Server, tokenStr string) *http.Response {
-	req, err := http.NewRequest("GET", srv.URL, nil)
+	t.Helper()
+
+	req, err := http.NewRequestWithContext(t.Context(), http.MethodGet, srv.URL, nil)
 	if err != nil {
 		t.Fatalf("failed to create request: %v", err)
 	}
@@ -177,6 +198,7 @@ func makeJWTRequest(t *testing.T, srv *httptest.Server, tokenStr string) *http.R
 	if err != nil {
 		t.Fatalf("Client err: %+v", err)
 	}
+
 	return res
 }
 
@@ -201,7 +223,7 @@ func TestJWTHeader(t *testing.T) {
 		user := CheckUserFromJwtHeader(context)
 
 		if user == nil {
-			w.WriteHeader(403)
+			w.WriteHeader(http.StatusForbidden)
 			return
 		}
 
@@ -212,10 +234,6 @@ func TestJWTHeader(t *testing.T) {
 	srv := httptest.NewServer(mux)
 	defer srv.Close()
 
-	res := makeJWTRequest(t, srv, tokenStr)
-	defer func() { _ = res.Body.Close() }()
-
-	assert.Equal(t, 200, res.StatusCode)
-	body, _ := io.ReadAll(res.Body)
-	t.Logf("Response body: %s", string(body))
+	res := makeJWTRequest(t, srv, tokenStr) //nolint:bodyclose // closed by verifyJWTResponse
+	verifyJWTResponse(t, res, http.StatusOK)
 }
