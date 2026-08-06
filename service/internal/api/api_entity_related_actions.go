@@ -54,7 +54,11 @@ func tryAppendRelatedCandidate(candidates *[]relatedActionCandidate, seen map[st
 }
 
 func bindingViewableForRelated(seen map[string]bool, api *oliveTinAPI, user *authpublic.AuthenticatedUser, binding *executor.ActionBinding) bool {
-	return binding != nil && binding.Action != nil && !seen[binding.ID] && api.userCanViewAction(user, binding.Action)
+	if binding == nil || binding.Action == nil || seen[binding.ID] || binding.Action.Hidden {
+		return false
+	}
+
+	return api.userCanViewAction(user, binding.Action)
 }
 
 func relatedPrefillForBinding(binding *executor.ActionBinding, entityType string, entity *entities.Entity) (map[string]string, bool) {

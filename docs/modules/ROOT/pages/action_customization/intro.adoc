@@ -12,6 +12,7 @@ You can customize actions by:
 * Setting rate limits to prevent actions from being executed too frequently
 * Using enabled expressions to dynamically enable/disable actions based on entity state
 * Assigning unique IDs for API access
+* Hiding background helpers from the default dashboard
 * Configuring log saving for audit trails
 
 See the links in this section for detailed information on each customization option.
@@ -28,3 +29,4 @@ Explore specific customization options:
 * xref:action_customization/enabledExpression.adoc[Enabled expressions] - Dynamically enable/disable actions based on entity state
 * xref:logs/saving.adoc[Save action logs] - Configure log retention for actions
 * xref:action_customization/ids.adoc[Set action IDs] - Assign IDs for API access
+* xref:action_customization/hidden.adoc[Hidden actions] - Keep background helpers off the default dashboard (not a security control)

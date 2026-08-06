@@ -1,7 +1,7 @@
 [#triggers]
 = Triggers
 
-Sometimes you want to trigger another action after the first one completes. This is mostly useful for updating hidden actions that update entity files, without having to run those updates on a cron job every 10 seconds!
+Sometimes you want to trigger another action after the first one completes. This is mostly useful for updating xref:action_customization/hidden.adoc[hidden] actions that update entity files, without having to run those updates on a cron job every 10 seconds!
 
 NOTE: OliveTin used to support a single action trigger, but now supports multiple triggers. The field `trigger` was renamed to `triggers` and is now an array of triggers.
 
@@ -23,3 +23,4 @@ actions:
     hidden: true
 ----
 
+IMPORTANT: `hidden` only removes the action from automatic dashboard listings. It is not a security control — use xref:security/acl.adoc[ACLs] to restrict who can view or execute an action. See xref:action_customization/hidden.adoc[Hidden actions].

@@ -1,0 +1,17 @@
+[#action-hidden]
+= Hidden actions
+
+Set `hidden: true` on an action to keep it off the default **Actions** dashboard and out of automatic UI listings (for example entity-related action pickers). This is useful for background helpers that run on cron, startup, webhooks, or as xref:action_execution/triggers.adoc[triggers].
+
+[source,yaml]
+----
+actions:
+  - title: Update container entity file
+    shell: docker ps -a --format=json > /etc/OliveTin/entities/containers.json
+    hidden: true
+    execOnStartup: true
+----
+
+IMPORTANT: `hidden` is **not** a security control. It only affects where the action appears in the UI. Users who are allowed to view the action (via `defaultPermissions` or ACLs) can still open its Action Details page, see it in logs, and call APIs such as `GetActionBinding`. To restrict who can see or run an action, use xref:security/acl.adoc[Access Control Lists].
+
+You can still place a hidden action on a custom dashboard by title if you want a button for it in a specific place.

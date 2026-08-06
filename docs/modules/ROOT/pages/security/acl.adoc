@@ -158,6 +158,8 @@ dashboards:
 
 In the example above, guests can open **Public tools**, but **Services** is hidden from the side menu and cannot be loaded by deep link.
 
+NOTE: Action `hidden: true` is not part of the ACL model. It only controls dashboard listing. Restrict who can see or run actions with the permissions above; see xref:action_customization/hidden.adoc[Hidden actions].
+
 == ACL Matching - usernames and usergroups.
 
 You can match users based on their usergroup which is the most common, but it is also possible to match based on the user's username.

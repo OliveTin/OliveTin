@@ -119,12 +119,9 @@ func IsAllowedExec(cfg *config.Config, user *authpublic.AuthenticatedUser, actio
 	return aclCheck(Exec, cfg.DefaultPermissions.Exec, cfg, "isAllowedExec", user, action.Title, action.Acls, true)
 }
 
-// IsAllowedView checks if a User is allowed to view an Action
+// IsAllowedView checks if a User is allowed to view an Action.
+// Action.Hidden is not a security control — it only affects dashboard listing.
 func IsAllowedView(cfg *config.Config, user *authpublic.AuthenticatedUser, action *config.Action) bool {
-	if action.Hidden {
-		return false
-	}
-
 	return aclCheck(View, cfg.DefaultPermissions.View, cfg, "isAllowedView", user, action.Title, action.Acls, true)
 }
 
