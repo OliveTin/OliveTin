@@ -336,6 +336,77 @@ export declare type GetDashboardResponse = Message<"olivetin.api.v1.GetDashboard
 export declare const GetDashboardResponseSchema: GenMessage<GetDashboardResponse>;
 
 /**
+ * @generated from message olivetin.api.v1.SearchHints
+ */
+export declare type SearchHints = Message<"olivetin.api.v1.SearchHints"> & {
+  /**
+   * Lightweight titles for client search only. Omits fields, icons, and payloads.
+   * Dashboards are not included; clients index Init.root_dashboard_entries instead.
+   *
+   * @generated from field: repeated olivetin.api.v1.EntitySearchHint entities = 1;
+   */
+  entities: EntitySearchHint[];
+
+  /**
+   * @generated from field: repeated olivetin.api.v1.ActionSearchHint actions = 2;
+   */
+  actions: ActionSearchHint[];
+};
+
+/**
+ * Describes the message olivetin.api.v1.SearchHints.
+ * Use `create(SearchHintsSchema)` to create a new message.
+ */
+export declare const SearchHintsSchema: GenMessage<SearchHints>;
+
+/**
+ * @generated from message olivetin.api.v1.EntitySearchHint
+ */
+export declare type EntitySearchHint = Message<"olivetin.api.v1.EntitySearchHint"> & {
+  /**
+   * @generated from field: string title = 1;
+   */
+  title: string;
+
+  /**
+   * @generated from field: string type = 2;
+   */
+  type: string;
+
+  /**
+   * @generated from field: string unique_key = 3;
+   */
+  uniqueKey: string;
+};
+
+/**
+ * Describes the message olivetin.api.v1.EntitySearchHint.
+ * Use `create(EntitySearchHintSchema)` to create a new message.
+ */
+export declare const EntitySearchHintSchema: GenMessage<EntitySearchHint>;
+
+/**
+ * @generated from message olivetin.api.v1.ActionSearchHint
+ */
+export declare type ActionSearchHint = Message<"olivetin.api.v1.ActionSearchHint"> & {
+  /**
+   * @generated from field: string title = 1;
+   */
+  title: string;
+
+  /**
+   * @generated from field: string binding_id = 2;
+   */
+  bindingId: string;
+};
+
+/**
+ * Describes the message olivetin.api.v1.ActionSearchHint.
+ * Use `create(ActionSearchHintSchema)` to create a new message.
+ */
+export declare const ActionSearchHintSchema: GenMessage<ActionSearchHint>;
+
+/**
  * @generated from message olivetin.api.v1.EffectivePolicy
  */
 export declare type EffectivePolicy = Message<"olivetin.api.v1.EffectivePolicy"> & {
@@ -360,6 +431,25 @@ export declare type EffectivePolicy = Message<"olivetin.api.v1.EffectivePolicy">
  * Use `create(EffectivePolicySchema)` to create a new message.
  */
 export declare const EffectivePolicySchema: GenMessage<EffectivePolicy>;
+
+/**
+ * Features are global opt-in flags from config.yaml features.*.
+ * All flags default to false and gate alpha / experimental functionality.
+ *
+ * @generated from message olivetin.api.v1.Features
+ */
+export declare type Features = Message<"olivetin.api.v1.Features"> & {
+  /**
+   * @generated from field: bool header_search = 1;
+   */
+  headerSearch: boolean;
+};
+
+/**
+ * Describes the message olivetin.api.v1.Features.
+ * Use `create(FeaturesSchema)` to create a new message.
+ */
+export declare const FeaturesSchema: GenMessage<Features>;
 
 /**
  * @generated from message olivetin.api.v1.GetDashboardRequest
@@ -1895,6 +1985,21 @@ export declare type InitResponse = Message<"olivetin.api.v1.InitResponse"> & {
    * @generated from field: repeated olivetin.api.v1.RootDashboard root_dashboard_entries = 27;
    */
   rootDashboardEntries: RootDashboard[];
+
+  /**
+   * Client-side search index hints. Omitted when login is required
+   * or features.header_search is false.
+   * Entities match GetEntities visibility; actions use view ACL.
+   * Dashboards are indexed client-side from root_dashboard_entries.
+   *
+   * @generated from field: olivetin.api.v1.SearchHints search_hints = 28;
+   */
+  searchHints?: SearchHints | undefined;
+
+  /**
+   * @generated from field: olivetin.api.v1.Features features = 29;
+   */
+  features?: Features | undefined;
 };
 
 /**

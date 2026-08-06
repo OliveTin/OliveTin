@@ -139,6 +139,16 @@ func IsAllowedViewDashboard(cfg *config.Config, user *authpublic.AuthenticatedUs
 	return aclCheck(View, cfg.DefaultPermissions.View, cfg, "isAllowedViewDashboard", user, dashboard.Title, dashboard.Acls, false)
 }
 
+// IsAllowedViewEntityType checks if a user may see an entity type (list, details, search).
+// Entity types with no acls are unrestricted. AddToEveryAction does not apply.
+func IsAllowedViewEntityType(cfg *config.Config, user *authpublic.AuthenticatedUser, entityFile *config.EntityFile) bool {
+	if entityFile == nil || len(entityFile.Acls) == 0 {
+		return true
+	}
+
+	return aclCheck(View, cfg.DefaultPermissions.View, cfg, "isAllowedViewEntityType", user, entityFile.Name, entityFile.Acls, false)
+}
+
 func isACLRelevant(resourceAcls []string, acl *config.AccessControlList, user *authpublic.AuthenticatedUser, includeAddToEvery bool) bool {
 	if !slices.Contains(user.Acls, acl.Name) {
 		return false

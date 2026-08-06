@@ -60,6 +60,7 @@ All configuration options are covered in the solution sections
 | `defaultIconForBack` | The default icon to use for back (from directories). | `&laquo;` | Requires Restart | -
 | `enableCustomJs` | Enable custom JavaScript. | `false` | Live Reloadable, but refreshing the web browser is required. | xref:advanced_configuration/webui.adoc[Custom JS].
 | `themeName` | The theme to use. | `` | Restart recommended | xref:reference/reference_themes_for_users.adoc[Themes].
+| `features.headerSearch` | Enable header QuickSearch (actions, dashboards, entities). Alpha / experimental; all `features.*` default off. | `false` | Live reloadable; refresh the browser after changing. | xref:advanced_configuration/webui.adoc#header-search[Header search].
 |===
 
 == Security Configuration

@@ -81,16 +81,40 @@ func (rr *DashboardRenderRequest) findActionForEntity(title string, entity *enti
 	defer rr.ex.MapActionBindingsLock.RUnlock()
 
 	for _, binding := range rr.ex.MapActionBindings {
-		if !bindingMatchesTitleAndEntity(binding, title, entity) {
-			continue
+		if action := rr.actionFromMatchingBinding(title, entity, binding); action != nil {
+			return action
 		}
-		if !acl.IsAllowedView(rr.cfg, rr.AuthenticatedUser, binding.Action) {
-			return nil
-		}
-		return buildAction(binding, rr)
 	}
 
 	return nil
+}
+
+func (rr *DashboardRenderRequest) actionFromMatchingBinding(title string, entity *entities.Entity, binding *executor.ActionBinding) *apiv1.Action {
+	if !bindingMatchesTitleAndEntity(binding, title, entity) {
+		return nil
+	}
+
+	if !rr.canViewBindingForDashboard(binding) {
+		return nil
+	}
+
+	return buildAction(binding, rr)
+}
+
+func (rr *DashboardRenderRequest) canViewBindingForDashboard(binding *executor.ActionBinding) bool {
+	if binding == nil || binding.Action == nil {
+		return false
+	}
+
+	if !acl.IsAllowedView(rr.cfg, rr.AuthenticatedUser, binding.Action) {
+		return false
+	}
+
+	if binding.Action.Entity == "" {
+		return true
+	}
+
+	return acl.IsAllowedViewEntityType(rr.cfg, rr.AuthenticatedUser, entityFileForType(rr.cfg, binding.Action.Entity))
 }
 
 func matchesEntity(binding *executor.ActionBinding, entity *entities.Entity) bool {
@@ -191,7 +215,7 @@ func applyActiveBindingStateToAction(btn *apiv1.Action, bindingID string, states
 	btn.HasQueuedInstance = state.hasQueued
 }
 
-func buildActionArguments(action *config.Action, entity *entities.Entity) []*apiv1.ActionArgument {
+func buildActionArguments(action *config.Action, entity *entities.Entity, rr *DashboardRenderRequest) []*apiv1.ActionArgument {
 	args := make([]*apiv1.ActionArgument, 0, len(action.Arguments))
 	for _, cfgArg := range action.Arguments {
 		args = append(args, &apiv1.ActionArgument{
@@ -200,7 +224,7 @@ func buildActionArguments(action *config.Action, entity *entities.Entity) []*api
 			Type:                  cfgArg.Type,
 			Description:           cfgArg.Description,
 			DefaultValue:          getDefaultArgumentValue(cfgArg, entity),
-			Choices:               buildChoices(cfgArg),
+			Choices:               buildChoices(cfgArg, rr),
 			Suggestions:           cfgArg.Suggestions,
 			SuggestionsBrowserKey: cfgArg.SuggestionsBrowserKey,
 		})
@@ -228,7 +252,7 @@ func buildAction(actionBinding *executor.ActionBinding, rr *DashboardRenderReque
 
 	applyActiveBindingStateToAction(&btn, binding.ID, rr.activeBindingStates)
 	applyActionExecTriggers(&btn, action)
-	btn.Arguments = buildActionArguments(action, binding.Entity)
+	btn.Arguments = buildActionArguments(action, binding.Entity, rr)
 	btn.Groups = buildActionGroups(action, rr.cfg)
 
 	return &btn
@@ -262,15 +286,23 @@ func actionGroupMembershipFromConfig(name string, cfg *config.Config) *apiv1.Act
 	return membership
 }
 
-func buildChoices(arg config.ActionArgument) []*apiv1.ActionArgumentChoice {
-	if arg.Entity != "" && len(arg.Choices) == 1 {
-		return buildChoicesEntity(arg.Choices[0], arg.Entity)
-	} else {
+func buildChoices(arg config.ActionArgument, rr *DashboardRenderRequest) []*apiv1.ActionArgumentChoice {
+	if arg.Entity == "" {
 		return buildChoicesSimple(arg.Choices)
 	}
+
+	if len(arg.Choices) != 1 {
+		return []*apiv1.ActionArgumentChoice{}
+	}
+
+	return buildChoicesEntity(arg.Choices[0], arg.Entity, rr)
 }
 
-func buildChoicesEntity(firstChoice config.ActionArgumentChoice, entityTitle string) []*apiv1.ActionArgumentChoice {
+func buildChoicesEntity(firstChoice config.ActionArgumentChoice, entityTitle string, rr *DashboardRenderRequest) []*apiv1.ActionArgumentChoice {
+	if rr != nil && !acl.IsAllowedViewEntityType(rr.cfg, rr.AuthenticatedUser, entityFileForType(rr.cfg, entityTitle)) {
+		return []*apiv1.ActionArgumentChoice{}
+	}
+
 	ret := []*apiv1.ActionArgumentChoice{}
 
 	for _, ent := range entities.GetEntityInstancesOrdered(entityTitle) {

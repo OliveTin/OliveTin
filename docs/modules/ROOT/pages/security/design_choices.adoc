@@ -12,6 +12,7 @@ OliveTin has a few design choices that should help it's general security posture
 * OliveTin listens on just 1 open public port by default (1337). The rest of the ports only listen on `localhost` so you don't have to worry about them in your firewall.
 * Standard Linux controls can be used to run OliveTin as non-root, with `sudo` permissions if needed. See the action customization section of these docs for more details.
 * Robust code-scanning, code review, and dependency analysis at build-time. OliveTin uses many linters and code checkers, especially on new pull requests. Out dated dependencies are addressed quickly.
+* Unfinished or experimental surfaces ship behind global `features.*` flags that **default to off**. Those surfaces are alpha until graduated; they are out of scope for security advisories and CVEs (see https://github.com/OliveTin/OliveTin/blob/main/SECURITY.md[SECURITY.md]). Do not enable experimental flags in high-assurance deployments unless you accept that risk.
 
 == Hardening Recommendations
 

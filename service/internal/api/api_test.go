@@ -1099,7 +1099,7 @@ func TestBuildChoicesExpandsChecklistEntityChoices(t *testing.T) {
 		},
 	}
 
-	choices := buildChoices(arg)
+	choices := buildChoices(arg, nil)
 	require.Len(t, choices, 2)
 	assert.Equal(t, "attic", choices[0].Value)
 	assert.Equal(t, "attic", choices[0].Title)

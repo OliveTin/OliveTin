@@ -62,6 +62,8 @@ This is what it looks like in the web interface;
 
 image::args/dropdown/dropdown-entities.png[]
 
+IMPORTANT: Arguments with `entity` must define **exactly one** choice template. Multiple static choices combined with `entity` is invalid configuration and is rejected on startup.
+
 include::partial$args/reject-null.adoc[]
 
 == Default values

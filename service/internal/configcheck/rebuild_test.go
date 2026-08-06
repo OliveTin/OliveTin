@@ -191,6 +191,64 @@ func TestStickyEnvUnsetSurvivesRebuild(t *testing.T) {
 	assert.True(t, hasCode(configissues.List(), configissues.CodeEnvUnset))
 }
 
+func TestRebuildWarnsForEntityTypeWithoutConfigEntry(t *testing.T) {
+	entities.ClearEntitiesOfType("orphan_type")
+	t.Cleanup(func() {
+		entities.ClearEntitiesOfType("orphan_type")
+	})
+
+	entities.AddEntity("orphan_type", "0", map[string]any{"name": "lonely"})
+
+	configissues.BeginConfigLoad()
+	cfg := config.DefaultConfig()
+	cfg.Entities = nil
+	configcheck.Rebuild(cfg)
+
+	issues := configissues.List()
+	require.True(t, hasCode(issues, configissues.CodeEntityTypeUnconfigured))
+	found := false
+	for _, issue := range issues {
+		if issue.Code == configissues.CodeEntityTypeUnconfigured {
+			assert.Equal(t, configissues.SeverityWarning, issue.Severity)
+			assert.Equal(t, "orphan_type", issue.Source)
+			found = true
+		}
+	}
+	assert.True(t, found)
+}
+
+func TestRebuildEntityArgumentChoices(t *testing.T) {
+	configissues.BeginConfigLoad()
+	cfg := config.DefaultConfig()
+	cfg.Actions = []*config.Action{
+		{
+			Title: "Reboot",
+			ID:    "reboot",
+			Arguments: []config.ActionArgument{
+				{
+					Name:   "target",
+					Entity: "servers",
+					Choices: []config.ActionArgumentChoice{
+						{Value: "{{ servers.name }}"},
+						{Value: "web01"},
+					},
+				},
+			},
+		},
+	}
+
+	configcheck.Rebuild(cfg)
+
+	issues := configissues.List()
+	require.True(t, hasCode(issues, configissues.CodeEntityArgumentChoices))
+	for _, issue := range issues {
+		if issue.Code == configissues.CodeEntityArgumentChoices {
+			assert.Equal(t, configissues.SeverityError, issue.Severity)
+			assert.Equal(t, "target", issue.ArgumentName)
+		}
+	}
+}
+
 func hasCode(issues []configissues.Issue, code string) bool {
 	for _, issue := range issues {
 		if issue.Code == code {

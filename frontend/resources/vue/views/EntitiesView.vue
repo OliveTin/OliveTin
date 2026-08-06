@@ -24,7 +24,6 @@
 import { ref, computed, onMounted } from 'vue'
 import Section from 'picocrank/vue/components/Section.vue'
 import EntityDefinitionSection from '../components/EntityDefinitionSection.vue'
-
 const definitionsLoaded = ref(false)
 const entityDefinitions = ref([])
 

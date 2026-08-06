@@ -2,6 +2,7 @@ package api
 
 import (
 	apiv1 "github.com/OliveTin/OliveTin/gen/olivetin/api/v1"
+	acl "github.com/OliveTin/OliveTin/internal/acl"
 	config "github.com/OliveTin/OliveTin/internal/config"
 	entities "github.com/OliveTin/OliveTin/internal/entities"
 	"github.com/OliveTin/OliveTin/internal/tpl"
@@ -9,6 +10,10 @@ import (
 )
 
 func buildEntityFieldsets(entityTitle string, tpl *config.DashboardComponent, rr *DashboardRenderRequest) []*apiv1.DashboardComponent {
+	if !acl.IsAllowedViewEntityType(rr.cfg, rr.AuthenticatedUser, entityFileForType(rr.cfg, entityTitle)) {
+		return nil
+	}
+
 	ret := make([]*apiv1.DashboardComponent, 0)
 
 	orderedEntities := entities.GetEntityInstancesOrdered(entityTitle)

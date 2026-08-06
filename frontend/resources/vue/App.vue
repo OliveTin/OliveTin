@@ -8,6 +8,14 @@
     @toggle-sidebar="toggleSidebar"
   >
     <template #toolbar>
+      <QuickSearch
+        v-if="!loginRequired && headerSearchEnabled"
+        :items="searchIndexItems"
+        :auto-import-routes="false"
+        :search-fields="['title', 'description', 'category']"
+        :max-results="15"
+        placeholder="Search actions, dashboards, entities…"
+      />
       <div
         v-if="bannerMessage"
         id="banner"
@@ -193,6 +201,7 @@ import { useRouter } from 'vue-router'
 import Sidebar from 'picocrank/vue/components/Sidebar.vue'
 import Navigation from 'picocrank/vue/components/Navigation.vue'
 import Header from 'picocrank/vue/components/Header.vue'
+import QuickSearch from 'picocrank/vue/components/QuickSearch.vue'
 import ConnectionBanner from './components/ConnectionBanner.vue'
 import { connectEventStreamIfNeeded } from '../../js/websocket.js'
 import { HugeiconsIcon } from '@hugeicons/vue'
@@ -200,6 +209,7 @@ import { UserCircle02Icon, DashboardSquare01Icon } from '@hugeicons/core-free-ic
 import logoUrl from '../../OliveTinLogo.png'
 import { useI18n } from 'vue-i18n'
 import combinedTranslations from '../../../lang/combined_output.json'
+import { searchIndexItems, clearSearchIndex, indexSystemNavigation, indexSearchHints, indexRootDashboardEntries } from './stores/searchIndex.js'
 const { t } = useI18n()
 
 const router = useRouter()
@@ -220,6 +230,8 @@ const showDiagnostics = ref(true)
 const showVersionNumber = ref(true)
 const showLoginLink = ref(true)
 const sectionNavigationStyle = ref('sidebar')
+const loginRequired = ref(false)
+const headerSearchEnabled = ref(false)
 
 const languageDialog = ref(null)
 const browserLanguages = ref([])
@@ -305,8 +317,15 @@ function updateHeaderFromInit () {
     return
   }
 
-  username.value = window.initResponse.authenticatedUser
-  isLoggedIn.value = window.initResponse.authenticatedUser !== '' && window.initResponse.authenticatedUser !== 'guest'
+  // Rebuild the in-memory search index from this Init; never persist it.
+  clearSearchIndex()
+
+  const authenticatedUser = window.initResponse.authenticatedUser
+  loginRequired.value = !!window.initResponse.loginRequired
+  headerSearchEnabled.value = !!window.initResponse.features?.headerSearch
+
+  username.value = authenticatedUser
+  isLoggedIn.value = authenticatedUser !== '' && authenticatedUser !== 'guest'
   currentVersion.value = window.initResponse.currentVersion
   pageTitle.value = window.initResponse.pageTitle || 'OliveTin'
   bannerMessage.value = window.initResponse.bannerMessage || ''
@@ -329,10 +348,15 @@ function updateHeaderFromInit () {
   renderNavigation()
   applyTheme()
 
-  if (window.initResponse.loginRequired) {
+  if (loginRequired.value) {
     connectEventStreamIfNeeded()
     router.push('/login')
     return
+  }
+
+  if (headerSearchEnabled.value) {
+    indexSearchHints(window.initResponse.searchHints)
+    indexRootDashboardEntries(getRootDashboardEntries())
   }
 
   connectEventStreamIfNeeded()
@@ -430,6 +454,17 @@ function addSystemNavLinks () {
       routeName: 'Diagnostics',
       title: t('nav.diagnostics'),
       options: { count: issueCount }
+    })
+  }
+
+  if (!loginRequired.value && headerSearchEnabled.value) {
+    indexRootDashboardEntries(getRootDashboardEntries())
+    indexSystemNavigation({
+      showLogs: showLogs.value,
+      showDiagnostics: showDiagnostics.value,
+      entitiesTitle: t('nav.entities'),
+      logsTitle: t('nav.logs'),
+      diagnosticsTitle: t('nav.diagnostics')
     })
   }
 

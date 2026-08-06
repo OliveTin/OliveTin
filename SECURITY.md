@@ -37,6 +37,17 @@ The following notes might be helpful when reporting a vulnerability:
 * GitHub usernames are how we you will be credited for discoveries reported via GitHub, if using emails we'll ask for your preferred name/handle to credit you with.
 * CVEs will be requested via GitHub Security Advisories when appropriate, but we do not guarantee that all vulnerabilities will receive CVEs, as this is determined on a case-by-case basis.
 
+## Feature flags (alpha / experimental)
+
+OliveTin uses global `features.*` flags in `config.yaml` to ship unfinished or experimental functionality.
+
+* **All feature flags default to off.** Enabling a flag is an explicit operator choice.
+* Functionality behind a feature flag is **alpha / experimental** until the flag is removed or the feature is graduated to a stable, default-on product surface.
+* **Security reports and CVEs are not accepted** for bugs that only affect feature-flagged (alpha) functionality. Prefer filing a normal GitHub issue (or a PR) instead of a security advisory.
+* Reports that affect **stable, non-flagged** code paths remain in scope under this policy, even if a feature flag exists elsewhere in the project.
+
+Operators who enable experimental features should treat them as preview software and avoid relying on them in high-assurance production deployments.
+
 ## Disclosure of how vulnerabilities were found
 
 It is incredibly useful to not just patch security vulnerabilities, but also to understand how they were found. If you are able to share this information, it can help us and the community to better understand potential attack vectors and improve the overall security of the project.
@@ -52,6 +63,7 @@ Maintainers: see [.github/SECURITY_ADVISORY_DUPLICATES.md](.github/SECURITY_ADVI
 Once a vulnerability is reported, the process is;
 
 * Check [.github/SECURITY_ADVISORY_DUPLICATES.md](.github/SECURITY_ADVISORY_DUPLICATES.md) and open advisories for duplicates before accepting.
+* Reject reports that only affect feature-flagged / alpha functionality (see [Feature flags](#feature-flags-alpha--experimental) above); ask the reporter to open a normal issue instead.
 * Accept or reject the report, and communicate with the reporter about next steps.
 * If accepted, patch using a temporary branch, and code review will be requested from the original reporter if they are interested.
 * The severity of the vulnerability will be assessed using CVSS, and the patch will be prioritised accordingly.
