@@ -136,7 +136,7 @@ func entityInstanceMatchesFilter(instance *apiv1.Entity, filter string) bool {
 }
 
 func stringContainsFold(value, filter string) bool {
-	return strings.Contains(strings.ToLower(value), filter)
+	return strings.Contains(strings.ToLower(value), strings.ToLower(filter))
 }
 
 func entityFieldsContainFilter(fields map[string]string, filter string) bool {

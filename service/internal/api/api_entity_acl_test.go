@@ -148,9 +148,9 @@ func TestSearchHintsOmitRestrictedEntitiesAndEntityBoundActions(t *testing.T) {
 	assert.NotContains(t, guestEntityKeys, "servers:0")
 
 	guestActionIDs := actionHintBindingIDs(guestHints.Actions)
-	for _, id := range guestActionIDs {
-		assert.NotContains(t, id, "restart")
-	}
+	require.NotEmpty(t, guestActionIDs)
+	assert.Contains(t, guestActionIDs, "ping-printer")
+	assert.NotContains(t, guestActionIDs, "restart")
 
 	adminHints := api.buildSearchHints(admin)
 	require.NotNil(t, adminHints)

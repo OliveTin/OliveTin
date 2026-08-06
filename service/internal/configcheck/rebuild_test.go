@@ -249,6 +249,38 @@ func TestRebuildEntityArgumentChoices(t *testing.T) {
 	}
 }
 
+func TestRebuildUnknownAclReferences(t *testing.T) {
+	configissues.BeginConfigLoad()
+	cfg := config.DefaultConfig()
+	cfg.AccessControlLists = []*config.AccessControlList{
+		{Name: "ops", MatchUsernames: []string{"admin"}, Permissions: config.PermissionsList{View: true}},
+	}
+	cfg.Actions = []*config.Action{
+		{Title: "Restart", ID: "restart", Acls: []string{"ops"}},
+		{Title: "Secret", ID: "secret", Acls: []string{"missing-acl"}},
+	}
+	cfg.Entities = []*config.EntityFile{
+		{Name: "printers", File: "printers.yaml"},
+		{Name: "servers", File: "servers.yaml", Acls: []string{"missing-entity-acl"}},
+	}
+
+	configcheck.Rebuild(cfg)
+
+	issues := configissues.List()
+	require.True(t, hasCode(issues, configissues.CodeAclUnknown))
+
+	unknownSources := make([]string, 0)
+	for _, issue := range issues {
+		if issue.Code == configissues.CodeAclUnknown {
+			assert.Equal(t, configissues.SeverityError, issue.Severity)
+			unknownSources = append(unknownSources, issue.Source)
+		}
+	}
+	assert.Contains(t, unknownSources, "missing-acl")
+	assert.Contains(t, unknownSources, "missing-entity-acl")
+	assert.NotContains(t, unknownSources, "ops")
+}
+
 func hasCode(issues []configissues.Issue, code string) bool {
 	for _, issue := range issues {
 		if issue.Code == code {

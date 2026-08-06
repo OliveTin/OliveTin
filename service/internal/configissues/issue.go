@@ -19,6 +19,7 @@ const (
 	CodeCronInvalid            = "cron_invalid"
 	CodeCronEntityBinding      = "cron_entity_binding"
 	CodeWatcherPath            = "watcher_path"
+	CodeAclUnknown             = "acl_unknown"
 )
 
 // Issue is a configuration warning or error surfaced on Diagnostics.

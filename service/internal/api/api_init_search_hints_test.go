@@ -36,10 +36,10 @@ func TestInitIncludesEntitySearchHints(t *testing.T) {
 	cfg.Features.HeaderSearch = true
 	cfg.Sanitize()
 
-	ex := executor.DefaultExecutor(cfg)
-	ex.RebuildActionMap()
-	ts, client := getNewTestServerAndClientWithExecutor(cfg, ex)
-	defer ts.Close()
+	testExecutor := executor.DefaultExecutor(cfg)
+	testExecutor.RebuildActionMap()
+	testServer, client := getNewTestServerAndClientWithExecutor(cfg, testExecutor)
+	defer testServer.Close()
 
 	resp, err := client.Init(context.Background(), connect.NewRequest(&apiv1.InitRequest{}))
 	require.NoError(t, err)
@@ -76,10 +76,10 @@ func TestInitOmitsSearchHintsWhenLoginRequired(t *testing.T) {
 	cfg.Features.HeaderSearch = true
 	cfg.Sanitize()
 
-	ex := executor.DefaultExecutor(cfg)
-	ex.RebuildActionMap()
-	ts, client := getNewTestServerAndClientWithExecutor(cfg, ex)
-	defer ts.Close()
+	testExecutor := executor.DefaultExecutor(cfg)
+	testExecutor.RebuildActionMap()
+	testServer, client := getNewTestServerAndClientWithExecutor(cfg, testExecutor)
+	defer testServer.Close()
 
 	resp, err := client.Init(context.Background(), connect.NewRequest(&apiv1.InitRequest{}))
 	require.NoError(t, err)
@@ -99,10 +99,10 @@ func TestInitOmitsSearchHintsWhenHeaderSearchDisabled(t *testing.T) {
 	cfg.Sanitize()
 	require.False(t, cfg.Features.HeaderSearch)
 
-	ex := executor.DefaultExecutor(cfg)
-	ex.RebuildActionMap()
-	ts, client := getNewTestServerAndClientWithExecutor(cfg, ex)
-	defer ts.Close()
+	testExecutor := executor.DefaultExecutor(cfg)
+	testExecutor.RebuildActionMap()
+	testServer, client := getNewTestServerAndClientWithExecutor(cfg, testExecutor)
+	defer testServer.Close()
 
 	resp, err := client.Init(context.Background(), connect.NewRequest(&apiv1.InitRequest{}))
 	require.NoError(t, err)
@@ -135,9 +135,9 @@ func TestBuildSearchHintsRespectsActionACL(t *testing.T) {
 	cfg.Actions[0].Acls = []string{"everyone"}
 	cfg.Sanitize()
 
-	ex := executor.DefaultExecutor(cfg)
-	ex.RebuildActionMap()
-	api := newServer(ex)
+	testExecutor := executor.DefaultExecutor(cfg)
+	testExecutor.RebuildActionMap()
+	api := newServer(testExecutor)
 
 	guest := &authpublic.AuthenticatedUser{Username: "guest", Provider: "system"}
 	guest.BuildUserAcls(cfg)
@@ -167,9 +167,9 @@ func TestBuildSearchHintsOmitsHiddenActions(t *testing.T) {
 	}
 	cfg.Sanitize()
 
-	ex := executor.DefaultExecutor(cfg)
-	ex.RebuildActionMap()
-	api := newServer(ex)
+	testExecutor := executor.DefaultExecutor(cfg)
+	testExecutor.RebuildActionMap()
+	api := newServer(testExecutor)
 
 	user := &authpublic.AuthenticatedUser{Username: "guest", Provider: "system"}
 	user.BuildUserAcls(cfg)
@@ -210,9 +210,9 @@ func TestBuildSearchHintsCapsActionsAndEntitiesPerType(t *testing.T) {
 	}
 	cfg.Sanitize()
 
-	ex := executor.DefaultExecutor(cfg)
-	ex.RebuildActionMap()
-	api := newServer(ex)
+	testExecutor := executor.DefaultExecutor(cfg)
+	testExecutor.RebuildActionMap()
+	api := newServer(testExecutor)
 
 	user := &authpublic.AuthenticatedUser{Username: "guest", Provider: "system"}
 	user.BuildUserAcls(cfg)
@@ -251,9 +251,9 @@ func TestBuildSearchHintsPrefersNonEntityActions(t *testing.T) {
 	}
 	cfg.Sanitize()
 
-	ex := executor.DefaultExecutor(cfg)
-	ex.RebuildActionMap()
-	api := newServer(ex)
+	testExecutor := executor.DefaultExecutor(cfg)
+	testExecutor.RebuildActionMap()
+	api := newServer(testExecutor)
 
 	user := &authpublic.AuthenticatedUser{Username: "guest", Provider: "system"}
 	user.BuildUserAcls(cfg)

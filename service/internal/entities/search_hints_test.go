@@ -30,13 +30,13 @@ func TestListSearchHintsReturnsLightweightIdentities(t *testing.T) {
 		byKey[hint.Type+":"+hint.UniqueKey] = hint
 	}
 
-	host, ok := byKey["search_hint_host:0"]
-	require.True(t, ok)
+	host, hostFound := byKey["search_hint_host:0"]
+	require.True(t, hostFound)
 	assert.Equal(t, "web01", host.Title)
 	assert.Equal(t, "search_hint_host", host.Type)
 	assert.Equal(t, "0", host.UniqueKey)
 
-	app, ok := byKey["search_hint_app:app-1"]
-	require.True(t, ok)
+	app, appFound := byKey["search_hint_app:app-1"]
+	require.True(t, appFound)
 	assert.Equal(t, "Frontend", app.Title)
 }

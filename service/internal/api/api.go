@@ -637,7 +637,7 @@ func (api *oliveTinAPI) userCanViewBinding(user *authpublic.AuthenticatedUser, b
 }
 
 func (api *oliveTinAPI) bindingEntityTypeAllowed(user *authpublic.AuthenticatedUser, binding *executor.ActionBinding) bool {
-	if binding == nil || binding.Entity == nil || binding.Action == nil || binding.Action.Entity == "" {
+	if binding == nil || binding.Action == nil || binding.Action.Entity == "" {
 		return true
 	}
 

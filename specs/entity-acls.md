@@ -6,21 +6,21 @@ This spec describes how OliveTin restricts which entity types a user may see, an
 
 ## 1. Scope
 
-Access control applies at the **entity type** level (each entry under entities in configuration), not per instance.
+Access control applies at the **entity type** level (each configured entity definition), not per instance.
 
 - Instances remain data loaded from entity files.
-- Only the **view** permission is consulted for entity types.
-- Action permissions (view, exec, logs, kill) continue to govern actions themselves.
+- Only the ability to **view** an entity type is consulted for these rules.
+- Separate action permissions (view, execute, logs, kill) continue to govern actions themselves.
 
 ---
 
 ## 2. Configuration
 
-Each entity definition may list zero or more ACL names.
+Each entity definition may list zero or more named access-control entries.
 
-- If the list is omitted or empty, the entity type is **unrestricted**: any user who may use the dashboard UI can see that type (same rule as root dashboards with no ACLs).
-- If one or more ACL names are listed, access is an allow list: a matching ACL that grants view, otherwise the default view permission.
-- Adding an ACL to every action does not apply to entity types. An ACL must be listed on the entity definition to restrict it.
+- If the list is omitted or empty, the entity type is **unrestricted**: any user who may use the dashboard UI can see that type (same rule as root dashboards with no access-control list).
+- If one or more named entries are listed, access is an allow list: a matching entry that grants view, otherwise the installation’s default view permission.
+- Marking an access-control entry as applying to every action does not apply to entity types. An entry must be listed on the entity definition to restrict it.
 
 ---
 
@@ -41,13 +41,13 @@ Client search hints for entities include only instances of types the user may vi
 
 Entity-bound action hints (actions generated per entity instance) appear only when the user may view both the action and the entity type. Action view alone is not enough if the entity type is restricted.
 
-Search hints are omitted from Init when guests must log in, when the header search feature flag is off, and the QuickSearch control is not shown until login is no longer required and header search is enabled.
+Search hints are omitted from the initial client bootstrap when guests must log in, when header search is disabled for the installation, and the header search control is not shown until login is no longer required and header search is enabled.
 
-Hints are capped at 100 actions and 50 entity instances **per entity type** per Init response. The client applies the same caps when indexing.
+Hints are capped at 100 actions and 50 entity instances **per entity type** per bootstrap response. The client applies the same caps when indexing.
 
-Dashboards are not included in search hints. Clients build the dashboard search index from Init root dashboard entries (already filtered by dashboard ACL).
+Dashboards are not included in search hints. Clients build the dashboard search index from the bootstrap root dashboard entries (already filtered by dashboard access control).
 
-Entity types with no ACL list remain unrestricted for search and listing.
+Entity types with no access-control list remain unrestricted for search and listing.
 
 ---
 
@@ -70,9 +70,9 @@ Rules:
 
 When a dashboard expands an entity fieldset, instances of types the user cannot view are not rendered.
 
-When an action argument draws choices from an entity type, it must define **exactly one** choice template plus `entity`. OliveTin expands that template per instance. Only instances of types the user may view are included. Users who can view the action but not the entity type must not learn instance names from the argument form.
+When an action argument draws choices from an entity type, it must define **exactly one** choice template and name the entity type. OliveTin expands that template per instance. Only instances of types the user may view are included. Users who can view the action but not the entity type must not learn instance names from the argument form.
 
-Arguments that set `entity` with zero or multiple choices are invalid configuration: startup/reload rejects them, Diagnostics reports an error, the argument form shows no choices, and start/validate requests are rejected.
+Arguments that name an entity type with zero or multiple choice templates are invalid configuration: startup/reload rejects them, Diagnostics reports an error, the argument form shows no choices, and start/validate requests are rejected.
 
 Starting or validating an action rejects entity-backed argument values when:
 
@@ -85,4 +85,4 @@ Guessing an instance name must not bypass entity type access control.
 
 ## 7. Compatibility
 
-Existing entity definitions without ACL lists stay unrestricted. Setting default view to false alone does not hide unrestricted entity types; operators must list ACLs on entity definitions to lock them down.
+Existing entity definitions without access-control lists stay unrestricted. Setting the default view permission to false alone does not hide unrestricted entity types; operators must list access-control entries on entity definitions to lock them down.

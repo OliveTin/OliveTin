@@ -31,8 +31,8 @@ func (api *oliveTinAPI) buildEntitySearchHints(user *authpublic.AuthenticatedUse
 	out := make([]*apiv1.EntitySearchHint, 0, len(hints))
 
 	for _, hint := range hints {
-		if pb := api.entitySearchHintIfAllowed(user, hint); pb != nil {
-			out = append(out, pb)
+		if allowedHint := api.entitySearchHintIfAllowed(user, hint); allowedHint != nil {
+			out = append(out, allowedHint)
 		}
 	}
 
@@ -57,16 +57,16 @@ func (api *oliveTinAPI) entitySearchHintIfAllowed(user *authpublic.Authenticated
 }
 
 func sortEntitySearchHints(hints []*apiv1.EntitySearchHint) {
-	sort.SliceStable(hints, func(i, j int) bool {
-		if hints[i].Type != hints[j].Type {
-			return hints[i].Type < hints[j].Type
+	sort.SliceStable(hints, func(leftIndex, rightIndex int) bool {
+		if hints[leftIndex].Type != hints[rightIndex].Type {
+			return hints[leftIndex].Type < hints[rightIndex].Type
 		}
 
-		if hints[i].UniqueKey != hints[j].UniqueKey {
-			return hints[i].UniqueKey < hints[j].UniqueKey
+		if hints[leftIndex].UniqueKey != hints[rightIndex].UniqueKey {
+			return hints[leftIndex].UniqueKey < hints[rightIndex].UniqueKey
 		}
 
-		return hints[i].Title < hints[j].Title
+		return hints[leftIndex].Title < hints[rightIndex].Title
 	})
 }
 
@@ -154,15 +154,15 @@ func isSearchableActionBinding(binding *executor.ActionBinding) bool {
 }
 
 func sortActionSearchCandidates(candidates []actionSearchCandidate) {
-	sort.SliceStable(candidates, func(i, j int) bool {
-		if candidates[i].hasEntity != candidates[j].hasEntity {
-			return !candidates[i].hasEntity
+	sort.SliceStable(candidates, func(leftIndex, rightIndex int) bool {
+		if candidates[leftIndex].hasEntity != candidates[rightIndex].hasEntity {
+			return !candidates[leftIndex].hasEntity
 		}
 
-		if candidates[i].title != candidates[j].title {
-			return candidates[i].title < candidates[j].title
+		if candidates[leftIndex].title != candidates[rightIndex].title {
+			return candidates[leftIndex].title < candidates[rightIndex].title
 		}
 
-		return candidates[i].bindingID < candidates[j].bindingID
+		return candidates[leftIndex].bindingID < candidates[rightIndex].bindingID
 	})
 }

@@ -7,11 +7,10 @@ This document lists known duplicate security advisory clusters for [OliveTin/Oli
 ## Triage checklist
 
 1. Search open advisories for the same component and attack path.
-2. Reject if the issue only affects feature-flagged / alpha functionality (`features.*` in config; see [SECURITY.md](../SECURITY.md#feature-flags-alpha--experimental)). Ask the reporter to open a normal GitHub issue instead; do not request a CVE.
-3. Match against clusters below.
-4. If duplicate: close the newer advisory, link to canonical, add reporter to canonical credits.
-5. If unique: accept, patch on a private branch, reassess CVSS with OliveTin context (see SECURITY.md — OliveTin is intentional RCE by design).
-6. Merge fix to `next`, publish advisory, credit reporters in advisory body (not commit message).
+2. Match against clusters below.
+3. If duplicate: close the newer advisory, link to canonical, add reporter to canonical credits.
+4. If unique: accept, patch on a private branch, reassess CVSS with OliveTin context (see SECURITY.md — OliveTin is intentional RCE by design).
+5. Merge fix to `next`, publish advisory, credit reporters in advisory body (not commit message).
 
 ---
 

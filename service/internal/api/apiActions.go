@@ -299,7 +299,7 @@ func buildChoices(arg config.ActionArgument, rr *DashboardRenderRequest) []*apiv
 }
 
 func buildChoicesEntity(firstChoice config.ActionArgumentChoice, entityTitle string, rr *DashboardRenderRequest) []*apiv1.ActionArgumentChoice {
-	if rr != nil && !acl.IsAllowedViewEntityType(rr.cfg, rr.AuthenticatedUser, entityFileForType(rr.cfg, entityTitle)) {
+	if rr == nil || !acl.IsAllowedViewEntityType(rr.cfg, rr.AuthenticatedUser, entityFileForType(rr.cfg, entityTitle)) {
 		return []*apiv1.ActionArgumentChoice{}
 	}
 

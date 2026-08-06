@@ -43,7 +43,7 @@ OliveTin uses global `features.*` flags in `config.yaml` to ship unfinished or e
 
 * **All feature flags default to off.** Enabling a flag is an explicit operator choice.
 * Functionality behind a feature flag is **alpha / experimental** until the flag is removed or the feature is graduated to a stable, default-on product surface.
-* **Security reports and CVEs are not accepted** for bugs that only affect feature-flagged (alpha) functionality. Prefer filing a normal GitHub issue (or a PR) instead of a security advisory.
+* Private security reports **are accepted** for vulnerabilities that affect feature-flagged (alpha) functionality when that flag is enabled. Use Option A or B above; do not file a public issue that discloses exploit details.
 * Reports that affect **stable, non-flagged** code paths remain in scope under this policy, even if a feature flag exists elsewhere in the project.
 
 Operators who enable experimental features should treat them as preview software and avoid relying on them in high-assurance production deployments.
@@ -63,7 +63,6 @@ Maintainers: see [.github/SECURITY_ADVISORY_DUPLICATES.md](.github/SECURITY_ADVI
 Once a vulnerability is reported, the process is;
 
 * Check [.github/SECURITY_ADVISORY_DUPLICATES.md](.github/SECURITY_ADVISORY_DUPLICATES.md) and open advisories for duplicates before accepting.
-* Reject reports that only affect feature-flagged / alpha functionality (see [Feature flags](#feature-flags-alpha--experimental) above); ask the reporter to open a normal issue instead.
 * Accept or reject the report, and communicate with the reporter about next steps.
 * If accepted, patch using a temporary branch, and code review will be requested from the original reporter if they are interested.
 * The severity of the vulnerability will be assessed using CVSS, and the patch will be prioritised accordingly.
