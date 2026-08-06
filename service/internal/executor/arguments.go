@@ -300,6 +300,10 @@ func typecheckChoice(value string, arg *config.ActionArgument) error {
 }
 
 func typecheckChoiceEntity(value string, arg *config.ActionArgument) error {
+	if len(arg.Choices) != 1 {
+		return fmt.Errorf("entity-backed argument must define exactly one choice template")
+	}
+
 	templateChoice := arg.Choices[0].Value
 
 	for _, ent := range entities.GetEntityInstances(arg.Entity) {
@@ -613,7 +617,7 @@ func mangleChoiceSegment(arg *config.ActionArgument, value string, actionTitle s
 }
 
 func mangleChoiceSegmentEntity(arg *config.ActionArgument, value string, actionTitle string) (string, bool) {
-	if arg.Entity == "" || len(arg.Choices) == 0 {
+	if arg.Entity == "" || len(arg.Choices) != 1 {
 		return value, false
 	}
 

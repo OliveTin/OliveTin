@@ -222,7 +222,6 @@ import ActionIconGlyph from '../components/ActionIconGlyph.vue'
 import LogActionTitle from '../components/LogActionTitle.vue'
 import { getExecutionLogEntry, updateLogEntryInList } from '../utils/executionLogEvents.js'
 import { loadStoredLogsFilter, storeLogsFilter } from '../utils/logsFilterStorage.js'
-
 const route = useRoute()
 const router = useRouter()
 

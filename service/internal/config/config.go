@@ -112,6 +112,7 @@ type EntityFile struct {
 	Icon       string           `koanf:"icon"`
 	SourceFile string           `koanf:"-"`
 	Properties []EntityProperty `koanf:"properties"`
+	Acls       []string         `koanf:"acls"`
 }
 
 // EntityProperty defines a column shown when listing entity instances in the UI.
@@ -143,6 +144,11 @@ type ConfigurationPolicy struct {
 	ShowDiagnostics   bool `koanf:"showDiagnostics"`
 	ShowLogList       bool `koanf:"showLogList"`
 	ShowVersionNumber bool `koanf:"showVersionNumber"`
+}
+
+// FeaturesConfig holds global opt-in feature flags. New flags default to false.
+type FeaturesConfig struct {
+	HeaderSearch bool `koanf:"headerSearch"`
 }
 
 type PrometheusConfig struct {
@@ -228,6 +234,7 @@ type Config struct {
 	ShowFooter                         bool                 `koanf:"showFooter"`
 	UseSingleHTTPFrontend              bool                 `koanf:"useSingleHTTPFrontend"`
 	ThemeCacheDisabled                 bool                 `koanf:"themeCacheDisabled"`
+	Features                           FeaturesConfig       `koanf:"features"`
 }
 
 type AuthLocalUsersConfig struct {

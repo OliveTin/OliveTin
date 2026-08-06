@@ -160,6 +160,58 @@ In the example above, guests can open **Public tools**, but **Services** is hidd
 
 NOTE: Action `hidden: true` is not part of the ACL model. It only controls dashboard listing. Restrict who can see or run actions with the permissions above; see xref:action_customization/hidden.adoc[Hidden actions].
 
+== ACLs and Entities
+
+Entity types (entries under `entities` in configuration) can also list `acls`. This controls whether users may see that type in the Entities page, entity details, search hints, dashboard entity fieldsets, and entity-driven argument choices.
+
+* If an entity type has **no** `acls` (or an empty list), it is unrestricted — same as root dashboards without ACLs.
+* If an entity type lists one or more `acls`, access uses the same allow-list rules as actions and dashboards: a matching ACL that grants `view`, otherwise `defaultPermissions.view`.
+* Only **view** applies to entity types. `exec`, `logs`, and `kill` remain action permissions.
+* `addToEveryAction` does **not** apply to entities. List the ACL on the entity definition explicitly when you want to restrict it.
+* Access is per **entity type**, not per instance. All instances of a restricted type are hidden together.
+* Entity types loaded at runtime without a matching `entities:` entry stay unrestricted for ACL purposes, but Diagnostics reports a configuration warning.
+* Arguments that expand choices from an entity type must define **exactly one** choice template. Combining `entity` with multiple static choices is invalid and rejected on startup.
+
+Entity-related actions stay dual-gated:
+
+* Viewing the entity type requires entity `view`.
+* Seeing or running a related action still requires that action’s own ACLs (`view` / `exec`).
+* Search and dashboards do not show entity-bound actions for types the user cannot view, even if the action ACL alone would allow it.
+
+[source,yaml]
+.`config.yaml`
+----
+defaultPermissions:
+  view: false
+  exec: false
+
+accessControlLists:
+  - name: ops
+    matchUsergroups:
+      - ops
+    permissions:
+      view: true
+      exec: true
+
+entities:
+  - name: printers
+    file: entities/printers.yaml
+
+  - name: servers
+    file: entities/servers.yaml
+    acls:
+      - ops
+
+actions:
+  - title: Restart {{ name }}
+    entity: servers
+    shell: echo restart
+    acls:
+      - ops
+----
+
+In the example above, guests can see **printers** (unrestricted) but not **servers**. Users in the `ops` group can see **servers** and the Restart actions bound to them.
+
 == ACL Matching - usernames and usergroups.
 
 You can match users based on their usergroup which is the most common, but it is also possible to match based on the user's username.

@@ -26,6 +26,10 @@ func getEntityFromRequest(rr *DashboardRenderRequest) *entities.Entity {
 		return nil
 	}
 
+	if !acl.IsAllowedViewEntityType(rr.cfg, rr.AuthenticatedUser, entityFileForType(rr.cfg, rr.EntityType)) {
+		return nil
+	}
+
 	entityInstances := entities.GetEntityInstances(rr.EntityType)
 	if entity, ok := entityInstances[rr.EntityKey]; ok {
 		return entity
@@ -154,6 +158,11 @@ func buildDefaultDashboard(rr *DashboardRenderRequest) *apiv1.Dashboard {
 		}
 
 		if !acl.IsAllowedView(rr.cfg, rr.AuthenticatedUser, binding.Action) {
+			continue
+		}
+
+		if binding.Entity != nil && binding.Action.Entity != "" &&
+			!acl.IsAllowedViewEntityType(rr.cfg, rr.AuthenticatedUser, entityFileForType(rr.cfg, binding.Action.Entity)) {
 			continue
 		}
 

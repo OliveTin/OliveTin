@@ -12,6 +12,6 @@ actions:
     execOnStartup: true
 ----
 
-IMPORTANT: `hidden` is **not** a security control. It only affects where the action appears in the UI. Users who are allowed to view the action (via `defaultPermissions` or ACLs) can still open its Action Details page, see it in logs, and call APIs such as `GetActionBinding`. To restrict who can see or run an action, use xref:security/acl.adoc[Access Control Lists].
+IMPORTANT: `hidden` is **not** a security control. It only affects where the action appears in the UI. Opening Action Details and calling APIs such as `GetActionBinding` require **view** permission; viewing execution logs requires **logs** permission. Those are separate from whether the action is listed on a dashboard. To restrict who can see or run an action, use xref:security/acl.adoc[Access Control Lists].
 
 You can still place a hidden action on a custom dashboard by title if you want a button for it in a specific place.

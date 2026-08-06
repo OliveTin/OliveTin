@@ -28,10 +28,12 @@ func Rebuild(cfg *config.Config, extra ...configissues.Issue) {
 	collected := make([]configissues.Issue, 0)
 	collected = append(collected, configissues.CopySticky()...)
 	collected = append(collected, collectActionGroupIssues(cfg)...)
+	collected = append(collected, collectAclReferenceIssues(cfg)...)
 	collected = append(collected, collectArgumentIssues(cfg)...)
 	collected = append(collected, collectIncludeIssues(cfg)...)
 	collected = append(collected, collectTemplateParseIssues(cfg)...)
 	collected = append(collected, collectEntityFileIssues(cfg)...)
+	collected = append(collected, collectOrphanEntityTypeIssues(cfg)...)
 	collected = append(collected, collectEntityEmptyIssues(cfg)...)
 	collected = append(collected, collectCronIssues(cfg)...)
 	collected = append(collected, collectWatcherPathIssues(cfg)...)
@@ -80,6 +82,55 @@ func actionIssue(action *config.Action, severity, code, message, source, argName
 	}
 }
 
+func collectAclReferenceIssues(cfg *config.Config) []configissues.Issue {
+	out := make([]configissues.Issue, 0)
+	out = append(out, collectActionAclIssues(cfg)...)
+	out = append(out, collectEntityAclIssues(cfg)...)
+	return out
+}
+
+func collectActionAclIssues(cfg *config.Config) []configissues.Issue {
+	out := make([]configissues.Issue, 0)
+	for _, action := range cfg.Actions {
+		if action == nil {
+			continue
+		}
+		for _, aclName := range action.Acls {
+			out = append(out, unknownAclIssue(cfg, aclName, action.ID, action.Title, action.SourceFile)...)
+		}
+	}
+	return out
+}
+
+func collectEntityAclIssues(cfg *config.Config) []configissues.Issue {
+	out := make([]configissues.Issue, 0)
+	for _, entityFile := range cfg.Entities {
+		if entityFile == nil {
+			continue
+		}
+		for _, aclName := range entityFile.Acls {
+			out = append(out, unknownAclIssue(cfg, aclName, "", entityFile.Name, entityFile.SourceFile)...)
+		}
+	}
+	return out
+}
+
+func unknownAclIssue(cfg *config.Config, aclName, actionID, title, configFile string) []configissues.Issue {
+	if cfg.FindAcl(aclName) != nil {
+		return nil
+	}
+
+	return []configissues.Issue{{
+		Severity:    configissues.SeverityError,
+		Code:        configissues.CodeAclUnknown,
+		Message:     fmt.Sprintf("References unknown ACL %q", aclName),
+		ActionID:    actionID,
+		ActionTitle: title,
+		Source:      aclName,
+		ConfigFile:  configFile,
+	}}
+}
+
 func collectArgumentIssues(cfg *config.Config) []configissues.Issue {
 	out := make([]configissues.Issue, 0)
 	for _, action := range cfg.Actions {
@@ -94,13 +145,13 @@ func collectArgumentIssues(cfg *config.Config) []configissues.Issue {
 }
 
 func argumentIssues(action *config.Action, arg *config.ActionArgument) []configissues.Issue {
-	if arg.Type != "checklist" {
-		return nil
+	out := make([]configissues.Issue, 0)
+	out = append(out, entityArgumentChoicesIssue(action, arg)...)
+
+	if arg.Type == "checklist" {
+		out = append(out, checklistNoChoicesIssue(action, arg)...)
 	}
 
-	out := make([]configissues.Issue, 0)
-	out = append(out, checklistNoChoicesIssue(action, arg)...)
-	out = append(out, checklistEntityChoicesIssue(action, arg)...)
 	return out
 }
 
@@ -113,13 +164,13 @@ func checklistNoChoicesIssue(action *config.Action, arg *config.ActionArgument) 
 		"Checklist argument has no choices defined", "", arg.Name)}
 }
 
-func checklistEntityChoicesIssue(action *config.Action, arg *config.ActionArgument) []configissues.Issue {
-	if arg.Entity == "" || len(arg.Choices) <= 1 {
+func entityArgumentChoicesIssue(action *config.Action, arg *config.ActionArgument) []configissues.Issue {
+	if arg.Entity == "" || len(arg.Choices) == 1 {
 		return nil
 	}
 
-	return []configissues.Issue{actionIssue(action, configissues.SeverityWarning, configissues.CodeChecklistEntityChoices,
-		"Checklist argument with entity should define exactly one choice template", arg.Entity, arg.Name)}
+	return []configissues.Issue{actionIssue(action, configissues.SeverityError, configissues.CodeEntityArgumentChoices,
+		"Arguments with entity must define exactly one choice template", arg.Entity, arg.Name)}
 }
 
 func collectIncludeIssues(cfg *config.Config) []configissues.Issue {
@@ -213,6 +264,42 @@ func collectEntityFileIssues(cfg *config.Config) []configissues.Issue {
 	}
 
 	return out
+}
+
+func collectOrphanEntityTypeIssues(cfg *config.Config) []configissues.Issue {
+	configured := configuredEntityTypeNames(cfg)
+	out := make([]configissues.Issue, 0)
+
+	for entityType := range entities.GetEntities() {
+		if configured[entityType] {
+			continue
+		}
+
+		out = append(out, configissues.Issue{
+			Severity: configissues.SeverityWarning,
+			Code:     configissues.CodeEntityTypeUnconfigured,
+			Message:  fmt.Sprintf("Entity type %q is loaded but has no matching entities entry in configuration", entityType),
+			Source:   entityType,
+		})
+	}
+
+	return out
+}
+
+func configuredEntityTypeNames(cfg *config.Config) map[string]bool {
+	configured := make(map[string]bool)
+	if cfg == nil {
+		return configured
+	}
+
+	for _, entityFile := range cfg.Entities {
+		if entityFile == nil || entityFile.Name == "" {
+			continue
+		}
+		configured[entityFile.Name] = true
+	}
+
+	return configured
 }
 
 func entityFileIssuesFor(ef *config.EntityFile, baseDir string) []configissues.Issue {

@@ -1091,6 +1091,15 @@ func TestBuildChoicesExpandsChecklistEntityChoices(t *testing.T) {
 		entities.ClearEntitiesOfType("room")
 	})
 
+	cfg := config.DefaultConfig()
+	cfg.Entities = []*config.EntityFile{
+		{Name: "room", File: "room.yaml"},
+	}
+	cfg.Sanitize()
+
+	user := &authpublic.AuthenticatedUser{Username: "guest", Provider: "system"}
+	user.BuildUserAcls(cfg)
+
 	arg := config.ActionArgument{
 		Type:   "checklist",
 		Entity: "room",
@@ -1099,7 +1108,7 @@ func TestBuildChoicesExpandsChecklistEntityChoices(t *testing.T) {
 		},
 	}
 
-	choices := buildChoices(arg)
+	choices := buildChoices(arg, &DashboardRenderRequest{AuthenticatedUser: user, cfg: cfg})
 	require.Len(t, choices, 2)
 	assert.Equal(t, "attic", choices[0].Value)
 	assert.Equal(t, "attic", choices[0].Title)
