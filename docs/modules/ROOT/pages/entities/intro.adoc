@@ -15,6 +15,8 @@ Entity field values are **not** sanitized for shell safety. If you substitute th
 
 To control which fields appear in the Entities page table and entity details view, configure `properties` on the entity definition in `config.yaml`. See xref:entities/properties.adoc[Entity properties] for details.
 
+To restrict which users may see an entity type (list, details, search, and related UI), list `acls` on the entity definition. See xref:security/acl.adoc#acls[Access Control Lists] (Entities section). Entity types with no `acls` stay unrestricted.
+
 [source,yaml]
 ----
 entities:
@@ -24,6 +26,8 @@ entities:
   - file: /etc/OliveTin/servers.yaml
     name: server
     icon: ssh
+    acls:
+      - ops
     properties:
       - name: hostname
         title: Hostname

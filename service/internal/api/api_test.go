@@ -632,6 +632,42 @@ func TestViewPermissionAllowedSeesAction(t *testing.T) {
 	assert.Equal(t, "secret_action", resp.Action.BindingId)
 }
 
+// TestGetActionBindingAllowsHiddenWhenViewAllowed asserts that hidden is not a security control:
+// users with view permission can fetch action details for hidden actions (e.g. webhook helpers).
+func TestGetActionBindingAllowsHiddenWhenViewAllowed(t *testing.T) {
+	cfg, lowUser, adminUser := buildViewPermissionTestConfig(t)
+	cfg.Actions = append(cfg.Actions, &config.Action{
+		ID:     "webhook_helper",
+		Title:  "Webhook Helper",
+		Shell:  "echo webhook",
+		Hidden: true,
+	})
+	ex := executor.DefaultExecutor(cfg)
+	ex.RebuildActionMap()
+	api := newServer(ex)
+
+	rr := &DashboardRenderRequest{
+		AuthenticatedUser: adminUser,
+		cfg:               cfg,
+		ex:                ex,
+	}
+	db := buildDefaultDashboard(rr)
+	assert.NotContains(t, bindingIdsInDashboardContents(db.Contents), "webhook_helper",
+		"hidden actions must stay off the default dashboard")
+
+	resp, err := api.getActionBindingResponse(adminUser, "webhook_helper")
+	require.NoError(t, err)
+	require.NotNil(t, resp)
+	require.NotNil(t, resp.Action)
+	assert.Equal(t, "webhook_helper", resp.Action.BindingId)
+	assert.Equal(t, "Webhook Helper", resp.Action.Title)
+
+	_, err = api.getActionBindingResponse(lowUser, "webhook_helper")
+	require.Error(t, err)
+	assert.Equal(t, connect.CodePermissionDenied, connect.CodeOf(err),
+		"users without view ACL must still be denied for hidden actions")
+}
+
 // TestViewPermissionExcludedFromCustomDashboard (issue #921) asserts that when a custom dashboard
 // lists an action by title, users without view permission do not see that action (title or icon).
 func TestViewPermissionExcludedFromCustomDashboard(t *testing.T) {
@@ -1055,6 +1091,15 @@ func TestBuildChoicesExpandsChecklistEntityChoices(t *testing.T) {
 		entities.ClearEntitiesOfType("room")
 	})
 
+	cfg := config.DefaultConfig()
+	cfg.Entities = []*config.EntityFile{
+		{Name: "room", File: "room.yaml"},
+	}
+	cfg.Sanitize()
+
+	user := &authpublic.AuthenticatedUser{Username: "guest", Provider: "system"}
+	user.BuildUserAcls(cfg)
+
 	arg := config.ActionArgument{
 		Type:   "checklist",
 		Entity: "room",
@@ -1063,7 +1108,7 @@ func TestBuildChoicesExpandsChecklistEntityChoices(t *testing.T) {
 		},
 	}
 
-	choices := buildChoices(arg)
+	choices := buildChoices(arg, &DashboardRenderRequest{AuthenticatedUser: user, cfg: cfg})
 	require.Len(t, choices, 2)
 	assert.Equal(t, "attic", choices[0].Value)
 	assert.Equal(t, "attic", choices[0].Title)

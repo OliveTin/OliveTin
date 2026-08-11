@@ -161,6 +161,10 @@ func (api *oliveTinAPI) StartAction(ctx ctx.Context, req *connect.Request[apiv1.
 
 	authenticatedUser := auth.UserFromApiCall(ctx, req, api.cfg)
 	args := startActionArgumentsFromProto(req.Msg.Arguments)
+	if err := api.errUnlessStartEntityAccessAllowed(authenticatedUser, pair, args); err != nil {
+		return nil, err
+	}
+
 	justification := resolveStartJustification(pair.Action, pair, req.Msg.Justification, args)
 	if err := validateJustificationRequired(pair.Action, justification, authenticatedUser); err != nil {
 		return nil, connectInvalidJustification(err)
@@ -309,6 +313,10 @@ func (api *oliveTinAPI) StartActionAndWait(ctx ctx.Context, req *connect.Request
 
 	user := auth.UserFromApiCall(ctx, req, api.cfg)
 	args := startActionArgumentsFromProto(req.Msg.Arguments)
+	if err = api.errUnlessStartEntityAccessAllowed(user, binding, args); err != nil {
+		return nil, err
+	}
+
 	justification := resolveStartJustification(binding.Action, binding, req.Msg.Justification, args)
 
 	if err = validateJustificationRequired(binding.Action, justification, user); err != nil {
@@ -330,13 +338,18 @@ func (api *oliveTinAPI) StartActionByGet(ctx ctx.Context, req *connect.Request[a
 		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("action with ID %s not found", req.Msg.ActionId))
 	}
 
+	user := auth.UserFromApiCall(ctx, req, api.cfg)
+	if err := api.errUnlessStartEntityAccessAllowed(user, binding, map[string]string{}); err != nil {
+		return nil, err
+	}
+
 	args := make(map[string]string)
 
 	execReq := executor.ExecutionRequest{
 		Binding:           binding,
 		TrackingID:        uuid.NewString(),
 		Arguments:         args,
-		AuthenticatedUser: auth.UserFromApiCall(ctx, req, api.cfg),
+		AuthenticatedUser: user,
 		Cfg:               api.cfg,
 	}
 
@@ -377,6 +390,10 @@ func (api *oliveTinAPI) StartActionByGetAndWait(ctx ctx.Context, req *connect.Re
 	}
 
 	user := auth.UserFromApiCall(ctx, req, api.cfg)
+	if err := api.errUnlessStartEntityAccessAllowed(user, binding, map[string]string{}); err != nil {
+		return nil, err
+	}
+
 	logEntry, err := api.startActionByGetAndWaitLogEntry(binding, user)
 	if err != nil {
 		return nil, err
@@ -586,7 +603,7 @@ func (api *oliveTinAPI) getActionBindingResponse(user *authpublic.AuthenticatedU
 		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("action with ID %s not found", bindingId))
 	}
 
-	if !api.userCanViewAction(user, binding.Action) {
+	if !api.userCanViewBinding(user, binding) {
 		return nil, connect.NewError(connect.CodePermissionDenied, fmt.Errorf("permission denied"))
 	}
 
@@ -601,6 +618,38 @@ func (api *oliveTinAPI) userCanViewAction(user *authpublic.AuthenticatedUser, ac
 		return true
 	}
 	return acl.IsAllowedView(api.cfg, user, action)
+}
+
+func (api *oliveTinAPI) userCanViewEntityType(user *authpublic.AuthenticatedUser, entityType string) bool {
+	return acl.IsAllowedViewEntityType(api.cfg, user, entityFileForType(api.cfg, entityType))
+}
+
+func (api *oliveTinAPI) userCanViewBinding(user *authpublic.AuthenticatedUser, binding *executor.ActionBinding) bool {
+	if binding == nil || binding.Action == nil {
+		return false
+	}
+
+	if !api.userCanViewAction(user, binding.Action) {
+		return false
+	}
+
+	return api.bindingEntityTypeAllowed(user, binding)
+}
+
+func (api *oliveTinAPI) bindingEntityTypeAllowed(user *authpublic.AuthenticatedUser, binding *executor.ActionBinding) bool {
+	if binding == nil || binding.Action == nil || binding.Action.Entity == "" {
+		return true
+	}
+
+	return api.userCanViewEntityType(user, binding.Action.Entity)
+}
+
+func (api *oliveTinAPI) errUnlessBindingEntityTypeAllowed(user *authpublic.AuthenticatedUser, binding *executor.ActionBinding) error {
+	if api.bindingEntityTypeAllowed(user, binding) {
+		return nil
+	}
+
+	return connect.NewError(connect.CodePermissionDenied, fmt.Errorf("permission denied"))
 }
 
 func (api *oliveTinAPI) GetDashboard(ctx ctx.Context, req *connect.Request[apiv1.GetDashboardRequest]) (*connect.Response[apiv1.GetDashboardResponse], error) {
@@ -848,7 +897,7 @@ func (api *oliveTinAPI) errUnlessUserMayValidateArgumentTypeForBinding(user *aut
 		return connect.NewError(connect.CodeNotFound, fmt.Errorf("action or argument not found for binding ID %s", bindingID))
 	}
 
-	if !api.userCanViewAction(user, binding.Action) {
+	if !api.userCanViewBinding(user, binding) {
 		return connect.NewError(connect.CodePermissionDenied, fmt.Errorf("permission denied"))
 	}
 
@@ -869,7 +918,29 @@ func (api *oliveTinAPI) ValidateArgumentType(ctx ctx.Context, req *connect.Reque
 		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("action or argument not found for binding ID %s", req.Msg.BindingId))
 	}
 
+	if err := api.validateArgumentTypeEntityAccess(user, req.Msg); err != nil {
+		return nil, err
+	}
+
 	return api.validateArgumentTypeConnectResponse(req.Msg)
+}
+
+func (api *oliveTinAPI) validateArgumentTypeEntityAccess(user *authpublic.AuthenticatedUser, msg *apiv1.ValidateArgumentTypeRequest) error {
+	arg := api.argumentFromValidationRequest(msg)
+	if arg == nil {
+		return nil
+	}
+
+	return api.errUnlessEntityArgumentAllowed(user, arg, "")
+}
+
+func (api *oliveTinAPI) argumentFromValidationRequest(msg *apiv1.ValidateArgumentTypeRequest) *config.ActionArgument {
+	if msg == nil || msg.BindingId == "" || msg.ArgumentName == "" {
+		return nil
+	}
+
+	arg, _ := api.findArgumentForValidation(msg.BindingId, msg.ArgumentName)
+	return arg
 }
 
 func (api *oliveTinAPI) validateArgumentTypeConnectResponse(msg *apiv1.ValidateArgumentTypeRequest) (*connect.Response[apiv1.ValidateArgumentTypeResponse], error) {
@@ -893,6 +964,10 @@ func (api *oliveTinAPI) validateArgumentTypeInternal(msg *apiv1.ValidateArgument
 	arg, action := api.findArgumentForValidation(msg.BindingId, msg.ArgumentName)
 	if arg == nil {
 		return fmt.Errorf("argument not found")
+	}
+
+	if err := errUnlessEntityArgumentValueAllowed(arg, msg.Value); err != nil {
+		return err
 	}
 
 	return executor.ValidateArgument(arg, msg.Value, action)
@@ -1227,23 +1302,18 @@ func (api *oliveTinAPI) GetDiagnostics(ctx ctx.Context, req *connect.Request[api
 
 func (api *oliveTinAPI) Init(ctx ctx.Context, req *connect.Request[apiv1.InitRequest]) (*connect.Response[apiv1.InitResponse], error) {
 	user := auth.UserFromApiCall(ctx, req, api.cfg)
+	return connect.NewResponse(api.buildInitResponse(user)), nil
+}
 
+func (api *oliveTinAPI) buildInitResponse(user *authpublic.AuthenticatedUser) *apiv1.InitResponse {
 	loginRequired := user.IsGuest() && api.cfg.AuthRequireGuestsToLogin
-
-	showVersion := user.EffectivePolicy.ShowVersionNumber
-	currentVersion := ""
-	availableVersion := ""
-	if showVersion {
-		currentVersion = installationinfo.Build.Version
-		availableVersion = installationinfo.Runtime.AvailableVersion
-	}
-
+	currentVersion, availableVersion, showNewVersions := initVersionFields(user, api.cfg)
 	rootDashboardEntries := api.buildRootDashboardEntries(user, api.cfg.Dashboards)
 
 	res := &apiv1.InitResponse{
 		ShowFooter:                api.cfg.ShowFooter,
 		ShowNavigation:            api.cfg.ShowNavigation,
-		ShowNewVersions:           showVersion && api.cfg.ShowNewVersions,
+		ShowNewVersions:           showNewVersions,
 		AvailableVersion:          availableVersion,
 		CurrentVersion:            currentVersion,
 		PageTitle:                 api.cfg.PageTitle,
@@ -1268,9 +1338,29 @@ func (api *oliveTinAPI) Init(ctx ctx.Context, req *connect.Request[apiv1.InitReq
 		AvailableThemes:           discoverAvailableThemes(api.cfg),
 		ShowNavigateOnStartIcons:  api.cfg.ShowNavigateOnStartIcons,
 		ConfigIssueCount:          configIssueCountForUser(api, user),
+		Features: &apiv1.Features{
+			HeaderSearch: api.cfg.Features.HeaderSearch,
+		},
+		SearchHints: api.initSearchHints(user, loginRequired),
 	}
 
-	return connect.NewResponse(res), nil
+	return res
+}
+
+func initVersionFields(user *authpublic.AuthenticatedUser, cfg *config.Config) (currentVersion string, availableVersion string, showNewVersions bool) {
+	if !user.EffectivePolicy.ShowVersionNumber {
+		return "", "", false
+	}
+
+	return installationinfo.Build.Version, installationinfo.Runtime.AvailableVersion, cfg.ShowNewVersions
+}
+
+func (api *oliveTinAPI) initSearchHints(user *authpublic.AuthenticatedUser, loginRequired bool) *apiv1.SearchHints {
+	if loginRequired || !api.cfg.Features.HeaderSearch {
+		return nil
+	}
+
+	return api.buildSearchHints(user)
 }
 
 // discoverAvailableThemes finds all available themes in the custom-webui/themes directory.
@@ -1450,7 +1540,7 @@ func (api *oliveTinAPI) GetEntities(ctx ctx.Context, req *connect.Request[apiv1.
 	}
 
 	entityMap := entities.GetEntities()
-	entityDefinitions := api.buildEntityDefinitionsResponse(req.Msg, entityMap)
+	entityDefinitions := api.buildEntityDefinitionsResponse(user, req.Msg, entityMap)
 
 	res := &apiv1.GetEntitiesResponse{
 		EntityDefinitions: entityDefinitions,
@@ -1567,6 +1657,10 @@ func (api *oliveTinAPI) GetEntity(ctx ctx.Context, req *connect.Request[apiv1.Ge
 
 	instances := entities.GetEntityInstances(req.Msg.Type)
 	if len(instances) == 0 {
+		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("entity type %s not found", req.Msg.Type))
+	}
+
+	if !api.userCanViewEntityType(user, req.Msg.Type) {
 		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("entity type %s not found", req.Msg.Type))
 	}
 
@@ -1701,9 +1795,14 @@ func (api *oliveTinAPI) RestartAction(ctx ctx.Context, req *connect.Request[apiv
 	}
 
 	authenticatedUser := auth.UserFromApiCall(ctx, req, api.cfg)
+	restartArgs := copyStringMap(execReqLogEntry.Arguments)
+	if err := api.errUnlessStartEntityAccessAllowed(authenticatedUser, execReqLogEntry.Binding, restartArgs); err != nil {
+		return nil, err
+	}
+
 	execReq := executor.ExecutionRequest{
 		Binding:           execReqLogEntry.Binding,
-		Arguments:         copyStringMap(execReqLogEntry.Arguments),
+		Arguments:         restartArgs,
 		Justification:     execReqLogEntry.Justification,
 		AuthenticatedUser: authenticatedUser,
 		Cfg:               api.cfg,

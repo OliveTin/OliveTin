@@ -191,6 +191,96 @@ func TestStickyEnvUnsetSurvivesRebuild(t *testing.T) {
 	assert.True(t, hasCode(configissues.List(), configissues.CodeEnvUnset))
 }
 
+func TestRebuildWarnsForEntityTypeWithoutConfigEntry(t *testing.T) {
+	entities.ClearEntitiesOfType("orphan_type")
+	t.Cleanup(func() {
+		entities.ClearEntitiesOfType("orphan_type")
+	})
+
+	entities.AddEntity("orphan_type", "0", map[string]any{"name": "lonely"})
+
+	configissues.BeginConfigLoad()
+	cfg := config.DefaultConfig()
+	cfg.Entities = nil
+	configcheck.Rebuild(cfg)
+
+	issues := configissues.List()
+	require.True(t, hasCode(issues, configissues.CodeEntityTypeUnconfigured))
+	found := false
+	for _, issue := range issues {
+		if issue.Code == configissues.CodeEntityTypeUnconfigured {
+			assert.Equal(t, configissues.SeverityWarning, issue.Severity)
+			assert.Equal(t, "orphan_type", issue.Source)
+			found = true
+		}
+	}
+	assert.True(t, found)
+}
+
+func TestRebuildEntityArgumentChoices(t *testing.T) {
+	configissues.BeginConfigLoad()
+	cfg := config.DefaultConfig()
+	cfg.Actions = []*config.Action{
+		{
+			Title: "Reboot",
+			ID:    "reboot",
+			Arguments: []config.ActionArgument{
+				{
+					Name:   "target",
+					Entity: "servers",
+					Choices: []config.ActionArgumentChoice{
+						{Value: "{{ servers.name }}"},
+						{Value: "web01"},
+					},
+				},
+			},
+		},
+	}
+
+	configcheck.Rebuild(cfg)
+
+	issues := configissues.List()
+	require.True(t, hasCode(issues, configissues.CodeEntityArgumentChoices))
+	for _, issue := range issues {
+		if issue.Code == configissues.CodeEntityArgumentChoices {
+			assert.Equal(t, configissues.SeverityError, issue.Severity)
+			assert.Equal(t, "target", issue.ArgumentName)
+		}
+	}
+}
+
+func TestRebuildUnknownAclReferences(t *testing.T) {
+	configissues.BeginConfigLoad()
+	cfg := config.DefaultConfig()
+	cfg.AccessControlLists = []*config.AccessControlList{
+		{Name: "ops", MatchUsernames: []string{"admin"}, Permissions: config.PermissionsList{View: true}},
+	}
+	cfg.Actions = []*config.Action{
+		{Title: "Restart", ID: "restart", Acls: []string{"ops"}},
+		{Title: "Secret", ID: "secret", Acls: []string{"missing-acl"}},
+	}
+	cfg.Entities = []*config.EntityFile{
+		{Name: "printers", File: "printers.yaml"},
+		{Name: "servers", File: "servers.yaml", Acls: []string{"missing-entity-acl"}},
+	}
+
+	configcheck.Rebuild(cfg)
+
+	issues := configissues.List()
+	require.True(t, hasCode(issues, configissues.CodeAclUnknown))
+
+	unknownSources := make([]string, 0)
+	for _, issue := range issues {
+		if issue.Code == configissues.CodeAclUnknown {
+			assert.Equal(t, configissues.SeverityError, issue.Severity)
+			unknownSources = append(unknownSources, issue.Source)
+		}
+	}
+	assert.Contains(t, unknownSources, "missing-acl")
+	assert.Contains(t, unknownSources, "missing-entity-acl")
+	assert.NotContains(t, unknownSources, "ops")
+}
+
 func hasCode(issues []configissues.Issue, code string) bool {
 	for _, issue := range issues {
 		if issue.Code == code {

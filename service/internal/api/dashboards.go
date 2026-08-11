@@ -8,6 +8,7 @@ import (
 	acl "github.com/OliveTin/OliveTin/internal/acl"
 	config "github.com/OliveTin/OliveTin/internal/config"
 	entities "github.com/OliveTin/OliveTin/internal/entities"
+	"github.com/OliveTin/OliveTin/internal/executor"
 	"github.com/OliveTin/OliveTin/internal/tpl"
 	log "github.com/sirupsen/logrus"
 	"slices"
@@ -23,6 +24,10 @@ func renderDashboard(rr *DashboardRenderRequest, dashboardTitle string) *apiv1.D
 
 func getEntityFromRequest(rr *DashboardRenderRequest) *entities.Entity {
 	if rr.EntityType == "" || rr.EntityKey == "" {
+		return nil
+	}
+
+	if !acl.IsAllowedViewEntityType(rr.cfg, rr.AuthenticatedUser, entityFileForType(rr.cfg, rr.EntityType)) {
 		return nil
 	}
 
@@ -131,7 +136,6 @@ func buildDashboardFromConfigWithEntity(dashboard *config.DashboardComponent, rr
 	}
 }
 
-//gocyclo:ignore
 func buildDefaultDashboard(rr *DashboardRenderRequest) *apiv1.Dashboard {
 	db := &apiv1.Dashboard{
 		Title:    "Actions",
@@ -145,33 +149,13 @@ func buildDefaultDashboard(rr *DashboardRenderRequest) *apiv1.Dashboard {
 	}
 
 	for _, binding := range rr.ex.MapActionBindings {
-		if binding == nil || binding.Action == nil || binding.Action.Hidden {
+		if !defaultBindingEligibleForDashboard(rr, binding) {
 			continue
 		}
 
-		if binding.IsOnConfiguredDashboard() {
-			continue
+		if comp := defaultDashboardComponentFromBinding(binding, rr); comp != nil {
+			fieldset.Contents = append(fieldset.Contents, comp)
 		}
-
-		if !acl.IsAllowedView(rr.cfg, rr.AuthenticatedUser, binding.Action) {
-			continue
-		}
-
-		action := buildAction(binding, rr)
-		if action == nil {
-			continue
-		}
-
-		comp := &apiv1.DashboardComponent{
-			Type:   "link",
-			Title:  action.Title,
-			Icon:   action.Icon,
-			Action: action,
-		}
-		if binding.Entity != nil {
-			comp.EntityKey = binding.Entity.UniqueKey
-		}
-		fieldset.Contents = append(fieldset.Contents, comp)
 	}
 
 	if len(fieldset.Contents) > 0 {
@@ -180,6 +164,44 @@ func buildDefaultDashboard(rr *DashboardRenderRequest) *apiv1.Dashboard {
 	}
 
 	return db
+}
+
+func defaultBindingEligibleForDashboard(rr *DashboardRenderRequest, binding *executor.ActionBinding) bool {
+	return defaultBindingWellFormed(binding) &&
+		!binding.IsOnConfiguredDashboard() &&
+		acl.IsAllowedView(rr.cfg, rr.AuthenticatedUser, binding.Action) &&
+		defaultBindingEntityTypeAllowed(rr, binding)
+}
+
+func defaultBindingWellFormed(binding *executor.ActionBinding) bool {
+	return binding != nil && binding.Action != nil && !binding.Action.Hidden
+}
+
+func defaultBindingEntityTypeAllowed(rr *DashboardRenderRequest, binding *executor.ActionBinding) bool {
+	if binding.Entity == nil || binding.Action.Entity == "" {
+		return true
+	}
+
+	return acl.IsAllowedViewEntityType(rr.cfg, rr.AuthenticatedUser, entityFileForType(rr.cfg, binding.Action.Entity))
+}
+
+func defaultDashboardComponentFromBinding(binding *executor.ActionBinding, rr *DashboardRenderRequest) *apiv1.DashboardComponent {
+	action := buildAction(binding, rr)
+	if action == nil {
+		return nil
+	}
+
+	comp := &apiv1.DashboardComponent{
+		Type:   "link",
+		Title:  action.Title,
+		Icon:   action.Icon,
+		Action: action,
+	}
+	if binding.Entity != nil {
+		comp.EntityKey = binding.Entity.UniqueKey
+	}
+
+	return comp
 }
 
 func entityKeyLess(a, b string) bool {

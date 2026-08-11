@@ -11,7 +11,7 @@
 		"stylelint-config-standard": "^40.0.0"
 	},
 	"scripts": {
-		"test": "node --test resources/vue/components/*.test.mjs resources/vue/utils/*.test.mjs"
+		"test": "node --test resources/vue/components/*.test.mjs resources/vue/utils/*.test.mjs resources/vue/stores/*.test.mjs"
 	},
 	"author": "",
 	"parcelIgnore": [
@@ -32,11 +32,11 @@
 		"@xterm/addon-web-links": "^0.12.0",
 		"@xterm/xterm": "^6.0.0",
 		"iconify-icon": "^3.0.2",
-		"picocrank": "^1.21.2",
+		"picocrank": "^1.22.1",
 		"standard": "^17.1.2",
 		"unplugin-vue-components": "^32.1.0",
-		"vite": "^8.1.5",
-		"vue": "^3.5.40",
+		"vite": "^8.2.1",
+		"vue": "^3.5.41",
 		"vue-i18n": "^11.4.8",
 		"vue-router": "^5.2.0"
 	},

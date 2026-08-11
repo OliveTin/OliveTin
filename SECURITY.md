@@ -37,6 +37,17 @@ The following notes might be helpful when reporting a vulnerability:
 * GitHub usernames are how we you will be credited for discoveries reported via GitHub, if using emails we'll ask for your preferred name/handle to credit you with.
 * CVEs will be requested via GitHub Security Advisories when appropriate, but we do not guarantee that all vulnerabilities will receive CVEs, as this is determined on a case-by-case basis.
 
+## Feature flags (alpha / experimental)
+
+OliveTin uses global `features.*` flags in `config.yaml` to ship unfinished or experimental functionality.
+
+* **All feature flags default to off.** Enabling a flag is an explicit operator choice.
+* Functionality behind a feature flag is **alpha / experimental** until the flag is removed or the feature is graduated to a stable, default-on product surface.
+* Private security reports **are accepted** for vulnerabilities that affect feature-flagged (alpha) functionality when that flag is enabled. Use Option A or B above; do not file a public issue that discloses exploit details.
+* Reports that affect **stable, non-flagged** code paths remain in scope under this policy, even if a feature flag exists elsewhere in the project.
+
+Operators who enable experimental features should treat them as preview software and avoid relying on them in high-assurance production deployments.
+
 ## Disclosure of how vulnerabilities were found
 
 It is incredibly useful to not just patch security vulnerabilities, but also to understand how they were found. If you are able to share this information, it can help us and the community to better understand potential attack vectors and improve the overall security of the project.

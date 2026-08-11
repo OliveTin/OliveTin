@@ -40,6 +40,10 @@ func (cfg *Config) Sanitize() {
 	if err := cfg.validateChecklistChoiceValues(); err != nil {
 		log.Fatalf("%v", err)
 	}
+
+	if err := cfg.validateEntityArgumentChoices(); err != nil {
+		log.Fatalf("%v", err)
+	}
 }
 
 func (cfg *Config) validateReservedActionArgumentNames() error {
@@ -106,6 +110,42 @@ func validateChecklistChoicesForArgument(actionTitle string, arg ActionArgument)
 	}
 
 	return nil
+}
+
+func (cfg *Config) validateEntityArgumentChoices() error {
+	for _, action := range cfg.Actions {
+		if err := action.validateEntityArgumentChoices(); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (action *Action) validateEntityArgumentChoices() error {
+	if action == nil {
+		return nil
+	}
+
+	for _, arg := range action.Arguments {
+		if err := validateEntityArgumentChoicesForArgument(action.Title, arg); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func validateEntityArgumentChoicesForArgument(actionTitle string, arg ActionArgument) error {
+	if arg.Entity == "" || len(arg.Choices) == 1 {
+		return nil
+	}
+
+	return fmt.Errorf(
+		`action %q argument %q with entity must define exactly one choice template`,
+		actionTitle,
+		arg.Name,
+	)
 }
 
 func (cfg *Config) sanitizeDashboardsForInlineActions() {

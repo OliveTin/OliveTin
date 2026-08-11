@@ -143,6 +143,23 @@ You can add custom JavaScript to OliveTin, which will be executed on every page 
 
 If the browser blocks your script or network calls with Content Security Policy errors, see xref:security/content_security_policy.adoc[Content Security Policy headers] for how to adjust or disable the CSP sent by OliveTin.
 
+[#header-search]
+== Header search
+
+Header QuickSearch is an **alpha / experimental** opt-in feature. All `features.*` flags default to **off**. Enabling a flag is an explicit operator choice; see the project https://github.com/OliveTin/OliveTin/blob/main/SECURITY.md[security policy] (feature flags are out of scope for CVEs and security advisories until graduated).
+
+Enable it in `config.yaml`:
+
+[source,yaml]
+----
+features:
+  headerSearch: true
+----
+
+When enabled, the header shows a search control that can jump to actions, dashboards, entities, and system navigation pages the user is already allowed to see. Refresh the browser after changing the flag so Init picks up the new value.
+
+Other `features.*` flags follow the same pattern: typed booleans under `features`, default false, exposed on Init for the web UI, and treated as alpha until graduated.
+
 == Custom CSS (with a custom theme)
 
 You can customize OliveTin with themes, but it's also possible to write your on very simple theme that contains just a few CSS rules to change the look and feel of OliveTin. This is very useful if you just want to change the colours of OliveTin, or hide a few elements.

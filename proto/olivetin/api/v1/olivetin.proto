@@ -79,10 +79,34 @@ message GetDashboardResponse {
 	Dashboard dashboard = 4;
 }
 
+message SearchHints {
+	// Lightweight titles for client search only. Omits fields, icons, and payloads.
+	// Dashboards are not included; clients index Init.root_dashboard_entries instead.
+	repeated EntitySearchHint entities = 1;
+	repeated ActionSearchHint actions = 2;
+}
+
+message EntitySearchHint {
+	string title = 1;
+	string type = 2;
+	string unique_key = 3;
+}
+
+message ActionSearchHint {
+	string title = 1;
+	string binding_id = 2;
+}
+
 message EffectivePolicy {
 	bool show_diagnostics = 1;
 	bool show_log_list = 2;
 	bool show_version_number = 3;
+}
+
+// Features are global opt-in flags from config.yaml features.*.
+// All flags default to false and gate alpha / experimental functionality.
+message Features {
+	bool header_search = 1;
 }
 
 message GetDashboardRequest {
@@ -426,6 +450,12 @@ message InitResponse {
 	bool show_navigate_on_start_icons = 25;
 	int32 config_issue_count = 26;
 	repeated RootDashboard root_dashboard_entries = 27;
+	// Client-side search index hints. Omitted when login is required
+	// or features.header_search is false.
+	// Entities match GetEntities visibility; actions use view ACL.
+	// Dashboards are indexed client-side from root_dashboard_entries.
+	SearchHints search_hints = 28;
+	Features features = 29;
 }
 
 message RootDashboard {

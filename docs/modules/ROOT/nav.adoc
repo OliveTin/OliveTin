@@ -57,6 +57,7 @@
 ** xref:action_customization/ratelimiting.adoc[Rate Limiting]
 ** xref:action_customization/enabledExpression.adoc[Enabled Expression]
 ** xref:action_customization/ids.adoc[IDs]
+** xref:action_customization/hidden.adoc[Hidden]
 * xref:action_examples/intro.adoc[Action Examples]
 ** xref:action_examples/containers.adoc[Containers - start/stop]
 *** xref:action_examples/docker-proxy.adoc[Docker control, via proxy]

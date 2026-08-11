@@ -167,9 +167,9 @@ export async function openSidebar() {
 }
 
 export async function getNavigationLinks() {
-  // Exclude section headers (e.g. "System"); they are li.nav-section-header-item.
+  // Exclude section containers and legacy section header rows; count only link items.
   const navigationLinks = await webdriver.findElements(
-    By.css('.navigation-links li:not(.nav-section-header-item)')
+    By.css('.navigation-links li:not(.nav-section-header-item):not(.nav-section)')
   )
 
   return navigationLinks

@@ -119,12 +119,9 @@ func IsAllowedExec(cfg *config.Config, user *authpublic.AuthenticatedUser, actio
 	return aclCheck(Exec, cfg.DefaultPermissions.Exec, cfg, "isAllowedExec", user, action.Title, action.Acls, true)
 }
 
-// IsAllowedView checks if a User is allowed to view an Action
+// IsAllowedView checks if a User is allowed to view an Action.
+// Action.Hidden is not a security control — it only affects dashboard listing.
 func IsAllowedView(cfg *config.Config, user *authpublic.AuthenticatedUser, action *config.Action) bool {
-	if action.Hidden {
-		return false
-	}
-
 	return aclCheck(View, cfg.DefaultPermissions.View, cfg, "isAllowedView", user, action.Title, action.Acls, true)
 }
 
@@ -140,6 +137,16 @@ func IsAllowedViewDashboard(cfg *config.Config, user *authpublic.AuthenticatedUs
 	}
 
 	return aclCheck(View, cfg.DefaultPermissions.View, cfg, "isAllowedViewDashboard", user, dashboard.Title, dashboard.Acls, false)
+}
+
+// IsAllowedViewEntityType checks if a user may see an entity type (list, details, search).
+// Entity types with no acls are unrestricted. AddToEveryAction does not apply.
+func IsAllowedViewEntityType(cfg *config.Config, user *authpublic.AuthenticatedUser, entityFile *config.EntityFile) bool {
+	if entityFile == nil || len(entityFile.Acls) == 0 {
+		return true
+	}
+
+	return aclCheck(View, cfg.DefaultPermissions.View, cfg, "isAllowedViewEntityType", user, entityFile.Name, entityFile.Acls, false)
 }
 
 func isACLRelevant(resourceAcls []string, acl *config.AccessControlList, user *authpublic.AuthenticatedUser, includeAddToEvery bool) bool {

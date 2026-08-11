@@ -81,3 +81,5 @@ entities:
 ----
 
 OliveTin expands the template once per entity instance and renders each result as a checkbox. Selected values are still passed as a JSON array string.
+
+IMPORTANT: Like dropdowns, checklist arguments with `entity` must define **exactly one** choice template. Combining `entity` with multiple static choices is rejected on startup.

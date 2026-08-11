@@ -45,7 +45,6 @@ import { useI18n } from 'vue-i18n'
 import Calendar from 'picocrank/vue/components/Calendar.vue'
 import Section from 'picocrank/vue/components/Section.vue'
 import { loadStoredLogsFilter } from '../utils/logsFilterStorage.js'
-
 const router = useRouter()
 const { t } = useI18n()
 
