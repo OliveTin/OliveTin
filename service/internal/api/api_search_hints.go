@@ -27,17 +27,40 @@ func (api *oliveTinAPI) buildSearchHints(user *authpublic.AuthenticatedUser) *ap
 }
 
 func (api *oliveTinAPI) buildEntitySearchHints(user *authpublic.AuthenticatedUser) []*apiv1.EntitySearchHint {
-	hints := entities.ListSearchHints()
-	out := make([]*apiv1.EntitySearchHint, 0, len(hints))
+	hintsByType := make(map[string][]*apiv1.EntitySearchHint)
 
-	for _, hint := range hints {
+	for _, hint := range entities.ListSearchHints() {
 		if allowedHint := api.entitySearchHintIfAllowed(user, hint); allowedHint != nil {
-			out = append(out, allowedHint)
+			hintsByType[allowedHint.Type] = appendBoundedEntitySearchHints(
+				hintsByType[allowedHint.Type],
+				allowedHint,
+				maxSearchHintEntitiesPerType,
+			)
 		}
 	}
 
-	sortEntitySearchHints(out)
-	return capEntitySearchHintsPerType(out, maxSearchHintEntitiesPerType)
+	entityTypes := make([]string, 0, len(hintsByType))
+	for entityType := range hintsByType {
+		entityTypes = append(entityTypes, entityType)
+	}
+	sort.Strings(entityTypes)
+
+	out := make([]*apiv1.EntitySearchHint, 0, len(entityTypes)*maxSearchHintEntitiesPerType)
+	for _, entityType := range entityTypes {
+		out = append(out, hintsByType[entityType]...)
+	}
+
+	return out
+}
+
+func appendBoundedEntitySearchHints(hints []*apiv1.EntitySearchHint, hint *apiv1.EntitySearchHint, limit int) []*apiv1.EntitySearchHint {
+	hints = append(hints, hint)
+	sortEntitySearchHints(hints)
+	if len(hints) > limit {
+		hints = hints[:limit]
+	}
+
+	return hints
 }
 
 func (api *oliveTinAPI) entitySearchHintIfAllowed(user *authpublic.AuthenticatedUser, hint entities.SearchHint) *apiv1.EntitySearchHint {
@@ -70,33 +93,16 @@ func sortEntitySearchHints(hints []*apiv1.EntitySearchHint) {
 	})
 }
 
-func capEntitySearchHintsPerType(hints []*apiv1.EntitySearchHint, perType int) []*apiv1.EntitySearchHint {
-	if perType < 1 || len(hints) == 0 {
-		return hints
-	}
-
-	counts := make(map[string]int)
-	out := make([]*apiv1.EntitySearchHint, 0, len(hints))
-
-	for _, hint := range hints {
-		if counts[hint.Type] >= perType {
-			continue
-		}
-
-		counts[hint.Type]++
-		out = append(out, hint)
-	}
-
-	return out
-}
-
 func (api *oliveTinAPI) buildActionSearchHints(user *authpublic.AuthenticatedUser) []*apiv1.ActionSearchHint {
-	candidates := api.collectViewableActionBindings(user)
-	sortActionSearchCandidates(candidates)
+	candidates := make([]actionSearchCandidate, 0, maxSearchHintActions)
 
-	if len(candidates) > maxSearchHintActions {
-		candidates = candidates[:maxSearchHintActions]
+	api.executor.MapActionBindingsLock.RLock()
+	for _, binding := range api.executor.MapActionBindings {
+		if candidate, ok := actionSearchCandidateFromBinding(api, user, binding); ok {
+			candidates = appendBoundedActionSearchCandidates(candidates, candidate, maxSearchHintActions)
+		}
 	}
+	api.executor.MapActionBindingsLock.RUnlock()
 
 	out := make([]*apiv1.ActionSearchHint, 0, len(candidates))
 	for _, candidate := range candidates {
@@ -109,24 +115,20 @@ func (api *oliveTinAPI) buildActionSearchHints(user *authpublic.AuthenticatedUse
 	return out
 }
 
+func appendBoundedActionSearchCandidates(candidates []actionSearchCandidate, candidate actionSearchCandidate, limit int) []actionSearchCandidate {
+	candidates = append(candidates, candidate)
+	sortActionSearchCandidates(candidates)
+	if len(candidates) > limit {
+		candidates = candidates[:limit]
+	}
+
+	return candidates
+}
+
 type actionSearchCandidate struct {
 	title     string
 	bindingID string
 	hasEntity bool
-}
-
-func (api *oliveTinAPI) collectViewableActionBindings(user *authpublic.AuthenticatedUser) []actionSearchCandidate {
-	api.executor.MapActionBindingsLock.RLock()
-	defer api.executor.MapActionBindingsLock.RUnlock()
-
-	candidates := make([]actionSearchCandidate, 0)
-	for _, binding := range api.executor.MapActionBindings {
-		if candidate, ok := actionSearchCandidateFromBinding(api, user, binding); ok {
-			candidates = append(candidates, candidate)
-		}
-	}
-
-	return candidates
 }
 
 func actionSearchCandidateFromBinding(api *oliveTinAPI, user *authpublic.AuthenticatedUser, binding *executor.ActionBinding) (actionSearchCandidate, bool) {

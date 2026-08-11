@@ -73,10 +73,10 @@ export function dashboardRoutePath (title, entityType, entityKey) {
     return '/'
   }
 
-  let path = `/dashboards/${title}`
+  let path = `/dashboards/${encodeURIComponent(title)}`
 
   if (entityType && entityKey) {
-    path += `/${entityType}/${entityKey}`
+    path += `/${encodeURIComponent(entityType)}/${encodeURIComponent(entityKey)}`
   }
 
   return path
@@ -123,7 +123,7 @@ function entityItemsFromHints (hints) {
       description: hint.type,
       category: 'Entities',
       type: 'route',
-      path: `/entity-details/${hint.type}/${hint.uniqueKey}`,
+      path: `/entity-details/${encodeURIComponent(hint.type)}/${encodeURIComponent(hint.uniqueKey)}`,
       icon: CellsIcon
     })
   }
@@ -147,7 +147,7 @@ function actionItemsFromHints (hints) {
       title: hint.title || hint.bindingId,
       category: 'Actions',
       type: 'route',
-      path: `/action/${hint.bindingId}`,
+      path: `/action/${encodeURIComponent(hint.bindingId)}`,
       icon: PlayIcon
     })
   }

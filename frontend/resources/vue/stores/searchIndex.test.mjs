@@ -27,6 +27,14 @@ test('dashboardRoutePath builds dashboard and entity paths', () => {
     dashboardRoutePath('Servers', 'host', 'web01'),
     '/dashboards/Servers/host/web01'
   )
+  assert.equal(
+    dashboardRoutePath('Ops/Prod', 'host/type', 'key?1'),
+    '/dashboards/Ops%2FProd/host%2Ftype/key%3F1'
+  )
+  assert.equal(
+    dashboardRoutePath('Servers', 'host', 'key#frag'),
+    '/dashboards/Servers/host/key%23frag'
+  )
 })
 
 test('indexSearchHints indexes entities and actions', () => {
@@ -36,12 +44,17 @@ test('indexSearchHints indexes entities and actions', () => {
     entities: [
       { title: 'web01', type: 'host', uniqueKey: '0' },
       { title: '', type: 'host', uniqueKey: '1' },
-      { title: 'skip', type: '', uniqueKey: 'x' }
+      { title: 'skip', type: '', uniqueKey: 'x' },
+      { title: 'slash host', type: 'host/type', uniqueKey: 'key?1' },
+      { title: 'hash host', type: 'host', uniqueKey: 'key#frag' }
     ],
     actions: [
       { title: 'Ping Host', bindingId: 'bind-ping' },
       { title: '', bindingId: 'bind-empty-title' },
-      { title: 'Ignored', bindingId: '' }
+      { title: 'Ignored', bindingId: '' },
+      { title: 'Slash Action', bindingId: 'bind/slash' },
+      { title: 'Query Action', bindingId: 'bind?query' },
+      { title: 'Hash Action', bindingId: 'bind#hash' }
     ]
   })
 
@@ -51,9 +64,20 @@ test('indexSearchHints indexes entities and actions', () => {
   assert.equal(byId['entity:host:0'].path, '/entity-details/host/0')
   assert.equal(byId['entity:host:0'].description, 'host')
   assert.equal(byId['entity:host:1'].title, '1')
+  assert.equal(
+    byId['entity:host/type:key?1'].path,
+    '/entity-details/host%2Ftype/key%3F1'
+  )
+  assert.equal(
+    byId['entity:host:key#frag'].path,
+    '/entity-details/host/key%23frag'
+  )
 
   assert.equal(byId['action:bind-ping'].title, 'Ping Host')
   assert.equal(byId['action:bind-ping'].path, '/action/bind-ping')
+  assert.equal(byId['action:bind/slash'].path, '/action/bind%2Fslash')
+  assert.equal(byId['action:bind?query'].path, '/action/bind%3Fquery')
+  assert.equal(byId['action:bind#hash'].path, '/action/bind%23hash')
   assert.equal(byId['action:bind-ping'].category, 'Actions')
   assert.equal(byId['action:bind-empty-title'].title, 'bind-empty-title')
 
@@ -72,7 +96,7 @@ test('indexRootDashboardEntries indexes ACL-filtered dashboards', () => {
 
   const byId = Object.fromEntries(searchIndexItems.value.map((item) => [item.id, item]))
   assert.equal(byId['dashboard:Actions'].path, '/')
-  assert.equal(byId['dashboard:My Server'].path, '/dashboards/My Server')
+  assert.equal(byId['dashboard:My Server'].path, '/dashboards/My%20Server')
   assert.equal(byId['dashboard:My Server'].description, 'Infrastructure')
   assert.equal(byId['dashboard:My Server'].category, 'Dashboards')
 })

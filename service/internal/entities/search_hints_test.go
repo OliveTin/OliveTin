@@ -7,10 +7,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestListSearchHintsReturnsLightweightIdentities(t *testing.T) {
+func TestListSearchHintsReturnsLightweightIdentities(testContext *testing.T) {
 	ClearEntitiesOfType("search_hint_host")
 	ClearEntitiesOfType("search_hint_app")
-	t.Cleanup(func() {
+	testContext.Cleanup(func() {
 		ClearEntitiesOfType("search_hint_host")
 		ClearEntitiesOfType("search_hint_app")
 	})
@@ -31,12 +31,12 @@ func TestListSearchHintsReturnsLightweightIdentities(t *testing.T) {
 	}
 
 	host, hostFound := byKey["search_hint_host:0"]
-	require.True(t, hostFound)
-	assert.Equal(t, "web01", host.Title)
-	assert.Equal(t, "search_hint_host", host.Type)
-	assert.Equal(t, "0", host.UniqueKey)
+	require.True(testContext, hostFound)
+	assert.Equal(testContext, "web01", host.Title)
+	assert.Equal(testContext, "search_hint_host", host.Type)
+	assert.Equal(testContext, "0", host.UniqueKey)
 
 	app, appFound := byKey["search_hint_app:app-1"]
-	require.True(t, appFound)
-	assert.Equal(t, "Frontend", app.Title)
+	require.True(testContext, appFound)
+	assert.Equal(testContext, "Frontend", app.Title)
 }

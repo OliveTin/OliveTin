@@ -34,8 +34,8 @@ func (api *oliveTinAPI) errUnlessEntityArgumentsAllowed(user *authpublic.Authent
 		return nil
 	}
 
-	for i := range action.Arguments {
-		arg := &action.Arguments[i]
+	for argumentIndex := range action.Arguments {
+		arg := &action.Arguments[argumentIndex]
 		if arg.Entity == "" {
 			continue
 		}
@@ -108,10 +108,11 @@ func errUnlessEntityArgumentValueAllowed(arg *config.ActionArgument, value strin
 func entityArgumentValueAllowed(arg *config.ActionArgument, value string) bool {
 	allowed := entityArgumentAllowedValues(arg)
 	if strings.EqualFold(arg.Type, "checklist") {
-		return checklistEntityValuesAllowed(value, allowed)
+		return checklistEntityValuesAllowed(arg, value, allowed)
 	}
 
-	_, ok := allowed[value]
+	normalized := normalizeEntityArgumentValue(arg, value)
+	_, ok := allowed[normalized]
 	return ok
 }
 
@@ -132,21 +133,43 @@ func entityArgumentAllowedValues(arg *config.ActionArgument) map[string]struct{}
 	return allowed
 }
 
-func checklistEntityValuesAllowed(value string, allowed map[string]struct{}) bool {
-	parts := strings.Split(value, ",")
-	sawItem := false
+func normalizeEntityArgumentValue(arg *config.ActionArgument, value string) string {
+	if arg == nil || arg.Entity == "" || len(arg.Choices) != 1 {
+		return value
+	}
 
-	for _, part := range parts {
-		part = strings.TrimSpace(part)
-		if part == "" {
+	if resolved, ok := entityChoiceValueForTitle(arg, value); ok {
+		return resolved
+	}
+
+	return value
+}
+
+func entityChoiceValueForTitle(arg *config.ActionArgument, title string) (string, bool) {
+	for _, ent := range entities.GetEntityInstancesOrdered(arg.Entity) {
+		expandedTitle := tpl.ParseTemplateOfActionBeforeExec(arg.Choices[0].Title, ent)
+		if title != expandedTitle {
 			continue
 		}
 
-		sawItem = true
-		if _, ok := allowed[part]; !ok {
+		return tpl.ParseTemplateOfActionBeforeExec(arg.Choices[0].Value, ent), true
+	}
+
+	return "", false
+}
+
+func checklistEntityValuesAllowed(arg *config.ActionArgument, value string, allowed map[string]struct{}) bool {
+	segments, err := config.ParseChecklistValue(value)
+	if err != nil || len(segments) == 0 {
+		return false
+	}
+
+	for _, segment := range segments {
+		normalized := normalizeEntityArgumentValue(arg, strings.TrimSpace(segment))
+		if _, ok := allowed[normalized]; !ok {
 			return false
 		}
 	}
 
-	return sawItem
+	return true
 }

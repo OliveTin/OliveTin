@@ -190,9 +190,9 @@ func TestBuildSearchHintsCapsActionsAndEntitiesPerType(t *testing.T) {
 		entities.ClearEntitiesOfType("cap_container")
 	})
 
-	for i := 0; i < maxSearchHintEntitiesPerType+5; i++ {
-		entities.AddEntity("cap_host", fmt.Sprintf("%03d", i), map[string]any{"name": fmt.Sprintf("host-%03d", i)})
-		entities.AddEntity("cap_container", fmt.Sprintf("%03d", i), map[string]any{"name": fmt.Sprintf("ctr-%03d", i)})
+	for entityIndex := 0; entityIndex < maxSearchHintEntitiesPerType+5; entityIndex++ {
+		entities.AddEntity("cap_host", fmt.Sprintf("%03d", entityIndex), map[string]any{"name": fmt.Sprintf("host-%03d", entityIndex)})
+		entities.AddEntity("cap_container", fmt.Sprintf("%03d", entityIndex), map[string]any{"name": fmt.Sprintf("ctr-%03d", entityIndex)})
 	}
 
 	cfg := config.DefaultConfig()
@@ -201,10 +201,10 @@ func TestBuildSearchHintsCapsActionsAndEntitiesPerType(t *testing.T) {
 		{Name: "cap_container", File: "cap_container.yaml"},
 	}
 	cfg.Actions = make([]*config.Action, 0, maxSearchHintActions+5)
-	for i := 0; i < maxSearchHintActions+5; i++ {
+	for actionIndex := 0; actionIndex < maxSearchHintActions+5; actionIndex++ {
 		cfg.Actions = append(cfg.Actions, &config.Action{
-			ID:    fmt.Sprintf("action-%03d", i),
-			Title: fmt.Sprintf("Action %03d", i),
+			ID:    fmt.Sprintf("action-%03d", actionIndex),
+			Title: fmt.Sprintf("Action %03d", actionIndex),
 			Shell: "echo",
 		})
 	}

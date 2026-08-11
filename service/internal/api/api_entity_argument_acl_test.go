@@ -128,14 +128,55 @@ func TestStartActionAllowsListedEntityArgumentValue(t *testing.T) {
 
 func TestChecklistEntityValuesAllowedRejectsBlankOnlyInput(t *testing.T) {
 	allowed := map[string]struct{}{"web01": {}, "db01": {}}
+	arg := &config.ActionArgument{Type: "checklist"}
 
-	assert.False(t, checklistEntityValuesAllowed(",,,", allowed))
-	assert.False(t, checklistEntityValuesAllowed(" , ", allowed))
-	assert.False(t, checklistEntityValuesAllowed("", allowed),
+	assert.False(t, checklistEntityValuesAllowed(arg, ",,,", allowed))
+	assert.False(t, checklistEntityValuesAllowed(arg, " , ", allowed))
+	assert.False(t, checklistEntityValuesAllowed(arg, "", allowed),
 		"all-blank checklist parts are rejected here; empty string is accepted by the caller separately")
-	assert.True(t, checklistEntityValuesAllowed("web01", allowed))
-	assert.True(t, checklistEntityValuesAllowed("web01, db01", allowed))
-	assert.False(t, checklistEntityValuesAllowed("web01, unknown", allowed))
+	assert.True(t, checklistEntityValuesAllowed(arg, "web01", allowed))
+	assert.True(t, checklistEntityValuesAllowed(arg, `["web01","db01"]`, allowed))
+	assert.False(t, checklistEntityValuesAllowed(arg, `["web01","unknown"]`, allowed))
+}
+
+func TestChecklistEntityValuesAllowedAcceptsJSONArrayWithEntityTitles(t *testing.T) {
+	entities.ClearEntitiesOfType("servers")
+	t.Cleanup(func() {
+		entities.ClearEntitiesOfType("servers")
+	})
+	entities.AddEntity("servers", "0", map[string]any{"name": "web01", "label": "Web Server One"})
+	entities.AddEntity("servers", "1", map[string]any{"name": "db01", "label": "Database One"})
+
+	arg := &config.ActionArgument{
+		Type:   "checklist",
+		Entity: "servers",
+		Choices: []config.ActionArgumentChoice{
+			{Title: "{{ servers.label }}", Value: "{{ servers.name }}"},
+		},
+	}
+	allowed := entityArgumentAllowedValues(arg)
+
+	assert.True(t, checklistEntityValuesAllowed(arg, `["Web Server One","Database One"]`, allowed))
+	assert.False(t, checklistEntityValuesAllowed(arg, `["Web Server One","unknown"]`, allowed))
+}
+
+func TestEntityArgumentValueAllowedAcceptsEntityChoiceTitle(t *testing.T) {
+	entities.ClearEntitiesOfType("servers")
+	t.Cleanup(func() {
+		entities.ClearEntitiesOfType("servers")
+	})
+	entities.AddEntity("servers", "0", map[string]any{"name": "web01", "label": "Web Server One"})
+
+	arg := &config.ActionArgument{
+		Entity: "servers",
+		Choices: []config.ActionArgumentChoice{
+			{Title: "{{ servers.label }}", Value: "{{ servers.name }}"},
+		},
+	}
+
+	assert.True(t, entityArgumentValueAllowed(arg, "Web Server One"))
+	assert.True(t, entityArgumentValueAllowed(arg, "web01"))
+	assert.False(t, entityArgumentValueAllowed(arg, "unknown"))
 }
 
 func TestStartActionRejectsMalformedMultiChoiceEntityArgument(t *testing.T) {
