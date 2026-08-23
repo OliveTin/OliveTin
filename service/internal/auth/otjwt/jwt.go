@@ -227,14 +227,14 @@ func parseJwt(cfg *config.Config, token string) *authTypes.AuthenticatedUser {
 
 	user := &authTypes.AuthenticatedUser{
 		Username:      lookupClaimValueOrDefault(claims, cfg.AuthJwtClaimUsername, ""),
-		UsergroupLine: parseGroupClaim(cfg.AuthJwtClaimUserGroup, claims),
+		UsergroupLine: parseGroupClaim(cfg.AuthJwtClaimUserGroup, claims, cfg.AuthHttpHeaderUserGroupSep),
 		Provider:      "jwt",
 	}
 
 	return user
 }
 
-func parseGroupClaim(groupClaim string, claims jwt.MapClaims) string {
+func parseGroupClaim(groupClaim string, claims jwt.MapClaims, sep string) string {
 	usergroup := ""
 	if val, ok := claims[groupClaim]; ok {
 		if array, ok := val.([]any); ok {
@@ -242,7 +242,10 @@ func parseGroupClaim(groupClaim string, claims jwt.MapClaims) string {
 			for i, v := range array {
 				groups[i] = fmt.Sprintf("%s", v)
 			}
-			usergroup = strings.Join(groups, " ")
+			if sep == "" {
+				sep = " "
+			}
+			usergroup = strings.Join(groups, sep)
 		} else {
 			usergroup = fmt.Sprintf("%s", val)
 		}

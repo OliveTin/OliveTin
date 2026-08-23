@@ -37,6 +37,9 @@ OliveTin `2024.11.24` added support for OAuth2 group mapping for a single group.
 
 The examples below show various ways to map groups from Authentik to OliveTin.
 
+[NOTE]
+OliveTin can also accept groups returned as a native list/array, instead of a comma-separated string. If your scope mapping expression returns `{"olivetin_group_list": groups}` (a plain list) rather than joining it with `",".join(groups)`, OliveTin will read it the same way. The comma-separated approach below still works and is kept for reference.
+
 === Multiple group mapping: Comma-separated list
 
 The below will match all groups the user is a member of and return them as a comma-separated list. If no groups are found then an empty string is returned (no groups)".
@@ -183,9 +186,9 @@ image::authentik_login3.png[]
 
 == Debugging
 
-OliveTin logs OAuth2 flows quite extensively. If you are having trouble with OAuth2, you should check your OliveTin logs. 
+OliveTin logs OAuth2 flows quite extensively. If you are having trouble with OAuth2, you should check your OliveTin logs.
 
-You may see errors such as "OAuth2: Error getting user data" or "Failed to get field from user data". 
+You may see errors such as "OAuth2: Error getting user data" or "Failed to get field from user data".
 
 Sometimes it can be infuriating to debug the user data mapping (username and usergroup), as you cannot easily capture the data that is being sent back from Authentik. To help with this, you can temporarily enable a debug log flag that is INSECURE (do not leave this enabled) to log the user data that is being sent back from Authentik. To do this, add the following to your OliveTin configuration file:
 
@@ -200,4 +203,3 @@ Once you have this working, you can disable the `insecureAllowDumpOAuth2UserData
 == Next steps
 
 Once you have OAuth2 working, you will probably want to configure access control lists in OliveTin. This is described in the xref:security/acl.adoc[Access Control Lists] documentation page.
-
