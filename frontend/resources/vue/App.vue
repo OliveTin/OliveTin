@@ -254,6 +254,7 @@ const availableLanguages = {
   'es-ES': 'Español',
   'it-IT': 'Italiano',
   'zh-Hans-CN': '简体中文'
+  'zh-Hant-TW': '繁體中文'
 }
 
 // Computed property to get current language display name
