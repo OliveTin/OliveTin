@@ -1,5 +1,5 @@
 define delete-files
-	python -c "import shutil;shutil.rmtree('$(1)', ignore_errors=True)"
+	python3 -c "import shutil;shutil.rmtree('$(1)', ignore_errors=True)"
 endef
 
 codestyle:
