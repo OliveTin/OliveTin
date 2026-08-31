@@ -3,7 +3,7 @@
 
 include::partial$action_examples/ssh_intro.adoc[]
 
-NOTE: There is an easy method of setting up SSH with OliveTin, which is described in the <<action-ssh-easy,SSH (easy setup)>> section. This section is for those who want to set up SSH manually.
+NOTE: There is an easy method of setting up SSH with OliveTin, which is described in the xref:action_examples/ssh-easy.adoc[SSH (easy setup)] section. This section is for those who want to set up SSH manually.
 
 :systemd: Easy
 :container: Needs some setting up - see the <<ssh-container,SSH Container setup instructions>>
@@ -39,7 +39,7 @@ The steps in detail are below;
 [#ssh-step-1]
  [red]#Step 1#: Give OliveTin a SSH key
 
-Open a terminal window on _server-with-olivetin_. 
+Open a terminal window on _server-with-olivetin_.
 
 [loweralpha]
 . Create the `/opt/OliveTinSshKeys` directory, to create a shared directory for your SSH key file.
@@ -49,7 +49,7 @@ Open a terminal window on _server-with-olivetin_.
 root@server-with-olivetin: mkdir /opt/OliveTinSshKeys
 ----
 +
-This will later be used as a "volume mount" when you create a docker container. 
+This will later be used as a "volume mount" when you create a docker container.
 
 . Run `ssh-keygen` to generate a SSH key just for OliveTin.
 +
@@ -90,7 +90,7 @@ The key's randomart image is:
 +----[SHA256------+
 ----
 +
-This will create two files, `/opt/OliveTinSshKeys/id_rsa` (your private key) and `/opt/OliveTinSshKeys/id_rsa.pub` (your public key). 
+This will create two files, `/opt/OliveTinSshKeys/id_rsa` (your private key) and `/opt/OliveTinSshKeys/id_rsa.pub` (your public key).
 
 . Copy your public key to every server you want to connect to.
 +
@@ -113,7 +113,7 @@ root@server-with-olivetin: ssh -i /opt/OliveTinSshKeys/id_rsa root@server2
 (you should login without a password)
 ----
 
-. Give the SSH key to the OliveTin container. 
+. Give the SSH key to the OliveTin container.
 +
 The way to do this is via a "volume mount". When you create the container, you use "-v" to specify a volume.
 +
@@ -156,4 +156,3 @@ actions:
      icon: ping
      timeout: 5
 ....
-

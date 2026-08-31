@@ -69,6 +69,4 @@ xref:reference/containerInstallPackages.adoc[How to install additional packages 
 +
 NOTE: The reason that the `arm` and `arm64` containers do not include docker, is that when these images are cross-compiled at build time, it takes FOREVER because we have to emulate arm.
 
-After you have passed the socket into the container (and optionally installed docker), you should be able to setup docker actions like it's shown in the example <<example-control-containers,above>>.
-
-
+After you have passed the socket into the container (and optionally installed docker), you should be able to setup docker actions like it's shown in the xref:action_examples/containers.adoc#example-control-containers[container start/stop example].
