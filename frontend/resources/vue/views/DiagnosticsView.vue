@@ -13,12 +13,10 @@
       :show-pagination="false"
     >
       <template #cell-severity="{ value }">
-        <div
+        <span
           class="tag"
-          :class="value === 'error' ? 'fg-bad' : 'fg-warning'"
-        >
-          {{ value }}
-        </div>
+          :class="value"
+        >{{ value }}</span>
       </template>
     </Table>
   </Section>

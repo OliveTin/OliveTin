@@ -1,14 +1,17 @@
 <template>
-  <div :class="statusClass + ' annotation'">
-    <router-link
-      v-if="showQueueLink"
-      to="/logs/queue"
-      class="queue-status-link"
-    >
-      {{ statusText }}
-    </router-link>
-    <span v-else>{{ statusText }}</span><span>{{ exitCodeText }}</span>
-  </div>
+  <router-link
+    v-if="showQueueLink"
+    to="/logs/queue"
+    class="tag"
+    :class="statusTagClass"
+  >
+    {{ statusText }}
+  </router-link>
+  <span
+    v-else
+    class="tag"
+    :class="statusTagClass"
+  >{{ statusText }}{{ exitCodeText }}</span>
 </template>
 
 <script setup>
@@ -71,48 +74,44 @@ const showQueueLink = computed(() => {
   return props.linkQueuedStatus && isWaitingInQueue(props.logEntry)
 })
 
-const statusClass = computed(() => {
+const statusTagClass = computed(() => {
   const logEntry = props.logEntry
-  if (!logEntry) return ''
-  if (logEntry.executionFinished) {
-    if (logEntry.blocked) {
-      return 'status-blocked'
-    } else if (logEntry.timedOut) {
-      return 'status-timeout'
-    } else if (logEntry.exitCode === 0) {
-      return 'status-success'
-    } else {
-      return 'status-nonzero-exit'
-    }
+  if (!logEntry) {
+    return ''
   }
-  return ''
+
+  if (!logEntry.executionFinished) {
+    if (isWaitingInQueue(logEntry)) {
+      return 'note'
+    }
+    return 'info'
+  }
+
+  if (logEntry.blocked) {
+    return 'status-blocked'
+  }
+  if (logEntry.timedOut) {
+    return ['warning', 'status-timeout']
+  }
+  if (logEntry.exitCode === 0) {
+    return ['good', 'status-success']
+  }
+  return ['error', 'status-nonzero-exit']
 })
 </script>
 
 <style scoped>
-.status-success {
-  color: var(--karma-good-fg);
+.tag {
+  text-transform: none;
 }
 
-.status-nonzero-exit {
-  color: var(--karma-bad-fg);
+.tag.status-blocked {
+  border-color: transparent;
+  background-color: color-mix(in srgb, #ca79ff 30%, var(--standout-bg-color));
+  color: var(--text-color);
 }
 
-.status-timeout {
-  color: var(--karma-warning-fg);
-}
-
-.status-blocked {
-  color: #ca79ff;
-}
-
-.queue-status-link {
-  color: #0d6efd;
+a.tag {
   text-decoration: none;
 }
-
-.queue-status-link:hover {
-  text-decoration: underline;
-}
-
 </style>
