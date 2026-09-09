@@ -1,20 +1,5 @@
 @layer components, karma, theme;
 
-header {
-	position: fixed;
-	width: 100%;
-	z-index: 5;
-}
-
-aside {
-	padding-top: 4em;
-	z-index: 3; /* Make sure the sidebar is on top of the terminal */
-}
-
-main {
-	padding-top: 4em;
-}
-
 dialog {
 	border-radius: 1em;
 }

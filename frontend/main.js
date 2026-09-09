@@ -1,6 +1,6 @@
 'use strict'
 
-import 'femtocrank/style.css'
+import 'picocrank/styles.css'
 import 'femtocrank/dark.css'
 import './style.css'
 
@@ -18,6 +18,7 @@ import router from './resources/vue/router.js'
 import App from './resources/vue/App.vue'
 
 import { initWebsocket } from './js/websocket.js'
+import { applyThemeStyles, getStoredThemePreference } from './resources/vue/utils/themeLoader.js'
 import combinedTranslations from '../lang/combined_output.json'
 
 function getSelectedLanguage () {
@@ -117,6 +118,8 @@ function setupErrorDisplay (errorMessage) {
 async function main () {
   try {
     const i18nSettings = await initClient()
+
+    await applyThemeStyles(getStoredThemePreference())
 
     initWebsocket()
 

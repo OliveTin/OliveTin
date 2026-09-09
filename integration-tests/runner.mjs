@@ -21,6 +21,7 @@ export default function getRunner () {
 
 class OliveTinTestRunner {
   BASE_URL = 'http://nohost:1337/';
+  pageGeneration = 0
 
   baseUrl() {
     return this.BASE_URL
@@ -36,6 +37,8 @@ class OliveTinTestRunnerStartLocalProcess extends OliveTinTestRunner {
     if (this.ot != null && this.ot.exitCode == null) {
       await this.stop()
     }
+
+    this.pageGeneration += 1
 
     let stdout = ""
     let stderr = ""
@@ -137,7 +140,7 @@ class OliveTinTestRunnerStartLocalProcess extends OliveTinTestRunner {
       // GitHub runners seem to need a bit more time to clean up
       await new Promise((res) => setTimeout(res, 3000))
     } else {
-      await new Promise((res) => setTimeout(res, 100))
+      await new Promise((res) => setTimeout(res, 50))
     }
   }
 }

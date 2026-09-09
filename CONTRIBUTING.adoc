@@ -52,6 +52,10 @@ pre-commit install --hook-type pre-push
 make proto
 make
 ./OliveTin
+
+Go codestyle checks (`make -wC service codestyle`) use golangci-lint. Install it
+with `make -wC service go-tools` if `golangci-lint` is not already on your PATH.
+Lint rules live in `service/.golangci.yml`.
 ```
 
 === Getting started to contribute;

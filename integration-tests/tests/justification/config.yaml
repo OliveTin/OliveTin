@@ -1,0 +1,45 @@
+---
+listenAddressSingleHTTPFrontend: 0.0.0.0:1337
+
+logLevel: "DEBUG"
+checkForUpdates: false
+defaultPopupOnStart: execution-dialog
+
+actions:
+  - title: Test action without justification
+    exec:
+      - echo
+      - "No justification needed"
+    icon: ping
+
+  # A single space requires justification with no prefilled template.
+  - title: Test manual justification
+    justification: " "
+    exec:
+      - echo
+      - "Manual justification action ran"
+    icon: ping
+
+  - title: Test templated justification
+    justification: "{{ target }}"
+    exec:
+      - echo
+      - "Target: {{ target }}"
+    icon: ping
+    arguments:
+      - name: target
+        title: Target host
+        type: ascii
+        default: dbserver
+
+  - title: Test justification with arguments
+    justification: " "
+    exec:
+      - echo
+      - "Target: {{ target }}"
+    icon: ping
+    arguments:
+      - name: target
+        title: Target host
+        type: ascii
+        default: testhost

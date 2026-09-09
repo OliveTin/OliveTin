@@ -47,7 +47,8 @@
         class="back-button-container"
       >
         <button
-          class="back-button"
+          type="button"
+          class="back-button inline-icon"
           @click="goBack"
         >
           <HugeiconsIcon
@@ -55,7 +56,7 @@
             width="1.2em"
             height="1.2em"
           />
-          <span>Back</span>
+          Back
         </button>
       </div>
       <h2>{{ dashboard.title }}</h2>
@@ -76,7 +77,8 @@
         class="back-button-container"
       >
         <button
-          class="back-button"
+          type="button"
+          class="back-button inline-icon"
           @click="goBack"
         >
           <HugeiconsIcon
@@ -84,7 +86,7 @@
             width="1.2em"
             height="1.2em"
           />
-          <span>Back</span>
+          Back
         </button>
       </div>
       <div

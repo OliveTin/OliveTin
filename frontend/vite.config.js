@@ -3,6 +3,9 @@ import vue from '@vitejs/plugin-vue'
 import Components from 'unplugin-vue-components/vite'
 
 export default defineConfig({
+  resolve: {
+    dedupe: ['vue', 'vue-router'],
+  },
   plugins: [
     Components({
       dirs: ['resources/vue/'],

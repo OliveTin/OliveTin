@@ -2,10 +2,12 @@
   <Section
     v-if="!definitionsLoaded"
     title="Loading entity definitions..."
+    :icon="CellsIcon"
   />
   <Section
     v-else-if="totalInstances === 0"
     title="There are no entities to show yet."
+    :icon="CellsIcon"
   >
     <p>
       When OliveTin has registered entity instances (for example from entity files or your setup), they will be listed here.
@@ -22,6 +24,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { CellsIcon } from '@hugeicons/core-free-icons'
 import Section from 'picocrank/vue/components/Section.vue'
 import EntityDefinitionSection from '../components/EntityDefinitionSection.vue'
 const definitionsLoaded = ref(false)

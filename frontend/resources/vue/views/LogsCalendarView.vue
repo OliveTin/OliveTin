@@ -1,12 +1,13 @@
 <template>
   <Section
     :title="t('logs.calendar-title')"
+    :icon="Calendar01Icon"
     :padding="false"
   >
     <template #toolbar>
       <router-link
         :to="logsListLocation"
-        class="button neutral"
+        class="button neutral inline-icon"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -42,6 +43,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { Calendar01Icon } from '@hugeicons/core-free-icons'
 import Calendar from 'picocrank/vue/components/Calendar.vue'
 import Section from 'picocrank/vue/components/Section.vue'
 import { loadStoredLogsFilter } from '../utils/logsFilterStorage.js'
@@ -176,17 +178,5 @@ onMounted(() => {
 <style scoped>
 .padding {
   padding: 1rem;
-}
-
-@media (prefers-color-scheme: dark) {
-  :deep(div.calendar-header-nav) {
-    background-color: var(--bg, #111);
-    color: var(--text-color, #fff);
-    border-color: var(--border-color, #333);
-  }
-
-  :deep(div.calendar-header-nav h2.calendar-title) {
-    color: #fff !important;
-  }
 }
 </style>

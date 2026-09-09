@@ -1,6 +1,7 @@
 <template>
   <Section
     title="Login to OliveTin"
+    :icon="Login01Icon"
     class="small"
   >
     <div class="login-form">
@@ -89,6 +90,7 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { Login01Icon } from '@hugeicons/core-free-icons'
 import Section from 'picocrank/vue/components/Section.vue'
 
 const router = useRouter()

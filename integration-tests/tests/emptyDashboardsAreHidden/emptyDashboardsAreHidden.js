@@ -6,10 +6,13 @@ import {
   getRootAndWait,
   openSidebar,
   getNavigationLinks,
+  waitForNavigationLinks,
   takeScreenshotOnFailure,
 } from '../../lib/elements.js'
 
 describe('config: empty dashboards are hidden', function () {
+  this.timeout(30000)
+
   before(async function () {
     await runner.start('emptyDashboardsAreHidden')
   })
@@ -26,6 +29,7 @@ describe('config: empty dashboards are hidden', function () {
     await getRootAndWait()
 
     await openSidebar()
+    await waitForNavigationLinks(3)
 
     const title = await webdriver.getTitle()
     expect(title).to.be.equal("Actions - OliveTin")

@@ -1,5 +1,8 @@
 <template>
-  <Section :padding="!hasTable">
+  <Section
+    :icon="CellsIcon"
+    :padding="!hasTable"
+  >
     <template #title>
       <span class="section-title-with-icon">
         Entity:
@@ -79,6 +82,7 @@
 
 <script setup>
 import { computed, ref, watch, onMounted, onBeforeUnmount } from 'vue'
+import { CellsIcon } from '@hugeicons/core-free-icons'
 import Section from 'picocrank/vue/components/Section.vue'
 import ActionIconGlyph from './ActionIconGlyph.vue'
 import EntityInstancesTable from './EntityInstancesTable.vue'

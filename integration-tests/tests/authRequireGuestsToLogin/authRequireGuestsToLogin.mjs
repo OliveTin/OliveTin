@@ -26,8 +26,14 @@ describe('config: authRequireGuestsToLogin', function () {
 
     await webdriver.get(runner.baseUrl())
 
-    await webdriver.wait(until.urlContains('/login'), 10000)
-    
+    await webdriver.wait(async () => {
+      const loginRequired = await webdriver.executeScript(
+        'return !!(window.initResponse && window.initResponse.loginRequired)'
+      )
+      const url = await webdriver.getCurrentUrl()
+      return loginRequired && url.includes('/login')
+    }, 15000, 'Guest should be redirected to login after Init')
+
     // Verify login UI elements are present
     const loginElements = await webdriver.findElements(By.css('form.local-login-form, .login-oauth2, .login-disabled'))
     expect(loginElements.length).to.be.greaterThan(0)
@@ -36,4 +42,3 @@ describe('config: authRequireGuestsToLogin', function () {
 
   })
 })
-

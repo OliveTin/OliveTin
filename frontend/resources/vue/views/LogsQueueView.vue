@@ -1,12 +1,13 @@
 <template>
   <Section
     :title="t('logs.queue-title')"
+    :icon="Queue01Icon"
     :padding="false"
   >
     <template #toolbar>
       <router-link
         to="/logs"
-        class="button neutral"
+        class="button neutral inline-icon"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -58,90 +59,21 @@
     </div>
 
     <div class="section-content">
-      <table class="logs-table row-hover">
-        <thead>
-          <tr>
-            <th>{{ t('logs.timestamp') }}</th>
-            <th>{{ t('logs.action') }}</th>
-            <th>{{ t('logs.metadata') }}</th>
-            <th>{{ t('logs.status') }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          <template
-            v-for="action in actionGroup.actions"
-            :key="`${actionGroup.name}:${action.bindingId}`"
-          >
-            <tr
-              v-for="(entry, index) in action.entries"
-              :key="entry.executionTrackingId"
-              class="log-row"
-              :title="action.actionTitle"
-            >
-              <td class="timestamp">
-                {{ formatTimestamp(entry.datetimeStarted) }}
-              </td>
-              <td>
-                <ActionIconGlyph
-                  class="icon"
-                  :glyph="action.actionIcon"
-                />
-                <router-link :to="`/logs/${entry.executionTrackingId}`">
-                  <LogActionTitle
-                    :action-title="action.actionTitle"
-                    :justification="entry.justification"
-                  />
-                </router-link>
-                <span
-                  v-if="action.entityPrefix"
-                  class="queue-entity annotation"
-                >
-                  {{ action.entityPrefix }}
-                </span>
-              </td>
-              <td class="tags">
-                <span class="annotation">
-                  <span class="annotation-key">User:</span>
-                  <span class="annotation-val">{{ entry.user }}</span>
-                </span>
-                <span
-                  v-if="entry.tags && entry.tags.length > 0"
-                  class="tag-list"
-                >
-                  <span
-                    v-for="tag in entry.tags"
-                    :key="tag"
-                    class="tag"
-                  >{{ tag }}</span>
-                </span>
-              </td>
-              <td class="exit-code">
-                <span
-                  v-if="!entry.executionFinished"
-                  class="queue-position"
-                >
-                  {{ t('logs.queue-position', { position: index + 1 }) }}
-                </span>
-                <ActionStatusDisplay
-                  :log-entry="entry"
-                  link-queued-status
-                />
-              </td>
-            </tr>
-          </template>
-        </tbody>
-      </table>
+      <ExecutionLogsTable
+        :logs="queueRowsForGroup(actionGroup)"
+        :loading="loading"
+      />
     </div>
   </section>
 </template>
 
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
+import { Queue01Icon } from '@hugeicons/core-free-icons'
 import Section from 'picocrank/vue/components/Section.vue'
 import ActionIconGlyph from '../components/ActionIconGlyph.vue'
-import ActionStatusDisplay from '../components/ActionStatusDisplay.vue'
-import LogActionTitle from '../components/LogActionTitle.vue'
 import ActionGroupLimitsLabel from '../components/ActionGroupLimitsLabel.vue'
+import ExecutionLogsTable from '../components/ExecutionLogsTable.vue'
 import { useI18n } from 'vue-i18n'
 import { getExecutionLogEntry, cloneLogEntry, updateLogEntryInGroups } from '../utils/executionLogEvents.js'
 
@@ -350,15 +282,22 @@ function onExecutionFinished (evt) {
   applyQueueEntryUpdate(logEntry)
 }
 
-function formatTimestamp (timestamp) {
-  if (!timestamp) {
-    return 'Unknown'
+function queueRowsForGroup (actionGroup) {
+  const rows = []
+
+  for (const action of actionGroup.actions || []) {
+    for (const [index, entry] of (action.entries || []).entries()) {
+      rows.push({
+        ...entry,
+        actionTitle: action.actionTitle,
+        actionIcon: action.actionIcon,
+        entityPrefix: action.entityPrefix,
+        queuePosition: index + 1
+      })
+    }
   }
-  try {
-    return new Date(timestamp).toLocaleString()
-  } catch (err) {
-    return timestamp
-  }
+
+  return rows
 }
 
 async function fetchQueue () {
@@ -397,38 +336,6 @@ onUnmounted(() => {
 
 .queue-action-group-heading h2 {
   margin: 0;
-}
-
-.timestamp {
-  font-family: monospace;
-  font-size: 0.875rem;
-  color: #666;
-}
-
-.icon {
-  margin-right: 0.5rem;
-  font-size: 1.2em;
-}
-
-.annotation {
-  font-weight: 500;
-  font-size: smaller;
-}
-
-.queue-entity {
-  display: block;
-  margin-top: 0.25rem;
-  color: #666;
-}
-
-.exit-code {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.queue-position {
-  white-space: nowrap;
 }
 
 .empty-state {

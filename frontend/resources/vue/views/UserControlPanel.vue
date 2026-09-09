@@ -1,6 +1,7 @@
 <template>
   <Section
     title="User Information"
+    :icon="UserIcon"
     class="small"
   >
     <div
@@ -64,6 +65,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { UserIcon } from '@hugeicons/core-free-icons'
 import Section from 'picocrank/vue/components/Section.vue'
 
 const router = useRouter()

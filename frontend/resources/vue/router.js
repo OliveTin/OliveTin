@@ -40,8 +40,8 @@ const routes = [
     component: () => import('./views/LogsCalendarView.vue'),
     meta: {
       title: 'Logs Calendar',
-      breadcrumb: [
-        { name: 'Logs', href: '/logs' },
+      breadcrumbs: () => [
+        { name: 'Logs', to: { name: 'Logs' } },
         { name: 'Calendar' }
       ]
     }
@@ -52,8 +52,8 @@ const routes = [
     component: () => import('./views/LogsQueueView.vue'),
     meta: {
       title: 'Execution Queue',
-      breadcrumb: [
-        { name: 'Logs', href: '/logs' },
+      breadcrumbs: () => [
+        { name: 'Logs', to: { name: 'Logs' } },
         { name: 'Queue' }
       ]
     }
@@ -74,8 +74,8 @@ const routes = [
     props: true,
     meta: {
       title: 'OliveTin - Entity Details',
-      breadcrumb: [
-        { name: 'Entities', href: '/entities' },
+      breadcrumbs: () => [
+        { name: 'Entities', to: { name: 'Entities' } },
         { name: 'Entity Details' }
       ]
     }
@@ -87,8 +87,8 @@ const routes = [
     props: true,
     meta: {
       title: 'Execution',
-      breadcrumb: [
-        { name: 'Logs', href: '/logs' },
+      breadcrumbs: () => [
+        { name: 'Logs', to: { name: 'Logs' } },
         { name: 'Execution' }
       ]
     }
@@ -100,8 +100,8 @@ const routes = [
     props: true,
     meta: {
       title: 'Action Details',
-      breadcrumb: [
-        { name: 'Actions', href: '/' },
+      breadcrumbs: () => [
+        { name: 'Actions', to: { name: 'Actions' } },
         { name: 'Action Details' }
       ]
     }
@@ -113,8 +113,8 @@ const routes = [
     props: true,
     meta: {
       title: 'Execution conditions',
-      breadcrumb: [
-        { name: 'Actions', href: '/' },
+      breadcrumbs: () => [
+        { name: 'Actions', to: { name: 'Actions' } },
         { name: 'Execution conditions' }
       ]
     }
@@ -171,6 +171,10 @@ router.beforeEach((to) => {
 
 // Navigation guard for authentication (if needed)
 router.beforeEach((to) => {
+  if (window.initResponse?.loginRequired && to.name !== 'Login') {
+    return '/login'
+  }
+
   const isAuthenticated = window.isAuthenticated ?? false
 
   if (to.meta.requiresAuth && !isAuthenticated) {

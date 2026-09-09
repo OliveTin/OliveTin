@@ -3,7 +3,7 @@ import { expect } from 'chai'
 import {
   getRootAndWait,
   openSidebar,
-  getNavigationLinks,
+  getNavigationLinkTitles,
   takeScreenshotOnFailure,
 } from '../../lib/elements.js'
 
@@ -24,13 +24,8 @@ describe('config: dashboardAcls', function () {
     await getRootAndWait()
     await openSidebar()
 
-    const navigationLinks = await getNavigationLinks()
-    expect(navigationLinks).to.not.be.empty
-
-    const linkTexts = []
-    for (const link of navigationLinks) {
-      linkTexts.push(await link.getText())
-    }
+    const linkTexts = await getNavigationLinkTitles()
+    expect(linkTexts).to.not.be.empty
 
     expect(linkTexts).to.include('Public tools')
     expect(linkTexts).to.not.include('Services')

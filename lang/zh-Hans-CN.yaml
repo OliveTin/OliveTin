@@ -27,6 +27,7 @@ translations:
   logs.no-logs-for-filter: 没有符合当前过滤条件的日志。
   logs.timestamp: 时间戳
   logs.action: 动作
+  logs.execution-id: 执行 ID
   logs.metadata: 元数据
   logs.status: 状态
   logs.no-logs-to-display: 没有日志可显示。

@@ -1,5 +1,5 @@
 <template>
-  <Section>
+  <Section :icon="CellsIcon">
     <template #title>
       <span class="section-title-with-icon">
         Entity Details:
@@ -13,7 +13,9 @@
     </template>
     <template #toolbar>
       <button
-        class="back-button"
+        type="button"
+        class="button neutral inline-icon"
+        title="Back"
         @click="goBack"
       >
         <HugeiconsIcon
@@ -21,7 +23,7 @@
           width="1.2em"
           height="1.2em"
         />
-        <span>Back</span>
+        Back
       </button>
     </template>
     <div v-if="!entityDetails">
@@ -63,6 +65,7 @@
   <Section
     v-if="entityDetails"
     title="Dashboard Entity Directories"
+    :icon="Folder01Icon"
   >
     <div
       v-if="filteredDirectories.length > 0"
@@ -126,7 +129,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { HugeiconsIcon } from '@hugeicons/vue'
-import { ArrowLeftIcon } from '@hugeicons/core-free-icons'
+import { ArrowLeftIcon, CellsIcon, Folder01Icon } from '@hugeicons/core-free-icons'
 import Section from 'picocrank/vue/components/Section.vue'
 import ActionButton from '../ActionButton.vue'
 import ActionIconGlyph from '../components/ActionIconGlyph.vue'
@@ -182,25 +185,6 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.back-button {
-    display: flex;
-    align-items: center;
-    gap: 0.5em;
-    padding: 0.5em 1em;
-    background-color: var(--bg, #fff);
-    border: 1px solid var(--border-color, #ccc);
-    border-radius: 0.5em;
-    cursor: pointer;
-    font-size: 0.9em;
-    box-shadow: 0 0 .3em rgba(0, 0, 0, 0.1);
-    transition: background-color 0.2s, box-shadow 0.2s;
-}
-
-.back-button:hover {
-    background-color: var(--bg-hover, #f5f5f5);
-    box-shadow: 0 0 .5em rgba(0, 0, 0, 0.15);
-}
-
 .directory-list a {
     text-decoration: none;
     padding: 0.5em;
@@ -243,15 +227,6 @@ fieldset {
 }
 
 @media (prefers-color-scheme: dark) {
-    .back-button {
-        background-color: var(--bg, #111);
-        border-color: var(--border-color, #333);
-    }
-
-    .back-button:hover {
-        background-color: var(--bg-hover, #222);
-    }
-
     .directory-list a:hover {
         background-color: var(--bg-hover, #222);
     }

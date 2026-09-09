@@ -1,12 +1,15 @@
 import { describe, it, before, after } from 'mocha'
 import { expect } from 'chai'
-import { By, until, Condition } from 'selenium-webdriver'
+import { By } from 'selenium-webdriver'
 //import * as waitOn from 'wait-on'
 import {
   getRootAndWait,
   getActionButtons,
   takeScreenshotOnFailure,
   openSidebar,
+  findSidebarNavHref,
+  waitForCurrentUrl,
+  waitForSelectorCount,
 } from '../../lib/elements.js'
 
 describe('config: general', function () {
@@ -34,8 +37,8 @@ describe('config: general', function () {
     await openSidebar()
 
 
-    const logsLink = await webdriver.findElements(By.css('a[href="/logs"]'))
-    const diagnosticsLink = await webdriver.findElements(By.css('a[href="/diagnostics"]'))
+    const logsLink = await findSidebarNavHref('/logs')
+    const diagnosticsLink = await findSidebarNavHref('/diagnostics')
 
     expect(logsLink).to.not.be.empty
     expect(diagnosticsLink).to.not.be.empty
@@ -50,10 +53,7 @@ describe('config: general', function () {
   it('Default buttons are rendered', async function() {
     await getRootAndWait()
 
-    await webdriver.wait(new Condition('wait for action buttons', async () => {
-      const btns = await webdriver.findElements(By.css('[title="dir-popup"], [title="cd-passive"], .action-button button'))
-      return btns.length >= 1
-    }), 10000)
+    await waitForSelectorCount('[title="dir-popup"], [title="cd-passive"], .action-button button', 1, 10000)
 
     const buttons = await getActionButtons()
     expect(buttons.length).to.be.greaterThanOrEqual(4)
@@ -62,10 +62,7 @@ describe('config: general', function () {
   it('Start dir action (popup)', async function () {
     await getRootAndWait()
 
-    await webdriver.wait(new Condition('wait for dir-popup button', async () => {
-      const btns = await webdriver.findElements(By.css('[title="dir-popup"]'))
-      return btns.length === 1
-    }), 10000)
+    await waitForSelectorCount('[title="dir-popup"]', 1, 10000)
 
     const buttons = await webdriver.findElements(By.css('[title="dir-popup"]'))
 
@@ -78,19 +75,13 @@ describe('config: general', function () {
     buttonCMD.click()
 
     // New UI navigates to /logs/<id> instead of showing old dialog
-    await webdriver.wait(new Condition('wait navigate to logs', async () => {
-      const url = await webdriver.getCurrentUrl()
-      return url.includes('/logs/')
-    }), 8000)
+    await waitForCurrentUrl((url) => url.includes('/logs/'), 8000)
   })
 
   it('Start cd action (passive)', async function () {
     await getRootAndWait()
 
-    await webdriver.wait(new Condition('wait for cd-passive button', async () => {
-      const btns = await webdriver.findElements(By.css('[title="cd-passive"]'))
-      return btns.length === 1
-    }), 10000)
+    await waitForSelectorCount('[title="cd-passive"]', 1, 10000)
 
     const buttons = await webdriver.findElements(By.css('[title="cd-passive"]'))
 
@@ -102,7 +93,7 @@ describe('config: general', function () {
 
     buttonCMD.click()
 
-    // Should not navigate to logs for passive action
+    // Should not navigate to logs for passive action; brief pause allows spurious navigation to show up
     await webdriver.sleep(500)
     const url = await webdriver.getCurrentUrl()
     expect(url.includes('/logs/')).to.be.false

@@ -4,9 +4,10 @@ import getRunner from './runner.mjs'
 
 export async function mochaGlobalSetup () {
   const options = new Options()
-  options.addArguments('--headless')
+  options.addArguments('--headless', '--disable-gpu', '--disable-dev-shm-usage')
 
   global.webdriver = await new Builder().forBrowser(Browser.CHROME).setChromeOptions(options).build()
+  await global.webdriver.manage().setTimeouts({ implicit: 0, pageLoad: 30000, script: 30000 })
 
   global.runner = getRunner()
 
