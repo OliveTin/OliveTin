@@ -4,7 +4,9 @@ test-install:
 	npm install --no-fund
 
 prep:
+ifneq ($(SKIP_WEBUI),1)
 	$(MAKE) -wC .. webui-dist
+endif
 	$(MAKE) -wC ../service compile-currentenv
 
 test-run:
