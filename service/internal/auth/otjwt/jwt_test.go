@@ -202,6 +202,42 @@ func makeJWTRequest(t *testing.T, srv *httptest.Server, tokenStr string) *http.R
 	return res
 }
 
+func TestJWTHeaderSkipsNonStringGroupArrayElements(t *testing.T) {
+	privateKey, publicKeyPath := createKeys(t)
+	defer func() { _ = os.Remove(publicKeyPath) }()
+
+	cfg := config.DefaultConfig()
+	cfg.AuthJwtPubKeyPath = publicKeyPath
+	cfg.AuthJwtClaimUsername = "sub"
+	cfg.AuthJwtClaimUserGroup = "olivetinGroup"
+	cfg.AuthJwtHeader = "Authorization"
+
+	tokenStr := createJWTTokenWithGroups(t, privateKey, []any{"admins", 42, "ops"})
+
+	mux := newMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		context := &authpublic.AuthCheckingContext{
+			Request: r,
+			Config:  cfg,
+		}
+		user := CheckUserFromJwtHeader(context)
+
+		if user == nil {
+			w.WriteHeader(http.StatusForbidden)
+			return
+		}
+
+		assert.Equal(t, "test", user.Username)
+		assert.Equal(t, "admins ops", user.UsergroupLine)
+	})
+
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+
+	res := makeJWTRequest(t, srv, tokenStr) //nolint:bodyclose // closed by verifyJWTResponse
+	verifyJWTResponse(t, res, http.StatusOK)
+}
+
 func TestJWTHeaderWithCustomGroupSeparator(t *testing.T) {
 	privateKey, publicKeyPath := createKeys(t)
 	defer func() { _ = os.Remove(publicKeyPath) }()
