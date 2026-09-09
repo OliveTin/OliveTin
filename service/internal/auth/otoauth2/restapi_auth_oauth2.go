@@ -11,6 +11,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -288,7 +289,11 @@ func (h *OAuth2Handler) computeUsergroup(userinfo *UserInfo, providerConfig *con
 	usergroup := userinfo.Usergroup
 	if providerConfig != nil && providerConfig.AddToUsergroup != "" {
 		if usergroup != "" {
-			usergroup = usergroup + " " + providerConfig.AddToUsergroup
+			sep := h.cfg.AuthHttpHeaderUserGroupSep
+			if sep == "" {
+				sep = " "
+			}
+			usergroup = usergroup + sep + providerConfig.AddToUsergroup
 		} else {
 			usergroup = providerConfig.AddToUsergroup
 		}
@@ -389,14 +394,14 @@ func getUserInfo(cfg *config.Config, client *http.Client, provider *config.OAuth
 	}
 
 	ret.Username = getDataField(userData, provider.UsernameField)
-	ret.Usergroup = getDataField(userData, provider.UserGroupField)
+	ret.Usergroup = getGroupField(userData, provider.UserGroupField, cfg.AuthHttpHeaderUserGroupSep)
 
 	return ret
 }
 
-func getDataField(data map[string]any, field string) string {
+func lookupRawField(data map[string]any, field string) (any, bool) {
 	if field == "" {
-		return ""
+		return nil, false
 	}
 
 	val, ok := data[field]
@@ -404,6 +409,16 @@ func getDataField(data map[string]any, field string) string {
 	if !ok {
 		log.Errorf("Failed to get field from user data: %v / %v", data, field)
 
+		return nil, false
+	}
+
+	return val, true
+}
+
+func getDataField(data map[string]any, field string) string {
+	val, ok := lookupRawField(data, field)
+
+	if !ok {
 		return ""
 	}
 
@@ -415,6 +430,55 @@ func getDataField(data map[string]any, field string) string {
 	}
 
 	return stringVal
+}
+
+// getGroupField reads a userinfo field that may be either a single string
+// group name, or a JSON array of group names (e.g. an OIDC "groups" claim).
+// Array elements that aren't strings are skipped and logged, rather than
+// discarding the whole claim.
+func getGroupField(data map[string]any, field string, sep string) string {
+	val, found := lookupRawField(data, field)
+
+	if !found {
+		return ""
+	}
+
+	if stringVal, isString := val.(string); isString {
+		return stringVal
+	}
+
+	arrayVal, isArray := val.([]any)
+
+	if !isArray {
+		log.Errorf("Field %v is not a string or array: %v", field, val)
+		return ""
+	}
+
+	return joinGroupArray(arrayVal, field, sep)
+}
+
+// joinGroupArray joins the string elements of a group claim array using sep,
+// defaulting to a space. Non-string elements are skipped and logged, rather
+// than discarding the whole claim.
+func joinGroupArray(arrayVal []any, field string, sep string) string {
+	groups := make([]string, 0, len(arrayVal))
+
+	for _, v := range arrayVal {
+		strVal, isString := v.(string)
+
+		if !isString {
+			log.Warnf("Skipping non-string group entry in field %v: %v", field, v)
+			continue
+		}
+
+		groups = append(groups, strVal)
+	}
+
+	if sep == "" {
+		sep = " "
+	}
+
+	return strings.Join(groups, sep)
 }
 
 func (h *OAuth2Handler) lookupOAuth2UserByState(state string) (*authTypes.AuthenticatedUser, bool) {

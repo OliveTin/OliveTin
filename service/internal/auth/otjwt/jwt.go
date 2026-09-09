@@ -227,25 +227,41 @@ func parseJwt(cfg *config.Config, token string) *authTypes.AuthenticatedUser {
 
 	user := &authTypes.AuthenticatedUser{
 		Username:      lookupClaimValueOrDefault(claims, cfg.AuthJwtClaimUsername, ""),
-		UsergroupLine: parseGroupClaim(cfg.AuthJwtClaimUserGroup, claims),
+		UsergroupLine: parseGroupClaim(cfg.AuthJwtClaimUserGroup, claims, cfg.AuthHttpHeaderUserGroupSep),
 		Provider:      "jwt",
 	}
 
 	return user
 }
 
-func parseGroupClaim(groupClaim string, claims jwt.MapClaims) string {
-	usergroup := ""
-	if val, ok := claims[groupClaim]; ok {
-		if array, ok := val.([]any); ok {
-			groups := make([]string, len(array))
-			for i, v := range array {
-				groups[i] = fmt.Sprintf("%s", v)
-			}
-			usergroup = strings.Join(groups, " ")
-		} else {
-			usergroup = fmt.Sprintf("%s", val)
-		}
+func parseGroupClaim(groupClaim string, claims jwt.MapClaims, sep string) string {
+	val, ok := claims[groupClaim]
+	if !ok {
+		return ""
 	}
-	return usergroup
+
+	array, isArray := val.([]any)
+	if isArray {
+		return joinJWTGroupArray(array, groupClaim, sep)
+	}
+
+	return fmt.Sprintf("%s", val)
+}
+
+func joinJWTGroupArray(arrayVal []any, groupClaim string, sep string) string {
+	if sep == "" {
+		sep = " "
+	}
+
+	groups := make([]string, 0, len(arrayVal))
+	for _, element := range arrayVal {
+		groupName, isString := element.(string)
+		if !isString {
+			log.Warnf("Skipping non-string group entry in JWT claim %v: %v", groupClaim, element)
+			continue
+		}
+		groups = append(groups, groupName)
+	}
+
+	return strings.Join(groups, sep)
 }

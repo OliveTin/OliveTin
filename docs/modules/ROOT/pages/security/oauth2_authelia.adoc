@@ -1,6 +1,6 @@
 = OAuth2 - Authelia
 
-Notes contributed by a member of the OliveTin community - many thanks Phampyk! 
+Notes contributed by a member of the OliveTin community - many thanks Phampyk!
 
 [source,yaml]
 .Authelia code
@@ -48,7 +48,7 @@ Digest: $pbkdf2-sha512$310000$yQogpMZvkHoAmOBGiIHVJQ$hxKuvar6Q6pOlkdzQBMWq1i5WjX
 authRequireGuestsToLogin: true
 authOAuth2RedirectURL: https://olivetin.hostname.com/oauth/callback
 authOAuth2Providers:
-  authelia: 
+  authelia:
     name: authelia
     title: Authelia
     clientID: olivetin  #same as authelia
@@ -61,7 +61,7 @@ authOAuth2Providers:
       - profile
     usernameField: preferred_username
     icon: <iconify-icon icon="simple-icons:authelia"></iconify-icon>
-	
+
 accessControlLists:
   - name: john #same as authelia
     matchUserNames:
@@ -73,7 +73,62 @@ accessControlLists:
     addToEveryAction: true
 ----
 
+== Group-based access control
+
+Rather than (or as well as) matching on individual usernames, you can grant access based on Authelia group membership. Authelia's OIDC provider can return a user's groups as a `groups` claim, which is an array (e.g. `["admins", "operators"]`), not a single string.
+
+First, request the `groups` scope for the client in Authelia:
+
+[source,yaml]
+.Authelia code
+----
+identity_providers:
+  oidc:
+    clients:
+      - client_id: "olivetin"
+        # ... other settings as above ...
+        scopes:
+          - openid
+          - profile
+          - groups
+----
+
+Then tell OliveTin which field to read the groups from with `userGroupField`. OliveTin accepts the `groups` claim as a native array - no need to flatten it into a string yourself:
+
+[source,yaml]
+.OliveTin config
+----
+authOAuth2Providers:
+  authelia:
+    name: authelia
+    title: Authelia
+    clientID: olivetin
+    clientSecret: xxxxxxx
+    authURL: https://authelia.hostname.com/api/oidc/authorization
+    tokenURL: https://authelia.hostname.com/api/oidc/token
+    whoamiUrl: https://authelia.hostname.com/api/oidc/userinfo
+    scopes:
+      - openid
+      - profile
+      - groups
+    usernameField: preferred_username
+    userGroupField: groups
+
+accessControlLists:
+  - name: admins
+    matchUsergroups:
+      - admins
+    permissions:
+      view: true
+      exec: true
+      logs: true
+    addToEveryAction: true
+----
+
+A user who is a member of multiple Authelia groups (e.g. `admins` and `operators`) will match any ACL whose `matchUsergroups` contains one of those groups - OliveTin combines the permissions from every matching ACL.
+
+If you need the joined groups to use a specific separator (e.g. because a group name itself contains a space), set `authHttpHeaderUserGroupSep`, e.g. `authHttpHeaderUserGroupSep: ","`. This is optional; the default separator is a space.
+
 == Next steps
 
 Once you have OAuth2 working, you will probably want to configure access control lists in OliveTin. This is described in the xref:security/acl.adoc[Access Control Lists] documentation page.
-
