@@ -3,7 +3,7 @@
 
 By default, OliveTin only keeps logs in memory, meaning that if you restart OliveTin your logs will be lost. For some use cases this is acceptable, but you can configure OliveTin to save logs for you.
 
-When `saveLogs` is enabled, OliveTin writes a results file and output file for every finished execution, including blocked runs (for example when concurrency or rate limits prevent the action from starting).
+When `saveLogs` is enabled, OliveTin writes a file for each configured directory when an execution finishes — a results YAML when `resultsDirectory` is set, and an output log when `outputDirectory` is set. If only one directory is configured, only that file type is written. This includes blocked runs (for example when concurrency or rate limits prevent the action from starting).
 
 You can configure the global setting for saving logs, or override it on a per-action basis;
 
