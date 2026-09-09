@@ -1042,6 +1042,84 @@ func TestStepSaveLogSanitizesNULInTitle(t *testing.T) {
 	assert.Equal(t, "nul ok", string(output))
 }
 
+func TestBlockedExecutionPersistsSaveLogs(t *testing.T) {
+	t.Parallel()
+
+	resultsDir := t.TempDir()
+	outputDir := t.TempDir()
+
+	action := &config.Action{
+		Title:         "Blocked report",
+		Shell:         "sleep 1",
+		MaxConcurrent: 1,
+		SaveLogs: config.SaveLogsConfig{
+			ResultsDirectory: resultsDir,
+			OutputDirectory:  outputDir,
+		},
+	}
+
+	e, cfg := testGroupExecutor([]*config.Action{action}, nil)
+	binding := e.FindBindingWithNoEntity(action)
+
+	wg1, tracking1 := e.ExecRequest(&ExecutionRequest{
+		Binding:           binding,
+		Cfg:               cfg,
+		AuthenticatedUser: auth.UserFromSystem(cfg, "testuser"),
+	})
+
+	waitUntilExecutionStarted(t, e, tracking1)
+
+	wg2, tracking2 := e.ExecRequest(&ExecutionRequest{
+		Binding:           binding,
+		Cfg:               cfg,
+		AuthenticatedUser: auth.UserFromSystem(cfg, "testuser"),
+	})
+
+	wg1.Wait()
+	wg2.Wait()
+
+	snapshot, ok := e.SnapshotLog(tracking2)
+	require.True(t, ok)
+	require.True(t, snapshot.Blocked)
+
+	resultsEntries, err := os.ReadDir(resultsDir)
+	require.NoError(t, err)
+
+	var resultsPath string
+
+	for _, entry := range resultsEntries {
+		if strings.Contains(entry.Name(), tracking2) {
+			resultsPath = filepath.Join(resultsDir, entry.Name())
+			break
+		}
+	}
+
+	require.NotEmpty(t, resultsPath)
+
+	outputEntries, err := os.ReadDir(outputDir)
+	require.NoError(t, err)
+
+	var outputPath string
+
+	for _, entry := range outputEntries {
+		if strings.Contains(entry.Name(), tracking2) {
+			outputPath = filepath.Join(outputDir, entry.Name())
+			break
+		}
+	}
+
+	require.NotEmpty(t, outputPath)
+
+	resultsData, err := os.ReadFile(resultsPath)
+	require.NoError(t, err)
+	assert.Contains(t, string(resultsData), "blocked: true")
+	assert.Contains(t, string(resultsData), tracking2)
+
+	outputData, err := os.ReadFile(outputPath)
+	require.NoError(t, err)
+	assert.Contains(t, string(outputData), "Blocked from executing due to concurrency limit")
+}
+
 func TestStepSaveLogReturnsFalseWhenDependenciesMissing(t *testing.T) {
 	started := time.Unix(1714333384, 0)
 	valid := &ExecutionRequest{

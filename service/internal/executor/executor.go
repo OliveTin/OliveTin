@@ -184,7 +184,6 @@ func DefaultExecutor(cfg *config.Config) *Executor {
 		stepExec,
 		stepExecAfter,
 		stepLogFinish,
-		stepSaveLog,
 		stepTrigger,
 	}
 
@@ -688,6 +687,7 @@ func (e *Executor) finishExecChain(req *ExecutionRequest) {
 	recordExecutionMetrics(req.logEntry)
 
 	notifyListenersFinished(req)
+	stepSaveLog(req)
 	e.drainGroupQueue()
 }
 
