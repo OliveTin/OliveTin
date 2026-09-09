@@ -199,6 +199,49 @@ function consumeAndFlashPendingResult () {
 // Timestamps
 const updateIterationTimestamp = ref(0)
 
+function isBindingBusy () {
+  const id = bindingId.value
+  if (!id) {
+    return false
+  }
+
+  const state = bindingExecutionState[id]
+  return !!(state?.hasRunning || state?.hasQueued)
+}
+
+function applyCanExecFromServer (json) {
+  if (json?.canExec === undefined) {
+    return
+  }
+
+  canExec.value = json.canExec
+
+  if (!isBindingBusy()) {
+    isDisabled.value = !json.canExec
+  }
+}
+
+async function refreshCanExecFromServer () {
+  const id = bindingId.value
+  if (!id || !window.client) {
+    return
+  }
+
+  try {
+    const response = await window.client.getActionBinding({ bindingId: id })
+    if (response?.action) {
+      applyCanExecFromServer(response.action)
+      updateFromJson(response.action)
+    }
+  } catch (err) {
+    console.error('Failed to refresh action exec permission:', err)
+  }
+}
+
+function onEntityOrConfigChanged () {
+  refreshCanExecFromServer()
+}
+
 function constructFromJson (json) {
   updateIterationTimestamp.value = 0
 
@@ -206,7 +249,6 @@ function constructFromJson (json) {
 
   bindingId.value = json.bindingId
   title.value = json.title
-  canExec.value = json.canExec
   popupOnStart.value = json.popupOnStart
 
   if (popupOnStart.value.includes('execution-dialog')) {
@@ -217,7 +259,7 @@ function constructFromJson (json) {
     navigateOnStart.value = 'arg'
   }
 
-  isDisabled.value = !json.canExec
+  applyCanExecFromServer(json)
   displayTitle.value = title.value
   glyph.value = json.icon ?? ''
   // Initialize rate limit from action data (parse datetime string)
@@ -242,6 +284,8 @@ function constructFromJson (json) {
 function updateFromJson (json) {
   // Fields that should not be updated
   // title - as the callback URL relies on it
+
+  applyCanExecFromServer(json)
 
   // Update rate limiting if changed (parse datetime string)
   if (json.datetimeRateLimitExpires) {
@@ -502,6 +546,8 @@ function onExecStatusChanged () {
 
 onMounted(() => {
   constructFromJson(props.actionData)
+  window.addEventListener('EventEntityChanged', onEntityOrConfigChanged)
+  window.addEventListener('EventConfigChanged', onEntityOrConfigChanged)
 
   // Watch the central rate limit store for updates to this button's bindingId
   // Watch the entire rateLimits object to ensure reactivity with dynamic keys
@@ -534,6 +580,8 @@ onMounted(() => {
 
 onUnmounted(() => {
   isComponentMounted.value = false
+  window.removeEventListener('EventEntityChanged', onEntityOrConfigChanged)
+  window.removeEventListener('EventConfigChanged', onEntityOrConfigChanged)
   if (rateLimitInterval.value) {
     clearInterval(rateLimitInterval.value)
     rateLimitInterval.value = null

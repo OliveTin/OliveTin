@@ -4,12 +4,18 @@
       <h2>
         <span class="section-title-with-icon">
           Start action:
-          <ActionIconGlyph
-            v-if="icon"
-            class="action-title-icon"
-            :glyph="icon"
-          />
-          {{ title }}
+          <router-link
+            :to="`/action/${bindingId}`"
+            class="action-details-title-link"
+            :title="'Action ID: ' + bindingId"
+          >
+            <ActionIconGlyph
+              v-if="icon"
+              class="action-title-icon"
+              :glyph="icon"
+            />
+            {{ title }}
+          </router-link>
         </span>
       </h2>
     </div>
@@ -679,6 +685,18 @@ onUnmounted(() => {
 
 .action-title-icon {
   font-size: 1.5rem;
+}
+
+.action-details-title-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: inherit;
+  text-decoration: none;
+}
+
+.action-details-title-link:hover {
+  text-decoration: underline;
 }
 
 form {

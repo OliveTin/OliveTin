@@ -1208,14 +1208,25 @@ func (api *oliveTinAPI) removeClient(clientToRemove *streamingClient) {
 }
 
 func (api *oliveTinAPI) OnActionMapRebuilt() {
+	api.broadcastEventStream(&apiv1.EventStreamResponse{
+		Event: &apiv1.EventStreamResponse_ConfigChanged{
+			ConfigChanged: &apiv1.EventConfigChanged{},
+		},
+	})
+}
+
+func (api *oliveTinAPI) onEntityChanged() {
+	api.broadcastEventStream(&apiv1.EventStreamResponse{
+		Event: &apiv1.EventStreamResponse_EntityChanged{
+			EntityChanged: &apiv1.EventEntityChanged{},
+		},
+	})
+}
+
+func (api *oliveTinAPI) broadcastEventStream(msg *apiv1.EventStreamResponse) {
 	toRemove := []*streamingClient{}
 
 	for _, client := range api.copyOfStreamingClients() {
-		msg := &apiv1.EventStreamResponse{
-			Event: &apiv1.EventStreamResponse_ConfigChanged{
-				ConfigChanged: &apiv1.EventConfigChanged{},
-			},
-		}
 		if !api.trySendEventToClient(client, msg) {
 			toRemove = append(toRemove, client)
 		}
@@ -1840,7 +1851,8 @@ var (
 // RegisterExecutorListener registers the API server as an executor listener during startup.
 // Call this before background goroutines that may trigger RebuildActionMap.
 func RegisterExecutorListener(ex *executor.Executor) {
-	ensureExecutorListener(ex)
+	server := ensureExecutorListener(ex)
+	entities.AddListener(server.onEntityChanged)
 }
 
 func ensureExecutorListener(ex *executor.Executor) *oliveTinAPI {

@@ -831,6 +831,32 @@ func TestEventStreamACLNoLeakToUnauthorizedUser(t *testing.T) {
 	assertEventStreamAdminReceivesSecretActionEvents(t, adminEvents)
 }
 
+func TestEntityChangedEventBroadcast(t *testing.T) {
+	cfg := config.DefaultConfig()
+	ex := executor.DefaultExecutor(cfg)
+	api := newServer(ex)
+	user := &authpublic.AuthenticatedUser{Username: "entity-test"}
+
+	client := &streamingClient{
+		channel:           make(chan *apiv1.EventStreamResponse, 1),
+		AuthenticatedUser: user,
+		heartbeatStop:     make(chan struct{}),
+		heartbeatDone:     make(chan struct{}),
+	}
+	close(client.heartbeatDone)
+	require.NoError(t, api.registerStreamingClient(client))
+	defer api.removeClient(client)
+
+	api.onEntityChanged()
+
+	select {
+	case ev := <-client.channel:
+		require.NotNil(t, ev.GetEntityChanged())
+	default:
+		t.Fatal("expected EventEntityChanged on event stream")
+	}
+}
+
 func TestRegisterStreamingClientEnforcesLimit(t *testing.T) {
 	cfg := config.DefaultConfig()
 	ex := executor.DefaultExecutor(cfg)

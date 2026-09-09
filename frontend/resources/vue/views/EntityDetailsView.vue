@@ -123,7 +123,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { HugeiconsIcon } from '@hugeicons/vue'
 import { ArrowLeftIcon } from '@hugeicons/core-free-icons'
@@ -169,7 +169,14 @@ async function fetchEntityDetails () {
 }
 
 onMounted(() => {
-	    fetchEntityDetails()
+  fetchEntityDetails()
+  window.addEventListener('EventEntityChanged', fetchEntityDetails)
+  window.addEventListener('EventConfigChanged', fetchEntityDetails)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('EventEntityChanged', fetchEntityDetails)
+  window.removeEventListener('EventConfigChanged', fetchEntityDetails)
 })
 
 </script>

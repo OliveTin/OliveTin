@@ -5,7 +5,10 @@
     :sidebar-enabled="sidebarEnabled"
     :top-bar-enabled="topbarEnabled"
     :navigation="navigation"
+    :username="headerUsername"
+    :login-route="headerLoginRoute"
     @toggle-sidebar="toggleSidebar"
+    @user-click="goToUserControlPanel"
   >
     <template #toolbar>
       <QuickSearch
@@ -23,32 +26,7 @@
       >
         <p>{{ bannerMessage }}</p>
       </div>
-    </template>
-
-    <template #user-info>
       <ConnectionBanner />
-      <div
-        class="flex-row user-info"
-        style="gap: .5em;"
-      >
-        <span
-          v-if="!isLoggedIn && showLoginLink"
-          id="link-login"
-        ><router-link to="/login">{{ t('login-button') }}</router-link></span>
-        <router-link
-          v-else-if="isLoggedIn"
-          to="/user"
-          class="user-link"
-        >
-          <span id="username-text">{{ username }}</span>
-        </router-link>
-        <HugeiconsIcon
-          v-if="isLoggedIn"
-          :icon="UserCircle02Icon"
-          width="1.5em"
-          height="1.5em"
-        />
-      </div>
     </template>
   </Header>
 
@@ -204,8 +182,7 @@ import Header from 'picocrank/vue/components/Header.vue'
 import QuickSearch from 'picocrank/vue/components/QuickSearch.vue'
 import ConnectionBanner from './components/ConnectionBanner.vue'
 import { connectEventStreamIfNeeded } from '../../js/websocket.js'
-import { HugeiconsIcon } from '@hugeicons/vue'
-import { UserCircle02Icon, DashboardSquare01Icon } from '@hugeicons/core-free-icons'
+import { DashboardSquare01Icon } from '@hugeicons/core-free-icons'
 import logoUrl from '../../OliveTinLogo.png'
 import { useI18n } from 'vue-i18n'
 import combinedTranslations from '../../../lang/combined_output.json'
@@ -216,7 +193,7 @@ const router = useRouter()
 
 const sidebar = ref(null)
 const navigation = ref(null)
-const username = ref('notset')
+const username = ref('')
 const isLoggedIn = ref(false)
 const currentVersion = ref('?')
 const pageTitle = ref('OliveTin')
@@ -283,6 +260,14 @@ const sidebarEnabled = computed(() => {
   return sectionNavigationStyle.value !== 'topbar' && showNavigation.value
 })
 
+const headerUsername = computed(() => {
+  return isLoggedIn.value ? username.value : ''
+})
+
+const headerLoginRoute = computed(() => {
+  return showLoginLink.value ? { name: 'Login' } : null
+})
+
 function normalizeBrowserLanguage () {
   const available = Object.keys(combinedTranslations.messages || {})
 
@@ -311,6 +296,10 @@ function toggleSidebar () {
   if (sidebar.value && showNavigation.value) {
     sidebar.value.toggle()
   }
+}
+
+function goToUserControlPanel () {
+  router.push({ name: 'UserInformation' })
 }
 
 function updateHeaderFromInit () {
@@ -622,19 +611,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.user-info span {
-    margin-left: 1em;
-}
-
-.user-link {
-    text-decoration: none;
-    color: inherit;
-}
-
-.user-link:hover {
-    text-decoration: underline;
-}
-
 .language-dialog,
 .theme-dialog {
     border: 1px solid var(--border-color, #ccc);

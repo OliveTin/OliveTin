@@ -290,8 +290,16 @@ function waitForInitAndLoadDashboard () {
   }
 }
 
+function refreshDashboardAfterLiveUpdate () {
+  if (window.initResponse) {
+    getDashboard()
+  }
+}
+
 onMounted(() => {
   waitForInitAndLoadDashboard()
+  window.addEventListener('EventEntityChanged', refreshDashboardAfterLiveUpdate)
+  window.addEventListener('EventConfigChanged', refreshDashboardAfterLiveUpdate)
 })
 
 watch(
@@ -304,6 +312,8 @@ watch(
 
 onUnmounted(() => {
   document.body.removeAttribute('loaded-dashboard')
+  window.removeEventListener('EventEntityChanged', refreshDashboardAfterLiveUpdate)
+  window.removeEventListener('EventConfigChanged', refreshDashboardAfterLiveUpdate)
 
   // Clean up the timers when component is unmounted
   if (loadingTimer) {
