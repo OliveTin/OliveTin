@@ -273,9 +273,9 @@ function constructFromJson (json) {
   if (bindingId.value) {
     rateLimits[bindingId.value] = rateLimitExpires.value
     setBindingExecutionState(
-	  bindingId.value,
-	  !!json.hasRunningInstance,
-	  !!json.hasQueuedInstance
+      bindingId.value,
+      !!json.hasRunningInstance,
+      !!json.hasQueuedInstance
     )
   }
   updateRateLimitStatus()
@@ -310,8 +310,8 @@ function updateRateLimitStatus () {
     isRateLimited.value = false
     rateLimitMessage.value = ''
     if (rateLimitInterval.value) {
-	  clearInterval(rateLimitInterval.value)
-	  rateLimitInterval.value = null
+      clearInterval(rateLimitInterval.value)
+      rateLimitInterval.value = null
     }
     return
   }
@@ -325,8 +325,8 @@ function updateRateLimitStatus () {
     rateLimitMessage.value = ''
     rateLimitExpires.value = 0
     if (rateLimitInterval.value) {
-	  clearInterval(rateLimitInterval.value)
-	  rateLimitInterval.value = null
+      clearInterval(rateLimitInterval.value)
+      rateLimitInterval.value = null
     }
   } else {
     // Still rate limited
@@ -336,9 +336,9 @@ function updateRateLimitStatus () {
 
     // Set up interval to update every second
     if (!rateLimitInterval.value) {
-	  rateLimitInterval.value = setInterval(() => {
+      rateLimitInterval.value = setInterval(() => {
         updateRateLimitStatus()
-	  }, 1000)
+      }, 1000)
     }
   }
 }
@@ -360,12 +360,12 @@ async function handleClick () {
     const bindingId = props.actionData.bindingId
     const prefilled = props.prefilledArguments || {}
     if (Object.keys(prefilled).length > 0) {
-	  router.push({
+      router.push({
         path: `/actionBinding/${bindingId}/argumentForm`,
         state: { prefilledArguments: prefilled }
-	  })
+      })
     } else {
-	  router.push(`/actionBinding/${bindingId}/argumentForm`)
+      router.push(`/actionBinding/${bindingId}/argumentForm`)
     }
   } else {
     await startAction()
@@ -439,7 +439,7 @@ async function startAction (actionArgs) {
   stopButtonResultWatch = watch(
     () => buttonResults[startActionArgs.uniqueTrackingId],
     (newResult, oldResult) => {
-	  onLogEntryChanged(newResult)
+      onLogEntryChanged(newResult)
     }
   )
 
@@ -450,11 +450,11 @@ async function startAction (actionArgs) {
     const trackingId = response.executionTrackingId || startActionArgs.uniqueTrackingId
 
     if (popupOnStart.value && popupOnStart.value.includes('execution-dialog')) {
-	  router.push(`/logs/${trackingId}`)
+      router.push(`/logs/${trackingId}`)
     }
 
     if (!connectionState.connected) {
-	  await pollExecutionUntilDone(trackingId)
+      await pollExecutionUntilDone(trackingId)
     }
   } catch (err) {
     stopWatchingButtonResult()
@@ -554,14 +554,14 @@ onMounted(() => {
   watch(
     rateLimits,
     () => {
-	  const id = bindingId.value
-	  if (id && rateLimits[id] !== undefined) {
+      const id = bindingId.value
+      if (id && rateLimits[id] !== undefined) {
         const newExpires = rateLimits[id]
         if (newExpires !== rateLimitExpires.value) {
-		  rateLimitExpires.value = newExpires
-		  updateRateLimitStatus()
+          rateLimitExpires.value = newExpires
+          updateRateLimitStatus()
         }
-	  }
+      }
     },
     { deep: true }
   )
@@ -570,9 +570,9 @@ onMounted(() => {
   watch(
     () => pendingBindingFlash[bindingId.value],
     (pending) => {
-	  if (pending) {
+      if (pending) {
         consumeAndFlashPendingResult()
-	  }
+      }
     },
     { immediate: true }
   )
@@ -593,7 +593,7 @@ watch(
   (newData) => {
     updateFromJson(newData)
     if (newData?.icon !== undefined) {
-	  glyph.value = newData.icon ?? ''
+      glyph.value = newData.icon ?? ''
     }
   },
   { deep: true }

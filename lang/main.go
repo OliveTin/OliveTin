@@ -25,23 +25,47 @@ type CombinedTranslationsOutput struct {
 
 func main() {
 	combinedContent := getCombinedLanguageContent()
-
 	sortedContent := sortTranslations(combinedContent)
 
-	jsonData, err := json.MarshalIndent(sortedContent, "", "    ")
-
+	err := writeTranslationFiles(sortedContent.Messages)
 	if err != nil {
-		log.Fatalf("Error marshalling combined language content: %v", err)
+		log.Fatalf("Error writing language content: %v", err)
+	}
+}
+
+func writeTranslationFiles(messages map[string]map[string]string) error {
+	err := os.RemoveAll("generated")
+	if err != nil {
+		return err
+	}
+
+	err = os.Mkdir("generated", 0o755)
+	if err != nil {
+		return err
+	}
+
+	for languageName, translations := range messages {
+		err = writeTranslationFile(languageName, translations)
+		if err != nil {
+			return err
+		}
+	}
+
+	log.Infof("Language content saved to generated/")
+
+	return nil
+}
+
+func writeTranslationFile(languageName string, translations map[string]string) error {
+	jsonData, err := json.MarshalIndent(translations, "", "    ")
+	if err != nil {
+		return err
 	}
 
 	jsonData = append(jsonData, '\n')
-	err = os.WriteFile("combined_output.json", jsonData, 0644)
+	filename := filepath.Join("generated", languageName+".json")
 
-	if err != nil {
-		log.Fatalf("Error saving combined language content to file: %v", err)
-	}
-
-	log.Infof("Combined language content saved to combined_output.json")
+	return os.WriteFile(filename, jsonData, 0o644)
 }
 
 // sortTranslations creates a new structure with sorted keys for deterministic output.
