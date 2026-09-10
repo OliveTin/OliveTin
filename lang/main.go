@@ -34,6 +34,7 @@ func main() {
 		log.Fatalf("Error marshalling combined language content: %v", err)
 	}
 
+	jsonData = append(jsonData, '\n')
 	err = os.WriteFile("combined_output.json", jsonData, 0644)
 
 	if err != nil {

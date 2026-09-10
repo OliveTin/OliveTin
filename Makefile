@@ -38,8 +38,19 @@ it:
 go-tools:
 	$(MAKE) -wC service go-tools
 
-proto: go-tools
+proto-tools:
+	$(MAKE) -wC service proto-tools
+
+proto: proto-tools
 	$(MAKE) -wC proto
+
+lang-generate:
+	$(MAKE) -wC lang
+
+generated-check: proto lang-generate
+	git diff --exit-code -- service/gen frontend/resources/scripts/gen lang/combined_output.json
+	@untracked="$$(git ls-files --others --exclude-standard -- service/gen frontend/resources/scripts/gen lang/combined_output.json)"; \
+	test -z "$$untracked" || { printf 'Untracked generated files:\n%s\n' "$$untracked"; exit 1; }
 
 dist:
 	echo "dist noop"
@@ -85,4 +96,4 @@ config-tool:
 devcheck:
 	python3 scripts/devcheck.py $(ARGS)
 
-.PHONY: proto default service windows-resources windows-msi frontend-unittests docs-check it devcheck
+.PHONY: proto proto-tools lang-generate generated-check default service windows-resources windows-msi frontend-unittests docs-check it devcheck
