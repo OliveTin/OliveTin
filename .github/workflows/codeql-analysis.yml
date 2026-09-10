@@ -20,7 +20,7 @@ on:
       - 'integration-tests/**'
       - 'proto/**'
       - 'service/**'
-    branches: [main]
+    branches: [main, next]
   pull_request:
     paths:
       - '.github/workflows/codeql-analysis.yml'
@@ -28,7 +28,7 @@ on:
       - 'integration-tests/**'
       - 'proto/**'
       - 'service/**'
-    branches: [main]
+    branches: [main, next]
   schedule:
     - cron: '25 10 * * 5'
 
