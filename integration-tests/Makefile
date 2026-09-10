@@ -1,7 +1,13 @@
 default: test-install prep test-run
 
 test-install:
-	npm install --no-fund
+	npm ci --no-fund
+
+codestyle: test-install
+	npm run lint
+
+codestyle-fix: test-install
+	npm run lint:fix
 
 prep:
 ifneq ($(SKIP_WEBUI),1)
@@ -11,7 +17,7 @@ endif
 
 test-run:
     # GitHub Actions fails badly on the default timeout of 2000ms
-	npx mocha tests --recursive -t 10000
+	npm test
 
 find-flakey-tests:
 	echo "Running test-run infinately"
@@ -30,4 +36,4 @@ getsnapshot:
 	rm -rf /opt/OliveTin-snapshot/*
 	gh run download -D /opt/OliveTin-snapshot/
 
-.PHONY: default find-flakey-tests find-flakey-tests-inf prep
+.PHONY: default test-install codestyle codestyle-fix test-run find-flakey-tests find-flakey-tests-inf prep

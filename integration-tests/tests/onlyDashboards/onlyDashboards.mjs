@@ -6,7 +6,6 @@ import {
   getActionButtons,
   getNavigationLinks,
   openSidebar,
-  closeSidebar,
   takeScreenshotOnFailure,
 } from '../../lib/elements.js'
 
@@ -43,7 +42,7 @@ describe('config: onlyDashboards', function () {
     const firstDashboardLink = await webdriver.findElement(By.css('li[title="My Dashboard"]'), 'The first dashboard link should be present')
     assert.isNotNull(firstDashboardLink, 'First dashboard link should not be null')
     assert.isTrue(await firstDashboardLink.isDisplayed(), 'First dashboard link should be displayed')
-    
+
     const actionButtonsOnDashboard = await getActionButtons()
     assert.isArray(actionButtonsOnDashboard, 'Action buttons on dashboard should be an array')
     assert.lengthOf(actionButtonsOnDashboard, 3, 'Action buttons on dashboard should have 3 buttons')

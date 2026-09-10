@@ -11,6 +11,8 @@
 		"stylelint-config-standard": "^40.0.0"
 	},
 	"scripts": {
+		"lint": "eslint main.js js/* resources/vue vite.config.mjs && stylelint \"style.css\" \"themes/**/*.css\"",
+		"lint:fix": "eslint --fix main.js js/* resources/vue vite.config.mjs && stylelint --fix \"style.css\" \"themes/**/*.css\"",
 		"test": "node --test resources/vue/components/*.test.mjs resources/vue/utils/*.test.mjs resources/vue/stores/*.test.mjs"
 	},
 	"author": "",

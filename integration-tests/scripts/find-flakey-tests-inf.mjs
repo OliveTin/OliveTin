@@ -104,7 +104,7 @@ function runMochaOnce () {
       try {
         report = JSON.parse(readFileSync(reportPath, 'utf8'))
       } catch {
-        report = null
+        // Keep the default null report when Mocha did not produce valid JSON.
       }
 
       try {

@@ -44,7 +44,7 @@ async function pollTerminal(matcher, timeoutMs = DEFAULT_UI_WAIT_MS) {
         }
 
         return matcher(output.trim())
-      } catch (e) {
+      } catch {
         return false
       }
     }),
