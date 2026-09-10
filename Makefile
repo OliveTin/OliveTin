@@ -2,6 +2,8 @@ define delete-files
 	python3 -c "import shutil;shutil.rmtree('$(1)', ignore_errors=True)"
 endef
 
+default: proto service webui-dist
+
 service:
 	$(MAKE) -wC service
 
