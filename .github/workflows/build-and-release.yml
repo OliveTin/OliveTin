@@ -71,6 +71,8 @@ jobs:
         uses: actions/checkout@v6
         with:
           fetch-depth: ${{ env.WILL_PUBLISH == 'true' && '0' || '1' }}
+          # Keep the read-only GITHUB_TOKEN out of git config so release uses CONTAINER_TOKEN.
+          persist-credentials: false
 
       - name: Set up QEMU
         if: env.WILL_PUBLISH == 'true'
@@ -167,6 +169,20 @@ jobs:
           MACOS_SIGN_P12: ${{ secrets.MACOS_SIGN_P12 }}
           MACOS_SIGN_PASSWORD: ${{ secrets.MACOS_SIGN_PASSWORD }}
         run: ./var/macos/verify-macos-sign-p12.sh
+
+      - name: Authenticate git for release
+        if: env.WILL_PUBLISH == 'true'
+        env:
+          CONTAINER_TOKEN: ${{ secrets.CONTAINER_TOKEN }}
+        run: |
+          if [[ -z "${CONTAINER_TOKEN}" ]]; then
+            echo "CONTAINER_TOKEN is required for semantic-release git push on main." >&2
+            exit 1
+          fi
+          # Prefer CONTAINER_TOKEN over the workflow's read-only GITHUB_TOKEN for git operations.
+          basic="$(printf 'x-access-token:%s' "${CONTAINER_TOKEN}" | base64 -w 0)"
+          git config --local --unset-all http.https://github.com/.extraheader || true
+          git config --local http.https://github.com/.extraheader "AUTHORIZATION: basic ${basic}"
 
       - name: release
         id: release
