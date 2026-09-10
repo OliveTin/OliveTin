@@ -14,14 +14,10 @@ prep:
 	go generate ./...
 
 compile-armhf:
-	go env -w GOARCH=arm GOARM=6
-	go build -o OliveTin.armhf
-	go env -u GOARCH GOARM
+	GOOS=linux GOARCH=arm GOARM=6 go build -o OliveTin.armhf
 
 compile-x64-lin:
-	go env -w GOOS=linux
-	go build -o OliveTin
-	go env -u GOOS
+	GOOS=linux GOARCH=amd64 go build -o OliveTin
 
 compile-x64-win: windows-resources
 	GOOS=windows GOARCH=amd64 go build -o OliveTin.exe
