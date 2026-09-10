@@ -5,14 +5,23 @@ on:
   pull_request:
     paths:
       - '.github/workflows/build-and-release.yml'
+      - '.dockerignore'
       - '.goreleaser.yml'
+      - '.releaserc.yaml'
       - 'Dockerfile.multiarches'
       - 'Dockerfile.singlearch'
+      - 'LICENSE'
       - 'Makefile'
+      - 'config.yaml'
+      - 'examples/backupScript.sh'
       - 'frontend/**'
       - 'integration-tests/**'
+      - 'lang/**'
       - 'proto/**'
       - 'service/**'
+      - 'var/entities/**'
+      - 'var/helper-actions/**'
+      - 'var/macos/**'
       - 'var/windows/**'
   workflow_dispatch:
   push:
@@ -24,15 +33,27 @@ on:
       - beta
     paths:
       - '.github/workflows/build-and-release.yml'
+      - '.dockerignore'
       - '.goreleaser.yml'
+      - '.releaserc.yaml'
       - 'Dockerfile.multiarches'
       - 'Dockerfile.singlearch'
+      - 'LICENSE'
       - 'Makefile'
+      - 'config.yaml'
+      - 'examples/backupScript.sh'
       - 'frontend/**'
       - 'integration-tests/**'
+      - 'lang/**'
       - 'proto/**'
       - 'service/**'
+      - 'var/entities/**'
+      - 'var/helper-actions/**'
+      - 'var/macos/**'
       - 'var/windows/**'
+
+permissions:
+  contents: read
 
 jobs:
   build:
