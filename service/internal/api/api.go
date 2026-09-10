@@ -1736,7 +1736,7 @@ func entityListFields(data any, properties []config.EntityProperty) map[string]s
 	displayFieldKey := entities.DisplayNameFieldKey(data)
 	fields := make(map[string]string, len(properties))
 	for _, property := range properties {
-		if entityFieldIsDisplayName(property.Name, displayFieldKey) {
+		if entityPropertyIsDisplayName(property.Name, displayFieldKey) {
 			continue
 		}
 		fields[property.Name] = entityPropertyValue(data, property.Name)
@@ -1792,10 +1792,13 @@ func serializeEntityFields(data any) map[string]string {
 		return nil
 	}
 
-	displayFieldKey := entities.DisplayNameFieldKey(data)
-	fields := make(map[string]string)
+	return serializeEntityFieldsFromMap(dataMap, entities.DisplayNameFieldKey(data))
+}
+
+func serializeEntityFieldsFromMap(dataMap map[string]any, omitFieldKey string) map[string]string {
+	fields := make(map[string]string, len(dataMap))
 	for k, v := range dataMap {
-		if entityFieldIsDisplayName(k, displayFieldKey) {
+		if entityFieldIsSelectedDisplayName(k, omitFieldKey) {
 			continue
 		}
 		fields[k] = fmt.Sprintf("%v", v)
@@ -1803,8 +1806,12 @@ func serializeEntityFields(data any) map[string]string {
 	return fields
 }
 
-func entityFieldIsDisplayName(fieldName, displayFieldKey string) bool {
-	return displayFieldKey != "" && strings.EqualFold(fieldName, displayFieldKey)
+func entityFieldIsSelectedDisplayName(fieldName, displayFieldKey string) bool {
+	return displayFieldKey != "" && fieldName == displayFieldKey
+}
+
+func entityPropertyIsDisplayName(propertyName, displayFieldKey string) bool {
+	return displayFieldKey != "" && strings.EqualFold(propertyName, displayFieldKey)
 }
 
 func (api *oliveTinAPI) RestartAction(ctx ctx.Context, req *connect.Request[apiv1.RestartActionRequest]) (*connect.Response[apiv1.StartActionResponse], error) {

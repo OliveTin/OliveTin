@@ -126,32 +126,45 @@ func AddEntity(entityName string, entityKey string, data any) {
 
 var entityDisplayNameCandidates = []string{"title", "name", "id", "hostname", "host", "label"}
 
-//gocyclo:ignore
-func entityDisplayNameLookup(data map[string]any) (fieldKey string, value string, found bool) {
+func entityDisplayNameKeysByLower(data map[string]any) map[string]string {
 	keys := make(map[string]string, len(data))
 	for k := range data {
-		keys[strings.ToLower(k)] = k
+		lower := strings.ToLower(k)
+		existing, exists := keys[lower]
+		if exists && k >= existing {
+			continue
+		}
+		keys[lower] = k
+	}
+	return keys
+}
+
+func entityDisplayNameCandidateValue(data map[string]any, keysByLower map[string]string, candidate string) (fieldKey string, value string, ok bool) {
+	lookupKey, exists := keysByLower[strings.ToLower(candidate)]
+	if !exists {
+		return "", "", false
 	}
 
+	rawValue, exists := data[lookupKey]
+	if !exists {
+		return "", "", false
+	}
+
+	valueStr, isString := rawValue.(string)
+	if !isString {
+		return "", "", false
+	}
+
+	return lookupKey, valueStr, true
+}
+
+func entityDisplayNameLookup(data map[string]any) (fieldKey string, value string, found bool) {
+	keysByLower := entityDisplayNameKeysByLower(data)
 	for _, candidate := range entityDisplayNameCandidates {
-		lookupKey, exists := keys[strings.ToLower(candidate)]
-		if !exists {
-			continue
+		if fieldKey, value, ok := entityDisplayNameCandidateValue(data, keysByLower, candidate); ok {
+			return fieldKey, value, true
 		}
-
-		rawValue, ok := data[lookupKey]
-		if !ok {
-			continue
-		}
-
-		valueStr, ok := rawValue.(string)
-		if !ok {
-			continue
-		}
-
-		return lookupKey, valueStr, true
 	}
-
 	return "", "", false
 }
 
@@ -170,7 +183,6 @@ func DisplayNameFieldKey(data any) string {
 	return fieldKey
 }
 
-//gocyclo:ignore
 func findEntityTitle(data any) string {
 	mapData, ok := data.(map[string]any)
 	if !ok {
