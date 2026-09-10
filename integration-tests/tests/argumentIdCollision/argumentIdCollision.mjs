@@ -45,7 +45,7 @@ async function waitForTerminalOutput (expectedSubstring) {
 
         const output = await getTerminalBuffer()
         return output && output.includes(expectedSubstring)
-      } catch (e) {
+      } catch {
         return false
       }
     }),

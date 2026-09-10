@@ -1,6 +1,6 @@
 import { describe, it, before, after } from 'mocha'
 import { expect, assert } from 'chai'
-import { By, until, Condition } from 'selenium-webdriver'
+import { By } from 'selenium-webdriver'
 //import * as waitOn from 'wait-on'
 import {
   getRootAndWait,

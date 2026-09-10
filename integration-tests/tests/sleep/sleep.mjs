@@ -1,9 +1,7 @@
-import * as process from 'node:process'
 import { describe, it, before, after } from 'mocha'
 import { expect } from 'chai'
-import { By, Condition } from 'selenium-webdriver'
+import { By } from 'selenium-webdriver'
 import {
-  takeScreenshot,
   takeScreenshotOnFailure,
   findExecutionDialog,
   requireExecutionDialogStatus,

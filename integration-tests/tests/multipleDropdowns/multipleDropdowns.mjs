@@ -1,6 +1,6 @@
 import { describe, it, before, after } from 'mocha'
 import { expect } from 'chai'
-import { By, until, Condition, Key } from 'selenium-webdriver'
+import { By, Condition, Key } from 'selenium-webdriver'
 import {
   getRootAndWait,
   getActionButtons,

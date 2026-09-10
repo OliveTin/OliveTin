@@ -4,16 +4,16 @@ import Components from 'unplugin-vue-components/vite'
 
 export default defineConfig({
   resolve: {
-    dedupe: ['vue', 'vue-router'],
+    dedupe: ['vue', 'vue-router']
   },
   plugins: [
     Components({
       dirs: ['resources/vue/'],
       extensions: ['vue'],
       deep: true,
-      dts: false,
+      dts: false
     }),
-    vue(),
+    vue()
   ],
   build: {
     rolldownOptions: {
@@ -22,25 +22,25 @@ export default defineConfig({
           return
         }
         defaultHandler(level, log)
-      },
-    },
+      }
+    }
   },
   server: {
     proxy: {
       '/api': {
         target: 'http://localhost:1337',
         changeOrigin: true,
-        secure: false,
+        secure: false
       },
       '/theme.css': {
         target: 'http://localhost:1337',
         changeOrigin: true,
-        secure: false,
+        secure: false
       },
-      "/custom-webui": {
-        target: "http://localhost:1337",
-        changeOrigin: true,
+      '/custom-webui': {
+        target: 'http://localhost:1337',
+        changeOrigin: true
       }
-    },
-  },
+    }
+  }
 })
