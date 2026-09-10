@@ -1,5 +1,5 @@
 import { expect } from 'chai'
-import { 
+import {
   getRootAndWait,
   takeScreenshotOnFailure,
 } from '../../lib/elements.js'
