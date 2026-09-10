@@ -44,6 +44,9 @@ unittests:
 unittests-fast:
 	go test ./... -count=1
 
+unittests-race:
+	go test -race ./... -count=1
+
 find-flakey-tests:
 	echo "Running unittests-fast infinitely"
 	sh -c "while $(MAKE) unittests-fast; do :; done"
@@ -54,7 +57,7 @@ find-flakey-tests-inf:
 go-tools:
 	go install "github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.13.2"
 
-.PHONY: codestyle go-tools unittests unittests-fast find-flakey-tests find-flakey-tests-inf
+.PHONY: codestyle go-tools unittests unittests-fast unittests-race find-flakey-tests find-flakey-tests-inf
 
 go-tools-all:
 	go install "github.com/bufbuild/buf/cmd/buf"
