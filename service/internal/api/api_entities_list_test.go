@@ -119,6 +119,108 @@ func findEntityDefinition(definitions []*apiv1.EntityDefinition, title string) *
 	return nil
 }
 
+func TestGetEntityOmitsDisplayNameFieldWhenPropertiesUnset(t *testing.T) {
+	entities.ClearEntitiesOfType("vehicle")
+	entities.AddEntity("vehicle", "0", map[string]any{
+		"title":  "My Car",
+		"status": "parked",
+		"vin":    "123",
+	})
+	t.Cleanup(func() {
+		entities.ClearEntitiesOfType("vehicle")
+	})
+
+	cfg := config.DefaultConfig()
+	cfg.Entities = []*config.EntityFile{{Name: "vehicle"}}
+	cfg.Sanitize()
+
+	ex := executor.DefaultExecutor(cfg)
+	ex.RebuildActionMap()
+	ts, client := getNewTestServerAndClientWithExecutor(cfg, ex)
+	defer ts.Close()
+
+	resp, err := client.GetEntity(context.Background(), connect.NewRequest(&apiv1.GetEntityRequest{
+		Type:      "vehicle",
+		UniqueKey: "0",
+	}))
+	require.NoError(t, err)
+	require.NotNil(t, resp.Msg)
+
+	assert.Equal(t, "My Car", resp.Msg.Title)
+	assert.Equal(t, "parked", resp.Msg.Fields["status"])
+	assert.Equal(t, "123", resp.Msg.Fields["vin"])
+	assert.NotContains(t, resp.Msg.Fields, "title")
+}
+
+func TestGetEntityRetainsNonSelectedDisplayNameCasingVariant(t *testing.T) {
+	entities.ClearEntitiesOfType("vehicle")
+	entities.AddEntity("vehicle", "0", map[string]any{
+		"title":  "lower-title-value",
+		"Title":  "upper-title-value",
+		"status": "parked",
+	})
+	t.Cleanup(func() {
+		entities.ClearEntitiesOfType("vehicle")
+	})
+
+	cfg := config.DefaultConfig()
+	cfg.Entities = []*config.EntityFile{{Name: "vehicle"}}
+	cfg.Sanitize()
+
+	ex := executor.DefaultExecutor(cfg)
+	ex.RebuildActionMap()
+	ts, client := getNewTestServerAndClientWithExecutor(cfg, ex)
+	defer ts.Close()
+
+	resp, err := client.GetEntity(context.Background(), connect.NewRequest(&apiv1.GetEntityRequest{
+		Type:      "vehicle",
+		UniqueKey: "0",
+	}))
+	require.NoError(t, err)
+
+	assert.Equal(t, "upper-title-value", resp.Msg.Title)
+	assert.Equal(t, "lower-title-value", resp.Msg.Fields["title"])
+	assert.NotContains(t, resp.Msg.Fields, "Title")
+	assert.Equal(t, "parked", resp.Msg.Fields["status"])
+}
+
+func TestGetEntityOmitsDisplayNamePropertyFromConfiguredFields(t *testing.T) {
+	entities.ClearEntitiesOfType("vehicle")
+	entities.AddEntity("vehicle", "0", map[string]any{
+		"title":  "My Car",
+		"status": "parked",
+	})
+	t.Cleanup(func() {
+		entities.ClearEntitiesOfType("vehicle")
+	})
+
+	cfg := config.DefaultConfig()
+	cfg.Entities = []*config.EntityFile{
+		{
+			Name: "vehicle",
+			Properties: []config.EntityProperty{
+				{Name: "title", Title: "Title"},
+				{Name: "status", Title: "Status"},
+			},
+		},
+	}
+	cfg.Sanitize()
+
+	ex := executor.DefaultExecutor(cfg)
+	ex.RebuildActionMap()
+	ts, client := getNewTestServerAndClientWithExecutor(cfg, ex)
+	defer ts.Close()
+
+	resp, err := client.GetEntity(context.Background(), connect.NewRequest(&apiv1.GetEntityRequest{
+		Type:      "vehicle",
+		UniqueKey: "0",
+	}))
+	require.NoError(t, err)
+
+	assert.Equal(t, "parked", resp.Msg.Fields["status"])
+	assert.NotContains(t, resp.Msg.Fields, "title")
+}
+
 func TestGetEntityRestrictsFieldsToConfiguredProperties(t *testing.T) {
 	entities.ClearEntitiesOfType("server")
 	entities.AddEntity("server", "0", map[string]any{

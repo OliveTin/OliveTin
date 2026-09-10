@@ -53,6 +53,31 @@ func TestGetEntityInstancesOrdered_lexicographicKeys(t *testing.T) {
 	assert.Equal(t, "zebra", ordered[2].UniqueKey)
 }
 
+func TestDisplayNameFieldKey(t *testing.T) {
+	assert.Equal(t, "title", DisplayNameFieldKey(map[string]any{"title": "Car"}))
+	assert.Equal(t, "name", DisplayNameFieldKey(map[string]any{"name": "Car"}))
+	assert.Equal(t, "Name", DisplayNameFieldKey(map[string]any{"Name": "Car"}))
+	assert.Equal(t, "", DisplayNameFieldKey(map[string]any{"status": "running"}))
+	assert.Equal(t, "", DisplayNameFieldKey("not a map"))
+}
+
+func TestDisplayNameFieldKey_caseCollisionIsDeterministic(t *testing.T) {
+	data := map[string]any{
+		"title": "lower",
+		"Title": "upper",
+	}
+
+	assert.Equal(t, "Title", DisplayNameFieldKey(data))
+
+	ClearEntitiesOfType("display_name_collision")
+	defer ClearEntitiesOfType("display_name_collision")
+
+	AddEntity("display_name_collision", "0", data)
+	ordered := GetEntityInstancesOrdered("display_name_collision")
+	require.Len(t, ordered, 1)
+	assert.Equal(t, "upper", ordered[0].Title)
+}
+
 func TestGetEntityInstancesOrdered_emptyOrMissing(t *testing.T) {
 	ordered := GetEntityInstancesOrdered("nonexistent_type")
 	assert.Nil(t, ordered)
