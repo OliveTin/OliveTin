@@ -8,6 +8,8 @@ file in the following locations;
 2. `/config/` - Mostly used for containers
 3. `/etc/OliveTin/` - this is the recommended directory on Linux for your `config.yaml`.
 
+For a complete annotated example, see the https://github.com/OliveTin/OliveTin/blob/main/config.yaml[`config.yaml` in the OliveTin repository].
+
 The most simple `config.yaml` would be something like this;
 
 .The most simple `config.yaml` file.
@@ -68,21 +70,21 @@ All configuration options are covered in the solution sections
 |===
 | Option | Description | Default | Live Reloadable | Documentation
 
-| `AuthJwtCookieName` | The name of the cookie to use for JWT authentication. | `` | Requires restart | xref:security/jwt_hmac.adoc[JWT with HMAC], xref:security/jwt_keys.adoc[JWT with Keys]
-| `AuthJwtAud` | The audience to use for JWT authentication. | `` | Requires restart | xref:security/jwt_keys.adoc[JWT with Keys]
-| `AuthJwtDomain` | The domain to use for JWT authentication. | `` | Requires restart | xref:security/jwt_hmac.adoc[JWT with HMAC], xref:security/jwt_keys.adoc[JWT with Keys]
-| `AuthJwtCertsURL` | The URL to fetch the public keys from with JWKS | `` | Requires restart | xref:security/jwt_keys.adoc[JWT with Keys]
-| `AuthJwtClaimUsername` | The claim to use for the username. | `sub` | Requires restart | xref:security/jwt_hmac.adoc[JWT with HMAC], xref:security/jwt_keys.adoc[JWT with Keys]
-| `AuthJwtClaimUserGroup` | The claim to use for the usergroup. | `sub` | Requires restart | xref:security/jwt_hmac.adoc[JWT with HMAC], xref:security/jwt_keys.adoc[JWT with Keys]
-| `AuthJwtHeader` | The HTTP header to use for JWT authentication. | `` | Requires restart | xref:security/jwt_keys.adoc[JWT with Keys]
-| `AuthJwtPubKeyPath` | The path to the public key to use for JWT authentication. | `` | Requires restart | xref:security/jwt_keys.adoc[JWT with Keys]
-| `AuthHttpHeaderUsername` | The HTTP header to use for the username. | `` | Requires restart | xref:security/trusted_header.adoc[Trusted Headers]
-| `AuthHttpHeaderUserGroup` | The HTTP header to use for the usergroup. | `` | Requires restart | xref:security/trusted_header.adoc[Trusted Headers]
-| `AuthLocalUsers` | The list of local users. | `[]` | Requires restart | xref:security/local.adoc[Local Users]
-| `AuthLoginUrl` | The URL to redirect to for login. | `` | Requires restart | xref:security/local.adoc[Login URL]
-| `AuthRequireGuestsToLogin` | Basically disables all functionality for guests. It sets all default permissions to false. | `false` | Requires restart | xref:security/acl.adoc[Access Control Lists]
-| `DefaultPermissions` | The default permissions to use. | `[]` | Requires restart | xref:security/acl.adoc[Access Control Lists]
-| `AccessControlLists` | The list of access control lists. | `[]` | Requires restart | xref:security/acl.adoc[Access Control Lists]
+| `authJwtCookieName` | The name of the cookie to use for JWT authentication. | `` | Requires restart | xref:security/jwt_hmac.adoc[JWT with HMAC], xref:security/jwt_keys.adoc[JWT with Keys]
+| `authJwtAud` | The audience to use for JWT authentication. | `` | Requires restart | xref:security/jwt_keys.adoc[JWT with Keys]
+| `authJwtDomain` | The domain to use for JWT authentication. | `` | Requires restart | xref:security/jwt_hmac.adoc[JWT with HMAC], xref:security/jwt_keys.adoc[JWT with Keys]
+| `authJwtCertsUrl` | The URL to fetch the public keys from with JWKS | `` | Requires restart | xref:security/jwt_keys.adoc[JWT with Keys]
+| `authJwtClaimUsername` | The claim to use for the username. | `sub` | Requires restart | xref:security/jwt_hmac.adoc[JWT with HMAC], xref:security/jwt_keys.adoc[JWT with Keys]
+| `authJwtClaimUserGroup` | The claim to use for the usergroup. | `sub` | Requires restart | xref:security/jwt_hmac.adoc[JWT with HMAC], xref:security/jwt_keys.adoc[JWT with Keys]
+| `authJwtHeader` | The HTTP header to use for JWT authentication. | `` | Requires restart | xref:security/jwt_keys.adoc[JWT with Keys]
+| `authJwtPubKeyPath` | The path to the public key to use for JWT authentication. | `` | Requires restart | xref:security/jwt_keys.adoc[JWT with Keys]
+| `authHttpHeaderUsername` | The HTTP header to use for the username. | `` | Requires restart | xref:security/trusted_header.adoc[Trusted Headers]
+| `authHttpHeaderUserGroup` | The HTTP header to use for the usergroup. | `` | Requires restart | xref:security/trusted_header.adoc[Trusted Headers]
+| `authLocalUsers` | The list of local users. | `[]` | Requires restart | xref:security/local.adoc[Local Users]
+| `authLoginUrl` | The URL to redirect to for login. | `` | Requires restart | xref:security/local.adoc[Login URL]
+| `authRequireGuestsToLogin` | Basically disables all functionality for guests. It sets all default permissions to false. | `false` | Requires restart | xref:security/acl.adoc[Access Control Lists]
+| `defaultPermissions` | The default permissions to use. | `[]` | Requires restart | xref:security/acl.adoc[Access Control Lists]
+| `accessControlLists` | The list of access control lists. | `[]` | Requires restart | xref:security/acl.adoc[Access Control Lists]
 | `security.headerContentSecurityPolicy` | Whether to send a `Content-Security-Policy` header from the single HTTP frontend. | `true` | Live reloadable | xref:security/content_security_policy.adoc[Content Security Policy headers]
 | `security.contentSecurityPolicy` | CSP header value when `security.headerContentSecurityPolicy` is enabled. If empty, a built-in default is used. | (built-in default) | Live reloadable | xref:security/content_security_policy.adoc[Content Security Policy headers]
 |===
@@ -92,13 +94,12 @@ All configuration options are covered in the solution sections
 |===
 | Option | Description | Default | Live Reloadable | Documentation
 
-| `UseSingleHttpFrontend` | Whether or not to start the internal "microproxy" frontend. Disabling this is highly unusual and is only really useful for power users.  | true | Requires Restart | xref:reference/network-ports.adoc[Network Ports]
-| `ListenAddressSingleHTTPFrontend` | The address to listen on for the internal "microproxy" frontend. | `0.0.0.0:1337` | Requires Restart | xref:reference/network-ports.adoc[Network Ports]
-| `ListenAddressWebUI` | The address to listen on for the web UI. | `localhost:1340` | Requires Restart | xref:reference/network-ports.adoc[Network Ports]
-| `ListenAddressRestActions` | The address for the API | `localhost:1338` | Requires Restart | xref:reference/network-ports.adoc[Network Ports]
-| `ListenAddressGrpcActions` | The address for the gRPC API | `localhost:1339` | Requires Restart | xref:reference/network-ports.adoc[Network Ports]
-| `ListenAddressPrometheus` | The address for the Prometheus metrics | `localhost:1341` | Requires Restart | xref:reference/network-ports.adoc[Network Ports], xref:advanced_configuration/prometheus.adoc[Prometheus]
-| `ExternalRestAddress` | The address the web browser should use to connect to the API. | `.` | Requires Restart | xref:reference/network-ports.adoc[Network Ports]
+| `useSingleHTTPFrontend` | Whether or not to start the internal "microproxy" frontend. Disabling this is highly unusual and is only really useful for power users.  | true | Requires Restart | xref:reference/network-ports.adoc[Network Ports]
+| `listenAddressSingleHTTPFrontend` | The address to listen on for the internal "microproxy" frontend. | `0.0.0.0:1337` | Requires Restart | xref:reference/network-ports.adoc[Network Ports]
+| `listenAddressWebUI` | The address to listen on for the web UI. | `localhost:1340` | Requires Restart | xref:reference/network-ports.adoc[Network Ports]
+| `listenAddressRestActions` | The address for the API | `localhost:1338` | Requires Restart | xref:reference/network-ports.adoc[Network Ports]
+| `listenAddressPrometheus` | The address for the Prometheus metrics | `localhost:1341` | Requires Restart | xref:reference/network-ports.adoc[Network Ports], xref:advanced_configuration/prometheus.adoc[Prometheus]
+| `externalRestAddress` | The address the web browser should use to connect to the API. | `.` | Requires Restart | xref:reference/network-ports.adoc[Network Ports]
 |===
 
 == Debugging Configuration
@@ -106,8 +107,8 @@ All configuration options are covered in the solution sections
 |===
 | Option | Description | Default | Live Reloadable | Documentation
 
-| `LogLevel` | The log level to use. `INFO`, `DEBUG`, `WARN` | `INFO` | Requires Restart | -
-| `LogDebugOptions` | Enable various debug logs. | `-` | Requires Restart | xref:troubleshooting/advanced.adoc[Advanced Troubleshooting]
+| `logLevel` | The log level to use. `INFO`, `DEBUG`, `WARN` | `INFO` | Requires Restart | -
+| `logDebugOptions` | Enable various debug logs. | `-` | Requires Restart | xref:troubleshooting/advanced.adoc[Advanced Troubleshooting]
 | `Insecure*` | Various options to disable security features. | `false` | Restart recommended | xref:troubleshooting/advanced.adoc[Advanced Troubleshooting]
 |===
 
@@ -116,11 +117,11 @@ All configuration options are covered in the solution sections
 |===
 | Option | Description | Default | Live Reloadable | Documentation
 
-| `WebUIDir` | The directory to serve the web UI from. | Calculated at runtime. | Requires Restart | -
-| `CronSupportForSeconds` | Whether or not to support seconds in cron expressions. | `false` | Requires Restart | xref:action_execution/oncron.adoc[Cron]
-| `SaveLogs` | Whether or not to save logs to disk. | `[]` | Requires Restart | xref:logs/saving.adoc[Save Logs]
-| `ServiceLogs` | Windows process log directory (`serviceLogs.directory`). | `%ProgramData%\OliveTin\logs\` on Windows | Requires Restart | xref:install/windows_service.adoc#windows-service-logs[Windows service logs]
-| `Prometheus` | Prometheus configuration. | `-` | Requires Restart | xref:advanced_configuration/prometheus.adoc[Prometheus]
+| `webUIDir` | The directory to serve the web UI from. | Calculated at runtime. | Requires Restart | -
+| `cronSupportForSeconds` | Whether or not to support seconds in cron expressions. | `false` | Requires Restart | xref:action_execution/oncron.adoc[Cron]
+| `saveLogs` | Whether or not to save logs to disk. | `[]` | Requires Restart | xref:logs/saving.adoc[Save Logs]
+| `serviceLogs` | Windows process log directory (`serviceLogs.directory`). | `%ProgramData%\OliveTin\logs\` on Windows | Requires Restart | xref:install/windows_service.adoc#windows-service-logs[Windows service logs]
+| `prometheus` | Prometheus configuration. | `-` | Requires Restart | xref:advanced_configuration/prometheus.adoc[Prometheus]
 |===
 
 == What's Next?

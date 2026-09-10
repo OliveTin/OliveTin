@@ -14,7 +14,7 @@ identity_providers:
         algorithm: "RS256"
         use: "sig"
         key: |
-          -----BEGIN PRIVATE KEY-----
+          -----BEGIN PRIVATE KEY----- #notsecret
           xxxxxxxxxxxxxxxxxxxxxxxxxx
           -----END PRIVATE KEY-----
 
@@ -46,7 +46,7 @@ Digest: $pbkdf2-sha512$310000$yQogpMZvkHoAmOBGiIHVJQ$hxKuvar6Q6pOlkdzQBMWq1i5WjX
 [source,yaml]
 ----
 authRequireGuestsToLogin: true
-authOAuth2RedirectURL: https://olivetin.hostname.com/oauth/callback
+authOAuth2RedirectUrl: https://olivetin.hostname.com/oauth/callback
 authOAuth2Providers:
   authelia:
     name: authelia

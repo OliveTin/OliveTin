@@ -92,7 +92,7 @@ return {
 ----
 
 [IMPORTANT]
-If you use this multiple group mapping, you will need to set the `AuthHttpHeaderUserGroupSep` field to `,`. This may sound like a strangely named field, but it is the correct one to use for this mapping. It was originally created for the HTTP Trusted Header authentication method, but it is also used for OAuth2 group mapping.
+If you use this multiple group mapping, you will need to set the `authHttpHeaderUserGroupSep` field to `,`. This may sound like a strangely named field, but it is the correct one to use for this mapping. It was originally created for the HTTP Trusted Header authentication method, but it is also used for OAuth2 group mapping.
 
 === Single group mapping: Specific Group Match
 
