@@ -48,8 +48,8 @@ lang-generate:
 	$(MAKE) -wC lang
 
 generated-check: proto lang-generate
-	git diff --exit-code -- service/gen frontend/resources/scripts/gen lang/combined_output.json
-	@untracked="$$(git ls-files --others --exclude-standard -- service/gen frontend/resources/scripts/gen lang/combined_output.json)"; \
+	git diff --exit-code -- service/gen frontend/resources/scripts/gen lang/generated
+	@untracked="$$(git ls-files --others --exclude-standard -- service/gen frontend/resources/scripts/gen lang/generated)"; \
 	test -z "$$untracked" || { printf 'Untracked generated files:\n%s\n' "$$untracked"; exit 1; }
 
 dist:

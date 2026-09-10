@@ -188,7 +188,7 @@ import { connectEventStreamIfNeeded } from '../../js/websocket.js'
 import { DashboardSquare01Icon } from '@hugeicons/core-free-icons'
 import logoUrl from '../../OliveTinLogo.png'
 import { useI18n } from 'vue-i18n'
-import combinedTranslations from '../../../lang/combined_output.json'
+import { activateLocale, resolveBrowserLocale } from './i18n.js'
 import { searchIndexItems, clearSearchIndex, indexSystemNavigation, indexSearchHints, indexRootDashboardEntries } from './stores/searchIndex.js'
 import { applyThemeStyles } from './utils/themeLoader.js'
 const { t } = useI18n()
@@ -271,30 +271,6 @@ const headerUsername = computed(() => {
 const headerLoginRoute = computed(() => {
   return showLoginLink.value ? { name: 'Login' } : null
 })
-
-function normalizeBrowserLanguage () {
-  const available = Object.keys(combinedTranslations.messages || {})
-
-  if (navigator.languages && navigator.languages.length > 0) {
-    for (const candidate of navigator.languages) {
-      const lowerCandidate = candidate.toLowerCase()
-
-      // Try exact match (case-insensitive)
-      const exact = available.find(locale => locale.toLowerCase() === lowerCandidate)
-      if (exact) {
-        return exact
-      }
-
-      // Try prefix match (e.g., "zh-CN" -> "zh-Hans-CN")
-      const prefix = available.find(locale => locale.toLowerCase().startsWith(lowerCandidate.split('-')[0] + '-'))
-      if (prefix) {
-        return prefix
-      }
-    }
-  }
-
-  return 'en'
-}
 
 function toggleSidebar () {
   if (sidebar.value && showNavigation.value) {
@@ -518,7 +494,7 @@ function closeLanguageDialog () {
   }
 }
 
-function changeLanguage () {
+async function changeLanguage () {
   if (!window.i18n || !selectedLanguage.value) {
     return
   }
@@ -526,9 +502,9 @@ function changeLanguage () {
   if (selectedLanguage.value === 'auto') {
     localStorage.removeItem('olivetin-language')
     languagePreference.value = 'auto'
-    window.i18n.locale.value = normalizeBrowserLanguage()
+    await activateLocale(window.i18n, resolveBrowserLocale())
   } else {
-    window.i18n.locale.value = selectedLanguage.value
+    await activateLocale(window.i18n, selectedLanguage.value)
     localStorage.setItem('olivetin-language', selectedLanguage.value)
     languagePreference.value = selectedLanguage.value
   }

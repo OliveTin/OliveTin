@@ -18,49 +18,21 @@ import router from './resources/vue/router.js'
 import App from './resources/vue/App.vue'
 
 import { initWebsocket } from './js/websocket.js'
+import { getSelectedLocale, loadInitialMessages } from './resources/vue/i18n.js'
 import { applyThemeStyles, getStoredThemePreference } from './resources/vue/utils/themeLoader.js'
-import combinedTranslations from '../lang/combined_output.json'
-
-function getSelectedLanguage () {
-  const storedLanguage = localStorage.getItem('olivetin-language')
-
-  if (storedLanguage && storedLanguage !== 'auto') {
-    return storedLanguage
-  }
-
-  if (storedLanguage === 'auto') {
-    localStorage.removeItem('olivetin-language')
-  }
-
-  if (navigator.languages && navigator.languages.length > 0) {
-    const available = Object.keys(combinedTranslations.messages || {})
-
-    for (const candidate of navigator.languages) {
-      const lowerCandidate = candidate.toLowerCase()
-      const exact = available.find(locale => locale.toLowerCase() === lowerCandidate)
-
-      if (exact) {
-        return exact
-      }
-
-      const prefix = available.find(locale => locale.toLowerCase().startsWith(lowerCandidate.split('-')[0] + '-'))
-
-      if (prefix) {
-        return prefix
-      }
-    }
-  }
-
-  return 'en'
-}
 
 async function initClient () {
   const transport = createConnectTransport({
     baseUrl: window.location.protocol + '//' + window.location.host + '/api/'
   })
+  const locale = getSelectedLocale()
 
   window.client = createClient(OliveTinApiService, transport)
-  window.initResponse = await window.client.init({})
+  const [initResponse, messages] = await Promise.all([
+    window.client.init({}),
+    loadInitialMessages(locale)
+  ])
+  window.initResponse = initResponse
 
   if (window.initResponse.enableCustomJs) {
     const script = document.createElement('script')
@@ -72,9 +44,9 @@ async function initClient () {
 
   const i18nSettings = createI18n({
     legacy: false,
-    locale: getSelectedLanguage(),
+    locale,
     fallbackLocale: 'en',
-    messages: combinedTranslations.messages,
+    messages,
     postTranslation: (translated) => {
       const params = new URLSearchParams(window.location.search)
 

@@ -18,7 +18,7 @@ deps:
 	npm ci
 
 build:
-	npx vite build
+	npm run build
 
 dist: deps clean build
 
