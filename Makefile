@@ -34,7 +34,10 @@ it:
 go-tools:
 	$(MAKE) -wC service go-tools
 
-proto: go-tools
+proto-tools:
+	$(MAKE) -wC service proto-tools
+
+proto: proto-tools
 	$(MAKE) -wC proto
 
 dist:
@@ -81,4 +84,4 @@ config-tool:
 devcheck:
 	python3 scripts/devcheck.py $(ARGS)
 
-.PHONY: proto default service windows-resources windows-msi frontend-unittests it devcheck
+.PHONY: proto proto-tools default service windows-resources windows-msi frontend-unittests it devcheck

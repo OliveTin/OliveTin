@@ -46,8 +46,7 @@ pre-commit install
 pre-commit install --hook-type pre-push
 
 # Step3: compile binary for current dev env (OS, ARCH)
-# `make proto` will also run `make go-tools`, which installs "buf". This binary
-# will be put in your GOPATH/bin/, which should be on your path. buf is used to
+# `make proto` installs pinned protobuf tools in GOPATH/bin/ and uses buf to
 # generate the protobuf / Connect RPC stubs.
 make proto
 make
