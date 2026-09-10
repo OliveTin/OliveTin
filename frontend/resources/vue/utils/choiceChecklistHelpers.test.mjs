@@ -13,7 +13,7 @@ const choices = [
   { title: 'Photos', value: 'photos' }
 ]
 
-	test('parseChecklistValue parses JSON-encoded values', () => {
+test('parseChecklistValue parses JSON-encoded values', () => {
   assert.deepEqual(parseChecklistValue('["documents","photos"]'), ['documents', 'photos'])
   assert.deepEqual(parseChecklistValue('["kitchen,bedroom","hallway"]'), ['kitchen,bedroom', 'hallway'])
   assert.deepEqual(parseChecklistValue(''), [])

@@ -355,10 +355,10 @@ async function fetchExecutionResult (executionTrackingIdParam) {
   } catch (err) {
     // Check if it's a "not found" error (404 or similar)
     if (err.status === 404 || err.code === 'NotFound' || err.message?.includes('not found')) {
-	  notFound.value = true
-	  errorMessage.value = err.message || 'The execution could not be found in the system.'
+      notFound.value = true
+      errorMessage.value = err.message || 'The execution could not be found in the system.'
     } else {
-	  renderError(err)
+      renderError(err)
     }
     throw err
   }
@@ -434,7 +434,7 @@ async function renderExecutionResult (res) {
   if (terminal) {
     await terminal.reset()
     await terminal.write(res.logEntry.output, () => {
-	  terminal.fit()
+      terminal.fit()
     })
   }
 }
@@ -488,11 +488,11 @@ onMounted(() => {
   watch(
     () => buttonResults[props.executionTrackingId],
     (newResult, oldResult) => {
-	  if (newResult) {
+      if (newResult) {
         renderExecutionResult({
-		  logEntry: newResult
+          logEntry: newResult
         })
-	  }
+      }
     }
   )
 })
