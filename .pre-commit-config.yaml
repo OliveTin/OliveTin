@@ -33,6 +33,13 @@ repos:
 
   - repo: local
     hooks:
+      - id: docs-check
+        name: docs-check
+        entry: make docs-check
+        language: system
+        pass_filenames: false
+        files: ^(docs/|service/internal/config/config\.go|Makefile)
+
       - id: service-codestyle
         name: service-codestyle
         entry: make service-codestyle
