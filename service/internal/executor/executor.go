@@ -153,6 +153,17 @@ type InternalLogEntry struct {
 	TimedOut            bool
 }
 
+func cloneActionBinding(binding *ActionBinding) *ActionBinding {
+	if binding == nil {
+		return nil
+	}
+
+	cloned := *binding
+	cloned.OnDashboards = slices.Clone(binding.OnDashboards)
+
+	return &cloned
+}
+
 func cloneInternalLogEntry(entry *InternalLogEntry) *InternalLogEntry {
 	if entry == nil {
 		return nil
@@ -161,6 +172,7 @@ func cloneInternalLogEntry(entry *InternalLogEntry) *InternalLogEntry {
 	cloned := *entry
 	cloned.Arguments = maps.Clone(entry.Arguments)
 	cloned.Tags = slices.Clone(entry.Tags)
+	cloned.Binding = cloneActionBinding(entry.Binding)
 
 	return &cloned
 }

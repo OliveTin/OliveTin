@@ -44,6 +44,12 @@ func TestGetLogReturnsDefensiveCopy(t *testing.T) {
 		Arguments: map[string]string{"message": "original"},
 		Output:    "original",
 		Tags:      []string{"original"},
+		Binding: &ActionBinding{
+			ID: "original-binding",
+			OnDashboards: []DashboardNavigationTarget{
+				{Title: "original"},
+			},
+		},
 	}
 
 	entry, found := e.GetLog("tracking-id")
@@ -52,12 +58,17 @@ func TestGetLogReturnsDefensiveCopy(t *testing.T) {
 	entry.Arguments["message"] = "changed"
 	entry.Output = "changed"
 	entry.Tags[0] = "changed"
+	entry.Binding.ID = "changed-binding"
+	entry.Binding.OnDashboards[0].Title = "changed"
 
 	stored, found := e.GetLog("tracking-id")
 	require.True(t, found)
 	assert.Equal(t, "original", stored.Arguments["message"])
 	assert.Equal(t, "original", stored.Output)
 	assert.Equal(t, []string{"original"}, stored.Tags)
+	require.NotNil(t, stored.Binding)
+	assert.Equal(t, "original-binding", stored.Binding.ID)
+	assert.Equal(t, []DashboardNavigationTarget{{Title: "original"}}, stored.Binding.OnDashboards)
 }
 
 func TestCreateExecutorAndExec(t *testing.T) {
