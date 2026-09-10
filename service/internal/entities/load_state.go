@@ -1,6 +1,10 @@
 package entities
 
-import "sync"
+import (
+	"sync"
+
+	"github.com/OliveTin/OliveTin/internal/filehelper"
+)
 
 var (
 	loadAttemptedMu sync.RWMutex
@@ -30,4 +34,20 @@ func ResetEntityLoadAttempts() {
 	loadAttemptedMu.Lock()
 	defer loadAttemptedMu.Unlock()
 	loadAttempted = map[string]bool{}
+}
+
+// ResetEntityWatchersForTests clears watched-path tracking (used by tests).
+func ResetEntityWatchersForTests() {
+	watchedMu.Lock()
+	defer watchedMu.Unlock()
+	for path := range watchedBindings {
+		filehelper.StopFileWatch(path)
+	}
+	watchedBindings = map[string]entityWatchBinding{}
+}
+
+func watchedPathCountForTests() int {
+	watchedMu.Lock()
+	defer watchedMu.Unlock()
+	return len(watchedBindings)
 }

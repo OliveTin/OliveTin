@@ -262,6 +262,9 @@ func main() {
 	executor := executor.DefaultExecutor(cfg)
 	executor.RebuildActionMap()
 	config.AddListener(executor.RebuildActionMap)
+	config.AddListener(func() {
+		entities.SyncEntityFileWatchers(cfg)
+	})
 
 	executor.LoadLogsFromDisk()
 
@@ -273,7 +276,7 @@ func main() {
 	go onfileindir.WatchFilesInDirectory(cfg, executor)
 	go oncalendarfile.Schedule(cfg, executor)
 
-	go entities.SetupEntityFileWatchers(cfg)
+	go entities.SyncEntityFileWatchers(cfg)
 
 	go updatecheck.StartUpdateChecker(cfg)
 
