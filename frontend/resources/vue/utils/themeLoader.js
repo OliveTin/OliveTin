@@ -1,16 +1,6 @@
 const DEFAULT_THEME_FETCH_TIMEOUT_MS = 5000
 
-async function fetchWithTimeout (url, options, timeoutMs) {
-  const controller = new AbortController()
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
-  try {
-    return await fetch(url, { ...options, signal: controller.signal })
-  } finally {
-    clearTimeout(timeoutId)
-  }
-}
-
-export async function applyThemeStyles (themePreference = '', timeoutMs = DEFAULT_THEME_FETCH_TIMEOUT_MS) {
+export async function applyThemeStyles (themePreference = '') {
   let themeStyle = document.getElementById('theme-style')
 
   if (!themeStyle) {
@@ -24,7 +14,10 @@ export async function applyThemeStyles (themePreference = '', timeoutMs = DEFAUL
     ? `/custom-webui/themes/${encodeURIComponent(themePreference)}/theme.css`
     : '/theme.css'
 
-  const response = await fetchWithTimeout(themeUrl, { cache: 'no-store' }, timeoutMs)
+  const response = await fetch(themeUrl, {
+    cache: 'no-store',
+    signal: AbortSignal.timeout(DEFAULT_THEME_FETCH_TIMEOUT_MS)
+  })
   if (!response.ok) {
     throw new Error(`theme fetch failed: ${response.status}`)
   }

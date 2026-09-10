@@ -340,7 +340,9 @@ async function updateHeaderFromInit () {
   loadCustomJsIfEnabled()
 
   renderNavigation()
-  await applyTheme()
+  applyTheme().catch((err) => {
+    console.warn('Failed to load theme CSS:', err)
+  })
 
   if (loginRequired.value) {
     connectEventStreamIfNeeded()
