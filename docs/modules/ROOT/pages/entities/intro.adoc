@@ -18,13 +18,13 @@ Each entity instance needs a human-readable name in the UI. OliveTin picks the f
 
 If none of those fields contain a string value, the instance appears as **Untitled Entity**. Add one of those fields to every row in your entity file — for example `title: My Vehicle` or `name: server1`.
 
-The chosen field is shown as the instance name in lists and dashboards. It is not repeated again in the entity details field list.
+The chosen field is shown as the instance name in lists and dashboards. On the entity details page, it appears in the page heading; see xref:entities/properties.adoc#entity-details-page[Entity details page] for which other fields are listed.
 
 [#entity-live-reload]
 === Live reload
 
 * **Entity file content** — when a watched data file is updated on disk, OliveTin reloads instances and notifies the web UI. No restart is required.
-* **New entity types in `config.yaml`** — when you add a new entry under `entities:` and reload config, OliveTin starts watching that file without a full restart (from OliveTin 3k builds including the #996 live-reload fix).
+* **New entity types in `config.yaml`** — when you add a new entry under `entities:` and reload config, OliveTin starts watching that file without a full restart.
 * **Removing or renaming entity types** — restart OliveTin if you remove an entity definition or change its file path.
 
 [NOTE]
