@@ -23,7 +23,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { CellsIcon } from '@hugeicons/core-free-icons'
 import Section from 'picocrank/vue/components/Section.vue'
 import EntityDefinitionSection from '../components/EntityDefinitionSection.vue'
@@ -51,6 +51,13 @@ async function fetchEntities () {
 }
 
 onMounted(() => {
-	    fetchEntities()
+  fetchEntities()
+  window.addEventListener('EventEntityChanged', fetchEntities)
+  window.addEventListener('EventConfigChanged', fetchEntities)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('EventEntityChanged', fetchEntities)
+  window.removeEventListener('EventConfigChanged', fetchEntities)
 })
 </script>

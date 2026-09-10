@@ -31,3 +31,16 @@ func ResetEntityLoadAttempts() {
 	defer loadAttemptedMu.Unlock()
 	loadAttempted = map[string]bool{}
 }
+
+// ResetEntityWatchersForTests clears watched-path tracking (used by tests).
+func ResetEntityWatchersForTests() {
+	watchedMu.Lock()
+	defer watchedMu.Unlock()
+	watchedPaths = map[string]struct{}{}
+}
+
+func watchedPathCountForTests() int {
+	watchedMu.Lock()
+	defer watchedMu.Unlock()
+	return len(watchedPaths)
+}

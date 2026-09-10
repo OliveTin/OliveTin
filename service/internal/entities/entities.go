@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	config "github.com/OliveTin/OliveTin/internal/config"
 	"github.com/OliveTin/OliveTin/internal/filehelper"
@@ -17,6 +18,9 @@ import (
 var (
 	EntityChangedSender chan bool
 	listeners           []func()
+
+	watchedMu    sync.Mutex
+	watchedPaths = map[string]struct{}{}
 )
 
 type Entity struct {
@@ -30,10 +34,16 @@ func AddListener(l func()) {
 }
 
 func SetupEntityFileWatchers(cfg *config.Config) {
+	SyncEntityFileWatchers(cfg)
+}
+
+// SyncEntityFileWatchers ensures each configured entity file has a watcher and reloads
+// entity data. Safe to call on config reload; already-watched paths are not watched twice.
+func SyncEntityFileWatchers(cfg *config.Config) {
 	baseDir := ResolveEntitiesBaseDir(cfg.GetDir())
 	for i := range cfg.Entities { // #337 - iterate by key, not by value
 		ef := cfg.Entities[i]
-		watchAndLoadEntity(baseDir, ef)
+		syncEntityFileWatcher(baseDir, ef)
 	}
 }
 
@@ -63,15 +73,31 @@ func resolveEntitiesBaseDir(configDir string) string {
 	return absConfigDir
 }
 
-func watchAndLoadEntity(baseDir string, ef *config.EntityFile) {
-	p := ef.File
+func resolveEntityFilePath(baseDir string, file string) string {
+	p := file
 	if !filepath.IsAbs(p) {
 		p = filepath.Join(baseDir, p)
 		log.WithFields(log.Fields{"entityFile": p}).Debugf("Adding config dir to entity file path")
 	}
-	go filehelper.WatchFileWrite(p, func(_ string) { loadEntityFile(p, ef.Name) }, filehelper.WatchMeta{
-		ConfigFile: ef.SourceFile,
-	})
+	return p
+}
+
+func syncEntityFileWatcher(baseDir string, ef *config.EntityFile) {
+	p := resolveEntityFilePath(baseDir, ef.File)
+
+	watchedMu.Lock()
+	_, alreadyWatched := watchedPaths[p]
+	if !alreadyWatched {
+		watchedPaths[p] = struct{}{}
+	}
+	watchedMu.Unlock()
+
+	if !alreadyWatched {
+		go filehelper.WatchFileWrite(p, func(_ string) { loadEntityFile(p, ef.Name) }, filehelper.WatchMeta{
+			ConfigFile: ef.SourceFile,
+		})
+	}
+
 	loadEntityFile(p, ef.Name)
 }
 

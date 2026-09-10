@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	config "github.com/OliveTin/OliveTin/internal/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -60,6 +61,59 @@ func TestGetEntityInstancesOrdered_emptyOrMissing(t *testing.T) {
 	ClearEntitiesOfType("empty_test")
 	ordered = GetEntityInstancesOrdered("empty_test")
 	assert.Nil(t, ordered)
+}
+
+func TestSyncEntityFileWatchers_doesNotDuplicateWatchers(t *testing.T) {
+	ResetEntityWatchersForTests()
+	t.Cleanup(ResetEntityWatchersForTests)
+
+	dir := t.TempDir()
+	yamlPath := filepath.Join(dir, "vehicles.yaml")
+	require.NoError(t, os.WriteFile(yamlPath, []byte("- title: car1\n"), 0o600))
+
+	cfg := config.DefaultConfig()
+	cfg.SetDir(dir)
+	cfg.Entities = []*config.EntityFile{
+		{Name: "vehicle", File: "vehicles.yaml"},
+	}
+
+	SyncEntityFileWatchers(cfg)
+	require.Equal(t, 1, watchedPathCountForTests())
+	require.Len(t, GetEntityInstancesOrdered("vehicle"), 1)
+
+	SyncEntityFileWatchers(cfg)
+	assert.Equal(t, 1, watchedPathCountForTests())
+}
+
+func TestSyncEntityFileWatchers_picksUpNewEntityType(t *testing.T) {
+	ResetEntityWatchersForTests()
+	t.Cleanup(func() {
+		ResetEntityWatchersForTests()
+		ClearEntitiesOfType("vehicle")
+		ClearEntitiesOfType("server")
+	})
+
+	dir := t.TempDir()
+	vehiclePath := filepath.Join(dir, "vehicles.yaml")
+	serverPath := filepath.Join(dir, "servers.yaml")
+	require.NoError(t, os.WriteFile(vehiclePath, []byte("- title: car1\n"), 0o600))
+
+	cfg := config.DefaultConfig()
+	cfg.SetDir(dir)
+	cfg.Entities = []*config.EntityFile{
+		{Name: "vehicle", File: "vehicles.yaml"},
+	}
+
+	SyncEntityFileWatchers(cfg)
+	require.Equal(t, 1, watchedPathCountForTests())
+
+	require.NoError(t, os.WriteFile(serverPath, []byte("- name: srv1\n"), 0o600))
+	cfg.Entities = append(cfg.Entities, &config.EntityFile{Name: "server", File: "servers.yaml"})
+
+	SyncEntityFileWatchers(cfg)
+	require.Equal(t, 2, watchedPathCountForTests())
+	require.Len(t, GetEntityInstancesOrdered("vehicle"), 1)
+	require.Len(t, GetEntityInstancesOrdered("server"), 1)
 }
 
 func TestLoadEntityFile_preservesEntitiesOnTransientFailure(t *testing.T) {
