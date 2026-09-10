@@ -22,6 +22,8 @@ If you are looking for OliveTin's AI policy, you can find it in `AI.md`.
   - From repo root: `cd service && make unittests`
 - Code style (after editing code in `service/`):
   - From repo root: `cd service && make codestyle` (runs `go fmt` and `golangci-lint`; install linter via `make go-tools`)
+- Documentation checks:
+  - From repo root: `make docs-check` (validates documented config key casing and local AsciiDoc anchor links)
 - Integration tests (Mocha + Selenium):
   - All tests: `make it` (from repo root; builds webui + service binary, then runs Mocha)
   - Single test: `cd integration-tests && npx --yes mocha tests/general/general.mjs`

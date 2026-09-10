@@ -1,0 +1,36 @@
+name: Go race detector
+
+on:
+  push:
+    branches:
+      - main
+      - next
+    paths:
+      - '.github/workflows/race.yml'
+      - 'service/**'
+  pull_request:
+    branches:
+      - next
+    paths:
+      - '.github/workflows/race.yml'
+      - 'service/**'
+
+permissions:
+  contents: read
+
+jobs:
+  race:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'service/go.mod'
+          cache: true
+          cache-dependency-path: 'service/go.mod'
+
+      - name: Run race detector
+        run: make -wC service unittests-race

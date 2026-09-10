@@ -3,7 +3,6 @@ import { expect } from 'chai'
 import { By, Condition } from 'selenium-webdriver'
 import {
   getRootAndWait,
-  getActionButtons,
   takeScreenshotOnFailure,
 } from '../../lib/elements.js'
 
@@ -116,13 +115,13 @@ describe('config: stdout-most-recent-execution', function () {
           // Output should change from initial state and contain actual output
           // (not "Waiting...", "No execution found", or the same as initialText)
           const hasChanged = newText !== initialText
-          const hasValidOutput = newText && 
-                                 !newText.includes('Waiting...') && 
-                                 !newText.includes('No execution found') && 
+          const hasValidOutput = newText &&
+                                 !newText.includes('Waiting...') &&
+                                 !newText.includes('No execution found') &&
                                  !newText.includes('Error:') &&
                                  newText.trim().length > 0
           return hasChanged && hasValidOutput
-        } catch (e) {
+        } catch {
           return false
         }
       }),

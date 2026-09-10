@@ -5,7 +5,6 @@ import fs from 'fs'
 import path from 'path'
 import {
   getRootAndWait,
-  getActionButtons,
   takeScreenshotOnFailure,
 } from '../../lib/elements.js'
 
@@ -210,7 +209,7 @@ describe('config: logPersistence', function () {
           const text = await body.getText()
           // The log should contain the output from the echo command
           return text.includes('Hello from persisted log test') || text.includes(firstExecutionTrackingId)
-        } catch (e) {
+        } catch {
           return false
         }
       }),

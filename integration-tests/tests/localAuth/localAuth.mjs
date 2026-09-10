@@ -1,8 +1,7 @@
 import { describe, it, before, after } from 'mocha'
 import { expect } from 'chai'
-import { By, until, Condition } from 'selenium-webdriver'
+import { By, until } from 'selenium-webdriver'
 import {
-  getRootAndWait,
   takeScreenshotOnFailure,
 } from '../../lib/elements.js'
 
@@ -47,7 +46,7 @@ describe('config: localAuth', function () {
     // Check if any login-related elements are present
     const bodyText = await webdriver.findElement(By.tagName('body')).getText()
     console.log('Login page content:', bodyText.substring(0, 300))
-    
+
     // For now, just verify we can navigate to the login page
     // The page content rendering is a separate frontend issue
     console.log('Login page navigation successful')
@@ -67,11 +66,11 @@ describe('config: localAuth', function () {
 
     if (usernameFields.length > 0 && passwordFields.length > 0 && loginButtons.length > 0) {
       console.log('Login form found, attempting login')
-      
+
       // Fill in credentials
       await usernameFields[0].clear()
       await usernameFields[0].sendKeys('testuser')
-      
+
       await passwordFields[0].clear()
       await passwordFields[0].sendKeys('testpass123')
 

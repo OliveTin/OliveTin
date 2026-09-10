@@ -6,13 +6,17 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "lint": "eslint tests lib scripts runner.mjs mochaSetup.mjs",
+    "lint:fix": "npm run lint -- --fix",
+    "test": "mocha tests --recursive -t 10000"
   },
   "author": "",
   "license": "AGPL-3.0-only",
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "chai": "^6.2.2",
     "eslint": "^10.10.0",
+    "globals": "^17.3.0",
     "mocha": "^12.0.0",
     "selenium-webdriver": "^4.49.0"
   },

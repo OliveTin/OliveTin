@@ -44,6 +44,9 @@ unittests:
 unittests-fast:
 	go test ./... -count=1
 
+unittests-race:
+	go test -race ./... -count=1
+
 find-flakey-tests:
 	echo "Running unittests-fast infinitely"
 	sh -c "while $(MAKE) unittests-fast; do :; done"
@@ -60,4 +63,4 @@ proto-tools:
 
 go-tools-all: go-tools proto-tools
 
-.PHONY: codestyle go-tools proto-tools go-tools-all unittests unittests-fast find-flakey-tests find-flakey-tests-inf
+.PHONY: codestyle go-tools proto-tools go-tools-all unittests unittests-fast unittests-race find-flakey-tests find-flakey-tests-inf
