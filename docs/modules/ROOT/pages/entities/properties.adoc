@@ -61,9 +61,10 @@ When `properties` is configured, the Entities page shows a searchable, paginated
 
 When `properties` is omitted or empty, the Entities page shows a simple list of instance names and a total count instead of a table.
 
+[#entity-details-page]
 === Entity details page
 
-The entity details view shows only the fields listed in `properties`, plus type and title.
+The entity details view shows only the fields listed in `properties`, plus type. The instance name appears in the page title, not again in the field list.
 
 If `properties` is not configured, all top-level fields from the entity data file are shown.
 
