@@ -40,6 +40,12 @@ proto-tools:
 proto: proto-tools
 	$(MAKE) -wC proto
 
+lang-generate:
+	$(MAKE) -wC lang
+
+generated-check: proto lang-generate
+	git diff --exit-code -- service/gen frontend/resources/scripts/gen lang/combined_output.json
+
 dist:
 	echo "dist noop"
 
@@ -84,4 +90,4 @@ config-tool:
 devcheck:
 	python3 scripts/devcheck.py $(ARGS)
 
-.PHONY: proto proto-tools default service windows-resources windows-msi frontend-unittests it devcheck
+.PHONY: proto proto-tools lang-generate generated-check default service windows-resources windows-msi frontend-unittests it devcheck

@@ -1,0 +1,54 @@
+name: Generated source checks
+
+on:
+  push:
+    branches:
+      - main
+      - next
+    paths:
+      - '.github/workflows/generated.yml'
+      - 'Makefile'
+      - 'frontend/resources/scripts/gen/**'
+      - 'lang/**'
+      - 'proto/**'
+      - 'service/gen/**'
+      - 'service/go.mod'
+      - 'service/go.sum'
+      - 'service/Makefile'
+      - 'service/tools.go'
+  pull_request:
+    branches:
+      - next
+    paths:
+      - '.github/workflows/generated.yml'
+      - 'Makefile'
+      - 'frontend/resources/scripts/gen/**'
+      - 'lang/**'
+      - 'proto/**'
+      - 'service/gen/**'
+      - 'service/go.mod'
+      - 'service/go.sum'
+      - 'service/Makefile'
+      - 'service/tools.go'
+
+permissions:
+  contents: read
+
+jobs:
+  generated:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'service/go.mod'
+          cache: true
+          cache-dependency-path: |
+            service/go.sum
+            lang/go.sum
+
+      - name: Check generated sources
+        run: make generated-check
