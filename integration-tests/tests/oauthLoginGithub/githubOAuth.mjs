@@ -1,8 +1,7 @@
 import { describe, it, before, after } from 'mocha'
 import { expect } from 'chai'
-import { By, until, Condition } from 'selenium-webdriver'
+import { By, until } from 'selenium-webdriver'
 import {
-  getRootAndWait,
   takeScreenshotOnFailure,
 } from '../../lib/elements.js'
 
@@ -56,14 +55,14 @@ describe('config: githubOAuth', function () {
     // Button may show "Login with GitHub" or "Login with undefined" depending on provider.name vs provider.title
     // We'll check for the presence of the button and verify it's in the OAuth section
     expect(githubButtons.length).to.be.greaterThan(0, 'At least one OAuth button should be present')
-    
+
     // The first button should be GitHub since it's the only provider in the config
     const githubButton = githubButtons[0]
     const buttonText = await githubButton.getText()
-    
+
     // Button should contain "Login with" and the provider should be configured as GitHub
     expect(buttonText).to.include('Login with', 'Button should have "Login with" prefix')
-    
+
     console.log('GitHub OAuth button found with text:', buttonText)
   })
 
@@ -78,16 +77,14 @@ describe('config: githubOAuth', function () {
     // Since the test config only has one provider (GitHub), we can use the first button
     const githubButtons = await webdriver.findElements(By.css('.oauth-button'))
     expect(githubButtons.length).to.be.greaterThan(0, 'At least one OAuth button should be present')
-    
+
     const githubButton = githubButtons[0]
     const buttonText = await githubButton.getText()
     console.log('Button text:', buttonText)
-    
+
     // Verify it's the GitHub button (should contain "github" in the text)
     expect(buttonText.toLowerCase()).to.include('github', 'Button should be GitHub OAuth button')
 
-    // Check for provider icon (if present)
-    const providerIcons = await githubButton.findElements(By.css('.provider-icon'))
     const providerNames = await githubButton.findElements(By.css('.provider-name'))
     // Provider name may show "GitHub" (from title) or be undefined (if using name field)
     // Just verify the structure is present
@@ -111,11 +108,8 @@ describe('config: githubOAuth', function () {
     // Find GitHub OAuth button (should be the first/only one in our test config)
     const githubButtons = await webdriver.findElements(By.css('.oauth-button'))
     expect(githubButtons.length).to.be.greaterThan(0, 'OAuth button should be present')
-    
-    const githubButton = githubButtons[0]
 
-    // Get the current URL before clicking
-    const initialUrl = await webdriver.getCurrentUrl()
+    const githubButton = githubButtons[0]
 
     // Click the button
     await githubButton.click()
@@ -124,7 +118,7 @@ describe('config: githubOAuth', function () {
     // Since we can't actually complete OAuth flow, we check that the button
     // click handler is set up correctly by verifying the button exists and is clickable
     // In a real scenario, this would redirect to GitHub's OAuth page
-    
+
     // Give a small delay to allow any navigation to start
     await new Promise(resolve => setTimeout(resolve, 1000))
 
@@ -133,4 +127,3 @@ describe('config: githubOAuth', function () {
     console.log('GitHub OAuth button click verified (redirect would happen in production)')
   })
 })
-

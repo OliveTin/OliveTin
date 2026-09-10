@@ -18,17 +18,19 @@ on:
       - '.github/workflows/codeql-analysis.yml'
       - 'frontend/**'
       - 'integration-tests/**'
+      - 'lang/**'
       - 'proto/**'
       - 'service/**'
-    branches: [main]
+    branches: [main, next]
   pull_request:
     paths:
       - '.github/workflows/codeql-analysis.yml'
       - 'frontend/**'
       - 'integration-tests/**'
+      - 'lang/**'
       - 'proto/**'
       - 'service/**'
-    branches: [main]
+    branches: [main, next]
   schedule:
     - cron: '25 10 * * 5'
 

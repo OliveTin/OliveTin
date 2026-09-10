@@ -1,5 +1,8 @@
 <template>
-  <Section id="execution-results-popup">
+  <Section
+    id="execution-results-popup"
+    :icon="ComputerTerminal01Icon"
+  >
     <template #title>
       <span class="section-title-with-icon">
         Execution Results:
@@ -35,7 +38,7 @@
         v-for="dashboard in backToDashboards"
         :key="dashboard.path"
         :title="'Back to ' + dashboard.title"
-        class="button neutral"
+        class="button neutral inline-icon"
         @click="goToDashboard(dashboard.path)"
       >
         <HugeiconsIcon :icon="DashboardSquare01Icon" />
@@ -44,7 +47,7 @@
       <button
         v-if="backToDashboards.length === 0"
         title="Go back"
-        class="button neutral"
+        class="button neutral inline-icon"
         @click="goBack"
       >
         <HugeiconsIcon :icon="ArrowLeftIcon" />
@@ -122,6 +125,8 @@
       <div class="fg1" />
 
       <button
+        type="button"
+        class="inline-icon"
         :disabled="!canRerun"
         title="Rerun"
         @click="rerunAction"
@@ -131,6 +136,8 @@
       </button>
       <button
         id="execution-dialog-kill-action"
+        type="button"
+        class="inline-icon"
         :disabled="!canKill"
         title="Kill"
         @click="killAction"
@@ -150,7 +157,7 @@ import LogActionTitle from '../components/LogActionTitle.vue'
 import Section from 'picocrank/vue/components/Section.vue'
 import { OutputTerminal } from '../../../js/OutputTerminal.js'
 import { HugeiconsIcon } from '@hugeicons/vue'
-import { WorkoutRunIcon, Cancel02Icon, ArrowLeftIcon, DashboardSquare01Icon, Copy01Icon } from '@hugeicons/core-free-icons'
+import { WorkoutRunIcon, Cancel02Icon, ArrowLeftIcon, DashboardSquare01Icon, Copy01Icon, ComputerTerminal01Icon } from '@hugeicons/core-free-icons'
 import { useRouter } from 'vue-router'
 import { buttonResults } from '../stores/buttonResults'
 import { requestReconnectNow } from '../../../js/websocket.js'
@@ -348,13 +355,27 @@ async function fetchExecutionResult (executionTrackingIdParam) {
   } catch (err) {
     // Check if it's a "not found" error (404 or similar)
     if (err.status === 404 || err.code === 'NotFound' || err.message?.includes('not found')) {
-	  notFound.value = true
-	  errorMessage.value = err.message || 'The execution could not be found in the system.'
+      notFound.value = true
+      errorMessage.value = err.message || 'The execution could not be found in the system.'
     } else {
-	  renderError(err)
+      renderError(err)
     }
     throw err
   }
+}
+
+function formatDurationRange (datetimeStarted, datetimeFinished) {
+  const startDay = datetimeStarted?.slice(0, 10)
+  const finishDay = datetimeFinished?.slice(0, 10)
+  const finishTime = datetimeFinished?.includes(' ')
+    ? datetimeFinished.slice(datetimeFinished.indexOf(' ') + 1)
+    : datetimeFinished
+
+  if (startDay && finishDay && startDay === finishDay) {
+    return `${datetimeStarted} → ${finishTime}`
+  }
+
+  return `${datetimeStarted} → ${datetimeFinished}`
 }
 
 function updateDuration (logEntryParam) {
@@ -368,14 +389,17 @@ function updateDuration (logEntryParam) {
   } else {
     let delta = ''
     try {
-		  delta = (new Date(logEntry.value.datetimeFinished) - new Date(logEntry.value.datetimeStarted)) / 1000
-	  delta = new Intl.RelativeTimeFormat().format(delta, 'seconds').replace('in ', '').replace('ago', '')
+      delta = (new Date(logEntry.value.datetimeFinished) - new Date(logEntry.value.datetimeStarted)) / 1000
+      delta = new Intl.RelativeTimeFormat().format(delta, 'seconds').replace('in ', '').replace('ago', '')
     } catch (e) {
-	  console.warn('Failed to calculate delta', e)
+      console.warn('Failed to calculate delta', e)
     }
-    duration.value = logEntry.value.datetimeStarted + ' → ' + logEntry.value.datetimeFinished
+    duration.value = formatDurationRange(
+      logEntry.value.datetimeStarted,
+      logEntry.value.datetimeFinished
+    )
     if (delta !== '') {
-	  duration.value += ' (' + delta + ')'
+      duration.value += ' (' + delta + ')'
     }
   }
 }
@@ -410,7 +434,7 @@ async function renderExecutionResult (res) {
   if (terminal) {
     await terminal.reset()
     await terminal.write(res.logEntry.output, () => {
-	  terminal.fit()
+      terminal.fit()
     })
   }
 }
@@ -464,11 +488,11 @@ onMounted(() => {
   watch(
     () => buttonResults[props.executionTrackingId],
     (newResult, oldResult) => {
-	  if (newResult) {
+      if (newResult) {
         renderExecutionResult({
-		  logEntry: newResult
+          logEntry: newResult
         })
-	  }
+      }
     }
   )
 })

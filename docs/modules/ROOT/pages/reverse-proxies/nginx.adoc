@@ -5,6 +5,8 @@ include::partial$reverse-proxies/diagram.adoc[]
 
 This is an example of DNS based proxying with Nginx.
 
+The example uses `http2 on;`, which requires Nginx 1.25.1 or later with `ngx_http_v2_module`. On older Nginx versions, replace it with `listen 443 ssl http2;` and remove the separate `http2` directive.
+
 ./etc/nginx/cond.d/OliveTin.conf
 [source,nginx]
 ----
@@ -39,4 +41,3 @@ These "custom path" instructions are for when you want to use OliveTin with a cu
 ----
 
 include::partial$reverse-proxies/external-rest.adoc[]
-

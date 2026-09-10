@@ -124,28 +124,77 @@ func AddEntity(entityName string, entityKey string, data any) {
 	rwmutex.Unlock()
 }
 
-//gocyclo:ignore
-func findEntityTitle(data any) string {
-	if mapData, ok := data.(map[string]any); ok {
-		keys := make(map[string]string)
+var entityDisplayNameCandidates = []string{"title", "name", "id", "hostname", "host", "label"}
 
-		for k := range mapData {
-			lookupKey := strings.ToLower(k)
-			keys[lookupKey] = k
+func entityDisplayNameKeysByLower(data map[string]any) map[string]string {
+	keys := make(map[string]string, len(data))
+	for k := range data {
+		lower := strings.ToLower(k)
+		existing, exists := keys[lower]
+		if exists && k >= existing {
+			continue
 		}
+		keys[lower] = k
+	}
+	return keys
+}
 
-		for _, key := range []string{"title", "name", "id", "hostname", "host", "label"} {
-			if lookupKey, exists := keys[strings.ToLower(key)]; exists {
-				if value, ok := mapData[lookupKey]; ok {
-					if valueStr, ok := value.(string); ok {
-						return valueStr
-					}
-				}
-			}
-		}
+func entityDisplayNameCandidateValue(data map[string]any, keysByLower map[string]string, candidate string) (fieldKey string, value string, ok bool) {
+	lookupKey, exists := keysByLower[strings.ToLower(candidate)]
+	if !exists {
+		return "", "", false
 	}
 
-	return "Untitled Entity"
+	rawValue, exists := data[lookupKey]
+	if !exists {
+		return "", "", false
+	}
+
+	valueStr, isString := rawValue.(string)
+	if !isString {
+		return "", "", false
+	}
+
+	return lookupKey, valueStr, true
+}
+
+func entityDisplayNameLookup(data map[string]any) (fieldKey string, value string, found bool) {
+	keysByLower := entityDisplayNameKeysByLower(data)
+	for _, candidate := range entityDisplayNameCandidates {
+		if fieldKey, value, ok := entityDisplayNameCandidateValue(data, keysByLower, candidate); ok {
+			return fieldKey, value, true
+		}
+	}
+	return "", "", false
+}
+
+// DisplayNameFieldKey returns the data-file field used as the entity instance title, or "".
+func DisplayNameFieldKey(data any) string {
+	mapData, ok := data.(map[string]any)
+	if !ok {
+		return ""
+	}
+
+	fieldKey, _, found := entityDisplayNameLookup(mapData)
+	if !found {
+		return ""
+	}
+
+	return fieldKey
+}
+
+func findEntityTitle(data any) string {
+	mapData, ok := data.(map[string]any)
+	if !ok {
+		return "Untitled Entity"
+	}
+
+	_, value, found := entityDisplayNameLookup(mapData)
+	if !found {
+		return "Untitled Entity"
+	}
+
+	return value
 }
 
 func ClearEntitiesOfType(entityType string) {

@@ -1,6 +1,7 @@
 <template>
   <Section
     :title="'Execution conditions: ' + actionTitle"
+    :icon="TimeScheduleIcon"
     :padding="false"
   >
     <template #toolbar>
@@ -168,6 +169,7 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
+import { TimeScheduleIcon } from '@hugeicons/core-free-icons'
 import Section from 'picocrank/vue/components/Section.vue'
 
 const route = useRoute()

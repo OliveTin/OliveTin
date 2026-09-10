@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	config "github.com/OliveTin/OliveTin/internal/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -53,6 +54,31 @@ func TestGetEntityInstancesOrdered_lexicographicKeys(t *testing.T) {
 	assert.Equal(t, "zebra", ordered[2].UniqueKey)
 }
 
+func TestDisplayNameFieldKey(t *testing.T) {
+	assert.Equal(t, "title", DisplayNameFieldKey(map[string]any{"title": "Car"}))
+	assert.Equal(t, "name", DisplayNameFieldKey(map[string]any{"name": "Car"}))
+	assert.Equal(t, "Name", DisplayNameFieldKey(map[string]any{"Name": "Car"}))
+	assert.Equal(t, "", DisplayNameFieldKey(map[string]any{"status": "running"}))
+	assert.Equal(t, "", DisplayNameFieldKey("not a map"))
+}
+
+func TestDisplayNameFieldKey_caseCollisionIsDeterministic(t *testing.T) {
+	data := map[string]any{
+		"title": "lower",
+		"Title": "upper",
+	}
+
+	assert.Equal(t, "Title", DisplayNameFieldKey(data))
+
+	ClearEntitiesOfType("display_name_collision")
+	defer ClearEntitiesOfType("display_name_collision")
+
+	AddEntity("display_name_collision", "0", data)
+	ordered := GetEntityInstancesOrdered("display_name_collision")
+	require.Len(t, ordered, 1)
+	assert.Equal(t, "upper", ordered[0].Title)
+}
+
 func TestGetEntityInstancesOrdered_emptyOrMissing(t *testing.T) {
 	ordered := GetEntityInstancesOrdered("nonexistent_type")
 	assert.Nil(t, ordered)
@@ -60,6 +86,129 @@ func TestGetEntityInstancesOrdered_emptyOrMissing(t *testing.T) {
 	ClearEntitiesOfType("empty_test")
 	ordered = GetEntityInstancesOrdered("empty_test")
 	assert.Nil(t, ordered)
+}
+
+func TestSyncEntityFileWatchers_doesNotDuplicateWatchers(t *testing.T) {
+	ResetEntityWatchersForTests()
+	t.Cleanup(ResetEntityWatchersForTests)
+
+	dir := t.TempDir()
+	yamlPath := filepath.Join(dir, "vehicles.yaml")
+	require.NoError(t, os.WriteFile(yamlPath, []byte("- title: car1\n"), 0o600))
+
+	cfg := config.DefaultConfig()
+	cfg.SetDir(dir)
+	cfg.Entities = []*config.EntityFile{
+		{Name: "vehicle", File: "vehicles.yaml"},
+	}
+
+	SyncEntityFileWatchers(cfg)
+	require.Equal(t, 1, watchedPathCountForTests())
+	require.Len(t, GetEntityInstancesOrdered("vehicle"), 1)
+
+	SyncEntityFileWatchers(cfg)
+	assert.Equal(t, 1, watchedPathCountForTests())
+}
+
+func TestSyncEntityFileWatchers_removedPathDoesNotReload(t *testing.T) {
+	ResetEntityWatchersForTests()
+	t.Cleanup(func() {
+		ResetEntityWatchersForTests()
+		ClearEntitiesOfType("vehicle")
+	})
+
+	dir := t.TempDir()
+	vehiclePath := filepath.Join(dir, "vehicles.yaml")
+	require.NoError(t, os.WriteFile(vehiclePath, []byte("- title: car1\n"), 0o600))
+
+	cfg := config.DefaultConfig()
+	cfg.SetDir(dir)
+	cfg.Entities = []*config.EntityFile{
+		{Name: "vehicle", File: "vehicles.yaml"},
+	}
+
+	SyncEntityFileWatchers(cfg)
+	require.Equal(t, 1, watchedPathCountForTests())
+	require.Len(t, GetEntityInstancesOrdered("vehicle"), 1)
+
+	cfg.Entities = nil
+	SyncEntityFileWatchers(cfg)
+	assert.Equal(t, 0, watchedPathCountForTests())
+	assert.Empty(t, GetEntityInstancesOrdered("vehicle"))
+
+	require.NoError(t, os.WriteFile(vehiclePath, []byte("- title: car2\n"), 0o600))
+	entityFileWatchCallback(vehiclePath)
+	assert.Empty(t, GetEntityInstancesOrdered("vehicle"))
+}
+
+func TestSyncEntityFileWatchers_replacedPathUsesNewBinding(t *testing.T) {
+	ResetEntityWatchersForTests()
+	t.Cleanup(func() {
+		ResetEntityWatchersForTests()
+		ClearEntitiesOfType("vehicle")
+	})
+
+	dir := t.TempDir()
+	vehiclePath := filepath.Join(dir, "vehicles.yaml")
+	carsPath := filepath.Join(dir, "cars.yaml")
+	require.NoError(t, os.WriteFile(vehiclePath, []byte("- title: car1\n"), 0o600))
+	require.NoError(t, os.WriteFile(carsPath, []byte("- title: car2\n"), 0o600))
+
+	cfg := config.DefaultConfig()
+	cfg.SetDir(dir)
+	cfg.Entities = []*config.EntityFile{
+		{Name: "vehicle", File: "vehicles.yaml"},
+	}
+
+	SyncEntityFileWatchers(cfg)
+	require.Equal(t, 1, watchedPathCountForTests())
+	require.Equal(t, "car1", GetEntityInstancesOrdered("vehicle")[0].Title)
+
+	cfg.Entities = []*config.EntityFile{
+		{Name: "vehicle", File: "cars.yaml"},
+	}
+	SyncEntityFileWatchers(cfg)
+	require.Equal(t, 1, watchedPathCountForTests())
+	require.Equal(t, "car2", GetEntityInstancesOrdered("vehicle")[0].Title)
+
+	require.NoError(t, os.WriteFile(vehiclePath, []byte("- title: stale\n"), 0o600))
+	entityFileWatchCallback(vehiclePath)
+	assert.Equal(t, "car2", GetEntityInstancesOrdered("vehicle")[0].Title, "obsolete path should not reload")
+
+	require.NoError(t, os.WriteFile(carsPath, []byte("- title: car3\n"), 0o600))
+	entityFileWatchCallback(carsPath)
+	assert.Equal(t, "car3", GetEntityInstancesOrdered("vehicle")[0].Title)
+}
+
+func TestSyncEntityFileWatchers_picksUpNewEntityType(t *testing.T) {
+	ResetEntityWatchersForTests()
+	t.Cleanup(func() {
+		ResetEntityWatchersForTests()
+		ClearEntitiesOfType("vehicle")
+		ClearEntitiesOfType("server")
+	})
+
+	dir := t.TempDir()
+	vehiclePath := filepath.Join(dir, "vehicles.yaml")
+	serverPath := filepath.Join(dir, "servers.yaml")
+	require.NoError(t, os.WriteFile(vehiclePath, []byte("- title: car1\n"), 0o600))
+
+	cfg := config.DefaultConfig()
+	cfg.SetDir(dir)
+	cfg.Entities = []*config.EntityFile{
+		{Name: "vehicle", File: "vehicles.yaml"},
+	}
+
+	SyncEntityFileWatchers(cfg)
+	require.Equal(t, 1, watchedPathCountForTests())
+
+	require.NoError(t, os.WriteFile(serverPath, []byte("- name: srv1\n"), 0o600))
+	cfg.Entities = append(cfg.Entities, &config.EntityFile{Name: "server", File: "servers.yaml"})
+
+	SyncEntityFileWatchers(cfg)
+	require.Equal(t, 2, watchedPathCountForTests())
+	require.Len(t, GetEntityInstancesOrdered("vehicle"), 1)
+	require.Len(t, GetEntityInstancesOrdered("server"), 1)
 }
 
 func TestLoadEntityFile_preservesEntitiesOnTransientFailure(t *testing.T) {

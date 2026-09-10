@@ -27,6 +27,7 @@ translations:
   logs.no-logs-for-filter: Keine Protokolle entsprechen dem aktuellen Filter.
   logs.timestamp: Zeitstempel
   logs.action: Aktion
+  logs.execution-id: Ausführungs-ID
   logs.metadata: Metadaten
   logs.status: Status
   logs.no-logs-to-display: Es gibt keine Protokolle zu anzeigen.

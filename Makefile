@@ -1,6 +1,8 @@
 define delete-files
-	python -c "import shutil;shutil.rmtree('$(1)', ignore_errors=True)"
+	python3 -c "import shutil;shutil.rmtree('$(1)', ignore_errors=True)"
 endef
+
+default: proto service webui-dist
 
 service:
 	$(MAKE) -wC service
@@ -26,14 +28,29 @@ frontend-codestyle:
 frontend-unittests:
 	$(MAKE) -wC frontend unittests
 
+docs-check:
+	python3 docs/modules/ROOT/check_config_keys.py
+	python3 docs/modules/ROOT/check_chevron_links.py
+
 it:
 	$(MAKE) -wC integration-tests
 
 go-tools:
 	$(MAKE) -wC service go-tools
 
-proto: go-tools
+proto-tools:
+	$(MAKE) -wC service proto-tools
+
+proto: proto-tools
 	$(MAKE) -wC proto
+
+lang-generate:
+	$(MAKE) -wC lang
+
+generated-check: proto lang-generate
+	git diff --exit-code -- service/gen frontend/resources/scripts/gen lang/generated
+	@untracked="$$(git ls-files --others --exclude-standard -- service/gen frontend/resources/scripts/gen lang/generated)"; \
+	test -z "$$untracked" || { printf 'Untracked generated files:\n%s\n' "$$untracked"; exit 1; }
 
 dist:
 	echo "dist noop"
@@ -79,4 +96,4 @@ config-tool:
 devcheck:
 	python3 scripts/devcheck.py $(ARGS)
 
-.PHONY: proto service windows-resources windows-msi frontend-unittests devcheck
+.PHONY: proto proto-tools lang-generate generated-check default service windows-resources windows-msi frontend-unittests docs-check it devcheck

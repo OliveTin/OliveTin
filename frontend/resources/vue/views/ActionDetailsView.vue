@@ -1,5 +1,8 @@
 <template>
-  <Section :padding="false">
+  <Section
+    :icon="PlayIcon"
+    :padding="false"
+  >
     <template #title>
       <span class="section-title-with-icon">
         Action Details:
@@ -12,35 +15,33 @@
       </span>
     </template>
     <template #toolbar>
-      <div class="action-details-toolbar">
-        <button
-          v-for="dashboard in backToDashboards"
-          :key="dashboard.path"
-          :title="'Back to ' + dashboard.title"
-          class="button neutral"
-          @click="goToDashboard(dashboard.path)"
-        >
-          <HugeiconsIcon :icon="DashboardSquare01Icon" />
-          {{ dashboard.title }}
-        </button>
-        <button
-          v-if="action"
-          title="Run this action"
-          class="button neutral"
-          @click="startAction"
-        >
-          <HugeiconsIcon :icon="WorkoutRunIcon" />
-          Run
-        </button>
-        <router-link
-          v-if="action"
-          :to="{ name: 'ActionExecConditions', params: { actionId: route.params.actionId } }"
-          class="button neutral"
-          title="View configured automatic triggers and on-demand execution"
-        >
-          Execution conditions ({{ executionConditionCount }})
-        </router-link>
-      </div>
+      <button
+        v-for="dashboard in backToDashboards"
+        :key="dashboard.path"
+        :title="'Back to ' + dashboard.title"
+        class="button neutral inline-icon"
+        @click="goToDashboard(dashboard.path)"
+      >
+        <HugeiconsIcon :icon="DashboardSquare01Icon" />
+        {{ dashboard.title }}
+      </button>
+      <button
+        v-if="action"
+        title="Run this action"
+        class="button neutral inline-icon"
+        @click="startAction"
+      >
+        <HugeiconsIcon :icon="WorkoutRunIcon" />
+        Run
+      </button>
+      <router-link
+        v-if="action"
+        :to="{ name: 'ActionExecConditions', params: { actionId: route.params.actionId } }"
+        class="button neutral"
+        title="View configured automatic triggers and on-demand execution"
+      >
+        Execution conditions ({{ executionConditionCount }})
+      </router-link>
     </template>
 
     <div
@@ -129,67 +130,20 @@
     </div>
 
     <div v-show="filteredLogs.length > 0">
-      <table class="logs-table row-hover">
-        <thead>
-          <tr>
-            <th>Timestamp</th>
-            <th>Duration</th>
-            <th>Execution ID</th>
-            <th>Metadata</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            v-for="log in filteredLogs"
-            :key="log.executionTrackingId"
-            class="log-row"
-            :title="log.actionTitle"
-          >
-            <td class="timestamp">
-              {{ formatTimestamp(log.datetimeStarted) }}
-            </td>
-            <td class="duration">
-              {{ formatExecutionDuration(log) }}
-            </td>
-            <td>
-              <router-link :to="`/logs/${log.executionTrackingId}`">
-                <LogActionTitle :justification="log.justification">
-                  {{ log.executionTrackingId }}
-                </LogActionTitle>
-              </router-link>
-            </td>
-            <td class="tags">
-              <span class="annotation">
-                <span class="annotation-key">User:</span>
-                <span class="annotation-val">{{ log.user }}</span>
-              </span>
-              <span
-                v-if="log.tags && log.tags.length > 0"
-                class="tag-list"
-              >
-                <span
-                  v-for="tag in log.tags"
-                  :key="tag"
-                  class="tag"
-                >{{ tag }}</span>
-              </span>
-            </td>
-            <td class="exit-code">
-              <ActionStatusDisplay
-                :log-entry="log"
-                :link-queued-status="true"
-              />
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <ExecutionLogsTable
+        variant="action-history"
+        :logs="filteredLogs"
+        :loading="loading"
+      >
+        <template #duration="{ row }">
+          {{ formatExecutionDuration(row) }}
+        </template>
+      </ExecutionLogsTable>
 
       <Pagination
         :page-size="pageSize"
         :total="totalCount"
         :current-page="currentPage"
-        :page="currentPage"
         class="padding"
         item-title="execution logs"
         @page-change="handlePageChange"
@@ -215,11 +169,10 @@ import { useRoute, useRouter } from 'vue-router'
 import Pagination from 'picocrank/vue/components/Pagination.vue'
 import Section from 'picocrank/vue/components/Section.vue'
 import ActionIconGlyph from '../components/ActionIconGlyph.vue'
-import ActionStatusDisplay from '../components/ActionStatusDisplay.vue'
 import ActionGroupLimitsLabel from '../components/ActionGroupLimitsLabel.vue'
-import LogActionTitle from '../components/LogActionTitle.vue'
+import ExecutionLogsTable from '../components/ExecutionLogsTable.vue'
 import { HugeiconsIcon } from '@hugeicons/vue'
-import { DashboardSquare01Icon, WorkoutRunIcon } from '@hugeicons/core-free-icons'
+import { DashboardSquare01Icon, PlayIcon, WorkoutRunIcon } from '@hugeicons/core-free-icons'
 import { requestReconnectNow } from '../../../js/websocket.js'
 import { needsArgumentForm } from '../utils/needsArgumentForm.js'
 import { getExecutionLogEntry, updateLogEntryInList } from '../utils/executionLogEvents.js'
@@ -318,16 +271,6 @@ function resetState () {
 
 function clearSearch () {
   searchText.value = ''
-}
-
-function formatTimestamp (timestamp) {
-  if (!timestamp) return 'Unknown'
-  try {
-    const date = new Date(timestamp)
-    return date.toLocaleString()
-  } catch (err) {
-    return timestamp
-  }
 }
 
 function plural (n, singular, pluralForm) {
@@ -483,39 +426,6 @@ onUnmounted(() => {
   font-size: 1.5rem;
 }
 
-.logs-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.logs-table th {
-  background-color: var(--section-background);
-  padding: 0.5rem;
-  text-align: left;
-  font-weight: 600;
-}
-
-.logs-table td {
-  padding: 0.5rem;
-  border-top: 1px solid var(--border-color);
-}
-
-.log-row:hover {
-  background-color: var(--hover-background);
-}
-
-.timestamp {
-  font-family: monospace;
-  font-size: 0.9rem;
-  color: var(--text-secondary);
-}
-
-.duration {
-  font-size: 0.9rem;
-  color: var(--text-secondary);
-  white-space: nowrap;
-}
-
 .empty-state {
   padding: 2rem;
   text-align: center;
@@ -597,13 +507,6 @@ onUnmounted(() => {
 
 .padding {
   padding: 1rem;
-}
-
-.action-details-toolbar {
-  display: inline-flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  align-items: center;
 }
 
 .action-group-list {

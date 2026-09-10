@@ -1,3 +1,12 @@
+# OliveTin Go static analysis is run via `make codestyle` (golangci-lint).
+#
+# This config replaces the former standalone tools:
+#   go vet ./...              -> govet (enable-all)
+#   gocyclo -over 4           -> gocyclo min-complexity: 5
+#   gocritic check ./...      -> gocritic
+#   errcheck, staticcheck, ...-> same-named golangci-lint linters
+#
+# Cyclomatic complexity over 4 is not permitted (min-complexity 5 flags >4).
 version: "2"
 
 run:

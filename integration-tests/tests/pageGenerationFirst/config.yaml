@@ -1,0 +1,13 @@
+listenAddressSingleHTTPFrontend: 0.0.0.0:1337
+
+logLevel: "DEBUG"
+checkForUpdates: false
+
+actions:
+  - title: page-gen-first-action
+    shell: echo first
+
+dashboards:
+  - title: Page Generation First
+    contents:
+      - title: page-gen-first-action

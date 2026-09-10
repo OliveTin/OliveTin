@@ -37,7 +37,11 @@ func Schedule(cfg *config.Config, ex *executor.Executor) {
 				parseCalendarFile(captured, cfg, ex, filename)
 			}
 
-			go filehelper.WatchFileWrite(action.ExecOnCalendarFile, x, filehelper.WatchMeta{
+			go func(calendarFile string, callback func(string), meta filehelper.WatchMeta) {
+				if err := filehelper.WatchFileWrite(calendarFile, callback, meta); err != nil {
+					log.WithFields(log.Fields{"calendarFile": calendarFile}).Errorf("Could not watch calendar file: %v", err)
+				}
+			}(action.ExecOnCalendarFile, x, filehelper.WatchMeta{
 				ActionID:    action.ID,
 				ActionTitle: action.Title,
 				ConfigFile:  action.SourceFile,

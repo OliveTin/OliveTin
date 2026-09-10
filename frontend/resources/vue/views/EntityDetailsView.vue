@@ -1,5 +1,5 @@
 <template>
-  <Section>
+  <Section :icon="CellsIcon">
     <template #title>
       <span class="section-title-with-icon">
         Entity Details:
@@ -13,7 +13,9 @@
     </template>
     <template #toolbar>
       <button
-        class="back-button"
+        type="button"
+        class="button neutral inline-icon"
+        title="Back"
         @click="goBack"
       >
         <HugeiconsIcon
@@ -21,10 +23,13 @@
           width="1.2em"
           height="1.2em"
         />
-        <span>Back</span>
+        Back
       </button>
     </template>
-    <div v-if="!entityDetails">
+    <div v-if="entityNotFound">
+      <p>Entity not found.</p>
+    </div>
+    <div v-else-if="!entityDetails">
       <p>Loading entity details...</p>
     </div>
     <template v-else>
@@ -37,12 +42,6 @@
           >
             {{ entityType }}
           </router-link>
-        </dd>
-        <dt v-if="entityDetails.title">
-          Title
-        </dt>
-        <dd v-if="entityDetails.title">
-          {{ entityDetails.title }}
         </dd>
         <template v-if="entityDetails.fields">
           <template
@@ -63,6 +62,7 @@
   <Section
     v-if="entityDetails"
     title="Dashboard Entity Directories"
+    :icon="Folder01Icon"
   >
     <div
       v-if="filteredDirectories.length > 0"
@@ -123,16 +123,17 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { HugeiconsIcon } from '@hugeicons/vue'
-import { ArrowLeftIcon } from '@hugeicons/core-free-icons'
+import { ArrowLeftIcon, CellsIcon, Folder01Icon } from '@hugeicons/core-free-icons'
 import Section from 'picocrank/vue/components/Section.vue'
 import ActionButton from '../ActionButton.vue'
 import ActionIconGlyph from '../components/ActionIconGlyph.vue'
 
 const router = useRouter()
 const entityDetails = ref(null)
+const entityNotFound = ref(false)
 
 const props = defineProps({
   entityType: String,
@@ -154,6 +155,10 @@ function goBack () {
   router.push({ name: 'Entities' })
 }
 
+function isEntityNotFoundError (err) {
+  return err.status === 404 || err.code === 'NotFound' || err.message?.includes('not found')
+}
+
 async function fetchEntityDetails () {
   try {
     const response = await window.client.getEntity({
@@ -162,38 +167,33 @@ async function fetchEntityDetails () {
     })
 
     entityDetails.value = response
+    entityNotFound.value = false
   } catch (err) {
+    if (isEntityNotFoundError(err)) {
+      entityDetails.value = null
+      entityNotFound.value = true
+      return
+    }
+
     console.error('Failed to fetch entity details:', err)
     window.showBigError('fetch-entity-details', 'getting entity details', err, false)
   }
 }
 
 onMounted(() => {
-	    fetchEntityDetails()
+  fetchEntityDetails()
+  window.addEventListener('EventEntityChanged', fetchEntityDetails)
+  window.addEventListener('EventConfigChanged', fetchEntityDetails)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('EventEntityChanged', fetchEntityDetails)
+  window.removeEventListener('EventConfigChanged', fetchEntityDetails)
 })
 
 </script>
 
 <style scoped>
-.back-button {
-    display: flex;
-    align-items: center;
-    gap: 0.5em;
-    padding: 0.5em 1em;
-    background-color: var(--bg, #fff);
-    border: 1px solid var(--border-color, #ccc);
-    border-radius: 0.5em;
-    cursor: pointer;
-    font-size: 0.9em;
-    box-shadow: 0 0 .3em rgba(0, 0, 0, 0.1);
-    transition: background-color 0.2s, box-shadow 0.2s;
-}
-
-.back-button:hover {
-    background-color: var(--bg-hover, #f5f5f5);
-    box-shadow: 0 0 .5em rgba(0, 0, 0, 0.15);
-}
-
 .directory-list a {
     text-decoration: none;
     padding: 0.5em;
@@ -236,15 +236,6 @@ fieldset {
 }
 
 @media (prefers-color-scheme: dark) {
-    .back-button {
-        background-color: var(--bg, #111);
-        border-color: var(--border-color, #333);
-    }
-
-    .back-button:hover {
-        background-color: var(--bg-hover, #222);
-    }
-
     .directory-list a:hover {
         background-color: var(--bg-hover, #222);
     }

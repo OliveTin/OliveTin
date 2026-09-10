@@ -199,6 +199,49 @@ function consumeAndFlashPendingResult () {
 // Timestamps
 const updateIterationTimestamp = ref(0)
 
+function isBindingBusy () {
+  const id = bindingId.value
+  if (!id) {
+    return false
+  }
+
+  const state = bindingExecutionState[id]
+  return !!(state?.hasRunning || state?.hasQueued)
+}
+
+function applyCanExecFromServer (json) {
+  if (json?.canExec === undefined) {
+    return
+  }
+
+  canExec.value = json.canExec
+
+  if (!isBindingBusy()) {
+    isDisabled.value = !json.canExec
+  }
+}
+
+async function refreshCanExecFromServer () {
+  const id = bindingId.value
+  if (!id || !window.client) {
+    return
+  }
+
+  try {
+    const response = await window.client.getActionBinding({ bindingId: id })
+    if (response?.action) {
+      applyCanExecFromServer(response.action)
+      updateFromJson(response.action)
+    }
+  } catch (err) {
+    console.error('Failed to refresh action exec permission:', err)
+  }
+}
+
+function onEntityOrConfigChanged () {
+  refreshCanExecFromServer()
+}
+
 function constructFromJson (json) {
   updateIterationTimestamp.value = 0
 
@@ -206,7 +249,6 @@ function constructFromJson (json) {
 
   bindingId.value = json.bindingId
   title.value = json.title
-  canExec.value = json.canExec
   popupOnStart.value = json.popupOnStart
 
   if (popupOnStart.value.includes('execution-dialog')) {
@@ -217,7 +259,7 @@ function constructFromJson (json) {
     navigateOnStart.value = 'arg'
   }
 
-  isDisabled.value = !json.canExec
+  applyCanExecFromServer(json)
   displayTitle.value = title.value
   glyph.value = json.icon ?? ''
   // Initialize rate limit from action data (parse datetime string)
@@ -231,9 +273,9 @@ function constructFromJson (json) {
   if (bindingId.value) {
     rateLimits[bindingId.value] = rateLimitExpires.value
     setBindingExecutionState(
-	  bindingId.value,
-	  !!json.hasRunningInstance,
-	  !!json.hasQueuedInstance
+      bindingId.value,
+      !!json.hasRunningInstance,
+      !!json.hasQueuedInstance
     )
   }
   updateRateLimitStatus()
@@ -242,6 +284,8 @@ function constructFromJson (json) {
 function updateFromJson (json) {
   // Fields that should not be updated
   // title - as the callback URL relies on it
+
+  applyCanExecFromServer(json)
 
   // Update rate limiting if changed (parse datetime string)
   if (json.datetimeRateLimitExpires) {
@@ -266,8 +310,8 @@ function updateRateLimitStatus () {
     isRateLimited.value = false
     rateLimitMessage.value = ''
     if (rateLimitInterval.value) {
-	  clearInterval(rateLimitInterval.value)
-	  rateLimitInterval.value = null
+      clearInterval(rateLimitInterval.value)
+      rateLimitInterval.value = null
     }
     return
   }
@@ -281,8 +325,8 @@ function updateRateLimitStatus () {
     rateLimitMessage.value = ''
     rateLimitExpires.value = 0
     if (rateLimitInterval.value) {
-	  clearInterval(rateLimitInterval.value)
-	  rateLimitInterval.value = null
+      clearInterval(rateLimitInterval.value)
+      rateLimitInterval.value = null
     }
   } else {
     // Still rate limited
@@ -292,9 +336,9 @@ function updateRateLimitStatus () {
 
     // Set up interval to update every second
     if (!rateLimitInterval.value) {
-	  rateLimitInterval.value = setInterval(() => {
+      rateLimitInterval.value = setInterval(() => {
         updateRateLimitStatus()
-	  }, 1000)
+      }, 1000)
     }
   }
 }
@@ -316,12 +360,12 @@ async function handleClick () {
     const bindingId = props.actionData.bindingId
     const prefilled = props.prefilledArguments || {}
     if (Object.keys(prefilled).length > 0) {
-	  router.push({
+      router.push({
         path: `/actionBinding/${bindingId}/argumentForm`,
         state: { prefilledArguments: prefilled }
-	  })
+      })
     } else {
-	  router.push(`/actionBinding/${bindingId}/argumentForm`)
+      router.push(`/actionBinding/${bindingId}/argumentForm`)
     }
   } else {
     await startAction()
@@ -395,7 +439,7 @@ async function startAction (actionArgs) {
   stopButtonResultWatch = watch(
     () => buttonResults[startActionArgs.uniqueTrackingId],
     (newResult, oldResult) => {
-	  onLogEntryChanged(newResult)
+      onLogEntryChanged(newResult)
     }
   )
 
@@ -406,11 +450,11 @@ async function startAction (actionArgs) {
     const trackingId = response.executionTrackingId || startActionArgs.uniqueTrackingId
 
     if (popupOnStart.value && popupOnStart.value.includes('execution-dialog')) {
-	  router.push(`/logs/${trackingId}`)
+      router.push(`/logs/${trackingId}`)
     }
 
     if (!connectionState.connected) {
-	  await pollExecutionUntilDone(trackingId)
+      await pollExecutionUntilDone(trackingId)
     }
   } catch (err) {
     stopWatchingButtonResult()
@@ -502,20 +546,22 @@ function onExecStatusChanged () {
 
 onMounted(() => {
   constructFromJson(props.actionData)
+  window.addEventListener('EventEntityChanged', onEntityOrConfigChanged)
+  window.addEventListener('EventConfigChanged', onEntityOrConfigChanged)
 
   // Watch the central rate limit store for updates to this button's bindingId
   // Watch the entire rateLimits object to ensure reactivity with dynamic keys
   watch(
     rateLimits,
     () => {
-	  const id = bindingId.value
-	  if (id && rateLimits[id] !== undefined) {
+      const id = bindingId.value
+      if (id && rateLimits[id] !== undefined) {
         const newExpires = rateLimits[id]
         if (newExpires !== rateLimitExpires.value) {
-		  rateLimitExpires.value = newExpires
-		  updateRateLimitStatus()
+          rateLimitExpires.value = newExpires
+          updateRateLimitStatus()
         }
-	  }
+      }
     },
     { deep: true }
   )
@@ -524,9 +570,9 @@ onMounted(() => {
   watch(
     () => pendingBindingFlash[bindingId.value],
     (pending) => {
-	  if (pending) {
+      if (pending) {
         consumeAndFlashPendingResult()
-	  }
+      }
     },
     { immediate: true }
   )
@@ -534,6 +580,8 @@ onMounted(() => {
 
 onUnmounted(() => {
   isComponentMounted.value = false
+  window.removeEventListener('EventEntityChanged', onEntityOrConfigChanged)
+  window.removeEventListener('EventConfigChanged', onEntityOrConfigChanged)
   if (rateLimitInterval.value) {
     clearInterval(rateLimitInterval.value)
     rateLimitInterval.value = null
@@ -545,7 +593,7 @@ watch(
   (newData) => {
     updateFromJson(newData)
     if (newData?.icon !== undefined) {
-	  glyph.value = newData.icon ?? ''
+      glyph.value = newData.icon ?? ''
     }
   },
   { deep: true }

@@ -27,7 +27,7 @@ authOAuth2Providers:
 * `tokenUrl` - the URL to exchange the code for a token
 * `whoamiUrl` - the URL to fetch user information from
 * `usernameField` - the field in the user information response to use as the username
-* `userGroupField` - the field in the user information response to use as the group. This is a string containing one group name, e.g. `olivetin_group`
+* `userGroupField` - the field in the user information response to use as the group. This can either be a string containing one group name (e.g. `olivetin_group`), or an array of group names (e.g. a `groups` claim returned by many OIDC providers). When multiple groups are found, they are joined into one usergroup value using `authHttpHeaderUserGroupSep` (space-separated by default) - see xref:security/acl.adoc[Access Control Lists] for how this is matched against ACLs.
 * `addToUsergroup` - a group name to add to every user who logs in via this provider. If the user already has a usergroup (e.g. from `userGroupField`), this value is appended to it; otherwise it becomes the user's usergroup. Useful for giving all users from this provider a common group for ACLs, e.g. `addToUsergroup: github`
 * `certBundlePath` - the path to a certificate to add to the truststore for authentication requests, e.g. `/certs/internal.crt`
 * `insecureSkipVerify` - a boolean to disable certificate verfication
@@ -70,7 +70,7 @@ authOAuth2Providers:
     addToUsergroup: github
 ```
 
-Then in your actions you can restrict access with `allowedUserGroups: ["github"]`.
+Then in your ACLs you can restrict access with `matchUsergroups: ["github"]`.
 
 === Combining with userGroupField
 
@@ -103,4 +103,4 @@ authOAuth2Providers:
     addToUsergroup: google
 ```
 
-Then use ACLs such as `allowedUserGroups: ["github"]` for GitHub-only actions or `allowedUserGroups: ["github", "google"]` for any OAuth user.
+Then use ACLs such as `matchUsergroups: ["github"]` for GitHub-only actions or `matchUsergroups: ["github", "google"]` for any OAuth user.

@@ -4,6 +4,7 @@ import { expect } from 'chai'
 import { Condition } from 'selenium-webdriver'
 
 export const DEFAULT_UI_WAIT_MS = 3000
+const FAST_POLL_MS = 50
 
 // Keep Selenium helpers in lockstep with the frontend DOM id helpers.
 export {
@@ -15,6 +16,67 @@ export {
 } from '../../frontend/resources/vue/utils/argumentFieldIds.js'
 
 const executionDialogStatusBy = By.css('.execution-dialog-status')
+const sidebarIds = ['mainnav', 'picocrank-sidebar']
+
+const sidebarNavLinksSelector = [
+  sidebarCss('menu.navigation-links > li:not(.nav-section)'),
+  sidebarCss('menu.nav-section-links > li')
+].join(', ')
+
+let loadedPageGeneration = null
+
+function sidebarCss (suffix) {
+  return sidebarIds.map((id) => `#${id} ${suffix}`).join(', ')
+}
+
+function isSamePagePath (currentUrl, targetUrl) {
+  try {
+    return new URL(currentUrl).pathname === new URL(targetUrl).pathname
+  } catch {
+    return false
+  }
+}
+
+async function waitUntil (description, fn, timeoutMs = DEFAULT_UI_WAIT_MS) {
+  await webdriver.wait(
+    new Condition(description, fn),
+    timeoutMs,
+    undefined,
+    FAST_POLL_MS
+  )
+}
+
+async function getBodyAttribute (name) {
+  return webdriver.executeScript(
+    (attributeName) => document.body.getAttribute(attributeName),
+    name
+  )
+}
+
+async function isSidebarVisibleInBrowser () {
+  return webdriver.executeScript((ids) => {
+    for (const id of ids) {
+      const sidebar = document.getElementById(id)
+      if (!sidebar) {
+        continue
+      }
+
+      const classes = sidebar.className
+      if (classes.includes('shown') || classes.includes('stuck')) {
+        return true
+      }
+    }
+
+    return false
+  }, sidebarIds)
+}
+
+async function countNavigationLinksInBrowser () {
+  return webdriver.executeScript(
+    (selector) => document.querySelectorAll(selector).length,
+    sidebarNavLinksSelector
+  )
+}
 
 export async function getActionButtons () {
   // Currently, only the active dashboard's contents are rendered,
@@ -23,10 +85,10 @@ export async function getActionButtons () {
 }
 
 export async function getExecutionDialogOutput() {
-    await webdriver.wait(new Condition('Dialog with long int is visible', async () => {
+    await waitUntil('Dialog with long int is visible', async () => {
       const dialog = await webdriver.findElement({ id: 'execution-results-popup' })
       return await dialog.isDisplayed()
-    }));
+    })
 
     const ret = await webdriver.executeScript('return window.logEntries.get(window.executionDialog.executionTrackingId).output')
 
@@ -52,7 +114,7 @@ export function takeScreenshot (webdriver, title) {
     fs.mkdirSync('screenshots', { recursive: true });
 
   title = title.replaceAll('config: ', '')
-	title = title.replaceAll(/[\(\)\|\*\<\>\:]/g, "_")
+	title = title.replaceAll(/[()|*<>:]/g, '_')
 	title = title + '.failed-test'
 
     fs.writeFileSync('screenshots/' + title + '.png', img, 'base64')
@@ -60,11 +122,8 @@ export function takeScreenshot (webdriver, title) {
 }
 
 export async function waitForDashboardLoaded(timeoutMs = DEFAULT_UI_WAIT_MS, expectedTitle = null) {
-  await webdriver.wait(new Condition('wait for loaded-dashboard', async function () {
-    const body = await webdriver.findElement(By.tagName('body'))
-    const attr = await body.getAttribute('loaded-dashboard')
-
-    console.log('loaded-dashboard: ', attr)
+  await waitUntil('wait for loaded-dashboard', async function () {
+    const attr = await getBodyAttribute('loaded-dashboard')
 
     if (attr == null || attr === '') {
       return false
@@ -75,118 +134,133 @@ export async function waitForDashboardLoaded(timeoutMs = DEFAULT_UI_WAIT_MS, exp
     }
 
     return true
-  }), timeoutMs)
+  }, timeoutMs)
 }
 
 export async function waitForLogsPage(timeoutMs = DEFAULT_UI_WAIT_MS) {
-  await webdriver.wait(new Condition('wait for logs page', async () => {
+  await waitUntil('wait for logs page', async () => {
     const url = await webdriver.getCurrentUrl()
     return url.includes('/logs/') && !url.endsWith('/logs')
-  }), timeoutMs)
+  }, timeoutMs)
 }
 
 export async function waitForArgumentFormPage(timeoutMs = DEFAULT_UI_WAIT_MS) {
-  await webdriver.wait(new Condition('wait for argument form page', async () => {
+  await waitUntil('wait for argument form page', async () => {
     const url = await webdriver.getCurrentUrl()
     return url.includes('/actionBinding/') && url.includes('/argumentForm')
-  }), timeoutMs)
+  }, timeoutMs)
 }
 
 export async function waitForArgumentFormReady(timeoutMs = DEFAULT_UI_WAIT_MS) {
-  await webdriver.wait(new Condition('wait for argument form ready', async () => {
-    const body = await webdriver.findElement(By.tagName('body'))
-    const attr = await body.getAttribute('loaded-argument-form')
+  await waitUntil('wait for argument form ready', async () => {
+    const attr = await getBodyAttribute('loaded-argument-form')
     return attr != null && attr !== ''
-  }), timeoutMs)
+  }, timeoutMs)
 }
 
 export async function waitForExecutionComplete(timeoutMs = DEFAULT_UI_WAIT_MS) {
-  await webdriver.wait(new Condition('wait for execution status', async () => {
+  await waitUntil('wait for execution to finish', async () => {
     const statusElements = await webdriver.findElements(executionDialogStatusBy)
-    return statusElements.length > 0
-  }), timeoutMs)
-
-  await webdriver.wait(new Condition('wait for execution to finish', async () => {
-    try {
-      const statusElement = await webdriver.findElement(executionDialogStatusBy)
-      const statusText = await statusElement.getText()
-      return !statusText.includes('Still running') && !statusText.includes('Queued')
-    } catch (e) {
+    if (statusElements.length === 0) {
       return false
     }
-  }), timeoutMs)
+
+    try {
+      const statusText = await statusElements[0].getText()
+      return !statusText.includes('Still running') && !statusText.includes('Queued')
+    } catch {
+      return false
+    }
+  }, timeoutMs)
 }
 
 export async function getRootAndWait() {
-  await webdriver.get(runner.baseUrl())
+  const targetUrl = runner.baseUrl()
+  const sameConfig = loadedPageGeneration === runner.pageGeneration
+
+  if (sameConfig && isSamePagePath(await webdriver.getCurrentUrl(), targetUrl)) {
+    const attr = await getBodyAttribute('loaded-dashboard')
+    if (attr != null && attr !== '') {
+      return
+    }
+  }
+
+  await webdriver.get(targetUrl)
   await waitForDashboardLoaded()
+  loadedPageGeneration = runner.pageGeneration
+}
+
+async function isSidebarVisible () {
+  return isSidebarVisibleInBrowser()
 }
 
 export async function closeSidebar() {
-  await webdriver.findElement(By.id('sidebar-toggler-button')).click()
+  if (await isSidebarVisible()) {
+    await webdriver.findElement(By.id('sidebar-toggler-button')).click()
+  }
 
-  const sidebar = await webdriver.findElement(By.id('mainnav'))
-
-  const neededLeft = '-250px' // Assuming sidebar is closed at this position
-
-  let lastLeft = ''
-
-  await webdriver.wait(new Condition('wait for sidebar to close', async function() {
-    const left = await sidebar.getCssValue('left')
-
-    if (left !== lastLeft) {
-      lastLeft = left
-      console.log('Sidebar left changed to: ', left)
-      return false
-    } else {
-      console.log('Sidebar closed, left is: *' + left, left === neededLeft ? ' (as expected)' : '')
-      return left === neededLeft
-    }
-  }), DEFAULT_UI_WAIT_MS)
+  await waitUntil('wait for sidebar to close', async () => {
+    return !(await isSidebarVisible())
+  })
 }
 
 export async function openSidebar() {
+  if (await isSidebarVisible()) {
+    return
+  }
+
   await webdriver.findElement(By.id('sidebar-toggler-button')).click()
 
-  const sidebar = await webdriver.findElement(By.id('mainnav'))
-
-  let lastLeft = 0
-
-  await webdriver.wait(new Condition('wait for sidebar to open', async function() {
-    const left = await sidebar.getCssValue('left')
-
-    if (left !== lastLeft) {
-      lastLeft = left
-      console.log('Sidebar left changed to: ', left)
-      return false
-    } else {
-      console.log('Sidebar opened, left is: ', left)
-      return true
-    }
-  }), DEFAULT_UI_WAIT_MS)
+  await waitUntil('wait for sidebar to open', async () => {
+    return await isSidebarVisible()
+  })
 }
 
 export async function getNavigationLinks() {
-  // Exclude section containers and legacy section header rows; count only link items.
-  const navigationLinks = await webdriver.findElements(
-    By.css('.navigation-links li:not(.nav-section-header-item):not(.nav-section)')
-  )
+  return await webdriver.findElements(By.css(sidebarNavLinksSelector))
+}
 
-  return navigationLinks
+export async function getNavigationLinkTitles () {
+  return webdriver.executeScript((selector) => {
+    return [...document.querySelectorAll(selector)].map((linkElement) => {
+      const title = linkElement.getAttribute('title')
+      if (title) {
+        return title
+      }
+
+      const anchor = linkElement.querySelector('a[href]')
+      return anchor ? anchor.textContent.trim() : ''
+    })
+  }, sidebarNavLinksSelector)
+}
+
+export async function waitForNavigationLinks (minimumCount = 1, timeoutMs = DEFAULT_UI_WAIT_MS) {
+  await waitUntil(`wait for at least ${minimumCount} navigation links`, async () => {
+    const count = await countNavigationLinksInBrowser()
+    return count >= minimumCount
+  }, timeoutMs)
+}
+
+export async function getNavigationLinkTitle (linkElement) {
+  const title = await linkElement.getAttribute('title')
+  if (title) {
+    return title
+  }
+
+  const anchor = await linkElement.findElement(By.css('a[href]'))
+  return await anchor.getText()
+}
+
+export async function findSidebarNavHref (href) {
+  return await webdriver.findElements(By.css(sidebarCss(`a[href="${href}"]`)))
 }
 
 export async function requireExecutionDialogStatus (webdriver, expected) {
-  await webdriver.wait(new Condition('wait for action to be running', async function () {
+  await waitUntil('wait for action to be running', async function () {
     const dialogStatus = await webdriver.findElement(executionDialogStatusBy)
     const actual = await dialogStatus.getText()
-
-    if (actual === expected) {
-      return true
-    } else {
-      console.log('Waiting for domStatus text to be: ', expected, ', it is currently: ', actual)
-      return false
-    }
-  }), DEFAULT_UI_WAIT_MS)
+    return actual === expected
+  })
 }
 
 export async function findExecutionDialog (webdriver) {
@@ -214,4 +288,21 @@ export async function getTerminalBuffer() {
     console.log('[getTerminalBuffer] Error:', e.message)
     return null
   }
+}
+
+export async function waitForCurrentUrl (predicate, timeoutMs = DEFAULT_UI_WAIT_MS) {
+  await waitUntil('wait for url', async () => {
+    const url = await webdriver.getCurrentUrl()
+    return predicate(url)
+  }, timeoutMs)
+}
+
+export async function waitForSelectorCount (selector, minimumCount = 1, timeoutMs = DEFAULT_UI_WAIT_MS) {
+  await waitUntil(`wait for at least ${minimumCount} ${selector}`, async () => {
+    const count = await webdriver.executeScript(
+      (cssSelector) => document.querySelectorAll(cssSelector).length,
+      selector
+    )
+    return count >= minimumCount
+  }, timeoutMs)
 }

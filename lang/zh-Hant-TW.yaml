@@ -27,6 +27,7 @@ translations:
   logs.no-logs-for-filter: 沒有符合目前過濾條件的日誌。
   logs.timestamp: 時間戳記
   logs.action: 動作
+  logs.execution-id: 執行 ID
   logs.metadata: 中繼資料
   logs.status: 狀態
   logs.no-logs-to-display: 目前沒有可顯示的日誌。

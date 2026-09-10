@@ -1,3 +1,3 @@
-//go:generate make -wC ../
+//go:generate make -wC ../ proto
 
 package main

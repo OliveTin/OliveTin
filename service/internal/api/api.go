@@ -41,6 +41,8 @@ type oliveTinAPI struct {
 	// We use a map for efficient membership and deletion; ordering is not required.
 	streamingClients      map[*streamingClient]struct{}
 	streamingClientsMutex sync.RWMutex
+
+	entityListenerRegistered bool
 }
 
 const maxEventStreamClients = 16
@@ -1208,14 +1210,25 @@ func (api *oliveTinAPI) removeClient(clientToRemove *streamingClient) {
 }
 
 func (api *oliveTinAPI) OnActionMapRebuilt() {
+	api.broadcastEventStream(&apiv1.EventStreamResponse{
+		Event: &apiv1.EventStreamResponse_ConfigChanged{
+			ConfigChanged: &apiv1.EventConfigChanged{},
+		},
+	})
+}
+
+func (api *oliveTinAPI) onEntityChanged() {
+	api.broadcastEventStream(&apiv1.EventStreamResponse{
+		Event: &apiv1.EventStreamResponse_EntityChanged{
+			EntityChanged: &apiv1.EventEntityChanged{},
+		},
+	})
+}
+
+func (api *oliveTinAPI) broadcastEventStream(msg *apiv1.EventStreamResponse) {
 	toRemove := []*streamingClient{}
 
 	for _, client := range api.copyOfStreamingClients() {
-		msg := &apiv1.EventStreamResponse{
-			Event: &apiv1.EventStreamResponse_ConfigChanged{
-				ConfigChanged: &apiv1.EventConfigChanged{},
-			},
-		}
 		if !api.trySendEventToClient(client, msg) {
 			toRemove = append(toRemove, client)
 		}
@@ -1722,12 +1735,37 @@ func entityListFields(data any, properties []config.EntityProperty) map[string]s
 		return nil
 	}
 
+	dataMap, _ := data.(map[string]any)
+	displayFieldKey := entities.DisplayNameFieldKey(data)
 	fields := make(map[string]string, len(properties))
 	for _, property := range properties {
+		actualKey := entityDataPropertyKey(dataMap, property.Name)
+		if entityFieldIsSelectedDisplayName(actualKey, displayFieldKey) {
+			continue
+		}
 		fields[property.Name] = entityPropertyValue(data, property.Name)
 	}
 
 	return fields
+}
+
+func entityDataPropertyKey(dataMap map[string]any, propertyName string) string {
+	if dataMap == nil {
+		return propertyName
+	}
+
+	if _, found := dataMap[propertyName]; found {
+		return propertyName
+	}
+
+	propertyNameLower := strings.ToLower(propertyName)
+	for key := range dataMap {
+		if strings.ToLower(key) == propertyNameLower {
+			return key
+		}
+	}
+
+	return propertyName
 }
 
 func entityPropertyValue(data any, propertyName string) string {
@@ -1777,11 +1815,22 @@ func serializeEntityFields(data any) map[string]string {
 		return nil
 	}
 
-	fields := make(map[string]string)
+	return serializeEntityFieldsFromMap(dataMap, entities.DisplayNameFieldKey(data))
+}
+
+func serializeEntityFieldsFromMap(dataMap map[string]any, omitFieldKey string) map[string]string {
+	fields := make(map[string]string, len(dataMap))
 	for k, v := range dataMap {
+		if entityFieldIsSelectedDisplayName(k, omitFieldKey) {
+			continue
+		}
 		fields[k] = fmt.Sprintf("%v", v)
 	}
 	return fields
+}
+
+func entityFieldIsSelectedDisplayName(fieldName, displayFieldKey string) bool {
+	return displayFieldKey != "" && fieldName == displayFieldKey
 }
 
 func (api *oliveTinAPI) RestartAction(ctx ctx.Context, req *connect.Request[apiv1.RestartActionRequest]) (*connect.Response[apiv1.StartActionResponse], error) {
@@ -1840,7 +1889,13 @@ var (
 // RegisterExecutorListener registers the API server as an executor listener during startup.
 // Call this before background goroutines that may trigger RebuildActionMap.
 func RegisterExecutorListener(ex *executor.Executor) {
-	ensureExecutorListener(ex)
+	server := ensureExecutorListener(ex)
+	if server.entityListenerRegistered {
+		return
+	}
+
+	server.entityListenerRegistered = true
+	entities.AddListener(server.onEntityChanged)
 }
 
 func ensureExecutorListener(ex *executor.Executor) *oliveTinAPI {

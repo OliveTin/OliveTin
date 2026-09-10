@@ -38,6 +38,39 @@ func testingExecutor() (*Executor, *config.Config) {
 	return e, cfg
 }
 
+func TestGetLogReturnsDefensiveCopy(t *testing.T) {
+	e := DefaultExecutor(config.DefaultConfig())
+	e.logs["tracking-id"] = &InternalLogEntry{
+		Arguments: map[string]string{"message": "original"},
+		Output:    "original",
+		Tags:      []string{"original"},
+		Binding: &ActionBinding{
+			ID: "original-binding",
+			OnDashboards: []DashboardNavigationTarget{
+				{Title: "original"},
+			},
+		},
+	}
+
+	entry, found := e.GetLog("tracking-id")
+	require.True(t, found)
+
+	entry.Arguments["message"] = "changed"
+	entry.Output = "changed"
+	entry.Tags[0] = "changed"
+	entry.Binding.ID = "changed-binding"
+	entry.Binding.OnDashboards[0].Title = "changed"
+
+	stored, found := e.GetLog("tracking-id")
+	require.True(t, found)
+	assert.Equal(t, "original", stored.Arguments["message"])
+	assert.Equal(t, "original", stored.Output)
+	assert.Equal(t, []string{"original"}, stored.Tags)
+	require.NotNil(t, stored.Binding)
+	assert.Equal(t, "original-binding", stored.Binding.ID)
+	assert.Equal(t, []DashboardNavigationTarget{{Title: "original"}}, stored.Binding.OnDashboards)
+}
+
 func TestCreateExecutorAndExec(t *testing.T) {
 	e, cfg := testingExecutor()
 
@@ -1040,6 +1073,84 @@ func TestStepSaveLogSanitizesNULInTitle(t *testing.T) {
 	output, err := os.ReadFile(outputPath)
 	assert.NoError(t, err)
 	assert.Equal(t, "nul ok", string(output))
+}
+
+func TestBlockedExecutionPersistsSaveLogs(t *testing.T) {
+	t.Parallel()
+
+	resultsDir := t.TempDir()
+	outputDir := t.TempDir()
+
+	action := &config.Action{
+		Title:         "Blocked report",
+		Shell:         "sleep 1",
+		MaxConcurrent: 1,
+		SaveLogs: config.SaveLogsConfig{
+			ResultsDirectory: resultsDir,
+			OutputDirectory:  outputDir,
+		},
+	}
+
+	e, cfg := testGroupExecutor([]*config.Action{action}, nil)
+	binding := e.FindBindingWithNoEntity(action)
+
+	wg1, tracking1 := e.ExecRequest(&ExecutionRequest{
+		Binding:           binding,
+		Cfg:               cfg,
+		AuthenticatedUser: auth.UserFromSystem(cfg, "testuser"),
+	})
+
+	waitUntilExecutionStarted(t, e, tracking1)
+
+	wg2, tracking2 := e.ExecRequest(&ExecutionRequest{
+		Binding:           binding,
+		Cfg:               cfg,
+		AuthenticatedUser: auth.UserFromSystem(cfg, "testuser"),
+	})
+
+	wg1.Wait()
+	wg2.Wait()
+
+	snapshot, ok := e.SnapshotLog(tracking2)
+	require.True(t, ok)
+	require.True(t, snapshot.Blocked)
+
+	resultsEntries, err := os.ReadDir(resultsDir)
+	require.NoError(t, err)
+
+	var resultsPath string
+
+	for _, entry := range resultsEntries {
+		if strings.Contains(entry.Name(), tracking2) {
+			resultsPath = filepath.Join(resultsDir, entry.Name())
+			break
+		}
+	}
+
+	require.NotEmpty(t, resultsPath)
+
+	outputEntries, err := os.ReadDir(outputDir)
+	require.NoError(t, err)
+
+	var outputPath string
+
+	for _, entry := range outputEntries {
+		if strings.Contains(entry.Name(), tracking2) {
+			outputPath = filepath.Join(outputDir, entry.Name())
+			break
+		}
+	}
+
+	require.NotEmpty(t, outputPath)
+
+	resultsData, err := os.ReadFile(resultsPath)
+	require.NoError(t, err)
+	assert.Contains(t, string(resultsData), "blocked: true")
+	assert.Contains(t, string(resultsData), tracking2)
+
+	outputData, err := os.ReadFile(outputPath)
+	require.NoError(t, err)
+	assert.Contains(t, string(outputData), "Blocked from executing due to concurrency limit")
 }
 
 func TestStepSaveLogReturnsFalseWhenDependenciesMissing(t *testing.T) {

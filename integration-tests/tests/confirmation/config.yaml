@@ -1,0 +1,37 @@
+---
+listenAddressSingleHTTPFrontend: 0.0.0.0:1337
+
+logLevel: "DEBUG"
+checkForUpdates: false
+defaultPopupOnStart: execution-dialog
+
+actions:
+  # Docs: https://docs.olivetin.app/args/input_confirmation.html
+  # Unnamed confirmation is a UI-only gate; nothing is substituted into the command.
+  - title: Test unnamed confirmation argument
+    exec:
+      - echo
+      - "Confirmed action ran"
+    icon: ping
+    arguments:
+      - type: confirmation
+        title: Are you sure?!
+
+  # Named confirmation values are only ever 0 or 1, so they are safe with shell actions.
+  - title: Test named confirmation argument
+    exec:
+      - echo
+      - "Confirmation value: {{ agree }}"
+    icon: ping
+    arguments:
+      - name: agree
+        type: confirmation
+        title: I understand the consequences
+
+  - title: Test shell with named confirmation
+    shell: "echo 'Shell confirmation value: {{ agree }}'"
+    icon: ping
+    arguments:
+      - name: agree
+        type: confirmation
+        title: Are you sure?!

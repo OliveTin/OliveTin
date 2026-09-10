@@ -40,11 +40,11 @@ dashboards:
 
 Note, to use this configuration, you will need to replace `-- your password hash here --` with a password hash. You can generate a password hash by looking at the options in the xref:security/local.adoc[local-users] configuration section.
 
-== Important configuration option: `AuthRequireGuestsToLogin`
+== Important configuration option: `authRequireGuestsToLogin`
 
-The `AuthRequireGuestsToLogin` option is a helpful shortcut that sets all `defaultPermissions` to false, and makes it so that all guests are prompted to login before they can do anything with OliveTin.
+The `authRequireGuestsToLogin` option is a helpful shortcut that sets all `defaultPermissions` to false, and makes it so that all guests are prompted to login before they can do anything with OliveTin.
 
-Technically, you could achieve the same effect by setting `defaultPermissions` to `false` and setting up an ACL that allows access to the login page, but `AuthRequireGuestsToLogin` is a more convenient way to achieve the same effect.
+Technically, you could achieve the same effect by setting `defaultPermissions` to `false` and setting up an ACL that allows access to the login page, but `authRequireGuestsToLogin` is a more convenient way to achieve the same effect.
 
 == Per-action ACLs, vs `addToEveryAction`
 

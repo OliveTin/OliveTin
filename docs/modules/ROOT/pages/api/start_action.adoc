@@ -13,7 +13,7 @@ Used by:
 *** xref:api/method_StartActionByGet.adoc[StartActionByGet]
 *** xref:api/method_StartActionByGetAndWait.adoc[StartActionByGetAndWait]
 
-If you are trying to integrate OliveTin with your own scripts or processes, it's probably easiest to start actions by using an ID directly in the URL, <<api-eg-startIdUrl,see the example>>.
+If you are trying to integrate OliveTin with your own scripts or processes, it's probably easiest to start actions by using an ID directly in the URL, xref:api/method_StartActionByGet.adoc#api-eg-startIdUrl[see the example].
 
 [#api-request-obj]
 == Request type: OliveTin request object
@@ -101,5 +101,3 @@ Used by:
     }
 }
 ----
-
-

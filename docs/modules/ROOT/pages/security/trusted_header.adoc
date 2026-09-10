@@ -17,18 +17,18 @@ To configure Trusted Header Authorization, set the following configuration optio
 .`config.yaml`
 ----
 authHttpHeaderUsername: "X-Username"
-authHttpHeaderUsergroup: "X-Usergroup"
+authHttpHeaderUserGroup: "X-Usergroup"
 ----
 
 The value of `X-Username` and `X-Usergroup` can be whatever you like, as long as they match the headers set by your reverse proxy.
 
-NOTE: You *must* set `AuthHttpHeaderUsername` to some value, even if you only intend to use `AuthHttpHeaderUsergroup`, otherwise usergroups will be ignored.
+NOTE: You *must* set `authHttpHeaderUsername` to some value, even if you only intend to use `authHttpHeaderUserGroup`, otherwise usergroups will be ignored.
 
 == Multiple usergroups
 
-OliveTin will automatically detect multiple usergroups in the `authHttpHeaderUsergroup` header if they are separated by a space. You can also set a configuration option to use a different separator string with `authHttpHeaderUsergroupSep`. For example, if you set `authHttpHeaderUsergroupSep` to `,`, then the header `X-Usergroup: group1,group2` will be interpreted as two usergroups: `group1` and `group2`. 
+OliveTin will automatically detect multiple usergroups in the `authHttpHeaderUserGroup` header if they are separated by a space. You can also set a configuration option to use a different separator string with `authHttpHeaderUserGroupSep`. For example, if you set `authHttpHeaderUserGroupSep` to `,`, then the header `X-Usergroup: group1,group2` will be interpreted as two usergroups: `group1` and `group2`.
 
 [source, yaml]
 ----
-authHttpHeaderUsergroupSep: ","
+authHttpHeaderUserGroupSep: ","
 ----

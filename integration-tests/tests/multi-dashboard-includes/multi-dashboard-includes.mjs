@@ -5,6 +5,8 @@ import {
   DEFAULT_UI_WAIT_MS,
   getRootAndWait,
   getActionButtons,
+  getNavigationLinkTitles,
+  getNavigationLinkTitle,
   getNavigationLinks,
   openSidebar,
   takeScreenshotOnFailure,
@@ -34,7 +36,7 @@ describe('config: multi-dashboard-includes', function () {
 
     const matching = []
     for (const li of navigationLinks) {
-      const liTitle = await li.getAttribute('title')
+      const liTitle = await getNavigationLinkTitle(li)
       if (liTitle === title) {
         matching.push(li)
       }
@@ -42,7 +44,8 @@ describe('config: multi-dashboard-includes', function () {
 
     assert.strictEqual(matching.length, 1, `Expected exactly one navigation link with title "${title}"`)
 
-    await matching[0].click()
+    const anchor = await matching[0].findElement(By.css('a[href]'))
+    await anchor.click()
     await waitForDashboardLoaded(DEFAULT_UI_WAIT_MS, title)
   }
 
@@ -61,13 +64,8 @@ describe('config: multi-dashboard-includes', function () {
     await getRootAndWait()
 
     await openSidebar()
-    const navigationLinks = await getNavigationLinks()
-    assert.isAbove(navigationLinks.length, 0, 'Expected navigation to have at least one link')
-
-    const titles = []
-    for (const li of navigationLinks) {
-      titles.push(await li.getAttribute('title'))
-    }
+    const titles = await getNavigationLinkTitles()
+    assert.isAbove(titles.length, 0, 'Expected navigation to have at least one link')
 
     expect(titles).to.include('First Dashboard')
     expect(titles).to.include('Second Dashboard')
@@ -107,5 +105,3 @@ describe('config: multi-dashboard-includes', function () {
   })
 
 })
-
-

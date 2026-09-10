@@ -1,17 +1,11 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import Components from 'unplugin-vue-components/vite'
 
 export default defineConfig({
-  plugins: [
-    Components({
-      dirs: ['resources/vue/'],
-      extensions: ['vue'],
-      deep: true,
-      dts: false,
-    }),
-    vue(),
-  ],
+  resolve: {
+    dedupe: ['vue', 'vue-router']
+  },
+  plugins: [vue()],
   build: {
     rolldownOptions: {
       onLog (level, log, defaultHandler) {
@@ -19,25 +13,25 @@ export default defineConfig({
           return
         }
         defaultHandler(level, log)
-      },
-    },
+      }
+    }
   },
   server: {
     proxy: {
       '/api': {
         target: 'http://localhost:1337',
         changeOrigin: true,
-        secure: false,
+        secure: false
       },
       '/theme.css': {
         target: 'http://localhost:1337',
         changeOrigin: true,
-        secure: false,
+        secure: false
       },
-      "/custom-webui": {
-        target: "http://localhost:1337",
-        changeOrigin: true,
+      '/custom-webui': {
+        target: 'http://localhost:1337',
+        changeOrigin: true
       }
-    },
-  },
+    }
+  }
 })

@@ -1,5 +1,8 @@
 <template>
-  <Section :title="t('diagnostics.config-issues')">
+  <Section
+    :title="t('diagnostics.config-issues')"
+    :icon="AlertCircleIcon"
+  >
     <p>{{ t('diagnostics.config-issues-description') }}</p>
 
     <p v-if="!loading && configIssues.length === 0">
@@ -13,17 +16,18 @@
       :show-pagination="false"
     >
       <template #cell-severity="{ value }">
-        <div
+        <span
           class="tag"
-          :class="value === 'error' ? 'fg-bad' : 'fg-warning'"
-        >
-          {{ value }}
-        </div>
+          :class="value"
+        >{{ value }}</span>
       </template>
     </Table>
   </Section>
 
-  <Section :title="t('diagnostics.get-support')">
+  <Section
+    :title="t('diagnostics.get-support')"
+    :icon="CustomerSupportIcon"
+  >
     <p>
       {{ t('diagnostics.get-support-description') }}
     </p>
@@ -37,7 +41,10 @@
     </ul>
   </Section>
 
-  <Section :title="t('diagnostics.ssh')">
+  <Section
+    :title="t('diagnostics.ssh')"
+    :icon="ComputerTerminal01Icon"
+  >
     <dl>
       <dt>{{ t('diagnostics.found-key') }}</dt>
       <dd>{{ diagnostics.sshFoundKey || '?' }}</dd>
@@ -46,7 +53,10 @@
     </dl>
   </Section>
 
-  <Section :title="t('diagnostics.server-diagnostics')">
+  <Section
+    :title="t('diagnostics.server-diagnostics')"
+    :icon="CloudServerIcon"
+  >
     <p>{{ t('diagnostics.server-diagnostics-description') }}</p>
     <p>
       <a
@@ -55,60 +65,63 @@
       >{{ t('diagnostics.server-diagnostics-docs') }}</a>
     </p>
 
-    <div role="toolbar">
-      <button
-        :disabled="loading"
-        class="good"
-        @click="generateServerDiagnostics"
-      >
-        {{ t('diagnostics.generate-server-diagnostics') }}
-      </button>
-      <button
-        :disabled="!serverDiagnostics || loading"
-        :class="serverDiagnosticsCopied ? 'good' : ''"
-        @click="copyServerDiagnostics"
-      >
-        {{ serverDiagnosticsCopied ? t('diagnostics.copied') : t('diagnostics.copy-to-clipboard') }}
-      </button>
-    </div>
-
-    <textarea
+    <ReadOnlyTextArea
       v-model="serverDiagnostics"
-      readonly
-      style="flex: 1; min-height: 200px; resize: vertical; width: 100%; box-sizing: border-box;"
-    />
+      :rows="10"
+      markdown-ticks
+      :copy-label="t('diagnostics.copy-to-clipboard')"
+      :copied-label="t('diagnostics.copied')"
+    >
+      <template #actions>
+        <button
+          type="button"
+          :disabled="loading"
+          class="good"
+          @click="generateServerDiagnostics"
+        >
+          {{ t('diagnostics.generate-server-diagnostics') }}
+        </button>
+      </template>
+    </ReadOnlyTextArea>
   </Section>
 
-  <Section :title="t('diagnostics.browser-info')">
+  <Section
+    :title="t('diagnostics.browser-info')"
+    :icon="BrowserIcon"
+  >
     <p>{{ t('diagnostics.browser-info-description') }}</p>
 
-    <div role="toolbar">
-      <button
-        :disabled="loading"
-        class="good"
-        @click="generateBrowserInfo"
-      >
-        {{ t('diagnostics.generate-browser-info') }}
-      </button>
-      <button
-        :disabled="!browserInfo || loading"
-        :class="browserInfoCopied ? 'good' : ''"
-        @click="copyBrowserInfo"
-      >
-        {{ browserInfoCopied ? t('diagnostics.copied') : t('diagnostics.copy-to-clipboard') }}
-      </button>
-    </div>
-
-    <textarea
+    <ReadOnlyTextArea
       v-model="browserInfo"
-      readonly
-      style="flex: 1; min-height: 200px; resize: vertical; width: 100%; box-sizing: border-box;"
-    />
+      :rows="10"
+      markdown-ticks
+      :copy-label="t('diagnostics.copy-to-clipboard')"
+      :copied-label="t('diagnostics.copied')"
+    >
+      <template #actions>
+        <button
+          type="button"
+          :disabled="loading"
+          class="good"
+          @click="generateBrowserInfo"
+        >
+          {{ t('diagnostics.generate-browser-info') }}
+        </button>
+      </template>
+    </ReadOnlyTextArea>
   </Section>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import {
+  AlertCircleIcon,
+  BrowserIcon,
+  CloudServerIcon,
+  ComputerTerminal01Icon,
+  CustomerSupportIcon
+} from '@hugeicons/core-free-icons'
+import ReadOnlyTextArea from 'picocrank/vue/components/ReadOnlyTextArea.vue'
 import Section from 'picocrank/vue/components/Section.vue'
 import Table from 'picocrank/vue/components/Table.vue'
 import { useI18n } from 'vue-i18n'
@@ -120,8 +133,6 @@ const configIssues = ref([])
 const loading = ref(false)
 const serverDiagnostics = ref('')
 const browserInfo = ref('')
-const serverDiagnosticsCopied = ref(false)
-const browserInfoCopied = ref(false)
 
 const configIssueHeaders = computed(() => [
   { key: 'severity', label: t('diagnostics.config-issue-severity'), sortable: true, width: '7rem' },
@@ -170,24 +181,12 @@ async function generateServerDiagnostics () {
   try {
     const response = await window.client.serverDiagnostics()
     console.log('response', response)
-    serverDiagnostics.value = `\`\`\`\n${response.alert}\n\`\`\`\n`
+    serverDiagnostics.value = response.alert
   } catch (err) {
     console.error('Failed to generate server diagnostics:', err)
     serverDiagnostics.value = ''
   } finally {
     loading.value = false
-  }
-}
-
-async function copyServerDiagnostics () {
-  try {
-    await navigator.clipboard.writeText(serverDiagnostics.value)
-    serverDiagnosticsCopied.value = true
-    setTimeout(() => {
-      serverDiagnosticsCopied.value = false
-    }, 2000)
-  } catch (err) {
-    console.error('Failed to copy Server Diagnostics to clipboard:', err)
   }
 }
 
@@ -258,7 +257,6 @@ async function generateBrowserInfo () {
     const currentLanguage = locale.value || t('diagnostics.unknown')
 
     let output = ''
-    output += '```\n'
     output += '### BROWSER INFO START (copy all text to BROWSER INFO END)\n'
     output += '# OliveTin Information\n'
     output += `olivetinVersion: ${olivetinVersion}\n`
@@ -289,23 +287,10 @@ async function generateBrowserInfo () {
     output += `timezone: ${info.timezone}\n`
     output += `timezoneOffset: ${info.timezoneOffset}\n`
     output += '\n### BROWSER INFO END (copy all text from BROWSER INFO START)'
-    output += '\n```\n'
 
     browserInfo.value = output
   } finally {
     loading.value = false
-  }
-}
-
-async function copyBrowserInfo () {
-  try {
-    await navigator.clipboard.writeText(browserInfo.value)
-    browserInfoCopied.value = true
-    setTimeout(() => {
-      browserInfoCopied.value = false
-    }, 2000)
-  } catch (err) {
-    console.error('Failed to copy browser info to clipboard:', err)
   }
 }
 

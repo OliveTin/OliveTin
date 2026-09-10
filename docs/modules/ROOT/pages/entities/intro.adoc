@@ -7,7 +7,31 @@ This is really useful if you want to generate wake on lan or poweroff actions fo
 
 A very popular use case that entities were designed for was for `container` entities - in a similar way you could generate `start`, `stop`, and `restart` container actions.
 
-Entities are just loaded from files on disk, OliveTin will also watch these files for updates while OliveTin is running, and update entities.
+Entities are just loaded from files on disk. OliveTin watches these files for updates while it is running and refreshes dashboards, actions, and the Entities page when data changes.
+
+[#display-names]
+=== Display names
+
+Each entity instance needs a human-readable name in the UI. OliveTin picks the first matching string field from this list (case-insensitive field names):
+
+`title`, `name`, `id`, `hostname`, `host`, `label`
+
+If none of those fields contain a string value, the instance appears as **Untitled Entity**. Add one of those fields to every row in your entity file — for example `title: My Vehicle` or `name: server1`.
+
+The chosen field is shown as the instance name in lists and dashboards. On the entity details page, it appears in the page heading; see xref:entities/properties.adoc#entity-details-page[Entity details page] for which other fields are listed.
+
+[#entity-live-reload]
+=== Live reload
+
+* **Entity file content** — when a watched data file is updated on disk, OliveTin reloads instances and notifies the web UI. No restart is required.
+* **New entity types in `config.yaml`** — when you add a new entry under `entities:` and reload config, OliveTin starts watching that file without a full restart.
+* **Entity file path changes** — when you change an entity's file path in config and reload, OliveTin switches to the new file without a restart.
+* **Removing or renaming entity types** — restart OliveTin if you remove an entity definition or rename its type; otherwise stale entity data may remain in memory until restart.
+
+[NOTE]
+====
+On **Docker Desktop for Windows**, bind-mounted entity files may not trigger file-watch events when updated from the host (for example by a cron job writing through a volume). If live reload does not pick up changes, restart the container after updating the file, run OliveTin on Linux, or write the file in place on the same filesystem OliveTin watches.
+====
 
 Entity data files can contain any fields you need. Those values are available in action templates as `{{ .CurrentEntity.field }}` — for example, `{{ .CurrentEntity.status }}` or `{{ .CurrentEntity.hostname }}`.
 

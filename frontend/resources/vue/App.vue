@@ -1,198 +1,179 @@
 <template>
-  <Header
-    :title="pageTitle"
-    :logo-url="logoUrl"
-    :sidebar-enabled="sidebarEnabled"
-    :top-bar-enabled="topbarEnabled"
-    :navigation="navigation"
-    @toggle-sidebar="toggleSidebar"
-  >
-    <template #toolbar>
-      <QuickSearch
-        v-if="!loginRequired && headerSearchEnabled"
-        :items="searchIndexItems"
-        :auto-import-routes="false"
-        :search-fields="['title', 'description', 'category']"
-        :max-results="15"
-        placeholder="Search actions, dashboards, entities…"
-      />
-      <div
-        v-if="bannerMessage"
-        id="banner"
-        :style="bannerCss"
-      >
-        <p>{{ bannerMessage }}</p>
-      </div>
-    </template>
-
-    <template #user-info>
-      <ConnectionBanner />
-      <div
-        class="flex-row user-info"
-        style="gap: .5em;"
-      >
-        <span
-          v-if="!isLoggedIn && showLoginLink"
-          id="link-login"
-        ><router-link to="/login">{{ t('login-button') }}</router-link></span>
-        <router-link
-          v-else-if="isLoggedIn"
-          to="/user"
-          class="user-link"
-        >
-          <span id="username-text">{{ username }}</span>
-        </router-link>
-        <HugeiconsIcon
-          v-if="isLoggedIn"
-          :icon="UserCircle02Icon"
-          width="1.5em"
-          height="1.5em"
+  <div class="layout-fixed-header">
+    <Header
+      :title="pageTitle"
+      :logo-url="logoUrl"
+      :breadcrumbs="false"
+      :sidebar-enabled="sidebarEnabled"
+      :top-bar-enabled="topbarEnabled"
+      :navigation="navigation"
+      :username="headerUsername"
+      :login-route="headerLoginRoute"
+      @toggle-sidebar="toggleSidebar"
+      @user-click="goToUserControlPanel"
+    >
+      <template #toolbar>
+        <QuickSearch
+          v-if="!loginRequired && headerSearchEnabled"
+          :items="searchIndexItems"
+          :auto-import-routes="false"
+          :search-fields="['title', 'description', 'category']"
+          :max-results="15"
+          placeholder="Search actions, dashboards, entities…"
         />
-      </div>
-    </template>
-  </Header>
+        <div
+          v-if="bannerMessage"
+          id="banner"
+          :style="bannerCss"
+        >
+          <p>{{ bannerMessage }}</p>
+        </div>
+        <ConnectionBanner />
+      </template>
+    </Header>
 
-  <div id="layout">
-    <Navigation ref="navigation">
-      <Sidebar
-        v-if="sidebarEnabled && showNavigation"
-        id="mainnav"
-        ref="sidebar"
-      />
-    </Navigation>
+    <div id="layout">
+      <Navigation ref="navigation">
+        <Sidebar
+          v-if="sidebarEnabled && showNavigation"
+          id="mainnav"
+          ref="sidebar"
+        />
+      </Navigation>
 
-    <div
-      id="content"
-      :initial-martial-complete="hasLoaded"
-    >
-      <main title="Main content">
-        <router-view :key="$route.fullPath" />
-      </main>
-
-      <footer
-        v-if="showFooter"
-        title="footer"
+      <div
+        id="content"
+        :initial-martial-complete="hasLoaded"
       >
-        <p>
-          <img
-            title="application icon"
-            :src="logoUrl"
-            alt="OliveTin logo"
-            style="height: 1em;"
-            class="logo"
+        <main title="Main content">
+          <router-view :key="$route.fullPath" />
+        </main>
+
+        <footer
+          v-if="showFooter"
+          title="footer"
+        >
+          <p>
+            <img
+              title="application icon"
+              :src="logoUrl"
+              alt="OliveTin logo"
+              style="height: 1em;"
+              class="logo"
+            >
+            OliveTin <span v-if="showVersionNumber">{{ currentVersion }}</span>
+          </p>
+          <p>
+            <span>
+              <a
+                href="https://docs.olivetin.app"
+                target="_new"
+              >{{ t('docs') }}</a>
+            </span>
+
+            <span>
+              <a
+                href="https://github.com/OliveTin/OliveTin/issues/new/choose"
+                target="_new"
+              >{{ t('raise-issue') }}</a>
+            </span>
+
+            <span>
+              <a
+                href="#"
+                @click.prevent="openLanguageDialog"
+              >{{ currentLanguageName }}</a>
+            </span>
+
+            <span v-if="availableThemes.length > 1">
+              <a
+                href="#"
+                @click.prevent="openThemeDialog"
+              >{{ currentThemeName }}</a>
+            </span>
+          </p>
+          <p v-if="showVersionNumber">
+            <a
+              id="available-version"
+              href="http://olivetin.app"
+              target="_blank"
+              hidden
+            >?</a>
+          </p>
+        </footer>
+      </div>
+    </div>
+
+    <dialog
+      ref="languageDialog"
+      class="language-dialog"
+      @click="handleLanguageDialogClick"
+    >
+      <div
+        class="dialog-content"
+        @click.stop
+      >
+        <h2>{{ t('language-dialog.title') }}</h2>
+        <select
+          v-model="selectedLanguage"
+          class="language-select"
+          @change="changeLanguage"
+        >
+          <option
+            v-for="(name, code) in availableLanguages"
+            :key="code"
+            :value="code"
           >
-          OliveTin <span v-if="showVersionNumber">{{ currentVersion }}</span>
+            {{ code === 'auto' ? name : `${name} (${code})` }}
+          </option>
+        </select>
+        <p class="browser-languages">
+          {{ t('language-dialog.browser-languages') }}:
+          <span v-if="browserLanguages.length > 0">{{ browserLanguages.join(', ') }}</span>
+          <span v-else>{{ t('language-dialog.not-available') }}</span>
         </p>
-        <p>
-          <span>
-            <a
-              href="https://docs.olivetin.app"
-              target="_new"
-            >{{ t('docs') }}</a>
-          </span>
+        <div class="dialog-buttons">
+          <button @click="closeLanguageDialog">
+            {{ t('language-dialog.close') }}
+          </button>
+        </div>
+      </div>
+    </dialog>
 
-          <span>
-            <a
-              href="https://github.com/OliveTin/OliveTin/issues/new/choose"
-              target="_new"
-            >{{ t('raise-issue') }}</a>
-          </span>
-
-          <span>
-            <a
-              href="#"
-              @click.prevent="openLanguageDialog"
-            >{{ currentLanguageName }}</a>
-          </span>
-
-          <span v-if="availableThemes.length > 1">
-            <a
-              href="#"
-              @click.prevent="openThemeDialog"
-            >{{ currentThemeName }}</a>
-          </span>
-        </p>
-        <p v-if="showVersionNumber">
-          <a
-            id="available-version"
-            href="http://olivetin.app"
-            target="_blank"
-            hidden
-          >?</a>
-        </p>
-      </footer>
-    </div>
+    <dialog
+      ref="themeDialog"
+      class="theme-dialog"
+      @click="handleThemeDialogClick"
+    >
+      <div
+        class="dialog-content"
+        @click.stop
+      >
+        <h2>{{ t('theme-dialog.title') }}</h2>
+        <select
+          v-model="selectedTheme"
+          class="language-select"
+          @change="changeTheme"
+        >
+          <option value="">
+            {{ t('theme-dialog.default') }}
+          </option>
+          <option
+            v-for="theme in availableThemes"
+            :key="theme"
+            :value="theme"
+          >
+            {{ theme }}
+          </option>
+        </select>
+        <div class="dialog-buttons">
+          <button @click="closeThemeDialog">
+            {{ t('theme-dialog.close') }}
+          </button>
+        </div>
+      </div>
+    </dialog>
   </div>
-
-  <dialog
-    ref="languageDialog"
-    class="language-dialog"
-    @click="handleLanguageDialogClick"
-  >
-    <div
-      class="dialog-content"
-      @click.stop
-    >
-      <h2>{{ t('language-dialog.title') }}</h2>
-      <select
-        v-model="selectedLanguage"
-        class="language-select"
-        @change="changeLanguage"
-      >
-        <option
-          v-for="(name, code) in availableLanguages"
-          :key="code"
-          :value="code"
-        >
-          {{ code === 'auto' ? name : `${name} (${code})` }}
-        </option>
-      </select>
-      <p class="browser-languages">
-        {{ t('language-dialog.browser-languages') }}:
-        <span v-if="browserLanguages.length > 0">{{ browserLanguages.join(', ') }}</span>
-        <span v-else>{{ t('language-dialog.not-available') }}</span>
-      </p>
-      <div class="dialog-buttons">
-        <button @click="closeLanguageDialog">
-          {{ t('language-dialog.close') }}
-        </button>
-      </div>
-    </div>
-  </dialog>
-
-  <dialog
-    ref="themeDialog"
-    class="theme-dialog"
-    @click="handleThemeDialogClick"
-  >
-    <div
-      class="dialog-content"
-      @click.stop
-    >
-      <h2>{{ t('theme-dialog.title') }}</h2>
-      <select
-        v-model="selectedTheme"
-        class="language-select"
-        @change="changeTheme"
-      >
-        <option value="">
-          {{ t('theme-dialog.default') }}
-        </option>
-        <option
-          v-for="theme in availableThemes"
-          :key="theme"
-          :value="theme"
-        >
-          {{ theme }}
-        </option>
-      </select>
-      <div class="dialog-buttons">
-        <button @click="closeThemeDialog">
-          {{ t('theme-dialog.close') }}
-        </button>
-      </div>
-    </div>
-  </dialog>
 </template>
 
 <script setup>
@@ -204,19 +185,19 @@ import Header from 'picocrank/vue/components/Header.vue'
 import QuickSearch from 'picocrank/vue/components/QuickSearch.vue'
 import ConnectionBanner from './components/ConnectionBanner.vue'
 import { connectEventStreamIfNeeded } from '../../js/websocket.js'
-import { HugeiconsIcon } from '@hugeicons/vue'
-import { UserCircle02Icon, DashboardSquare01Icon } from '@hugeicons/core-free-icons'
+import { DashboardSquare01Icon } from '@hugeicons/core-free-icons'
 import logoUrl from '../../OliveTinLogo.png'
 import { useI18n } from 'vue-i18n'
-import combinedTranslations from '../../../lang/combined_output.json'
+import { ensureLocaleMessages, resolveBrowserLocale } from './i18n.js'
 import { searchIndexItems, clearSearchIndex, indexSystemNavigation, indexSearchHints, indexRootDashboardEntries } from './stores/searchIndex.js'
+import { applyThemeStyles } from './utils/themeLoader.js'
 const { t } = useI18n()
 
 const router = useRouter()
 
 const sidebar = ref(null)
 const navigation = ref(null)
-const username = ref('notset')
+const username = ref('')
 const isLoggedIn = ref(false)
 const currentVersion = ref('?')
 const pageTitle = ref('OliveTin')
@@ -239,6 +220,7 @@ const browserLanguages = ref([])
 const initialLanguagePreference = typeof window !== 'undefined' ? localStorage.getItem('olivetin-language') : null
 const languagePreference = ref(initialLanguagePreference || 'auto')
 const selectedLanguage = ref(languagePreference.value)
+let latestLanguageChange = 0
 
 const themeDialog = ref(null)
 const availableThemes = ref([])
@@ -253,7 +235,8 @@ const availableLanguages = {
   'de-DE': 'Deutsch',
   'es-ES': 'Español',
   'it-IT': 'Italiano',
-  'zh-Hans-CN': '简体中文'
+  'zh-Hans-CN': '简体中文',
+  'zh-Hant-TW': '繁體中文'
 }
 
 // Computed property to get current language display name
@@ -282,29 +265,13 @@ const sidebarEnabled = computed(() => {
   return sectionNavigationStyle.value !== 'topbar' && showNavigation.value
 })
 
-function normalizeBrowserLanguage () {
-  const available = Object.keys(combinedTranslations.messages || {})
+const headerUsername = computed(() => {
+  return isLoggedIn.value ? username.value : ''
+})
 
-  if (navigator.languages && navigator.languages.length > 0) {
-    for (const candidate of navigator.languages) {
-      const lowerCandidate = candidate.toLowerCase()
-
-      // Try exact match (case-insensitive)
-      const exact = available.find(locale => locale.toLowerCase() === lowerCandidate)
-      if (exact) {
-        return exact
-      }
-
-      // Try prefix match (e.g., "zh-CN" -> "zh-Hans-CN")
-      const prefix = available.find(locale => locale.toLowerCase().startsWith(lowerCandidate.split('-')[0] + '-'))
-      if (prefix) {
-        return prefix
-      }
-    }
-  }
-
-  return 'en'
-}
+const headerLoginRoute = computed(() => {
+  return showLoginLink.value ? { name: 'Login' } : null
+})
 
 function toggleSidebar () {
   if (sidebar.value && showNavigation.value) {
@@ -312,7 +279,11 @@ function toggleSidebar () {
   }
 }
 
-function updateHeaderFromInit () {
+function goToUserControlPanel () {
+  router.push({ name: 'UserInformation' })
+}
+
+async function updateHeaderFromInit () {
   if (!window.initResponse) {
     return
   }
@@ -346,7 +317,9 @@ function updateHeaderFromInit () {
   loadCustomJsIfEnabled()
 
   renderNavigation()
-  applyTheme()
+  applyTheme().catch((err) => {
+    console.warn('Failed to load theme CSS:', err)
+  })
 
   if (loginRequired.value) {
     connectEventStreamIfNeeded()
@@ -475,8 +448,31 @@ function addSystemNavLinks () {
   navigation.value.addSection(t('nav.system'))
 
   for (const link of systemLinks) {
-    navigation.value.addRouterLink(link.routeName, link.title, link.options || {})
+    addSystemRouterNavLink(link.routeName, link.title, link.options || {})
   }
+}
+
+function addSystemRouterNavLink (routeName, title, options = {}) {
+  const foundRoute = router.getRoutes().find((candidate) => candidate.name === routeName)
+  if (!foundRoute) {
+    console.warn(`Route "${routeName}" not found`)
+    return
+  }
+
+  const navLink = {
+    name: routeName,
+    title,
+    path: foundRoute.path,
+    to: foundRoute.path,
+    icon: foundRoute.meta?.icon || DashboardSquare01Icon,
+    type: 'route'
+  }
+
+  if (options.count != null && options.count > 0) {
+    navLink.count = options.count
+  }
+
+  navigation.value.addNavigationLink(navLink)
 }
 
 function openLanguageDialog () {
@@ -499,19 +495,29 @@ function closeLanguageDialog () {
   }
 }
 
-function changeLanguage () {
+async function changeLanguage () {
   if (!window.i18n || !selectedLanguage.value) {
     return
   }
 
-  if (selectedLanguage.value === 'auto') {
+  const languageChange = ++latestLanguageChange
+  const requestedPreference = selectedLanguage.value
+  const requestedLocale = requestedPreference === 'auto' ? resolveBrowserLocale() : requestedPreference
+
+  await ensureLocaleMessages(window.i18n, requestedLocale)
+
+  if (languageChange !== latestLanguageChange) {
+    return
+  }
+
+  window.i18n.locale.value = requestedLocale
+
+  if (requestedPreference === 'auto') {
     localStorage.removeItem('olivetin-language')
     languagePreference.value = 'auto'
-    window.i18n.locale.value = normalizeBrowserLanguage()
   } else {
-    window.i18n.locale.value = selectedLanguage.value
-    localStorage.setItem('olivetin-language', selectedLanguage.value)
-    languagePreference.value = selectedLanguage.value
+    localStorage.setItem('olivetin-language', requestedPreference)
+    languagePreference.value = requestedPreference
   }
 
   // Update navigation with new translations
@@ -543,7 +549,7 @@ function closeThemeDialog () {
   }
 }
 
-function changeTheme () {
+async function changeTheme () {
   if (!selectedTheme.value || selectedTheme.value === '') {
     localStorage.removeItem('olivetin-theme')
     themePreference.value = ''
@@ -552,25 +558,28 @@ function changeTheme () {
     themePreference.value = selectedTheme.value
   }
 
-  applyTheme()
+  await applyTheme()
   closeThemeDialog()
 }
 
-function applyTheme () {
-  let themeStyle = document.getElementById('theme-style')
-
-  if (!themeStyle) {
-    themeStyle = document.createElement('style')
-    themeStyle.id = 'theme-style'
-    themeStyle.type = 'text/css'
-    document.head.appendChild(themeStyle)
-  }
-
-  // Load theme into @layer theme so it takes precedence over @layer components
-  if (themePreference.value && themePreference.value !== '') {
-    themeStyle.textContent = `@import url('/custom-webui/themes/${themePreference.value}/theme.css') layer(theme);`
-  } else {
-    themeStyle.textContent = '@import url(\'/theme.css\') layer(theme);'
+async function applyTheme () {
+  try {
+    await applyThemeStyles(themePreference.value)
+  } catch (err) {
+    console.warn('Failed to load theme CSS:', err)
+    localStorage.removeItem('olivetin-theme')
+    themePreference.value = ''
+    selectedTheme.value = ''
+    try {
+      await applyThemeStyles('')
+    } catch (fallbackErr) {
+      console.warn('Failed to load default theme CSS:', fallbackErr)
+      const themeStyle = document.getElementById('theme-style')
+      if (themeStyle) {
+        themeStyle.textContent = ''
+      }
+      document.body.removeAttribute('loaded-theme')
+    }
   }
 }
 
@@ -605,8 +614,8 @@ function handleThemeDialogClick (event) {
 
 window.updateHeaderFromInit = updateHeaderFromInit
 
-onMounted(() => {
-  updateHeaderFromInit()
+onMounted(async () => {
+  await updateHeaderFromInit()
 
   // Initialize selected language from stored preference
   selectedLanguage.value = languagePreference.value
@@ -621,19 +630,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.user-info span {
-    margin-left: 1em;
-}
-
-.user-link {
-    text-decoration: none;
-    color: inherit;
-}
-
-.user-link:hover {
-    text-decoration: underline;
-}
-
 .language-dialog,
 .theme-dialog {
     border: 1px solid var(--border-color, #ccc);

@@ -1,8 +1,5 @@
-import { expect } from 'chai'
-import { By } from 'selenium-webdriver'
-import { 
-  getRootAndWait, 
-  getActionButtons,
+import {
+  getRootAndWait,
   takeScreenshotOnFailure,
 } from '../../lib/elements.js'
 

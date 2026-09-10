@@ -1,19 +1,22 @@
 <template>
   <Section
     :title="t('logs.title')"
+    :icon="LeftToRightListDashIcon"
     :padding="false"
   >
     <template #toolbar>
       <router-link
         to="/logs/queue"
-        class="button neutral"
+        class="button neutral inline-icon"
       >
+        <HugeiconsIcon :icon="Queue01Icon" />
         {{ t('logs.queue') }}
       </router-link>
       <router-link
         to="/logs/calendar"
-        class="button neutral"
+        class="button neutral inline-icon"
       >
+        <HugeiconsIcon :icon="Calendar01Icon" />
         {{ t('logs.calendar') }}
       </router-link>
       <label class="input-with-icons">
@@ -76,95 +79,44 @@
       >
         {{ filterError }}
       </p>
+      <p
+        v-if="selectedDate"
+        class="date-filter-banner"
+      >
+        <span>{{ formatDateFilter(selectedDate) }}</span>
+        <button
+          type="button"
+          class="button neutral inline-icon"
+          :title="t('logs.clear-date-filter')"
+          @click="clearDateFilter"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="1em"
+            height="1em"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path
+              fill="currentColor"
+              d="M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12z"
+            />
+          </svg>
+          {{ t('logs.clear-date-filter') }}
+        </button>
+      </p>
     </div>
 
     <div v-show="logs.length > 0">
-      <table class="logs-table row-hover">
-        <thead>
-          <tr>
-            <th>
-              <div class="timestamp-header">
-                <span>{{ t('logs.timestamp') }}</span>
-                <span
-                  v-if="selectedDate"
-                  class="date-filter-indicator"
-                >
-                  <span class="date-filter-text">{{ formatDateFilter(selectedDate) }}</span>
-                  <button
-                    :title="t('logs.clear-date-filter')"
-                    class="clear-date-button"
-                    @click="clearDateFilter"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="1em"
-                      height="1em"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        fill="currentColor"
-                        d="M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12z"
-                      />
-                    </svg>
-                  </button>
-                </span>
-              </div>
-            </th>
-            <th>{{ t('logs.action') }}</th>
-            <th>{{ t('logs.metadata') }}</th>
-            <th>{{ t('logs.status') }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            v-for="log in logs"
-            :key="log.executionTrackingId"
-            class="log-row"
-            :title="log.actionTitle"
-          >
-            <td class="timestamp">
-              {{ formatTimestamp(log.datetimeStarted) }}
-            </td>
-            <td>
-              <ActionIconGlyph
-                class="icon"
-                :glyph="log.actionIcon"
-              />
-              <router-link :to="`/logs/${log.executionTrackingId}`">
-                <LogActionTitle
-                  :action-title="log.actionTitle"
-                  :justification="log.justification"
-                />
-              </router-link>
-            </td>
-            <td class="tags">
-              <span class="annotation">
-                <span class="annotation-key">User:</span>
-                <span class="annotation-val">{{ log.user }}</span>
-              </span>
-              <span
-                v-if="log.tags && log.tags.length > 0"
-                class="tag-list"
-              >
-                <span
-                  v-for="tag in log.tags"
-                  :key="tag"
-                  class="tag"
-                >{{ tag }}</span>
-              </span>
-            </td>
-            <td class="exit-code">
-              <ActionStatusDisplay :log-entry="log" />
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <ExecutionLogsTable
+        :logs="logs"
+        :loading="loading"
+      />
 
       <Pagination
         :page-size="pageSize"
         :total="totalCount"
         :current-page="currentPage"
-        :page="currentPage"
         class="padding"
         item-title="execution logs"
         @page-change="handlePageChange"
@@ -217,9 +169,9 @@ import { ConnectError, Code } from '@connectrpc/connect'
 import Pagination from 'picocrank/vue/components/Pagination.vue'
 import Section from 'picocrank/vue/components/Section.vue'
 import { useI18n } from 'vue-i18n'
-import ActionStatusDisplay from '../components/ActionStatusDisplay.vue'
-import ActionIconGlyph from '../components/ActionIconGlyph.vue'
-import LogActionTitle from '../components/LogActionTitle.vue'
+import { HugeiconsIcon } from '@hugeicons/vue'
+import { Calendar01Icon, LeftToRightListDashIcon, Queue01Icon } from '@hugeicons/core-free-icons'
+import ExecutionLogsTable from '../components/ExecutionLogsTable.vue'
 import { getExecutionLogEntry, updateLogEntryInList } from '../utils/executionLogEvents.js'
 import { loadStoredLogsFilter, storeLogsFilter } from '../utils/logsFilterStorage.js'
 const route = useRoute()
@@ -368,16 +320,6 @@ function formatDateFilter (dateString) {
   }
 }
 
-function formatTimestamp (timestamp) {
-  if (!timestamp) return 'Unknown'
-  try {
-    const date = new Date(timestamp)
-    return date.toLocaleString()
-  } catch (err) {
-    return timestamp
-  }
-}
-
 function handlePageChange (page) {
   currentPage.value = page
   fetchLogs()
@@ -475,20 +417,12 @@ onUnmounted(() => {
   cursor: not-allowed;
 }
 
-.timestamp {
-  font-family: monospace;
-  font-size: 0.875rem;
-  color: #666;
-}
-
-.icon {
-  margin-right: 0.5rem;
-  font-size: 1.2em;
-}
-
-.annotation {
-  font-weight: 500;
-  font-size: smaller;
+.date-filter-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0;
 }
 
 .empty-state {
@@ -504,49 +438,6 @@ onUnmounted(() => {
 
 .empty-state a:hover {
   text-decoration: underline;
-}
-
-.timestamp-header {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.date-filter-indicator {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  font-size: 0.75rem;
-  font-weight: normal;
-  color: var(--text-secondary, #666);
-  white-space: nowrap;
-}
-
-.date-filter-text {
-  font-style: italic;
-}
-
-.timestamp-header .clear-date-button {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0.125rem;
-  border-radius: 3px;
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-  opacity: 0.7;
-  transition: opacity 0.2s;
-}
-
-.timestamp-header .clear-date-button:hover {
-  opacity: 1;
-  background: var(--hover-background, rgba(0, 0, 0, 0.05));
-}
-
-.timestamp-header .clear-date-button svg {
-  width: 0.75rem;
-  height: 0.75rem;
 }
 
 </style>

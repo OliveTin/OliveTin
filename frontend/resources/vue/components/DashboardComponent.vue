@@ -1,7 +1,7 @@
 <template>
   <ActionButton
     v-if="component.type == 'link'"
-    :key="component.title"
+    :key="component.action?.bindingId || component.title"
     :action-data="component.action"
     :css-class="component.cssClass"
   />

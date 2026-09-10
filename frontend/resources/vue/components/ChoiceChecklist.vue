@@ -142,20 +142,24 @@ function selectNone () {
   text-decoration: underline;
 }
 
-.choice-checklist-fieldset {
+fieldset.choice-checklist-fieldset {
   border: none;
-  display: grid;
-  gap: 0.5em 1em;
-  grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.5em;
   margin: 0;
   padding: 0;
+  width: 100%;
 }
 
 .choice-checklist-item {
-  align-items: center;
   display: flex;
+  align-items: center;
   gap: 0.4em;
   margin: 0;
+  max-width: 20em;
+  width: 100%;
 }
 
 .choice-checklist-item input[type="checkbox"] {

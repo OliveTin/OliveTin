@@ -6,6 +6,5 @@ COPY go.mod /workspace/
 COPY go.sum /workspace/
 WORKDIR /workspace
 RUN go install -v "github.com/bufbuild/buf/cmd/buf"
-RUN go install -v "github.com/fzipp/gocyclo/cmd/gocyclo"
-RUN go install -v "github.com/go-critic/go-critic/cmd/gocritic"
+RUN go install -v "github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.13.2"
 RUN go install -v "google.golang.org/protobuf/cmd/protoc-gen-go"

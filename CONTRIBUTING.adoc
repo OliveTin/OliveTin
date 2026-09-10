@@ -46,12 +46,15 @@ pre-commit install
 pre-commit install --hook-type pre-push
 
 # Step3: compile binary for current dev env (OS, ARCH)
-# `make proto` will also run `make go-tools`, which installs "buf". This binary
-# will be put in your GOPATH/bin/, which should be on your path. buf is used to
+# `make proto` installs pinned protobuf tools in GOPATH/bin/ and uses buf to
 # generate the protobuf / Connect RPC stubs.
 make proto
 make
 ./OliveTin
+
+Go codestyle checks (`make -wC service codestyle`) use golangci-lint. Install it
+with `make -wC service go-tools` if `golangci-lint` is not already on your PATH.
+Lint rules live in `service/.golangci.yml`.
 ```
 
 === Getting started to contribute;
@@ -60,6 +63,7 @@ The project layout is reasonably straightforward;
 
 * See the `Makefile` for common targets. This project was originally created on top of Fedora, but it should be usable on Debian/your faveourite distro with minor changes (if any).
 * End-user documentation (AsciiDoc for link:https://docs.olivetin.app[docs.olivetin.app]) lives in `docs/` as an Antora component; the published site is built from the separate link:https://github.com/OliveTin/docs.olivetin.app[docs.olivetin.app] repository.
+* Run `make docs-check` after changing documentation or the service configuration schema.
 * The API is defined in protobuf+Connect RPC - you will need to `make proto`.
 * The Go daemon is built from the `cmd` and `internal` directories mostly.
 * The webui is just a single page application with a bit of Javascript in the `webui` directory. This can happily be hosted on another webserver.

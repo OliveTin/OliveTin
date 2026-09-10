@@ -1,16 +1,20 @@
 import { describe, it, before, after } from 'mocha'
 import { expect, assert } from 'chai'
-import { By, until, Condition } from 'selenium-webdriver'
+import { By } from 'selenium-webdriver'
 //import * as waitOn from 'wait-on'
 import {
   getRootAndWait,
   getActionButtons,
   openSidebar,
   getNavigationLinks,
+  getNavigationLinkTitle,
+  waitForNavigationLinks,
   takeScreenshotOnFailure,
 } from '../../lib/elements.js'
 
 describe('config: dashboards with basic fieldsets', function () {
+  this.timeout(30000)
+
   before(async function () {
     await runner.start('dashboardsWithBasicFieldsets')
   })
@@ -30,13 +34,14 @@ describe('config: dashboards with basic fieldsets', function () {
     expect(title).to.be.equal("Test - OliveTin")
 
     await openSidebar()
+    await waitForNavigationLinks(4)
 
     const navigationLinks = await getNavigationLinks()
     assert.equal(navigationLinks.length, 4, 'Expected the nav to only have 4 links') // test dashboard + entities + logs + diagnostics
 
     const firstLink = await navigationLinks[0]
 
-    expect(await firstLink.getAttribute('title')).to.be.equal('Test', 'Expected the first link to be the actions link')
+    expect(await getNavigationLinkTitle(firstLink)).to.be.equal('Test', 'Expected the first link to be the actions link')
 
     const actionButtons = await getActionButtons()
     expect(actionButtons).to.have.length(5, 'Expected 5 action buttons')

@@ -4,9 +4,9 @@ There are several style modifications that some people like to use, which can ea
 
 [source,yaml]
 ----
-stylemods:
+styleMods:
   - sm-side-icons
-----	
+----
 
 You can add as many style mods as you like, but note that some of them may conflict with each other. The style mods are applied in the order they are listed, so if you have a conflict, the last one in the list will take precedence.
 
@@ -19,7 +19,7 @@ You can add as many style mods as you like, but note that some of them may confl
 
 NOTE: The `sm-transparent-header` and `sm-transparent-footer` style mods often fix themes that were designed for OliveTin 2k.
 
-The list of style mods on this page is maintained as new style modifications are added to OliveTin. 
+The list of style mods on this page is maintained as new style modifications are added to OliveTin.
 
 == Feature history
 

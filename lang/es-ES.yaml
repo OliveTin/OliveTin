@@ -27,6 +27,7 @@ translations:
   logs.no-logs-for-filter: Ningún registro coincide con el filtro actual.
   logs.timestamp: Marca de tiempo
   logs.action: Acción
+  logs.execution-id: ID de ejecución
   logs.metadata: Metadatos
   logs.status: Estado
   logs.no-logs-to-display: No hay registros para mostrar.

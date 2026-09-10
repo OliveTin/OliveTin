@@ -153,6 +153,30 @@ type InternalLogEntry struct {
 	TimedOut            bool
 }
 
+func cloneActionBinding(binding *ActionBinding) *ActionBinding {
+	if binding == nil {
+		return nil
+	}
+
+	cloned := *binding
+	cloned.OnDashboards = slices.Clone(binding.OnDashboards)
+
+	return &cloned
+}
+
+func cloneInternalLogEntry(entry *InternalLogEntry) *InternalLogEntry {
+	if entry == nil {
+		return nil
+	}
+
+	cloned := *entry
+	cloned.Arguments = maps.Clone(entry.Arguments)
+	cloned.Tags = slices.Clone(entry.Tags)
+	cloned.Binding = cloneActionBinding(entry.Binding)
+
+	return &cloned
+}
+
 // .Binding can be nil, so we need to handle that.
 func (e *InternalLogEntry) GetBindingId() string {
 	if e.Binding == nil {
@@ -184,7 +208,6 @@ func DefaultExecutor(cfg *config.Config) *Executor {
 		stepExec,
 		stepExecAfter,
 		stepLogFinish,
-		stepSaveLog,
 		stepTrigger,
 	}
 
@@ -274,7 +297,7 @@ func (e *Executor) GetLogTrackingIds(startOffset int64, pageCount int64) ([]*Int
 
 	if totalLogCount > 0 {
 		for i := startIndex; i >= endIndex; i-- {
-			trackingIds = append(trackingIds, e.logs[e.logsTrackingIdsByDate[i]])
+			trackingIds = append(trackingIds, cloneInternalLogEntry(e.logs[e.logsTrackingIdsByDate[i]]))
 		}
 	}
 
@@ -304,7 +327,7 @@ func (e *Executor) filterLogsByACL(cfg *config.Config, user *authpublic.Authenti
 		entry := e.logs[trackingId]
 
 		if shouldIncludeLogEntry(cfg, user, entry, filterDate, hasDateFilter) {
-			filtered = append(filtered, entry)
+			filtered = append(filtered, cloneInternalLogEntry(entry))
 		}
 	}
 
@@ -400,26 +423,28 @@ func (e *Executor) GetLogTrackingIdsACL(cfg *config.Config, user *authpublic.Aut
 
 func (e *Executor) GetLog(trackingID string) (*InternalLogEntry, bool) {
 	e.logmutex.RLock()
+	defer e.logmutex.RUnlock()
 
 	entry, found := e.logs[trackingID]
-
-	e.logmutex.RUnlock()
-
-	return entry, found
+	return cloneInternalLogEntry(entry), found
 }
 
 func (e *Executor) GetLogsByBindingId(bindingId string) []*InternalLogEntry {
 	e.logmutex.RLock()
+	defer e.logmutex.RUnlock()
 
 	logs, found := e.LogsByBindingId[bindingId]
-
-	e.logmutex.RUnlock()
 
 	if !found {
 		return make([]*InternalLogEntry, 0)
 	}
 
-	return logs
+	cloned := make([]*InternalLogEntry, 0, len(logs))
+	for _, entry := range logs {
+		cloned = append(cloned, cloneInternalLogEntry(entry))
+	}
+
+	return cloned
 }
 
 // shouldCountExecution checks if a log entry should be counted for rate limiting.
@@ -688,6 +713,7 @@ func (e *Executor) finishExecChain(req *ExecutionRequest) {
 	recordExecutionMetrics(req.logEntry)
 
 	notifyListenersFinished(req)
+	stepSaveLog(req)
 	e.drainGroupQueue()
 }
 

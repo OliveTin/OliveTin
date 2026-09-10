@@ -21,10 +21,12 @@ If you are looking for OliveTin's AI policy, you can find it in `AI.md`.
 - Unit tests (Go):
   - From repo root: `cd service && make unittests`
 - Code style (after editing code in `service/`):
-  - From repo root: `cd service && make codestyle`
+  - From repo root: `cd service && make codestyle` (runs `go fmt` and `golangci-lint`; install linter via `make go-tools`)
+- Documentation checks:
+  - From repo root: `make docs-check` (validates documented config key casing and local AsciiDoc anchor links)
 - Integration tests (Mocha + Selenium):
-  - Single test: `cd integration-tests && npx --yes mocha test/general.mjs`
-  - All tests: `cd integration-tests && npx --yes mocha`
+  - All tests: `make it` (from repo root; builds webui + service binary, then runs Mocha)
+  - Single test: `cd integration-tests && npx --yes mocha tests/general/general.mjs`
 
 ### Test Notes and Gotchas
 - The top-level Makefile does not expose `unittests`; use `cd service && make unittests`.
@@ -44,7 +46,7 @@ If you are looking for OliveTin's AI policy, you can find it in `AI.md`.
 - Do not swallow errors; propagate or log meaningfully.
 - Match existing formatting; avoid unrelated reformatting.
 - Be safe around nils in executor steps (e.g., guard `req.Binding` and `req.Binding.Action`).
-- Cyclomatic complexity over 4 is not permitted.
+- Cyclomatic complexity over 4 is not permitted (`gocyclo` `min-complexity: 5` in `service/.golangci.yml`).
 
 ### API and Execution Flow (High-level)
 1. Client calls Connect RPC (e.g., `Init`, `GetDashboard`, `StartAction`).

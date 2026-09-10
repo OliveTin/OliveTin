@@ -47,7 +47,7 @@ async function waitForTerminalOutput(expectedValue) {
         }
 
         return output.trim().includes(`Checkbox value: ${expectedValue}`)
-      } catch (e) {
+      } catch {
         return false
       }
     }),

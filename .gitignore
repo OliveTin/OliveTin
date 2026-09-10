@@ -11,6 +11,7 @@ installation-id.txt
 tmp/
 frontend/dist/
 frontend/node_modules
+integration-tests/node_modules/
 custom-frontend
 integration-tests/screenshots/
 integration-tests/flakey-test-runs.log
@@ -28,4 +29,5 @@ sessions.yaml
 docs/build/
 build/
 Binary/
+lang/langtool
 .cursor

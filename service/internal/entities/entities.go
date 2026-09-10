@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	config "github.com/OliveTin/OliveTin/internal/config"
 	"github.com/OliveTin/OliveTin/internal/filehelper"
@@ -17,7 +18,16 @@ import (
 var (
 	EntityChangedSender chan bool
 	listeners           []func()
+
+	reconcileMu     sync.Mutex
+	watchedMu       sync.Mutex
+	watchedBindings = map[string]entityWatchBinding{}
 )
+
+type entityWatchBinding struct {
+	entityName string
+	sourceFile string
+}
 
 type Entity struct {
 	Data      any
@@ -30,11 +40,17 @@ func AddListener(l func()) {
 }
 
 func SetupEntityFileWatchers(cfg *config.Config) {
+	SyncEntityFileWatchers(cfg)
+}
+
+// SyncEntityFileWatchers ensures each configured entity file has a watcher and reloads
+// entity data. Safe to call on config reload; obsolete watchers are stopped.
+func SyncEntityFileWatchers(cfg *config.Config) {
+	reconcileMu.Lock()
+	defer reconcileMu.Unlock()
+
 	baseDir := ResolveEntitiesBaseDir(cfg.GetDir())
-	for i := range cfg.Entities { // #337 - iterate by key, not by value
-		ef := cfg.Entities[i]
-		watchAndLoadEntity(baseDir, ef)
-	}
+	reconcileEntityWatchers(desiredEntityWatchers(baseDir, cfg.Entities))
 }
 
 // ResolveEntitiesBaseDir returns the directory used to resolve relative entity file paths.
@@ -63,16 +79,104 @@ func resolveEntitiesBaseDir(configDir string) string {
 	return absConfigDir
 }
 
-func watchAndLoadEntity(baseDir string, ef *config.EntityFile) {
-	p := ef.File
+func resolveEntityFilePath(baseDir string, file string) string {
+	p := file
 	if !filepath.IsAbs(p) {
 		p = filepath.Join(baseDir, p)
 		log.WithFields(log.Fields{"entityFile": p}).Debugf("Adding config dir to entity file path")
 	}
-	go filehelper.WatchFileWrite(p, func(_ string) { loadEntityFile(p, ef.Name) }, filehelper.WatchMeta{
-		ConfigFile: ef.SourceFile,
-	})
-	loadEntityFile(p, ef.Name)
+	return p
+}
+
+func desiredEntityWatchers(baseDir string, entityFiles []*config.EntityFile) map[string]entityWatchBinding {
+	desired := make(map[string]entityWatchBinding, len(entityFiles))
+	for i := range entityFiles { // #337 - iterate by key, not by value
+		ef := entityFiles[i]
+		path := resolveEntityFilePath(baseDir, ef.File)
+		desired[path] = entityWatchBinding{
+			entityName: ef.Name,
+			sourceFile: ef.SourceFile,
+		}
+	}
+	return desired
+}
+
+func reconcileEntityWatchers(desired map[string]entityWatchBinding) {
+	stopObsoleteEntityWatchers(desired)
+	for path, binding := range desired {
+		ensureEntityFileWatcher(path, binding)
+	}
+	clearUnreferencedEntityTypes(desired)
+}
+
+func clearUnreferencedEntityTypes(desired map[string]entityWatchBinding) {
+	referenced := make(map[string]struct{}, len(desired))
+	for _, binding := range desired {
+		referenced[binding.entityName] = struct{}{}
+	}
+
+	for entityName := range GetEntities() {
+		if _, ok := referenced[entityName]; !ok {
+			ClearEntitiesOfType(entityName)
+		}
+	}
+}
+
+func stopObsoleteEntityWatchers(desired map[string]entityWatchBinding) {
+	watchedMu.Lock()
+	defer watchedMu.Unlock()
+
+	for path, binding := range watchedBindings {
+		wanted, ok := desired[path]
+		if ok && wanted == binding {
+			continue
+		}
+		filehelper.StopFileWatch(path)
+		delete(watchedBindings, path)
+	}
+}
+
+func ensureEntityFileWatcher(path string, binding entityWatchBinding) {
+	watchedMu.Lock()
+	existing, watching := watchedBindings[path]
+	if watching && existing == binding {
+		watchedMu.Unlock()
+		loadEntityFile(path, binding.entityName)
+		return
+	}
+	watchedMu.Unlock()
+
+	if err := filehelper.WatchFileWrite(path, makeEntityFileWatchCallback(path), filehelper.WatchMeta{
+		ConfigFile: binding.sourceFile,
+	}); err != nil {
+		filehelper.StopFileWatch(path)
+		watchedMu.Lock()
+		delete(watchedBindings, path)
+		watchedMu.Unlock()
+		return
+	}
+
+	watchedMu.Lock()
+	watchedBindings[path] = binding
+	watchedMu.Unlock()
+
+	loadEntityFile(path, binding.entityName)
+}
+
+func makeEntityFileWatchCallback(path string) func(string) {
+	return func(_ string) {
+		entityFileWatchCallback(path)
+	}
+}
+
+func entityFileWatchCallback(path string) {
+	watchedMu.Lock()
+	binding, ok := watchedBindings[path]
+	watchedMu.Unlock()
+	if !ok {
+		return
+	}
+	loadEntityFile(path, binding.entityName)
 }
 
 func loadEntityFile(filename string, entityname string) {

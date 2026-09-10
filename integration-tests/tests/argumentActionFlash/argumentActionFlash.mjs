@@ -28,7 +28,7 @@ async function waitForActionSuccessFlash (actionTitle) {
         const button = await getActionButton(webdriver, actionTitle)
         const classAttr = await button.getAttribute('class')
         return classAttr && classAttr.includes('action-success')
-      } catch (e) {
+      } catch {
         return false
       }
     }),

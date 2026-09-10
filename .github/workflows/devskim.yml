@@ -17,7 +17,7 @@ on:
       - 'integration-tests/**'
       - 'proto/**'
       - 'service/**'
-    branches: [ "main" ]
+    branches: [ "main", "next" ]
   pull_request:
     paths:
       - '.github/workflows/devskim.yml'
@@ -29,7 +29,7 @@ on:
       - 'integration-tests/**'
       - 'proto/**'
       - 'service/**'
-    branches: [ "main" ]
+    branches: [ "main", "next" ]
   schedule:
     - cron: '34 21 * * 2'
 

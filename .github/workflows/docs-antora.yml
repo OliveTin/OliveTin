@@ -3,12 +3,14 @@ on:
   push:
     paths:
       - 'docs/**'
+      - 'service/internal/config/config.go'
       - 'local-antora-playbook.yml'
       - 'local-antora-playbook-ci.yml'
       - '.github/workflows/docs-antora.yml'
   pull_request:
     paths:
       - 'docs/**'
+      - 'service/internal/config/config.go'
       - 'local-antora-playbook.yml'
       - 'local-antora-playbook-ci.yml'
       - '.github/workflows/docs-antora.yml'
@@ -29,6 +31,12 @@ jobs:
 
       - name: Install Antora toolchain
         run: npm i antora@3.1.14 asciidoctor-kroki@0.18.1 @asciidoctor/tabs@1.0.0-beta.6
+
+      - name: Check docs config key casing
+        run: python3 docs/modules/ROOT/check_config_keys.py
+
+      - name: Check docs chevron links
+        run: python3 docs/modules/ROOT/check_chevron_links.py
 
       - name: Generate docs site (smoke)
         run: npx antora local-antora-playbook-ci.yml --log-level info
