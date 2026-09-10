@@ -112,6 +112,9 @@ func registerFileWatch(watchKey string) chan struct{} {
 
 	done := make(chan struct{})
 	fileWatchMu.Lock()
+	if previous, ok := fileWatchStops[watchKey]; ok {
+		close(previous)
+	}
 	fileWatchStops[watchKey] = done
 	fileWatchMu.Unlock()
 	return done
