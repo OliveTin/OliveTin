@@ -188,7 +188,7 @@ import { connectEventStreamIfNeeded } from '../../js/websocket.js'
 import { DashboardSquare01Icon } from '@hugeicons/core-free-icons'
 import logoUrl from '../../OliveTinLogo.png'
 import { useI18n } from 'vue-i18n'
-import { activateLocale, resolveBrowserLocale } from './i18n.js'
+import { ensureLocaleMessages, resolveBrowserLocale } from './i18n.js'
 import { searchIndexItems, clearSearchIndex, indexSystemNavigation, indexSearchHints, indexRootDashboardEntries } from './stores/searchIndex.js'
 import { applyThemeStyles } from './utils/themeLoader.js'
 const { t } = useI18n()
@@ -220,6 +220,7 @@ const browserLanguages = ref([])
 const initialLanguagePreference = typeof window !== 'undefined' ? localStorage.getItem('olivetin-language') : null
 const languagePreference = ref(initialLanguagePreference || 'auto')
 const selectedLanguage = ref(languagePreference.value)
+let latestLanguageChange = 0
 
 const themeDialog = ref(null)
 const availableThemes = ref([])
@@ -499,14 +500,24 @@ async function changeLanguage () {
     return
   }
 
-  if (selectedLanguage.value === 'auto') {
+  const languageChange = ++latestLanguageChange
+  const requestedPreference = selectedLanguage.value
+  const requestedLocale = requestedPreference === 'auto' ? resolveBrowserLocale() : requestedPreference
+
+  await ensureLocaleMessages(window.i18n, requestedLocale)
+
+  if (languageChange !== latestLanguageChange) {
+    return
+  }
+
+  window.i18n.locale.value = requestedLocale
+
+  if (requestedPreference === 'auto') {
     localStorage.removeItem('olivetin-language')
     languagePreference.value = 'auto'
-    await activateLocale(window.i18n, resolveBrowserLocale())
   } else {
-    await activateLocale(window.i18n, selectedLanguage.value)
-    localStorage.setItem('olivetin-language', selectedLanguage.value)
-    languagePreference.value = selectedLanguage.value
+    localStorage.setItem('olivetin-language', requestedPreference)
+    languagePreference.value = requestedPreference
   }
 
   // Update navigation with new translations

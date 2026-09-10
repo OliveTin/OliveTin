@@ -46,10 +46,8 @@ export async function loadInitialMessages (locale) {
   return Object.fromEntries(loadedMessages)
 }
 
-export async function activateLocale (i18n, locale) {
+export async function ensureLocaleMessages (i18n, locale) {
   if (!i18n.availableLocales.includes(locale)) {
     i18n.setLocaleMessage(locale, await loadLocaleMessages(locale))
   }
-
-  i18n.locale.value = locale
 }

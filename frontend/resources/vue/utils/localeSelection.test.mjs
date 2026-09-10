@@ -13,6 +13,10 @@ test('selectBrowserLocale falls back to a matching language', () => {
   assert.equal(selectBrowserLocale(availableLocales, ['de-AT']), 'de-DE')
 })
 
+test('selectBrowserLocale preserves script subtags during fallback', () => {
+  assert.equal(selectBrowserLocale(availableLocales, ['zh-Hant-HK']), 'zh-Hant-TW')
+})
+
 test('selectBrowserLocale uses English when no locale matches', () => {
   assert.equal(selectBrowserLocale(availableLocales, ['fr-FR']), 'en')
 })

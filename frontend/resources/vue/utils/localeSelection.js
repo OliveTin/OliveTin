@@ -7,11 +7,15 @@ export function selectBrowserLocale (availableLocales, browserLanguages) {
       return exact
     }
 
-    const language = lowerCandidate.split('-')[0]
-    const prefix = availableLocales.find(locale => locale.toLowerCase().startsWith(`${language}-`))
+    const parts = lowerCandidate.split('-')
 
-    if (prefix) {
-      return prefix
+    for (let length = parts.length - 1; length > 0; length--) {
+      const prefix = `${parts.slice(0, length).join('-')}-`
+      const match = availableLocales.find(locale => locale.toLowerCase().startsWith(prefix))
+
+      if (match) {
+        return match
+      }
     }
   }
 
