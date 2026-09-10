@@ -3,10 +3,22 @@
 
 JSON files are parsed as if each line is a single JSON object. This can be super helpful for getting a list of containers, for example; `docker ps -a --format=json > /etc/OliveTin/containers.json`.
 
+== Display names in JSON
+
+OliveTin uses the first string value found in fields named `title`, `name`, `id`, `hostname`, `host`, or `label` as the instance name in the UI. See xref:entities/intro.adoc#display-names[Display names] in the entities overview.
+
+Docker's JSON output uses `Names`, which is **not** one of those fields. Either map it when generating the file (for example with `jq` to add a `name` field) or include an explicit `title` or `name` key in each object.
+
 [source,json]
-.`/etc/OliveTin/containers.json`
+.Example with an explicit display name
+----
+{"title":"media-indexing-container","ID":"4bafe6f9f956","Image":"fedora","State":"exited"}
+{"title":"media-playback-container","ID":"d25f37c49c35","Image":"fedora","State":"exited"}
+----
+
+[source,json]
+.Raw `docker ps --format=json` lines (add `title` or `name` for OliveTin display names)
 ----
 {"Command":"\"/opt/entrypoint.sh\"","CreatedAt":"2024-02-08 15:27:42 +0000 GMT","ID":"4bafe6f9f956","Image":"fedora","Labels":"?","LocalVolumes":"0","Mounts":"","Names":"media-indexing-container","Networks":"bridge","Ports":"","RunningFor":"13 days ago","Size":"0B","State":"exited","Status":"Exited (128) 13 days ago"}
 {"Command":"\"/opt/entrypoint.sh\"","CreatedAt":"2023-12-17 20:58:03 +0000 GMT","ID":"d25f37c49c35","Image":"fedora","Labels":"?","LocalVolumes":"0","Mounts":"","Names":"media-playback-container","Networks":"bridge","Ports":"","RunningFor":"27 days ago","Size":"0B","State":"exited","Status":"Exited (137) 27 days ago"}
 ----
-

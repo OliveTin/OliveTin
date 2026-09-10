@@ -37,7 +37,7 @@ All configuration options are covered in the solution sections
 | Option | Description | Default | Live Reloadable | Documentation
 
 | `actions` | The list of available actions. | `-` | Live Reloadable, but refreshing the web browser is recommended. | xref:action_examples/intro.adoc[Action examples]
-| `entities` | A list of "things" you can attach actions to. | `-` | Live Reloadable, but restart is recommended. | xref:entities/intro.adoc[Entities]
+| `entities` | A list of "things" you can attach actions to. | `-` | Entity data files reload live; new entity definitions in config reload live. Restart if removing types or changing file paths. | xref:entities/intro.adoc[Entities]
 | `dashboards` | A grouping of actions, with optional displays, or actions generated from entities. | `-` | Live Reloadable | xref:dashboards/intro.adoc[Dashboards]
 |===
 

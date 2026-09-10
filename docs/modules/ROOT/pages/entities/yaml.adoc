@@ -1,7 +1,9 @@
 [#entities-yaml]
 = YAML entity files
 
-YAML files are the default expected format, so you can use .yml, .yaml, or even .txt - as long as the file contains a valid yaml LIST, then it will be loaded. 
+YAML files are the default expected format, so you can use .yml, .yaml, or even .txt - as long as the file contains a valid yaml LIST, then it will be loaded.
+
+Each list item should include a display name field (`title`, `name`, `id`, `hostname`, `host`, or `label`). The example below uses `name`. See xref:entities/intro.adoc#display-names[Display names].
 
 .`/etc/OliveTin/servers.yaml`
 [source,yaml]
@@ -19,4 +21,3 @@ YAML files are the default expected format, so you can use .yml, .yaml, or even 
   hostname: server3.example.com
   ip: 192.168.0.3
 ----
-
