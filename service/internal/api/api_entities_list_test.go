@@ -184,6 +184,50 @@ func TestGetEntityRetainsNonSelectedDisplayNameCasingVariant(t *testing.T) {
 	assert.Equal(t, "parked", resp.Msg.Fields["status"])
 }
 
+func TestGetEntitiesRetainsNonSelectedDisplayNameCasingVariantInListFields(t *testing.T) {
+	entities.ClearEntitiesOfType("vehicle")
+	entities.AddEntity("vehicle", "0", map[string]any{
+		"title":  "lower-title-value",
+		"Title":  "upper-title-value",
+		"status": "parked",
+	})
+	t.Cleanup(func() {
+		entities.ClearEntitiesOfType("vehicle")
+	})
+
+	cfg := config.DefaultConfig()
+	cfg.Entities = []*config.EntityFile{
+		{
+			Name: "vehicle",
+			Properties: []config.EntityProperty{
+				{Name: "title", Title: "Title"},
+				{Name: "status", Title: "Status"},
+			},
+		},
+	}
+	cfg.Sanitize()
+
+	ex := executor.DefaultExecutor(cfg)
+	ex.RebuildActionMap()
+	ts, client := getNewTestServerAndClientWithExecutor(cfg, ex)
+	defer ts.Close()
+
+	resp, err := client.GetEntities(context.Background(), connect.NewRequest(&apiv1.GetEntitiesRequest{
+		EntityType: "vehicle",
+		Page:       1,
+		PageSize:   10,
+	}))
+	require.NoError(t, err)
+
+	vehicleDef := findEntityDefinition(resp.Msg.EntityDefinitions, "vehicle")
+	require.NotNil(t, vehicleDef)
+	require.Len(t, vehicleDef.Instances, 1)
+	assert.Equal(t, "upper-title-value", vehicleDef.Instances[0].Title)
+	assert.Equal(t, "lower-title-value", vehicleDef.Instances[0].Fields["title"])
+	assert.Equal(t, "parked", vehicleDef.Instances[0].Fields["status"])
+	assert.NotContains(t, vehicleDef.Instances[0].Fields, "Title")
+}
+
 func TestGetEntityOmitsDisplayNamePropertyFromConfiguredFields(t *testing.T) {
 	entities.ClearEntitiesOfType("vehicle")
 	entities.AddEntity("vehicle", "0", map[string]any{

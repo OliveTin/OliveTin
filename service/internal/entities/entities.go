@@ -19,6 +19,7 @@ var (
 	EntityChangedSender chan bool
 	listeners           []func()
 
+	reconcileMu     sync.Mutex
 	watchedMu       sync.Mutex
 	watchedBindings = map[string]entityWatchBinding{}
 )
@@ -45,6 +46,9 @@ func SetupEntityFileWatchers(cfg *config.Config) {
 // SyncEntityFileWatchers ensures each configured entity file has a watcher and reloads
 // entity data. Safe to call on config reload; obsolete watchers are stopped.
 func SyncEntityFileWatchers(cfg *config.Config) {
+	reconcileMu.Lock()
+	defer reconcileMu.Unlock()
+
 	baseDir := ResolveEntitiesBaseDir(cfg.GetDir())
 	reconcileEntityWatchers(desiredEntityWatchers(baseDir, cfg.Entities))
 }
@@ -102,6 +106,20 @@ func reconcileEntityWatchers(desired map[string]entityWatchBinding) {
 	for path, binding := range desired {
 		ensureEntityFileWatcher(path, binding)
 	}
+	clearUnreferencedEntityTypes(desired)
+}
+
+func clearUnreferencedEntityTypes(desired map[string]entityWatchBinding) {
+	referenced := make(map[string]struct{}, len(desired))
+	for _, binding := range desired {
+		referenced[binding.entityName] = struct{}{}
+	}
+
+	for entityName := range GetEntities() {
+		if _, ok := referenced[entityName]; !ok {
+			ClearEntitiesOfType(entityName)
+		}
+	}
 }
 
 func stopObsoleteEntityWatchers(desired map[string]entityWatchBinding) {
@@ -126,12 +144,22 @@ func ensureEntityFileWatcher(path string, binding entityWatchBinding) {
 		loadEntityFile(path, binding.entityName)
 		return
 	}
+	watchedMu.Unlock()
+
+	if err := filehelper.WatchFileWrite(path, makeEntityFileWatchCallback(path), filehelper.WatchMeta{
+		ConfigFile: binding.sourceFile,
+	}); err != nil {
+		filehelper.StopFileWatch(path)
+		watchedMu.Lock()
+		delete(watchedBindings, path)
+		watchedMu.Unlock()
+		return
+	}
+
+	watchedMu.Lock()
 	watchedBindings[path] = binding
 	watchedMu.Unlock()
 
-	filehelper.WatchFileWrite(path, makeEntityFileWatchCallback(path), filehelper.WatchMeta{
-		ConfigFile: binding.sourceFile,
-	})
 	loadEntityFile(path, binding.entityName)
 }
 

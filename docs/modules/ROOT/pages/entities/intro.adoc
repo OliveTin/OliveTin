@@ -25,7 +25,8 @@ The chosen field is shown as the instance name in lists and dashboards. On the e
 
 * **Entity file content** — when a watched data file is updated on disk, OliveTin reloads instances and notifies the web UI. No restart is required.
 * **New entity types in `config.yaml`** — when you add a new entry under `entities:` and reload config, OliveTin starts watching that file without a full restart.
-* **Removing or renaming entity types** — restart OliveTin if you remove an entity definition or change its file path.
+* **Entity file path changes** — when you change an entity's file path in config and reload, OliveTin switches to the new file without a restart.
+* **Removing or renaming entity types** — restart OliveTin if you remove an entity definition or rename its type; otherwise stale entity data may remain in memory until restart.
 
 [NOTE]
 ====

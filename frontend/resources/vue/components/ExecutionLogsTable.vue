@@ -31,7 +31,9 @@
         :to="`/logs/${row.executionTrackingId}`"
         class="execution-id-link"
       >
-        <LogActionTitle :justification="row.justification">
+        <LogActionTitle
+          :justification="variant === 'action-history' ? row.justification : ''"
+        >
           {{ row.executionTrackingId }}
         </LogActionTitle>
       </router-link>
@@ -89,7 +91,7 @@
     <template #cell-status="{ row }">
       <span class="exit-code">
         <span
-          v-if="variant === 'standard' && row.queuePosition != null && !row.executionFinished"
+          v-if="variant === 'standard' && row.queuePosition != null && !row.executionFinished && !row.executionStarted"
           class="queue-position"
         >
           {{ t('logs.queue-position', { position: row.queuePosition }) }}

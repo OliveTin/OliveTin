@@ -578,11 +578,19 @@ async function applyTheme () {
     await applyThemeStyles(themePreference.value)
   } catch (err) {
     console.warn('Failed to load theme CSS:', err)
-    const themeStyle = document.getElementById('theme-style')
-    if (themeStyle) {
-      themeStyle.textContent = ''
+    localStorage.removeItem('olivetin-theme')
+    themePreference.value = ''
+    selectedTheme.value = ''
+    try {
+      await applyThemeStyles('')
+    } catch (fallbackErr) {
+      console.warn('Failed to load default theme CSS:', fallbackErr)
+      const themeStyle = document.getElementById('theme-style')
+      if (themeStyle) {
+        themeStyle.textContent = ''
+      }
+      document.body.removeAttribute('loaded-theme')
     }
-    document.body.removeAttribute('loaded-theme')
   }
 }
 

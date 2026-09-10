@@ -1,4 +1,16 @@
-export async function applyThemeStyles (themePreference = '') {
+const DEFAULT_THEME_FETCH_TIMEOUT_MS = 5000
+
+async function fetchWithTimeout (url, options, timeoutMs) {
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
+  try {
+    return await fetch(url, { ...options, signal: controller.signal })
+  } finally {
+    clearTimeout(timeoutId)
+  }
+}
+
+export async function applyThemeStyles (themePreference = '', timeoutMs = DEFAULT_THEME_FETCH_TIMEOUT_MS) {
   let themeStyle = document.getElementById('theme-style')
 
   if (!themeStyle) {
@@ -12,7 +24,7 @@ export async function applyThemeStyles (themePreference = '') {
     ? `/custom-webui/themes/${encodeURIComponent(themePreference)}/theme.css`
     : '/theme.css'
 
-  const response = await fetch(themeUrl, { cache: 'no-store' })
+  const response = await fetchWithTimeout(themeUrl, { cache: 'no-store' }, timeoutMs)
   if (!response.ok) {
     throw new Error(`theme fetch failed: ${response.status}`)
   }

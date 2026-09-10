@@ -119,7 +119,11 @@ async function main () {
   try {
     const i18nSettings = await initClient()
 
-    await applyThemeStyles(getStoredThemePreference())
+    try {
+      await applyThemeStyles(getStoredThemePreference())
+    } catch (err) {
+      console.warn('Failed to load theme CSS:', err)
+    }
 
     initWebsocket()
 

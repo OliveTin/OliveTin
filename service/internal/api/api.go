@@ -41,6 +41,8 @@ type oliveTinAPI struct {
 	// We use a map for efficient membership and deletion; ordering is not required.
 	streamingClients      map[*streamingClient]struct{}
 	streamingClientsMutex sync.RWMutex
+
+	entityListenerRegistered bool
 }
 
 const maxEventStreamClients = 16
@@ -1733,16 +1735,37 @@ func entityListFields(data any, properties []config.EntityProperty) map[string]s
 		return nil
 	}
 
+	dataMap, _ := data.(map[string]any)
 	displayFieldKey := entities.DisplayNameFieldKey(data)
 	fields := make(map[string]string, len(properties))
 	for _, property := range properties {
-		if entityPropertyIsDisplayName(property.Name, displayFieldKey) {
+		actualKey := entityDataPropertyKey(dataMap, property.Name)
+		if entityFieldIsSelectedDisplayName(actualKey, displayFieldKey) {
 			continue
 		}
 		fields[property.Name] = entityPropertyValue(data, property.Name)
 	}
 
 	return fields
+}
+
+func entityDataPropertyKey(dataMap map[string]any, propertyName string) string {
+	if dataMap == nil {
+		return propertyName
+	}
+
+	if _, found := dataMap[propertyName]; found {
+		return propertyName
+	}
+
+	propertyNameLower := strings.ToLower(propertyName)
+	for key := range dataMap {
+		if strings.ToLower(key) == propertyNameLower {
+			return key
+		}
+	}
+
+	return propertyName
 }
 
 func entityPropertyValue(data any, propertyName string) string {
@@ -1810,10 +1833,6 @@ func entityFieldIsSelectedDisplayName(fieldName, displayFieldKey string) bool {
 	return displayFieldKey != "" && fieldName == displayFieldKey
 }
 
-func entityPropertyIsDisplayName(propertyName, displayFieldKey string) bool {
-	return displayFieldKey != "" && strings.EqualFold(propertyName, displayFieldKey)
-}
-
 func (api *oliveTinAPI) RestartAction(ctx ctx.Context, req *connect.Request[apiv1.RestartActionRequest]) (*connect.Response[apiv1.StartActionResponse], error) {
 	execReqLogEntry, err := api.restartActionLogEntry(req.Msg.ExecutionTrackingId)
 	if err != nil {
@@ -1871,6 +1890,11 @@ var (
 // Call this before background goroutines that may trigger RebuildActionMap.
 func RegisterExecutorListener(ex *executor.Executor) {
 	server := ensureExecutorListener(ex)
+	if server.entityListenerRegistered {
+		return
+	}
+
+	server.entityListenerRegistered = true
 	entities.AddListener(server.onEntityChanged)
 }
 

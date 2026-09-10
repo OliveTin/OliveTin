@@ -103,7 +103,13 @@ jobs:
           webui_pid=$!
           make -w service-unittests &
           service_tests_pid=$!
-          wait "$webui_pid" "$service_tests_pid"
+          webui_status=0
+          service_tests_status=0
+          wait "$webui_pid" || webui_status=$?
+          wait "$service_tests_pid" || service_tests_status=$?
+          if (( webui_status != 0 || service_tests_status != 0 )); then
+            exit 1
+          fi
           make -w frontend-unittests
 
       - name: integration tests

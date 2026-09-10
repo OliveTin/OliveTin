@@ -70,19 +70,34 @@ func WatchDirectoryWrite(fullpath string, callback func(filename string), meta W
 	}, nil)
 }
 
-func WatchFileWrite(fullpath string, callback func(filename string), meta WatchMeta) {
+func WatchFileWrite(fullpath string, callback func(filename string), meta WatchMeta) error {
 	filename := filepath.Base(fullpath)
 	filedir := filepath.Dir(fullpath)
 	watchKey := filepath.Join(filedir, filename)
 
-	done := registerFileWatch(watchKey)
-	go watchPath(&watchContext{
+	ctx := &watchContext{
 		filedir:         filedir,
 		filename:        filename,
 		callback:        callback,
 		interestedEvent: fsnotify.Write,
 		meta:            meta,
-	}, done)
+	}
+
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		reportWatcherFailure(ctx, err)
+		return err
+	}
+
+	if err := watcher.Add(filedir); err != nil {
+		reportWatcherFailure(ctx, err)
+		closeWatcher(watcher)
+		return err
+	}
+
+	done := registerFileWatch(watchKey)
+	go runWatcher(ctx, watcher, done)
+	return nil
 }
 
 // StopFileWatch stops a file write watcher started by WatchFileWrite.
@@ -127,12 +142,17 @@ func watchPath(ctx *watchContext, done <-chan struct{}) {
 		return
 	}
 
-	defer closeWatcher(watcher)
-
 	if err := watcher.Add(ctx.filedir); err != nil {
 		reportWatcherFailure(ctx, err)
+		closeWatcher(watcher)
 		return
 	}
+
+	runWatcher(ctx, watcher, done)
+}
+
+func runWatcher(ctx *watchContext, watcher *fsnotify.Watcher, done <-chan struct{}) {
+	defer closeWatcher(watcher)
 
 	for processEvent(ctx, watcher, done) {
 	}

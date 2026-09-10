@@ -134,8 +134,8 @@ func TestSyncEntityFileWatchers_removedPathDoesNotReload(t *testing.T) {
 	cfg.Entities = nil
 	SyncEntityFileWatchers(cfg)
 	assert.Equal(t, 0, watchedPathCountForTests())
+	assert.Empty(t, GetEntityInstancesOrdered("vehicle"))
 
-	ClearEntitiesOfType("vehicle")
 	require.NoError(t, os.WriteFile(vehiclePath, []byte("- title: car2\n"), 0o600))
 	entityFileWatchCallback(vehiclePath)
 	assert.Empty(t, GetEntityInstancesOrdered("vehicle"))

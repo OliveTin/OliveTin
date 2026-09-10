@@ -26,7 +26,10 @@
         Back
       </button>
     </template>
-    <div v-if="!entityDetails">
+    <div v-if="entityNotFound">
+      <p>Entity not found.</p>
+    </div>
+    <div v-else-if="!entityDetails">
       <p>Loading entity details...</p>
     </div>
     <template v-else>
@@ -130,6 +133,7 @@ import ActionIconGlyph from '../components/ActionIconGlyph.vue'
 
 const router = useRouter()
 const entityDetails = ref(null)
+const entityNotFound = ref(false)
 
 const props = defineProps({
   entityType: String,
@@ -151,6 +155,10 @@ function goBack () {
   router.push({ name: 'Entities' })
 }
 
+function isEntityNotFoundError (err) {
+  return err.status === 404 || err.code === 'NotFound' || err.message?.includes('not found')
+}
+
 async function fetchEntityDetails () {
   try {
     const response = await window.client.getEntity({
@@ -159,7 +167,14 @@ async function fetchEntityDetails () {
     })
 
     entityDetails.value = response
+    entityNotFound.value = false
   } catch (err) {
+    if (isEntityNotFoundError(err)) {
+      entityDetails.value = null
+      entityNotFound.value = true
+      return
+    }
+
     console.error('Failed to fetch entity details:', err)
     window.showBigError('fetch-entity-details', 'getting entity details', err, false)
   }
