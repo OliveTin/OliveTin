@@ -52,6 +52,9 @@ on:
       - 'var/macos/**'
       - 'var/windows/**'
 
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest

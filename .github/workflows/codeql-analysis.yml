@@ -18,6 +18,7 @@ on:
       - '.github/workflows/codeql-analysis.yml'
       - 'frontend/**'
       - 'integration-tests/**'
+      - 'lang/**'
       - 'proto/**'
       - 'service/**'
     branches: [main, next]
@@ -26,6 +27,7 @@ on:
       - '.github/workflows/codeql-analysis.yml'
       - 'frontend/**'
       - 'integration-tests/**'
+      - 'lang/**'
       - 'proto/**'
       - 'service/**'
     branches: [main, next]
