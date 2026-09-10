@@ -38,6 +38,28 @@ func testingExecutor() (*Executor, *config.Config) {
 	return e, cfg
 }
 
+func TestGetLogReturnsDefensiveCopy(t *testing.T) {
+	e := DefaultExecutor(config.DefaultConfig())
+	e.logs["tracking-id"] = &InternalLogEntry{
+		Arguments: map[string]string{"message": "original"},
+		Output:    "original",
+		Tags:      []string{"original"},
+	}
+
+	entry, found := e.GetLog("tracking-id")
+	require.True(t, found)
+
+	entry.Arguments["message"] = "changed"
+	entry.Output = "changed"
+	entry.Tags[0] = "changed"
+
+	stored, found := e.GetLog("tracking-id")
+	require.True(t, found)
+	assert.Equal(t, "original", stored.Arguments["message"])
+	assert.Equal(t, "original", stored.Output)
+	assert.Equal(t, []string{"original"}, stored.Tags)
+}
+
 func TestCreateExecutorAndExec(t *testing.T) {
 	e, cfg := testingExecutor()
 
