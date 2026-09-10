@@ -224,7 +224,8 @@ notarize:
         key_id: "{{.Env.MACOS_NOTARY_KEY_ID}}"
         key: "{{.Env.MACOS_NOTARY_KEY}}"
         wait: true
-        timeout: 30m
+        # Apple rejects notary auth tokens with lifetimes over 20m.
+        timeout: 20m
 
 release:
   # Publish immediately without Windows assets; sign-windows uploads signed zip/MSI later.
