@@ -124,28 +124,65 @@ func AddEntity(entityName string, entityKey string, data any) {
 	rwmutex.Unlock()
 }
 
+var entityDisplayNameCandidates = []string{"title", "name", "id", "hostname", "host", "label"}
+
 //gocyclo:ignore
-func findEntityTitle(data any) string {
-	if mapData, ok := data.(map[string]any); ok {
-		keys := make(map[string]string)
-
-		for k := range mapData {
-			lookupKey := strings.ToLower(k)
-			keys[lookupKey] = k
-		}
-
-		for _, key := range []string{"title", "name", "id", "hostname", "host", "label"} {
-			if lookupKey, exists := keys[strings.ToLower(key)]; exists {
-				if value, ok := mapData[lookupKey]; ok {
-					if valueStr, ok := value.(string); ok {
-						return valueStr
-					}
-				}
-			}
-		}
+func entityDisplayNameLookup(data map[string]any) (fieldKey string, value string, found bool) {
+	keys := make(map[string]string, len(data))
+	for k := range data {
+		keys[strings.ToLower(k)] = k
 	}
 
-	return "Untitled Entity"
+	for _, candidate := range entityDisplayNameCandidates {
+		lookupKey, exists := keys[strings.ToLower(candidate)]
+		if !exists {
+			continue
+		}
+
+		rawValue, ok := data[lookupKey]
+		if !ok {
+			continue
+		}
+
+		valueStr, ok := rawValue.(string)
+		if !ok {
+			continue
+		}
+
+		return lookupKey, valueStr, true
+	}
+
+	return "", "", false
+}
+
+// DisplayNameFieldKey returns the data-file field used as the entity instance title, or "".
+func DisplayNameFieldKey(data any) string {
+	mapData, ok := data.(map[string]any)
+	if !ok {
+		return ""
+	}
+
+	fieldKey, _, found := entityDisplayNameLookup(mapData)
+	if !found {
+		return ""
+	}
+
+	return fieldKey
+}
+
+//gocyclo:ignore
+func findEntityTitle(data any) string {
+	mapData, ok := data.(map[string]any)
+	if !ok {
+		return "Untitled Entity"
+	}
+
+	_, value, found := entityDisplayNameLookup(mapData)
+	if !found {
+		return "Untitled Entity"
+	}
+
+	return value
 }
 
 func ClearEntitiesOfType(entityType string) {

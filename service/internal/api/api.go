@@ -1733,8 +1733,12 @@ func entityListFields(data any, properties []config.EntityProperty) map[string]s
 		return nil
 	}
 
+	displayFieldKey := entities.DisplayNameFieldKey(data)
 	fields := make(map[string]string, len(properties))
 	for _, property := range properties {
+		if entityFieldIsDisplayName(property.Name, displayFieldKey) {
+			continue
+		}
 		fields[property.Name] = entityPropertyValue(data, property.Name)
 	}
 
@@ -1788,11 +1792,19 @@ func serializeEntityFields(data any) map[string]string {
 		return nil
 	}
 
+	displayFieldKey := entities.DisplayNameFieldKey(data)
 	fields := make(map[string]string)
 	for k, v := range dataMap {
+		if entityFieldIsDisplayName(k, displayFieldKey) {
+			continue
+		}
 		fields[k] = fmt.Sprintf("%v", v)
 	}
 	return fields
+}
+
+func entityFieldIsDisplayName(fieldName, displayFieldKey string) bool {
+	return displayFieldKey != "" && strings.EqualFold(fieldName, displayFieldKey)
 }
 
 func (api *oliveTinAPI) RestartAction(ctx ctx.Context, req *connect.Request[apiv1.RestartActionRequest]) (*connect.Response[apiv1.StartActionResponse], error) {

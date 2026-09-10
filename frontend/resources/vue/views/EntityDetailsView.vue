@@ -40,12 +40,6 @@
             {{ entityType }}
           </router-link>
         </dd>
-        <dt v-if="entityDetails.title">
-          Title
-        </dt>
-        <dd v-if="entityDetails.title">
-          {{ entityDetails.title }}
-        </dd>
         <template v-if="entityDetails.fields">
           <template
             v-for="(value, key) in entityDetails.fields"
