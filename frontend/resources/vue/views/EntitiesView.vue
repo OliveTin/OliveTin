@@ -29,6 +29,7 @@ import Section from 'picocrank/vue/components/Section.vue'
 import EntityDefinitionSection from '../components/EntityDefinitionSection.vue'
 const definitionsLoaded = ref(false)
 const entityDefinitions = ref([])
+let entityFetchGeneration = 0
 
 const totalInstances = computed(() =>
   entityDefinitions.value.reduce(
@@ -38,15 +39,20 @@ const totalInstances = computed(() =>
 )
 
 async function fetchEntities () {
+  const fetchGeneration = ++entityFetchGeneration
   try {
     const ret = await window.client.getEntities()
+    if (fetchGeneration !== entityFetchGeneration) return
     entityDefinitions.value = ret.entityDefinitions ?? []
   } catch (err) {
+    if (fetchGeneration !== entityFetchGeneration) return
     console.error('Failed to fetch entities:', err)
     window.showBigError('fetch-entities', 'getting entities', err, false)
     entityDefinitions.value = []
   } finally {
-    definitionsLoaded.value = true
+    if (fetchGeneration === entityFetchGeneration) {
+      definitionsLoaded.value = true
+    }
   }
 }
 

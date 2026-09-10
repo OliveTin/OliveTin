@@ -85,6 +85,76 @@ func TestSyncEntityFileWatchers_doesNotDuplicateWatchers(t *testing.T) {
 	assert.Equal(t, 1, watchedPathCountForTests())
 }
 
+func TestSyncEntityFileWatchers_removedPathDoesNotReload(t *testing.T) {
+	ResetEntityWatchersForTests()
+	t.Cleanup(func() {
+		ResetEntityWatchersForTests()
+		ClearEntitiesOfType("vehicle")
+	})
+
+	dir := t.TempDir()
+	vehiclePath := filepath.Join(dir, "vehicles.yaml")
+	require.NoError(t, os.WriteFile(vehiclePath, []byte("- title: car1\n"), 0o600))
+
+	cfg := config.DefaultConfig()
+	cfg.SetDir(dir)
+	cfg.Entities = []*config.EntityFile{
+		{Name: "vehicle", File: "vehicles.yaml"},
+	}
+
+	SyncEntityFileWatchers(cfg)
+	require.Equal(t, 1, watchedPathCountForTests())
+	require.Len(t, GetEntityInstancesOrdered("vehicle"), 1)
+
+	cfg.Entities = nil
+	SyncEntityFileWatchers(cfg)
+	assert.Equal(t, 0, watchedPathCountForTests())
+
+	ClearEntitiesOfType("vehicle")
+	require.NoError(t, os.WriteFile(vehiclePath, []byte("- title: car2\n"), 0o600))
+	entityFileWatchCallback(vehiclePath)
+	assert.Empty(t, GetEntityInstancesOrdered("vehicle"))
+}
+
+func TestSyncEntityFileWatchers_replacedPathUsesNewBinding(t *testing.T) {
+	ResetEntityWatchersForTests()
+	t.Cleanup(func() {
+		ResetEntityWatchersForTests()
+		ClearEntitiesOfType("vehicle")
+	})
+
+	dir := t.TempDir()
+	vehiclePath := filepath.Join(dir, "vehicles.yaml")
+	carsPath := filepath.Join(dir, "cars.yaml")
+	require.NoError(t, os.WriteFile(vehiclePath, []byte("- title: car1\n"), 0o600))
+	require.NoError(t, os.WriteFile(carsPath, []byte("- title: car2\n"), 0o600))
+
+	cfg := config.DefaultConfig()
+	cfg.SetDir(dir)
+	cfg.Entities = []*config.EntityFile{
+		{Name: "vehicle", File: "vehicles.yaml"},
+	}
+
+	SyncEntityFileWatchers(cfg)
+	require.Equal(t, 1, watchedPathCountForTests())
+	require.Equal(t, "car1", GetEntityInstancesOrdered("vehicle")[0].Title)
+
+	cfg.Entities = []*config.EntityFile{
+		{Name: "vehicle", File: "cars.yaml"},
+	}
+	SyncEntityFileWatchers(cfg)
+	require.Equal(t, 1, watchedPathCountForTests())
+	require.Equal(t, "car2", GetEntityInstancesOrdered("vehicle")[0].Title)
+
+	require.NoError(t, os.WriteFile(vehiclePath, []byte("- title: stale\n"), 0o600))
+	entityFileWatchCallback(vehiclePath)
+	assert.Equal(t, "car2", GetEntityInstancesOrdered("vehicle")[0].Title, "obsolete path should not reload")
+
+	require.NoError(t, os.WriteFile(carsPath, []byte("- title: car3\n"), 0o600))
+	entityFileWatchCallback(carsPath)
+	assert.Equal(t, "car3", GetEntityInstancesOrdered("vehicle")[0].Title)
+}
+
 func TestSyncEntityFileWatchers_picksUpNewEntityType(t *testing.T) {
 	ResetEntityWatchersForTests()
 	t.Cleanup(func() {

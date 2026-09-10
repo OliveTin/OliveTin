@@ -15,6 +15,9 @@ var (
 	debounceWriteLog map[string]*FsNotifyLogEntry
 
 	debounceWriteLogMutex = sync.Mutex{}
+
+	fileWatchMu    sync.Mutex
+	fileWatchStops = map[string]chan struct{}{}
 )
 
 func init() {
@@ -54,7 +57,7 @@ func WatchDirectoryCreate(fullpath string, callback func(filename string), meta 
 		callback:        callback,
 		interestedEvent: fsnotify.Create,
 		meta:            meta,
-	})
+	}, nil)
 }
 
 func WatchDirectoryWrite(fullpath string, callback func(filename string), meta WatchMeta) {
@@ -64,23 +67,57 @@ func WatchDirectoryWrite(fullpath string, callback func(filename string), meta W
 		callback:        callback,
 		interestedEvent: fsnotify.Write,
 		meta:            meta,
-	})
+	}, nil)
 }
 
 func WatchFileWrite(fullpath string, callback func(filename string), meta WatchMeta) {
 	filename := filepath.Base(fullpath)
 	filedir := filepath.Dir(fullpath)
+	watchKey := filepath.Join(filedir, filename)
 
-	watchPath(&watchContext{
+	done := registerFileWatch(watchKey)
+	go watchPath(&watchContext{
 		filedir:         filedir,
 		filename:        filename,
 		callback:        callback,
 		interestedEvent: fsnotify.Write,
 		meta:            meta,
-	})
+	}, done)
 }
 
-func watchPath(ctx *watchContext) {
+// StopFileWatch stops a file write watcher started by WatchFileWrite.
+func StopFileWatch(fullpath string) {
+	watchKey, err := filepath.Abs(fullpath)
+	if err != nil {
+		watchKey = fullpath
+	}
+
+	fileWatchMu.Lock()
+	done, ok := fileWatchStops[watchKey]
+	if ok {
+		delete(fileWatchStops, watchKey)
+	}
+	fileWatchMu.Unlock()
+
+	if ok {
+		close(done)
+	}
+}
+
+func registerFileWatch(watchKey string) chan struct{} {
+	absKey, err := filepath.Abs(watchKey)
+	if err == nil {
+		watchKey = absKey
+	}
+
+	done := make(chan struct{})
+	fileWatchMu.Lock()
+	fileWatchStops[watchKey] = done
+	fileWatchMu.Unlock()
+	return done
+}
+
+func watchPath(ctx *watchContext, done <-chan struct{}) {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		reportWatcherFailure(ctx, err)
@@ -94,7 +131,7 @@ func watchPath(ctx *watchContext) {
 		return
 	}
 
-	for processEvent(ctx, watcher) {
+	for processEvent(ctx, watcher, done) {
 	}
 }
 
@@ -127,8 +164,26 @@ func reportWatcherFailure(ctx *watchContext, err error) {
 
 // processEvent waits for one watcher event. It returns false when the watcher
 // channels are closed so the caller can stop looping.
-func processEvent(ctx *watchContext, watcher *fsnotify.Watcher) bool {
+func processEvent(ctx *watchContext, watcher *fsnotify.Watcher, done <-chan struct{}) bool {
+	if done == nil {
+		return waitForWatcherEvent(ctx, watcher)
+	}
+	return waitForWatcherEventOrCancel(ctx, watcher, done)
+}
+
+func waitForWatcherEvent(ctx *watchContext, watcher *fsnotify.Watcher) bool {
 	select {
+	case event, ok := <-watcher.Events:
+		return handleWatcherEvent(ctx, event, ok)
+	case err, ok := <-watcher.Errors:
+		return handleWatcherError(ctx, err, ok)
+	}
+}
+
+func waitForWatcherEventOrCancel(ctx *watchContext, watcher *fsnotify.Watcher, done <-chan struct{}) bool {
+	select {
+	case <-done:
+		return false
 	case event, ok := <-watcher.Events:
 		return handleWatcherEvent(ctx, event, ok)
 	case err, ok := <-watcher.Errors:
