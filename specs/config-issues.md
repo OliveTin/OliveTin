@@ -48,3 +48,11 @@ When Diagnostics is visible and at least one configuration issue exists that the
 ## Startup count
 
 When the web UI starts, users who may view Diagnostics receive the same filtered configuration issue count used for the Diagnostics list and navigation badge. For other users the count is zero.
+
+## Command-line syntax check
+
+Operators can validate configuration without starting the web server by running OliveTin with the `-syntaxcheck` flag (optionally with `-configdir`). OliveTin searches for and reads configuration files as usual, prints each candidate path that was found or not found, prints the list of configuration files that were successfully read (including include-directory files), prints each configuration issue, and always prints a final count of issues found (including zero). Routine server logs are suppressed so the report stays readable.
+
+If configuration cannot be loaded (for example no base config file is found, or a found file cannot be parsed), OliveTin still prints the search results and loaded-file list, prints a configuration load failure message, prints `0 configuration issues found`, and exits with a non-zero status.
+
+The process exits with status `0` when configuration loaded successfully and no configuration issues were found, and status `1` when one or more issues were found or configuration failed to load.

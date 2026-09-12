@@ -10,6 +10,18 @@ file in the following locations;
 
 For a complete annotated example, see the https://github.com/OliveTin/OliveTin/blob/main/config.yaml[`config.yaml` in the OliveTin repository].
 
+[#syntaxcheck]
+== Check configuration without starting the server
+
+Use `-syntaxcheck` to load configuration, print the files OliveTin found and read, list any configuration warnings or errors (the same Diagnostics issue list), and exit without starting the web UI.
+
+[source,bash]
+----
+OliveTin -configdir /etc/OliveTin -syntaxcheck
+----
+
+The process exits with `0` when no configuration issues are found, and `1` when one or more issues are found. A final line always reports how many issues were found, including `0 configuration issues found`. If configuration cannot be loaded (for example no `config.yaml` is found), OliveTin still prints the searched paths and a load-failure message, then exits with a non-zero status.
+
 The most simple `config.yaml` would be something like this;
 
 .The most simple `config.yaml` file.
@@ -107,7 +119,7 @@ All configuration options are covered in the solution sections
 |===
 | Option | Description | Default | Live Reloadable | Documentation
 
-| `logLevel` | The log level to use. `INFO`, `DEBUG`, `WARN` | `INFO` | Requires Restart | -
+| `logLevel` | The log level to use. `INFO`, `DEBUG`, `WARN`, `TRACE` | `INFO` | Requires Restart | xref:advanced_configuration/logs.adoc[Logging]
 | `logDebugOptions` | Enable various debug logs. | `-` | Requires Restart | xref:troubleshooting/advanced.adoc[Advanced Troubleshooting]
 | `Insecure*` | Various options to disable security features. | `false` | Restart recommended | xref:troubleshooting/advanced.adoc[Advanced Troubleshooting]
 |===
