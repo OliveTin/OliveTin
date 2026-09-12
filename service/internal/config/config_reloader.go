@@ -45,6 +45,8 @@ func AppendSource(cfg *Config, k *koanf.Koanf, configPath string) {
 	}).Info("Appending cfg source")
 
 	configissues.BeginConfigLoad()
+	BeginLoadedSources()
+	RecordLoadedSource(configPath)
 	stampLoadedConfigSources(k, configPath)
 	loadIncludedConfigsFromDir(k, configPath)
 
@@ -244,6 +246,8 @@ func loadAndMergeIncludedFile(k *koanf.Koanf, includePath, filename string) {
 		return
 	}
 
+	RecordLoadedSource(filePath)
+
 	log.WithFields(log.Fields{
 		"filePath": filePath,
 	}).Info("Successfully loaded included config file")
@@ -350,7 +354,7 @@ func justificationDecodeHookFunc(from reflect.Type, to reflect.Type, data any) (
 }
 
 func envDecodeHookFunc(from reflect.Type, to reflect.Type, data any) (any, error) {
-	log.Debugf("envDecodeHookFunc called: from=%v, to=%v, data=%v", from, to, data)
+	log.Tracef("envDecodeHookFunc called: from=%v, to=%v, data=%v", from, to, data)
 	if from.Kind() != reflect.String {
 		return data, nil
 	}

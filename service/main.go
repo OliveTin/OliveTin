@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"path/filepath"
 	"strings"
 
@@ -33,15 +34,30 @@ import (
 
 var (
 	cfg     *config.Config
+	cli     cliOptions
 	version = "dev"
 	commit  = "nocommit"
 	date    = "nodate"
+
+	syntaxCheckSearchResults []string
+	syntaxCheckLoadError     error
 )
 
-func init() {
-	initLog()
+type cliOptions struct {
+	configDir    string
+	syntaxCheck  bool
+	startupTrace bool
+	printVersion bool
+}
 
-	initConfig(initCliFlags())
+func init() {
+	// Parse flags before initLog so -startuptrace can enable TRACE before config loads.
+	cli = parseCliFlags()
+	initLog()
+	handleEarlyCliFlags()
+
+	initConfig(cli.configDir, !cli.syntaxCheck)
+	quietSyntaxCheckLogs()
 
 	initCheckEnvironment()
 
@@ -62,32 +78,64 @@ func initLog() {
 		})
 	}
 
-	// Use debug this early on to catch details about startup errors. The
-	// default config will raise the log level later, if not set.
-	log.SetLevel(log.DebugLevel) // Default to debug, to catch cfg issue
-}
-
-func initCliFlags() string {
-	var configDir string
-	flag.StringVar(&configDir, "configdir", ".", "Config directory path")
-
-	var printVersion bool
-	flag.BoolVar(&printVersion, "version", false, "Prints the version number and exits")
-	flag.Parse()
-
-	// This log message should be the first log message OliveTin prints.
-	if printVersion {
-		logStartupMessage("OliveTin is just printing the startup message")
-		os.Exit(1)
-	} else {
-		logStartupMessage("OliveTin initializing")
+	if cli.startupTrace {
+		log.SetLevel(log.TraceLevel)
+		return
 	}
 
-	log.WithFields(log.Fields{
-		"value": configDir,
-	}).Debugf("Value of -configdir flag")
+	log.SetLevel(log.InfoLevel)
+}
 
-	return configDir
+func parseCliFlags() cliOptions {
+	options := cliOptions{}
+	flag.StringVar(&options.configDir, "configdir", ".", "Config directory path")
+	flag.BoolVar(&options.printVersion, "version", false, "Prints the version number and exits")
+	flag.BoolVar(&options.syntaxCheck, "syntaxcheck", false, "Check configuration for issues and exit")
+	flag.BoolVar(&options.startupTrace, "startuptrace", false, "Enable TRACE logging before configuration is loaded")
+	flag.Parse()
+	return options
+}
+
+func handleEarlyCliFlags() {
+	// This log message should be the first log message OliveTin prints.
+	if cli.printVersion {
+		logStartupMessage("OliveTin is just printing the startup message")
+		os.Exit(1)
+	}
+
+	if cli.syntaxCheck {
+		// Suppress routine logs before any further startup output. Re-applied
+		// after config load because sanitize may raise the level again.
+		log.SetLevel(log.FatalLevel)
+		return
+	}
+
+	logStartupMessage("OliveTin initializing")
+
+	log.WithFields(log.Fields{
+		"value": cli.configDir,
+	}).Debugf("Value of -configdir flag")
+}
+
+// quietSyntaxCheckLogs keeps -syntaxcheck output limited to the report on
+// stdout. Load failures are returned to the syntax-check report instead of
+// exiting immediately via Fatalf.
+func quietSyntaxCheckLogs() {
+	if cli.syntaxCheck {
+		log.SetLevel(log.FatalLevel)
+	}
+}
+
+func failConfigLoad(format string, args ...any) {
+	err := fmt.Errorf(format, args...)
+	if cli.syntaxCheck {
+		if syntaxCheckLoadError == nil {
+			syntaxCheckLoadError = err
+		}
+		return
+	}
+
+	log.Fatal(err)
 }
 
 func getBasePort() int {
@@ -178,7 +226,7 @@ func watchConfigFile(k *koanf.Koanf, f *file.File, configPath string) {
 	}
 }
 
-func loadAndWatchConfig(k *koanf.Koanf, configPath string) {
+func loadConfigFromPath(k *koanf.Koanf, configPath string, watch bool) bool {
 	log.WithFields(log.Fields{
 		"configPath": configPath,
 	}).Info("Loading config from path")
@@ -186,40 +234,66 @@ func loadAndWatchConfig(k *koanf.Koanf, configPath string) {
 	f := file.Provider(configPath)
 
 	if err := k.Load(f, yaml.Parser()); err != nil {
-		log.Fatalf("error loading config from %s: %v", configPath, err)
+		failConfigLoad("error loading config from %s: %v", configPath, err)
+		return false
 	}
 
-	watchConfigFile(k, f, configPath)
+	if watch {
+		watchConfigFile(k, f, configPath)
+	}
+
+	return true
 }
 
-func findAndLoadBaseConfig(k *koanf.Koanf, directories []string) string {
+func findAndLoadBaseConfig(k *koanf.Koanf, directories []string, watch bool) string {
 	for _, directory := range directories {
 		configPath := getConfigPath(directory)
-		if !configPathExists(configPath) {
+		found := configPathExists(configPath)
+		printConfigSearchResult(configPath, found)
+
+		if !found {
 			continue
 		}
 
-		loadAndWatchConfig(k, configPath)
+		if !loadConfigFromPath(k, configPath, watch) {
+			return ""
+		}
+
 		return configPath
 	}
 
 	return ""
 }
 
-func initConfig(configDir string) {
+func printConfigSearchResult(configPath string, found bool) {
+	if !cli.syntaxCheck {
+		return
+	}
+
+	if found {
+		syntaxCheckSearchResults = append(syntaxCheckSearchResults, "Found config file: "+configPath)
+		return
+	}
+
+	syntaxCheckSearchResults = append(syntaxCheckSearchResults, "Config file not found: "+configPath)
+}
+
+func initConfig(configDir string, watch bool) {
 	k := koanf.New(".")
 	err := k.Load(env.Provider(".", ".", nil), nil)
 	if err != nil {
-		log.WithFields(log.Fields{
-			"error": err,
-		}).Fatalf("Error loading environment variables")
+		failConfigLoad("Error loading environment variables: %v", err)
+		return
 	}
 
-	baseConfigPath := findAndLoadBaseConfig(k, configSearchDirectories(configDir))
+	baseConfigPath := findAndLoadBaseConfig(k, configSearchDirectories(configDir), watch)
 	cfg = config.DefaultConfigWithBasePort(getBasePort())
 
 	if baseConfigPath == "" {
-		log.Fatalf("No base config file found")
+		if syntaxCheckLoadError == nil {
+			failConfigLoad("No base config file found")
+		}
+		return
 	}
 
 	config.AppendSource(cfg, k, baseConfigPath)
@@ -251,6 +325,11 @@ func warnIfPuidGuid() {
 }
 
 func main() {
+	if cli.syntaxCheck {
+		runSyntaxCheck()
+		return
+	}
+
 	servicehost.Start(cfg.ServiceHostMode, cfg.ServiceLogs.Directory)
 
 	log.WithFields(log.Fields{
