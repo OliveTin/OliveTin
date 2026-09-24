@@ -700,7 +700,21 @@ onUnmounted(() => {
 }
 
 form {
-  grid-template-columns: max-content auto auto;
+  grid-template-columns: minmax(0, max-content) minmax(0, auto) minmax(0, auto);
+}
+
+@media (max-width: 600px) {
+  form {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  form input:not([type="checkbox"]):not([type="radio"]),
+  form textarea,
+  form select {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
 }
 
 .argument-description {
