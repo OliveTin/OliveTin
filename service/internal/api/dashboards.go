@@ -148,6 +148,8 @@ func buildDefaultDashboard(rr *DashboardRenderRequest) *apiv1.Dashboard {
 		Contents: make([]*apiv1.DashboardComponent, 0),
 	}
 
+	rr.ex.MapActionBindingsLock.RLock()
+
 	for _, binding := range rr.ex.MapActionBindings {
 		if !defaultBindingEligibleForDashboard(rr, binding) {
 			continue
@@ -157,6 +159,8 @@ func buildDefaultDashboard(rr *DashboardRenderRequest) *apiv1.Dashboard {
 			fieldset.Contents = append(fieldset.Contents, comp)
 		}
 	}
+
+	rr.ex.MapActionBindingsLock.RUnlock()
 
 	if len(fieldset.Contents) > 0 {
 		fieldset.Contents = sortDashboardComponents(fieldset.Contents)
