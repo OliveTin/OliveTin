@@ -1,0 +1,10 @@
+# Fictional servers for marketing screenshots.
+- name: web
+  hostname: web.example.com
+  ip: 192.0.2.10
+- name: nas
+  hostname: nas.example.com
+  ip: 192.0.2.20
+- name: media
+  hostname: media.example.com
+  ip: 192.0.2.30
