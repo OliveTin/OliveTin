@@ -28,6 +28,10 @@ frontend-codestyle:
 frontend-unittests:
 	$(MAKE) -wC frontend unittests
 
+lint: service-codestyle frontend-codestyle
+
+test: service-unittests frontend-unittests
+
 docs-check:
 	python3 docs/modules/ROOT/check_config_keys.py
 	python3 docs/modules/ROOT/check_chevron_links.py
@@ -96,4 +100,4 @@ config-tool:
 devcheck:
 	python3 scripts/devcheck.py $(ARGS)
 
-.PHONY: proto proto-tools lang-generate generated-check default service windows-resources windows-msi frontend-unittests docs-check it devcheck
+.PHONY: proto proto-tools lang-generate generated-check default service windows-resources windows-msi frontend-unittests docs-check it devcheck lint test service-unittests service-codestyle frontend-codestyle
