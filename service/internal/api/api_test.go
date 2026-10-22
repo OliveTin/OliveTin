@@ -897,6 +897,59 @@ func TestRegisterStreamingClientEnforcesLimit(t *testing.T) {
 	api.removeClient(overflow)
 }
 
+// TestEventStreamReleasesSlotWhenClientDisconnects fills every EventStream slot,
+// disconnects all those clients and expects the slots to be released right
+// away, so a new client is accepted instead of being rejected with
+// "concurrent client limit reached".
+func TestEventStreamReleasesSlotWhenClientDisconnects(t *testing.T) {
+	cfg := config.DefaultConfig()
+	ex := executor.DefaultExecutor(cfg)
+	ex.RebuildActionMap()
+
+	ts, client := getNewTestServerAndClientWithExecutor(cfg, ex)
+	defer ts.Close()
+
+	server := ensureExecutorListener(ex)
+
+	cancels := make([]context.CancelFunc, 0, maxEventStreamClients)
+	for i := 0; i < maxEventStreamClients; i++ {
+		cancels = append(cancels, openEventStreamAndReadHeartbeat(t, client))
+	}
+	require.Equal(t, maxEventStreamClients, countStreamingClients(server))
+
+	for _, cancel := range cancels {
+		cancel()
+	}
+
+	// The next heartbeat is 10s away, so anything under that proves the
+	// disconnect itself released the slots, not a later failed write.
+	require.Eventually(t, func() bool {
+		return countStreamingClients(server) == 0
+	}, 2*time.Second, 10*time.Millisecond, "disconnected EventStream clients still hold their slots")
+
+	cancel := openEventStreamAndReadHeartbeat(t, client)
+	cancel()
+}
+
+func openEventStreamAndReadHeartbeat(t *testing.T, client apiv1connect.OliveTinApiServiceClient) context.CancelFunc {
+	t.Helper()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	stream, err := client.EventStream(ctx, connect.NewRequest(&apiv1.EventStreamRequest{}))
+	require.NoError(t, err)
+	require.True(t, stream.Receive(), "expected an initial heartbeat, got error: %v", stream.Err())
+	require.NotNil(t, stream.Msg().GetHeartbeat())
+
+	return cancel
+}
+
+func countStreamingClients(api *oliveTinAPI) int {
+	api.streamingClientsMutex.RLock()
+	defer api.streamingClientsMutex.RUnlock()
+
+	return len(api.streamingClients)
+}
+
 func addEventStreamTestClients(t *testing.T, api *oliveTinAPI, lowUser, adminUser *authpublic.AuthenticatedUser) (*streamingClient, *streamingClient) {
 	t.Helper()
 	clientLow := &streamingClient{
