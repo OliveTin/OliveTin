@@ -21,14 +21,14 @@ build:
 	$(MAKE) -C $(ROOT) service webui-dist
 
 up: down
-	@if curl -fsS $(BASE_URL)/ >/dev/null 2>&1; then \
+	@if curl -fsS --max-time 5 $(BASE_URL)/ >/dev/null 2>&1; then \
 		echo "Port 18337 is already in use"; exit 1; fi
 	rm -rf $(TMP)
 	mkdir -p $(TMP)
 	cp -r seed $(TMP)/config
 	# Started from service/ so that OliveTin finds ../webui.
 	cd $(ROOT)/service && { ./OliveTin -configdir $(TMP)/config > $(TMP)/service.log 2>&1 & echo $$! > $(TMP)/service.pid; }
-	@for i in $$(seq 60); do curl -fsS -X POST -H 'Content-Type: application/json' -d '{}' \
+	@for i in $$(seq 60); do curl -fsS --max-time 5 -X POST -H 'Content-Type: application/json' -d '{}' \
 		$(API)/Init >/dev/null 2>&1 && exit 0; sleep 0.5; done; \
 		echo "OliveTin did not start; see $(TMP)/service.log"; exit 1
 

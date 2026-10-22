@@ -9,7 +9,7 @@ base="${1:?base url}"
 api="$base/api/olivetin.api.v1.OliveTinApiService"
 
 rpc() {
-	curl -fsS -X POST -H 'Content-Type: application/json' -d "$2" "$api/$1"
+	curl -fsS --max-time 10 -X POST -H 'Content-Type: application/json' -d "$2" "$api/$1"
 }
 
 run() {
