@@ -313,6 +313,8 @@ onBeforeUnmount(() => {
 
 .choice-combobox-input {
   width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .choice-combobox-list {
