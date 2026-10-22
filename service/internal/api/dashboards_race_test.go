@@ -28,14 +28,14 @@ func TestBuildDefaultDashboardConcurrentWithRebuild(t *testing.T) {
 
 	go func() {
 		defer wg.Done()
-		for i := 0; i < 200; i++ {
+		for range 200 {
 			ex.RebuildActionMap()
 		}
 	}()
 
 	go func() {
 		defer wg.Done()
-		for i := 0; i < 200; i++ {
+		for range 200 {
 			buildDefaultDashboard(rr)
 		}
 	}()

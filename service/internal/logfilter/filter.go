@@ -38,12 +38,7 @@ func Compile(expression string) (*vm.Program, error) {
 		return nil, fmt.Errorf("filter expression exceeds maximum length of %d characters", maxFilterLength)
 	}
 
-	normalized, err := normalizeExpression(trimmed)
-	if err != nil {
-		return nil, err
-	}
-
-	return compileNormalized(normalized)
+	return compileNormalized(normalizeExpression(trimmed))
 }
 
 func compileNormalized(normalized string) (*vm.Program, error) {
@@ -114,19 +109,19 @@ func Matches(program *vm.Program, record Record) (bool, error) {
 	return matched, nil
 }
 
-func normalizeExpression(expression string) (string, error) {
+func normalizeExpression(expression string) string {
 	if isNegatedSearchTerm(expression) {
 		term := quoteLiteral(strings.TrimPrefix(expression, "!"))
-		return negatedSearchExpression(term), nil
+		return negatedSearchExpression(term)
 	}
 
 	if isPositiveSearchTerm(expression) {
-		return positiveSearchExpression(quoteLiteral(expression)), nil
+		return positiveSearchExpression(quoteLiteral(expression))
 	}
 
 	normalized := replaceContainsOperators(expression)
 	normalized = replaceComparisons(normalized)
-	return replaceBooleanWords(normalized), nil
+	return replaceBooleanWords(normalized)
 }
 
 func isNegatedSearchTerm(expression string) bool {

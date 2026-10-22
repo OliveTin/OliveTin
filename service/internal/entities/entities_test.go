@@ -58,8 +58,8 @@ func TestDisplayNameFieldKey(t *testing.T) {
 	assert.Equal(t, "title", DisplayNameFieldKey(map[string]any{"title": "Car"}))
 	assert.Equal(t, "name", DisplayNameFieldKey(map[string]any{"name": "Car"}))
 	assert.Equal(t, "Name", DisplayNameFieldKey(map[string]any{"Name": "Car"}))
-	assert.Equal(t, "", DisplayNameFieldKey(map[string]any{"status": "running"}))
-	assert.Equal(t, "", DisplayNameFieldKey("not a map"))
+	assert.Empty(t, DisplayNameFieldKey(map[string]any{"status": "running"}))
+	assert.Empty(t, DisplayNameFieldKey("not a map"))
 }
 
 func TestDisplayNameFieldKey_caseCollisionIsDeterministic(t *testing.T) {

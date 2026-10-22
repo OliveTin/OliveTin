@@ -1,5 +1,7 @@
 package config
 
+import "slices"
+
 import "sync"
 
 var (
@@ -23,10 +25,8 @@ func RecordLoadedSource(path string) {
 	loadedSourcesMu.Lock()
 	defer loadedSourcesMu.Unlock()
 
-	for _, existing := range loadedSources {
-		if existing == path {
-			return
-		}
+	if slices.Contains(loadedSources, path) {
+		return
 	}
 
 	loadedSources = append(loadedSources, path)

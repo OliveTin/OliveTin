@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
@@ -806,8 +807,8 @@ func (api *oliveTinAPI) buildActionLogsResponse(filtered []*executor.InternalLog
 	startIdx, endIdx := calculateReversedIndices(page, len(filtered))
 	ret := &apiv1.GetActionLogsResponse{}
 	chunk := filtered[int(startIdx):int(endIdx)]
-	for i := len(chunk) - 1; i >= 0; i-- {
-		ret.Logs = append(ret.Logs, api.internalLogEntryToPb(chunk[i], user))
+	for _, c := range slices.Backward(chunk) {
+		ret.Logs = append(ret.Logs, api.internalLogEntryToPb(c, user))
 	}
 	ret.CountRemaining = page.start
 	ret.PageSize = page.size

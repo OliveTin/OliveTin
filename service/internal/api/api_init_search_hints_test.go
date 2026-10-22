@@ -190,7 +190,7 @@ func TestBuildSearchHintsCapsActionsAndEntitiesPerType(t *testing.T) {
 		entities.ClearEntitiesOfType("cap_container")
 	})
 
-	for entityIndex := 0; entityIndex < maxSearchHintEntitiesPerType+5; entityIndex++ {
+	for entityIndex := range maxSearchHintEntitiesPerType + 5 {
 		entities.AddEntity("cap_host", fmt.Sprintf("%03d", entityIndex), map[string]any{"name": fmt.Sprintf("host-%03d", entityIndex)})
 		entities.AddEntity("cap_container", fmt.Sprintf("%03d", entityIndex), map[string]any{"name": fmt.Sprintf("ctr-%03d", entityIndex)})
 	}
@@ -201,7 +201,7 @@ func TestBuildSearchHintsCapsActionsAndEntitiesPerType(t *testing.T) {
 		{Name: "cap_container", File: "cap_container.yaml"},
 	}
 	cfg.Actions = make([]*config.Action, 0, maxSearchHintActions+5)
-	for actionIndex := 0; actionIndex < maxSearchHintActions+5; actionIndex++ {
+	for actionIndex := range maxSearchHintActions + 5 {
 		cfg.Actions = append(cfg.Actions, &config.Action{
 			ID:    fmt.Sprintf("action-%03d", actionIndex),
 			Title: fmt.Sprintf("Action %03d", actionIndex),
@@ -240,7 +240,7 @@ func TestBuildSearchHintsPrefersNonEntityActions(t *testing.T) {
 		entities.ClearEntitiesOfType("host")
 	})
 
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		entities.AddEntity("host", fmt.Sprintf("%d", i), map[string]any{"name": fmt.Sprintf("host-%d", i)})
 	}
 

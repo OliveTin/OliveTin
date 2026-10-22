@@ -864,7 +864,7 @@ func TestRegisterStreamingClientEnforcesLimit(t *testing.T) {
 	user := &authpublic.AuthenticatedUser{Username: "limit-test"}
 
 	clients := make([]*streamingClient, 0, maxEventStreamClients)
-	for i := 0; i < maxEventStreamClients; i++ {
+	for range maxEventStreamClients {
 		client := &streamingClient{
 			channel:           make(chan *apiv1.EventStreamResponse, 1),
 			AuthenticatedUser: user,
@@ -912,7 +912,7 @@ func TestEventStreamReleasesSlotWhenClientDisconnects(t *testing.T) {
 	server := ensureExecutorListener(ex)
 
 	cancels := make([]context.CancelFunc, 0, maxEventStreamClients)
-	for i := 0; i < maxEventStreamClients; i++ {
+	for range maxEventStreamClients {
 		cancels = append(cancels, openEventStreamAndReadHeartbeat(t, client))
 	}
 	require.Equal(t, maxEventStreamClients, countStreamingClients(server))

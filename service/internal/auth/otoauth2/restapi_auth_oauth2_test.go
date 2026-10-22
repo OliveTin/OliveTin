@@ -43,13 +43,13 @@ func TestGetGroupFieldString(t *testing.T) {
 func TestGetGroupFieldMissing(t *testing.T) {
 	data := map[string]any{}
 
-	assert.Equal(t, "", getGroupField(data, "olivetin_group", ""))
+	assert.Empty(t, getGroupField(data, "olivetin_group", ""))
 }
 
 func TestGetGroupFieldEmptyFieldName(t *testing.T) {
 	data := map[string]any{"olivetin_group": "admins"}
 
-	assert.Equal(t, "", getGroupField(data, "", ""))
+	assert.Empty(t, getGroupField(data, "", ""))
 }
 
 func TestGetGroupFieldArrayDefaultSeparator(t *testing.T) {
@@ -73,13 +73,13 @@ func TestGetGroupFieldArraySkipsNonStringElements(t *testing.T) {
 func TestGetGroupFieldArrayAllNonStringElements(t *testing.T) {
 	data := map[string]any{"groups": []any{float64(1), true}}
 
-	assert.Equal(t, "", getGroupField(data, "groups", ""))
+	assert.Empty(t, getGroupField(data, "groups", ""))
 }
 
 func TestGetGroupFieldNotStringOrArray(t *testing.T) {
 	data := map[string]any{"groups": map[string]any{"nested": "value"}}
 
-	assert.Equal(t, "", getGroupField(data, "groups", ""))
+	assert.Empty(t, getGroupField(data, "groups", ""))
 }
 
 func TestGetUserInfoWithArrayGroupsClaim(t *testing.T) {
@@ -141,7 +141,7 @@ func TestHandleOAuthLoginRejectsWhenStateMapFull(t *testing.T) {
 
 	h := NewOAuth2Handler(cfg)
 	h.registeredStates = make(map[string]*oauth2State, oauthStateMaxEntries)
-	for i := 0; i < oauthStateMaxEntries; i++ {
+	for i := range oauthStateMaxEntries {
 		h.registeredStates[strconv.Itoa(i)] = &oauth2State{
 			providerConfig: &oauth2.Config{},
 			providerName:   "test",
@@ -155,5 +155,5 @@ func TestHandleOAuthLoginRejectsWhenStateMapFull(t *testing.T) {
 	h.HandleOAuthLogin(rec, req)
 
 	assert.Equal(t, http.StatusServiceUnavailable, rec.Code)
-	assert.Equal(t, oauthStateMaxEntries, len(h.registeredStates))
+	assert.Len(t, h.registeredStates, oauthStateMaxEntries)
 }
