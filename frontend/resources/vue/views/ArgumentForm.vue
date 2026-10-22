@@ -87,7 +87,7 @@
               :value="(arg.type === 'checkbox' || arg.type === 'confirmation') ? undefined : getArgumentValue(arg)"
               :checked="(arg.type === 'checkbox' || arg.type === 'confirmation') ? getArgumentValue(arg) : undefined"
               :list="(arg.suggestions || getBrowserSuggestions(arg).length > 0) ? argumentFieldChoicesId(arg.name) : undefined"
-              :type="getInputComponent(arg) !== 'select' ? getInputType(arg) : undefined"
+              :type="getInputComponent(arg) !== 'select' ? argumentInputType(arg) : undefined"
               :rows="arg.type === 'raw_string_multiline' ? 5 : undefined"
               :step="arg.type === 'datetime' ? 1 : undefined"
               :pattern="getPattern(arg)"
@@ -158,6 +158,7 @@ import {
   argumentFieldId,
   argumentFieldValidationElementId
 } from '../utils/argumentFieldIds.js'
+import { argumentInputType } from '../utils/argumentInputType.js'
 import { getInitialArgumentValue, readPrefilledArgumentsFromNavigation } from '../utils/prefilledArguments.js'
 
 const router = useRouter()
@@ -283,26 +284,6 @@ function getInputComponent (arg) {
   } else {
     return 'input'
   }
-}
-
-function getInputType (arg) {
-  if (arg.type === 'html' || arg.type === 'raw_string_multiline' || arg.type === 'select') {
-    return undefined
-  }
-
-  if (arg.type === 'confirmation') {
-    return 'checkbox'
-  }
-
-  if (arg.type === 'ascii_identifier' || arg.type === 'dnsname' || arg.type === 'shell_safe_identifier' || arg.type === 'ascii' || arg.type === 'ascii_sentence') {
-    return 'text'
-  }
-
-  if (arg.type === 'datetime') {
-    return 'datetime-local'
-  }
-
-  return arg.type
 }
 
 function getPattern (arg) {
