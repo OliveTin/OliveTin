@@ -107,6 +107,24 @@ No known duplicates.
 
 ---
 
+## PasswordHash argon2 resource exhaustion / login lockout
+
+**Canonical:** [GHSA-pc8g-78pf-4xrp](https://github.com/OliveTin/OliveTin/security/advisories/GHSA-pc8g-78pf-4xrp) / CVE-2026-28342 — reporter **fg0x0** (2026-02-25)
+
+Unauthenticated `PasswordHash` performs Argon2id hashing. Fixed in CVE-2026-28342 by a 10-slot semaphore shared with `LocalUserLogin`. Later reports argue that saturating the shared pool denies logins; this is the intended fail-fast trade-off and is not accepted as a separate vulnerability.
+
+| GHSA | Reporter | Status | Notes |
+|------|----------|--------|-------|
+| GHSA-pc8g-78pf-4xrp | fg0x0 | published (canonical) | Unbounded memory; fixed by semaphore |
+| GHSA-j746-2pj2-p94h | 0xkakash1 | closed | CPU exhaustion, post-fix |
+| GHSA-r2h8-8h64-fxx8 | offset | closed | Shared pool denies `LocalUserLogin` |
+| GHSA-p7jx-32j2-jq49 | fg0x0 | closed | Shared pool denies `LocalUserLogin` |
+| GHSA-8656-625g-3h52 | muzi5622 | closed | Shared pool denies `LocalUserLogin` |
+
+**Why not accepted:** the endpoint is intentionally unauthenticated (documented hashing utility, needed before any user exists); worst case is bounded at ~640 MiB and 10 concurrent hashes; login refusal lasts only while the flood is sustained, with no bypass or C/I impact. Volumetric floods belong to reverse-proxy rate limiting.
+
+---
+
 ## Easy to confuse (not duplicates)
 
 | Topic | Advisories | Distinction |

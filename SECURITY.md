@@ -58,6 +58,12 @@ If you are reporting via GitHub Security Advisories, search existing [repository
 
 Maintainers: see [.github/SECURITY_ADVISORY_DUPLICATES.md](.github/SECURITY_ADVISORY_DUPLICATES.md) for known duplicate pairs, triage steps, and OAuth2 issues that are easy to confuse with each other.
 
+## Known behaviour that is not considered a vulnerability
+
+The following have been reported several times and reviewed. Please only report them if you have found something beyond what is described here.
+
+* **`PasswordHash` is unauthenticated and can make local login busy.** The `PasswordHash` API is a documented utility for generating Argon2id hashes, and is needed before any user exists. Unbounded resource use was fixed in CVE-2026-28342 by limiting all Argon2id work, including `LocalUserLogin`, to 10 concurrent operations. Flooding `PasswordHash` can make logins return `ResourceExhausted` while the flood continues; this fail-fast behaviour is intentional, keeps memory bounded, and has no lasting effect. Rate limit request floods at your reverse proxy.
+
 ## Process
 
 Once a vulnerability is reported, the process is;
