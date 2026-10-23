@@ -1,12 +1,12 @@
 ---
-listenAddressSingleHTTPFrontend: 0.0.0.0:11337
+listenAddressSingleHTTPFrontend: 127.0.0.1:11337
 
 logLevel: "WARN"
 checkForUpdates: false
 showFooter: false
 
 entities:
-  - file: /etc/OliveTin/entities/water_valve.yaml
+  - file: ${{ WATER_VALVE_ENTITY_FILE }}
     name: water_valve
 
 actions:
@@ -17,7 +17,7 @@ actions:
     shell: |
       set -e
       echo "Opening {{ .CurrentEntity.title }}"
-      printf -- '- title: %s\n  state: open\n' "{{ .CurrentEntity.title }}" > /etc/OliveTin/entities/water_valve.yaml
+      printf -- '- title: %s\n  state: open\n' "{{ .CurrentEntity.title }}" > "${{ WATER_VALVE_ENTITY_FILE }}"
 
   - title: Close valve
     icon: '&#128683;'
@@ -26,7 +26,7 @@ actions:
     shell: |
       set -e
       echo "Closing {{ .CurrentEntity.title }}"
-      printf -- '- title: %s\n  state: closed\n' "{{ .CurrentEntity.title }}" > /etc/OliveTin/entities/water_valve.yaml
+      printf -- '- title: %s\n  state: closed\n' "{{ .CurrentEntity.title }}" > "${{ WATER_VALVE_ENTITY_FILE }}"
 
 dashboards:
   - title: Water Valve

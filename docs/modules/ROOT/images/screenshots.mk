@@ -45,5 +45,5 @@ stop:
 	exit 0
 
 update-screenshots: stop start
-	cd "$(CONFIGDIR)" && repo-helper screenshot --config screenshots.ini
+	@cd "$(CONFIGDIR)" && repo-helper screenshot --config screenshots.ini || { $(MAKE) stop; exit 1; }
 	@$(MAKE) stop
