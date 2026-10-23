@@ -137,6 +137,7 @@
 ** xref:solutions/systemd-control-panel/index.adoc[Systemd Control Panel]
 ** xref:solutions/heating-control-panel/index.adoc[Heating Control Panel]
 ** xref:solutions/human-in-the-control-loop/index.adoc[Human in the Control Loop]
+** xref:solutions/latching-toggle/index.adoc[Latching Toggle]
 ** xref:solutions/k8s-control-panel-hosted/index.adoc[Kubernetes Control Panel (hosted)]
 ** xref:solutions/primitive-password/index.adoc[Primitive Password Protection]
 ** xref:solutions/wol/index.adoc[Wake on LAN]
