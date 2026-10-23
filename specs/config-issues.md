@@ -8,7 +8,7 @@ Operators should see configuration problems in Diagnostics instead of only in se
 
 ## When issues are rebuilt
 
-The issue list is cleared and rebuilt when configuration is loaded or reloaded, and when entity data changes. Some findings that can only be detected while configuration is first being loaded (for example references to unset environment variables that are expanded away during that load) are kept across later rebuilds until the next configuration load begins.
+The issue list is cleared and rebuilt when configuration is loaded or reloaded, and when entity data changes. Some findings that can only be detected while configuration is first being loaded (for example references to unset environment variables that are expanded away during that load, or included files that failed to parse) are kept across later rebuilds until the next configuration load begins.
 
 ## What is collected
 
@@ -19,6 +19,8 @@ Issues include:
 - Arguments whose type was left unset (defaulted to a generic text type)
 - Unset environment variables referenced from configuration
 - Missing or invalid include directories
+- Included configuration files that cannot be read or parsed (the file is skipped and the rest of the configuration still loads)
+- Configuration that parses as YAML but cannot be decoded into OliveTin's settings (for example a value of the wrong type)
 - Argument default or choice templates that fail to parse
 - Literal argument defaults that fail type validation (templated defaults are not type-checked as raw text)
 - Entity files that cannot be read or parsed, or are empty

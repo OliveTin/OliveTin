@@ -11,6 +11,8 @@ const (
 	CodeEntityArgumentChoices  = "entity_argument_choices"
 	CodeEnvUnset               = "env_unset"
 	CodeIncludeMissing         = "include_missing"
+	CodeIncludeParse           = "include_parse"
+	CodeConfigDecode           = "config_decode"
 	CodeTemplateParse          = "template_parse"
 	CodeArgDefaultInvalid      = "arg_default_invalid"
 	CodeEntityFile             = "entity_file"

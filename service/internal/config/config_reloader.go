@@ -73,6 +73,11 @@ func unmarshalRoot(k *koanf.Koanf, cfg *Config) bool {
 	})
 
 	if err != nil {
+		configissues.ReportSticky(configissues.Issue{
+			Severity: configissues.SeverityError,
+			Code:     configissues.CodeConfigDecode,
+			Message:  fmt.Sprintf("Configuration could not be decoded: %v", err),
+		})
 		log.Errorf("Error unmarshalling config: %v", err)
 		return false
 	}
@@ -242,6 +247,12 @@ func loadAndMergeIncludedFile(k *koanf.Koanf, includePath, filename string) {
 	filePath := filepath.Join(includePath, filename)
 
 	if err := k.Load(file.Provider(filePath), yaml.Parser(), koanf.WithMergeFunc(mergeFuncForSource(filePath))); err != nil {
+		configissues.ReportSticky(configissues.Issue{
+			Severity:   configissues.SeverityError,
+			Code:       configissues.CodeIncludeParse,
+			Message:    fmt.Sprintf("Included config file could not be loaded: %v", err),
+			ConfigFile: filePath,
+		})
 		log.Errorf("Error loading included config file %s: %v", filePath, err)
 		return
 	}
