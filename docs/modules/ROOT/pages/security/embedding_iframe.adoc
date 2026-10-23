@@ -54,6 +54,7 @@ Copy this into your OliveTin `config.yaml`. If you already have a `security:` se
 include::partial$config-start.adoc[]
 ----
 security:
+  headerContentSecurityPolicy: true
   headerXFrameOptions: false
   contentSecurityPolicy: "default-src 'self'; script-src 'self' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https:; frame-ancestors 'self' https://dashboard.example.com; base-uri 'self'"
 ----
@@ -67,8 +68,9 @@ For example, if your Home Assistant is at `http://192.168.1.50:8123`, the `frame
 frame-ancestors 'self' http://192.168.1.50:8123;
 ----
 
-What these two settings do:
+What these settings do:
 
+* `headerContentSecurityPolicy: true` makes sure OliveTin sends the security policy below. This is already the default, but it is included in case an older config turned it off.
 * `contentSecurityPolicy` is OliveTin's normal security policy, with one change. `frame-ancestors 'none'` (nobody may embed OliveTin) has become `frame-ancestors 'self' <your dashboard>` (only OliveTin itself and your dashboard may embed it).
 * `headerXFrameOptions: false` turns off an older header, `X-Frame-Options: DENY`, which also blocks iframes. The `frame-ancestors` setting above does the same job in a more flexible way, so this older header is no longer needed.
 
