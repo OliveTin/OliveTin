@@ -99,6 +99,8 @@ All configuration options are covered in the solution sections
 | `accessControlLists` | The list of access control lists. | `[]` | Requires restart | xref:security/acl.adoc[Access Control Lists]
 | `security.headerContentSecurityPolicy` | Whether to send a `Content-Security-Policy` header from the single HTTP frontend. | `true` | Live reloadable | xref:security/content_security_policy.adoc[Content Security Policy headers]
 | `security.contentSecurityPolicy` | CSP header value when `security.headerContentSecurityPolicy` is enabled. If empty, a built-in default is used. | (built-in default) | Live reloadable | xref:security/content_security_policy.adoc[Content Security Policy headers]
+| `security.headerXFrameOptions` | Whether to send an `X-Frame-Options` header from the single HTTP frontend. | `true` | Live reloadable | xref:security/embedding_iframe.adoc[Embedding OliveTin in an iframe]
+| `security.xFrameOptions` | `X-Frame-Options` header value when `security.headerXFrameOptions` is enabled. | `DENY` | Live reloadable | xref:security/embedding_iframe.adoc[Embedding OliveTin in an iframe]
 |===
 
 == Networking Configuration

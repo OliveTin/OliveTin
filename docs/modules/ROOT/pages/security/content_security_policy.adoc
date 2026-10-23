@@ -3,6 +3,8 @@
 
 When xref:reference/network-ports.adoc[the single HTTP frontend] is enabled (the default), OliveTin adds several browser security headers to every response, including `Content-Security-Policy`. This page explains how to turn that header off or replace it with a less strict policy when you need to (for example, custom scripts, different API hosts, or embedding in an iframe).
 
+TIP: If you want to show OliveTin inside another page, such as a Home Assistant dashboard, follow xref:security/embedding_iframe.adoc[Embedding OliveTin in an iframe] instead. It has a ready-to-paste example.
+
 [WARNING]
 Relaxing or removing CSP weakens protection against cross-site scripting and related attacks. Prefer the smallest change that fixes your issue, and keep the rest of the policy as tight as you can.
 
@@ -43,7 +45,7 @@ Build your policy from the https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP
 Typical reasons people adjust this setting:
 
 * **Custom JavaScript or third-party scripts** — You may need to extend `script-src` (and sometimes `connect-src` for XHR/fetch). See xref:advanced_configuration/webui.adoc#custom-js[Custom JavaScript].
-* **Embedding OliveTin in another site** — The default includes `frame-ancestors 'none'`, which blocks iframes. You must change that directive (and may need to relax `X-Frame-Options` using `security.headerXFrameOptions` and `security.xFrameOptions`) if embedding is required.
+* **Embedding OliveTin in another site** — The default includes `frame-ancestors 'none'`, which blocks iframes. See xref:security/embedding_iframe.adoc[Embedding OliveTin in an iframe] for step-by-step instructions.
 * **API or auth on another origin** — Extend `connect-src` (and possibly `form-action` or others) to include those URLs.
 * **Reverse proxy also sets CSP** — Your proxy might add a second policy; browsers combine them. Align OliveTin and the proxy so you do not get conflicting or unexpectedly strict effective policies.
 

@@ -121,6 +121,7 @@
 *** xref:security/example_some_admin_actions.adoc[Example: Some actions require admin]
 ** xref:security/design_choices.adoc[Security Design & Hardening Recommendations]
 ** xref:security/content_security_policy.adoc[Content Security Policy headers]
+*** xref:security/embedding_iframe.adoc[Embedding OliveTin in an iframe]
 * Integrations
 ** xref:integrations/homeassistant-integration.adoc[Home Assistant (HACS Integration)]
 ** xref:integrations/homeassistant.adoc[Home Assistant (REST)]
