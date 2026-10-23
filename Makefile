@@ -97,7 +97,10 @@ clean:
 config-tool:
 	cd service && go run cmd/config-tool/main.go
 
+screenshots:
+	$(MAKE) -wC var/marketing/screenshots
+
 devcheck:
 	python3 scripts/devcheck.py $(ARGS)
 
-.PHONY: proto proto-tools lang-generate generated-check default service windows-resources windows-msi frontend-unittests docs-check it devcheck lint test service-unittests service-codestyle frontend-codestyle
+.PHONY: screenshots proto proto-tools lang-generate generated-check default service windows-resources windows-msi frontend-unittests docs-check it devcheck lint test service-unittests service-codestyle frontend-codestyle

@@ -15,7 +15,7 @@
 [OliveTin 2k to 3k upgrade guide](https://docs.olivetin.app/upgrade/2k3k.html)
 </div>
 
-<img alt = "screenshot" src = "https://github.com/OliveTin/OliveTin/blob/main/var/marketing/screenshots/mainpage-laptop_framed.png" />
+<img alt = "OliveTin action buttons" src = "var/marketing/screenshots/dashboard.png" />
 <a href = "#screenshots">More screenshots below</a>
 
 All documentation can be found at [docs.olivetin.app](https://docs.olivetin.app). This includes installation and usage guide, etc.
@@ -55,23 +55,50 @@ The AsciiDoc sources for that site live in this repository under [`docs/`](docs/
 
 ## Screenshots
 
-Desktop web browser;
+### Action buttons
 
-<p align = "center">
-<img alt = "screenshot" src = "https://github.com/OliveTin/OliveTin/blob/main/var/marketing/screenshots/mainpage-laptop_framed.png" />
-</p>
+![Action buttons](var/marketing/screenshots/dashboard.png)
 
-Desktop web browser (dark mode);
+Your predefined shell commands appear as simple, touch-friendly buttons, so anyone can run them safely without a terminal.
 
-<p align = "center">
-<img alt = "screenshot" src = "https://github.com/OliveTin/OliveTin/blob/main/var/marketing/screenshots/mainpage-darkop_framed.png" />
-</p>
+### Arguments
 
-Mobile screen size (responsive layout);
+![Arguments](var/marketing/screenshots/argument-form.png)
 
-<p align = "center">
-<img alt = "screenshot" src = "https://github.com/OliveTin/OliveTin/blob/main/var/marketing/screenshots/mainpage-phone_framed.png" style = "width: 700px;" />
-</p>
+Actions can ask for input before they run, with typed and validated fields, defaults and dropdowns, so commands only ever run with sensible values.
+
+### Command output
+
+![Command output](var/marketing/screenshots/execution.png)
+
+Watch a command's output live as it runs, along with whether it succeeded and how long it took.
+
+### Dashboards and entities
+
+![Dashboards and entities](var/marketing/screenshots/entities.png)
+
+Build dashboards that group actions by the things you manage, such as servers or containers, with one set of buttons generated for each of them.
+
+### Execution logs
+
+![Execution logs](var/marketing/screenshots/logs.png)
+
+Every action that runs is logged, so you can see who ran what, when, and whether it succeeded.
+
+### Dark mode
+
+![Dark mode](var/marketing/screenshots/dashboard-dark.png)
+
+OliveTin follows your browser's dark mode preference automatically.
+
+### Mobile layout
+
+![Mobile layout](var/marketing/screenshots/dashboard-mobile.png)
+
+The responsive layout works well on phones and on wall-mounted tablets, so commands are a tap away wherever you are.
+
+Screenshots use fictional test data and are regenerated with `make screenshots`
+(see [`var/marketing/screenshots`](var/marketing/screenshots/README.md)).
 
 ## No-Nonsense Software Principles
 

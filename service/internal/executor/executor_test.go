@@ -158,7 +158,7 @@ func TestArgumentNameCamelCase(t *testing.T) {
 	out, err := parseActionArguments(req)
 
 	assert.Equal(t, "echo 'Tickling Fred'", out)
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 }
 
 func TestArgumentNameSnakeCase(t *testing.T) {
@@ -181,7 +181,7 @@ func TestArgumentNameSnakeCase(t *testing.T) {
 	out, err := parseActionArguments(req)
 
 	assert.Equal(t, "echo 'Tickling Fred'", out)
-	assert.Nil(t, err)
+	assert.NoError(t, err)
 }
 
 func TestGetLogsEmpty(t *testing.T) {
@@ -192,7 +192,7 @@ func TestGetLogsEmpty(t *testing.T) {
 	logs, paging := e.GetLogTrackingIds(0, 10)
 
 	assert.NotNil(t, logs, "Logs should not be nil")
-	assert.Equal(t, 0, len(logs), "No logs yet")
+	assert.Empty(t, logs, "No logs yet")
 	assert.Equal(t, int64(0), paging.CountRemaining, "There should be no remaining logs")
 }
 
@@ -212,35 +212,35 @@ func TestGetLogsLessThanPageSize(t *testing.T) {
 
 	logEntries, paging := e.GetLogTrackingIds(0, 10)
 
-	assert.Equal(t, 0, len(logEntries), "There should be 0 logs")
+	assert.Empty(t, logEntries, "There should be 0 logs")
 	assert.Zero(t, paging.CountRemaining, "There should be no remaining logs")
 
-	execNewReqAndWait(e, "blat", cfg)
-	execNewReqAndWait(e, "blat", cfg)
-	execNewReqAndWait(e, "blat", cfg)
-	execNewReqAndWait(e, "blat", cfg)
-	execNewReqAndWait(e, "blat", cfg)
-	execNewReqAndWait(e, "blat", cfg)
-	execNewReqAndWait(e, "blat", cfg)
+	execNewReqAndWait(e, cfg)
+	execNewReqAndWait(e, cfg)
+	execNewReqAndWait(e, cfg)
+	execNewReqAndWait(e, cfg)
+	execNewReqAndWait(e, cfg)
+	execNewReqAndWait(e, cfg)
+	execNewReqAndWait(e, cfg)
 
 	logEntries, paging = e.GetLogTrackingIds(0, 10)
 
-	assert.Equal(t, 7, len(logEntries), "There should be 7 logs")
+	assert.Len(t, logEntries, 7, "There should be 7 logs")
 	assert.Zero(t, paging.CountRemaining, "There should be no remaining logs")
 
-	execNewReqAndWait(e, "blat", cfg)
-	execNewReqAndWait(e, "blat", cfg)
-	execNewReqAndWait(e, "blat", cfg)
-	execNewReqAndWait(e, "blat", cfg)
-	execNewReqAndWait(e, "blat", cfg)
+	execNewReqAndWait(e, cfg)
+	execNewReqAndWait(e, cfg)
+	execNewReqAndWait(e, cfg)
+	execNewReqAndWait(e, cfg)
+	execNewReqAndWait(e, cfg)
 
 	logEntries, paging = e.GetLogTrackingIds(0, 10)
 
-	assert.Equal(t, 10, len(logEntries), "There should be 10 logs")
+	assert.Len(t, logEntries, 10, "There should be 10 logs")
 	assert.Equal(t, int64(2), paging.CountRemaining, "There should be 1 remaining logs")
 }
 
-func execNewReqAndWait(e *Executor, title string, cfg *config.Config) {
+func execNewReqAndWait(e *Executor, cfg *config.Config) {
 	req := &ExecutionRequest{
 		//		ActionTitle: title,
 		Cfg: cfg,
@@ -250,7 +250,7 @@ func execNewReqAndWait(e *Executor, title string, cfg *config.Config) {
 	e.RebuildActionMap()
 	var action *config.Action
 	for _, a := range cfg.Actions {
-		if a.Title == title {
+		if a.Title == "blat" {
 			action = a
 			break
 		}
@@ -288,8 +288,8 @@ func TestUnsetRequiredArgument(t *testing.T) {
 
 	out, err := parseActionArguments(req)
 
-	assert.Equal(t, "", out)
-	assert.NotNil(t, err)
+	assert.Empty(t, out)
+	assert.Error(t, err)
 }
 
 func TestUnusedArgumentStillPassesTypeSafetyCheck(t *testing.T) {
@@ -316,8 +316,8 @@ func TestUnusedArgumentStillPassesTypeSafetyCheck(t *testing.T) {
 
 	out, err := parseActionArguments(req)
 
-	assert.Equal(t, "", out)
-	assert.NotNil(t, err)
+	assert.Empty(t, out)
+	assert.Error(t, err)
 }
 
 // https://github.com/OliveTin/OliveTin/issues/564
@@ -357,7 +357,7 @@ func TestMangleInvalidArgumentValues(t *testing.T) {
 	wg.Wait()
 
 	assert.NotNil(t, req.logEntry, "Log entry should not be nil")
-	assert.Equal(t, req.logEntry.Output, "The date is: 1990-01-10T12:00:00\n", "Date should be mangled to a valid format")
+	assert.Equal(t, "The date is: 1990-01-10T12:00:00\n", req.logEntry.Output, "Date should be mangled to a valid format")
 
 }
 
@@ -726,7 +726,7 @@ func TestValidatedSystemArgsMatchesSystemArgumentDefinitions(t *testing.T) {
 
 	args, err := validatedSystemArgs(req)
 
-	assert.Nil(t, err)
+	require.NoError(t, err)
 	assert.Len(t, args, len(systemArgumentDefinitions))
 	for _, arg := range systemArgumentDefinitions {
 		assert.Contains(t, args, arg.Name)
@@ -745,7 +745,7 @@ func TestBuildShellAfterArgsOnlyAddsExpectedNonSystemArgs(t *testing.T) {
 
 	args, err := buildShellAfterArgs(req)
 
-	assert.Nil(t, err)
+	require.NoError(t, err)
 	assert.Len(t, args, len(systemArgumentDefinitions)+2)
 	assert.Contains(t, args, "output")
 	assert.Contains(t, args, "exitCode")
@@ -816,7 +816,7 @@ func TestBuildShellAfterArgsUsesValidatedSystemArgs(t *testing.T) {
 
 	args, err := buildShellAfterArgs(req)
 
-	assert.Nil(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, "alice@example.com", args["ot_username"])
 	assert.Equal(t, "server-track-456", args["ot_executionTrackingId"])
 	assert.Equal(t, "hello", args["output"])
@@ -836,7 +836,7 @@ func TestBuildShellAfterArgsFailsWhenSystemArgIsInvalid(t *testing.T) {
 	args, err := buildShellAfterArgs(req)
 
 	assert.Nil(t, args)
-	assert.NotNil(t, err)
+	require.Error(t, err)
 	assert.Contains(t, err.Error(), `system argument "ot_username" failed validation`)
 }
 
@@ -879,7 +879,7 @@ func TestTriggerExecutesTriggeredAction(t *testing.T) {
 	wg.Wait()
 
 	var got []string
-	for i := 0; i < 2; i++ {
+	for i := range 2 {
 		select {
 		case title := <-finishedTitles:
 			got = append(got, title)
@@ -995,15 +995,15 @@ func TestStepSaveLogSanitizesSlashInTitle(t *testing.T) {
 	assert.FileExists(t, outputPath)
 
 	resultsEntries, err := os.ReadDir(resultsDir)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Len(t, resultsEntries, 1, "results file must be flat under resultsDirectory, not a subdirectory")
 
 	data, err := os.ReadFile(resultsPath)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Contains(t, string(data), title, "YAML content keeps the original action title")
 
 	output, err := os.ReadFile(outputPath)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, "report ok", string(output))
 }
 
@@ -1071,7 +1071,7 @@ func TestStepSaveLogSanitizesNULInTitle(t *testing.T) {
 	assert.NotContains(t, outputPath, "\x00")
 
 	output, err := os.ReadFile(outputPath)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, "nul ok", string(output))
 }
 

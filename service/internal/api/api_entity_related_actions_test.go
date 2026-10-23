@@ -92,8 +92,10 @@ func buildRelatedActionsTestConfig(t *testing.T) (*config.Config, *authpublic.Au
 	return cfg, lowUser, adminUser
 }
 
-func getEntityRelatedActionTitles(t *testing.T, api *oliveTinAPI, user *authpublic.AuthenticatedUser, entityType, entityKey string) []string {
+func getEntityRelatedActionTitles(t *testing.T, api *oliveTinAPI, user *authpublic.AuthenticatedUser, entityKey string) []string {
 	t.Helper()
+
+	entityType := "host"
 
 	entity, ok := entities.GetEntityInstances(entityType)[entityKey]
 	require.True(t, ok, "entity %s/%s must exist", entityType, entityKey)
@@ -108,8 +110,10 @@ func getEntityRelatedActionTitles(t *testing.T, api *oliveTinAPI, user *authpubl
 	return titles
 }
 
-func getEntityRelatedBindingIDs(t *testing.T, api *oliveTinAPI, user *authpublic.AuthenticatedUser, entityType, entityKey string) []string {
+func getEntityRelatedBindingIDs(t *testing.T, api *oliveTinAPI, user *authpublic.AuthenticatedUser, entityKey string) []string {
 	t.Helper()
+
+	entityType := "host"
 
 	entity, ok := entities.GetEntityInstances(entityType)[entityKey]
 	require.True(t, ok, "entity %s/%s must exist", entityType, entityKey)
@@ -132,10 +136,10 @@ func TestGetEntityRelatedActionsDeniesRestrictedView(t *testing.T) {
 	ex.RebuildActionMap()
 	api := newServer(ex)
 
-	ids := getEntityRelatedBindingIDs(t, api, lowUser, "host", "0")
+	ids := getEntityRelatedBindingIDs(t, api, lowUser, "0")
 	assert.Empty(t, ids)
 
-	titles := getEntityRelatedActionTitles(t, api, lowUser, "host", "0")
+	titles := getEntityRelatedActionTitles(t, api, lowUser, "0")
 	assert.Empty(t, titles)
 }
 
@@ -147,7 +151,7 @@ func TestGetEntityRelatedActionsAllowsAdminView(t *testing.T) {
 	ex.RebuildActionMap()
 	api := newServer(ex)
 
-	titles := getEntityRelatedActionTitles(t, api, adminUser, "host", "0")
+	titles := getEntityRelatedActionTitles(t, api, adminUser, "0")
 	assert.Contains(t, titles, "Run Automation Playbook")
 	assert.Contains(t, titles, "Public Host Action")
 	assert.Contains(t, titles, "Secret Entity Action")
@@ -161,7 +165,7 @@ func TestGetEntityRelatedActionsExcludesHiddenActions(t *testing.T) {
 	ex.RebuildActionMap()
 	api := newServer(ex)
 
-	titles := getEntityRelatedActionTitles(t, api, adminUser, "host", "0")
+	titles := getEntityRelatedActionTitles(t, api, adminUser, "0")
 	assert.NotContains(t, titles, "Hidden Host Action")
 }
 
@@ -179,11 +183,11 @@ func TestGetEntityRelatedActionsEntityBoundMatchesInstanceOnly(t *testing.T) {
 	api := newServer(ex)
 	user := &authpublic.AuthenticatedUser{Username: "guest", Provider: "system"}
 
-	titlesHost0 := getEntityRelatedActionTitles(t, api, user, "host", "0")
+	titlesHost0 := getEntityRelatedActionTitles(t, api, user, "0")
 	assert.Len(t, titlesHost0, 1)
 	assert.Equal(t, "stuffbox Wake", titlesHost0[0])
 
-	titlesHost1 := getEntityRelatedActionTitles(t, api, user, "host", "1")
+	titlesHost1 := getEntityRelatedActionTitles(t, api, user, "1")
 	assert.Len(t, titlesHost1, 1)
 	assert.Equal(t, "lurker Wake", titlesHost1[0])
 }

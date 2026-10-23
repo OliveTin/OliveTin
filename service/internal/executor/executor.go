@@ -1313,8 +1313,8 @@ func substituteShellAfterCompletedEnvRefs(command string) string {
 
 func replaceShellAfterEnvRef(command string, pattern *regexp.Regexp, envRef string) string {
 	matches := pattern.FindAllStringIndex(command, -1)
-	for i := len(matches) - 1; i >= 0; i-- {
-		start, end := matches[i][0], matches[i][1]
+	for _, match := range slices.Backward(matches) {
+		start, end := match[0], match[1]
 		replacement := `"` + envRef + `"`
 		if shellPosInsideSingleQuotes(command, start) {
 			// Break out of single quotes so the env ref can expand at runtime.
@@ -1528,7 +1528,7 @@ func sanitizeLogFilename(title string) string {
 	}
 
 	// NUL and other C0 controls plus DEL are invalid or problematic in filenames.
-	for i := 0; i < 32; i++ {
+	for i := range 32 {
 		oldnew = append(oldnew, string(rune(i)), "_")
 	}
 	oldnew = append(oldnew, "\x7f", "_")

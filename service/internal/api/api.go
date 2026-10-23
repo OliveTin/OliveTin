@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
@@ -806,8 +807,8 @@ func (api *oliveTinAPI) buildActionLogsResponse(filtered []*executor.InternalLog
 	startIdx, endIdx := calculateReversedIndices(page, len(filtered))
 	ret := &apiv1.GetActionLogsResponse{}
 	chunk := filtered[int(startIdx):int(endIdx)]
-	for i := len(chunk) - 1; i >= 0; i-- {
-		ret.Logs = append(ret.Logs, api.internalLogEntryToPb(chunk[i], user))
+	for _, c := range slices.Backward(chunk) {
+		ret.Logs = append(ret.Logs, api.internalLogEntryToPb(c, user))
 	}
 	ret.CountRemaining = page.start
 	ret.PageSize = page.size
@@ -1118,22 +1119,49 @@ func (api *oliveTinAPI) EventStream(ctx ctx.Context, req *connect.Request[apiv1.
 		"authenticatedUser": user.Username,
 	}).Debugf("EventStream: client connected")
 
+	// Release the slot on every exit path. removeClient is idempotent, so this
+	// is safe when a broadcast or the heartbeat goroutine already removed us.
+	defer api.removeClient(client)
+
 	go api.sendEventStreamHeartbeats(client)
 
-	// loop over client channel and send events to connectedClient
-	for msg := range client.channel {
-		log.Debugf("Sending event to client: %v", msg)
-		if err := srv.Send(msg); err != nil {
-			log.Errorf("Error sending event to client: %v", err)
-			// Remove disconnected client from the list
-			api.removeClient(client)
-			break
-		}
-	}
+	api.forwardEventsToClient(ctx.Done(), client, srv)
 
 	log.Infof("EventStream: client disconnected")
 
 	return nil
+}
+
+// forwardEventsToClient sends queued events to the stream until the client goes
+// away. Without watching done, a client that disconnected was only noticed once
+// a later Send failed, which net/http's buffered writer reports several
+// heartbeats late (or not at all while the TCP peer keeps ACKing), so its slot
+// in maxEventStreamClients stayed taken.
+func (api *oliveTinAPI) forwardEventsToClient(done <-chan struct{}, client *streamingClient, srv *connect.ServerStream[apiv1.EventStreamResponse]) {
+	for {
+		msg, ok := nextEvent(done, client.channel)
+		if !ok {
+			return
+		}
+
+		log.Debugf("Sending event to client: %v", msg)
+
+		if err := srv.Send(msg); err != nil {
+			log.Warnf("Error sending event to client: %v", err)
+			return
+		}
+	}
+}
+
+// nextEvent waits for the next queued event. ok is false once the request is
+// done (the client went away) or the channel was closed by removeClient.
+func nextEvent(done <-chan struct{}, events <-chan *apiv1.EventStreamResponse) (*apiv1.EventStreamResponse, bool) {
+	select {
+	case <-done:
+		return nil, false
+	case msg, ok := <-events:
+		return msg, ok
+	}
 }
 
 func (api *oliveTinAPI) registerStreamingClient(client *streamingClient) error {

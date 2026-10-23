@@ -26,7 +26,7 @@ func (u *AuthenticatedUser) parseUsergroupLine(sep string) []string {
 	ret := []string{}
 
 	if sep != "" {
-		for _, v := range strings.Split(u.UsergroupLine, sep) {
+		for v := range strings.SplitSeq(u.UsergroupLine, sep) {
 			trimmed := strings.TrimSpace(v)
 
 			if trimmed != "" {

@@ -18,12 +18,12 @@ func (e *Executor) LoadLogsFromDisk() {
 		return
 	}
 
-	entries, skippedCount := e.readLogDirectory(resultsDir)
+	entries := e.readLogDirectory(resultsDir)
 	if entries == nil {
 		return
 	}
 
-	loadedLogs, skippedCount := e.parseLogFiles(resultsDir, entries, skippedCount)
+	loadedLogs, skippedCount := e.parseLogFiles(resultsDir, entries, 0)
 
 	sort.Slice(loadedLogs, func(i, j int) bool {
 		return loadedLogs[i].DatetimeStarted.Before(loadedLogs[j].DatetimeStarted)
@@ -37,12 +37,12 @@ func (e *Executor) LoadLogsFromDisk() {
 	}).Info("Finished loading persisted logs from disk")
 }
 
-func (e *Executor) readLogDirectory(resultsDir string) ([]os.DirEntry, int) {
+func (e *Executor) readLogDirectory(resultsDir string) []os.DirEntry {
 	if _, err := os.Stat(resultsDir); os.IsNotExist(err) {
 		log.WithFields(log.Fields{
 			"directory": resultsDir,
 		}).Debug("Logs directory does not exist, skipping log loading")
-		return nil, 0
+		return nil
 	}
 
 	log.WithFields(log.Fields{
@@ -55,10 +55,10 @@ func (e *Executor) readLogDirectory(resultsDir string) ([]os.DirEntry, int) {
 			"directory": resultsDir,
 			"error":     err,
 		}).Warnf("Failed to read logs directory")
-		return nil, 0
+		return nil
 	}
 
-	return entries, 0
+	return entries
 }
 
 func (e *Executor) parseLogFiles(resultsDir string, entries []os.DirEntry, skippedCount int) ([]*InternalLogEntry, int) {

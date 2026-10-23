@@ -42,7 +42,7 @@ actions:
 	// Load config using koanf
 	k := koanf.New(".")
 	err = k.Load(file.Provider(tmpFile.Name()), yaml.Parser())
-	assert.NoError(t, err, "Should load config file")
+	require.NoError(t, err, "Should load config file")
 
 	// Create config struct and load it
 	cfg := &Config{}
@@ -50,7 +50,7 @@ actions:
 
 	// Test that authLocalUsers was loaded correctly
 	assert.True(t, cfg.AuthLocalUsers.Enabled, "AuthLocalUsers should be enabled")
-	assert.Equal(t, 2, len(cfg.AuthLocalUsers.Users), "Should load 2 users")
+	assert.Len(t, cfg.AuthLocalUsers.Users, 2, "Should load 2 users")
 
 	// Test individual users
 	user1 := cfg.FindUserByUsername("testuser1")
@@ -91,13 +91,13 @@ actions:
 
 	k := koanf.New(".")
 	err = k.Load(file.Provider(tmpFile.Name()), yaml.Parser())
-	assert.NoError(t, err, "Should load config file")
+	require.NoError(t, err, "Should load config file")
 
 	cfg := &Config{}
 	AppendSource(cfg, k, tmpFile.Name())
 
 	assert.True(t, cfg.AuthLocalUsers.Enabled, "AuthLocalUsers should be enabled")
-	assert.Equal(t, 0, len(cfg.AuthLocalUsers.Users), "Should have 0 users")
+	assert.Empty(t, cfg.AuthLocalUsers.Users, "Should have 0 users")
 	assert.Nil(t, cfg.FindUserByUsername("anyuser"), "Should return nil for any user")
 }
 
@@ -126,13 +126,13 @@ actions:
 
 	k := koanf.New(".")
 	err = k.Load(file.Provider(tmpFile.Name()), yaml.Parser())
-	assert.NoError(t, err, "Should load config file")
+	require.NoError(t, err, "Should load config file")
 
 	cfg := &Config{}
 	AppendSource(cfg, k, tmpFile.Name())
 
 	assert.False(t, cfg.AuthLocalUsers.Enabled, "AuthLocalUsers should be disabled")
-	assert.Equal(t, 1, len(cfg.AuthLocalUsers.Users), "Should still load users even when disabled")
+	assert.Len(t, cfg.AuthLocalUsers.Users, 1, "Should still load users even when disabled")
 
 	// User should still be findable even when auth is disabled
 	user := cfg.FindUserByUsername("testuser")
@@ -157,13 +157,13 @@ actions:
 
 	k := koanf.New(".")
 	err = k.Load(file.Provider(tmpFile.Name()), yaml.Parser())
-	assert.NoError(t, err, "Should load config file")
+	require.NoError(t, err, "Should load config file")
 
 	cfg := &Config{}
 	AppendSource(cfg, k, tmpFile.Name())
 
 	// Should have default values
 	assert.False(t, cfg.AuthLocalUsers.Enabled, "AuthLocalUsers should be disabled by default")
-	assert.Equal(t, 0, len(cfg.AuthLocalUsers.Users), "Should have 0 users by default")
+	assert.Empty(t, cfg.AuthLocalUsers.Users, "Should have 0 users by default")
 	assert.Nil(t, cfg.FindUserByUsername("anyuser"), "Should return nil for any user")
 }

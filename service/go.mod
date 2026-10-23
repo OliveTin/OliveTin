@@ -13,7 +13,7 @@ require (
 	github.com/MicahParks/keyfunc/v3 v3.8.2
 	github.com/PaesslerAG/jsonpath v0.1.1
 	github.com/alexedwards/argon2id v1.0.0
-	github.com/bufbuild/buf v1.74.0
+	github.com/bufbuild/buf v1.75.0
 	github.com/expr-lang/expr v1.17.8
 	github.com/fsnotify/fsnotify v1.10.1
 	github.com/go-viper/mapstructure/v2 v2.5.0
@@ -33,7 +33,7 @@ require (
 	go.akshayshah.org/connectproto v0.6.0
 	golang.org/x/oauth2 v0.37.0
 	golang.org/x/sys v0.49.0
-	google.golang.org/protobuf v1.36.12
+	google.golang.org/protobuf v1.36.13-0.20261016172727-e9ee2a76ab8e
 	gopkg.in/yaml.v3 v3.0.1
 )
 
@@ -97,7 +97,7 @@ require (
 	github.com/bombsimon/wsl/v5 v5.9.0 // indirect
 	github.com/breml/bidichk v0.3.4 // indirect
 	github.com/breml/errchkjson v0.4.2 // indirect
-	github.com/bufbuild/protocompile v0.14.2-0.20261013160345-b79bfe2f85df // indirect
+	github.com/bufbuild/protocompile v0.14.2-0.20261020145055-56248e843b50 // indirect
 	github.com/bufbuild/protoplugin v0.0.0-20260414125817-25d1d281b46b // indirect
 	github.com/butuzov/ireturn v0.4.1 // indirect
 	github.com/butuzov/mirror v1.3.3 // indirect

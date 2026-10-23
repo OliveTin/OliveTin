@@ -1,0 +1,6 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", ":semanticCommits", "group:allNonMajor"],
+  "schedule": ["before 6am on monday"],
+  "postUpdateOptions": ["gomodTidy"]
+}

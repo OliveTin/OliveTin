@@ -53,16 +53,16 @@ func setExtractIfMissing(cfg *config.WebhookConfig, key, value string) {
 	}
 }
 
-func setMatchHeaderIfMissing(cfg *config.WebhookConfig, key, value string) {
-	if _, exists := cfg.MatchHeaders[key]; !exists {
-		cfg.MatchHeaders[key] = value
+func setGitHubEventHeaderIfMissing(cfg *config.WebhookConfig, event string) {
+	if _, exists := cfg.MatchHeaders["X-GitHub-Event"]; !exists {
+		cfg.MatchHeaders["X-GitHub-Event"] = event
 	}
 }
 
 func applyGitHubPushTemplate(cfg *config.WebhookConfig) {
 	setDefaultAuth(cfg)
 	ensureMatchHeaders(cfg)
-	setMatchHeaderIfMissing(cfg, "X-GitHub-Event", "push")
+	setGitHubEventHeaderIfMissing(cfg, "push")
 	ensureExtract(cfg)
 	setExtractIfMissing(cfg, "git_repository", "$.repository.full_name")
 	setExtractIfMissing(cfg, "git_ref", "$.ref")
@@ -75,7 +75,7 @@ func applyGitHubPushTemplate(cfg *config.WebhookConfig) {
 func applyGitHubPRTemplate(cfg *config.WebhookConfig) {
 	setDefaultAuth(cfg)
 	ensureMatchHeaders(cfg)
-	setMatchHeaderIfMissing(cfg, "X-GitHub-Event", "pull_request")
+	setGitHubEventHeaderIfMissing(cfg, "pull_request")
 	ensureExtract(cfg)
 	setExtractIfMissing(cfg, "pr_number", "$.number")
 	setExtractIfMissing(cfg, "pr_title", "$.pull_request.title")
@@ -89,7 +89,7 @@ func applyGitHubPRTemplate(cfg *config.WebhookConfig) {
 func applyGitHubReleaseTemplate(cfg *config.WebhookConfig) {
 	setDefaultAuth(cfg)
 	ensureMatchHeaders(cfg)
-	setMatchHeaderIfMissing(cfg, "X-GitHub-Event", "release")
+	setGitHubEventHeaderIfMissing(cfg, "release")
 	ensureExtract(cfg)
 	setExtractIfMissing(cfg, "release_action", "$.action")
 	setExtractIfMissing(cfg, "release_tag", "$.release.tag_name")
@@ -101,7 +101,7 @@ func applyGitHubReleaseTemplate(cfg *config.WebhookConfig) {
 func applyGitHubWorkflowTemplate(cfg *config.WebhookConfig) {
 	setDefaultAuth(cfg)
 	ensureMatchHeaders(cfg)
-	setMatchHeaderIfMissing(cfg, "X-GitHub-Event", "workflow_run")
+	setGitHubEventHeaderIfMissing(cfg, "workflow_run")
 	ensureExtract(cfg)
 	setExtractIfMissing(cfg, "workflow_name", "$.workflow_run.name")
 	setExtractIfMissing(cfg, "workflow_status", "$.workflow_run.status")

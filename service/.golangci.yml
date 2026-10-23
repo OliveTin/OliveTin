@@ -28,15 +28,15 @@ linters:
     - govet
     - ineffassign
     - misspell
-#    - modernize
+    - modernize
     - nilerr
     - noctx
 #    - promlinter
     - staticcheck
-#    - testifylint
+    - testifylint
     - thelper
     - unconvert
-#    - unparam
+    - unparam
     - unused
     - usestdlibvars
   settings:

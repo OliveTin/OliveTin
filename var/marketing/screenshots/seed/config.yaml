@@ -1,0 +1,204 @@
+# Fictional OliveTin config used only for marketing screenshots.
+#
+# Every command prints static, made-up output so that captures are
+# repeatable and never show details of the machine running `make`.
+# Hostnames use example.com and the 192.0.2.0/24 documentation range.
+
+listenAddressSingleHTTPFrontend: 127.0.0.1:18337
+logLevel: "WARN"
+checkForUpdates: false
+pageTitle: OliveTin
+showFooter: false
+
+actions:
+  - title: Restart media server
+    id: restart_media
+    icon: restart
+    shell: |
+      echo "Stopping demo-media..."
+      sleep 1
+      echo "Starting demo-media..."
+      echo "demo-media is running."
+
+  - title: Check disk space
+    id: check_disk
+    icon: disk
+    onclick: execution-dialog
+    shell: |
+      printf '%s\n' \
+        'Filesystem      Size  Used Avail Use% Mounted on' \
+        '/dev/sda2       457G  182G  252G  42% /' \
+        '/dev/sda1       974M  211M  696M  24% /boot' \
+        '/dev/sdb1       3.6T  2.1T  1.4T  61% /srv/media' \
+        '/dev/sdc1       1.8T  640G  1.1T  37% /srv/backups'
+
+  - title: Ping host
+    id: ping_host
+    icon: ping
+    shell: |
+      echo "PING {{ host }} (192.0.2.10) 56(84) bytes of data."
+      for i in $(seq {{ count }}); do
+        echo "64 bytes from {{ host }} (192.0.2.10): icmp_seq=$i ttl=64 time=0.42 ms"
+      done
+      echo ""
+      echo "--- {{ host }} ping statistics ---"
+      echo "{{ count }} packets transmitted, {{ count }} received, 0% packet loss"
+    arguments:
+      - name: host
+        title: Host
+        type: ascii_identifier
+        default: nas.example.com
+        description: The host that you want to ping.
+      - name: count
+        title: Count
+        type: int
+        default: 3
+        description: How many pings to send.
+
+  - title: Restart container
+    id: restart_container
+    icon: box
+    shell: 'echo "Restarting container {{ container }}..." && echo "{{ container }} restarted."'
+    arguments:
+      - name: container
+        title: Container
+        description: Pick the container to restart.
+        choices:
+          - title: Web server (demo-web)
+            value: demo-web
+          - title: Database (demo-db)
+            value: demo-db
+          - title: Cache (demo-cache)
+            value: demo-cache
+
+  - title: Run nightly backup
+    id: nightly_backup
+    icon: backup
+    groups: [ backup-jobs ]
+    shell: |
+      echo "Backing up /srv/media to backup.example.com..."
+      echo "Transferred 1,284 files (3.2 GB)."
+      echo "Backup complete."
+
+  - title: Backup selected folders
+    id: backup_folders
+    icon: backup
+    groups: [ backup-jobs ]
+    shell: 'echo "Backing up: {{ folders }}"'
+    arguments:
+      - name: folders
+        title: Folders to back up
+        type: checklist
+        description: Select one or more folders to include in the backup.
+        choices:
+          - title: Documents
+            value: documents
+          - title: Photos
+            value: photos
+          - title: Music
+            value: music
+          - title: Videos
+            value: videos
+        default: '["documents","photos"]'
+
+  - title: Toggle porch light
+    id: porch_light
+    icon: light
+    shell: echo "Porch light toggled."
+
+  - title: Run automation playbook
+    id: run_playbook
+    icon: robot
+    shell: |
+      echo "PLAY [homelab] *****************************************************"
+      echo "TASK [Update packages] *********************************************"
+      echo "ok: [web.example.com]"
+      echo "ok: [nas.example.com]"
+      echo "PLAY RECAP *********************************************************"
+      echo "web.example.com : ok=4 changed=1 unreachable=0 failed=0"
+      echo "nas.example.com : ok=4 changed=0 unreachable=0 failed=0"
+
+  - title: Enable SSH for 20 minutes
+    id: enable_ssh
+    icon: ssh
+    shell: echo "SSH enabled until the timer expires."
+
+  - title: Search the logs
+    id: search_logs
+    icon: logs
+    shell: 'echo "No matches for {{ pattern }}."'
+    arguments:
+      - name: pattern
+        title: Pattern
+        type: ascii_sentence
+        default: error
+
+  - title: Delete old backups
+    id: delete_old_backups
+    icon: ashtonished
+    shell: echo "Deleted 4 backups older than 90 days."
+    arguments:
+      - type: html
+        title: Description
+        default: This removes backups older than 90 days from <strong>backup.example.com</strong>.
+      - type: confirmation
+        title: Are you sure?
+
+  - title: Change theme
+    id: change_theme
+    icon: theme
+    shell: echo "Theme changed."
+
+  - title: "Wake {{ server.name }}"
+    icon: reboot
+    entity: server
+    shell: 'echo "Sending Wake on LAN to {{ server.hostname }}"'
+
+  - title: "Update {{ server.name }}"
+    icon: robot
+    entity: server
+    shell: 'echo "Updating {{ server.hostname }}"'
+
+  - title: "Back up {{ server.name }}"
+    icon: backup
+    entity: server
+    shell: 'echo "Backing up {{ server.hostname }}"'
+
+entities:
+  - file: entities/servers.yaml
+    name: server
+    icon: ssh
+    properties:
+      - name: hostname
+        title: Hostname
+      - name: ip
+        title: IP address
+
+actionGroups:
+  backup-jobs:
+    maxConcurrent: 1
+    icon: backup
+
+dashboards:
+  - title: Servers
+    contents:
+      - type: fieldset
+        entity: server
+        title: '{{ server.name }}'
+        contents:
+          - type: display
+            title: |
+              Hostname: <strong>{{ server.hostname }}</strong><br />
+              IP address: <strong>{{ server.ip }}</strong>
+          - title: 'Wake {{ server.name }}'
+          - title: 'Update {{ server.name }}'
+          - title: 'Back up {{ server.name }}'
+
+defaultPolicy:
+  showDiagnostics: true
+  showLogList: true
+
+defaultPermissions:
+  view: true
+  exec: true
+  logs: true

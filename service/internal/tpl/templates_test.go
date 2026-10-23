@@ -7,6 +7,7 @@ import (
 
 	"github.com/OliveTin/OliveTin/internal/entities"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestParseTemplateWithActionContext_Json(t *testing.T) {
@@ -60,7 +61,7 @@ func TestParseTemplateWithActionContext_Json(t *testing.T) {
 				assert.Error(t, err)
 				return
 			}
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			if tt.checkJsonOnly {
 				assertJsonOutput(t, output, tt.expectedOutput, tt.args)
 			} else {
@@ -78,7 +79,7 @@ func assertJsonOutput(t *testing.T, output, expectedPrefix string, args map[stri
 	jsonPart = strings.TrimSpace(jsonPart)
 	var decoded map[string]string
 	err := json.Unmarshal([]byte(jsonPart), &decoded)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	for k, v := range args {
 		assert.Equal(t, v, decoded[k], "decoded JSON should contain %s=%s", k, v)
 	}

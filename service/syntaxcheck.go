@@ -7,6 +7,7 @@ import (
 
 	"github.com/OliveTin/OliveTin/internal/config"
 	"github.com/OliveTin/OliveTin/internal/configissues"
+	"github.com/OliveTin/OliveTin/internal/entities"
 	"github.com/OliveTin/OliveTin/internal/executor"
 )
 
@@ -20,6 +21,7 @@ func runSyntaxCheck() {
 		os.Exit(1)
 	}
 
+	entities.SyncEntityFileWatchers(cfg)
 	executor.DefaultExecutor(cfg).RebuildActionMap()
 	printConfigIssues(configissues.List())
 
