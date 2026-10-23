@@ -1,0 +1,36 @@
+entities:
+  - file: /etc/OliveTin/entities/water_valve.yaml
+    name: water_valve
+
+actions:
+  - title: Open valve
+    icon: '&#128167;'
+    entity: water_valve
+    enabledExpression: '{{ eq .CurrentEntity.state "closed" }}'
+    shell: |
+      set -e
+      echo "Opening {{ .CurrentEntity.title }}"
+      printf -- '- title: %s\n  state: open\n' "{{ .CurrentEntity.title }}" > /etc/OliveTin/entities/water_valve.yaml
+
+  - title: Close valve
+    icon: '&#128683;'
+    entity: water_valve
+    enabledExpression: '{{ eq .CurrentEntity.state "open" }}'
+    shell: |
+      set -e
+      echo "Closing {{ .CurrentEntity.title }}"
+      printf -- '- title: %s\n  state: closed\n' "{{ .CurrentEntity.title }}" > /etc/OliveTin/entities/water_valve.yaml
+
+dashboards:
+  - title: Water Valve
+    contents:
+      - title: "{{ water_valve.title }}"
+        type: fieldset
+        entity: water_valve
+        contents:
+          - type: display
+            title: |
+              State: <strong>{{ water_valve.state }}</strong>
+
+          - title: Open valve
+          - title: Close valve

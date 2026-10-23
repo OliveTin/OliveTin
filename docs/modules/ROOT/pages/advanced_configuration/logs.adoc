@@ -6,6 +6,14 @@ There are two different types of logs in OliveTin - xref:advanced_configuration/
 
 OliveTin supports a few different log levels. The default logLevel is `INFO`.
 
+Before configuration is loaded, OliveTin also logs at `INFO` by default. Pass `-startuptrace` if you need `TRACE` messages while OliveTin is searching for and loading `config.yaml` (for example to see which config paths were checked). After configuration loads, `logLevel` from `config.yaml` takes over as usual.
+
+.`Example: enable startup TRACE logging`
+[source,bash]
+----
+OliveTin -startuptrace -configdir /etc/OliveTin
+----
+
 You can set a `logLevel` in config.yaml like this;
 
 .`config.yaml`
@@ -19,6 +27,7 @@ actions:
 
 The supported log levels are;
 
+* `TRACE` - Extremely detailed messages (for example config decode hooks). Usually only useful with `-startuptrace`.
 * `DEBUG` - Every possible log message will be shown. This will use a lot of disk space and is not recommended unless you are a developer / like reading code.
 * `ERROR` - OliveTin rarely uses the `ERROR` log level.
 * `WARN` - Very few messages, only warnings are shown.
@@ -43,8 +52,6 @@ You can enable JSON log format by setting the `OLIVETIN_LOG_FORMAT` environment 
 ----
 root@server: ./OliveTin
 {"commit":"nocommit","date":"nodate","level":"info","msg":"OliveTin initializing","time":"2025-10-30T10:09:55Z","version":"dev"}
-{"level":"debug","msg":"Value of -configdir flag","time":"2025-10-30T10:09:55Z","value":"."}
-{"level":"debug","msg":"servicehost nonwin","time":"2025-10-30T10:09:55Z"}
 {"level":"info","msg":"Setting log level to info","time":"2025-10-30T10:09:55Z"}
 {"level":"info","msg":"OliveTin initialization complete","time":"2025-10-30T10:09:55Z"}
 {"configDir":"/home/xconspirisist/sandbox/Development/OliveTin/OliveTin","level":"info","msg":"OliveTin started","time":"2025-10-30T10:09:55Z"}

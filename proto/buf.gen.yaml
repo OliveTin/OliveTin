@@ -4,7 +4,7 @@ plugins:
     out: ../service/gen/
     opt: paths=source_relative
 
-  - remote: buf.build/connectrpc/go
+  - remote: buf.build/connectrpc/go:v1.21.0
     out: ../service/gen/
     opt: paths=source_relative
 

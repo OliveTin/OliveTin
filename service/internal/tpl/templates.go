@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
+	"slices"
 	"strings"
 	"text/template"
 
@@ -112,8 +113,7 @@ func migrateLegacyEntityProperties(rawShellCommand string) string {
 func migrateLegacyArgumentNames(rawShellCommand string) string {
 	matches := legacyArgumentRegex.FindAllStringSubmatchIndex(rawShellCommand, -1)
 
-	for i := len(matches) - 1; i >= 0; i-- {
-		match := matches[i]
+	for _, match := range slices.Backward(matches) {
 		fullMatchStart := match[0]
 		fullMatchEnd := match[1]
 		argNameStart := match[2]

@@ -1,0 +1,58 @@
+[#latching-toggle]
+= Latching Toggle
+
+A latching toggle controls something that has two states, using two actions: one sets the state and the other resets it. The current state is _latched_ - it is remembered between button presses - and the dashboard always shows it.
+
+The two actions are also _interlocked_: only the action that is valid for the current state can be clicked. You cannot open a valve that is already open, or close one that is already closed.
+
+In OliveTin, the latched state is stored in an xref:entities/intro.adoc[entity file], which the actions update themselves, and the interlock is done with xref:action_customization/enabledExpression.adoc[enabled expressions].
+
+This differs from xref:solutions/human-in-the-control-loop/index.adoc[Human in the Control Loop], which shows a live reading next to a single manual action that can always be run.
+
+The example on this page controls a garden water valve.
+
+[cols="1,1"]
+|===
+| Valve closed | Valve open
+
+a| image::solutions/latching-toggle/closed.png[]
+a| image::solutions/latching-toggle/open.png[]
+|===
+
+== How it works
+
+* The entity file `/etc/OliveTin/entities/water_valve.yaml` holds the state of the valve (`open` or `closed`). It is the single source of truth for the dashboard.
+* **Open valve** is only enabled when the state is `closed`, and **Close valve** is only enabled when the state is `open`. This is done with `enabledExpression`, which reads the state from `.CurrentEntity`.
+* Each action writes the new state back to the entity file after it has done its work. OliveTin watches entity files, so the dashboard and the enabled buttons update as soon as the file changes.
+
+== Entity file
+
+[source,yaml]
+.`/etc/OliveTin/entities/water_valve.yaml`
+----
+include::example$solutions/latching-toggle/water_valve.yaml[]
+----
+
+== Configuration
+
+[source,yaml]
+.`config.yaml`
+----
+include::example$solutions/latching-toggle/config.yaml[]
+----
+
+== Customising this pattern
+
+* The same pattern works for anything with two states, such as lights, relays, services, or a maintenance mode.
+* Replace the `echo` commands with your real hardware control, for example a GPIO command, an MQTT publish, or a call to a smart plug API.
+* Only write the new state to the entity file once the hardware command has succeeded. If the command fails, the shell exits before the state changes and the dashboard keeps showing the real state.
+* If something else can change the device (a physical switch, a schedule), have a script update the entity file too. The dashboard will then follow it.
+* These actions rewrite the whole entity file, so to control several valves, give each one its own entity file (or update the file in place with a tool such as `yq`).
+* Add ACLs if only certain users should be able to operate the valve.
+
+== See also
+
+* xref:entities/intro.adoc[Entities]
+* xref:action_customization/enabledExpression.adoc[Enabled expressions]
+* xref:solutions/heating-control-panel/index.adoc[Heating Control Panel]
+* xref:solutions/human-in-the-control-loop/index.adoc[Human in the Control Loop]

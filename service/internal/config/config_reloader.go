@@ -45,6 +45,8 @@ func AppendSource(cfg *Config, k *koanf.Koanf, configPath string) {
 	}).Info("Appending cfg source")
 
 	configissues.BeginConfigLoad()
+	BeginLoadedSources()
+	RecordLoadedSource(configPath)
 	stampLoadedConfigSources(k, configPath)
 	loadIncludedConfigsFromDir(k, configPath)
 
@@ -71,10 +73,23 @@ func unmarshalRoot(k *koanf.Koanf, cfg *Config) bool {
 	})
 
 	if err != nil {
-		log.Errorf("Error unmarshalling config: %v", err)
+		reportDecodeFailure(err)
 		return false
 	}
 	return true
+}
+
+// A decode failure stops AppendSource before the issue list is rebuilt, so the
+// issue is published to the live list immediately as well as kept for later
+// rebuilds.
+func reportDecodeFailure(err error) {
+	issue := configissues.Issue{
+		Severity: configissues.SeverityError,
+		Code:     configissues.CodeConfigDecode,
+		Message:  fmt.Sprintf("Configuration could not be decoded: %v", err),
+	}
+	configissues.ReportSticky(issue)
+	configissues.Report(issue)
 }
 
 func afterLoadFinalize(cfg *Config, configPath string) {
@@ -240,9 +255,17 @@ func loadAndMergeIncludedFile(k *koanf.Koanf, includePath, filename string) {
 	filePath := filepath.Join(includePath, filename)
 
 	if err := k.Load(file.Provider(filePath), yaml.Parser(), koanf.WithMergeFunc(mergeFuncForSource(filePath))); err != nil {
+		configissues.ReportSticky(configissues.Issue{
+			Severity:   configissues.SeverityError,
+			Code:       configissues.CodeIncludeParse,
+			Message:    fmt.Sprintf("Included config file could not be loaded: %v", err),
+			ConfigFile: filePath,
+		})
 		log.Errorf("Error loading included config file %s: %v", filePath, err)
 		return
 	}
+
+	RecordLoadedSource(filePath)
 
 	log.WithFields(log.Fields{
 		"filePath": filePath,
@@ -350,7 +373,7 @@ func justificationDecodeHookFunc(from reflect.Type, to reflect.Type, data any) (
 }
 
 func envDecodeHookFunc(from reflect.Type, to reflect.Type, data any) (any, error) {
-	log.Debugf("envDecodeHookFunc called: from=%v, to=%v, data=%v", from, to, data)
+	log.Tracef("envDecodeHookFunc called: from=%v, to=%v, data=%v", from, to, data)
 	if from.Kind() != reflect.String {
 		return data, nil
 	}

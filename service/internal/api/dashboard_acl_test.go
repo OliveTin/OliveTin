@@ -100,7 +100,7 @@ func TestRootDashboardEntriesIncludeCategory(t *testing.T) {
 	entries := api.buildRootDashboardEntries(user, cfg.Dashboards)
 	require.Len(t, entries, 4)
 	assert.Equal(t, []string{"Misc Tools", "My Servers", "Status Board", "My Containers"}, rootDashboardTitles(entries))
-	assert.Equal(t, "", entries[0].Category)
+	assert.Empty(t, entries[0].Category)
 	assert.Equal(t, "Infrastructure", entries[1].Category)
 	assert.Equal(t, "Monitoring", entries[2].Category)
 	assert.Equal(t, "Infrastructure", entries[3].Category)

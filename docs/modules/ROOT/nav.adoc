@@ -121,6 +121,7 @@
 *** xref:security/example_some_admin_actions.adoc[Example: Some actions require admin]
 ** xref:security/design_choices.adoc[Security Design & Hardening Recommendations]
 ** xref:security/content_security_policy.adoc[Content Security Policy headers]
+*** xref:security/embedding_iframe.adoc[Embedding OliveTin in an iframe]
 * Integrations
 ** xref:integrations/homeassistant-integration.adoc[Home Assistant (HACS Integration)]
 ** xref:integrations/homeassistant.adoc[Home Assistant (REST)]
@@ -137,6 +138,7 @@
 ** xref:solutions/systemd-control-panel/index.adoc[Systemd Control Panel]
 ** xref:solutions/heating-control-panel/index.adoc[Heating Control Panel]
 ** xref:solutions/human-in-the-control-loop/index.adoc[Human in the Control Loop]
+** xref:solutions/latching-toggle/index.adoc[Latching Toggle]
 ** xref:solutions/k8s-control-panel-hosted/index.adoc[Kubernetes Control Panel (hosted)]
 ** xref:solutions/primitive-password/index.adoc[Primitive Password Protection]
 ** xref:solutions/wol/index.adoc[Wake on LAN]

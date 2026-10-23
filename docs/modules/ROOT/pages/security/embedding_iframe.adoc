@@ -1,0 +1,190 @@
+[#embedding-iframe]
+= Embedding OliveTin in an iframe
+
+You might want to show OliveTin inside another web page, such as a Home Assistant dashboard (Webpage card), Homarr, Organizr, Heimdall, or your own HTML page. These pages show OliveTin using an `<iframe>`.
+
+By default, **OliveTin tells web browsers not to allow this**. This protects you from "clickjacking", where a malicious website hides your OliveTin buttons inside its own page and tricks you into clicking them. If you try to embed OliveTin without changing anything, the iframe will be blank and the browser console will show an error like this:
+
+[source,text]
+----
+Framing violates the following Content Security Policy directive: "frame-ancestors 'none'". The request has been blocked.
+----
+
+This page explains how to allow *your* dashboard to embed OliveTin, while still blocking every other website.
+
+TIP: You do not need to understand Content Security Policy (CSP) to follow this page. You only need to change one web address in the example below.
+
+== Step 1: Find the address of your dashboard
+
+You need the **origin** of the page that will contain OliveTin, which we'll call the "parent page". This is *not* the address of OliveTin itself.
+
+The easiest way to get it exactly right:
+
+. Open your dashboard (the parent page) in your web browser.
+. Open the browser's developer tools (press kbd:[F12]) and go to the **Console** tab.
+. Type `location.origin` and press kbd:[Enter].
+
+The browser will print something like `"https://homeassistant.example.com"` or `"http://192.168.1.50:8123"`. Copy it, without the quotes. That is your origin.
+
+An origin is made up of three parts, and **all three must match exactly**:
+
+[cols="1,2,2"]
+|===
+| Part | Example | Notes
+
+| Scheme
+| `http://` or `https://`
+| `http` and `https` are treated as different sites.
+
+| Host
+| `homeassistant.example.com` or `192.168.1.50`
+| If you sometimes open your dashboard by IP address and sometimes by name, those are two different origins. Allow both (see <<multiple-dashboards>>).
+
+| Port
+| `:8123`
+| Only included if it is not the default (`80` for http, `443` for https).
+|===
+
+Paths such as `/lovelace/home` are not part of the origin. Leave them out.
+
+== Step 2: Add this to your config.yaml
+
+Copy this into your OliveTin `config.yaml`. If you already have a `security:` section, merge these keys into it rather than adding a second `security:` section.
+
+include::partial$config-start.adoc[]
+----
+security:
+  headerContentSecurityPolicy: true
+  headerXFrameOptions: false
+  contentSecurityPolicy: "default-src 'self'; script-src 'self' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https:; frame-ancestors 'self' https://dashboard.example.com; base-uri 'self'"
+----
+
+**The only thing you need to change** is `https://dashboard.example.com`. Replace it with the origin you found in Step 1. Leave everything else on that line exactly as it is, including the quotes and semicolons.
+
+For example, if your Home Assistant is at `http://192.168.1.50:8123`, the `frame-ancestors` part becomes:
+
+[source,text]
+----
+frame-ancestors 'self' http://192.168.1.50:8123;
+----
+
+What these settings do:
+
+* `headerContentSecurityPolicy: true` makes sure OliveTin sends the security policy below. This is already the default, but it is included in case an older config turned it off.
+* `contentSecurityPolicy` is OliveTin's normal security policy, with one change. `frame-ancestors 'none'` (nobody may embed OliveTin) has become `frame-ancestors 'self' <your dashboard>` (only OliveTin itself and your dashboard may embed it).
+* `headerXFrameOptions: false` turns off an older header, `X-Frame-Options: DENY`, which also blocks iframes. The `frame-ancestors` setting above does the same job in a more flexible way, so this older header is no longer needed.
+
+[#multiple-dashboards]
+=== Allowing more than one dashboard
+
+To allow several parent pages, list them after `frame-ancestors`, separated by spaces:
+
+[source,text]
+----
+frame-ancestors 'self' https://homeassistant.example.com http://192.168.1.50:8123 https://homarr.example.com;
+----
+
+To allow every subdomain of your own domain, use a `*` wildcard:
+
+[source,text]
+----
+frame-ancestors 'self' https://*.example.com;
+----
+
+=== Allowing any website (not recommended)
+
+If you are testing on a private network and just want it to work, you can allow any page to embed OliveTin:
+
+[source,text]
+----
+frame-ancestors *;
+----
+
+WARNING: This means *any* website you visit can embed your OliveTin and trick you into clicking its buttons. Only use this for testing, and never on an OliveTin instance that is reachable from the internet.
+
+== Step 3: Reload and test
+
+Changes to the `security` section are picked up automatically when you save `config.yaml`, so you normally do not need to restart OliveTin. If you are unsure, restarting is harmless.
+
+Then reload your dashboard page in the browser. If you use the browser's cache heavily, a hard refresh (kbd:[Ctrl+Shift+R]) helps.
+
+If you're writing your own HTML page, the iframe looks like this:
+
+[source,html]
+----
+<iframe src="https://olivetin.example.com/" style="width: 100%; height: 600px; border: 0"></iframe>
+----
+
+=== Checking what OliveTin is sending
+
+If it still does not work, check the headers that are actually being sent. Run this from a terminal, using the address you use to reach OliveTin:
+
+[source,shell]
+----
+curl -sI https://olivetin.example.com/ | grep -i -E 'content-security|x-frame'
+----
+
+You should see your dashboard's origin in the `frame-ancestors` part, and no `X-Frame-Options` line. If you still see `frame-ancestors 'none'`, your config change has not been applied. See the troubleshooting section below.
+
+== Troubleshooting
+
+[cols="2,3"]
+|===
+| What you see | What to do
+
+| The error still says `frame-ancestors 'none'`
+a| OliveTin is still sending its default policy. Check that:
+
+* the keys are indented under `security:` and spelled exactly as shown, including upper and lower case letters (`contentSecurityPolicy` starts with a lower case `c`).
+* you edited the `config.yaml` that OliveTin is actually using (check the OliveTin startup logs).
+* you replaced `'none'` in the line you pasted. Older examples on the xref:security/content_security_policy.adoc[Content Security Policy] page still contain `'none'`.
+* a reverse proxy is not adding its own `Content-Security-Policy` header (see below).
+
+| The error lists your dashboard, but it is still blocked
+| The origin does not match exactly. Compare it carefully with the output of `location.origin` from Step 1. The most common mistakes are `http` vs `https`, a missing port number, or using an IP address in one place and a hostname in the other.
+
+| `Refused to display ... in a frame because it set 'X-Frame-Options' to 'deny'`
+| Add `headerXFrameOptions: false` under `security:`, as shown in Step 2. You may also see this if your reverse proxy adds its own `X-Frame-Options` header.
+
+| `Mixed Content: The page at 'https://...' was loaded over HTTPS, but requested an insecure frame 'http://...'`
+| Your dashboard uses `https://` but OliveTin uses `http://`. Browsers do not allow this, and no OliveTin setting can change it. Serve OliveTin over HTTPS too, for example behind a xref:reverse-proxies/intro.adoc[reverse proxy].
+
+| The iframe works, but you have to log in every time or logging in does nothing
+| See <<logins-in-iframes>>.
+|===
+
+=== Reverse proxies
+
+Some reverse proxies and proxy add-ons (for example Traefik security header middlewares, Nginx Proxy Manager "block common exploits", or authentication proxies) add their own `Content-Security-Policy` or `X-Frame-Options` headers. Browsers enforce *every* policy they receive, so a strict policy from your proxy will still block the iframe even after you have changed OliveTin.
+
+To find out if this is happening, run the `curl` command from Step 3 twice: once directly against OliveTin (for example `http://192.168.1.10:1337/`) and once against the address that goes through your proxy. If the results are different, change the headers in your proxy configuration as well.
+
+[#logins-in-iframes]
+=== Logins inside an iframe
+
+If you use xref:security/local.adoc[local users] or xref:security/oauth2.adoc[OAuth2], OliveTin remembers that you are logged in using a cookie. Browsers only send OliveTin's cookie to an iframe when the parent page and OliveTin are on the **same site**. The same site means the same scheme (`http` or `https`) and the same main domain. Subdomains and port numbers can differ.
+
+[cols="2,2,1"]
+|===
+| Dashboard | OliveTin | Login works in iframe?
+
+| `https://ha.example.com`
+| `https://olivetin.example.com`
+| Yes
+
+| `http://192.168.1.50:8123`
+| `http://192.168.1.50:1337`
+| Yes
+
+| `https://ha.example.com`
+| `https://olivetin.otherdomain.net`
+| No
+
+| `https://ha.example.com`
+| `http://192.168.1.50:1337`
+| No
+|===
+
+If your setup is in the "No" rows, the easiest fix is to make OliveTin available on a subdomain of the same domain as your dashboard, usually with a xref:reverse-proxies/intro.adoc[reverse proxy].
+
+Many OAuth2 login providers also refuse to show their login page inside an iframe. If the login page does not appear, open OliveTin in a normal browser tab, log in there, and then reload your dashboard. This only works when the parent page and OliveTin are on the same site, as described above.

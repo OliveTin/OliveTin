@@ -359,7 +359,7 @@ func TestGroupQueuesThirdAndBlocksWhenQueueFull(t *testing.T) {
 	trackings := []string{tracking1, tracking2}
 	waitGroups := []*sync.WaitGroup{wg1, wg2}
 
-	for idx := 0; idx < 3; idx++ {
+	for range 3 {
 		wg, tracking := e.ExecRequest(&ExecutionRequest{
 			Binding:           binding,
 			Cfg:               cfg,

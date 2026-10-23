@@ -4,10 +4,11 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestValidateEntityArgumentChoicesForArgument(t *testing.T) {
-	assert.NoError(t, validateEntityArgumentChoicesForArgument("Reboot", ActionArgument{
+	require.NoError(t, validateEntityArgumentChoicesForArgument("Reboot", ActionArgument{
 		Name:   "target",
 		Entity: "servers",
 		Choices: []ActionArgumentChoice{
@@ -15,7 +16,7 @@ func TestValidateEntityArgumentChoicesForArgument(t *testing.T) {
 		},
 	}))
 
-	assert.Error(t, validateEntityArgumentChoicesForArgument("Reboot", ActionArgument{
+	require.Error(t, validateEntityArgumentChoicesForArgument("Reboot", ActionArgument{
 		Name:   "target",
 		Entity: "servers",
 		Choices: []ActionArgumentChoice{
@@ -24,7 +25,7 @@ func TestValidateEntityArgumentChoicesForArgument(t *testing.T) {
 		},
 	}))
 
-	assert.Error(t, validateEntityArgumentChoicesForArgument("Reboot", ActionArgument{
+	require.Error(t, validateEntityArgumentChoicesForArgument("Reboot", ActionArgument{
 		Name:    "target",
 		Entity:  "servers",
 		Choices: nil,

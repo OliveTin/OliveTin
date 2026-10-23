@@ -14,10 +14,10 @@ import (
 	"github.com/OliveTin/OliveTin/internal/executor"
 )
 
-func argumentAction(title, shell string, args []config.ActionArgument) *config.Action {
+func argumentAction(title string, args []config.ActionArgument) *config.Action {
 	return &config.Action{
 		Title:         title,
-		Shell:         shell,
+		Shell:         "echo {{ host }}",
 		MaxConcurrent: 1,
 		Arguments:     args,
 	}
@@ -75,7 +75,7 @@ func waitForLogJustification(t *testing.T, ex *executor.Executor, trackingID, ex
 func TestExecutionStatusIncludesStoredArguments(t *testing.T) {
 	cfg := config.DefaultConfig()
 	cfg.Actions = []*config.Action{
-		argumentAction("Ping host with stored args", "echo {{ host }}", []config.ActionArgument{
+		argumentAction("Ping host with stored args", []config.ActionArgument{
 			{Name: "host", Type: "ascii_identifier"},
 		}),
 	}
@@ -159,7 +159,7 @@ func TestExecutionStatusOmitsPasswordArguments(t *testing.T) {
 func TestRestartActionReusesStoredArguments(t *testing.T) {
 	cfg := config.DefaultConfig()
 	cfg.Actions = []*config.Action{
-		argumentAction("Ping host", "echo {{ host }}", []config.ActionArgument{
+		argumentAction("Ping host", []config.ActionArgument{
 			{Name: "host", Type: "ascii_identifier"},
 		}),
 	}
@@ -236,7 +236,7 @@ func TestRestartActionRejectsIncompleteStoredArguments(t *testing.T) {
 func TestRestartActionRejectsMissingRequiredStoredArguments(t *testing.T) {
 	cfg := config.DefaultConfig()
 	cfg.Actions = []*config.Action{
-		argumentAction("Ping host - reject missing required stored arg", "echo {{ host }}", []config.ActionArgument{
+		argumentAction("Ping host - reject missing required stored arg", []config.ActionArgument{
 			{Name: "host", Type: "ascii_identifier"},
 		}),
 	}
@@ -368,7 +368,7 @@ func TestRestartActionReusesStoredJustificationViaStartActionPath(t *testing.T) 
 func TestGetLogsIncludesStoredArguments(t *testing.T) {
 	cfg := config.DefaultConfig()
 	cfg.Actions = []*config.Action{
-		argumentAction("Ping host", "echo {{ host }}", []config.ActionArgument{
+		argumentAction("Ping host", []config.ActionArgument{
 			{Name: "host", Type: "ascii_identifier"},
 		}),
 	}

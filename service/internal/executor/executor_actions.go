@@ -101,6 +101,9 @@ func (e *Executor) RebuildActionMap() {
 	}
 
 	for configOrder, action := range e.Cfg.Actions {
+		if action == nil {
+			continue
+		}
 		if action.Entity != "" {
 			registerActionsFromEntities(e, configOrder, action.Entity, action, req)
 		} else {

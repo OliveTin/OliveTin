@@ -156,10 +156,7 @@ func paginateEntityInstances(instances []*apiv1.Entity, page, pageSize int32) []
 		return []*apiv1.Entity{}
 	}
 
-	end := start + int64(pageSize)
-	if end > count {
-		end = count
-	}
+	end := min(start+int64(pageSize), count)
 
 	return instances[int(start):int(end)]
 }
