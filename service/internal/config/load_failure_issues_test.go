@@ -58,6 +58,16 @@ func TestAppendSourceReportsDecodeFailure(t *testing.T) {
 	issue := findStickyIssue(configissues.CodeConfigDecode)
 	require.NotNil(t, issue)
 	assert.Equal(t, configissues.SeverityError, issue.Severity)
+	assert.True(t, hasLiveIssue(configissues.CodeConfigDecode), "decode failure should be visible without a rebuild")
+}
+
+func hasLiveIssue(code string) bool {
+	for _, issue := range configissues.List() {
+		if issue.Code == code {
+			return true
+		}
+	}
+	return false
 }
 
 func TestAppendSourceClearsLoadFailuresOnSuccessfulLoad(t *testing.T) {

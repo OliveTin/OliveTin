@@ -73,15 +73,23 @@ func unmarshalRoot(k *koanf.Koanf, cfg *Config) bool {
 	})
 
 	if err != nil {
-		configissues.ReportSticky(configissues.Issue{
-			Severity: configissues.SeverityError,
-			Code:     configissues.CodeConfigDecode,
-			Message:  fmt.Sprintf("Configuration could not be decoded: %v", err),
-		})
-		log.Errorf("Error unmarshalling config: %v", err)
+		reportDecodeFailure(err)
 		return false
 	}
 	return true
+}
+
+// A decode failure stops AppendSource before the issue list is rebuilt, so the
+// issue is published to the live list immediately as well as kept for later
+// rebuilds.
+func reportDecodeFailure(err error) {
+	issue := configissues.Issue{
+		Severity: configissues.SeverityError,
+		Code:     configissues.CodeConfigDecode,
+		Message:  fmt.Sprintf("Configuration could not be decoded: %v", err),
+	}
+	configissues.ReportSticky(issue)
+	configissues.Report(issue)
 }
 
 func afterLoadFinalize(cfg *Config, configPath string) {
