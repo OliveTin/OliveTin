@@ -1232,3 +1232,11 @@ func TestLogEntryOutputAvailableWhileRunning(t *testing.T) {
 	assert.True(t, snapshot.ExecutionFinished)
 	assert.Contains(t, snapshot.Output, "hello-mid-run")
 }
+
+func TestRebuildActionMapSkipsNilActions(t *testing.T) {
+	e, cfg := testingExecutor()
+	cfg.Actions = append(cfg.Actions, nil)
+
+	assert.NotPanics(t, e.RebuildActionMap)
+	assert.Len(t, e.MapActionBindings, 1)
+}
