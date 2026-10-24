@@ -230,6 +230,10 @@ notarize:
 release:
   # Publish immediately without Windows assets; sign-windows uploads signed zip/MSI later.
   draft: false
+  # semantic-release's github plugin creates a draft release first (for issue comments);
+  # adopt it and replace its placeholder notes rather than creating a second release.
+  use_existing_draft: true
+  mode: replace
   ids:
     - default
     - openrc
