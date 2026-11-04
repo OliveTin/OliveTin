@@ -10,7 +10,15 @@ export function selectBrowserLocale (availableLocales, browserLanguages) {
     const parts = lowerCandidate.split('-')
 
     if (parts[0] === 'zh') {
-      const script = new Intl.Locale(candidate).maximize().script
+      let script
+      try {
+        script = new Intl.Locale(candidate).maximize().script
+      } catch (error) {
+        if (error instanceof RangeError) {
+          continue
+        }
+        throw error
+      }
       const match = availableLocales.find(locale =>
         locale.toLowerCase().startsWith('zh-') &&
         new Intl.Locale(locale).maximize().script === script

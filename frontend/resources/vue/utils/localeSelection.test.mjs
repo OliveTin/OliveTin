@@ -37,3 +37,9 @@ test('selectBrowserLocale skips unavailable Chinese scripts and tries the next b
 test('selectBrowserLocale uses English when no locale matches', () => {
   assert.equal(selectBrowserLocale(availableLocales, ['fr-FR']), 'en')
 })
+
+test('selectBrowserLocale skips malformed Chinese candidates', () => {
+  assert.equal(selectBrowserLocale(availableLocales, ['zh-', 'zh-TW']), 'zh-Hant-TW')
+  assert.equal(selectBrowserLocale(availableLocales, ['zh-Hant-!', 'de-AT']), 'de-DE')
+  assert.equal(selectBrowserLocale(availableLocales, ['zh-']), 'en')
+})
