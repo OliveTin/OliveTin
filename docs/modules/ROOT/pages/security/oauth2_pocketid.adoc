@@ -8,7 +8,7 @@ This example uses Pocket ID v2.19.2. Please check the Pocket ID docs if you are 
 == Pocket ID Configuration:
 
 ==== Create a new user group:
-Assign users to this group that will have access to all olivetin actions. +
+Assign users to this group that will have access to all olivetin actions. We will add a custom claim that is sent to Olivetin at login. +
 
 -> Administration -> User Groups -> Add Group +
 
