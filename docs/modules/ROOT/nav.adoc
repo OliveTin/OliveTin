@@ -14,6 +14,7 @@
 ***** xref:install/docker_compose.adoc[Docker Compose]
 ***** xref:install/helm.adoc[Kubernetes with Helm]
 ***** xref:install/k8s.adoc[Kubernetes with Manifests]
+**** xref:install/easypanel.adoc[Easypanel]
 *** xref:install/bsd.adoc[BSD]
 *** xref:install/windows.adoc[Windows]
 **** xref:install/windows_service.adoc[Windows Service]
