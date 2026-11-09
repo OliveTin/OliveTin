@@ -1,0 +1,9 @@
+= Easypanel
+
+https://easypanel.io[Easypanel] is a self-hosted Docker deployment platform, and OliveTin has a one-click deployment template there.
+
+image::https://easypanel.io/img/deploy-on-easypanel-40.svg[Deploy on Easypanel,link=https://easypanel.io/templates/olivetin]
+
+The template deploys the `jamesread/olivetin` image with a persistent volume for `/config`, where OliveTin's `config.yaml` is expected to live.
+
+include::partial$install/post_container.adoc[]

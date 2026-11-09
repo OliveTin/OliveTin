@@ -25,4 +25,5 @@ Read more about 2k vs 3k here: xref:../upgrade/2k3k.adoc[OliveTin 2k vs OliveTin
 * xref:install/docker_compose.adoc[Docker Compose]
 * xref:install/helm.adoc[Kubernetes with Helm]
 * xref:install/k8s.adoc[Kubernetes with Manifests]
+* xref:install/easypanel.adoc[Easypanel]
 
