@@ -31,7 +31,7 @@
 		"@xterm/addon-web-links": "^0.12.0",
 		"@xterm/xterm": "^6.0.0",
 		"iconify-icon": "^3.0.4",
-		"picocrank": "^1.37.0",
+		"picocrank": "^1.40.0",
 		"vue": "^3.5.44",
 		"vue-i18n": "^11.4.16",
 		"vue-router": "^5.4.0"
