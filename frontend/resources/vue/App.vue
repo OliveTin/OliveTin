@@ -7,6 +7,7 @@
       :sidebar-enabled="sidebarEnabled"
       :top-bar-enabled="topbarEnabled"
       :navigation="navigation"
+      :top-bar-navigation="navigation"
       :username="headerUsername"
       :login-route="headerLoginRoute"
       @toggle-sidebar="toggleSidebar"
