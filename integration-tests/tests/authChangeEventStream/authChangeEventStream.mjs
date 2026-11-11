@@ -26,6 +26,7 @@ describe('config: authChangeEventStream', function () {
   })
 
   after(async () => {
+    await webdriver.manage().deleteAllCookies()
     await runner.stop()
   })
 
