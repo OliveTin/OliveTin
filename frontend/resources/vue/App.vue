@@ -259,7 +259,7 @@ const currentThemeName = computed(() => {
 
 // Computed properties for navigation style
 const topbarEnabled = computed(() => {
-  return sectionNavigationStyle.value === 'topbar'
+  return sectionNavigationStyle.value === 'topbar' && showNavigation.value
 })
 
 const sidebarEnabled = computed(() => {
