@@ -1,0 +1,46 @@
+#
+# Integration Test Config: Event stream identity follows login
+#
+
+listenAddressSingleHTTPFrontend: 0.0.0.0:1337
+
+logLevel: "DEBUG"
+checkForUpdates: false
+authRequireGuestsToLogin: false
+
+authLocalUsers:
+  enabled: true
+  users:
+    - username: "alice"
+      usergroup: "admin"
+      password: "$argon2id$v=19$m=65536,t=4,p=6$ORxyZZGW6E3FWZnbQmHJ9Q$BzIOWeXry/BZ6+JV1T4UASBnebVLB9QJ4f5TmUPXsg4" # notsecret: password
+
+defaultPermissions:
+  view: false
+  exec: false
+  logs: false
+
+accessControlLists:
+  - name: admin
+    addToEveryAction: true
+    matchUsergroups: ["admin"]
+    permissions:
+      view: true
+      exec: true
+      logs: true
+
+  - name: guests
+    matchUsernames: ["guest"]
+    permissions:
+      view: true
+      exec: true
+      logs: true
+
+actions:
+  - title: Guest action
+    shell: echo guest
+    acls:
+      - guests
+
+  - title: Admin action
+    shell: echo admin
