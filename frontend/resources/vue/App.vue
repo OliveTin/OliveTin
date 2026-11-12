@@ -8,6 +8,7 @@
         :sidebar-enabled="sidebarEnabled"
         :top-bar-enabled="topbarEnabled"
         :navigation="navigation"
+        :top-bar-navigation="navigation"
         :username="headerUsername"
         :login-route="headerLoginRoute"
         @toggle-sidebar="toggleSidebar"
@@ -184,7 +185,7 @@ import AppShell from 'picocrank/vue/components/AppShell.vue'
 import NotificationBlock from 'picocrank/vue/components/NotificationBlock.vue'
 import QuickSearch from 'picocrank/vue/components/QuickSearch.vue'
 import ConnectionBanner from './components/ConnectionBanner.vue'
-import { connectEventStreamIfNeeded } from '../../js/websocket.js'
+import { connectEventStreamIfNeeded, stopEventStream } from '../../js/websocket.js'
 import { DashboardSquare01Icon } from '@hugeicons/core-free-icons'
 import logoUrl from '../../OliveTinLogo.png'
 import { useI18n } from 'vue-i18n'
@@ -257,7 +258,7 @@ const currentThemeName = computed(() => {
 
 // Computed properties for navigation style
 const topbarEnabled = computed(() => {
-  return sectionNavigationStyle.value === 'topbar'
+  return sectionNavigationStyle.value === 'topbar' && showNavigation.value
 })
 
 const sidebarEnabled = computed(() => {
@@ -293,6 +294,11 @@ async function updateHeaderFromInit () {
   const authenticatedUser = window.initResponse.authenticatedUser
   loginRequired.value = !!window.initResponse.loginRequired
   headerSearchEnabled.value = !!window.initResponse.features?.headerSearch
+
+  // The server filters stream events by the identity the stream connected with.
+  if (username.value !== authenticatedUser) {
+    stopEventStream()
+  }
 
   username.value = authenticatedUser
   isLoggedIn.value = authenticatedUser !== '' && authenticatedUser !== 'guest'
