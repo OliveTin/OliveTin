@@ -3,10 +3,20 @@
 This method is useful is you are writing a script, and want to wait for the action to finish so that you can check the result, or get the output.
 
 * **HTTP Method**: `POST`
-* **Request Type**: OliveTin request object
+* **Request Type**: xref:api/start_action.adoc#api-request-startactionandwait[StartActionAndWait request object] (`actionId`, `arguments`, `justification`)
 * **Response Type**: Log Entry (waits for the action to finish)
 
 There are several variants of this API call available which might be easier for scripts (or humans) to work with:
 
-
 include::partial$api/start_action_methods.adoc[]
+
+== Example API call: Start an action with arguments, and wait for it to finish
+
+[source,bash]
+.curl
+----
+user@host: curl 'http://olivetin.example.com:1337/api/StartActionAndWait' --json '{"actionId": "Ping_host", "arguments": [{"name": "host", "value": "example.com"}]}'
+{"logEntry":{"actionTitle":"Ping host","output":"...","exitCode":0, ... }}
+----
+
+See xref:api/start_action.adoc#api-response-logentry[Response type: LogEntry] for the full response.

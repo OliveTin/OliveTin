@@ -6,7 +6,7 @@ This section of the documentation is intended for developers, and those who want
 **Short version**: 
 
 * http://olivetinServer:1337/api on your OliveTin server to get the REST API. 
-* link:http://docs.olivetin.app/api/swagger/[Swagger] documents the API.
+* link:https://docs.olivetin.app/api/swagger/3k/[Swagger] documents the API.
 
 **Longer version**: The OliveTin API is formally defined using the Protobuf IDL, in link:https://github.com/OliveTin/OliveTin/tree/main/proto[the `proto/` directory of the OliveTin repository]. Server and client code is generated from that definition, and the API is served using link:https://connectrpc.com[Connect RPC].
 
@@ -20,7 +20,8 @@ The OliveTin API is completely machine readable - every method, request and resp
 * **Source of truth**: link:https://github.com/OliveTin/OliveTin/tree/main/proto[`proto/`] on GitHub - the service is `olivetin.api.v1.OliveTinApiService` in link:https://github.com/OliveTin/OliveTin/blob/main/proto/olivetin/api/v1/olivetin.proto[`olivetin/api/v1/olivetin.proto`].
 * **Generate a client**: use link:https://buf.build[buf] or `protoc` with the Connect, gRPC, or gRPC-Web plugins for your language of choice (Go, TypeScript, Python, Java, etc).
 * **Call it directly**: each RPC is available as `POST /api/<MethodName>` with a JSON body matching the request message, using protobuf JSON field names (lowerCamelCase, eg: `bindingId`).
-* **OpenAPI**: the Swagger / OpenAPI links below are also available for tools that prefer OpenAPI.
+* **HTTP method**: every RPC is called with `POST` - a `GET` request returns `405 Method Not Allowed`.
+* **OpenAPI**: the Swagger / OpenAPI links below are generated from the Protobuf files, and are also available for tools that prefer OpenAPI.
 
 == Links
 

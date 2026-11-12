@@ -5,26 +5,85 @@ There are several variants of this API call available which might be easier for 
 
 include::partial$api/start_action_methods.adoc[]
 
-[#api-request-idurl]
-== Request type: Action ID in the URL
+All request and response field names below are the protobuf JSON names (lowerCamelCase) from the link:https://github.com/OliveTin/OliveTin/blob/main/proto/olivetin/api/v1/olivetin.proto[OliveTin Protobuf definition], which is the source of truth for the API.
+
+[#api-ids]
+== Action IDs vs Binding IDs
+
+* `actionId` is the `id` you set on the action in your `config.yaml`. To find your Action ID, and understand how Action IDs work, see the xref:action_customization/ids.adoc[Action ID] documentation.
+* `bindingId` identifies one button/instance of an action. For a normal action this is the same as the action ID. For actions generated from xref:entities/intro.adoc[entities], each entity gets its own binding ID. Binding IDs are returned by `GetDashboard` (as `action.bindingId`).
+
+NOTE: Despite its name, the `actionId` field used by `StartActionAndWait`, `StartActionByGet` and `StartActionByGetAndWait` is looked up as a binding ID. For normal actions this makes no difference, but for entity-generated actions you must send the entity's binding ID - sending the configured action `id` returns `not_found`.
+
+[#api-request-actionid]
+== Request type: Action ID only
 
 Used by:
 
 *** xref:api/method_StartActionByGet.adoc[StartActionByGet]
 *** xref:api/method_StartActionByGetAndWait.adoc[StartActionByGetAndWait]
 
-If you are trying to integrate OliveTin with your own scripts or processes, it's probably easiest to start actions by using an ID directly in the URL, xref:api/method_StartActionByGet.adoc#api-eg-startIdUrl[see the example].
+If you are trying to integrate OliveTin with your own scripts or processes, this is probably the easiest way to start actions. You cannot pass arguments with this request type.
 
-[#api-request-obj]
-== Request type: OliveTin request object
+[source,json]
+.`StartActionByGetRequest` / `StartActionByGetAndWaitRequest`
+----
+{
+  "actionId": "string"
+}
+----
+
+See xref:api/method_StartActionByGet.adoc#api-eg-startActionId[the example].
+
+[#api-request-startaction]
+== Request type: StartAction request object
 
 Used by:
 
 *** xref:api/method_StartAction.adoc[StartAction]
+
+This is the request the OliveTin web UI uses, and gives you the most control over the execution.
+
+[source,json]
+.`StartActionRequest`
+----
+{
+  "bindingId": "string",
+  "arguments": [
+    {
+      "name": "string",
+      "value": "string"
+    }
+  ],
+  "uniqueTrackingId": "string",
+  "justification": "string"
+}
+----
+
+* `bindingId` (required) - see <<api-ids>>.
+* `arguments` (optional) - values for the action's xref:args/intro.adoc[arguments].
+* `uniqueTrackingId` (optional) - if you set this, it is used as the execution tracking ID, otherwise one is generated for you. It must be up to 36 characters of hex digits and dashes (eg: a UUID), and must not already have been used. An invalid or previously used ID is silently replaced with a generated UUID, so always track the execution using the `executionTrackingId` returned in the response.
+* `justification` (optional) - the reason for running the action, for actions that require a justification.
+
+[source,json]
+.Example
+----
+{
+  "bindingId": "generate_cryptocurrency",
+  "arguments": [],
+  "uniqueTrackingId": "0f8b1c2e-6d3a-4e5f-9a7b-1c2d3e4f5a6b"
+}
+----
+
+[#api-request-startactionandwait]
+== Request type: StartActionAndWait request object
+
+Used by:
+
 *** xref:api/method_StartActionAndWait.adoc[StartActionAndWait]
 
 [source,json]
-.OliveTin request object structure
+.`StartActionAndWaitRequest`
 ----
 {
   "actionId": "string",
@@ -34,24 +93,11 @@ Used by:
       "value": "string"
     }
   ],
-  "uniqueTrackingId": "string"
+  "justification": "string"
 }
 ----
 
-To find your Action ID, and understand how Action IDs work, see the xref:action_customization/ids.adoc[Action ID] documentation
-
-If you need more control over the execution, then the only other option is to submit a `OliveTin reqjest object`, which is just a very simple JSON structure like this;
-
-[source,json]
-----
-{
-    "actionId": "Generate cryptocurrency",
-    "arguments": [],
-    "uniqueTrackingId": "my-tracking-id",
-}
-----
-
-More detailed examples can be seen below.
+Note that this request selects the action with `actionId` (not `bindingId`), and does not accept a `uniqueTrackingId`.
 
 [#api-response-trackingid]
 == Response type: Execution Tracking ID
@@ -75,29 +121,40 @@ Used by:
 *** xref:api/method_StartActionAndWait.adoc[StartActionAndWait]
 *** xref:api/method_StartActionByGetAndWait.adoc[StartActionByGetAndWait]
 
+The `output` field contains the combined stdout and stderr of the action.
+
 .Example log entry
 [source,json]
 ----
 {
-    "logEntry": {
-        "datetimeStarted": "2024-02-27 14:14:49",
-        "actionTitle": "Restart httpd on server1",
-        "stdout": "",
-        "stderr": "",
-        "timedOut": true,
-        "exitCode": -1,
-        "user": "",
-        "userClass": "",
-        "actionIcon": "&#128260;",
-        "tags": [
-
-        ],
-        "executionTrackingId": "b04b1e90-d457-4158-b7dc-da9e81f21568",
-        "datetimeFinished": "2024-02-27 14:14:52",
-        "actionId": "restart_httpd",
-        "executionStarted": true,
-        "executionFinished": true,
-        "blocked": false
-    }
+  "logEntry": {
+    "datetimeStarted": "2026-11-12 11:56:29",
+    "actionTitle": "Restart httpd on server1",
+    "output": "Restarting httpd...\n",
+    "timedOut": false,
+    "exitCode": 0,
+    "user": "guest",
+    "userClass": "",
+    "actionIcon": "&#128260;",
+    "tags": [],
+    "executionTrackingId": "56588051-80da-4b31-8cd8-461a4566e3a9",
+    "datetimeFinished": "2026-11-12 11:56:31",
+    "executionStarted": true,
+    "executionFinished": true,
+    "blocked": false,
+    "datetimeIndex": "4",
+    "canKill": false,
+    "datetimeRateLimitExpires": "",
+    "bindingId": "restart_httpd",
+    "queued": false,
+    "queuedForGroup": "",
+    "justification": "",
+    "arguments": [
+      {
+        "name": "server",
+        "value": "server1"
+      }
+    ]
+  }
 }
 ----

@@ -1,30 +1,32 @@
-There are 4 main methods to start an action in OliveTin, which can be used in scripts or other applications. These methods allow you to trigger actions either immediately or wait for them to complete, and they can be accessed via HTTP requests.
+There are 4 main methods to start an action in OliveTin, which can be used in scripts or other applications. These methods allow you to trigger actions either immediately or wait for them to complete. Like every OliveTin API method, they are called with an HTTP `POST` and a JSON request body (eg: `curl --json '{...}'`).
 
 .Webhook/API reference table
 [%header]
 |======================================================
 | Function                     | HTTP Method | Request Type (How to select an action)             | Response Type
 
-| xref:api/method_StartAction.adoc[StartAction]                
-| POST        
-| xref:api/start_action.adoc#api-request-obj[OliveTin request object]        
+| xref:api/method_StartAction.adoc[StartAction]
+| POST
+| xref:api/start_action.adoc#api-request-startaction[`bindingId`, arguments, tracking ID, justification]
 | xref:api/start_action.adoc#api-response-trackingid[Execution Tracking ID]
 
-| xref:api/method_StartActionByGet.adoc[StartActionByGet]           
-| GET         
-| xref:api/start_action.adoc#api-request-idurl[Action ID in the URL]
+| xref:api/method_StartActionByGet.adoc[StartActionByGet]
+| POST
+| xref:api/start_action.adoc#api-request-actionid[`actionId` only]
 | xref:api/start_action.adoc#api-response-trackingid[Execution Tracking ID]
 
-| xref:api/method_StartActionAndWait.adoc[StartActionAndWait]         
-| POST        
-| xref:api/start_action.adoc#api-request-obj[OliveTin request object]
+| xref:api/method_StartActionAndWait.adoc[StartActionAndWait]
+| POST
+| xref:api/start_action.adoc#api-request-startactionandwait[`actionId`, arguments, justification]
 | xref:api/start_action.adoc#api-response-logentry[Log Entry (waits for the action to finish)]
 
-| xref:api/method_StartActionByGetAndWait.adoc[StartActionByGetAndWait]    
-| GET         
-| xref:api/start_action.adoc#api-request-idurl[Action ID in the URL]         
+| xref:api/method_StartActionByGetAndWait.adoc[StartActionByGetAndWait]
+| POST
+| xref:api/start_action.adoc#api-request-actionid[`actionId` only]
 | xref:api/start_action.adoc#api-response-logentry[Log Entry (waits for the action to finish)]
 
 |======================================================
 
-You can also browse these methods in the link:htts://docs.olivetin.app/api/swagger/[OpenAPI/Swagger] docs if you prefer.
+NOTE: The waiting methods (`StartActionAndWait` and `StartActionByGetAndWait`) check that the caller is allowed to view the action's logs *after* the action has finished. A caller that can start an action but cannot view its logs receives a permission error, even though the action has already run - so retrying on that error can run the action again. Use `StartAction` or `StartActionByGet` when you do not need the log entry.
+
+You can also browse these methods in the link:https://docs.olivetin.app/api/swagger/3k/[OpenAPI/Swagger] docs if you prefer. The link:https://github.com/OliveTin/OliveTin/blob/main/proto/olivetin/api/v1/olivetin.proto[Protobuf definition] is the source of truth for all request and response fields.

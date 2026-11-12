@@ -70,7 +70,7 @@ function run_olivetin_action() {
 
         OLIVETIN_REQUEST="$(cat <<EOF
 {
-  "actionId": "$ACTION_NAME",
+  "bindingId": "$ACTION_NAME",
   "arguments": [
         {
                 "name": "commit",
