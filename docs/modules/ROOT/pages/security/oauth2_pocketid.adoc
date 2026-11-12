@@ -1,14 +1,77 @@
 [#oauth2-pocketid]
 = OAuth2 - Pocket ID
 
-OliveTin has been tested with Pocket ID. This documentation page describes how to configure Pocket ID for use with OliveTin and assumes you already have Pocket ID installed and running.
+OliveTin has been tested with Pocket ID. This documentation page describes how to configure Pocket ID for use with OliveTin and assumes you already have Pocket ID installed and running. It allows guests access to some actions, and admins access to all actions.
 
-== Configuration
+This example uses Pocket ID v2.19.2. Please check the Pocket ID docs if you are running a newer version.
+
+== Pocket ID Configuration:
+
+==== Create a new user group:
+Assign users to this group that will have access to all olivetin actions. We will add a custom claim that is sent to Olivetin at login. +
+
+-> Administration -> User Groups -> Add Group +
+
+[cols="1,2"]
+|===
+
+| Name | `olivetin_admins`
+
+| Friendly Name | `Olivetin Admins`
+|===
+
+-> Custom Claims
+
+[cols="1,2", options="header"]
+|===
+
+| Key | Value
+
+| olivetin_group
+| olivetin_admin
+
+|===
+
+==== Create a new client:
+
+-> Administration -> OIDC Clients -> Add OIDC Client +
+
+[cols="1,2"]
+|===
+
+| Name | `Olivetin`
+
+| Client Type | Confidential Client
+|===
+
+-> Callback URLs -> + Add callback URL +
+
+[cols="1,1"]
+|===
+
+| Callback URLs | `\https://olivetin.example.com/oauth/callback`
+|===
+
+-> Create
+
+-> Access Tab: +
+
+Allowed User Groups -> Selected user groups +
+-> `olivetin_admins` -> Save +
+
+Copy the generated Client ID and Client Secret from the General tab into olivetin's config.yaml (example below). The secret will only be displayed once.
+
+== Olivetin Configuration
 
 .config.yaml
 [source,yaml]
 ----
-authRequireGuestsToLogin: true
+authRequireGuestsToLogin: false
+
+defaultPermissions:
+  view: false
+  exec: false
+  logs: false
 
 accessControlLists:
   - name: admin
@@ -17,11 +80,16 @@ accessControlLists:
       exec: true
       logs: true
     matchUsergroups:
-      # Since you can't map properties in userinfo response from Pocket ID I am kind of cheating here:
-      # only I will be able to log in and so I return the "preferred_username" as the group, and I configure my
-      # own username as the "Usergroup" to mean "admin"
-      - myusername
+      - olivetin_admin
     addToEveryAction: true
+
+  - name: "guests"
+    permissions:
+      view: true
+      exec: true
+      logs: false
+    matchUsernames: [ "guest" ]
+    addToEveryAction: false
 
 authLocalUsers:
   enabled: false
@@ -43,12 +111,17 @@ authOAuth2Providers:
       - profile
       - email
     usernameField: preferred_username
-    userGroupField: preferred_username
+    userGroupField: olivetin_group
     insecureSkipVerify: true
 
 actions:
   - title: "Hello world!"
-    shell: echo 'Hello World!'
+    shell: echo 'Hello World! I have guest access'
+    acls:
+      - "guests"
+  - title: "Admins only"
+    shell: echo 'Hello World! I am an admin'
+
 ----
 
 == Pocket ID config
