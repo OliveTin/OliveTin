@@ -13,7 +13,6 @@ import (
 
 	//	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/MicahParks/keyfunc/v3"
-	"time"
 )
 
 var (
@@ -28,17 +27,15 @@ func initJwks() {
 		var err error
 
 		if cfg.AuthJwtCertsURL != "" {
-			ctx, cancel := context.WithTimeout(context.Background(), 300*time.Second)
-
-			jwksVerifier, err = keyfunc.NewDefaultCtx(ctx, []string{
+			// Keep the keyfunc context alive for process lifetime so JWKS
+			// refresh continues after the initial fetch (GHSA-gp3q-q8qg-j4xf).
+			jwksVerifier, err = keyfunc.NewDefaultCtx(context.Background(), []string{
 				cfg.AuthJwtCertsURL,
 			})
 
 			if err != nil {
 				log.Errorf("Init JWKS Failure: %v", err)
 			}
-
-			defer cancel()
 		}
 	}
 }
