@@ -1,35 +1,23 @@
-= API Method: StartActionByGet
+= API Method: StartActionByGet (deprecated)
 
-This is the simplest method to start an action - you only need to send the action ID, which makes it a good fit for quick integrations (Stream Deck, Home Assistant, cron jobs, etc). You cannot pass arguments using this method.
-
-* **HTTP Method**: `POST`
-* **Request Type**: xref:api/start_action.adoc#api-request-actionid[Action ID only] (`actionId`)
-* **Response Type**: Execution Tracking ID
-
-[NOTE]
+[WARNING]
 ====
-Despite the name, in OliveTin 3k this method is called with `POST` and a JSON body, the same as every other API method. The OliveTin 2k style of putting the action ID in the URL (eg: `GET /api/StartActionByGet/pingGithub`) is no longer supported and returns `404`.
+`StartActionByGet` is **deprecated** and will be removed in a future version of OliveTin. Use xref:api/method_StartAction.adoc[StartAction] instead.
+
+Despite its name, this method no longer supports `GET` requests. The OliveTin 2k style of putting the action ID in the URL (eg: `GET /api/StartActionByGet/pingGithub`) returns `404` in OliveTin 3k, and is not coming back.
 ====
 
-include::partial$api/start_action_methods.adoc[]
+== Migrating to `StartAction`
 
-[#api-eg-startActionId]
-== Example API call: Start an action by ID
+`StartActionByGet` takes only an `actionId`, and returns an Execution Tracking ID. `StartAction` does the same with `bindingId` - for a normal action, the binding ID is the same as the action `id` from your `config.yaml` (see xref:api/start_action.adoc#api-ids[Action IDs vs Binding IDs]).
 
-.curl
+.Before (deprecated)
 ----
 user@host: curl http://olivetin.example.com:1337/api/StartActionByGet --json '{"actionId": "pingGithub"}'
+----
+
+.After
+----
+user@host: curl http://olivetin.example.com:1337/api/StartAction --json '{"bindingId": "pingGithub"}'
 {"executionTrackingId":"ff7d6f13-af8f-4ebe-8174-ad4cc7197b45"}
 ----
-
-The corresponding config.yaml would look like this;
-
-[source,yaml]
-----
-actions:
-  - title: Ping GitHub.com
-    id: pingGithub
-    shell: ping github.com -c 1
-----
-
-IDs are used by these API calls, as you probably want the interface to display a human-readable title, whereas the API call doesn't want to have spaces or punctuation.

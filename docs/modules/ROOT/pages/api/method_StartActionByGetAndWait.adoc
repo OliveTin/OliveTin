@@ -1,26 +1,23 @@
-= API Method: StartActionByGetAndWait
+= API Method: StartActionByGetAndWait (deprecated)
 
-This method is also a very easy way to quickly start an action, but it waits for the action to finish before returning the result. This is useful if you want to get the output of the action or check its result without having to poll for it. You cannot pass arguments using this method.
-
-* **HTTP Method**: `POST`
-* **Request Type**: xref:api/start_action.adoc#api-request-actionid[Action ID only] (`actionId`)
-* **Response Type**: Log Entry (waits for the action to finish)
-
-[NOTE]
+[WARNING]
 ====
-Despite the name, in OliveTin 3k this method is called with `POST` and a JSON body. The OliveTin 2k style of putting the action ID in the URL (eg: `GET /api/StartActionByGetAndWait/pingGithub`) is no longer supported and returns `404`.
+`StartActionByGetAndWait` is **deprecated** and will be removed in a future version of OliveTin. Use xref:api/method_StartActionAndWait.adoc[StartActionAndWait] instead.
+
+Despite its name, this method no longer supports `GET` requests. The OliveTin 2k style of putting the action ID in the URL (eg: `GET /api/StartActionByGetAndWait/pingGithub`) returns `404` in OliveTin 3k, and is not coming back.
 ====
 
-There are several variants of this API call available which might be easier for scripts (or humans) to work with:
+== Migrating to `StartActionAndWait`
 
-include::partial$api/start_action_methods.adoc[]
+`StartActionAndWait` takes the same `actionId` field, and returns the same Log Entry, so you only need to change the method name. It also accepts `arguments` and a `justification`.
 
-== Example API call: Start an action by ID, and wait for it to finish
-
-.curl
+.Before (deprecated)
 ----
 user@host: curl http://olivetin.example.com:1337/api/StartActionByGetAndWait --json '{"actionId": "pingGithub"}'
-{"logEntry":{"actionTitle":"Ping GitHub.com","output":"...","exitCode":0, ... }}
 ----
 
-See xref:api/start_action.adoc#api-response-logentry[Response type: LogEntry] for the full response.
+.After
+----
+user@host: curl http://olivetin.example.com:1337/api/StartActionAndWait --json '{"actionId": "pingGithub"}'
+{"logEntry":{"actionTitle":"Ping GitHub.com","output":"...","exitCode":0, ... }}
+----

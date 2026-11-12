@@ -73,12 +73,21 @@ defaultPermissions:
   exec: false
   logs: false
 
+# showDiagnostics and showLogList default to true for everyone (including
+# guests), so turn them off here and enable them for admins only below.
+defaultPolicy:
+  showDiagnostics: false
+  showLogList: false
+
 accessControlLists:
   - name: admin
     permissions:
       view: true
       exec: true
       logs: true
+    policy:
+      showDiagnostics: true
+      showLogList: true
     matchUsergroups:
       - olivetin_admin
     addToEveryAction: true
