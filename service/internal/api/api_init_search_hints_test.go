@@ -87,6 +87,36 @@ func TestInitOmitsSearchHintsWhenLoginRequired(t *testing.T) {
 	assert.Nil(t, resp.Msg.SearchHints)
 }
 
+func TestInitHidesNavigationAndDashboardsWhenLoginRequired(t *testing.T) {
+	cfg := config.DefaultConfig()
+	cfg.AuthRequireGuestsToLogin = true
+	cfg.ShowNavigation = true
+	cfg.Actions = []*config.Action{
+		{Title: "Ping", Shell: "echo ping"},
+	}
+	cfg.Dashboards = []*config.DashboardComponent{
+		{
+			Title: "Secret Board",
+			Contents: []*config.DashboardComponent{
+				{Title: "Ping"},
+			},
+		},
+	}
+	cfg.Sanitize()
+
+	testExecutor := executor.DefaultExecutor(cfg)
+	testExecutor.RebuildActionMap()
+	testServer, client := getNewTestServerAndClientWithExecutor(cfg, testExecutor)
+	defer testServer.Close()
+
+	resp, err := client.Init(context.Background(), connect.NewRequest(&apiv1.InitRequest{}))
+	require.NoError(t, err)
+	require.True(t, resp.Msg.LoginRequired)
+	assert.False(t, resp.Msg.ShowNavigation)
+	assert.Empty(t, resp.Msg.RootDashboards)
+	assert.Empty(t, resp.Msg.RootDashboardEntries)
+}
+
 func TestInitOmitsSearchHintsWhenHeaderSearchDisabled(t *testing.T) {
 	entities.ClearEntitiesOfType("server")
 	t.Cleanup(func() {

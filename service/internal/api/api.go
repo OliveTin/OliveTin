@@ -1365,11 +1365,11 @@ func (api *oliveTinAPI) Init(ctx ctx.Context, req *connect.Request[apiv1.InitReq
 func (api *oliveTinAPI) buildInitResponse(user *authpublic.AuthenticatedUser) *apiv1.InitResponse {
 	loginRequired := user.IsGuest() && api.cfg.AuthRequireGuestsToLogin
 	currentVersion, availableVersion, showNewVersions := initVersionFields(user, api.cfg)
-	rootDashboardEntries := api.buildRootDashboardEntries(user, api.cfg.Dashboards)
+	showNavigation, rootDashboardEntries := api.initNavigationFields(user, loginRequired)
 
 	res := &apiv1.InitResponse{
 		ShowFooter:                api.cfg.ShowFooter,
-		ShowNavigation:            api.cfg.ShowNavigation,
+		ShowNavigation:            showNavigation,
 		ShowNewVersions:           showNewVersions,
 		AvailableVersion:          availableVersion,
 		CurrentVersion:            currentVersion,
@@ -1402,6 +1402,16 @@ func (api *oliveTinAPI) buildInitResponse(user *authpublic.AuthenticatedUser) *a
 	}
 
 	return res
+}
+
+// initNavigationFields hides sidebar navigation and dashboard titles from guests
+// that must log in before using OliveTin.
+func (api *oliveTinAPI) initNavigationFields(user *authpublic.AuthenticatedUser, loginRequired bool) (bool, []*apiv1.RootDashboard) {
+	if loginRequired {
+		return false, nil
+	}
+
+	return api.cfg.ShowNavigation, api.buildRootDashboardEntries(user, api.cfg.Dashboards)
 }
 
 func initVersionFields(user *authpublic.AuthenticatedUser, cfg *config.Config) (currentVersion string, availableVersion string, showNewVersions bool) {
