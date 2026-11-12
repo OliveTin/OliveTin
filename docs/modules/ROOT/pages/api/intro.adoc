@@ -8,11 +8,19 @@ This section of the documentation is intended for developers, and those who want
 * http://olivetinServer:1337/api on your OliveTin server to get the REST API. 
 * link:http://docs.olivetin.app/api/swagger/[Swagger] documents the API.
 
-**Longer version**: The OliveTin API is formally defined using the Protobuf IDL, which generates gRPC stubs, as well as a REST Gateway. 
+**Longer version**: The OliveTin API is formally defined using the Protobuf IDL, in link:https://github.com/OliveTin/OliveTin/tree/main/proto[the `proto/` directory of the OliveTin repository]. Server and client code is generated from that definition, and the API is served using link:https://connectrpc.com[Connect RPC].
 
-The REST API gateway is used by the WebUI, and you can use it too by default - it is exposed at "/api" by default.
+The API is exposed at `/api/` on the single HTTP frontend (port 1337 by default), and is the same API used by the WebUI. You can call it with plain JSON over HTTP (eg: `curl http://olivetinServer:1337/api/WhoAmI --json '{}'`), with binary Protobuf, or with gRPC-Web clients.
 
-The gRPC API only listens on localhost default, but it can be set to listen publicly. See xref:reference/network-ports.adoc[the network ports documentation] for a better description of how the APIs are exposed. Most people do not need to use the gRPC API. 
+[#machine-readable-api]
+== Machine readable API (for scripts, integrations and AI agents)
+
+The OliveTin API is completely machine readable - every method, request and response message, field, and enum is defined in the Protobuf files. This makes it straightforward for code generators, API tooling, and LLMs / AI agents to discover and use the API without guessing.
+
+* **Source of truth**: link:https://github.com/OliveTin/OliveTin/tree/main/proto[`proto/`] on GitHub - the service is `olivetin.api.v1.OliveTinApiService` in link:https://github.com/OliveTin/OliveTin/blob/main/proto/olivetin/api/v1/olivetin.proto[`olivetin/api/v1/olivetin.proto`].
+* **Generate a client**: use link:https://buf.build[buf] or `protoc` with the Connect, gRPC, or gRPC-Web plugins for your language of choice (Go, TypeScript, Python, Java, etc).
+* **Call it directly**: each RPC is available as `POST /api/<MethodName>` with a JSON body matching the request message, using protobuf JSON field names (lowerCamelCase, eg: `bindingId`).
+* **OpenAPI**: the Swagger / OpenAPI links below are also available for tools that prefer OpenAPI.
 
 == Links
 
@@ -20,7 +28,8 @@ The gRPC API only listens on localhost default, but it can be set to listen publ
 * link:http://docs.olivetin.app/api/swagger/OliveTin.openapi.json[OliveTin 2k API: OpenAPI JSON Definition]
 * link:http://docs.olivetin.app/api/swagger/3k/[OliveTin 3k API: Swagger UI]
 * link:http://docs.olivetin.app/api/swagger/3k/OliveTin.openapi.json[OliveTin 3k API: OpenAPI JSON Definition]
-* link:https://github.com/OliveTin/OliveTin/blob/main/proto/olivetin/api/v1/olivetin.proto[The OliveTin Protobuf file]. 
+* link:https://github.com/OliveTin/OliveTin/tree/main/proto[The OliveTin Protobuf definitions (source)]
+* link:https://github.com/OliveTin/OliveTin/blob/main/proto/olivetin/api/v1/olivetin.proto[The OliveTin Protobuf file]
 
 Please do talk to the developers on Discord if you'd like help using the API, or you're thinking about building something interesting using the API!
 
