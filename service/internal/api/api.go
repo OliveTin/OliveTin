@@ -586,6 +586,18 @@ func (api *oliveTinAPI) Logout(ctx ctx.Context, req *connect.Request[apiv1.Logou
 	}
 	response.Header().Add("Set-Cookie", oauth2Cookie.String())
 
+	// Clear any leftover OAuth2 CSRF state cookie from an in-flight login
+	oauthStateCookie := &http.Cookie{
+		Name:     "olivetin-oauth-state",
+		Value:    "",
+		MaxAge:   -1,
+		HttpOnly: true,
+		Path:     "/",
+		Secure:   secure,
+		SameSite: http.SameSiteLaxMode,
+	}
+	response.Header().Add("Set-Cookie", oauthStateCookie.String())
+
 	return response, nil
 }
 
