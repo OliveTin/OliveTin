@@ -8,7 +8,6 @@ import (
 	"os"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/MicahParks/keyfunc/v3"
 	authTypes "github.com/OliveTin/OliveTin/internal/auth/authpublic"
@@ -83,13 +82,8 @@ var (
 func initJwks(cfg *config.Config) error {
 	jwksOnce.Do(func() {
 		if cfg.AuthJwtCertsURL != "" {
-			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-			defer cancel()
-
 			var err error
-			jwksVerifier, err = keyfunc.NewDefaultCtx(ctx, []string{
-				cfg.AuthJwtCertsURL,
-			})
+			jwksVerifier, err = initRemoteJwks(cfg.AuthJwtCertsURL)
 
 			if err != nil {
 				log.Errorf("Init JWKS Failure: %v", err)
@@ -98,6 +92,14 @@ func initJwks(cfg *config.Config) error {
 		}
 	})
 	return jwksInitErr
+}
+
+// initRemoteJwks creates a JWKS verifier whose background refresh outlives the
+// calling request. keyfunc.NewDefaultCtx stops refreshing when its context is
+// cancelled; a WithTimeout/defer-cancel around the initial fetch permanently
+// freezes the keyset (GHSA-gp3q-q8qg-j4xf).
+func initRemoteJwks(certsURL string) (keyfunc.Keyfunc, error) {
+	return keyfunc.NewDefaultCtx(context.Background(), []string{certsURL})
 }
 
 func loadPublicKeyFromFile(keyPath string) error {
