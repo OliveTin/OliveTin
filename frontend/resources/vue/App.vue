@@ -308,7 +308,7 @@ async function updateHeaderFromInit () {
   bannerMessage.value = window.initResponse.bannerMessage || ''
   bannerCss.value = window.initResponse.bannerCss || ''
   showFooter.value = window.initResponse.showFooter
-  showNavigation.value = window.initResponse.showNavigation
+  showNavigation.value = !!window.initResponse.showNavigation && !loginRequired.value
   showLogs.value = window.initResponse.showLogList
   showDiagnostics.value = window.initResponse.showDiagnostics
   showVersionNumber.value = window.initResponse.effectivePolicy?.showVersionNumber ?? true
@@ -321,8 +321,6 @@ async function updateHeaderFromInit () {
 
   applyStyleMods()
   loadCustomJsIfEnabled()
-
-  renderNavigation()
   applyTheme().catch((err) => {
     console.warn('Failed to load theme CSS:', err)
   })
@@ -332,6 +330,8 @@ async function updateHeaderFromInit () {
     router.push('/login')
     return
   }
+
+  renderNavigation()
 
   if (headerSearchEnabled.value) {
     indexSearchHints(window.initResponse.searchHints)
