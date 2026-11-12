@@ -184,7 +184,7 @@ import Navigation from 'picocrank/vue/components/Navigation.vue'
 import Header from 'picocrank/vue/components/Header.vue'
 import QuickSearch from 'picocrank/vue/components/QuickSearch.vue'
 import ConnectionBanner from './components/ConnectionBanner.vue'
-import { connectEventStreamIfNeeded } from '../../js/websocket.js'
+import { connectEventStreamIfNeeded, stopEventStream } from '../../js/websocket.js'
 import { DashboardSquare01Icon } from '@hugeicons/core-free-icons'
 import logoUrl from '../../OliveTinLogo.png'
 import { useI18n } from 'vue-i18n'
@@ -294,6 +294,11 @@ async function updateHeaderFromInit () {
   const authenticatedUser = window.initResponse.authenticatedUser
   loginRequired.value = !!window.initResponse.loginRequired
   headerSearchEnabled.value = !!window.initResponse.features?.headerSearch
+
+  // The server filters stream events by the identity the stream connected with.
+  if (username.value !== authenticatedUser) {
+    stopEventStream()
+  }
 
   username.value = authenticatedUser
   isLoggedIn.value = authenticatedUser !== '' && authenticatedUser !== 'guest'
