@@ -47,3 +47,5 @@ The OliveTin documentation site supports the llm.txt and llm-full.txt files, ava
 
 * link:https://docs.olivetin.app/llm.txt[llm.txt]
 * link:https://docs.olivetin.app/llm-full.txt[llm-full.txt]
+
+The OliveTin API is completely machine readable. It is defined in Protobuf (gRPC / Connect RPC), and the definitions are the source of truth for every method and message - see link:https://github.com/OliveTin/OliveTin/tree/main/proto[`proto/` on GitHub] and xref:api/intro.adoc#machine-readable-api[the API overview].
