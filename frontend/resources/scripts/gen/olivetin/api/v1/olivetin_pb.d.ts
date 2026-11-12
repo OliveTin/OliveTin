@@ -2288,7 +2288,10 @@ export declare const OliveTinApiService: GenService<{
     output: typeof StartActionAndWaitResponseSchema;
   },
   /**
+   * Use StartAction instead; this method will be removed. See https://github.com/OliveTin/OliveTin/issues/1028
+   *
    * @generated from rpc olivetin.api.v1.OliveTinApiService.StartActionByGet
+   * @deprecated
    */
   startActionByGet: {
     methodKind: "unary";
@@ -2296,7 +2299,10 @@ export declare const OliveTinApiService: GenService<{
     output: typeof StartActionByGetResponseSchema;
   },
   /**
+   * Use StartActionAndWait instead; this method will be removed. See https://github.com/OliveTin/OliveTin/issues/1028
+   *
    * @generated from rpc olivetin.api.v1.OliveTinApiService.StartActionByGetAndWait
+   * @deprecated
    */
   startActionByGetAndWait: {
     methodKind: "unary";

@@ -22,6 +22,7 @@ const (
 	CodeCronEntityBinding      = "cron_entity_binding"
 	CodeWatcherPath            = "watcher_path"
 	CodeAclUnknown             = "acl_unknown"
+	CodeDeprecatedAPICall      = "deprecated_api_call"
 )
 
 // Issue is a configuration warning or error surfaced on Diagnostics.

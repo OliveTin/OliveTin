@@ -336,6 +336,8 @@ func (api *oliveTinAPI) StartActionAndWait(ctx ctx.Context, req *connect.Request
 }
 
 func (api *oliveTinAPI) StartActionByGet(ctx ctx.Context, req *connect.Request[apiv1.StartActionByGetRequest]) (*connect.Response[apiv1.StartActionByGetResponse], error) {
+	reportDeprecatedAPICall("StartActionByGet", "StartAction")
+
 	binding := api.executor.FindBindingByID(req.Msg.ActionId)
 	if binding == nil || binding.Action == nil {
 		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("action with ID %s not found", req.Msg.ActionId))
@@ -387,6 +389,8 @@ func (api *oliveTinAPI) startActionByGetAndWaitLogEntry(binding *executor.Action
 }
 
 func (api *oliveTinAPI) StartActionByGetAndWait(ctx ctx.Context, req *connect.Request[apiv1.StartActionByGetAndWaitRequest]) (*connect.Response[apiv1.StartActionByGetAndWaitResponse], error) {
+	reportDeprecatedAPICall("StartActionByGetAndWait", "StartActionAndWait")
+
 	binding := api.executor.FindBindingByID(req.Msg.ActionId)
 	if binding == nil || binding.Action == nil {
 		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("action with ID %s not found", req.Msg.ActionId))

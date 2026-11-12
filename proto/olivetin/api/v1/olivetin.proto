@@ -524,9 +524,15 @@ service OliveTinApiService {
 
 	rpc StartActionAndWait(StartActionAndWaitRequest) returns (StartActionAndWaitResponse) {}
 
-	rpc StartActionByGet(StartActionByGetRequest) returns (StartActionByGetResponse) {}
+	// Use StartAction instead; this method will be removed. See https://github.com/OliveTin/OliveTin/issues/1028
+	rpc StartActionByGet(StartActionByGetRequest) returns (StartActionByGetResponse) {
+		option deprecated = true;
+	}
 
-	rpc StartActionByGetAndWait(StartActionByGetAndWaitRequest) returns (StartActionByGetAndWaitResponse) {}
+	// Use StartActionAndWait instead; this method will be removed. See https://github.com/OliveTin/OliveTin/issues/1028
+	rpc StartActionByGetAndWait(StartActionByGetAndWaitRequest) returns (StartActionByGetAndWaitResponse) {
+		option deprecated = true;
+	}
 
     rpc RestartAction(RestartActionRequest) returns (StartActionResponse) {}
 
