@@ -277,3 +277,74 @@ func TestCheckUserFromOAuth2CookieUsesSessionCookieOnly(t *testing.T) {
 	reqLegacyStateCookie.AddCookie(&http.Cookie{Name: oauthStateCookieName, Value: "csrf-state"})
 	assert.Nil(t, h.CheckUserFromOAuth2Cookie(&authTypes.AuthCheckingContext{Request: reqLegacyStateCookie}))
 }
+
+func TestIssueOAuthSessionRejectsMissingPendingState(t *testing.T) {
+	h := &OAuth2Handler{
+		pendingStates: make(map[string]*oauth2PendingState),
+		sessions:      make(map[string]*oauth2Session),
+	}
+
+	pending := &oauth2PendingState{providerName: "test", createdAt: time.Now()}
+	sessionID, err := h.issueOAuthSession(pending, "already-consumed", "alice", "admins")
+	require.Error(t, err)
+	assert.Empty(t, sessionID)
+	assert.Empty(t, h.sessions)
+}
+
+func TestIssueOAuthSessionRejectsExpiredPendingState(t *testing.T) {
+	h := &OAuth2Handler{
+		pendingStates: make(map[string]*oauth2PendingState),
+		sessions:      make(map[string]*oauth2Session),
+	}
+
+	state := "expired-state"
+	pending := &oauth2PendingState{
+		providerName: "test",
+		createdAt:    time.Now().Add(-2 * oauthStateMaxAge * time.Second),
+	}
+	h.pendingStates[state] = pending
+
+	sessionID, err := h.issueOAuthSession(pending, state, "alice", "admins")
+	require.Error(t, err)
+	assert.Empty(t, sessionID)
+	assert.NotContains(t, h.pendingStates, state)
+	assert.Empty(t, h.sessions)
+}
+
+func TestLookupOAuth2UserBySessionRejectsExpiredSession(t *testing.T) {
+	h := &OAuth2Handler{
+		pendingStates: make(map[string]*oauth2PendingState),
+		sessions:      make(map[string]*oauth2Session),
+	}
+
+	h.sessions["stale"] = &oauth2Session{
+		Username:  "alice",
+		createdAt: time.Now().Add(-2 * oauthSessionMaxAge * time.Second),
+	}
+
+	user, found := h.lookupOAuth2UserBySession("stale")
+	assert.False(t, found)
+	assert.Nil(t, user)
+	assert.NotContains(t, h.sessions, "stale")
+}
+
+func TestLoadValidPendingOAuthStateRejectsExpired(t *testing.T) {
+	h := &OAuth2Handler{
+		pendingStates: make(map[string]*oauth2PendingState),
+		sessions:      make(map[string]*oauth2Session),
+	}
+
+	state := "expired-pending"
+	h.pendingStates[state] = &oauth2PendingState{
+		providerName: "test",
+		createdAt:    time.Now().Add(-2 * oauthStateMaxAge * time.Second),
+	}
+
+	rec := httptest.NewRecorder()
+	pending, gotState, ok := h.loadValidPendingOAuthState(rec, state)
+	assert.False(t, ok)
+	assert.Nil(t, pending)
+	assert.Equal(t, state, gotState)
+	assert.Equal(t, http.StatusBadRequest, rec.Code)
+	assert.NotContains(t, h.pendingStates, state)
+}

@@ -213,6 +213,14 @@ func (h *OAuth2Handler) validateStateMatch(queryState, cookieState string) bool 
 	return queryState != "" && queryState == cookieState
 }
 
+func pendingStateExpired(pending *oauth2PendingState, now time.Time) bool {
+	return pending.createdAt.Before(now.Add(-oauthStateMaxAge * time.Second))
+}
+
+func sessionExpired(session *oauth2Session, now time.Time) bool {
+	return session.createdAt.Before(now.Add(-oauthSessionMaxAge * time.Second))
+}
+
 func (h *OAuth2Handler) consumePendingOAuthState(w http.ResponseWriter, r *http.Request) (*oauth2PendingState, string, bool) {
 	cookie, err := r.Cookie(oauthStateCookieName)
 	if err != nil {
@@ -233,12 +241,27 @@ func (h *OAuth2Handler) consumePendingOAuthState(w http.ResponseWriter, r *http.
 		return nil, state, false
 	}
 
+	return h.loadValidPendingOAuthState(w, state)
+}
+
+func (h *OAuth2Handler) loadValidPendingOAuthState(w http.ResponseWriter, state string) (*oauth2PendingState, string, bool) {
 	h.mu.RLock()
 	pending, ok := h.pendingStates[state]
+	expired := ok && pendingStateExpired(pending, time.Now())
 	h.mu.RUnlock()
+
 	if !ok {
 		log.Errorf("OAuth2 pending state not found on server")
 		http.Error(w, "State not found in server", http.StatusBadRequest)
+		return nil, state, false
+	}
+
+	if expired {
+		h.mu.Lock()
+		h.deletePendingStateLocked(state)
+		h.mu.Unlock()
+		log.Errorf("OAuth2 pending state expired")
+		http.Error(w, "State expired", http.StatusBadRequest)
 		return nil, state, false
 	}
 
@@ -329,13 +352,27 @@ func (h *OAuth2Handler) issueOAuthSession(pending *oauth2PendingState, state, us
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
+	pendingEntry, ok := h.pendingStates[state]
+	if !ok {
+		return "", fmt.Errorf("pending OAuth state no longer exists")
+	}
+	if pendingStateExpired(pendingEntry, time.Now()) {
+		h.deletePendingStateLocked(state)
+		return "", fmt.Errorf("pending OAuth state expired")
+	}
+
+	providerName := pending.providerName
+	if pendingEntry.providerName != "" {
+		providerName = pendingEntry.providerName
+	}
+
 	h.deletePendingStateLocked(state)
 	h.sweepExpiredOAuthEntriesLocked(time.Now())
 	h.sessions[sessionID] = &oauth2Session{
 		createdAt:    time.Now(),
 		Username:     username,
 		Usergroup:    usergroup,
-		providerName: pending.providerName,
+		providerName: providerName,
 	}
 
 	return sessionID, nil
@@ -527,13 +564,15 @@ func joinGroupArray(arrayVal []any, field string, sep string) string {
 }
 
 func (h *OAuth2Handler) lookupOAuth2UserBySession(sessionID string) (*authTypes.AuthenticatedUser, bool) {
-	h.mu.Lock()
-	defer h.mu.Unlock()
-
-	h.sweepExpiredOAuthEntriesLocked(time.Now())
-
+	h.mu.RLock()
 	session, found := h.sessions[sessionID]
 	if !found || session.Username == "" {
+		h.mu.RUnlock()
+		return nil, false
+	}
+	if sessionExpired(session, time.Now()) {
+		h.mu.RUnlock()
+		h.deleteSessionIfExpired(sessionID)
 		return nil, false
 	}
 
@@ -543,7 +582,18 @@ func (h *OAuth2Handler) lookupOAuth2UserBySession(sessionID string) (*authTypes.
 		Provider:      "oauth2",
 		SID:           sessionID,
 	}
+	h.mu.RUnlock()
 	return user, true
+}
+
+func (h *OAuth2Handler) deleteSessionIfExpired(sessionID string) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	session, found := h.sessions[sessionID]
+	if found && sessionExpired(session, time.Now()) {
+		delete(h.sessions, sessionID)
+	}
 }
 
 func (h *OAuth2Handler) RevokeSession(sid string) {
