@@ -1,20 +1,30 @@
 = Misc API calls
 
-== Example API call: Get the dashboard buttons ("components")
+== Example API call: Get the dashboard buttons
+
+`GetDashboard` returns the dashboard and its action buttons, including each action's `bindingId`. Send an empty object for the default dashboard, or set `title` to request a specific dashboard.
 
 .curl
 ----
-user@host: curl http://olivetinServer:1337/api/GetDashboardComponents 
+user@host: curl http://olivetinServer:1337/api/GetDashboard --json '{}'
 ----
 
 == Example API call: readyz Healthcheck
 
-This is useful for configuring healthchecks in docker containers, or on Kubernetes.
+This is useful for configuring healthchecks in docker containers, or on Kubernetes. The simplest option is the plain HTTP `/readyz` endpoint (not under `/api/`), which works with a `GET` request;
 
 .curl
 ----
-user@host: curl http://olivetinServer:1337/api/readyz
-{"status": "ok"}
+user@host: curl http://olivetinServer:1337/readyz
+OK. Single HTTP Frontend is ready.
 ----
 
-The response will always be "status: ok" to indicate that the API is up, or it will timeout.
+There is also an API method, `GetReadyz`;
+
+.curl
+----
+user@host: curl http://olivetinServer:1337/api/GetReadyz --json '{}'
+{"status":"OK"}
+----
+
+Either will respond with a `200` status to indicate that OliveTin is up, or it will timeout.

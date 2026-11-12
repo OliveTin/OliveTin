@@ -9,15 +9,15 @@ All these configuration options are `false` by default, and should be deleted fr
 
 [#dump-server-diagnostics]
 == Dump server diagnostics
-`insecureAllowDumpServerDiagnostics: true` - will allow dumping xref:troubleshooting/server-diagnostics.adoc[server diagnostics] as plain text when visiting `http://server:1337/api/ServerDiagnostics`
+`insecureAllowDumpServerDiagnostics: true` - will allow dumping xref:troubleshooting/server-diagnostics.adoc[server diagnostics] via the `ServerDiagnostics` API method, eg: `curl http://server:1337/api/ServerDiagnostics --json '{}'`
 
 [#dump-action-map]
 == Dump Action Map
-`InsecureAllowDumpActionMap: true` - will allow dumping all the actions (and those generated with entities) and their public IDs, eg: `http://server:1337/api/DumpActionMap`
+`insecureAllowDumpActionMap: true` - will allow dumping all the actions (and those generated with entities) and their public IDs, eg: `curl http://server:1337/api/DumpPublicIdActionMap --json '{}'`
 
 [#dump-vars]
 == Dump Vars
-`InsecureAllowDumpVars: true` - will allow dumping all the "string variables" from a map that is mainly used for entities, eg: `http://server:1337/api/DumpVars`
+`insecureAllowDumpVars: true` - will allow dumping all the "string variables" from a map that is mainly used for entities, eg: `curl http://server:1337/api/DumpVars --json '{}'`
 
 [#dump-jwt]
 == Dump JWT Claims

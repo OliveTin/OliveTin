@@ -1,19 +1,25 @@
 = API Method: StartActionByGet
 
-This is the method that allows you to specify the action ID in the URL, and is probably the best to do quick integrations - QR Codes, streamdeck, etc. You cannot pass arguments using this method.
+This is the simplest method to start an action - you only need to send the action ID, which makes it a good fit for quick integrations (Stream Deck, Home Assistant, cron jobs, etc). You cannot pass arguments using this method.
 
-* **HTTP Method**: `GET`
-* **Request Type**: Action ID in the URL
+* **HTTP Method**: `POST`
+* **Request Type**: xref:api/start_action.adoc#api-request-actionid[Action ID only] (`actionId`)
 * **Response Type**: Execution Tracking ID
+
+[NOTE]
+====
+Despite the name, in OliveTin 3k this method is called with `POST` and a JSON body, the same as every other API method. The OliveTin 2k style of putting the action ID in the URL (eg: `GET /api/StartActionByGet/pingGithub`) is no longer supported and returns `404`.
+====
 
 include::partial$api/start_action_methods.adoc[]
 
-[#api-eg-startIdUrl]
-== Example API call; Start an action by ID in the URL
+[#api-eg-startActionId]
+== Example API call: Start an action by ID
 
 .curl
 ----
-user@host: curl http://olivetin.example.com/api/StartActionByGet/pingGithub
+user@host: curl http://olivetin.example.com:1337/api/StartActionByGet --json '{"actionId": "pingGithub"}'
+{"executionTrackingId":"ff7d6f13-af8f-4ebe-8174-ad4cc7197b45"}
 ----
 
 The corresponding config.yaml would look like this;

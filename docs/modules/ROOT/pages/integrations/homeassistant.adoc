@@ -19,9 +19,9 @@ actions:
     shell: ssh user@server "sudo systemctl suspend"
 ----
 
-You then need to know the URL to call to trigger this action. This URL is the OliveTin API URL, with the action ID appended to it. For example, if your OliveTin is running at `http://yourserver:1337`, the URL to call to trigger the action above would be `http://yourserver:1337/api/StartActionAndWait/server_sleep`.
+You then need to know the URL to call to trigger this action. This is the OliveTin API URL plus the method name, and the action ID is sent in a JSON body. For example, if your OliveTin is running at `http://yourserver:1337`, you would `POST` `{"actionId": "server_sleep"}` to `http://yourserver:1337/api/StartActionByGetAndWait`.
 
-You can learn more about starting actions via the OliveTin API by reading the link xref:api/start_action.adoc[Starting Actions via the API] page, but the method "StartActionAndWait" is the one you will want to use for Home Assistant.
+You can learn more about starting actions via the OliveTin API by reading the link xref:api/start_action.adoc[Starting Actions via the API] page, but the method "StartActionByGetAndWait" is the one you will want to use for Home Assistant.
 
 == Add the REST API call to Home Assistant
 
@@ -45,8 +45,10 @@ From the file editor now in your sidebar, browse the filesystem to the configura
 ----
 rest_command:
   olivetin_sleep_mindstorm:
-    url: http://olivetin.webapps.teratan.lan/api/StartActionByGetAndWait/server_sleep
-    method: get
+    url: http://olivetin.example.com:1337/api/StartActionByGetAndWait
+    method: post
+    content_type: "application/json"
+    payload: '{"actionId": "server_sleep"}'
 ----
 
 You save the file, and restart Home Assistant to pick up the changes.
