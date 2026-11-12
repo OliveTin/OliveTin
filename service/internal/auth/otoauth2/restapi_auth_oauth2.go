@@ -23,7 +23,8 @@ import (
 
 type OAuth2Handler struct {
 	cfg                 *config.Config
-	registeredStates    map[string]*oauth2State
+	pendingStates       map[string]*oauth2PendingState
+	sessions            map[string]*oauth2Session
 	registeredProviders map[string]*oauth2.Config
 	mu                  sync.RWMutex
 }
@@ -33,7 +34,8 @@ func NewOAuth2Handler(cfg *config.Config) *OAuth2Handler {
 		cfg: cfg,
 	}
 
-	h.registeredStates = make(map[string]*oauth2State)
+	h.pendingStates = make(map[string]*oauth2PendingState)
+	h.sessions = make(map[string]*oauth2Session)
 	h.registeredProviders = make(map[string]*oauth2.Config)
 
 	for providerName, providerConfig := range cfg.AuthOAuth2Providers {
@@ -58,17 +60,25 @@ func NewOAuth2Handler(cfg *config.Config) *OAuth2Handler {
 	return h
 }
 
-type oauth2State struct {
+type oauth2PendingState struct {
 	createdAt      time.Time
 	providerConfig *oauth2.Config
 	providerName   string
-	Username       string
-	Usergroup      string
+}
+
+type oauth2Session struct {
+	createdAt    time.Time
+	Username     string
+	Usergroup    string
+	providerName string
 }
 
 const (
-	oauthStateMaxAge     = 900 // matches olivetin-sid-oauth cookie MaxAge
-	oauthStateMaxEntries = 10000
+	oauthStateCookieName   = "olivetin-oauth-state"
+	oauthSessionCookieName = "olivetin-sid-oauth"
+	oauthStateMaxAge       = 900 // seconds; CSRF pending window
+	oauthSessionMaxAge     = 900 // seconds; authenticated session lifetime
+	oauthStateMaxEntries   = 10000
 )
 
 func assignIfEmpty(target *string, value string) {
@@ -122,11 +132,11 @@ func (h *OAuth2Handler) cookieSecure(r *http.Request) bool {
 	return useTLS || h.cfg.Security.ForceSecureCookies
 }
 
-func (h *OAuth2Handler) setOAuthCallbackCookie(w http.ResponseWriter, r *http.Request, name, value string) {
+func (h *OAuth2Handler) setOAuthCookie(w http.ResponseWriter, r *http.Request, name, value string, maxAge int) {
 	cookie := &http.Cookie{
 		Name:     name,
 		Value:    value,
-		MaxAge:   900, // 15 minutes
+		MaxAge:   maxAge,
 		Secure:   h.cookieSecure(r),
 		HttpOnly: true,
 		Path:     "/",
@@ -136,15 +146,26 @@ func (h *OAuth2Handler) setOAuthCallbackCookie(w http.ResponseWriter, r *http.Re
 	http.SetCookie(w, cookie)
 }
 
-func (h *OAuth2Handler) deleteOAuthStateLocked(state string) {
-	delete(h.registeredStates, state)
+func (h *OAuth2Handler) clearOAuthCookie(w http.ResponseWriter, r *http.Request, name string) {
+	h.setOAuthCookie(w, r, name, "", -1)
 }
 
-func (h *OAuth2Handler) sweepExpiredOAuthStatesLocked(now time.Time) {
-	cutoff := now.Add(-oauthStateMaxAge * time.Second)
-	for state, entry := range h.registeredStates {
-		if entry.createdAt.Before(cutoff) {
-			delete(h.registeredStates, state)
+func (h *OAuth2Handler) deletePendingStateLocked(state string) {
+	delete(h.pendingStates, state)
+}
+
+func (h *OAuth2Handler) sweepExpiredOAuthEntriesLocked(now time.Time) {
+	pendingCutoff := now.Add(-oauthStateMaxAge * time.Second)
+	for state, entry := range h.pendingStates {
+		if entry.createdAt.Before(pendingCutoff) {
+			delete(h.pendingStates, state)
+		}
+	}
+
+	sessionCutoff := now.Add(-oauthSessionMaxAge * time.Second)
+	for sid, entry := range h.sessions {
+		if entry.createdAt.Before(sessionCutoff) {
+			delete(h.sessions, sid)
 		}
 	}
 }
@@ -167,63 +188,84 @@ func (h *OAuth2Handler) HandleOAuthLogin(w http.ResponseWriter, r *http.Request)
 	}
 
 	h.mu.Lock()
-	h.sweepExpiredOAuthStatesLocked(time.Now())
-	if len(h.registeredStates) >= oauthStateMaxEntries {
+	h.sweepExpiredOAuthEntriesLocked(time.Now())
+	if len(h.pendingStates) >= oauthStateMaxEntries {
 		h.mu.Unlock()
 		http.Error(w, "OAuth login temporarily unavailable", http.StatusServiceUnavailable)
 		return
 	}
-	h.registeredStates[state] = &oauth2State{
+	h.pendingStates[state] = &oauth2PendingState{
 		providerConfig: provider,
 		providerName:   providerName,
-		Username:       "",
 		createdAt:      time.Now(),
 	}
 	h.mu.Unlock()
 
-	h.setOAuthCallbackCookie(w, r, "olivetin-sid-oauth", state)
+	// CSRF double-submit cookie only — never reuse this value as the session ID.
+	h.setOAuthCookie(w, r, oauthStateCookieName, state, oauthStateMaxAge)
 
-	log.Infof("OAuth2 state: %v mapped to provider %v (found: %v), now redirecting", state, providerName, provider != nil)
+	log.Infof("OAuth2 login redirect for provider %v", providerName)
 
 	http.Redirect(w, r, provider.AuthCodeURL(state), http.StatusFound)
 }
 
 func (h *OAuth2Handler) validateStateMatch(queryState, cookieState string) bool {
-	return queryState == cookieState
+	return queryState != "" && queryState == cookieState
 }
 
-func (h *OAuth2Handler) checkOAuthCallbackCookie(w http.ResponseWriter, r *http.Request) (*oauth2State, string, bool) {
-	cookie, err := r.Cookie("olivetin-sid-oauth")
+func pendingStateExpired(pending *oauth2PendingState, now time.Time) bool {
+	return pending.createdAt.Before(now.Add(-oauthStateMaxAge * time.Second))
+}
+
+func sessionExpired(session *oauth2Session, now time.Time) bool {
+	return session.createdAt.Before(now.Add(-oauthSessionMaxAge * time.Second))
+}
+
+func (h *OAuth2Handler) consumePendingOAuthState(w http.ResponseWriter, r *http.Request) (*oauth2PendingState, string, bool) {
+	cookie, err := r.Cookie(oauthStateCookieName)
 	if err != nil {
-		log.Errorf("Failed to get state cookie: %v", err)
+		log.Errorf("Failed to get OAuth state cookie: %v", err)
 		http.Error(w, "State not found", http.StatusBadRequest)
 		return nil, "", false
 	}
 
 	state := cookie.Value
+	queryState := r.URL.Query().Get("state")
 
-	if !h.validateStateMatch(r.URL.Query().Get("state"), state) {
-		log.Errorf("State mismatch: %v != %v", r.URL.Query().Get("state"), state)
+	if !h.validateStateMatch(queryState, state) {
+		log.Errorf("OAuth2 state mismatch between query and cookie")
 		h.mu.Lock()
-		h.deleteOAuthStateLocked(state)
+		h.deletePendingStateLocked(state)
 		h.mu.Unlock()
 		http.Error(w, "State mismatch", http.StatusBadRequest)
 		return nil, state, false
 	}
 
+	return h.loadValidPendingOAuthState(w, state)
+}
+
+func (h *OAuth2Handler) loadValidPendingOAuthState(w http.ResponseWriter, state string) (*oauth2PendingState, string, bool) {
 	h.mu.RLock()
-	registeredState, ok := h.registeredStates[state]
+	pending, ok := h.pendingStates[state]
+	expired := ok && pendingStateExpired(pending, time.Now())
 	h.mu.RUnlock()
+
 	if !ok {
-		log.Errorf("State not found in server: %v", state)
-		h.mu.Lock()
-		h.deleteOAuthStateLocked(state)
-		h.mu.Unlock()
+		log.Errorf("OAuth2 pending state not found on server")
 		http.Error(w, "State not found in server", http.StatusBadRequest)
 		return nil, state, false
 	}
 
-	return registeredState, state, true
+	if expired {
+		h.mu.Lock()
+		h.deletePendingStateLocked(state)
+		h.mu.Unlock()
+		log.Errorf("OAuth2 pending state expired")
+		http.Error(w, "State expired", http.StatusBadRequest)
+		return nil, state, false
+	}
+
+	return pending, state, true
 }
 
 type HttpClientSettings struct {
@@ -301,39 +343,79 @@ func (h *OAuth2Handler) computeUsergroup(userinfo *UserInfo, providerConfig *con
 	return usergroup
 }
 
+func (h *OAuth2Handler) issueOAuthSession(pending *oauth2PendingState, state, username, usergroup string) (string, error) {
+	sessionID, err := randString(16)
+	if err != nil {
+		return "", err
+	}
+
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	pendingEntry, ok := h.pendingStates[state]
+	if !ok {
+		return "", fmt.Errorf("pending OAuth state no longer exists")
+	}
+	if pendingStateExpired(pendingEntry, time.Now()) {
+		h.deletePendingStateLocked(state)
+		return "", fmt.Errorf("pending OAuth state expired")
+	}
+
+	providerName := pending.providerName
+	if pendingEntry.providerName != "" {
+		providerName = pendingEntry.providerName
+	}
+
+	h.deletePendingStateLocked(state)
+	h.sweepExpiredOAuthEntriesLocked(time.Now())
+	h.sessions[sessionID] = &oauth2Session{
+		createdAt:    time.Now(),
+		Username:     username,
+		Usergroup:    usergroup,
+		providerName: providerName,
+	}
+
+	return sessionID, nil
+}
+
 func (h *OAuth2Handler) HandleOAuthCallback(w http.ResponseWriter, r *http.Request) {
 	log.Infof("OAuth2 Callback received")
 
-	registeredState, state, ok := h.checkOAuthCallbackCookie(w, r)
+	pending, state, ok := h.consumePendingOAuthState(w, r)
 	if !ok {
 		return
 	}
 
 	code := r.FormValue("code")
+	log.Debug("OAuth2 token exchange starting")
 
-	log.WithFields(log.Fields{
-		"state":      state,
-		"token-code": code,
-	}).Debug("OAuth2 Token Code")
-
-	providerConfig := h.cfg.AuthOAuth2Providers[registeredState.providerName]
+	providerConfig := h.cfg.AuthOAuth2Providers[pending.providerName]
 	clientSettings := getOAuth2HttpClient(providerConfig)
 
 	ctx := context.Background()
-	tok, err := h.exchangeOAuthCode(ctx, registeredState.providerConfig, code, clientSettings)
+	tok, err := h.exchangeOAuthCode(ctx, pending.providerConfig, code, clientSettings)
 	if err != nil {
 		log.Errorf("Failed to exchange code: %v", err)
+		h.mu.Lock()
+		h.deletePendingStateLocked(state)
+		h.mu.Unlock()
 		http.Error(w, "Failed to exchange code", http.StatusBadRequest)
 		return
 	}
 
-	userInfoClient := h.createUserInfoClient(ctx, registeredState.providerConfig, tok, clientSettings)
+	userInfoClient := h.createUserInfoClient(ctx, pending.providerConfig, tok, clientSettings)
 	userinfo := getUserInfo(h.cfg, userInfoClient, providerConfig)
+	usergroup := h.computeUsergroup(userinfo, providerConfig)
 
-	h.mu.Lock()
-	h.registeredStates[state].Username = userinfo.Username
-	h.registeredStates[state].Usergroup = h.computeUsergroup(userinfo, providerConfig)
-	h.mu.Unlock()
+	sessionID, err := h.issueOAuthSession(pending, state, userinfo.Username, usergroup)
+	if err != nil {
+		log.Errorf("Failed to issue OAuth session: %v", err)
+		http.Error(w, "Failed to create session", http.StatusInternalServerError)
+		return
+	}
+
+	h.clearOAuthCookie(w, r, oauthStateCookieName)
+	h.setOAuthCookie(w, r, oauthSessionCookieName, sessionID, oauthSessionMaxAge)
 
 	http.Redirect(w, r, "/", http.StatusFound)
 }
@@ -481,41 +563,56 @@ func joinGroupArray(arrayVal []any, field string, sep string) string {
 	return strings.Join(groups, sep)
 }
 
-func (h *OAuth2Handler) lookupOAuth2UserByState(state string) (*authTypes.AuthenticatedUser, bool) {
+func (h *OAuth2Handler) lookupOAuth2UserBySession(sessionID string) (*authTypes.AuthenticatedUser, bool) {
 	h.mu.RLock()
-	serverState, found := h.registeredStates[state]
-	if !found {
+	session, found := h.sessions[sessionID]
+	if !found || session.Username == "" {
 		h.mu.RUnlock()
 		return nil, false
 	}
+	if sessionExpired(session, time.Now()) {
+		h.mu.RUnlock()
+		h.deleteSessionIfExpired(sessionID)
+		return nil, false
+	}
+
 	user := &authTypes.AuthenticatedUser{
-		Username:      serverState.Username,
-		UsergroupLine: serverState.Usergroup,
+		Username:      session.Username,
+		UsergroupLine: session.Usergroup,
 		Provider:      "oauth2",
-		SID:           state,
+		SID:           sessionID,
 	}
 	h.mu.RUnlock()
 	return user, true
 }
 
+func (h *OAuth2Handler) deleteSessionIfExpired(sessionID string) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	session, found := h.sessions[sessionID]
+	if found && sessionExpired(session, time.Now()) {
+		delete(h.sessions, sessionID)
+	}
+}
+
 func (h *OAuth2Handler) RevokeSession(sid string) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
-	delete(h.registeredStates, sid)
+	delete(h.sessions, sid)
 }
 
 func (h *OAuth2Handler) CheckUserFromOAuth2Cookie(context *authTypes.AuthCheckingContext) *authTypes.AuthenticatedUser {
-	cookie, err := context.Request.Cookie("olivetin-sid-oauth")
+	cookie, err := context.Request.Cookie(oauthSessionCookieName)
 	if err != nil || cookie.Value == "" {
 		return nil
 	}
 
-	user, found := h.lookupOAuth2UserByState(cookie.Value)
+	user, found := h.lookupOAuth2UserBySession(cookie.Value)
 	if !found {
 		log.WithFields(log.Fields{
-			"sid":      cookie.Value,
 			"provider": "oauth2",
-		}).Warnf("Stale session")
+		}).Warnf("Stale OAuth2 session")
 		return nil
 	}
 	return user

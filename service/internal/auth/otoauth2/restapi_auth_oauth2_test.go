@@ -3,35 +3,51 @@ package otoauth2
 import (
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strconv"
 	"testing"
 	"time"
 
+	authTypes "github.com/OliveTin/OliveTin/internal/auth/authpublic"
 	config "github.com/OliveTin/OliveTin/internal/config"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 )
 
-func TestSweepExpiredOAuthStatesLocked(t *testing.T) {
+func TestSweepExpiredOAuthEntriesLocked(t *testing.T) {
 	h := &OAuth2Handler{
-		registeredStates: make(map[string]*oauth2State),
+		pendingStates: make(map[string]*oauth2PendingState),
+		sessions:      make(map[string]*oauth2Session),
 	}
 
-	h.registeredStates["fresh"] = &oauth2State{
+	h.pendingStates["fresh"] = &oauth2PendingState{
 		providerName: "test",
 		createdAt:    time.Now(),
 	}
-	h.registeredStates["stale"] = &oauth2State{
+	h.pendingStates["stale"] = &oauth2PendingState{
 		providerName: "test",
 		createdAt:    time.Now().Add(-2 * oauthStateMaxAge * time.Second),
 	}
+	h.sessions["fresh-session"] = &oauth2Session{
+		Username:  "alice",
+		createdAt: time.Now(),
+	}
+	h.sessions["stale-session"] = &oauth2Session{
+		Username:  "bob",
+		createdAt: time.Now().Add(-2 * oauthSessionMaxAge * time.Second),
+	}
 
-	h.sweepExpiredOAuthStatesLocked(time.Now())
+	h.sweepExpiredOAuthEntriesLocked(time.Now())
 
-	_, freshFound := h.registeredStates["fresh"]
-	_, staleFound := h.registeredStates["stale"]
-	assert.True(t, freshFound)
-	assert.False(t, staleFound)
+	_, freshPending := h.pendingStates["fresh"]
+	_, stalePending := h.pendingStates["stale"]
+	_, freshSession := h.sessions["fresh-session"]
+	_, staleSession := h.sessions["stale-session"]
+	assert.True(t, freshPending)
+	assert.False(t, stalePending)
+	assert.True(t, freshSession)
+	assert.False(t, staleSession)
 }
 
 func TestGetGroupFieldString(t *testing.T) {
@@ -140,9 +156,9 @@ func TestHandleOAuthLoginRejectsWhenStateMapFull(t *testing.T) {
 	}
 
 	h := NewOAuth2Handler(cfg)
-	h.registeredStates = make(map[string]*oauth2State, oauthStateMaxEntries)
+	h.pendingStates = make(map[string]*oauth2PendingState, oauthStateMaxEntries)
 	for i := range oauthStateMaxEntries {
-		h.registeredStates[strconv.Itoa(i)] = &oauth2State{
+		h.pendingStates[strconv.Itoa(i)] = &oauth2PendingState{
 			providerConfig: &oauth2.Config{},
 			providerName:   "test",
 			createdAt:      time.Now(),
@@ -155,5 +171,180 @@ func TestHandleOAuthLoginRejectsWhenStateMapFull(t *testing.T) {
 	h.HandleOAuthLogin(rec, req)
 
 	assert.Equal(t, http.StatusServiceUnavailable, rec.Code)
-	assert.Len(t, h.registeredStates, oauthStateMaxEntries)
+	assert.Len(t, h.pendingStates, oauthStateMaxEntries)
+}
+
+func TestHandleOAuthLoginUsesSeparateStateCookie(t *testing.T) {
+	cfg := config.DefaultConfig()
+	cfg.AuthOAuth2Providers = map[string]*config.OAuth2Provider{
+		"test": {
+			Name:         "test",
+			ClientID:     "id",
+			ClientSecret: "secret",
+			AuthUrl:      "https://example.com/auth",
+			TokenUrl:     "https://example.com/token",
+		},
+	}
+
+	h := NewOAuth2Handler(cfg)
+	req := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/oauth/login?provider=test", nil)
+	rec := httptest.NewRecorder()
+
+	h.HandleOAuthLogin(rec, req)
+
+	assert.Equal(t, http.StatusFound, rec.Code)
+
+	cookies := rec.Result().Cookies()
+	var stateCookie, sessionCookie *http.Cookie
+	for _, cookie := range cookies {
+		switch cookie.Name {
+		case oauthStateCookieName:
+			stateCookie = cookie
+		case oauthSessionCookieName:
+			sessionCookie = cookie
+		}
+	}
+
+	requireCookie := func(cookie *http.Cookie, name string) string {
+		t.Helper()
+		assert.NotNil(t, cookie, "expected %s cookie", name)
+		assert.NotEmpty(t, cookie.Value)
+		return cookie.Value
+	}
+
+	stateValue := requireCookie(stateCookie, oauthStateCookieName)
+	assert.Nil(t, sessionCookie, "login must not set the session cookie yet")
+
+	location, err := url.Parse(rec.Header().Get("Location"))
+	require.NoError(t, err)
+	assert.Equal(t, stateValue, location.Query().Get("state"))
+	assert.Contains(t, h.pendingStates, stateValue)
+	assert.Empty(t, h.sessions)
+}
+
+func TestIssueOAuthSessionRotatesAwayFromCSRFState(t *testing.T) {
+	h := &OAuth2Handler{
+		pendingStates: make(map[string]*oauth2PendingState),
+		sessions:      make(map[string]*oauth2Session),
+	}
+
+	state := "csrf-state-value"
+	h.pendingStates[state] = &oauth2PendingState{
+		providerName: "test",
+		createdAt:    time.Now(),
+	}
+
+	sessionID, err := h.issueOAuthSession(h.pendingStates[state], state, "alice", "admins")
+	require.NoError(t, err)
+	assert.NotEmpty(t, sessionID)
+	assert.NotEqual(t, state, sessionID)
+	assert.NotContains(t, h.pendingStates, state)
+	assert.Contains(t, h.sessions, sessionID)
+
+	user, found := h.lookupOAuth2UserBySession(sessionID)
+	assert.True(t, found)
+	assert.Equal(t, "alice", user.Username)
+	assert.Equal(t, sessionID, user.SID)
+
+	_, foundAsState := h.lookupOAuth2UserBySession(state)
+	assert.False(t, foundAsState, "CSRF state must not authenticate as a session")
+}
+
+func TestCheckUserFromOAuth2CookieUsesSessionCookieOnly(t *testing.T) {
+	cfg := config.DefaultConfig()
+	h := NewOAuth2Handler(cfg)
+	h.sessions["session-id"] = &oauth2Session{
+		Username:  "alice",
+		Usergroup: "admins",
+		createdAt: time.Now(),
+	}
+	h.pendingStates["csrf-state"] = &oauth2PendingState{
+		providerName: "test",
+		createdAt:    time.Now(),
+	}
+
+	reqWithSession := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/", nil)
+	reqWithSession.AddCookie(&http.Cookie{Name: oauthSessionCookieName, Value: "session-id"})
+	user := h.CheckUserFromOAuth2Cookie(&authTypes.AuthCheckingContext{Request: reqWithSession})
+	assert.NotNil(t, user)
+	assert.Equal(t, "alice", user.Username)
+
+	reqWithState := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/", nil)
+	reqWithState.AddCookie(&http.Cookie{Name: oauthSessionCookieName, Value: "csrf-state"})
+	assert.Nil(t, h.CheckUserFromOAuth2Cookie(&authTypes.AuthCheckingContext{Request: reqWithState}))
+
+	reqLegacyStateCookie := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/", nil)
+	reqLegacyStateCookie.AddCookie(&http.Cookie{Name: oauthStateCookieName, Value: "csrf-state"})
+	assert.Nil(t, h.CheckUserFromOAuth2Cookie(&authTypes.AuthCheckingContext{Request: reqLegacyStateCookie}))
+}
+
+func TestIssueOAuthSessionRejectsMissingPendingState(t *testing.T) {
+	h := &OAuth2Handler{
+		pendingStates: make(map[string]*oauth2PendingState),
+		sessions:      make(map[string]*oauth2Session),
+	}
+
+	pending := &oauth2PendingState{providerName: "test", createdAt: time.Now()}
+	sessionID, err := h.issueOAuthSession(pending, "already-consumed", "alice", "admins")
+	require.Error(t, err)
+	assert.Empty(t, sessionID)
+	assert.Empty(t, h.sessions)
+}
+
+func TestIssueOAuthSessionRejectsExpiredPendingState(t *testing.T) {
+	h := &OAuth2Handler{
+		pendingStates: make(map[string]*oauth2PendingState),
+		sessions:      make(map[string]*oauth2Session),
+	}
+
+	state := "expired-state"
+	pending := &oauth2PendingState{
+		providerName: "test",
+		createdAt:    time.Now().Add(-2 * oauthStateMaxAge * time.Second),
+	}
+	h.pendingStates[state] = pending
+
+	sessionID, err := h.issueOAuthSession(pending, state, "alice", "admins")
+	require.Error(t, err)
+	assert.Empty(t, sessionID)
+	assert.NotContains(t, h.pendingStates, state)
+	assert.Empty(t, h.sessions)
+}
+
+func TestLookupOAuth2UserBySessionRejectsExpiredSession(t *testing.T) {
+	h := &OAuth2Handler{
+		pendingStates: make(map[string]*oauth2PendingState),
+		sessions:      make(map[string]*oauth2Session),
+	}
+
+	h.sessions["stale"] = &oauth2Session{
+		Username:  "alice",
+		createdAt: time.Now().Add(-2 * oauthSessionMaxAge * time.Second),
+	}
+
+	user, found := h.lookupOAuth2UserBySession("stale")
+	assert.False(t, found)
+	assert.Nil(t, user)
+	assert.NotContains(t, h.sessions, "stale")
+}
+
+func TestLoadValidPendingOAuthStateRejectsExpired(t *testing.T) {
+	h := &OAuth2Handler{
+		pendingStates: make(map[string]*oauth2PendingState),
+		sessions:      make(map[string]*oauth2Session),
+	}
+
+	state := "expired-pending"
+	h.pendingStates[state] = &oauth2PendingState{
+		providerName: "test",
+		createdAt:    time.Now().Add(-2 * oauthStateMaxAge * time.Second),
+	}
+
+	rec := httptest.NewRecorder()
+	pending, gotState, ok := h.loadValidPendingOAuthState(rec, state)
+	assert.False(t, ok)
+	assert.Nil(t, pending)
+	assert.Equal(t, state, gotState)
+	assert.Equal(t, http.StatusBadRequest, rec.Code)
+	assert.NotContains(t, h.pendingStates, state)
 }
