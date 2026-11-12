@@ -13,6 +13,8 @@ All request and response field names below are the protobuf JSON names (lowerCam
 * `actionId` is the `id` you set on the action in your `config.yaml`. To find your Action ID, and understand how Action IDs work, see the xref:action_customization/ids.adoc[Action ID] documentation.
 * `bindingId` identifies one button/instance of an action. For a normal action this is the same as the action ID. For actions generated from xref:entities/intro.adoc[entities], each entity gets its own binding ID. Binding IDs are returned by `GetDashboard` (as `action.bindingId`).
 
+NOTE: Despite its name, the `actionId` field used by `StartActionAndWait`, `StartActionByGet` and `StartActionByGetAndWait` is looked up as a binding ID. For normal actions this makes no difference, but for entity-generated actions you must send the entity's binding ID - sending the configured action `id` returns `not_found`.
+
 [#api-request-actionid]
 == Request type: Action ID only
 
@@ -60,7 +62,7 @@ This is the request the OliveTin web UI uses, and gives you the most control ove
 
 * `bindingId` (required) - see <<api-ids>>.
 * `arguments` (optional) - values for the action's xref:args/intro.adoc[arguments].
-* `uniqueTrackingId` (optional) - if you set this, it is used as the execution tracking ID, otherwise one is generated for you.
+* `uniqueTrackingId` (optional) - if you set this, it is used as the execution tracking ID, otherwise one is generated for you. It must be up to 36 characters of hex digits and dashes (eg: a UUID), and must not already have been used. An invalid or previously used ID is silently replaced with a generated UUID, so always track the execution using the `executionTrackingId` returned in the response.
 * `justification` (optional) - the reason for running the action, for actions that require a justification.
 
 [source,json]
@@ -69,7 +71,7 @@ This is the request the OliveTin web UI uses, and gives you the most control ove
 {
   "bindingId": "generate_cryptocurrency",
   "arguments": [],
-  "uniqueTrackingId": "my-tracking-id"
+  "uniqueTrackingId": "0f8b1c2e-6d3a-4e5f-9a7b-1c2d3e4f5a6b"
 }
 ----
 

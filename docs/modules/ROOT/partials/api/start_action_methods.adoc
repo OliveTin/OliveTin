@@ -27,4 +27,6 @@ There are 4 main methods to start an action in OliveTin, which can be used in sc
 
 |======================================================
 
+NOTE: The waiting methods (`StartActionAndWait` and `StartActionByGetAndWait`) check that the caller is allowed to view the action's logs *after* the action has finished. A caller that can start an action but cannot view its logs receives a permission error, even though the action has already run - so retrying on that error can run the action again. Use `StartAction` or `StartActionByGet` when you do not need the log entry.
+
 You can also browse these methods in the link:https://docs.olivetin.app/api/swagger/3k/[OpenAPI/Swagger] docs if you prefer. The link:https://github.com/OliveTin/OliveTin/blob/main/proto/olivetin/api/v1/olivetin.proto[Protobuf definition] is the source of truth for all request and response fields.

@@ -17,7 +17,7 @@ All these configuration options are `false` by default, and should be deleted fr
 
 [#dump-vars]
 == Dump Vars
-`insecureAllowDumpVars: true` - will allow dumping all the "string variables" from a map that is mainly used for entities, eg: `curl http://server:1337/api/DumpVars --json '{}'`
+`insecureAllowDumpVars: true` - will allow dumping all the "string variables" from a map that is mainly used for entities, eg: `curl http://server:1337/api/DumpVars --json '{}'`. The variables are written to the OliveTin process standard output (ie: the OliveTin logs); the API response only contains an alert.
 
 [#dump-jwt]
 == Dump JWT Claims

@@ -52,6 +52,13 @@ There is a configuration option you can set in your `config.yaml` that allows th
 insecureAllowDumpServerDiagnostics: true
 ----
 
+With this enabled, the diagnostics text is returned in the `alert` field of the JSON response, with its newlines escaped. Use `jq -r` to print it as readable text you can copy:
+
+[source,bash]
+----
+curl -sS http://myserver:1337/api/ServerDiagnostics --json '{}' | jq -r .alert
+----
+
 == Default: Diagnostics dump to logs
 
 You should get a simple JSON message saying something like;
