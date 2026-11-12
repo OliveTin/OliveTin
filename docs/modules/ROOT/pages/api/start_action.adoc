@@ -142,6 +142,8 @@ The `output` field contains the combined stdout and stderr of the action.
 
 `StartActionByGet` and `StartActionByGetAndWait` are deprecated, and will be removed in a future version of OliveTin. They only accept an `actionId` (no arguments), and despite their names they no longer support `GET` requests - the OliveTin 2k style of putting the action ID in the URL returns `404`.
 
+When either method is called, OliveTin shows a warning on the xref:advanced_configuration/diagnostics.adoc[Diagnostics] page (code `deprecated_api_call`), so you can find integrations that still need updating. The warning is cleared when OliveTin restarts.
+
 [%header]
 |===
 | Deprecated method | Use instead | Change
