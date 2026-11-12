@@ -19,9 +19,17 @@ actions:
     shell: ssh user@server "sudo systemctl suspend"
 ----
 
-You then need to know the URL to call to trigger this action. This is the OliveTin API URL plus the method name, and the action ID is sent in a JSON body. For example, if your OliveTin is running at `http://yourserver:1337`, you would `POST` `{"actionId": "server_sleep"}` to `http://yourserver:1337/api/StartActionByGetAndWait`.
+You then need to know the URL to call to trigger this action. This is the OliveTin API URL plus the method name, and the action ID is sent in a JSON body. For example, if your OliveTin is running at `http://yourserver:1337`, you would `POST` `{"actionId": "server_sleep"}` to `http://yourserver:1337/api/StartActionByGet`.
 
-You can learn more about starting actions via the OliveTin API by reading the link xref:api/start_action.adoc[Starting Actions via the API] page, but the method "StartActionByGetAndWait" is the one you will want to use for Home Assistant.
+You can learn more about starting actions via the OliveTin API by reading the link xref:api/start_action.adoc[Starting Actions via the API] page, but the method "StartActionByGet" is the one you will want to use for Home Assistant. It returns as soon as the action has started.
+
+[NOTE]
+====
+Avoid `StartActionByGetAndWait` for Home Assistant unless you need the action's output:
+
+* It only responds once the action has finished, and Home Assistant's `rest_command` gives up after 10 seconds by default, so longer actions are reported as failed even though they ran.
+* It checks that the caller can view the action's logs *after* the action has run. Without the `logs` permission, Home Assistant gets an error even though the action ran, and retrying runs it again.
+====
 
 == Add the REST API call to Home Assistant
 
@@ -45,7 +53,7 @@ From the file editor now in your sidebar, browse the filesystem to the configura
 ----
 rest_command:
   olivetin_sleep_mindstorm:
-    url: http://olivetin.example.com:1337/api/StartActionByGetAndWait
+    url: http://olivetin.example.com:1337/api/StartActionByGet
     method: post
     content_type: "application/json"
     payload: '{"actionId": "server_sleep"}'

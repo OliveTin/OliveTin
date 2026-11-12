@@ -29,4 +29,14 @@ OliveTin does not need to be run as a root, and does not need any special capabi
 
 To change the xref:advanced_configuration/timezones.adoc[changing the timezone requires a bound-mount] from the host. Olivetin ignores the TZ variable as it is non-standard.
 
+[#container-healthcheck]
+== Container healthcheck
+
+The OliveTin container image includes a Docker `HEALTHCHECK` that requests `http://127.0.0.1:$PORT/readyz` inside the container, with `PORT` defaulting to `1337`. The healthcheck cannot read your `config.yaml`, so if you change the port with `listenAddressSingleHTTPFrontend`, either:
+
+* set the xref:reference/network-ports.adoc[`PORT` environment variable] to the same port (`PORT` also overrides the port in `config.yaml`, so the two always match), or
+* override the healthcheck in your deployment (eg: `--health-cmd` with `docker run`, or `healthcheck:` in Docker Compose).
+
+Otherwise the container is reported as `unhealthy`, even though OliveTin is running normally.
+
 include::partial$install/post_container.adoc[]

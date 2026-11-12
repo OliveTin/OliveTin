@@ -6,6 +6,8 @@ This is the simplest method to start an action - you only need to send the actio
 * **Request Type**: xref:api/start_action.adoc#api-request-actionid[Action ID only] (`actionId`)
 * **Response Type**: Execution Tracking ID
 
+NOTE: For actions generated from xref:entities/intro.adoc[entities], `actionId` must be the entity's binding ID, not the action `id` from your `config.yaml` - see xref:api/start_action.adoc#api-ids[Action IDs vs Binding IDs]. For normal actions, the two are the same.
+
 [NOTE]
 ====
 Despite the name, in OliveTin 3k this method is called with `POST` and a JSON body, the same as every other API method. The OliveTin 2k style of putting the action ID in the URL (eg: `GET /api/StartActionByGet/pingGithub`) is no longer supported and returns `404`.
