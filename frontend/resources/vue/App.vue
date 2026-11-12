@@ -42,6 +42,7 @@
         v-if="bannerMessage"
         id="banner"
         type="info"
+        tabindex="0"
         :message="bannerMessage"
         :style="bannerCss"
       />
@@ -635,6 +636,12 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+/* The banner area is sticky, so a long configured message must not fill a short viewport. */
+#banner {
+    max-height: 25vh;
+    overflow-y: auto;
+}
+
 .language-dialog,
 .theme-dialog {
     border: 1px solid var(--border-color, #ccc);
