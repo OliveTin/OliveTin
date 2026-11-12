@@ -1,0 +1,39 @@
+name: Check target
+
+# Only release PRs (next -> main, from this repository) may target main.
+# Features, fixes and docs must target next. This runs on every PR so that it
+# can be a required status check; PRs that do not target main always pass.
+
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - edited
+
+permissions: {}
+
+jobs:
+  check-target:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check target branch
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          THIS_REPO: ${{ github.repository }}
+        run: |
+          if [ "$BASE_REF" != "main" ]; then
+            echo "PR targets '$BASE_REF', OK."
+            exit 0
+          fi
+
+          if [ "$HEAD_REPO" = "$THIS_REPO" ] && [ "$HEAD_REF" = "next" ]; then
+            echo "Release PR from next to main, OK."
+            exit 0
+          fi
+
+          echo "::error title=Wrong target branch::Only release PRs from 'next' may target 'main'. Please edit this PR and change its base branch to 'next'."
+          exit 1
