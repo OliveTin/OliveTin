@@ -49,7 +49,7 @@
       <ConnectionBanner />
     </template>
 
-    <router-view :key="$route.fullPath" />
+    <router-view :key="routerViewKey" />
 
     <template
       v-if="showFooter"
@@ -178,7 +178,7 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import Sidebar from 'picocrank/vue/components/Sidebar.vue'
 import Navigation from 'picocrank/vue/components/Navigation.vue'
 import Header from 'picocrank/vue/components/Header.vue'
@@ -196,6 +196,10 @@ import { applyThemeStyles } from './utils/themeLoader.js'
 const { t } = useI18n()
 
 const router = useRouter()
+const route = useRoute()
+
+// Views that keep their own state in the query (e.g. the calendar month) opt out of remounting when only the query changes.
+const routerViewKey = computed(() => route.meta.keepOnQueryChange ? route.path : route.fullPath)
 
 const sidebar = ref(null)
 const navigation = ref(null)
