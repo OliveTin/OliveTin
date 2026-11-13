@@ -1143,7 +1143,7 @@ func (api *oliveTinAPI) EventStream(ctx ctx.Context, req *connect.Request[apiv1.
 
 	api.forwardEventsToClient(ctx.Done(), client, srv)
 
-	log.Infof("EventStream: client disconnected")
+	log.Debugf("EventStream: client disconnected")
 
 	return nil
 }
