@@ -41,17 +41,26 @@ func (h *WebhookHandler) HandleWebhook(w http.ResponseWriter, r *http.Request) {
 
 	matchingActions := h.findMatchingActions(r, payload)
 	if len(matchingActions) == 0 {
+		log.WithFields(webhookRequestFields(r)).Infof("Webhook: no matching actions")
 		h.writeOKResponse(w, "no matching webhook actions")
 		return
 	}
 
 	processed := h.processMatchingActions(matchingActions, r, payload)
-	log.WithFields(log.Fields{
+	log.WithFields(webhookRequestFields(r)).WithFields(log.Fields{
 		"matched":   len(matchingActions),
 		"processed": processed,
-	}).Infof("Webhook processed")
+	}).Infof("Webhook: matched")
 
 	h.writeOKResponse(w, "webhook actions")
+}
+
+func webhookRequestFields(r *http.Request) log.Fields {
+	return log.Fields{
+		"method": r.Method,
+		"path":   r.URL.Path,
+		"query":  r.URL.RawQuery,
+	}
 }
 
 func (h *WebhookHandler) readPayload(r *http.Request) ([]byte, error) {
