@@ -46,7 +46,7 @@ If you are looking for OliveTin's AI policy, you can find it in `AI.md`.
 - Do not swallow errors; propagate or log meaningfully.
 - Match existing formatting; avoid unrelated reformatting.
 - Be safe around nils in executor steps (e.g., guard `req.Binding` and `req.Binding.Action`).
-- Cyclomatic complexity over 4 is not permitted (`gocyclo` `min-complexity: 5` in `service/.golangci.yml`).
+- Cyclomatic complexity over 5 is not permitted (`gocyclo` `min-complexity: 5` in `service/.golangci.yml`).
 
 ### API and Execution Flow (High-level)
 1. Client calls Connect RPC (e.g., `Init`, `GetDashboard`, `StartAction`).
