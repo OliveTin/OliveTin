@@ -2,7 +2,7 @@
 #
 # This config replaces the former standalone tools:
 #   go vet ./...              -> govet (enable-all)
-#   gocyclo -over 4           -> gocyclo min-complexity: 5
+#   gocyclo -over 5           -> gocyclo min-complexity: 5
 #   gocritic check ./...      -> gocritic
 #   errcheck, staticcheck, ...-> same-named golangci-lint linters
 #

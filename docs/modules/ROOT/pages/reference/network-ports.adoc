@@ -57,6 +57,8 @@ If the `PORT` environment variable is set at startup, OliveTin uses it as the li
 
 When `PORT` is not set, OliveTin uses `listenAddressSingleHTTPFrontend` from the config, or `0.0.0.0:1337` if that setting is omitted.
 
+The container image's healthcheck also uses `PORT` (default `1337`), so if you run the container on a different port, see xref:install/podmandocker.adoc#container-healthcheck[Container healthcheck].
+
 == See also
 
 * xref:reference/multiple_instances[Running Multiple instances of OliveTin on the same server]

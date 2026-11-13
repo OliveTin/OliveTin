@@ -1,38 +1,33 @@
 <template>
-  <div class="layout-fixed-header">
-    <Header
-      :title="pageTitle"
-      :logo-url="logoUrl"
-      :breadcrumbs="false"
-      :sidebar-enabled="sidebarEnabled"
-      :top-bar-enabled="topbarEnabled"
-      :navigation="navigation"
-      :username="headerUsername"
-      :login-route="headerLoginRoute"
-      @toggle-sidebar="toggleSidebar"
-      @user-click="goToUserControlPanel"
-    >
-      <template #toolbar>
-        <QuickSearch
-          v-if="!loginRequired && headerSearchEnabled"
-          :items="searchIndexItems"
-          :auto-import-routes="false"
-          :search-fields="['title', 'description', 'category']"
-          :max-results="15"
-          placeholder="Search actions, dashboards, entities…"
-        />
-        <div
-          v-if="bannerMessage"
-          id="banner"
-          :style="bannerCss"
-        >
-          <p>{{ bannerMessage }}</p>
-        </div>
-        <ConnectionBanner />
-      </template>
-    </Header>
+  <AppShell class="layout-fixed-header">
+    <template #header>
+      <Header
+        :title="pageTitle"
+        :logo-url="logoUrl"
+        :breadcrumbs="false"
+        :sidebar-enabled="sidebarEnabled"
+        :top-bar-enabled="topbarEnabled"
+        :navigation="navigation"
+        :top-bar-navigation="navigation"
+        :username="headerUsername"
+        :login-route="headerLoginRoute"
+        @toggle-sidebar="toggleSidebar"
+        @user-click="goToUserControlPanel"
+      >
+        <template #toolbar>
+          <QuickSearch
+            v-if="!loginRequired && headerSearchEnabled"
+            :items="searchIndexItems"
+            :auto-import-routes="false"
+            :search-fields="['title', 'description', 'category']"
+            :max-results="15"
+            placeholder="Search actions, dashboards, entities…"
+          />
+        </template>
+      </Header>
+    </template>
 
-    <div id="layout">
+    <template #sidebar>
       <Navigation ref="navigation">
         <Sidebar
           v-if="sidebarEnabled && showNavigation"
@@ -40,140 +35,145 @@
           ref="sidebar"
         />
       </Navigation>
+    </template>
 
-      <div
-        id="content"
-        :initial-martial-complete="hasLoaded"
-      >
-        <main title="Main content">
-          <router-view :key="$route.fullPath" />
-        </main>
+    <template #banners>
+      <NotificationBlock
+        v-if="bannerMessage"
+        id="banner"
+        type="info"
+        tabindex="0"
+        :message="bannerMessage"
+        :style="bannerCss"
+      />
+      <ConnectionBanner />
+    </template>
 
-        <footer
-          v-if="showFooter"
-          title="footer"
+    <router-view :key="$route.fullPath" />
+
+    <template
+      v-if="showFooter"
+      #footer
+    >
+      <p>
+        <img
+          title="application icon"
+          :src="logoUrl"
+          alt="OliveTin logo"
+          style="height: 1em;"
+          class="logo"
         >
-          <p>
-            <img
-              title="application icon"
-              :src="logoUrl"
-              alt="OliveTin logo"
-              style="height: 1em;"
-              class="logo"
-            >
-            OliveTin <span v-if="showVersionNumber">{{ currentVersion }}</span>
-          </p>
-          <p>
-            <span>
-              <a
-                href="https://docs.olivetin.app"
-                target="_new"
-              >{{ t('docs') }}</a>
-            </span>
+        OliveTin <span v-if="showVersionNumber">{{ currentVersion }}</span>
+      </p>
+      <p>
+        <span>
+          <a
+            href="https://docs.olivetin.app"
+            target="_new"
+          >{{ t('docs') }}</a>
+        </span>
 
-            <span>
-              <a
-                href="https://github.com/OliveTin/OliveTin/issues/new/choose"
-                target="_new"
-              >{{ t('raise-issue') }}</a>
-            </span>
+        <span>
+          <a
+            href="https://github.com/OliveTin/OliveTin/issues/new/choose"
+            target="_new"
+          >{{ t('raise-issue') }}</a>
+        </span>
 
-            <span>
-              <a
-                href="#"
-                @click.prevent="openLanguageDialog"
-              >{{ currentLanguageName }}</a>
-            </span>
+        <span>
+          <a
+            href="#"
+            @click.prevent="openLanguageDialog"
+          >{{ currentLanguageName }}</a>
+        </span>
 
-            <span v-if="availableThemes.length > 1">
-              <a
-                href="#"
-                @click.prevent="openThemeDialog"
-              >{{ currentThemeName }}</a>
-            </span>
-          </p>
-          <p v-if="showVersionNumber">
-            <a
-              id="available-version"
-              href="http://olivetin.app"
-              target="_blank"
-              hidden
-            >?</a>
-          </p>
-        </footer>
+        <span v-if="availableThemes.length > 1">
+          <a
+            href="#"
+            @click.prevent="openThemeDialog"
+          >{{ currentThemeName }}</a>
+        </span>
+      </p>
+      <p v-if="showVersionNumber">
+        <a
+          id="available-version"
+          href="http://olivetin.app"
+          target="_blank"
+          hidden
+        >?</a>
+      </p>
+    </template>
+  </AppShell>
+
+  <dialog
+    ref="languageDialog"
+    class="language-dialog"
+    @click="handleLanguageDialogClick"
+  >
+    <div
+      class="dialog-content"
+      @click.stop
+    >
+      <h2>{{ t('language-dialog.title') }}</h2>
+      <select
+        v-model="selectedLanguage"
+        class="language-select"
+        @change="changeLanguage"
+      >
+        <option
+          v-for="(name, code) in availableLanguages"
+          :key="code"
+          :value="code"
+        >
+          {{ code === 'auto' ? name : `${name} (${code})` }}
+        </option>
+      </select>
+      <p class="browser-languages">
+        {{ t('language-dialog.browser-languages') }}:
+        <span v-if="browserLanguages.length > 0">{{ browserLanguages.join(', ') }}</span>
+        <span v-else>{{ t('language-dialog.not-available') }}</span>
+      </p>
+      <div class="dialog-buttons">
+        <button @click="closeLanguageDialog">
+          {{ t('language-dialog.close') }}
+        </button>
       </div>
     </div>
+  </dialog>
 
-    <dialog
-      ref="languageDialog"
-      class="language-dialog"
-      @click="handleLanguageDialogClick"
+  <dialog
+    ref="themeDialog"
+    class="theme-dialog"
+    @click="handleThemeDialogClick"
+  >
+    <div
+      class="dialog-content"
+      @click.stop
     >
-      <div
-        class="dialog-content"
-        @click.stop
+      <h2>{{ t('theme-dialog.title') }}</h2>
+      <select
+        v-model="selectedTheme"
+        class="language-select"
+        @change="changeTheme"
       >
-        <h2>{{ t('language-dialog.title') }}</h2>
-        <select
-          v-model="selectedLanguage"
-          class="language-select"
-          @change="changeLanguage"
+        <option value="">
+          {{ t('theme-dialog.default') }}
+        </option>
+        <option
+          v-for="theme in availableThemes"
+          :key="theme"
+          :value="theme"
         >
-          <option
-            v-for="(name, code) in availableLanguages"
-            :key="code"
-            :value="code"
-          >
-            {{ code === 'auto' ? name : `${name} (${code})` }}
-          </option>
-        </select>
-        <p class="browser-languages">
-          {{ t('language-dialog.browser-languages') }}:
-          <span v-if="browserLanguages.length > 0">{{ browserLanguages.join(', ') }}</span>
-          <span v-else>{{ t('language-dialog.not-available') }}</span>
-        </p>
-        <div class="dialog-buttons">
-          <button @click="closeLanguageDialog">
-            {{ t('language-dialog.close') }}
-          </button>
-        </div>
+          {{ theme }}
+        </option>
+      </select>
+      <div class="dialog-buttons">
+        <button @click="closeThemeDialog">
+          {{ t('theme-dialog.close') }}
+        </button>
       </div>
-    </dialog>
-
-    <dialog
-      ref="themeDialog"
-      class="theme-dialog"
-      @click="handleThemeDialogClick"
-    >
-      <div
-        class="dialog-content"
-        @click.stop
-      >
-        <h2>{{ t('theme-dialog.title') }}</h2>
-        <select
-          v-model="selectedTheme"
-          class="language-select"
-          @change="changeTheme"
-        >
-          <option value="">
-            {{ t('theme-dialog.default') }}
-          </option>
-          <option
-            v-for="theme in availableThemes"
-            :key="theme"
-            :value="theme"
-          >
-            {{ theme }}
-          </option>
-        </select>
-        <div class="dialog-buttons">
-          <button @click="closeThemeDialog">
-            {{ t('theme-dialog.close') }}
-          </button>
-        </div>
-      </div>
-    </dialog>
-  </div>
+    </div>
+  </dialog>
 </template>
 
 <script setup>
@@ -182,9 +182,11 @@ import { useRouter } from 'vue-router'
 import Sidebar from 'picocrank/vue/components/Sidebar.vue'
 import Navigation from 'picocrank/vue/components/Navigation.vue'
 import Header from 'picocrank/vue/components/Header.vue'
+import AppShell from 'picocrank/vue/components/AppShell.vue'
+import NotificationBlock from 'picocrank/vue/components/NotificationBlock.vue'
 import QuickSearch from 'picocrank/vue/components/QuickSearch.vue'
 import ConnectionBanner from './components/ConnectionBanner.vue'
-import { connectEventStreamIfNeeded } from '../../js/websocket.js'
+import { connectEventStreamIfNeeded, stopEventStream } from '../../js/websocket.js'
 import { DashboardSquare01Icon } from '@hugeicons/core-free-icons'
 import logoUrl from '../../OliveTinLogo.png'
 import { useI18n } from 'vue-i18n'
@@ -203,7 +205,6 @@ const currentVersion = ref('?')
 const pageTitle = ref('OliveTin')
 const bannerMessage = ref('')
 const bannerCss = ref('')
-const hasLoaded = ref(false)
 const showFooter = ref(true)
 const showNavigation = ref(true)
 const showLogs = ref(true)
@@ -258,7 +259,7 @@ const currentThemeName = computed(() => {
 
 // Computed properties for navigation style
 const topbarEnabled = computed(() => {
-  return sectionNavigationStyle.value === 'topbar'
+  return sectionNavigationStyle.value === 'topbar' && showNavigation.value
 })
 
 const sidebarEnabled = computed(() => {
@@ -295,6 +296,11 @@ async function updateHeaderFromInit () {
   loginRequired.value = !!window.initResponse.loginRequired
   headerSearchEnabled.value = !!window.initResponse.features?.headerSearch
 
+  // The server filters stream events by the identity the stream connected with.
+  if (username.value !== authenticatedUser) {
+    stopEventStream()
+  }
+
   username.value = authenticatedUser
   isLoggedIn.value = authenticatedUser !== '' && authenticatedUser !== 'guest'
   currentVersion.value = window.initResponse.currentVersion
@@ -302,7 +308,7 @@ async function updateHeaderFromInit () {
   bannerMessage.value = window.initResponse.bannerMessage || ''
   bannerCss.value = window.initResponse.bannerCss || ''
   showFooter.value = window.initResponse.showFooter
-  showNavigation.value = window.initResponse.showNavigation
+  showNavigation.value = !!window.initResponse.showNavigation && !loginRequired.value
   showLogs.value = window.initResponse.showLogList
   showDiagnostics.value = window.initResponse.showDiagnostics
   showVersionNumber.value = window.initResponse.effectivePolicy?.showVersionNumber ?? true
@@ -315,8 +321,6 @@ async function updateHeaderFromInit () {
 
   applyStyleMods()
   loadCustomJsIfEnabled()
-
-  renderNavigation()
   applyTheme().catch((err) => {
     console.warn('Failed to load theme CSS:', err)
   })
@@ -326,6 +330,8 @@ async function updateHeaderFromInit () {
     router.push('/login')
     return
   }
+
+  renderNavigation()
 
   if (headerSearchEnabled.value) {
     indexSearchHints(window.initResponse.searchHints)
@@ -630,6 +636,12 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+/* The banner area is sticky, so a long configured message must not fill a short viewport. */
+#banner {
+    max-height: 25vh;
+    overflow-y: auto;
+}
+
 .language-dialog,
 .theme-dialog {
     border: 1px solid var(--border-color, #ccc);

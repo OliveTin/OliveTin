@@ -38,6 +38,33 @@ describe('config: authRequireGuestsToLogin', function () {
     expect(loginElements.length).to.be.greaterThan(0)
 
     console.log('✓ Login page loaded correctly')
+  })
 
+  it('Guest does not receive navigation or dashboards before login', async function () {
+    await webdriver.get(runner.baseUrl())
+
+    await webdriver.wait(async () => {
+      return await webdriver.executeScript(
+        'return !!(window.initResponse && window.initResponse.loginRequired)'
+      )
+    }, 15000, 'Init should report loginRequired')
+
+    const initState = await webdriver.executeScript(`
+      const init = window.initResponse || {}
+      return {
+        showNavigation: !!init.showNavigation,
+        rootDashboards: init.rootDashboards || [],
+        rootDashboardEntries: init.rootDashboardEntries || []
+      }
+    `)
+
+    expect(initState.showNavigation).to.equal(false)
+    expect(initState.rootDashboards).to.deep.equal([])
+    expect(initState.rootDashboardEntries).to.deep.equal([])
+
+    const sidebars = await webdriver.findElements(By.css('#mainnav, #picocrank-sidebar'))
+    expect(sidebars.length).to.equal(0)
+
+    console.log('✓ Navigation and dashboards hidden while login is required')
   })
 })

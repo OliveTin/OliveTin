@@ -1,13 +1,12 @@
 <template>
-  <span
+  <NotificationBlock
     v-if="connectionState.showDisconnectedBanner"
     id="connection-banner"
-    class="inline-notification critical user-info-connection"
+    type="severe"
+    role="status"
+    class="user-info-connection"
   >
-    <span
-      class="connection-banner-sr-only"
-      role="status"
-    >{{ staticAnnouncement }}</span>
+    <span class="connection-banner-sr-only">{{ staticAnnouncement }}</span>
     <span aria-hidden="true">
       <a
         :href="websocketDocsUrl"
@@ -16,12 +15,13 @@
         class="connection-banner-link"
       >{{ linkText }}</a>{{ bannerSuffix }}
     </span>
-  </span>
+  </NotificationBlock>
 </template>
 
 <script setup>
 import { ref, computed, watch, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
+import NotificationBlock from 'picocrank/vue/components/NotificationBlock.vue'
 import { connectionState } from '../stores/connectionState.js'
 
 const { t } = useI18n()
@@ -83,10 +83,6 @@ const bannerSuffix = computed(() => {
 <style scoped>
 #connection-banner.user-info-connection {
     font-weight: 500;
-}
-.inline-notification {
-    border: 0;
-    margin: 0;
 }
 .connection-banner-link {
     color: inherit;

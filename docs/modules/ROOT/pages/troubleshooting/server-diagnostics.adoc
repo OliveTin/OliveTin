@@ -33,20 +33,30 @@ You can then copy and paste this text into a GitHub issue, discussion, Discord c
 
 == How do I generate server diagnostics?
 
-OliveTin needs to be able to start and its API needs to be functional. Once OliveTin is started, open this URL in a browser (replace the host and port with yours):
+OliveTin needs to be able to start and its API needs to be functional. Once OliveTin is started, call the `ServerDiagnostics` API method (replace the host and port with yours):
 
-`http://myserver:1337/api/ServerDiagnostics`
+[source,bash]
+----
+curl http://myserver:1337/api/ServerDiagnostics --json '{}'
+----
 
-The `/api/ServerDiagnostics` path is the HTTP endpoint OliveTin uses for server diagnostics.
+Like all OliveTin API methods, `/api/ServerDiagnostics` must be called with `POST` - simply opening the URL in a browser sends a `GET`, which returns `405 Method Not Allowed`.
 
-== Optional: Allow insecure (but easy) dumping to the browser
+== Optional: Allow insecure (but easy) dumping in the API response
 
-There is a configuration option you can set in your `config.yaml` that allows you to easily dump server diagnostics to your browser when visiting the API. This is turned off by default, as you should not allow anybody to request diagnostics at any time they like, but you can enable this option temporarily to easily get access to the text in your browser.
+There is a configuration option you can set in your `config.yaml` that allows the API to return server diagnostics directly in the response, instead of only writing them to the logs. This is turned off by default, as you should not allow anybody to request diagnostics at any time they like, but you can enable this option temporarily to easily get access to the text.
 
 [source,yaml]
 .`config.yaml`
 ----
 insecureAllowDumpServerDiagnostics: true
+----
+
+With this enabled, the diagnostics text is returned in the `alert` field of the JSON response, with its newlines escaped. Use `jq -r` to print it as readable text you can copy:
+
+[source,bash]
+----
+curl -sS http://myserver:1337/api/ServerDiagnostics --json '{}' | jq -r .alert
 ----
 
 == Default: Diagnostics dump to logs
@@ -59,7 +69,7 @@ alert: "Your Server Diagnostics have been logged to OliveTin logs."
 
 The exact wording may match your OliveTin version.
 
-If you see this, great! The actual contents of the server diagnostics are not returned to your browser for security reasons (guests could get info about your installation, etc).
+If you see this, great! The actual contents of the server diagnostics are not returned in the API response for security reasons (guests could get info about your installation, etc).
 
 To find the diagnostics text depends on how you are running OliveTin. If you are running in a container, then try `docker logs olivetin` (where `olivetin` is your container name). If you are running using systemd, then try `journalctl -eu OliveTin`.
 

@@ -117,7 +117,13 @@ type OliveTinApiServiceClient interface {
 	GetDashboard(context.Context, *connect.Request[v1.GetDashboardRequest]) (*connect.Response[v1.GetDashboardResponse], error)
 	StartAction(context.Context, *connect.Request[v1.StartActionRequest]) (*connect.Response[v1.StartActionResponse], error)
 	StartActionAndWait(context.Context, *connect.Request[v1.StartActionAndWaitRequest]) (*connect.Response[v1.StartActionAndWaitResponse], error)
+	// Use StartAction instead; this method will be removed. See https://github.com/OliveTin/OliveTin/issues/1028
+	//
+	// Deprecated: do not use.
 	StartActionByGet(context.Context, *connect.Request[v1.StartActionByGetRequest]) (*connect.Response[v1.StartActionByGetResponse], error)
+	// Use StartActionAndWait instead; this method will be removed. See https://github.com/OliveTin/OliveTin/issues/1028
+	//
+	// Deprecated: do not use.
 	StartActionByGetAndWait(context.Context, *connect.Request[v1.StartActionByGetAndWaitRequest]) (*connect.Response[v1.StartActionByGetAndWaitResponse], error)
 	RestartAction(context.Context, *connect.Request[v1.RestartActionRequest]) (*connect.Response[v1.StartActionResponse], error)
 	KillAction(context.Context, *connect.Request[v1.KillActionRequest]) (*connect.Response[v1.KillActionResponse], error)
@@ -358,11 +364,15 @@ func (c *oliveTinApiServiceClient) StartActionAndWait(ctx context.Context, req *
 }
 
 // StartActionByGet calls olivetin.api.v1.OliveTinApiService.StartActionByGet.
+//
+// Deprecated: do not use.
 func (c *oliveTinApiServiceClient) StartActionByGet(ctx context.Context, req *connect.Request[v1.StartActionByGetRequest]) (*connect.Response[v1.StartActionByGetResponse], error) {
 	return c.startActionByGet.CallUnary(ctx, req)
 }
 
 // StartActionByGetAndWait calls olivetin.api.v1.OliveTinApiService.StartActionByGetAndWait.
+//
+// Deprecated: do not use.
 func (c *oliveTinApiServiceClient) StartActionByGetAndWait(ctx context.Context, req *connect.Request[v1.StartActionByGetAndWaitRequest]) (*connect.Response[v1.StartActionByGetAndWaitResponse], error) {
 	return c.startActionByGetAndWait.CallUnary(ctx, req)
 }
@@ -477,7 +487,13 @@ type OliveTinApiServiceHandler interface {
 	GetDashboard(context.Context, *connect.Request[v1.GetDashboardRequest]) (*connect.Response[v1.GetDashboardResponse], error)
 	StartAction(context.Context, *connect.Request[v1.StartActionRequest]) (*connect.Response[v1.StartActionResponse], error)
 	StartActionAndWait(context.Context, *connect.Request[v1.StartActionAndWaitRequest]) (*connect.Response[v1.StartActionAndWaitResponse], error)
+	// Use StartAction instead; this method will be removed. See https://github.com/OliveTin/OliveTin/issues/1028
+	//
+	// Deprecated: do not use.
 	StartActionByGet(context.Context, *connect.Request[v1.StartActionByGetRequest]) (*connect.Response[v1.StartActionByGetResponse], error)
+	// Use StartActionAndWait instead; this method will be removed. See https://github.com/OliveTin/OliveTin/issues/1028
+	//
+	// Deprecated: do not use.
 	StartActionByGetAndWait(context.Context, *connect.Request[v1.StartActionByGetAndWaitRequest]) (*connect.Response[v1.StartActionByGetAndWaitResponse], error)
 	RestartAction(context.Context, *connect.Request[v1.RestartActionRequest]) (*connect.Response[v1.StartActionResponse], error)
 	KillAction(context.Context, *connect.Request[v1.KillActionRequest]) (*connect.Response[v1.KillActionResponse], error)

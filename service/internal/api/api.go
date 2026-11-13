@@ -336,6 +336,8 @@ func (api *oliveTinAPI) StartActionAndWait(ctx ctx.Context, req *connect.Request
 }
 
 func (api *oliveTinAPI) StartActionByGet(ctx ctx.Context, req *connect.Request[apiv1.StartActionByGetRequest]) (*connect.Response[apiv1.StartActionByGetResponse], error) {
+	reportDeprecatedAPICall("StartActionByGet", "StartAction")
+
 	binding := api.executor.FindBindingByID(req.Msg.ActionId)
 	if binding == nil || binding.Action == nil {
 		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("action with ID %s not found", req.Msg.ActionId))
@@ -387,6 +389,8 @@ func (api *oliveTinAPI) startActionByGetAndWaitLogEntry(binding *executor.Action
 }
 
 func (api *oliveTinAPI) StartActionByGetAndWait(ctx ctx.Context, req *connect.Request[apiv1.StartActionByGetAndWaitRequest]) (*connect.Response[apiv1.StartActionByGetAndWaitResponse], error) {
+	reportDeprecatedAPICall("StartActionByGetAndWait", "StartActionAndWait")
+
 	binding := api.executor.FindBindingByID(req.Msg.ActionId)
 	if binding == nil || binding.Action == nil {
 		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("action with ID %s not found", req.Msg.ActionId))
@@ -581,6 +585,18 @@ func (api *oliveTinAPI) Logout(ctx ctx.Context, req *connect.Request[apiv1.Logou
 		SameSite: http.SameSiteLaxMode,
 	}
 	response.Header().Add("Set-Cookie", oauth2Cookie.String())
+
+	// Clear any leftover OAuth2 CSRF state cookie from an in-flight login
+	oauthStateCookie := &http.Cookie{
+		Name:     "olivetin-oauth-state",
+		Value:    "",
+		MaxAge:   -1,
+		HttpOnly: true,
+		Path:     "/",
+		Secure:   secure,
+		SameSite: http.SameSiteLaxMode,
+	}
+	response.Header().Add("Set-Cookie", oauthStateCookie.String())
 
 	return response, nil
 }
@@ -1127,7 +1143,7 @@ func (api *oliveTinAPI) EventStream(ctx ctx.Context, req *connect.Request[apiv1.
 
 	api.forwardEventsToClient(ctx.Done(), client, srv)
 
-	log.Infof("EventStream: client disconnected")
+	log.Debugf("EventStream: client disconnected")
 
 	return nil
 }
@@ -1349,11 +1365,11 @@ func (api *oliveTinAPI) Init(ctx ctx.Context, req *connect.Request[apiv1.InitReq
 func (api *oliveTinAPI) buildInitResponse(user *authpublic.AuthenticatedUser) *apiv1.InitResponse {
 	loginRequired := user.IsGuest() && api.cfg.AuthRequireGuestsToLogin
 	currentVersion, availableVersion, showNewVersions := initVersionFields(user, api.cfg)
-	rootDashboardEntries := api.buildRootDashboardEntries(user, api.cfg.Dashboards)
+	showNavigation, rootDashboardEntries := api.initNavigationFields(user, loginRequired)
 
 	res := &apiv1.InitResponse{
 		ShowFooter:                api.cfg.ShowFooter,
-		ShowNavigation:            api.cfg.ShowNavigation,
+		ShowNavigation:            showNavigation,
 		ShowNewVersions:           showNewVersions,
 		AvailableVersion:          availableVersion,
 		CurrentVersion:            currentVersion,
@@ -1386,6 +1402,16 @@ func (api *oliveTinAPI) buildInitResponse(user *authpublic.AuthenticatedUser) *a
 	}
 
 	return res
+}
+
+// initNavigationFields hides sidebar navigation and dashboard titles from guests
+// that must log in before using OliveTin.
+func (api *oliveTinAPI) initNavigationFields(user *authpublic.AuthenticatedUser, loginRequired bool) (bool, []*apiv1.RootDashboard) {
+	if loginRequired {
+		return false, nil
+	}
+
+	return api.cfg.ShowNavigation, api.buildRootDashboardEntries(user, api.cfg.Dashboards)
 }
 
 func initVersionFields(user *authpublic.AuthenticatedUser, cfg *config.Config) (currentVersion string, availableVersion string, showNewVersions bool) {

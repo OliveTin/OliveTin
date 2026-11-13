@@ -3,8 +3,10 @@
 This is the method the OliveTin web UI uses to start actions, and is probably the best method to use if you are writing scripts.
 
 * **HTTP Method**: `POST`
-* **Request Type**: OliveTin request object
+* **Request Type**: xref:api/start_action.adoc#api-request-startaction[StartAction request object] (`bindingId`, `arguments`, `uniqueTrackingId`, `justification`)
 * **Response Type**: Execution Tracking ID
+
+NOTE: `StartAction` selects the action with `bindingId`, not `actionId`. For a normal action, the binding ID is the same as the action `id` from your `config.yaml`. See xref:api/start_action.adoc#api-ids[Action IDs vs Binding IDs].
 
 There are several variants of this API call available which might be easier for scripts (or humans) to work with:
 
@@ -15,14 +17,15 @@ include::partial$api/start_action_methods.adoc[]
 [source,bash]
 .curl
 ----
-user@host: curl "http://olivetin.webapps.teratan.lan/api/StartAction" --json '{"bindingId": "nuclear_reactor_shutdown"}'
+user@host: curl "http://olivetin.example.com:1337/api/StartAction" --json '{"bindingId": "nuclear_reactor_shutdown"}'
+{"executionTrackingId":"6ecda25d-b6e1-4621-898c-d4e6f2dbeda5"}
 ----
 
 [source,powershell]
 .Powershell
 ----
 PS C:\Users\xcons> $json = '{"bindingId": "deploy_attack_gnomes"}'
-PS C:\Users\xcons> Invoke-RestMethod -Method "Post" -Uri "http://olivetinServer:1337/api/StartAction" -Body $json 
+PS C:\Users\xcons> Invoke-RestMethod -Method "Post" -Uri "http://olivetinServer:1337/api/StartAction" -ContentType "application/json" -Body $json
 ----
 
 == Example API call: Start an action using `StartAction` with arguments
@@ -30,6 +33,5 @@ PS C:\Users\xcons> Invoke-RestMethod -Method "Post" -Uri "http://olivetinServer:
 [source,bash]
 .curl
 ----
-user:host: curl 'http://olivetin.example.com/api/StartAction' --json '{"bindingId": "Ping_host", "arguments": [{"name": "host", "value": "example.com"},{"name": "count", "value": "1"}]}'
+user@host: curl 'http://olivetin.example.com:1337/api/StartAction' --json '{"bindingId": "Ping_host", "arguments": [{"name": "host", "value": "example.com"},{"name": "count", "value": "1"}]}'
 ----
-

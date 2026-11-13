@@ -50,7 +50,7 @@ The AsciiDoc sources for that site live in this repository under [`docs/`](docs/
 * **Accessible** - passes all the accessibility checks in Firefox, and issues with accessibility are taken seriously.
 * **Container** - available for quickly testing and getting it up and running, great for the selfhosted community.
 * **Integrate with anything** - OliveTin just runs Linux shell commands, so theoretically you could integrate with a bunch of stuff just by using curl, ping, etc. However, writing your own shell scripts is a great way to extend OliveTin.
-* **Lightweight on resources** - uses only a few MB of RAM and barely any CPU. Written in Go, with a web interface written as a modern, responsive, Single Page App that uses the REST/Connect RPC API.
+* **Lightweight on resources** - uses only a few MB of RAM and barely any CPU. Written in Go, with a web interface written as a modern, responsive, Single Page App that uses the REST/Connect RPC API. The API is completely machine readable, defined in [Protobuf](https://github.com/OliveTin/OliveTin/tree/main/proto) (gRPC / Connect RPC), so it is easy to integrate with from scripts, generated clients, and AI agents.
 * **Good amount of unit tests and style checks** - helps potential contributors be consistent, and helps with maintainability.
 
 ## Screenshots

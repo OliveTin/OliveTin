@@ -9,6 +9,28 @@ export function selectBrowserLocale (availableLocales, browserLanguages) {
 
     const parts = lowerCandidate.split('-')
 
+    if (parts[0] === 'zh') {
+      let script
+      try {
+        script = new Intl.Locale(candidate).maximize().script
+      } catch (error) {
+        if (error instanceof RangeError) {
+          continue
+        }
+        throw error
+      }
+      const match = availableLocales.find(locale =>
+        locale.toLowerCase().startsWith('zh-') &&
+        new Intl.Locale(locale).maximize().script === script
+      )
+
+      if (match) {
+        return match
+      }
+
+      continue
+    }
+
     for (let length = parts.length - 1; length > 0; length--) {
       const prefix = `${parts.slice(0, length).join('-')}-`
       const match = availableLocales.find(locale => locale.toLowerCase().startsWith(prefix))

@@ -51,3 +51,8 @@ actions:
   shell: sleep 2
   icon: "&#x1F971"
 
+dashboards:
+- title: Secret Board
+  contents:
+  - title: Ping Google.com
+

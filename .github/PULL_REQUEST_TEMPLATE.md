@@ -13,7 +13,7 @@ Helpful information to understand the project can be found here: [CONTRIBUTING](
 # Checklist
 Please put a X in the boxes as evidence of reading through the checklist.
 
-- [ ] I have read the [CONTRIBUTORS](CONTRIBUTORS.adoc) guide
+- [ ] I have read the [CONTRIBUTING](https://github.com/OliveTin/OliveTin/blob/main/CONTRIBUTING.adoc) guide
   - [ ] I considered the "3 line" suggestion.
   - [ ] I followed the "1 logical change" rule.
 - [ ] I have forked the project, and raised this PR on a feature branch.

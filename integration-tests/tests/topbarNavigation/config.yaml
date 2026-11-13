@@ -1,0 +1,22 @@
+#
+# Integration Test Config: Topbar navigation
+#
+
+listenAddressSingleHTTPFrontend: 0.0.0.0:1337
+
+checkForUpdates: false
+sectionNavigationStyle: topbar
+
+actions:
+  - title: Ping example.com
+    shell: ping example.com -c 1
+    icon: ping
+
+dashboards:
+  - title: Alpha
+    contents:
+      - title: Ping example.com
+
+  - title: Beta
+    contents:
+      - title: Ping example.com

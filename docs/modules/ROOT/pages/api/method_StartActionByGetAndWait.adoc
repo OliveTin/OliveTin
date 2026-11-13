@@ -1,11 +1,23 @@
-= API Method: StartActionByGetAndWait
+= API Method: StartActionByGetAndWait (deprecated)
 
-This method is also a very easy way to quickly start an action, but it waits for the action to finish before returning the result. This is useful if you want to get the output of the action or check its result without having to poll for it.
+[WARNING]
+====
+`StartActionByGetAndWait` is **deprecated** and will be removed in a future version of OliveTin. Use xref:api/method_StartActionAndWait.adoc[StartActionAndWait] instead.
 
-* **HTTP Method**: `GET`
-* **Request Type**: Action ID in the URL
-* **Response Type**: Log Entry (waits for the action to finish)
+Despite its name, this method no longer supports `GET` requests. The OliveTin 2k style of putting the action ID in the URL (eg: `GET /api/StartActionByGetAndWait/pingGithub`) returns `404` in OliveTin 3k, and is not coming back.
+====
 
-There are several variants of this API call available which might be easier for scripts (or humans) to work with:
+== Migrating to `StartActionAndWait`
 
-include::partial$api/start_action_methods.adoc[]
+`StartActionAndWait` takes the same `actionId` field, and returns the same Log Entry, so you only need to change the method name. It also accepts `arguments` and a `justification`.
+
+.Before (deprecated)
+----
+user@host: curl http://olivetin.example.com:1337/api/StartActionByGetAndWait --json '{"actionId": "pingGithub"}'
+----
+
+.After
+----
+user@host: curl http://olivetin.example.com:1337/api/StartActionAndWait --json '{"actionId": "pingGithub"}'
+{"logEntry":{"actionTitle":"Ping GitHub.com","output":"...","exitCode":0, ... }}
+----

@@ -46,13 +46,20 @@ If you are looking for OliveTin's AI policy, you can find it in `AI.md`.
 - Do not swallow errors; propagate or log meaningfully.
 - Match existing formatting; avoid unrelated reformatting.
 - Be safe around nils in executor steps (e.g., guard `req.Binding` and `req.Binding.Action`).
-- Cyclomatic complexity over 4 is not permitted (`gocyclo` `min-complexity: 5` in `service/.golangci.yml`).
+- Cyclomatic complexity over 5 is not permitted (`gocyclo` `min-complexity: 5` in `service/.golangci.yml`).
 
 ### API and Execution Flow (High-level)
 1. Client calls Connect RPC (e.g., `Init`, `GetDashboard`, `StartAction`).
 2. API translates requests to `executor.ExecutionRequest` and calls `Executor.ExecRequest`.
 3. Executor runs a chain of steps: request binding → concurrency/rate/ACL checks → arg parsing → exec → post-exec → logging/triggering.
 4. Logs are stored and can be fetched via `ExecutionStatus`/`GetLogs`.
+
+### Machine-readable API
+- The OliveTin API is completely machine readable: it is defined in Protobuf and served with Connect RPC (Connect JSON/binary and gRPC-Web).
+- Source of truth: `proto/olivetin/api/v1/olivetin.proto` (service `olivetin.api.v1.OliveTinApiService`), online at https://github.com/OliveTin/OliveTin/tree/main/proto
+- Prefer reading the proto over guessing endpoints. Each RPC is callable as `POST /api/<MethodName>` with a protobuf-JSON body (lowerCamelCase fields, eg `{"bindingId": "..."}`).
+- After changing the proto, regenerate code with `cd proto && make` (buf) — generated code lives in `service/gen/` and `frontend/resources/scripts/gen/`.
+- User docs for the API: `docs/modules/ROOT/pages/api/intro.adoc`. LLM-oriented docs index: https://docs.olivetin.app/llm.txt
 
 ### Common Tasks
 - Add/modify actions: update `config.yaml` and ensure `executor.RebuildActionMap()` is called when needed.
