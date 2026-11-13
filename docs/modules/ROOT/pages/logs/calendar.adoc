@@ -26,6 +26,8 @@ This gives you a quick visual overview of when actions were executed throughout 
 
 Use the navigation controls at the top of the calendar to move between months. The calendar will display all logged executions for the visible month.
 
+The month you are viewing is kept in the page address (for example `/logs/calendar?month=2026-08`). This means that after opening an execution, your browser's back button returns you to the same month, and you can bookmark or share a link to a particular month.
+
 === Click on an Event
 
 Click on any event (execution) on the calendar to view the full execution details, including:

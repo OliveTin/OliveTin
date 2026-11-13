@@ -40,6 +40,7 @@ const routes = [
     component: () => import('./views/LogsCalendarView.vue'),
     meta: {
       title: 'Logs Calendar',
+      keepOnQueryChange: true,
       breadcrumbs: () => [
         { name: 'Logs', to: { name: 'Logs' } },
         { name: 'Calendar' }

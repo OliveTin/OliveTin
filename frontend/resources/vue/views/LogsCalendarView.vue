@@ -41,20 +41,24 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { Calendar01Icon } from '@hugeicons/core-free-icons'
 import Calendar from 'picocrank/vue/components/Calendar.vue'
 import Section from 'picocrank/vue/components/Section.vue'
 import { loadStoredLogsFilter } from '../utils/logsFilterStorage.js'
+import { formatCalendarMonthQuery, parseCalendarMonthQuery } from '../utils/calendarMonthQuery.js'
 const router = useRouter()
+const route = useRoute()
 const { t } = useI18n()
 
 const logs = ref([])
 const loading = ref(false)
 const error = ref(null)
-const currentMonthIndex = ref(new Date().getMonth())
-const currentYear = ref(new Date().getFullYear())
+// The month lives in the URL so that browser Back from an execution returns to the month being browsed.
+const displayedMonth = computed(() => parseCalendarMonthQuery(route.query.month))
+const currentMonthIndex = computed(() => displayedMonth.value.monthIndex)
+const currentYear = computed(() => displayedMonth.value.year)
 
 const logsListLocation = computed(() => {
   const filter = loadStoredLogsFilter()
@@ -164,10 +168,7 @@ function handleDayClick (date) {
 }
 
 function handleMonthChange (month, year) {
-  currentMonthIndex.value = month
-  currentYear.value = year
-  // Optionally fetch logs for the new month if needed
-  // For now, we'll keep all logs loaded
+  router.replace({ query: { ...route.query, month: formatCalendarMonthQuery(month, year) } })
 }
 
 onMounted(() => {
