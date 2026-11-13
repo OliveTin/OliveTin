@@ -79,6 +79,7 @@ const (
 	oauthStateMaxAge       = 900 // seconds; CSRF pending window
 	oauthSessionMaxAge     = 900 // seconds; authenticated session lifetime
 	oauthStateMaxEntries   = 10000
+	oauthSessionMaxEntries = 10000
 )
 
 func assignIfEmpty(target *string, value string) {
@@ -155,13 +156,20 @@ func (h *OAuth2Handler) deletePendingStateLocked(state string) {
 }
 
 func (h *OAuth2Handler) sweepExpiredOAuthEntriesLocked(now time.Time) {
+	h.sweepExpiredPendingStatesLocked(now)
+	h.sweepExpiredSessionsLocked(now)
+}
+
+func (h *OAuth2Handler) sweepExpiredPendingStatesLocked(now time.Time) {
 	pendingCutoff := now.Add(-oauthStateMaxAge * time.Second)
 	for state, entry := range h.pendingStates {
 		if entry.createdAt.Before(pendingCutoff) {
 			delete(h.pendingStates, state)
 		}
 	}
+}
 
+func (h *OAuth2Handler) sweepExpiredSessionsLocked(now time.Time) {
 	sessionCutoff := now.Add(-oauthSessionMaxAge * time.Second)
 	for sid, entry := range h.sessions {
 		if entry.createdAt.Before(sessionCutoff) {
@@ -233,10 +241,9 @@ func (h *OAuth2Handler) consumePendingOAuthState(w http.ResponseWriter, r *http.
 	queryState := r.URL.Query().Get("state")
 
 	if !h.validateStateMatch(queryState, state) {
+		// Keep the cookie's pending state: an unrelated callback (different or
+		// missing query state) must not invalidate an in-flight login.
 		log.Errorf("OAuth2 state mismatch between query and cookie")
-		h.mu.Lock()
-		h.deletePendingStateLocked(state)
-		h.mu.Unlock()
 		http.Error(w, "State mismatch", http.StatusBadRequest)
 		return nil, state, false
 	}
@@ -343,7 +350,21 @@ func (h *OAuth2Handler) computeUsergroup(userinfo *UserInfo, providerConfig *con
 	return usergroup
 }
 
-func (h *OAuth2Handler) issueOAuthSession(pending *oauth2PendingState, state, username, usergroup string) (string, error) {
+func (h *OAuth2Handler) takeValidPendingStateLocked(state string, now time.Time) (*oauth2PendingState, error) {
+	pendingEntry, ok := h.pendingStates[state]
+	if !ok {
+		return nil, fmt.Errorf("pending OAuth state no longer exists")
+	}
+	if pendingStateExpired(pendingEntry, now) {
+		h.deletePendingStateLocked(state)
+		return nil, fmt.Errorf("pending OAuth state expired")
+	}
+
+	h.deletePendingStateLocked(state)
+	return pendingEntry, nil
+}
+
+func (h *OAuth2Handler) issueOAuthSession(state, username, usergroup string) (string, error) {
 	sessionID, err := randString(16)
 	if err != nil {
 		return "", err
@@ -352,27 +373,21 @@ func (h *OAuth2Handler) issueOAuthSession(pending *oauth2PendingState, state, us
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
-	pendingEntry, ok := h.pendingStates[state]
-	if !ok {
-		return "", fmt.Errorf("pending OAuth state no longer exists")
-	}
-	if pendingStateExpired(pendingEntry, time.Now()) {
-		h.deletePendingStateLocked(state)
-		return "", fmt.Errorf("pending OAuth state expired")
-	}
-
-	providerName := pending.providerName
-	if pendingEntry.providerName != "" {
-		providerName = pendingEntry.providerName
-	}
-
-	h.deletePendingStateLocked(state)
 	h.sweepExpiredOAuthEntriesLocked(time.Now())
+	if len(h.sessions) >= oauthSessionMaxEntries {
+		return "", fmt.Errorf("OAuth session capacity exceeded")
+	}
+
+	pendingEntry, err := h.takeValidPendingStateLocked(state, time.Now())
+	if err != nil {
+		return "", err
+	}
+
 	h.sessions[sessionID] = &oauth2Session{
 		createdAt:    time.Now(),
 		Username:     username,
 		Usergroup:    usergroup,
-		providerName: providerName,
+		providerName: pendingEntry.providerName,
 	}
 
 	return sessionID, nil
@@ -405,9 +420,18 @@ func (h *OAuth2Handler) HandleOAuthCallback(w http.ResponseWriter, r *http.Reque
 
 	userInfoClient := h.createUserInfoClient(ctx, pending.providerConfig, tok, clientSettings)
 	userinfo := getUserInfo(h.cfg, userInfoClient, providerConfig)
+	if userinfo.Username == "" {
+		h.mu.Lock()
+		h.deletePendingStateLocked(state)
+		h.mu.Unlock()
+		log.Errorf("OAuth2 user info returned empty username")
+		http.Error(w, "Failed to get user info", http.StatusBadRequest)
+		return
+	}
+
 	usergroup := h.computeUsergroup(userinfo, providerConfig)
 
-	sessionID, err := h.issueOAuthSession(pending, state, userinfo.Username, usergroup)
+	sessionID, err := h.issueOAuthSession(state, userinfo.Username, usergroup)
 	if err != nil {
 		log.Errorf("Failed to issue OAuth session: %v", err)
 		http.Error(w, "Failed to create session", http.StatusInternalServerError)

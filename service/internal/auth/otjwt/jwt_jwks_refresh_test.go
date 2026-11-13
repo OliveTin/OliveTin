@@ -52,7 +52,8 @@ func TestJwksRefreshContinuesWhenContextNotCancelled(t *testing.T) {
 	}))
 	t.Cleanup(srv.Close)
 
-	refreshCtx := context.Background()
+	refreshCtx, cancel := context.WithCancel(context.Background())
+	t.Cleanup(cancel)
 	verifier, err := keyfunc.NewDefaultOverrideCtx(refreshCtx, []string{srv.URL}, keyfunc.Override{
 		RefreshInterval:         100 * time.Millisecond,
 		RefreshErrorHandlerFunc: silentJWKSRefreshErrorHandler,

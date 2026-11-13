@@ -234,7 +234,7 @@ func TestIssueOAuthSessionRotatesAwayFromCSRFState(t *testing.T) {
 		createdAt:    time.Now(),
 	}
 
-	sessionID, err := h.issueOAuthSession(h.pendingStates[state], state, "alice", "admins")
+	sessionID, err := h.issueOAuthSession(state, "alice", "admins")
 	require.NoError(t, err)
 	assert.NotEmpty(t, sessionID)
 	assert.NotEqual(t, state, sessionID)
@@ -284,8 +284,7 @@ func TestIssueOAuthSessionRejectsMissingPendingState(t *testing.T) {
 		sessions:      make(map[string]*oauth2Session),
 	}
 
-	pending := &oauth2PendingState{providerName: "test", createdAt: time.Now()}
-	sessionID, err := h.issueOAuthSession(pending, "already-consumed", "alice", "admins")
+	sessionID, err := h.issueOAuthSession("already-consumed", "alice", "admins")
 	require.Error(t, err)
 	assert.Empty(t, sessionID)
 	assert.Empty(t, h.sessions)
@@ -304,7 +303,7 @@ func TestIssueOAuthSessionRejectsExpiredPendingState(t *testing.T) {
 	}
 	h.pendingStates[state] = pending
 
-	sessionID, err := h.issueOAuthSession(pending, state, "alice", "admins")
+	sessionID, err := h.issueOAuthSession(state, "alice", "admins")
 	require.Error(t, err)
 	assert.Empty(t, sessionID)
 	assert.NotContains(t, h.pendingStates, state)
@@ -347,4 +346,54 @@ func TestLoadValidPendingOAuthStateRejectsExpired(t *testing.T) {
 	assert.Equal(t, state, gotState)
 	assert.Equal(t, http.StatusBadRequest, rec.Code)
 	assert.NotContains(t, h.pendingStates, state)
+}
+
+func TestConsumePendingOAuthStateMismatchKeepsPending(t *testing.T) {
+	h := &OAuth2Handler{
+		pendingStates: make(map[string]*oauth2PendingState),
+		sessions:      make(map[string]*oauth2Session),
+	}
+
+	state := "valid-pending"
+	h.pendingStates[state] = &oauth2PendingState{
+		providerName: "test",
+		createdAt:    time.Now(),
+	}
+
+	req := httptest.NewRequestWithContext(t.Context(), http.MethodGet, "/oauth/callback?state=other-state", nil)
+	req.AddCookie(&http.Cookie{Name: oauthStateCookieName, Value: state})
+	rec := httptest.NewRecorder()
+
+	pending, gotState, ok := h.consumePendingOAuthState(rec, req)
+	assert.False(t, ok)
+	assert.Nil(t, pending)
+	assert.Equal(t, state, gotState)
+	assert.Equal(t, http.StatusBadRequest, rec.Code)
+	assert.Contains(t, h.pendingStates, state)
+}
+
+func TestIssueOAuthSessionRejectsWhenSessionCapacityExceeded(t *testing.T) {
+	h := &OAuth2Handler{
+		pendingStates: make(map[string]*oauth2PendingState),
+		sessions:      make(map[string]*oauth2Session, oauthSessionMaxEntries),
+	}
+
+	for i := range oauthSessionMaxEntries {
+		h.sessions[strconv.Itoa(i)] = &oauth2Session{
+			Username:  "user",
+			createdAt: time.Now(),
+		}
+	}
+
+	state := "pending"
+	h.pendingStates[state] = &oauth2PendingState{
+		providerName: "test",
+		createdAt:    time.Now(),
+	}
+
+	sessionID, err := h.issueOAuthSession(state, "alice", "admins")
+	require.Error(t, err)
+	assert.Empty(t, sessionID)
+	assert.Contains(t, h.pendingStates, state)
+	assert.Len(t, h.sessions, oauthSessionMaxEntries)
 }
