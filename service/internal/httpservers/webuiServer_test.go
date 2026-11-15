@@ -22,7 +22,7 @@ func TestHandleWebuiSetsCacheControl(t *testing.T) {
 
 	for _, p := range []string{"/", "/app.js", "/logs"} {
 		rec := httptest.NewRecorder()
-		s.handleWebui(rec, httptest.NewRequest(http.MethodGet, p, nil))
+		s.handleWebui(rec, httptest.NewRequestWithContext(t.Context(), http.MethodGet, p, nil))
 
 		assert.Equal(t, http.StatusOK, rec.Code, p)
 		assert.Equal(t, "no-cache", rec.Header().Get("Cache-Control"), p)
