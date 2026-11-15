@@ -82,7 +82,7 @@ Add `kubectl` job to OliveTin config with `kubectl edit cm/olivetin-config -n ol
 apiVersion: v1
 data:
   config.yaml: |
-    defaultOnClick: execution-dialog-output-only
+    defaultOnClick: execution-dialog
 
     actions:
       - title: get pods

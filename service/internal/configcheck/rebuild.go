@@ -38,6 +38,7 @@ func Rebuild(cfg *config.Config, extra ...configissues.Issue) {
 	collected = append(collected, collectEntityEmptyIssues(cfg)...)
 	collected = append(collected, collectCronIssues(cfg)...)
 	collected = append(collected, collectWatcherPathIssues(cfg)...)
+	collected = append(collected, collectDashboardTypeIssues(cfg)...)
 	collected = append(collected, extra...)
 	configissues.Replace(collected)
 }
