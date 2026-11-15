@@ -160,6 +160,27 @@ When enabled, the header shows a search control that can jump to actions, dashbo
 
 Other `features.*` flags follow the same pattern: typed booleans under `features`, default false, exposed on Init for the web UI, and treated as alpha until graduated.
 
+[#replace-webui]
+== Replace the web UI (`webUIDir`)
+
+Themes and custom JavaScript change the default web UI. If you want a completely different interface, you can point OliveTin at another directory of static files with `webUIDir`. OliveTin serves `index.html` and everything next to it from that directory, while the API stays on the same origin, so authentication and ACLs apply unchanged.
+
+.`config.yaml`
+[source,yaml]
+----
+webUIDir: /etc/OliveTin/my-webui/
+----
+
+Restart OliveTin after changing `webUIDir`. To go back to the default web UI, remove the option.
+
+Some paths are handled by OliveTin itself and never reach `webUIDir`, so don't use them for your own files: `/api/`, `/oauth/`, `/readyz`, `/webhooks`, `/theme.css`, `/custom-webui/` and, when Prometheus is enabled, `/metrics`. Requests for paths without a file extension (for example `/logs`) are answered with `index.html`, so a single-page app can use client-side routing.
+
+A replacement web UI only talks to the OliveTin API, so it needs to be kept compatible with the version of OliveTin you run.
+
+=== Community web UIs
+
+* https://github.com/DabuSoft-pl/olivetin-lamp[Lamp] - a phone-friendly web UI, with "hold to run" confirmations, live output and an optional status screen built from entities.
+
 == Custom CSS (with a custom theme)
 
 You can customize OliveTin with themes, but it's also possible to write your on very simple theme that contains just a few CSS rules to change the look and feel of OliveTin. This is very useful if you just want to change the colours of OliveTin, or hide a few elements.
