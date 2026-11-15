@@ -5,6 +5,11 @@ The `confirmation` type argument is a special argument type, which simply disabl
 
 Confirmation arguments are usually left unnamed, so nothing is substituted into the command. If you do give the argument a `name`, the only allowed values are `0` (unchecked) and `1` (checked), so confirmation is safe to use with `shell:` actions.
 
+[NOTE]
+====
+The checkbox guards against accidental clicks in the web UI; it is not an access control. An unnamed confirmation is not checked by the API, so calling xref:api/method_StartAction.adoc[StartAction] (or a custom web UI, or a script) starts the action without it. A named confirmation must be sent by API callers, but both `0` and `1` are accepted. To limit who can start an action, use xref:security/acl.adoc[access control lists].
+====
+
 [source,yaml]
 ----
 actions:
