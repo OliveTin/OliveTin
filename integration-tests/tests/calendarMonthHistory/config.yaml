@@ -1,0 +1,12 @@
+#
+# Integration Test Config: Calendar month history
+#
+
+listenAddressSingleHTTPFrontend: 0.0.0.0:1337
+
+checkForUpdates: false
+
+actions:
+  - title: Ping example.com
+    shell: ping example.com -c 1
+    icon: ping
