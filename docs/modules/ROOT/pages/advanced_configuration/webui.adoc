@@ -173,6 +173,8 @@ webUIDir: /etc/OliveTin/my-webui/
 
 Restart OliveTin after changing `webUIDir`. To go back to the default web UI, remove the option.
 
+Some paths are handled by OliveTin itself and never reach `webUIDir`, so don't use them for your own files: `/api/`, `/oauth/`, `/readyz`, `/webhooks`, `/theme.css`, `/custom-webui/` and, when Prometheus is enabled, `/metrics`. Requests for paths without a file extension (for example `/logs`) are answered with `index.html`, so a single-page app can use client-side routing.
+
 A replacement web UI only talks to the OliveTin API, so it needs to be kept compatible with the version of OliveTin you run.
 
 === Community web UIs
