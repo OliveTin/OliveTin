@@ -34,7 +34,16 @@ func NewWebUIServer(cfg *config.Config) *webUIServer {
 	return s
 }
 
+// Web UI files keep their names between releases, and some replacement UIs
+// (webUIDir) do not hash their asset names at all. Without Cache-Control,
+// browsers cache responses that only carry Last-Modified heuristically, and
+// can keep an old UI after an upgrade. no-cache makes them revalidate every
+// time; unchanged files still come back as a cheap 304.
+const webuiCacheControl = "no-cache"
+
 func (s *webUIServer) handleWebui(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Cache-Control", webuiCacheControl)
+
 	// Mangle requests for any path like /logs or /config to load the webui index.html
 	if path.Ext(r.URL.Path) == "" && r.URL.Path != "/" {
 		log.Debugf("Mangling request for %s to /index.html", r.URL.Path)
@@ -119,6 +128,7 @@ func (s *webUIServer) generateThemeCss(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Add("Content-Type", "text/css")
+	w.Header().Set("Cache-Control", webuiCacheControl)
 	_, err := w.Write(customThemeCss)
 	if err != nil {
 		log.WithFields(log.Fields{
@@ -128,5 +138,10 @@ func (s *webUIServer) generateThemeCss(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *webUIServer) handleCustomWebui() http.Handler {
-	return http.StripPrefix("/custom-webui/", http.FileServer(http.Dir(s.findCustomWebuiDir())))
+	fs := http.StripPrefix("/custom-webui/", http.FileServer(http.Dir(s.findCustomWebuiDir())))
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", webuiCacheControl)
+		fs.ServeHTTP(w, r)
+	})
 }
