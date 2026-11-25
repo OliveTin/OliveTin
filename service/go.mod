@@ -21,7 +21,7 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/golangci/golangci-lint/v2 v2.15.0
 	github.com/google/uuid v1.6.0
-	github.com/jamesread/armature-health/v2 v2.0.0
+	github.com/jamesread/armature-health/v2 v2.0.2
 	github.com/jamesread/golure v0.0.0-20261111213547-dc225fc15a30
 	github.com/knadh/koanf/parsers/yaml v1.1.1
 	github.com/knadh/koanf/providers/env v1.1.0

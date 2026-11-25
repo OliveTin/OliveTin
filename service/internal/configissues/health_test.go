@@ -2,6 +2,7 @@ package configissues
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	log "github.com/sirupsen/logrus"
@@ -165,4 +166,26 @@ func TestListKeepsCollectionOrder(t *testing.T) {
 	Replace([]Issue{testIssue(CodeCronInvalid, "config a"), testIssue(CodeCronInvalid, "config c"), testIssue(CodeCronInvalid, "config b")})
 
 	assert.Equal(t, []string{"load", "runtime", "config a", "config c", "config b"}, messages(List()))
+}
+
+func TestLongIssuesKeepOrderAndAreNotLoggedAgain(t *testing.T) {
+	resetIssues(t)
+	hook := captureLogs(t)
+
+	long := strings.Repeat("x", 600)
+	issues := []Issue{
+		testIssue(CodeConfigDecode, "b "+long),
+		testIssue(CodeConfigDecode, "a "+long),
+	}
+	Replace(issues)
+	Replace(issues)
+	ReportRuntime(testIssue(CodeDeprecatedAPICall, long))
+	ReportRuntime(testIssue(CodeDeprecatedAPICall, long))
+
+	assert.Len(t, issueLogEntries(hook), 3, "an unchanged long issue must not be logged again")
+
+	listed := List()
+	require.Len(t, listed, 3)
+	assert.True(t, strings.HasPrefix(listed[1].Message, "b "), "long issues must keep collection order")
+	assert.True(t, strings.HasPrefix(listed[2].Message, "a "), "long issues must keep collection order")
 }

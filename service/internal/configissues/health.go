@@ -1,6 +1,8 @@
 package configissues
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"slices"
 	"sort"
 	"strings"
@@ -27,8 +29,10 @@ var (
 
 // issueKey identifies the same problem across rebuilds. Severity is left out
 // so that a change in severity updates the issue rather than raising a new one.
+// It is a hash so that it always fits armature-health's key limit and is stored
+// unchanged; a longer key would be shortened, and stop matching.
 func issueKey(issue Issue) string {
-	return strings.Join([]string{
+	sum := sha256.Sum256([]byte(strings.Join([]string{
 		issue.Code,
 		issue.ActionID,
 		issue.ActionTitle,
@@ -36,7 +40,8 @@ func issueKey(issue Issue) string {
 		issue.Source,
 		issue.ConfigFile,
 		issue.Message,
-	}, "\x00")
+	}, "\x00")))
+	return hex.EncodeToString(sum[:])
 }
 
 // armature-health treats anything that is not a warning or an error as info.
@@ -110,6 +115,15 @@ func rememberOrder(sourceID string, issues []Issue) {
 // Within a source, issues keep the order they were collected in, and issues
 // reported between rebuilds follow in the order they were reported.
 func orderedIssues(stored []health.IssueView) []Issue {
+	views := orderedIssueViews(stored)
+	out := make([]Issue, 0, len(views))
+	for _, view := range views {
+		out = append(out, fromHealthIssue(view))
+	}
+	return out
+}
+
+func orderedIssueViews(stored []health.IssueView) []health.IssueView {
 	views := uniqueIssueViews(stored)
 
 	orderMu.Lock()
@@ -118,12 +132,7 @@ func orderedIssues(stored []health.IssueView) []Issue {
 	sort.SliceStable(views, func(left, right int) bool {
 		return issueSortsBefore(views[left], views[right])
 	})
-
-	out := make([]Issue, 0, len(views))
-	for _, view := range views {
-		out = append(out, fromHealthIssue(view))
-	}
-	return out
+	return views
 }
 
 func uniqueIssueViews(stored []health.IssueView) []health.IssueView {

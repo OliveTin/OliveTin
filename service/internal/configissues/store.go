@@ -155,10 +155,14 @@ func refreshSnapshot() {
 		return
 	}
 
-	ordered := orderedIssues(stored)
-	severities := make(map[string]string, len(ordered))
-	for _, issue := range ordered {
-		severities[issueKey(issue)] = issue.Severity
+	// Severities are keyed by the stored key rather than one worked out again from
+	// the listed issue, because armature-health shortens long titles and attributes.
+	views := orderedIssueViews(stored)
+	ordered := make([]Issue, 0, len(views))
+	severities := make(map[string]string, len(views))
+	for _, view := range views {
+		ordered = append(ordered, fromHealthIssue(view))
+		severities[view.IssueKey] = view.Severity
 	}
 
 	snapshotMu.Lock()
