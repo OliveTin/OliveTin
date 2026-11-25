@@ -34,7 +34,8 @@ STATUSES = (
 
 OPEN_STATES = ("triage", "draft")
 
-TAG_PATTERN = re.compile(r"\s*\[status:[^\]]*\]\s*$")
+TRAILING_TAGS_PATTERN = re.compile(r"(?:\s*\[status:[^\]]*\])+\s*$")
+TAG_PATTERN = re.compile(r"\[status:([^\]]*)\]")
 GHSA_PATTERN = re.compile(r"^GHSA(-[23456789cfghjmpqrvwx]{4}){3}$")
 
 
@@ -57,14 +58,18 @@ def gh_api(path: str, method: str = "GET", body: dict | None = None, paginate: b
 
 
 def strip_status(summary: str) -> str:
-    return TAG_PATTERN.sub("", summary).rstrip()
+    return TRAILING_TAGS_PATTERN.sub("", summary).rstrip()
 
 
-def current_status(summary: str) -> str:
-    match = TAG_PATTERN.search(summary)
+def status_tags(summary: str) -> list[str]:
+    match = TRAILING_TAGS_PATTERN.search(summary)
     if not match:
-        return ""
-    return match.group(0).strip()[len("[status:"):-1]
+        return []
+    return TAG_PATTERN.findall(match.group(0))
+
+
+def has_valid_status(tags: list[str]) -> bool:
+    return len(tags) == 1 and tags[0] in STATUSES
 
 
 def with_status(summary: str, status: str) -> str:
@@ -80,19 +85,20 @@ def list_advisories() -> int:
     problems = 0
 
     for advisory in advisories:
-        status = current_status(advisory["summary"])
+        tags = status_tags(advisory["summary"])
         is_open = advisory["state"] in OPEN_STATES
 
         note = ""
-        if is_open and status not in STATUSES:
-            note = "  <- missing or unknown status"
+        if is_open and not has_valid_status(tags):
+            note = "  <- missing, unknown or multiple statuses"
             problems += 1
-        elif not is_open and status:
+        elif not is_open and tags:
             note = "  <- should not have a status"
             problems += 1
 
-        if is_open or status:
-            print(f"{advisory['ghsa_id']}  {advisory['state']:<9} {status or '-':<18} {strip_status(advisory['summary'])}{note}")
+        if is_open or tags:
+            shown = ",".join(tag or "(empty)" for tag in tags) or "-"
+            print(f"{advisory['ghsa_id']}  {advisory['state']:<9} {shown:<18} {strip_status(advisory['summary'])}{note}")
 
     return 1 if problems else 0
 
