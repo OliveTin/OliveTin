@@ -58,6 +58,9 @@ func toHealthIssue(issue Issue) health.Issue {
 		Key:      issueKey(issue),
 		Severity: healthSeverity(issue.Severity),
 		Title:    issue.Message,
+		// armature-health cuts titles at 512 characters, so the whole message is
+		// also kept in the detail, which holds up to 16,000.
+		Detail: issue.Message,
 		Attributes: map[string]string{
 			attrCode:         issue.Code,
 			attrActionID:     issue.ActionID,
@@ -101,13 +104,20 @@ func fromHealthIssue(view health.IssueView) Issue {
 	return Issue{
 		Severity:     view.Severity,
 		Code:         view.Attributes[attrCode],
-		Message:      view.Title,
+		Message:      issueMessage(view),
 		ActionID:     view.Attributes[attrActionID],
 		ActionTitle:  view.Attributes[attrActionTitle],
 		ArgumentName: view.Attributes[attrArgumentName],
 		Source:       view.Attributes[attrSource],
 		ConfigFile:   view.Attributes[attrConfigFile],
 	}
+}
+
+func issueMessage(view health.IssueView) string {
+	if view.Detail == "" {
+		return view.Title
+	}
+	return view.Detail
 }
 
 func rememberOrder(sourceID string, issues []Issue) {

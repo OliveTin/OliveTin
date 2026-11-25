@@ -184,10 +184,8 @@ func TestLongIssuesKeepOrderAndAreNotLoggedAgain(t *testing.T) {
 
 	assert.Len(t, issueLogEntries(hook), 3, "an unchanged long issue must not be logged again")
 
-	listed := List()
-	require.Len(t, listed, 3)
-	assert.True(t, strings.HasPrefix(listed[1].Message, "b "), "long issues must keep collection order")
-	assert.True(t, strings.HasPrefix(listed[2].Message, "a "), "long issues must keep collection order")
+	runtime := testIssue(CodeDeprecatedAPICall, long)
+	assert.Equal(t, []Issue{runtime, issues[0], issues[1]}, List(), "long issues must keep their whole message and collection order")
 }
 
 func TestDuplicateIssueKeepsTheError(t *testing.T) {
