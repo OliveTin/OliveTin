@@ -5,6 +5,13 @@ OliveTin releases are published to GitHub, and the release notes are contained t
 
 == Next release (unreleased)
 
+[#require-guests-to-login-all-api-calls]
+=== `authRequireGuestsToLogin` now applies to every API call and ACL
+
+When `authRequireGuestsToLogin` is `true`, guests (visitors who are not logged in) can now only call the API to log in, log out, check that OliveTin is ready, and generate a password hash. Previously some API calls, including the ones that start, restart and kill actions, did not check this option, so guests could still use them if an ACL gave them permission. ACLs also no longer apply to guests when this option is enabled, even an ACL that matches the `guest` username or usergroup.
+
+This affects you if `authRequireGuestsToLogin` is `true` and a script or integration calls the OliveTin API without logging in, for example with `curl` and no API key or session. Those calls now fail with "permission denied". Give the integration an API key or a user account, and an ACL that matches that user. ACLs for logged-in users, including OAuth2 users in the `guest` usergroup, are not affected. See xref:security/example_login_required.adoc[Login required].
+
 [#webhook-auth-type-required]
 === Webhooks need an `authType`, and `authType: none` must be set for open webhooks
 
