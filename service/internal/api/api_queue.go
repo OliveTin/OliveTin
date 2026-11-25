@@ -22,10 +22,6 @@ type executionQueueBucketKey struct {
 func (api *oliveTinAPI) GetExecutionQueue(ctx ctx.Context, req *connect.Request[apiv1.GetExecutionQueueRequest]) (*connect.Response[apiv1.GetExecutionQueueResponse], error) {
 	user := auth.UserFromApiCall(ctx, req, api.cfg)
 
-	if err := api.checkDashboardAccess(user); err != nil {
-		return nil, err
-	}
-
 	active := api.executor.GetActiveExecutionsACL(api.cfg, user)
 	groups := buildExecutionQueueGroups(active, user, api)
 

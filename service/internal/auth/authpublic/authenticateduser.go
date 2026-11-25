@@ -39,6 +39,12 @@ func (u *AuthenticatedUser) IsGuest() bool {
 	return u.Username == "guest" && u.Provider == "system"
 }
 
+// MustLogIn is true for unauthenticated visitors when authRequireGuestsToLogin
+// is enabled. Such visitors get no permissions at all, whatever the ACLs say.
+func (u *AuthenticatedUser) MustLogIn(cfg *config.Config) bool {
+	return u != nil && u.IsGuest() && cfg.AuthRequireGuestsToLogin
+}
+
 func (u *AuthenticatedUser) parseUsergroupLine(sep string) []string {
 	ret := []string{}
 
@@ -73,19 +79,31 @@ func (u *AuthenticatedUser) MatchesUsergroupAcl(matchUsergroups []string, sep st
 }
 
 func (u *AuthenticatedUser) BuildUserAcls(cfg *config.Config) {
-	for _, acl := range cfg.AccessControlLists {
-		if slices.Contains(acl.MatchUsernames, u.Username) {
-			u.Acls = append(u.Acls, acl.Name)
-			continue
-		}
+	u.Acls = append(u.Acls, u.matchingAclNames(cfg)...)
+	u.EffectivePolicy = getEffectivePolicy(cfg, u)
+}
 
-		if u.MatchesUsergroupAcl(acl.MatchUsergroups, cfg.AuthHttpHeaderUserGroupSep) {
-			u.Acls = append(u.Acls, acl.Name)
-			continue
+// An ACL that names the "guest" user or usergroup is meant for logged-in users
+// (for example OAuth2 users with no group claim). When login is required it must
+// never match an unauthenticated visitor, who is also called "guest".
+func (u *AuthenticatedUser) matchingAclNames(cfg *config.Config) []string {
+	if u.MustLogIn(cfg) {
+		return nil
+	}
+
+	var names []string
+
+	for _, acl := range cfg.AccessControlLists {
+		if u.matchesAcl(acl, cfg.AuthHttpHeaderUserGroupSep) {
+			names = append(names, acl.Name)
 		}
 	}
 
-	u.EffectivePolicy = getEffectivePolicy(cfg, u)
+	return names
+}
+
+func (u *AuthenticatedUser) matchesAcl(acl *config.AccessControlList, usergroupSep string) bool {
+	return slices.Contains(acl.MatchUsernames, u.Username) || u.MatchesUsergroupAcl(acl.MatchUsergroups, usergroupSep)
 }
 
 func getEffectivePolicy(cfg *config.Config, u *AuthenticatedUser) *config.ConfigurationPolicy {

@@ -1024,11 +1024,27 @@ func stepRequestAction(req *ExecutionRequest) bool {
 	log.WithFields(log.Fields{
 		"actionTitle": req.logEntry.ActionTitle,
 		"tags":        req.Tags,
+		"username":    requestUsername(req),
+		"provider":    requestProvider(req),
 	}).Infof("Action requested")
 
 	notifyListenersStarted(req)
 
 	return true
+}
+
+func requestUsername(req *ExecutionRequest) string {
+	if req.AuthenticatedUser == nil {
+		return ""
+	}
+	return req.AuthenticatedUser.Username
+}
+
+func requestProvider(req *ExecutionRequest) string {
+	if req.AuthenticatedUser == nil {
+		return ""
+	}
+	return req.AuthenticatedUser.Provider
 }
 
 func stepRequestActionHasBinding(req *ExecutionRequest) bool {
