@@ -977,7 +977,7 @@ func (api *oliveTinAPI) validateArgumentTypeConnectResponse(msg *apiv1.ValidateA
 
 func (api *oliveTinAPI) validateArgumentTypeInternal(msg *apiv1.ValidateArgumentTypeRequest) error {
 	if msg.BindingId == "" || msg.ArgumentName == "" {
-		return executor.TypeSafetyCheck("", msg.Value, msg.Type)
+		return validateUnboundArgumentType(msg)
 	}
 
 	arg, action := api.findArgumentForValidation(msg.BindingId, msg.ArgumentName)
@@ -990,6 +990,16 @@ func (api *oliveTinAPI) validateArgumentTypeInternal(msg *apiv1.ValidateArgument
 	}
 
 	return executor.ValidateArgument(arg, msg.Value, action)
+}
+
+// Custom regex types only exist on configured arguments, so validating one
+// without a binding would only evaluate a caller-supplied pattern.
+func validateUnboundArgumentType(msg *apiv1.ValidateArgumentTypeRequest) error {
+	if strings.HasPrefix(msg.Type, "regex:") {
+		return fmt.Errorf("custom regex types can only be validated for a configured action argument")
+	}
+
+	return executor.TypeSafetyCheck("", msg.Value, msg.Type)
 }
 
 func (api *oliveTinAPI) findArgumentForValidation(bindingId string, argumentName string) (*config.ActionArgument, *config.Action) {
