@@ -1482,7 +1482,7 @@ func triggerLoop(req *ExecutionRequest) {
 		trigger := &ExecutionRequest{
 			Binding:           binding,
 			TrackingID:        uuid.NewString(),
-			Tags:              []string{"trigger"},
+			Tags:              triggeredRequestTags(req),
 			AuthenticatedUser: req.AuthenticatedUser,
 			Arguments:         req.Arguments,
 			Cfg:               req.Cfg,
@@ -1492,6 +1492,18 @@ func triggerLoop(req *ExecutionRequest) {
 
 		req.executor.ExecRequest(trigger)
 	}
+}
+
+// Triggered actions inherit the webhook tag so that the webhook shell
+// restrictions apply to the whole trigger chain, not just the first action.
+func triggeredRequestTags(req *ExecutionRequest) []string {
+	tags := []string{"trigger"}
+
+	if hasWebhookTag(req) {
+		tags = append(tags, "webhook")
+	}
+
+	return tags
 }
 
 func stepSaveLog(req *ExecutionRequest) bool {
