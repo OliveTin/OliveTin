@@ -2,6 +2,7 @@ package configissues
 
 import (
 	"context"
+	"maps"
 	"sync"
 	"time"
 
@@ -39,6 +40,12 @@ var (
 	// writeMu makes each change and the logging of the issues it adds one step,
 	// so concurrent reports cannot log the same new issue twice.
 	writeMu sync.Mutex
+
+	// current is the ordered issue list, rebuilt after each change. Every change
+	// goes through this package, so it always matches what is stored.
+	snapshotMu        sync.RWMutex
+	current           []Issue
+	currentSeverities map[string]string
 )
 
 // BeginConfigLoad clears sticky issues captured during config decode/include load.
@@ -87,25 +94,25 @@ func Report(issue Issue) {
 
 // List returns the current issues.
 func List() []Issue {
-	stored, err := service.ListIssues(context.Background(), false, true)
-	if err != nil {
-		log.WithError(err).Error("Could not list configuration issues")
-		return []Issue{}
-	}
-
-	return orderedIssues(stored)
+	snapshotMu.RLock()
+	defer snapshotMu.RUnlock()
+	out := make([]Issue, len(current))
+	copy(out, current)
+	return out
 }
 
 // Count returns the number of current issues.
 func Count() int {
-	return len(List())
+	snapshotMu.RLock()
+	defer snapshotMu.RUnlock()
+	return len(current)
 }
 
 func setSource(sourceID string, next []Issue) {
 	writeMu.Lock()
 	defer writeMu.Unlock()
 
-	before := openSeverities()
+	before := copyCurrentSeverities()
 	rememberOrder(sourceID, next)
 
 	if err := service.SetIssues(context.Background(), sourceID, toHealthIssues(next)); err != nil {
@@ -113,6 +120,7 @@ func setSource(sourceID string, next []Issue) {
 		return
 	}
 
+	refreshSnapshot()
 	logNewIssues(before, next)
 }
 
@@ -120,29 +128,51 @@ func raise(sourceID string, issue Issue) {
 	writeMu.Lock()
 	defer writeMu.Unlock()
 
-	before := openSeverities()
+	before := copyCurrentSeverities()
 
 	if err := service.Raise(context.Background(), sourceID, toHealthIssue(issue)); err != nil {
 		log.WithError(err).WithField("source", sourceID).Error("Could not save configuration issue")
 		return
 	}
 
+	// Raising an issue that is already listed with the same severity only adds an
+	// occurrence, so the list does not need rebuilding. This keeps repeated reports,
+	// such as every call to a deprecated API method, cheap.
+	if before[issueKey(issue)] == string(healthSeverity(issue.Severity)) {
+		return
+	}
+
+	refreshSnapshot()
 	logNewIssues(before, []Issue{issue})
 }
 
-// openSeverities returns the severity of every open issue, by key, across all sources.
-func openSeverities() map[string]string {
+// refreshSnapshot rebuilds the list returned by List after a change, so that
+// reading the list does not have to sort every stored issue each time.
+func refreshSnapshot() {
 	stored, err := service.ListIssues(context.Background(), false, true)
 	if err != nil {
 		log.WithError(err).Error("Could not list configuration issues")
-		return map[string]string{}
+		return
 	}
 
-	severities := make(map[string]string, len(stored))
-	for _, view := range stored {
-		severities[view.IssueKey] = view.Severity
+	ordered := orderedIssues(stored)
+	severities := make(map[string]string, len(ordered))
+	for _, issue := range ordered {
+		severities[issueKey(issue)] = issue.Severity
 	}
-	return severities
+
+	snapshotMu.Lock()
+	defer snapshotMu.Unlock()
+	current = ordered
+	currentSeverities = severities
+}
+
+func copyCurrentSeverities() map[string]string {
+	snapshotMu.RLock()
+	defer snapshotMu.RUnlock()
+	out := make(map[string]string, len(currentSeverities))
+	maps.Copy(out, currentSeverities)
+	return out
 }
 
 // logNewIssues logs issues that were not open before, or whose severity changed,
