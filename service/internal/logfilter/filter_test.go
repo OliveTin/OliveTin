@@ -104,3 +104,52 @@ func mustMatch(t *testing.T, program *vm.Program, record Record) bool {
 	require.NoError(t, err)
 	return matched
 }
+
+func TestCompileRejectsExpensiveExpressions(t *testing.T) {
+	expensive := []string{
+		"count(1..999, count(1..999, len(Output)+#>0) == 7) == 7",
+		"len(1..999999) > 0",
+		"(1 in 1..999999)",
+		"all(Tags, {# == \"x\"})",
+		"map(Tags, # + Output) != nil",
+		"Output matches \"(a+)+$\"",
+		"Output + Output == \"\"",
+		"let x = Output; x == \"\"",
+		"Tags[0] == \"webhook\"",
+		"upper(Output) == \"X\"",
+	}
+
+	for _, expression := range expensive {
+		program, err := Compile(expression)
+		require.Error(t, err, "expression must be rejected: %s", expression)
+		assert.Nil(t, program, "expression must not compile: %s", expression)
+	}
+}
+
+func TestCompileAllowsSupportedExpressions(t *testing.T) {
+	record := Record{Status: "Completed", Action: "Backup", User: "admin", Output: "done", Tags: []string{"webhook"}, ExitCode: 0}
+
+	supported := map[string]bool{
+		"Backup":                                     true,
+		"!Backup":                                    false,
+		"Status == \"Completed\"":                    true,
+		"Status != \"Completed\"":                    false,
+		"action contains back and user == admin":     true,
+		"(ExitCode > 0) || !Running":                 true,
+		"hasTag(Tags, \"webhook\")":                  true,
+		"includes(Output, \"done\") && !Blocked":     true,
+		"(Action startsWith \"Back\")":               true,
+		"(\"webhook\" in Tags)":                      true,
+		"(Status in [\"Completed\", \"Timed out\"])": true,
+		"ExitCode == -1":                             false,
+	}
+
+	for expression, expected := range supported {
+		program, err := Compile(expression)
+		require.NoError(t, err, "expression must compile: %s", expression)
+
+		matched, err := Matches(program, record)
+		require.NoError(t, err, expression)
+		assert.Equal(t, expected, matched, expression)
+	}
+}
