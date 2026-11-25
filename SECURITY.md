@@ -126,4 +126,11 @@ Once a vulnerability is reported, the process is;
 * The severity of the vulnerability will be assessed using CVSS, and the patch will be prioritised accordingly.
 * Once the patch is ready, it will be queued for a release onto the `next` branch (3k).
 * The reporter will be credited in the advisory and the release notes, but not the commit message.
-* The commit message will contain a reference to the CVSS score (eg: MED) and the advisory ID.
+* Commits that fix the vulnerability use this format, with the severity (`LOW`, `MED`, `HIGH` or `CRIT`) and the advisory ID:
+
+  ```
+  security: GHSA-xxxx-xxxx-xxxx (MED) short description of the fix
+  ```
+
+  `security:` commits trigger a patch release, and are listed under **Security** in the release notes.
+* Merging the private advisory fork into `next` creates a merge commit titled "Merge commit from fork". This is GitHub's fixed message and is expected; the `security:` commits inside the merge are what appear in the release notes.

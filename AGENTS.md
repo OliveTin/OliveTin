@@ -92,6 +92,15 @@ When a change means operators may need to do something when they upgrade (a brea
 - Do **not** mark the change with a `BREAKING CHANGE:` footer or a `!` in the commit type. semantic-release treats either as a major version bump.
 - docs.olivetin.app is built from `next`, so a note is public as soon as it merges. For security fixes the note goes in the private advisory fork PR, and should describe the behaviour change without exploit details.
 
+### Security Fixes
+Security advisory fixes follow the process in `SECURITY.md`:
+
+- Work in the advisory's private temporary fork (`OliveTin/OliveTin-ghsa-xxxx-xxxx-xxxx`), on a branch from its `next`, and open the PR against the fork's `next`. Never push fixes for unpublished advisories to the public repository, and never describe unfixed advisories in public files.
+- Commit subjects use `security: GHSA-xxxx-xxxx-xxxx (SEV) short description`, where `SEV` is `LOW`, `MED`, `HIGH` or `CRIT`. Do not name the reporter in commits; credit goes in the advisory.
+- Supporting commits in the same PR (for example docs or an upgrade note) use their normal type, and may mention the advisory ID.
+- `security:` commits trigger a patch release and are listed under **Security** in the release notes. Do not use `fix:` for advisory fixes, or they will be listed as bug fixes.
+- When an advisory is closed as not a vulnerability but still worth fixing, the fix is an ordinary public `fix:` commit against `next`, without the advisory ID.
+
 ### Branch Naming
 Use conventional-commit-style branch names with a type prefix, optional issue reference, and a short kebab-case description:
 
