@@ -125,6 +125,25 @@ Unauthenticated `PasswordHash` performs Argon2id hashing. Fixed in CVE-2026-2834
 
 ---
 
+## DoS triage
+
+Public criteria are in [SECURITY.md](../SECURITY.md) under "Denial of service (DoS) reports". In short: accept **crash or hang**, **amplification**, and **unbounded growth**; reject load that is proportional to traffic, bounded, fails gracefully and recovers by itself. Fix with bounds (semaphores, caps, TTL or eviction, limits on evaluation cost), not in-service rate limiting.
+
+Previous decisions, for reference:
+
+| GHSA | Outcome | Rule |
+|------|---------|------|
+| GHSA-45m3-398w-m2m9 | published | Crash: concurrent map writes in OAuth2 state handling |
+| GHSA-fwhj-785h-43hh | published | Crash: nil pointer from invalid bindings or log references |
+| GHSA-pc8g-78pf-4xrp | published | Amplification: about 64 MB of Argon2id memory per `PasswordHash` request; fixed with a 10-slot semaphore |
+| GHSA-xpxj-f2fm-rqch | published | Unbounded growth: OAuth2 state map; fixed with TTL and cap |
+| GHSA-j746-2pj2-p94h, GHSA-p7jx-32j2-jq49, GHSA-r2h8-8h64-fxx8, GHSA-8656-625g-3h52 | closed | Proportional and bounded: `PasswordHash` floods are capped by the semaphore and fail fast with `ResourceExhausted` |
+| GHSA-gc8x-fjw2-wghv | closed | Proportional and bounded: `ValidateArgumentType` regex uses Go's linear-time RE2 engine, so cost grows only with request size; hardened anyway |
+
+**CVSS note:** push back on `A:H` when an attack needs a very large number of requests before it has an effect; operators will notice network and CPU load first.
+
+---
+
 ## Easy to confuse (not duplicates)
 
 | Topic | Advisories | Distinction |

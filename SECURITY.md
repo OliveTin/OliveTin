@@ -89,6 +89,25 @@ If you are reporting via GitHub Security Advisories, search existing [repository
 
 Maintainers: see [.github/SECURITY_ADVISORY_DUPLICATES.md](.github/SECURITY_ADVISORY_DUPLICATES.md) for known duplicate pairs, triage steps, and OAuth2 issues that are easy to confuse with each other.
 
+## Denial of service (DoS) reports
+
+Any web service can be overwhelmed by enough traffic, so not every way of making OliveTin slow or busy is a vulnerability. Rate limiting request floods is the job of a reverse proxy, load balancer or firewall in front of OliveTin, not of OliveTin itself.
+
+A DoS report **is** considered a vulnerability when at least one of these is true:
+
+* **Crash or hang**: one request, or a small number of requests, crashes or hangs the OliveTin process. For example a panic, a nil pointer dereference, a fatal Go runtime error such as concurrent map writes, or a deadlock.
+* **Amplification**: a small or cheap request makes OliveTin do disproportionately large work. For example a single request that allocates a large amount of memory, or a short input that causes a large amount of CPU work.
+* **Unbounded growth**: requests cause memory or other state to grow without limit, and it is not reclaimed after the requests stop. For example a map, slice or cache that has no cap, expiry or eviction.
+
+A DoS report is **not** considered a vulnerability when:
+
+* the load is proportional to the number and size of requests sent, and the work done for each request is bounded;
+* OliveTin fails gracefully while busy, for example by returning HTTP 429 or `ResourceExhausted`, rather than crashing;
+* OliveTin recovers by itself once the requests stop;
+* the only possible fix would be rate limiting inside OliveTin.
+
+When a DoS report is accepted, the preferred fix is to put a bound on the resource (a concurrency limit, a size cap, an expiry or eviction, or a limit on the cost of evaluating input), not to add rate limiting. Severity is assessed on how practical the attack is: an issue that needs a very large volume of requests before it has an effect will usually be scored lower than the reporter's estimate.
+
 ## Known behaviour that is not considered a vulnerability
 
 The following have been reported several times and reviewed. Please only report them if you have found something beyond what is described here.
