@@ -119,6 +119,9 @@ The following have been reported several times and reviewed. Please only report 
 
 Once a vulnerability is reported, the process is;
 
+While a report is open, a `[status:...]` tag at the end of the advisory's title shows where it is: `pending-review`, `awaiting-reporter`, `accepted`, `feedback-on-fix` (a fix is ready for review), or `pending-release` (the fix is merged and will be published with the next release). The tag is removed when the advisory is published or closed.
+
+
 * Check [.github/SECURITY_ADVISORY_DUPLICATES.md](.github/SECURITY_ADVISORY_DUPLICATES.md) and open advisories for duplicates before accepting.
 * Confirm the report reproduces on the latest published 3k release or the `next` branch before accepting it or requesting a CVE.
 * Accept or reject the report, and communicate with the reporter about next steps.
