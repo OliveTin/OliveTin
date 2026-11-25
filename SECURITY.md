@@ -94,6 +94,7 @@ Maintainers: see [.github/SECURITY_ADVISORY_DUPLICATES.md](.github/SECURITY_ADVI
 The following have been reported several times and reviewed. Please only report them if you have found something beyond what is described here.
 
 * **`PasswordHash` is unauthenticated and can make local login busy.** The `PasswordHash` API is a documented utility for generating Argon2id hashes, and is needed before any user exists. Unbounded resource use was fixed in CVE-2026-28342 by limiting all Argon2id work, including `LocalUserLogin`, to 10 concurrent operations. Flooding `PasswordHash` can make logins return `ResourceExhausted` while the flood continues; this fail-fast behaviour is intentional, keeps memory bounded, and has no lasting effect. Rate limit request floods at your reverse proxy.
+* **`DEBUG` and `TRACE` logs contain sensitive information.** The `DEBUG` and `TRACE` log levels, `-startuptrace`, and `logDebugOptions` exist to show OliveTin's internal workings while troubleshooting. They are expected to log sensitive information, such as configuration values including secrets, API keys, password hashes, OAuth2 client secrets, webhook secrets, and request headers. This is by design and is not considered a vulnerability. Treat logs produced with these options as being as sensitive as `config.yaml` itself, and only enable them while troubleshooting. Reports about sensitive information in logs are only in scope at the default `INFO` level, or at `WARN` and `ERROR`.
 
 ## Process
 
