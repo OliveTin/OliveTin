@@ -5,7 +5,12 @@ branches:
   - name: main
 
 plugins:
-  - '@semantic-release/commit-analyzer'
+  # security: commits are not in the default rules, so without this a release
+  # containing only security fixes would not be published.
+  - - '@semantic-release/commit-analyzer'
+    - releaseRules:
+        - type: security
+          release: patch
   # Only a draft is created here; GoReleaser adopts it (release.use_existing_draft),
   # replaces the notes and publishes it. This plugin's job is the success comments on
   # resolved issues/PRs, and opening an issue when a release fails.

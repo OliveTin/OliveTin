@@ -83,6 +83,7 @@ changelog:
       - '^release:'
       - '^refactor:'
       - '^Merge branch'
+      - '^Merge commit from fork'
 
 archives:
   - id: default
