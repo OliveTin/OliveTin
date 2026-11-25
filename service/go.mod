@@ -10,6 +10,7 @@ exclude github.com/alecthomas/go-check-sumtype v0.5.0
 require (
 	connectrpc.com/connect v1.21.1
 	github.com/Masterminds/semver v1.5.0
+	github.com/MicahParks/jwkset v0.11.4
 	github.com/MicahParks/keyfunc/v3 v3.9.1
 	github.com/PaesslerAG/jsonpath v0.1.1
 	github.com/alexedwards/argon2id v1.0.0
@@ -20,6 +21,7 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/golangci/golangci-lint/v2 v2.15.0
 	github.com/google/uuid v1.6.0
+	github.com/jamesread/armature-health/v2 v2.0.0
 	github.com/jamesread/golure v0.0.0-20261111213547-dc225fc15a30
 	github.com/knadh/koanf/parsers/yaml v1.1.1
 	github.com/knadh/koanf/providers/env v1.1.0
@@ -75,7 +77,6 @@ require (
 	github.com/ClickHouse/clickhouse-go-linter v1.2.1 // indirect
 	github.com/Djarvur/go-err113 v0.1.1 // indirect
 	github.com/Masterminds/semver/v3 v3.5.0 // indirect
-	github.com/MicahParks/jwkset v0.11.4 // indirect
 	github.com/Microsoft/go-winio v0.6.4 // indirect
 	github.com/MirrexOne/unqueryvet v1.5.4 // indirect
 	github.com/OpenPeeDeeP/depguard/v2 v2.3.0 // indirect
