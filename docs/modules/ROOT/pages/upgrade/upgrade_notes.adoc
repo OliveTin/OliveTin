@@ -12,6 +12,13 @@ Webhook-triggered actions were already required to use `exec:`. This rule now al
 
 If a webhook action in your config triggers an action that uses `shell:` or `shellAfterCompleted`, that action will now fail with "webhooks cannot use Shell execution". Change it to use `exec:` instead. See xref:action_execution/shellvsexec.adoc[Shell vs Exec].
 
+[#log-history-limit]
+=== The number of execution logs kept in memory is now limited
+
+OliveTin now keeps up to 2000 execution logs in memory, and removes the oldest finished logs when there are more. Previously every execution since OliveTin started was kept in memory, so long-running instances showed their full history on the Logs pages.
+
+If you want a longer history in the web interface, raise `logHistoryLimit` in your config. Logs saved to disk with `saveLogs` are not affected. See xref:logs/saving.adoc#log-history-limit[How many logs are kept in memory].
+
 == 2024.08.14
 
 === Navigation change - Subpaths no longer supported
