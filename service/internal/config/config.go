@@ -215,6 +215,7 @@ type Config struct {
 	sourceFiles                        []string
 	AuthLocalUsers                     AuthLocalUsersConfig `koanf:"authLocalUsers"`
 	LogHistoryPageSize                 int64                `koanf:"logHistoryPageSize"`
+	LogHistoryLimit                    int                  `koanf:"logHistoryLimit"`
 	LogDebugOptions                    LogDebugOptions      `koanf:"logDebugOptions"`
 	DefaultPermissions                 PermissionsList      `koanf:"defaultPermissions"`
 	DefaultPolicy                      ConfigurationPolicy  `koanf:"defaultPolicy"`
@@ -303,6 +304,12 @@ type DashboardComponent struct {
 	Contents     []*DashboardComponent `koanf:"contents"`
 }
 
+// DefaultLogHistoryLimit is how many execution logs are kept in memory by default.
+const DefaultLogHistoryLimit = 2000
+
+// MinimumLogHistoryLimit stops the in-memory log history being configured too small to be useful.
+const MinimumLogHistoryLimit = 100
+
 func DefaultConfig() *Config {
 	return DefaultConfigWithBasePort(1337)
 }
@@ -320,6 +327,7 @@ func DefaultConfigWithBasePort(basePort int) *Config {
 	config.ExternalRestAddress = "."
 	config.LogLevel = "INFO"
 	config.LogHistoryPageSize = 10
+	config.LogHistoryLimit = DefaultLogHistoryLimit
 	config.CheckForUpdates = false
 	config.DefaultPermissions.Exec = true
 	config.DefaultPermissions.View = true

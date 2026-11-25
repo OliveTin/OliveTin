@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
@@ -165,7 +166,7 @@ func (e *Executor) restoreLogsToExecutor(loadedLogs []*InternalLogEntry, skipped
 			continue
 		}
 
-		logEntry.Index = int64(len(e.logsTrackingIdsByDate))
+		logEntry.Index = e.takeNextLogIndexLocked()
 		e.logs[logEntry.ExecutionTrackingID] = logEntry
 		e.logsTrackingIdsByDate = append(e.logsTrackingIdsByDate, logEntry.ExecutionTrackingID)
 
@@ -173,6 +174,8 @@ func (e *Executor) restoreLogsToExecutor(loadedLogs []*InternalLogEntry, skipped
 			e.addLogToBindingMap(logEntry)
 		}
 	}
+
+	e.evictOldLogsLocked(time.Now())
 
 	return skippedCount
 }

@@ -18,6 +18,7 @@ func (cfg *Config) Sanitize() {
 	cfg.sanitizeLogLevel()
 	cfg.sanitizeAuthRequireGuestsToLogin()
 	cfg.sanitizeLogHistoryPageSize()
+	cfg.sanitizeLogHistoryLimit()
 	cfg.sanitizeLocalUsers()
 	cfg.sanitizeSecurityHeaders()
 	cfg.sanitizeOnClickDefaults()
@@ -355,6 +356,13 @@ func (cfg *Config) sanitizeLogHistoryPageSize() {
 		cfg.LogHistoryPageSize = 10
 	} else if cfg.LogHistoryPageSize > 100 {
 		log.Warnf("LogsHistoryLimit is high, you can do this, but expect browser lag.")
+	}
+}
+
+func (cfg *Config) sanitizeLogHistoryLimit() {
+	if cfg.LogHistoryLimit < MinimumLogHistoryLimit {
+		log.Warnf("logHistoryLimit %d is too low, setting it to %d", cfg.LogHistoryLimit, MinimumLogHistoryLimit)
+		cfg.LogHistoryLimit = MinimumLogHistoryLimit
 	}
 }
 
