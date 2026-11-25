@@ -1,0 +1,60 @@
+---
+name: Release upgrade notes
+
+# Upgrade notes for merged but unreleased changes live under
+# "Next release (unreleased)" in upgrade_notes.adoc. When a 3k release is
+# tagged, move the notes that shipped in it under a heading for that version
+# on the next branch, which is where docs.olivetin.app is built from.
+
+on:
+  push:
+    tags:
+      - '3*.*.*'
+      - '!3*.*.*-*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag to label upgrade notes with (eg 3000.23.0)'
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-upgrade-notes
+  cancel-in-progress: false
+
+jobs:
+  label-upgrade-notes:
+    runs-on: ubuntu-latest
+    env:
+      NOTES_PATH: docs/modules/ROOT/pages/upgrade/upgrade_notes.adoc
+      RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
+    steps:
+      - name: Checkout next
+        uses: actions/checkout@v6
+        with:
+          ref: next
+          fetch-depth: 0
+          token: ${{ secrets.CONTAINER_TOKEN }}
+
+      - name: Move released upgrade notes
+        run: |
+          released_notes="${RUNNER_TEMP}/upgrade_notes_released.adoc"
+          if ! git show "refs/tags/${RELEASE_TAG}:${NOTES_PATH}" > "${released_notes}"; then
+            echo "Tag ${RELEASE_TAG} has no ${NOTES_PATH}; nothing to do."
+            exit 0
+          fi
+          python3 -I scripts/release_upgrade_notes.py "${RELEASE_TAG}" "${released_notes}" "${NOTES_PATH}"
+
+      - name: Commit and push
+        run: |
+          if git diff --quiet -- "${NOTES_PATH}"; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "${NOTES_PATH}"
+          git commit -m "docs: label upgrade notes released in ${RELEASE_TAG}"
+          git push origin HEAD:next

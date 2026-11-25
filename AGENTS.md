@@ -74,6 +74,23 @@ If you are looking for OliveTin's AI policy, you can find it in `AI.md`.
 - Review the AI guidance in `AI.md`.
 - Review the pull request template at `.github/PULL_REQUEST_TEMPLATE.md`.
 - When changing behaviour covered by a spec in `specs/`, ensure implementation and tests match the spec.
+- If operators need to act when upgrading, add an upgrade note (see "Upgrade Notes" below).
+
+### Upgrade Notes (changes that need operator action)
+When a change means operators may need to do something when they upgrade (a breaking behaviour change, a config change, or a security fix that stops a previously working setup), add an upgrade note in the same PR as the change.
+
+- Add the note to `docs/modules/ROOT/pages/upgrade/upgrade_notes.adoc`, under the `== Next release (unreleased)` heading. If that heading does not exist, create it directly after the page's introduction paragraph, above the newest version section.
+- Each note is an anchor line plus a level-3 heading, then what changed, who is affected, and what to do:
+  ```asciidoc
+  [#short-kebab-case-anchor]
+  === Short description of the change
+
+  What changed, and who is affected. What operators need to change.
+  ```
+- Link to the note from related docs pages with `xref:upgrade/upgrade_notes.adoc#short-kebab-case-anchor[Upgrade Notes]`. The anchor stays the same when the note moves under a version heading, so links keep working.
+- Do **not** write a version number and do **not** rename the unreleased heading by hand. When a 3k release is tagged, `.github/workflows/release-upgrade-notes.yml` runs `scripts/release_upgrade_notes.py`, which moves every note that was in the unreleased section at the tagged commit under a new `== <version>` heading on `next`. Notes merged after the release was cut stay unreleased. If the workflow fails, rerun it with `workflow_dispatch` and the release tag.
+- Do **not** mark the change with a `BREAKING CHANGE:` footer or a `!` in the commit type. semantic-release treats either as a major version bump.
+- docs.olivetin.app is built from `next`, so a note is public as soon as it merges. For security fixes the note goes in the private advisory fork PR, and should describe the behaviour change without exploit details.
 
 ### Branch Naming
 Use conventional-commit-style branch names with a type prefix, optional issue reference, and a short kebab-case description:
