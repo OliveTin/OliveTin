@@ -70,3 +70,45 @@ func newQueueTestLogEntry(binding *ActionBinding, finished bool) *InternalLogEnt
 	}
 	return entry
 }
+
+func TestGetActiveExecutionsACLReturnsCopies(t *testing.T) {
+	e, cfg := testingExecutor()
+	action := &config.Action{Title: "running", Shell: "sleep 1"}
+	cfg.Actions = append(cfg.Actions, action)
+	cfg.Sanitize()
+	e.RebuildActionMap()
+
+	binding := e.FindBindingWithNoEntity(action)
+	require.NotNil(t, binding)
+
+	running := newQueueTestLogEntry(binding, false)
+	e.SetLog(running.ExecutionTrackingID, running)
+
+	stop := make(chan struct{})
+	writerDone := make(chan struct{})
+	go func() {
+		defer close(writerDone)
+		for {
+			select {
+			case <-stop:
+				return
+			default:
+				e.logmutex.Lock()
+				running.Output += "x"
+				running.ExitCode++
+				e.logmutex.Unlock()
+			}
+		}
+	}()
+
+	user := auth.UserGuest(cfg)
+	for range 200 {
+		for _, entry := range e.GetActiveExecutionsACL(cfg, user) {
+			assert.NotSame(t, running, entry, "callers must get a copy of a running entry")
+			_ = len(entry.Output) + int(entry.ExitCode)
+		}
+	}
+
+	close(stop)
+	<-writerDone
+}

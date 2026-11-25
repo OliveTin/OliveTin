@@ -18,7 +18,8 @@ func isQueueEntryVisible(cfg *config.Config, user *authpublic.AuthenticatedUser,
 	return acl.IsAllowedLogs(cfg, user, entry.Binding.Action)
 }
 
-// GetActiveExecutionsACL returns unfinished executions the user may view in the queue.
+// GetActiveExecutionsACL returns copies of unfinished executions the user may view in the queue.
+// The executor keeps writing to running entries, so callers must not share them.
 func (e *Executor) GetActiveExecutionsACL(cfg *config.Config, user *authpublic.AuthenticatedUser) []*InternalLogEntry {
 	e.logmutex.RLock()
 	defer e.logmutex.RUnlock()
@@ -28,7 +29,7 @@ func (e *Executor) GetActiveExecutionsACL(cfg *config.Config, user *authpublic.A
 	for _, trackingID := range e.logsTrackingIdsByDate {
 		entry := e.logs[trackingID]
 		if isQueueEntryVisible(cfg, user, entry) {
-			active = append(active, entry)
+			active = append(active, cloneInternalLogEntry(entry))
 		}
 	}
 
