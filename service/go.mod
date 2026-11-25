@@ -9,10 +9,8 @@ exclude github.com/alecthomas/go-check-sumtype v0.5.0
 
 require (
 	connectrpc.com/connect v1.21.1
-	github.com/Masterminds/semver v1.5.0
 	github.com/MicahParks/jwkset v0.12.0
 	github.com/MicahParks/keyfunc/v3 v3.9.2
-	github.com/PaesslerAG/jsonpath v0.1.1
 	github.com/alexedwards/argon2id v1.0.0
 	github.com/bufbuild/buf v1.75.0
 	github.com/expr-lang/expr v1.18.1
@@ -31,7 +29,9 @@ require (
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/sirupsen/logrus v1.10.2
 	github.com/stretchr/testify v1.12.1
+	github.com/theory/jsonpath v0.12.3
 	go.akshayshah.org/connectproto v0.6.0
+	golang.org/x/mod v0.43.0
 	golang.org/x/oauth2 v0.38.0
 	golang.org/x/sys v0.50.0
 	google.golang.org/protobuf v1.37.0-rc.1
@@ -79,7 +79,6 @@ require (
 	github.com/Microsoft/go-winio v0.6.4 // indirect
 	github.com/MirrexOne/unqueryvet v1.5.4 // indirect
 	github.com/OpenPeeDeeP/depguard/v2 v2.3.0 // indirect
-	github.com/PaesslerAG/gval v1.2.4 // indirect
 	github.com/alecthomas/chroma/v2 v2.27.0 // indirect
 	github.com/alecthomas/go-check-sumtype v0.5.1-0.20260828200218-ae6904d28606 // indirect
 	github.com/alexkohler/nakedret/v2 v2.0.6 // indirect
@@ -247,7 +246,6 @@ require (
 	github.com/sashamelentyev/interfacebloat v1.1.0 // indirect
 	github.com/sashamelentyev/usestdlibvars v1.29.0 // indirect
 	github.com/securego/gosec/v2 v2.30.0 // indirect
-	github.com/shopspring/decimal v1.6.0 // indirect
 	github.com/sivchari/containedctx v1.0.3 // indirect
 	github.com/sonatard/noctx v0.5.1 // indirect
 	github.com/sourcegraph/go-diff v0.10.0 // indirect
@@ -297,7 +295,6 @@ require (
 	golang.org/x/crypto v0.59.0 // indirect
 	golang.org/x/exp v0.0.0-20261124000051-d6646c509b6d // indirect
 	golang.org/x/exp/typeparams v0.0.0-20261124000051-d6646c509b6d // indirect
-	golang.org/x/mod v0.43.0 // indirect
 	golang.org/x/net v0.63.0 // indirect
 	golang.org/x/sync v0.25.0 // indirect
 	golang.org/x/term v0.48.0 // indirect
