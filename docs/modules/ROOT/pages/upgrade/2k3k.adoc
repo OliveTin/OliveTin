@@ -1,6 +1,6 @@
 = Understanding OliveTin 2k vs 3k
 
-NOTE: OliveTin 3k is basically "rebuilding OliveTin for the future" - and aims to have high compatibility with OliveTin 2k while people migrate. However, as we all know, stuff will break when 3k is new - so please be patient, and report issues as you find them! OliveTin 2k isn't going anywhere anytime soon!
+NOTE: OliveTin 3k was a rebuilding of OliveTin 2k from the ground up - and has high compatibility with OliveTin 2k while people migrate. OliveTin 2k is now end of life and no longer receives any updates, so please upgrade to 3k, and report anything that blocks your upgrade!
 
 == Quick summary of key points
 
@@ -13,7 +13,7 @@ eg: 2022.11.11
 
 eg: 2023.04.15
 | Calendar Versioning (calver)
-| At least 31st December 2028 (bug fixes and security updates only)
+| End of life on 25th November 2026 (policy change) - no security fixes or bug fixes - see <<end-of-2k-support>>
 
 | **OliveTin 3k**
 
@@ -62,17 +62,37 @@ However, starting with version "2.0.0" after versions like "2022.11.11" would br
 
 To avoid this confusion, it was decided to jump straight to version "3000.0.0" - which is clearly above "2022.11.11" and any other 2k version. This way, users can easily see that 3000.x.x is newer than any 2k version, and it avoids any confusion with version ordering.
 
-- OliveTin versions like 2022.11.11 and 2023.04.15 are part of "**OliveTin 2k**" (2000 series) and use a **calendar versioning** (calver) scheme. These versions are stable and will continue to receive updates and support but will not receive new features.
-  - There is no plan to stop supporting OliveTin 2k versions until **at least 31st December 2028** (and I'll probably keep extending that date, but it's good to have a cutoff somewhere).
+- OliveTin versions like 2022.11.11 and 2023.04.15 are part of "**OliveTin 2k**" (2000 series) and use a **calendar versioning** (calver) scheme. These versions are end of life, and no longer receive any updates.
+  - OliveTin 2k was originally promised support until at least 31st December 2028. This changed on 25th November 2026, when 2k reached end of life - see <<end-of-2k-support>>.
 - OliveTin versions starting from 3000.0.0 and onwards are part of "**OliveTin 3k**" (3000 series) and also use a **semantic versioning scheme**. These versions will receive new features, improvements, and updates.
 
 == Should I automatically update to OliveTin 3k?
 
-Users are encouraged to try OliveTin 3k, but understand that it represents several major technology changes, so subtle things might change or break in the first few releases. Please remember that OliveTin 2k will continue to be supported and receive updates until at least 31st December 2028, so there is no rush to upgrade.
+Yes, please plan to upgrade. OliveTin 2k is end of life and no longer receives security fixes or bug fixes, so staying on 2k means staying on known, unpatched vulnerabilities.
+
+OliveTin 3k represents several major technology changes, so test your configuration after upgrading, and please report anything that breaks.
+
+[#end-of-2k-support]
+=== Policy change (25th November 2026): end of support for OliveTin 2k
+
+Until 25th November 2026, this page said OliveTin 2k would receive bug fixes and security updates until at least 31st December 2028. That has changed: **as of 25th November 2026, OliveTin 2k is end of life, and no longer receives any updates - neither security fixes nor bug fixes.** We're sorry. The original commitment was made in good faith, and we know some of you planned around it.
+
+There are four reasons for the change:
+
+- **There isn't enough maintainer time to patch 2k.** In practice, 2k has received almost no patches since 3k was released. All the available time has gone into 3k, and it is more honest to say so than to keep a promise on paper that isn't being kept.
+- **Very few people are asking for 2k.** Interest in staying on 2k has been very low compared to the number of users who have simply upgraded to 3k.
+- **Many fixes can't be made safely in 2k's architecture.** Recent fixes in 3k rely on typed entities, the Connect RPC API, and a configuration system that can be reloaded cleanly. 2k has none of these, so a lot of fixes would mean rewriting large parts of 2k, which would effectively rebuild 3k inside 2k.
+- **Reports are arriving much faster than 2k could be patched.** AI-assisted security research now finds issues faster than ever. That is good for OliveTin users overall, but it means 2k fixes would ship late, incomplete, or not at all, and a branch that still claims security support without getting it is worse than an honest end-of-support notice.
+
+Existing 2k releases and the `latest-2k` container images remain available, and nothing will stop working. If something blocks your upgrade to 3k, please open an issue - fixing upgrade blockers is now the best way we can keep 2k users safe.
+
+See the link:https://github.com/OliveTin/OliveTin/blob/main/SECURITY.md[security policy] for details.
 
 The developers of this project have quite a lot of test infrastructure around OliveTin 3k (more than was possible with 2k), and would like to **strongly urge problems with updates to be reported, so that they can be fixed when possible**. 
 
 === How do I stop my OliveTin 2k containers from upgrading to OliveTin 3k automatically?
+
+WARNING: OliveTin 2k is end of life and no longer receives any updates. Only pin to 2k while you prepare to upgrade.
 
 Change your `latest` tag to `latest-2k` in your container definitions. 
 
