@@ -7,7 +7,7 @@ OliveTin provides a dedicated webhook endpoint at `/webhooks` that can receive w
 
 == Basic Configuration
 
-To configure an action to run on a webhook, add the `execOnWebhook` property to your action. Webhook-triggered actions **must** use `exec:` (not `shell:` or `shellAfterCompleted`).
+To configure an action to run on a webhook, add the `execOnWebhook` property to your action. Webhook-triggered actions **must** use `exec:` (not `shell:` or `shellAfterCompleted`). This also applies to any action started through `triggers` from a webhook-triggered action, at any depth of the trigger chain (see xref:upgrade/upgrade_notes.adoc#webhook-trigger-chains-exec-only[Upgrade Notes]).
 
 [source,yaml]
 .`config.yaml`

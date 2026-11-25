@@ -3,6 +3,7 @@ package executor
 import (
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -1239,4 +1240,141 @@ func TestRebuildActionMapSkipsNilActions(t *testing.T) {
 
 	assert.NotPanics(t, e.RebuildActionMap)
 	assert.Len(t, e.MapActionBindings, 1)
+}
+
+type finishedExecution struct {
+	title    string
+	output   string
+	exitCode int32
+	tags     []string
+}
+
+type executionResultCollector struct {
+	ch chan finishedExecution
+}
+
+func (c *executionResultCollector) OnExecutionStarted(_ *InternalLogEntry) {}
+
+func (c *executionResultCollector) OnExecutionFinished(entry *InternalLogEntry) {
+	c.ch <- finishedExecution{
+		title:    entry.ActionTitle,
+		output:   entry.Output,
+		exitCode: entry.ExitCode,
+		tags:     slices.Clone(entry.Tags),
+	}
+}
+
+func (c *executionResultCollector) OnOutputChunk(_ []byte, _ string) {}
+
+func (c *executionResultCollector) OnActionMapRebuilt() {}
+
+func runWebhookTriggerChain(t *testing.T, actions []*config.Action, expectedExecutions int) map[string]finishedExecution {
+	t.Helper()
+
+	cfg := config.DefaultConfig()
+	e := DefaultExecutor(cfg)
+	cfg.Actions = append(cfg.Actions, actions...)
+	cfg.Sanitize()
+	e.RebuildActionMap()
+
+	results := make(chan finishedExecution, expectedExecutions+2)
+	e.AddListener(&executionResultCollector{ch: results})
+
+	req := &ExecutionRequest{
+		Tags:              []string{"webhook"},
+		AuthenticatedUser: auth.UserFromSystem(cfg, "webhook"),
+		Cfg:               cfg,
+		Arguments:         map[string]string{"msg": "hello"},
+		Binding:           e.FindBindingWithNoEntity(actions[0]),
+	}
+	wg, _ := e.ExecRequest(req)
+	wg.Wait()
+
+	got := make(map[string]finishedExecution)
+	for i := range expectedExecutions {
+		select {
+		case result := <-results:
+			got[result.title] = result
+		case <-time.After(2 * time.Second):
+			t.Fatalf("timed out waiting for execution %d; got %v", i+1, got)
+		}
+	}
+
+	return got
+}
+
+func TestWebhookTriggerRejectsShellExecution(t *testing.T) {
+	marker := filepath.Join(t.TempDir(), "triggered-shell-ran")
+
+	got := runWebhookTriggerChain(t, []*config.Action{
+		{
+			Title:    "Webhook entry",
+			Exec:     []string{"echo", "entry"},
+			Triggers: []string{"Triggered shell"},
+		},
+		{
+			Title: "Triggered shell",
+			Shell: "touch " + marker,
+		},
+	}, 2)
+
+	triggered := got["Triggered shell"]
+	assert.Equal(t, int32(-1337), triggered.exitCode)
+	assert.Contains(t, triggered.output, "webhooks cannot use Shell execution")
+	assert.Contains(t, triggered.tags, "trigger")
+	assert.Contains(t, triggered.tags, "webhook")
+	assert.NoFileExists(t, marker, "triggered shell command must not run")
+}
+
+func TestWebhookTriggerRejectsShellExecutionAtDepth(t *testing.T) {
+	marker := filepath.Join(t.TempDir(), "nested-shell-ran")
+
+	got := runWebhookTriggerChain(t, []*config.Action{
+		{
+			Title:    "Webhook entry",
+			Exec:     []string{"echo", "entry"},
+			Triggers: []string{"Middle exec"},
+		},
+		{
+			Title:    "Middle exec",
+			Exec:     []string{"echo", "middle"},
+			Triggers: []string{"Nested shell"},
+		},
+		{
+			Title: "Nested shell",
+			Shell: "touch " + marker,
+		},
+	}, 3)
+
+	nested := got["Nested shell"]
+	assert.Equal(t, int32(-1337), nested.exitCode)
+	assert.Contains(t, nested.output, "webhooks cannot use Shell execution")
+	assert.NoFileExists(t, marker, "nested triggered shell command must not run")
+}
+
+func TestWebhookTriggerRejectsShellAfterCompleted(t *testing.T) {
+	marker := filepath.Join(t.TempDir(), "triggered-after-ran")
+
+	got := runWebhookTriggerChain(t, []*config.Action{
+		{
+			Title:    "Webhook entry",
+			Exec:     []string{"echo", "entry"},
+			Triggers: []string{"Triggered after completed"},
+		},
+		{
+			Title:               "Triggered after completed",
+			Exec:                []string{"echo", "triggered"},
+			ShellAfterCompleted: "touch " + marker,
+		},
+	}, 2)
+
+	assert.Contains(t, got["Triggered after completed"].output, "webhooks cannot use shellAfterCompleted")
+	assert.NoFileExists(t, marker, "triggered shellAfterCompleted must not run")
+}
+
+func TestTriggeredRequestTags(t *testing.T) {
+	assert.Equal(t, []string{"trigger"}, triggeredRequestTags(&ExecutionRequest{}))
+	assert.Equal(t, []string{"trigger"}, triggeredRequestTags(&ExecutionRequest{Tags: []string{"trigger"}}))
+	assert.Equal(t, []string{"trigger", "webhook"}, triggeredRequestTags(&ExecutionRequest{Tags: []string{"webhook"}}))
+	assert.Equal(t, []string{"trigger", "webhook"}, triggeredRequestTags(&ExecutionRequest{Tags: []string{"trigger", "webhook"}}))
 }

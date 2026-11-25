@@ -3,6 +3,15 @@
 
 OliveTin releases are published to GitHub, and the release notes are contained there. This page includes a summary of "Upgrade Notes" for breaking changes between releases.
 
+== Next release (unreleased)
+
+[#webhook-trigger-chains-exec-only]
+=== Actions triggered from webhooks can no longer use `shell:`
+
+Webhook-triggered actions were already required to use `exec:`. This rule now also applies to every action started through `triggers` from a webhook-triggered action, at any depth, including `shellAfterCompleted`. Previously these triggered actions could still run `shell:` commands.
+
+If a webhook action in your config triggers an action that uses `shell:` or `shellAfterCompleted`, that action will now fail with "webhooks cannot use Shell execution". Change it to use `exec:` instead. See xref:action_execution/shellvsexec.adoc[Shell vs Exec].
+
 == 2024.08.14
 
 === Navigation change - Subpaths no longer supported
