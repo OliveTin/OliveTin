@@ -106,6 +106,7 @@ def move_released_notes(version: str, released_lines: list[str], target_lines: l
         return None
 
     result = list(preamble)
+    moved = False
     for section in sections:
         if section_heading(section) != UNRELEASED_HEADING:
             result.extend(section)
@@ -113,12 +114,16 @@ def move_released_notes(version: str, released_lines: list[str], target_lines: l
 
         heading, notes = split_sections(section, "=== ")
         shipped = [note for note in notes if note_key(note) in keys]
-        remaining = [note for note in notes if note_key(note) not in keys]
+        if not shipped:
+            result.extend(section)
+            continue
 
+        remaining = [note for note in notes if note_key(note) not in keys]
         result.extend(build_unreleased_section(heading, remaining))
         result.extend(build_version_section(version, shipped))
+        moved = True
 
-    return result
+    return result if moved else None
 
 
 def main(argv: list[str]) -> int:
