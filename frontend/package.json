@@ -5,12 +5,12 @@
 	"repository": "https://github.com/OliveTin/OliveTin",
 	"type": "module",
 	"devDependencies": {
-		"@vitejs/plugin-vue": "^6.0.10",
-		"eslint": "^10.14.0",
+		"@vitejs/plugin-vue": "^6.0.11",
+		"eslint": "^10.15.0",
 		"eslint-plugin-vue": "^10.12.1",
 		"neostandard": "^0.14.1",
-		"stylelint": "^18.0.0",
-		"stylelint-config-standard": "^41.0.0",
+		"stylelint": "^18.1.0",
+		"stylelint-config-standard": "^41.1.0",
 		"vite": "^8.3.8"
 	},
 	"scripts": {
@@ -31,10 +31,10 @@
 		"@xterm/addon-web-links": "^0.12.0",
 		"@xterm/xterm": "^6.0.0",
 		"iconify-icon": "^3.0.5",
-		"picocrank": "^1.41.0",
-		"vue": "^3.5.45",
-		"vue-i18n": "^11.4.18",
-		"vue-router": "^5.5.0"
+		"picocrank": "^1.42.0",
+		"vue": "^3.5.46",
+		"vue-i18n": "^11.4.23",
+		"vue-router": "^5.5.1"
 	},
 	"engines": {
 		"node": "^22.22.2 || ^24.15.0 || >=26.0.0"

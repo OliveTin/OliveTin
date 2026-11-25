@@ -3,7 +3,6 @@ package updatecheck
 import (
 	"context"
 	"encoding/json"
-	"github.com/Masterminds/semver"
 	config "github.com/OliveTin/OliveTin/internal/config"
 	"github.com/OliveTin/OliveTin/internal/installationinfo"
 	"github.com/robfig/cron/v3"
@@ -11,7 +10,10 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strings"
 	"time"
+
+	"golang.org/x/mod/semver"
 )
 
 type versionMapType struct {
@@ -69,20 +71,29 @@ func parseVersion(input []byte) string {
 }
 
 func parseIfVersionIsLater(currentString string, latestString string) string {
-	currentVersion, errCurrent := semver.NewVersion(currentString)
-	latestVersion, errLatest := semver.NewVersion(latestString)
+	currentVersion := withSemverPrefix(currentString)
+	latestVersion := withSemverPrefix(latestString)
 
-	if errCurrent != nil || errLatest != nil {
-		log.Warnf("Version parse failure: %v %v", errCurrent, errLatest)
+	if !semver.IsValid(currentVersion) || !semver.IsValid(latestVersion) {
+		log.Warnf("Version parse failure: current=%q latest=%q", currentString, latestString)
 
 		return "version-parse-failure"
 	}
 
-	if latestVersion.GreaterThan(currentVersion) {
+	if semver.Compare(latestVersion, currentVersion) > 0 {
 		return latestString
 	}
 
 	return "none"
+}
+
+// OliveTin versions are published without the "v" prefix that semver comparison requires.
+func withSemverPrefix(version string) string {
+	if strings.HasPrefix(version, "v") {
+		return version
+	}
+
+	return "v" + version
 }
 
 func doRequest() string {
