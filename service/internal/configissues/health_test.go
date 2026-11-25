@@ -189,3 +189,41 @@ func TestLongIssuesKeepOrderAndAreNotLoggedAgain(t *testing.T) {
 	assert.True(t, strings.HasPrefix(listed[1].Message, "b "), "long issues must keep collection order")
 	assert.True(t, strings.HasPrefix(listed[2].Message, "a "), "long issues must keep collection order")
 }
+
+func TestDuplicateIssueKeepsTheError(t *testing.T) {
+	warning := testIssue(CodeConfigDecode, "bad value")
+	failure := warning
+	failure.Severity = SeverityError
+
+	orders := map[string][]Issue{
+		"warning first": {warning, failure},
+		"error first":   {failure, warning},
+	}
+	for name, issues := range orders {
+		t.Run(name, func(t *testing.T) {
+			resetIssues(t)
+			Replace(issues)
+			assert.Equal(t, []Issue{failure}, List())
+		})
+	}
+}
+
+func TestIssueInTwoSourcesIsListedWithTheHighestSeverity(t *testing.T) {
+	warning := testIssue(CodeConfigDecode, "bad value")
+	failure := warning
+	failure.Severity = SeverityError
+
+	t.Run("error reported after a load warning", func(t *testing.T) {
+		resetIssues(t)
+		ReplaceLoadIssues([]Issue{warning})
+		Report(failure)
+		assert.Equal(t, []Issue{failure}, List())
+	})
+
+	t.Run("warning reported after a load error", func(t *testing.T) {
+		resetIssues(t)
+		ReplaceLoadIssues([]Issue{failure})
+		Report(warning)
+		assert.Equal(t, []Issue{failure}, List())
+	})
+}

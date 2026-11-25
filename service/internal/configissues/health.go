@@ -69,18 +69,32 @@ func toHealthIssue(issue Issue) health.Issue {
 	}
 }
 
+// toHealthIssues lists each problem once. When the same problem is collected
+// as both a warning and an error, the error is kept, at the position the
+// problem was first collected.
 func toHealthIssues(issues []Issue) []health.Issue {
-	seen := make(map[string]bool, len(issues))
+	positions := make(map[string]int, len(issues))
 	out := make([]health.Issue, 0, len(issues))
 	for _, issue := range issues {
 		converted := toHealthIssue(issue)
-		if seen[converted.Key] {
+		position, seen := positions[converted.Key]
+		if !seen {
+			positions[converted.Key] = len(out)
+			out = append(out, converted)
 			continue
 		}
-		seen[converted.Key] = true
-		out = append(out, converted)
+		if severityRank(string(converted.Severity)) > severityRank(string(out[position].Severity)) {
+			out[position] = converted
+		}
 	}
 	return out
+}
+
+func severityRank(severity string) int {
+	if severity == string(health.SeverityError) {
+		return 1
+	}
+	return 0
 }
 
 func fromHealthIssue(view health.IssueView) Issue {
@@ -141,14 +155,20 @@ func uniqueIssueViews(stored []health.IssueView) []health.IssueView {
 		return sourceRank(views[left].CheckID) < sourceRank(views[right].CheckID)
 	})
 
-	seen := make(map[string]bool, len(views))
+	// The same problem can be open in more than one source, with a different
+	// severity in each. It is listed once, with the highest severity.
+	positions := make(map[string]int, len(views))
 	out := make([]health.IssueView, 0, len(views))
 	for _, view := range views {
-		if seen[view.IssueKey] {
+		position, seen := positions[view.IssueKey]
+		if !seen {
+			positions[view.IssueKey] = len(out)
+			out = append(out, view)
 			continue
 		}
-		seen[view.IssueKey] = true
-		out = append(out, view)
+		if severityRank(view.Severity) > severityRank(out[position].Severity) {
+			out[position] = view
+		}
 	}
 	return out
 }
