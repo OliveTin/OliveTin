@@ -100,6 +100,7 @@ Security advisory fixes follow the process in `SECURITY.md`:
 - Supporting commits in the same PR (for example docs or an upgrade note) use their normal type, and may mention the advisory ID.
 - `security:` commits trigger a patch release and are listed under **Security** in the release notes. Do not use `fix:` for advisory fixes, or they will be listed as bug fixes.
 - When an advisory is closed as not a vulnerability but still worth fixing, the fix is an ordinary public `fix:` commit against `next`, without the advisory ID.
+- Every triage or draft advisory carries a `[status:...]` tag at the end of its summary. Update it with `scripts/ghsa_status.py <GHSA-ID> <status>` whenever you change an advisory's state, ask the reporter a question, open a fork PR, or merge a fix; clear it with `clear` before publishing, closing, or requesting a CVE. The statuses and when to use them are listed in `.github/SECURITY_ADVISORY_DUPLICATES.md` under "Status tags". Run `scripts/ghsa_status.py --list` to check them.
 
 ### Branch Naming
 Use conventional-commit-style branch names with a type prefix, optional issue reference, and a short kebab-case description:

@@ -12,6 +12,28 @@ This document lists known duplicate security advisory clusters for [OliveTin/Oli
 4. If unique: accept, patch on a private branch, reassess CVSS with OliveTin context (see SECURITY.md — OliveTin is intentional RCE by design).
 5. Merge fix to `next`, publish advisory, credit reporters in advisory body (not commit message).
 
+Keep each advisory's status tag up to date throughout (see below).
+
+---
+
+## Status tags
+
+Every advisory in triage or draft has one `[status:...]` tag at the end of its summary, so maintainers and reporters can see where it is. Set it with `scripts/ghsa_status.py <GHSA-ID> <status>`, and check all advisories with `scripts/ghsa_status.py --list` (it exits non-zero if any tag is missing, unknown, or left on a published or closed advisory).
+
+| Status | Advisory state | Set when |
+|--------|----------------|----------|
+| `pending-review` | triage | A new report arrives and has not been decided yet. |
+| `awaiting-reporter` | triage or draft | Questions have been asked and the reporter's reply is needed. |
+| `accepted` | draft | The report is accepted and a fix is not yet ready for review. |
+| `feedback-on-fix` | draft | The fix PR is open in the private advisory fork, waiting for review or merge. |
+| `pending-release` | draft | The fix is merged to `next` and is waiting for a release before publishing. |
+
+Remove the tag with `scripts/ghsa_status.py <GHSA-ID> clear`:
+
+- before publishing an advisory;
+- before closing an advisory;
+- before requesting a CVE, so the tag does not end up in the CVE record.
+
 ---
 
 ## shellAfterCompleted command injection
