@@ -131,6 +131,8 @@ journalctl -eu OliveTin --since "30 minutes ago"
 
 For deeper server-side detail, you can temporarily enable xref:troubleshooting/log-debug-options.adoc[LogDebugOptions]—then capture logs again with those settings in mind.
 
+WARNING: Logs captured at `DEBUG` or `TRACE` level, with `-startuptrace`, or with `logDebugOptions` enabled **will contain sensitive information**, such as secrets, API keys, password hashes and request headers. Remove these before sharing logs. See xref:advanced_configuration/logs.adoc#debug-logs-sensitive[DEBUG and TRACE logs contain sensitive information].
+
 [#share-the-logs]
 == Share the logs
 
