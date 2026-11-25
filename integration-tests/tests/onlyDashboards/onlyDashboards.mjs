@@ -1,6 +1,6 @@
 import { describe, it, before, after } from 'mocha'
 import { assert, expect } from 'chai'
-import { By } from 'selenium-webdriver'
+import { By, until } from 'selenium-webdriver'
 import {
   getRootAndWait,
   getActionButtons,
@@ -41,7 +41,8 @@ describe('config: onlyDashboards', function () {
 
     const firstDashboardLink = await webdriver.findElement(By.css('li[title="My Dashboard"]'), 'The first dashboard link should be present')
     assert.isNotNull(firstDashboardLink, 'First dashboard link should not be null')
-    assert.isTrue(await firstDashboardLink.isDisplayed(), 'First dashboard link should be displayed')
+    // The sidebar is marked as shown when it starts opening, so wait for the link to become visible.
+    await webdriver.wait(until.elementIsVisible(firstDashboardLink), 5000, 'First dashboard link should be displayed')
 
     const actionButtonsOnDashboard = await getActionButtons()
     assert.isArray(actionButtonsOnDashboard, 'Action buttons on dashboard should be an array')
