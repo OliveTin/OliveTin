@@ -94,7 +94,7 @@ All configuration options are covered in the solution sections
 | `authHttpHeaderUserGroup` | The HTTP header to use for the usergroup. | `` | Requires restart | xref:security/trusted_header.adoc[Trusted Headers]
 | `authLocalUsers` | The list of local users. | `[]` | Requires restart | xref:security/local.adoc[Local Users]
 | `authLoginUrl` | The URL to redirect to for login. | `` | Requires restart | xref:security/local.adoc[Login URL]
-| `authRequireGuestsToLogin` | Basically disables all functionality for guests. It sets all default permissions to false. | `false` | Requires restart | xref:security/acl.adoc[Access Control Lists]
+| `authRequireGuestsToLogin` | Makes guests log in before they can do anything. Guests can only call the API to log in, and get no permissions: all default permissions are set to false, and ACLs never apply to guests. See xref:security/example_login_required.adoc[Login required]. | `false` | Requires restart | xref:security/acl.adoc[Access Control Lists]
 | `defaultPermissions` | The default permissions to use. | `[]` | Requires restart | xref:security/acl.adoc[Access Control Lists]
 | `accessControlLists` | The list of access control lists. | `[]` | Requires restart | xref:security/acl.adoc[Access Control Lists]
 | `security.headerContentSecurityPolicy` | Whether to send a `Content-Security-Policy` header from the single HTTP frontend. | `true` | Live reloadable | xref:security/content_security_policy.adoc[Content Security Policy headers]

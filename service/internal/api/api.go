@@ -522,9 +522,6 @@ func (api *oliveTinAPI) executionStatusBackToDashboards(ile *executor.InternalLo
 
 func (api *oliveTinAPI) ExecutionStatus(ctx ctx.Context, req *connect.Request[apiv1.ExecutionStatusRequest]) (*connect.Response[apiv1.ExecutionStatusResponse], error) {
 	user := auth.UserFromApiCall(ctx, req, api.cfg)
-	if err := api.checkDashboardAccess(user); err != nil {
-		return nil, err
-	}
 	ile, err := api.resolveExecutionStatusForView(req.Msg, user)
 	if err != nil {
 		return nil, err
@@ -590,10 +587,6 @@ func (api *oliveTinAPI) Logout(ctx ctx.Context, req *connect.Request[apiv1.Logou
 
 func (api *oliveTinAPI) GetActionBinding(ctx ctx.Context, req *connect.Request[apiv1.GetActionBindingRequest]) (*connect.Response[apiv1.GetActionBindingResponse], error) {
 	user := auth.UserFromApiCall(ctx, req, api.cfg)
-
-	if err := api.checkDashboardAccess(user); err != nil {
-		return nil, err
-	}
 
 	resp, err := api.getActionBindingResponse(user, req.Msg.BindingId)
 	if err != nil {
@@ -661,10 +654,6 @@ func (api *oliveTinAPI) errUnlessBindingEntityTypeAllowed(user *authpublic.Authe
 func (api *oliveTinAPI) GetDashboard(ctx ctx.Context, req *connect.Request[apiv1.GetDashboardRequest]) (*connect.Response[apiv1.GetDashboardResponse], error) {
 	user := auth.UserFromApiCall(ctx, req, api.cfg)
 
-	if err := api.checkDashboardAccess(user); err != nil {
-		return nil, err
-	}
-
 	entityType := ""
 	entityKey := ""
 	if req.Msg != nil {
@@ -678,13 +667,6 @@ func (api *oliveTinAPI) GetDashboard(ctx ctx.Context, req *connect.Request[apiv1
 	}
 
 	return api.buildCustomDashboardResponse(dashboardRenderRequest, req.Msg.Title)
-}
-
-func (api *oliveTinAPI) checkDashboardAccess(user *authpublic.AuthenticatedUser) error {
-	if user.IsGuest() && api.cfg.AuthRequireGuestsToLogin {
-		return connect.NewError(connect.CodePermissionDenied, fmt.Errorf("guests are not allowed to access the dashboard"))
-	}
-	return nil
 }
 
 func (api *oliveTinAPI) createDashboardRenderRequest(user *authpublic.AuthenticatedUser, entityType, entityKey string) *DashboardRenderRequest {
@@ -733,10 +715,6 @@ func resolveLogsPageSize(requestPageSize, defaultPageSize int64) int64 {
 
 func (api *oliveTinAPI) GetLogs(ctx ctx.Context, req *connect.Request[apiv1.GetLogsRequest]) (*connect.Response[apiv1.GetLogsResponse], error) {
 	user := auth.UserFromApiCall(ctx, req, api.cfg)
-
-	if err := api.checkDashboardAccess(user); err != nil {
-		return nil, err
-	}
 
 	pageSize := resolveLogsPageSize(req.Msg.GetPageSize(), api.cfg.LogHistoryPageSize)
 	logEntries, paging, err := api.executor.GetLogTrackingIdsACL(api.cfg, user, req.Msg.StartOffset, pageSize, req.Msg.DateFilter, req.Msg.GetFilter())
@@ -823,10 +801,6 @@ func (api *oliveTinAPI) buildActionLogsResponse(filtered []*executor.InternalLog
 func (api *oliveTinAPI) GetActionLogs(ctx ctx.Context, req *connect.Request[apiv1.GetActionLogsRequest]) (*connect.Response[apiv1.GetActionLogsResponse], error) {
 	user := auth.UserFromApiCall(ctx, req, api.cfg)
 
-	if err := api.checkDashboardAccess(user); err != nil {
-		return nil, err
-	}
-
 	filtered := api.filterLogsByACL(api.executor.GetLogsByBindingId(req.Msg.ActionId), user)
 	page := paginate(int64(len(filtered)), api.cfg.LogHistoryPageSize, req.Msg.StartOffset)
 	if page.empty {
@@ -912,9 +886,6 @@ func (api *oliveTinAPI) errUnlessUserMayValidateArgumentTypeForBinding(user *aut
 
 func (api *oliveTinAPI) ValidateArgumentType(ctx ctx.Context, req *connect.Request[apiv1.ValidateArgumentTypeRequest]) (*connect.Response[apiv1.ValidateArgumentTypeResponse], error) {
 	user := auth.UserFromApiCall(ctx, req, api.cfg)
-	if err := api.checkDashboardAccess(user); err != nil {
-		return nil, err
-	}
 
 	if err := api.validateArgumentTypeBindingAccess(user, req.Msg); err != nil {
 		return nil, err
@@ -1010,10 +981,6 @@ func (api *oliveTinAPI) findArgumentByName(action *config.Action, name string) *
 
 func (api *oliveTinAPI) WhoAmI(ctx ctx.Context, req *connect.Request[apiv1.WhoAmIRequest]) (*connect.Response[apiv1.WhoAmIResponse], error) {
 	user := auth.UserFromApiCall(ctx, req, api.cfg)
-
-	if err := api.checkDashboardAccess(user); err != nil {
-		return nil, err
-	}
 
 	res := &apiv1.WhoAmIResponse{
 		AuthenticatedUser:  user.Username,
@@ -1112,10 +1079,6 @@ func (api *oliveTinAPI) EventStream(ctx ctx.Context, req *connect.Request[apiv1.
 	srv.ResponseHeader().Set("X-Accel-Buffering", "no")
 
 	user := auth.UserFromApiCall(ctx, req, api.cfg)
-
-	if err := api.checkDashboardAccess(user); err != nil {
-		return err
-	}
 
 	client := &streamingClient{
 		channel:           make(chan *apiv1.EventStreamResponse, 10), // Buffered channel to hold Events
@@ -1340,9 +1303,6 @@ func (api *oliveTinAPI) maybeSendExecutionFinished(client *streamingClient, ile 
 
 func (api *oliveTinAPI) GetDiagnostics(ctx ctx.Context, req *connect.Request[apiv1.GetDiagnosticsRequest]) (*connect.Response[apiv1.GetDiagnosticsResponse], error) {
 	user := auth.UserFromApiCall(ctx, req, api.cfg)
-	if err := api.checkDashboardAccess(user); err != nil {
-		return nil, err
-	}
 	if !user.EffectivePolicy.ShowDiagnostics {
 		return nil, connect.NewError(connect.CodePermissionDenied, fmt.Errorf("diagnostics are not available for your account"))
 	}
@@ -1360,7 +1320,7 @@ func (api *oliveTinAPI) Init(ctx ctx.Context, req *connect.Request[apiv1.InitReq
 }
 
 func (api *oliveTinAPI) buildInitResponse(user *authpublic.AuthenticatedUser) *apiv1.InitResponse {
-	loginRequired := user.IsGuest() && api.cfg.AuthRequireGuestsToLogin
+	loginRequired := user.MustLogIn(api.cfg)
 	currentVersion, availableVersion, showNewVersions := initVersionFields(user, api.cfg)
 	showNavigation, rootDashboardEntries := api.initNavigationFields(user, loginRequired)
 
@@ -1599,10 +1559,6 @@ func (api *oliveTinAPI) maybeSendOutputChunk(client *streamingClient, entry *exe
 func (api *oliveTinAPI) GetEntities(ctx ctx.Context, req *connect.Request[apiv1.GetEntitiesRequest]) (*connect.Response[apiv1.GetEntitiesResponse], error) {
 	user := auth.UserFromApiCall(ctx, req, api.cfg)
 
-	if err := api.checkDashboardAccess(user); err != nil {
-		return nil, err
-	}
-
 	entityMap := entities.GetEntities()
 	entityDefinitions := api.buildEntityDefinitionsResponse(user, req.Msg, entityMap)
 
@@ -1714,10 +1670,6 @@ func searchSubcomponentsForDirectories(entityType string, contents []*config.Das
 
 func (api *oliveTinAPI) GetEntity(ctx ctx.Context, req *connect.Request[apiv1.GetEntityRequest]) (*connect.Response[apiv1.Entity], error) {
 	user := auth.UserFromApiCall(ctx, req, api.cfg)
-
-	if err := api.checkDashboardAccess(user); err != nil {
-		return nil, err
-	}
 
 	instances := entities.GetEntityInstances(req.Msg.Type)
 	if len(instances) == 0 {
@@ -1985,5 +1937,9 @@ func GetNewHandler(ex *executor.Executor) (string, http.Handler) {
 		},
 	)
 
-	return apiv1connect.NewOliveTinApiServiceHandler(server, jsonOpt)
+	return apiv1connect.NewOliveTinApiServiceHandler(
+		server,
+		jsonOpt,
+		connect.WithInterceptors(&loginRequiredInterceptor{api: server}),
+	)
 }

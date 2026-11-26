@@ -80,6 +80,10 @@ func permissionsConfigToBits(permissions config.PermissionsList) PermissionBits 
 }
 
 func aclCheck(requiredPermission PermissionBits, defaultValue bool, cfg *config.Config, aclFunction string, user *authpublic.AuthenticatedUser, resourceTitle string, resourceAcls []string, includeAddToEvery bool) bool {
+	if user.MustLogIn(cfg) {
+		return false
+	}
+
 	relevantAcls := getRelevantAcls(cfg, resourceAcls, user, includeAddToEvery)
 
 	if cfg.LogDebugOptions.AclCheckStarted {
