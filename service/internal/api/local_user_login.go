@@ -1,8 +1,10 @@
 package api
 
 import (
+	"crypto/rand"
 	"errors"
 	"runtime"
+	"sync"
 
 	config "github.com/OliveTin/OliveTin/internal/config"
 	"github.com/alexedwards/argon2id"
@@ -61,21 +63,46 @@ func comparePasswordAndHash(password, hash string) (bool, error) {
 	return match, nil
 }
 
-func isLocalInteractiveLoginDisabledForUser(cfg *config.Config, username string) bool {
-	user := cfg.FindUserByUsername(username)
-	if user == nil {
-		return false
+// A login for an unknown username, or for a user with no password, still runs
+// one Argon2id comparison against a dummy hash, through the same concurrency
+// limit. Otherwise the response time, and whether the limit is reported as
+// busy, would show which usernames exist.
+// The dummy password is random, so it is not known to anyone, and the result of
+// the comparison is never used.
+var (
+	dummyPassword         string
+	dummyPasswordHash     string
+	dummyPasswordHashErr  error
+	dummyPasswordHashOnce sync.Once
+)
+
+func getDummyPasswordHash() (string, error) {
+	dummyPasswordHashOnce.Do(func() {
+		dummyPassword = rand.Text()
+		dummyPasswordHash, dummyPasswordHashErr = argon2id.CreateHash(dummyPassword, &defaultParams)
+	})
+
+	return dummyPasswordHash, dummyPasswordHashErr
+}
+
+func compareAgainstDummyHash(password string) error {
+	hash, err := getDummyPasswordHash()
+	if err != nil {
+		return err
 	}
 
-	return user.Password == ""
+	_, err = comparePasswordAndHash(password, hash)
+
+	return err
 }
 
 func checkUserPassword(cfg *config.Config, username, password string) (bool, error) {
 	user := cfg.FindUserByUsername(username)
-	if user == nil {
-		log.WithFields(log.Fields{"username": username}).Warn("Failed to check password for user, as username was not found")
-		return false, nil
+	if user == nil || user.Password == "" {
+		log.WithFields(log.Fields{"username": username}).Warn("Failed to check password for user, as the username was not found or has no password")
+		return false, compareAgainstDummyHash(password)
 	}
+
 	return comparePasswordAndLogResult(password, user.Password, username)
 }
 
