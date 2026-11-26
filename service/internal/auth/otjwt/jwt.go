@@ -1,6 +1,7 @@
 package otjwt
 
 import (
+	"bytes"
 	"context"
 	"crypto/rsa"
 	"errors"
@@ -67,17 +68,55 @@ func parseJwtTokenWithRemoteKey(cfg *config.Config, jwtToken string) (*jwt.Token
 }
 
 var (
-	pubKeyBytes   []byte = nil
-	pubKey        *rsa.PublicKey
-	loadedKeyPath string
-
 	jwksVerifier keyfunc.Keyfunc
 	jwksOnce     sync.Once
 	jwksInitErr  error
 
-	localKeyMutex   sync.RWMutex
-	localKeyInitErr error
+	localKey localKeyCache
 )
+
+// Operators rotate the local public key by replacing the file at the same
+// path, for example when a Kubernetes or Docker secret is updated, so the file
+// is read on every request and parsed again whenever its contents change. A
+// key file that cannot be read or parsed rejects every token, rather than
+// leaving the previous key trusted.
+type localKeyCache struct {
+	key      *rsa.PublicKey
+	keyBytes []byte
+	mu       sync.Mutex
+}
+
+func (c *localKeyCache) get(keyPath string) (*rsa.PublicKey, error) {
+	keyBytes, err := os.ReadFile(keyPath)
+
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if err != nil {
+		c.clearLocked()
+		return nil, fmt.Errorf("couldn't read public key from file %s", keyPath)
+	}
+
+	if c.key != nil && bytes.Equal(c.keyBytes, keyBytes) {
+		return c.key, nil
+	}
+
+	parsedKey, err := jwt.ParseRSAPublicKeyFromPEM(keyBytes)
+	if err != nil {
+		c.clearLocked()
+		return nil, fmt.Errorf("error parsing public key object (from %s)", keyPath)
+	}
+
+	c.keyBytes = keyBytes
+	c.key = parsedKey
+
+	return parsedKey, nil
+}
+
+func (c *localKeyCache) clearLocked() {
+	c.keyBytes = nil
+	c.key = nil
+}
 
 func initJwks(cfg *config.Config) error {
 	jwksOnce.Do(func() {
@@ -102,58 +141,16 @@ func initRemoteJwks(certsURL string) (keyfunc.Keyfunc, error) {
 	return keyfunc.NewDefaultCtx(context.Background(), []string{certsURL})
 }
 
-func loadPublicKeyFromFile(keyPath string) error {
-	keyBytes, err := os.ReadFile(keyPath)
-	if err != nil {
-		return fmt.Errorf("couldn't read public key from file %s", keyPath)
-	}
-
-	parsedKey, err := jwt.ParseRSAPublicKeyFromPEM(keyBytes)
-	if err != nil {
-		return fmt.Errorf("error parsing public key object (from %s)", keyPath)
-	}
-
-	pubKeyBytes = keyBytes
-	pubKey = parsedKey
-	loadedKeyPath = keyPath
-	localKeyInitErr = nil
-	return nil
-}
-
-func isKeyLoadedForPath(keyPath string) bool {
-	return pubKeyBytes != nil && loadedKeyPath == keyPath
-}
-
-func readLocalPublicKeyWithLock(keyPath string) error {
-	localKeyMutex.RLock()
-	alreadyLoaded := isKeyLoadedForPath(keyPath)
-	localKeyMutex.RUnlock()
-
-	if alreadyLoaded {
-		return nil
-	}
-
-	localKeyMutex.Lock()
-	defer localKeyMutex.Unlock()
-
-	if isKeyLoadedForPath(keyPath) {
-		return nil
-	}
-
-	localKeyInitErr = loadPublicKeyFromFile(keyPath)
-	return localKeyInitErr
-}
-
-func readLocalPublicKey(cfg *config.Config) error {
+func readLocalPublicKey(cfg *config.Config) (*rsa.PublicKey, error) {
 	if cfg.AuthJwtPubKeyPath == "" {
-		return errors.New("no JWT public key path configured")
+		return nil, errors.New("no JWT public key path configured")
 	}
-	return readLocalPublicKeyWithLock(cfg.AuthJwtPubKeyPath)
+
+	return localKey.get(cfg.AuthJwtPubKeyPath)
 }
 
 func parseJwtTokenWithLocalKey(cfg *config.Config, jwtString string) (*jwt.Token, error) {
-	err := readLocalPublicKey(cfg)
-
+	publicKey, err := readLocalPublicKey(cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -163,7 +160,7 @@ func parseJwtTokenWithLocalKey(cfg *config.Config, jwtString string) (*jwt.Token
 			return nil, fmt.Errorf("parseJwt expected token algorithm RSA but got: %v", token.Header["alg"])
 		}
 
-		return pubKey, nil
+		return publicKey, nil
 	}
 
 	opts := parserOptionsWithAudience(cfg)
