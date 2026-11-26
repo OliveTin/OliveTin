@@ -166,6 +166,23 @@ Previous decisions, for reference:
 
 ---
 
+## RestartAction reuses stale bindings after a config reload
+
+**Canonical:** [GHSA-mgr4-8mh8-frw7](https://github.com/OliveTin/OliveTin/security/advisories/GHSA-mgr4-8mh8-frw7) — reporter **0xRrudy** (2026-10-29)
+
+`RestartAction` ran the binding saved in the old log entry, so after a hot reload it could restart a removed action, or run the old command and ACLs of an action whose ACLs were tightened.
+
+| GHSA | Reporter | Status | Notes |
+|------|----------|--------|-------|
+| GHSA-mgr4-8mh8-frw7 | 0xRrudy | canonical | Removed action and tightened ACL cases |
+| GHSA-w8ph-8qcm-h74w | ITALICOder | duplicate | Same issue, removed action case |
+
+**Fix:** look up the log entry's binding ID in the current action map, return NotFound if it is gone, and run the current binding.
+
+**Not a duplicate:** GHSA-p443-p7w5-2f7f (RestartAction lost the caller's identity), and reports about hot reload keeping auth state such as API keys.
+
+---
+
 ## Easy to confuse (not duplicates)
 
 | Topic | Advisories | Distinction |
