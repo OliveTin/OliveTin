@@ -5,6 +5,13 @@ OliveTin releases are published to GitHub, and the release notes are contained t
 
 == Next release (unreleased)
 
+[#webhook-auth-type-required]
+=== Webhooks need an `authType`, and `authType: none` must be set for open webhooks
+
+A webhook in `execOnWebhook` without an `authType` used to accept every request that matched. It is now rejected, and the Diagnostics page shows an error for it (code `webhook_auth_type_unset`). Webhooks that use a GitHub `template` are not affected, because the template sets its own `authType`.
+
+If you have webhooks without an `authType`, add one. Use `authType: bearer`, `hmac-sha256`, `hmac-sha1` or `basic` with a `secret`, or set `authType: none` if the webhook should accept requests from anyone who can reach `/webhooks`. See xref:action_execution/onwebhook.adoc#every-webhook-needs-an-authtype[Webhook Authentication].
+
 [#whoami-session-fingerprint]
 === `WhoAmI` no longer returns the session ID
 

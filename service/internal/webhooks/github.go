@@ -15,15 +15,20 @@ func ApplyGitHubTemplate(cfg *config.WebhookConfig, template string) {
 
 type templateApplier func(*config.WebhookConfig)
 
-func getTemplateApplier(template string) templateApplier {
-	templateMap := map[string]templateApplier{
+// The names here must match config.WebhookTemplateNames, which the config
+// check uses to decide whether a webhook needs its own authType.
+func templateAppliers() map[string]templateApplier {
+	return map[string]templateApplier{
 		"github-push":         applyGitHubPushTemplate,
 		"github-pr":           applyGitHubPRTemplate,
 		"github-pull-request": applyGitHubPRTemplate,
 		"github-release":      applyGitHubReleaseTemplate,
 		"github-workflow":     applyGitHubWorkflowTemplate,
 	}
-	return templateMap[template]
+}
+
+func getTemplateApplier(template string) templateApplier {
+	return templateAppliers()[template]
 }
 
 func setDefaultAuth(cfg *config.WebhookConfig) {

@@ -31,7 +31,8 @@ actions:
     onclick: execution-dialog
     # Second webhook example: POST /webhooks?demo=disk-space
     execOnWebhook:
-      - matchQuery:
+      - authType: none
+        matchQuery:
           demo: disk-space
 
   # This uses `onclick: execution-dialog` to show a dialog with more
@@ -120,6 +121,10 @@ actions:
   # webhook request can only start it, not change what it runs. Replace the
   # command with your own script.
   #
+  # Every webhook needs an `authType`. These demo webhooks use `authType: none`,
+  # so anyone who can reach /webhooks can start them. For your own scripts, use
+  # `authType: bearer` (or hmac-sha256) with a `secret`.
+  #
   # Docs: https://docs.olivetin.app/action_execution/onwebhook.html
   # POST to /webhooks with the header X-OliveTin-Demo: run-script
   - title: Run script on webhook
@@ -128,7 +133,8 @@ actions:
     exec: ["echo", "Webhook received. Replace this with your own script."]
     onclick: execution-dialog
     execOnWebhook:
-      - matchHeaders:
+      - authType: none
+        matchHeaders:
           X-OliveTin-Demo: run-script
 
   # OliveTin can control containers - docker is just a command line app.
