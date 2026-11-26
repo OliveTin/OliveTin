@@ -5,6 +5,13 @@ OliveTin releases are published to GitHub, and the release notes are contained t
 
 == Next release (unreleased)
 
+[#example-config-guest-actions]
+=== The example config only lets guests run harmless demo actions
+
+The example `config.yaml` shipped with OliveTin (including the container image and the macOS example) used to let guests run, see logs for, and kill every example action. It now sets `defaultPermissions` to only let guests view actions. A `guest_actions` ACL lets guests run the harmless demo actions, `admin_acl` gives users in the `admins` usergroup access to every action, and a `system_triggers` ACL lets startup, cron and webhook triggers keep working. The "Setup easy SSH" and "Ping host" actions no longer have webhook triggers. The webhook examples are now "Check disk space" and a new "Run script on webhook" action, which both use `exec:` and take no arguments.
+
+Upgrading does not change your existing `config.yaml`. If your config started from the example and still has its example actions, review which of them guests can run. This is particularly important for actions that change the system, run scripts, or take a URL or other input from the user, such as "Get OliveTin Theme", "Setup easy SSH", "Delete old backups" and "Restart Docker Container". Either remove the actions you do not use, or set up permissions like the new example config. See xref:security/example_some_admin_actions.adoc[Some actions require admin] and xref:security/acl.adoc#acls-for-triggers[ACLs for triggers].
+
 [#webhook-trigger-chains-exec-only]
 === Actions triggered from webhooks can no longer use `shell:`
 
@@ -34,7 +41,7 @@ This was a bit cumbersome, because OliveTin treats the content of the "webui" di
 
 Now themes are stored in the "configdir" (wherever OliveTin finds it's config file, eg `/config` in containers), under the subdirectory `custom-webui/themes`. OliveTin will try to create the `custom-webui` folder in your configdir if it doesn't find it.
 
-The advantage of this change is that themes are stored with your config, as part of your data. 
+The advantage of this change is that themes are stored with your config, as part of your data.
 
 To upgrade, simply move any themes you might have into your configdir, under `custom-webui/themes/`. eg:
 
@@ -73,4 +80,3 @@ The new behavior is that OliveTin will always try to load `http://yourServer:133
 Internally, OliveTin maps `http://yourServer:1337/theme.css` to the `theme.css` of whatever the theme is set to with `themeName`, for example, it could map to `themes/myTheme/theme.css`.
 
 As a theme developer, normally you would reference a background image, or similar using `./background.png`, but OliveTin is loading the theme.css as the directory root, and the themes' assets from the custom-webui theme directory. Therefore you need to update paths to be like; `background-image: "/custom-webui/themes/myTheme/background.png`.
-
