@@ -16,18 +16,19 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// Rebuild clears and rebuilds the issue list from the current config, entity
-// state, sticky load-time reports, runtime reports, and any extra issues provided by callers
-// (for example literal argument default validation from the executor).
+// Rebuild rebuilds the issue list from the current config, entity state, sticky
+// load-time reports, and any extra issues provided by callers (for example literal
+// argument default validation from the executor). Runtime reports are kept.
 func Rebuild(cfg *config.Config, extra ...configissues.Issue) {
 	if cfg == nil {
-		configissues.Replace(append(configissues.CopyRuntime(), extra...))
+		configissues.ReplaceLoadIssues(nil)
+		configissues.Replace(extra)
 		return
 	}
 
+	configissues.ReplaceLoadIssues(configissues.CopySticky())
+
 	collected := make([]configissues.Issue, 0)
-	collected = append(collected, configissues.CopySticky()...)
-	collected = append(collected, configissues.CopyRuntime()...)
 	collected = append(collected, collectActionGroupIssues(cfg)...)
 	collected = append(collected, collectAclReferenceIssues(cfg)...)
 	collected = append(collected, collectArgumentIssues(cfg)...)
