@@ -24,5 +24,7 @@ You can check your current login status by using the `/WhoAmI` API call. Like al
 
 ```bash
 user@host: curl http://localhost:1337/api/WhoAmI --json '{}' -b "olivetin-sid-local=cd33aa9c-c613-473e-8581-2b742716ab8e"
-{"authenticatedUser":"admin", "usergroup":"", "provider":"local", "acls":[], "sid":""}
+{"authenticatedUser":"admin", "usergroup":"", "provider":"local", "acls":[], "sessionFingerprint":"9c1f5e2a7b3d4c60"}
 ```
+
+`WhoAmI` never returns your session ID, because the session ID is the credential in your session cookie. `sessionFingerprint` is a short value derived from the session ID. Use it to tell sessions apart, for example to check that two requests used the same session. It cannot be used to log in. If an API client needs the session cookie, take it from the `Set-Cookie` header of the login response. See xref:upgrade/upgrade_notes.adoc#whoami-session-fingerprint[Upgrade Notes].

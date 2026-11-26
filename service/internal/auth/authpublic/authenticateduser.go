@@ -1,6 +1,8 @@
 package authpublic
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"slices"
 	"strings"
 
@@ -16,6 +18,21 @@ type AuthenticatedUser struct {
 	Provider        string
 	SID             string
 	Acls            []string
+}
+
+// The session ID is the credential held in the session cookie, so it is never
+// returned to clients. The fingerprint lets a client tell sessions apart, and
+// cannot be used to authenticate.
+const sessionFingerprintLength = 16
+
+func (u *AuthenticatedUser) SessionFingerprint() string {
+	if u.SID == "" {
+		return ""
+	}
+
+	sum := sha256.Sum256([]byte(u.SID))
+
+	return hex.EncodeToString(sum[:])[:sessionFingerprintLength]
 }
 
 func (u *AuthenticatedUser) IsGuest() bool {

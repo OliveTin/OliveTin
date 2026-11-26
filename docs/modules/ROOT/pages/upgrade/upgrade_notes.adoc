@@ -5,6 +5,13 @@ OliveTin releases are published to GitHub, and the release notes are contained t
 
 == Next release (unreleased)
 
+[#whoami-session-fingerprint]
+=== `WhoAmI` no longer returns the session ID
+
+The `WhoAmI` API used to return the caller's session ID in a `sid` field. That value is the credential held in the `HttpOnly` session cookie, so it should not be readable from a response. `sid` has been removed, and `WhoAmI` now returns `sessionFingerprint` instead: a short value derived from the session ID that tells sessions apart but cannot be used to log in.
+
+This only affects API clients or scripts that read `sid` from `WhoAmI`. If you used it to get the session cookie, take the cookie from the `Set-Cookie` header of the login response instead. If you used it to identify a session, use `sessionFingerprint`. See xref:api/login.adoc[Login].
+
 [#example-config-guest-actions]
 === The example config only lets guests run harmless demo actions
 
