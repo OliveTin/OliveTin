@@ -18,11 +18,13 @@ actions:
     exec:
       - /opt/scripts/deploy.sh
     execOnWebhook:
-      - matchHeaders:
+      - authType: bearer
+        secret: "${{ WEBHOOK_TOKEN }}"
+        matchHeaders:
           X-Event-Type: deploy
 ----
 
-This action will be triggered when a POST request is sent to `/webhooks` with the header `X-Event-Type: deploy`.
+This action will be triggered when a POST request is sent to `/webhooks` with the header `X-Event-Type: deploy` and the header `Authorization: Bearer <token>`, where the token is the value of the `WEBHOOK_TOKEN` environment variable. Every webhook needs an `authType`; see <<every-webhook-needs-an-authtype,Webhook Authentication>>.
 
 == Webhook Endpoint
 
@@ -56,7 +58,9 @@ actions:
       - echo
       - "Processing event"
     execOnWebhook:
-      - matchHeaders:
+      - authType: bearer
+        secret: "${{ WEBHOOK_TOKEN }}"
+        matchHeaders:
           X-Event-Type: my-event
           X-Source: my-service
 ----
@@ -78,7 +82,9 @@ actions:
       - name: service
         type: ascii
     execOnWebhook:
-      - matchQuery:
+      - authType: bearer
+        secret: "${{ WEBHOOK_TOKEN }}"
+        matchQuery:
           action: deploy
           env: production
         extract:
@@ -102,7 +108,9 @@ actions:
       - name: branch
         type: ascii
     execOnWebhook:
-      - matchPath: "$.event_type=push"
+      - authType: bearer
+        secret: "${{ WEBHOOK_TOKEN }}"
+        matchPath: "$.event_type=push"
         extract:
           branch: "$.branch"
 ----
@@ -112,7 +120,9 @@ The `matchPath` format is `jsonpath=value`. You can also just specify a JSONPath
 [source,yaml]
 ----
 execOnWebhook:
-  - matchPath: "$.repository.name"  # Matches if this path exists in the JSON
+  - authType: bearer
+    secret: "${{ WEBHOOK_TOKEN }}"
+    matchPath: "$.repository.name"  # Matches if this path exists in the JSON
 ----
 
 === Using Regex for Matching
@@ -127,7 +137,9 @@ actions:
       - echo
       - "Handling event"
     execOnWebhook:
-      - matchHeaders:
+      - authType: bearer
+        secret: "${{ WEBHOOK_TOKEN }}"
+        matchHeaders:
           X-Event-Type: "regex:^(push|pull_request|release)$"
 ----
 
@@ -143,7 +155,9 @@ actions:
       - /opt/scripts/deploy.sh
       - production
     execOnWebhook:
-      - matchHeaders:
+      - authType: bearer
+        secret: "${{ WEBHOOK_TOKEN }}"
+        matchHeaders:
           X-Event-Type: deploy
         matchQuery:
           environment: production
@@ -168,7 +182,9 @@ actions:
       - name: environment
         type: ascii
     execOnWebhook:
-      - matchHeaders:
+      - authType: bearer
+        secret: "${{ WEBHOOK_TOKEN }}"
+        matchHeaders:
           X-Event-Type: deploy
         extract:
           version: "$.release.tag_name"
@@ -199,7 +215,9 @@ actions:
       - name: webhook_header_x-request-id
         type: ascii
     execOnWebhook:
-      - matchHeaders:
+      - authType: bearer
+        secret: "${{ WEBHOOK_TOKEN }}"
+        matchHeaders:
           X-Event-Type: log
 ----
 
@@ -209,9 +227,16 @@ Header names that contain hyphens become argument keys with the same hyphens (fo
 
 OliveTin supports several authentication methods to verify webhook requests:
 
+[#every-webhook-needs-an-authtype]
+=== Every webhook needs an `authType`
+
+Every webhook must set an `authType`. A webhook without one is rejected, and the xref:advanced_configuration/diagnostics.adoc[Diagnostics] page shows an error for it (code `webhook_auth_type_unset`). Webhooks that use a GitHub `template` choose their own `authType`. See xref:upgrade/upgrade_notes.adoc#webhook-auth-type-required[Upgrade Notes].
+
+`matchHeaders`, `matchQuery` and `matchPath` only decide which action a request is for. They are not secrets, so use one of the authentication methods below unless anyone who can reach `/webhooks` may run the action. Webhook-triggered actions run as the `system` usergroup, not as the caller (see xref:security/acl.adoc#acls-for-triggers[ACLs for triggers]).
+
 === No Authentication
 
-By default, webhooks have no authentication. Any request matching the criteria will trigger the action:
+To accept webhook requests without any authentication, set `authType: none` explicitly. Any request that matches will then trigger the action, so only do this for actions that are safe for anyone to run:
 
 [source,yaml]
 ----
@@ -301,9 +326,13 @@ actions:
     exec:
       - /opt/scripts/deploy.sh
     execOnWebhook:
-      - matchHeaders:
+      - authType: bearer
+        secret: "${{ WEBHOOK_TOKEN }}"
+        matchHeaders:
           X-Event-Type: deploy-manual
-      - matchHeaders:
+      - authType: bearer
+        secret: "${{ WEBHOOK_TOKEN }}"
+        matchHeaders:
           X-Event-Type: deploy-auto
         matchPath: "$.status=success"
 ----
@@ -314,9 +343,10 @@ You can test your webhook configuration using `curl`:
 
 [source,bash]
 ----
-# Simple webhook with headers
+# Simple webhook with headers and a bearer token
 curl -X POST \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $WEBHOOK_TOKEN" \
   -H "X-Event-Type: deploy" \
   -d '{"version": "1.2.3"}' \
   http://localhost:1337/webhooks
