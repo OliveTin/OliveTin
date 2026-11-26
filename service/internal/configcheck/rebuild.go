@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/OliveTin/OliveTin/internal/config"
@@ -41,6 +42,7 @@ func Rebuild(cfg *config.Config, extra ...configissues.Issue) {
 	collected = append(collected, collectWatcherPathIssues(cfg)...)
 	collected = append(collected, collectDashboardTypeIssues(cfg)...)
 	collected = append(collected, collectWebhookAuthIssues(cfg)...)
+	collected = append(collected, collectWebhookUnsignedArgumentIssues(cfg)...)
 	collected = append(collected, extra...)
 	configissues.Replace(collected)
 }
@@ -623,4 +625,54 @@ func webhookAuthTypeIssues(action *config.Action, webhook config.WebhookConfig, 
 	return []configissues.Issue{actionIssue(action, configissues.SeverityError, configissues.CodeWebhookAuthTypeUnset,
 		"Webhook has no authType, so its requests are rejected. Set an authType such as hmac-sha256 or bearer, or authType: none to allow unauthenticated requests",
 		source, "")}
+}
+
+func collectWebhookUnsignedArgumentIssues(cfg *config.Config) []configissues.Issue {
+	out := make([]configissues.Issue, 0)
+
+	for _, action := range cfg.Actions {
+		if action == nil || !actionHasBodyOnlySignedWebhook(action) {
+			continue
+		}
+
+		out = append(out, unsignedWebhookArgumentIssues(action)...)
+	}
+
+	return out
+}
+
+// HMAC webhook signatures, including the GitHub templates, only cover the
+// request body. The path, query string and headers that OliveTin passes to
+// webhook_path, webhook_query and webhook_header_* arguments are not signed,
+// so anyone who has captured one signed request can change them.
+func actionHasBodyOnlySignedWebhook(action *config.Action) bool {
+	return slices.ContainsFunc(action.ExecOnWebhook, webhookSignsBodyOnly)
+}
+
+func webhookSignsBodyOnly(webhook config.WebhookConfig) bool {
+	if webhook.AuthType == "" {
+		return config.IsKnownWebhookTemplate(webhook.Template)
+	}
+
+	return config.IsHmacWebhookAuthType(webhook.AuthType)
+}
+
+func isUnsignedWebhookArgument(name string) bool {
+	return name == "webhook_path" || name == "webhook_query" || strings.HasPrefix(name, "webhook_header_")
+}
+
+func unsignedWebhookArgumentIssues(action *config.Action) []configissues.Issue {
+	out := make([]configissues.Issue, 0)
+
+	for _, arg := range action.Arguments {
+		if !isUnsignedWebhookArgument(arg.Name) {
+			continue
+		}
+
+		out = append(out, actionIssue(action, configissues.SeverityWarning, configissues.CodeWebhookUnsignedArg,
+			"Argument comes from the webhook request's path, query string or headers, which HMAC webhook signatures do not cover, so its value is not authenticated. Take values you need to trust from the request body with extract instead",
+			arg.Name, arg.Name))
+	}
+
+	return out
 }

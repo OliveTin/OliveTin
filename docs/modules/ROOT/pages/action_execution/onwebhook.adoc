@@ -223,6 +223,8 @@ actions:
 
 Header names that contain hyphens become argument keys with the same hyphens (for example `webhook_header_x-request-id`). Use the `index` map-lookup form shown above, because Go templates treat hyphens in bare identifiers as subtraction.
 
+These metadata arguments come from the request's path, query string and headers, which HMAC signatures do not cover. Do not rely on them for values an action needs to trust; see <<what-hmac-signatures-cover,What HMAC signatures cover>>.
+
 == Webhook Authentication
 
 OliveTin supports several authentication methods to verify webhook requests:
@@ -275,6 +277,22 @@ execOnWebhook:
     matchHeaders:
       X-Event-Type: push
 ----
+
+[#what-hmac-signatures-cover]
+=== What HMAC signatures cover
+
+HMAC signatures, including the ones checked for the GitHub `template` webhooks, are worked out by the sender over the request body only. This is how GitHub, GitLab and similar services sign webhooks, so OliveTin cannot check anything more than the sender signed:
+
+* The request path, query string and headers are not signed. Anyone who has seen one signed request can send it again with a different path, query string or headers, and it will still pass the signature check.
+* There is no timestamp or nonce, so a signed request can be sent again, and it will run the action again.
+
+To keep webhooks safe:
+
+* Send webhooks to OliveTin over HTTPS, so that signed requests cannot be read or changed on the way.
+* Take any value that an action needs to trust from the request body, with `extract`. Do not use the `webhook_path`, `webhook_query` or `webhook_header_*` arguments for those values with HMAC webhooks. The xref:advanced_configuration/diagnostics.adoc[Diagnostics] page shows a warning (code `webhook_unsigned_argument`) for an action that does.
+* Make webhook-triggered actions safe to run more than once.
+
+`bearer` and `basic` authentication do not sign anything: they check that the request carries the secret. Anyone who has the secret can send any request.
 
 === Bearer Token
 
