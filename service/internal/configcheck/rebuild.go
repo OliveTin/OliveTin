@@ -590,20 +590,37 @@ func collectWebhookAuthIssues(cfg *config.Config) []configissues.Issue {
 	return out
 }
 
-// Webhook templates choose their own authType, so only webhooks without a
-// template need one in the config.
+// Known webhook templates choose their own authType, so only webhooks without
+// one need an authType in the config. An unknown template name sets nothing,
+// so it is reported, and does not excuse a missing authType.
 func webhookAuthIssuesForAction(action *config.Action) []configissues.Issue {
 	out := make([]configissues.Issue, 0)
 
 	for index, webhook := range action.ExecOnWebhook {
-		if webhook.AuthType != "" || webhook.Template != "" {
-			continue
-		}
-
-		out = append(out, actionIssue(action, configissues.SeverityError, configissues.CodeWebhookAuthTypeUnset,
-			"Webhook has no authType, so its requests are rejected. Set an authType such as hmac-sha256 or bearer, or authType: none to allow unauthenticated requests",
-			fmt.Sprintf("execOnWebhook[%d]", index), ""))
+		source := fmt.Sprintf("execOnWebhook[%d]", index)
+		out = append(out, webhookTemplateIssues(action, webhook, source)...)
+		out = append(out, webhookAuthTypeIssues(action, webhook, source)...)
 	}
 
 	return out
+}
+
+func webhookTemplateIssues(action *config.Action, webhook config.WebhookConfig, source string) []configissues.Issue {
+	if webhook.Template == "" || config.IsKnownWebhookTemplate(webhook.Template) {
+		return nil
+	}
+
+	return []configissues.Issue{actionIssue(action, configissues.SeverityError, configissues.CodeWebhookTemplateUnknown,
+		fmt.Sprintf("Webhook template %q is not known, so it is ignored. Known templates are: %s", webhook.Template, strings.Join(config.WebhookTemplateNames, ", ")),
+		source, "")}
+}
+
+func webhookAuthTypeIssues(action *config.Action, webhook config.WebhookConfig, source string) []configissues.Issue {
+	if webhook.AuthType != "" || config.IsKnownWebhookTemplate(webhook.Template) {
+		return nil
+	}
+
+	return []configissues.Issue{actionIssue(action, configissues.SeverityError, configissues.CodeWebhookAuthTypeUnset,
+		"Webhook has no authType, so its requests are rejected. Set an authType such as hmac-sha256 or bearer, or authType: none to allow unauthenticated requests",
+		source, "")}
 }

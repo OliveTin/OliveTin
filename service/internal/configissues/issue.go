@@ -26,6 +26,7 @@ const (
 	CodeOnClickUnknown         = "onclick_unknown"
 	CodeDashboardTypeUnknown   = "dashboard_type_unknown"
 	CodeWebhookAuthTypeUnset   = "webhook_auth_type_unset"
+	CodeWebhookTemplateUnknown = "webhook_template_unknown"
 )
 
 // Issue is a configuration warning or error surfaced on Diagnostics.

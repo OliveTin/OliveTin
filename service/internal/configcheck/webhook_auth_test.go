@@ -47,3 +47,29 @@ func TestRebuildReportsEachWebhookWithoutAuthType(t *testing.T) {
 	assert.Equal(t, "execOnWebhook[0]", issues[0].Source)
 	assert.Equal(t, "execOnWebhook[2]", issues[1].Source)
 }
+
+func TestRebuildReportsUnknownWebhookTemplateWithoutAuthType(t *testing.T) {
+	webhook := config.WebhookConfig{Template: "github-pus", Secret: "s3cret"}
+
+	assert.Len(t, webhookAuthIssues(webhook), 1, "a misspelt template must not excuse a missing authType")
+
+	templateIssues := issuesWithCode(configissues.List(), configissues.CodeWebhookTemplateUnknown)
+	require.Len(t, templateIssues, 1)
+	assert.Contains(t, templateIssues[0].Message, "github-pus")
+	assert.Contains(t, templateIssues[0].Message, "github-push")
+	assert.Equal(t, "execOnWebhook[0]", templateIssues[0].Source)
+}
+
+func TestRebuildReportsUnknownWebhookTemplateEvenWithAuthType(t *testing.T) {
+	webhook := config.WebhookConfig{Template: "gitlab-push", AuthType: "bearer", Secret: "token"}
+
+	assert.Empty(t, webhookAuthIssues(webhook))
+	assert.Len(t, issuesWithCode(configissues.List(), configissues.CodeWebhookTemplateUnknown), 1)
+}
+
+func TestRebuildAcceptsEveryKnownWebhookTemplate(t *testing.T) {
+	for _, name := range config.WebhookTemplateNames {
+		assert.Empty(t, webhookAuthIssues(config.WebhookConfig{Template: name, Secret: "s3cret"}), name)
+		assert.Empty(t, issuesWithCode(configissues.List(), configissues.CodeWebhookTemplateUnknown), name)
+	}
+}

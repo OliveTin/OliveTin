@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"slices"
 )
 
 // ReservedArgumentNamePrefix is reserved for OliveTin-injected system arguments.
@@ -95,6 +96,21 @@ type RateSpec struct {
 // WebhookAuthTypeNone must be set explicitly for a webhook that accepts
 // unauthenticated requests.
 const WebhookAuthTypeNone = "none"
+
+// WebhookTemplateNames are the webhook templates OliveTin knows. Each one sets
+// its own authType, so a webhook that uses one does not need an authType in
+// the config.
+var WebhookTemplateNames = []string{
+	"github-push",
+	"github-pr",
+	"github-pull-request",
+	"github-release",
+	"github-workflow",
+}
+
+func IsKnownWebhookTemplate(name string) bool {
+	return slices.Contains(WebhookTemplateNames, name)
+}
 
 type WebhookConfig struct {
 	Secret        string            `koanf:"secret"`        // Optional: secret for signature verification

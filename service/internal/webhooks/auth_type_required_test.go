@@ -74,3 +74,16 @@ func TestWebhookHandlerDoesNotRunActionWithoutAuthType(t *testing.T) {
 func TestWebhookHandlerRunsActionWithAuthTypeNone(t *testing.T) {
 	assert.Equal(t, 1, webhookExecutionCount(t, config.WebhookAuthTypeNone))
 }
+
+func TestKnownWebhookTemplateNamesMatchTemplateAppliers(t *testing.T) {
+	for _, name := range config.WebhookTemplateNames {
+		webhook := config.WebhookConfig{Template: name}
+		ApplyGitHubTemplate(&webhook, name)
+
+		assert.NotEmpty(t, webhook.AuthType, "known template %q must set an authType", name)
+	}
+
+	for name := range templateAppliers() {
+		assert.True(t, config.IsKnownWebhookTemplate(name), "template %q must be listed in config.WebhookTemplateNames", name)
+	}
+}

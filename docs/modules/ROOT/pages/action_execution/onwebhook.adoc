@@ -230,7 +230,7 @@ OliveTin supports several authentication methods to verify webhook requests:
 [#every-webhook-needs-an-authtype]
 === Every webhook needs an `authType`
 
-Every webhook must set an `authType`. A webhook without one is rejected, and the xref:advanced_configuration/diagnostics.adoc[Diagnostics] page shows an error for it (code `webhook_auth_type_unset`). Webhooks that use a GitHub `template` choose their own `authType`. See xref:upgrade/upgrade_notes.adoc#webhook-auth-type-required[Upgrade Notes].
+Every webhook must set an `authType`. A webhook without one is rejected, and the xref:advanced_configuration/diagnostics.adoc[Diagnostics] page shows an error for it (code `webhook_auth_type_unset`). Webhooks that use one of the xref:action_execution/onwebhook_github.adoc[GitHub templates] choose their own `authType`. A `template` name that OliveTin does not know is ignored, and Diagnostics shows an error for it (code `webhook_template_unknown`). See xref:upgrade/upgrade_notes.adoc#webhook-auth-type-required[Upgrade Notes].
 
 `matchHeaders`, `matchQuery` and `matchPath` only decide which action a request is for. They are not secrets, so use one of the authentication methods below unless anyone who can reach `/webhooks` may run the action. Webhook-triggered actions run as the `system` usergroup, not as the caller (see xref:security/acl.adoc#acls-for-triggers[ACLs for triggers]).
 
