@@ -102,11 +102,6 @@ actions:
     icon: ping
     timeout: 100
     onclick: history
-    # https://docs.olivetin.app/action_execution/onwebhook.html — POST to /webhooks
-    # with header X-OliveTin-Demo: ping-host (path and payload rules are documented).
-    execOnWebhook:
-      - matchHeaders:
-          X-OliveTin-Demo: ping-host
     arguments:
       - name: host
         title: Host
@@ -119,6 +114,22 @@ actions:
         type: int
         default: 3
         description: How many times to do you want to ping?
+
+  # Actions can be started by a webhook, as well as from the web UI. Webhook
+  # actions must use `exec:`, not `shell:`. This one takes no arguments, so a
+  # webhook request can only start it, not change what it runs. Replace the
+  # command with your own script.
+  #
+  # Docs: https://docs.olivetin.app/action_execution/onwebhook.html
+  # POST to /webhooks with the header X-OliveTin-Demo: run-script
+  - title: Run script on webhook
+    id: run_script_on_webhook
+    icon: '&#128279;'
+    exec: ["echo", "Webhook received. Replace this with your own script."]
+    onclick: execution-dialog
+    execOnWebhook:
+      - matchHeaders:
+          X-OliveTin-Demo: run-script
 
   # OliveTin can control containers - docker is just a command line app.
   #
