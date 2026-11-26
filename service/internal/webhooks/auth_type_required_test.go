@@ -87,3 +87,12 @@ func TestKnownWebhookTemplateNamesMatchTemplateAppliers(t *testing.T) {
 		assert.True(t, config.IsKnownWebhookTemplate(name), "template %q must be listed in config.WebhookTemplateNames", name)
 	}
 }
+
+func TestHmacWebhookAuthTypesAreVerified(t *testing.T) {
+	for _, authType := range config.HmacWebhookAuthTypes {
+		verifier := NewAuthVerifier(config.WebhookConfig{AuthType: authType, Secret: "s3cret"})
+
+		assert.NotNil(t, verifier.getVerifier(), "HMAC auth type %q must have a verifier", authType)
+		assert.False(t, verifier.Verify(unauthenticatedWebhookRequest(t), []byte(`{}`)), "unsigned request must be rejected for %q", authType)
+	}
+}

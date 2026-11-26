@@ -112,6 +112,16 @@ func IsKnownWebhookTemplate(name string) bool {
 	return slices.Contains(WebhookTemplateNames, name)
 }
 
+// HmacWebhookAuthTypes sign only the request body. The older of the two hash
+// functions is only accepted so that OliveTin can check signatures from
+// senders that still use it, such as older GitHub webhooks; OliveTin does not
+// use it for anything else.
+var HmacWebhookAuthTypes = []string{"hmac-sha256", "hmac-sha1"} // DevSkim: ignore DS126858
+
+func IsHmacWebhookAuthType(authType string) bool {
+	return slices.Contains(HmacWebhookAuthTypes, authType)
+}
+
 type WebhookConfig struct {
 	Secret        string            `koanf:"secret"`        // Optional: secret for signature verification
 	AuthType      string            `koanf:"authType"`      // Required unless set by a template: "hmac-sha256", "hmac-sha1", "bearer", "basic", "none"

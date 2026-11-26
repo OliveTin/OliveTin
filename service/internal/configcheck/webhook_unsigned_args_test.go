@@ -46,8 +46,11 @@ func TestRebuildWarnsForUnsignedArgumentsOnHmacWebhook(t *testing.T) {
 	assert.Contains(t, issues[0].Message, "extract")
 }
 
-func TestRebuildWarnsForUnsignedArgumentsOnHmacSha1AndTemplateWebhooks(t *testing.T) {
-	assert.Len(t, unsignedArgIssues(config.WebhookConfig{AuthType: "hmac-sha1", Secret: "s"}, "webhook_query"), 1)
+func TestRebuildWarnsForUnsignedArgumentsOnEveryHmacAuthTypeAndTemplate(t *testing.T) {
+	for _, authType := range config.HmacWebhookAuthTypes {
+		assert.Len(t, unsignedArgIssues(config.WebhookConfig{AuthType: authType, Secret: "s"}, "webhook_query"), 1, authType)
+	}
+
 	assert.Len(t, unsignedArgIssues(config.WebhookConfig{Template: "github-push", Secret: "s"}, "webhook_query"), 1)
 }
 

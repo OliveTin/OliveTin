@@ -650,14 +650,11 @@ func actionHasBodyOnlySignedWebhook(action *config.Action) bool {
 }
 
 func webhookSignsBodyOnly(webhook config.WebhookConfig) bool {
-	switch webhook.AuthType {
-	case "hmac-sha256", "hmac-sha1":
-		return true
-	case "":
+	if webhook.AuthType == "" {
 		return config.IsKnownWebhookTemplate(webhook.Template)
-	default:
-		return false
 	}
+
+	return config.IsHmacWebhookAuthType(webhook.AuthType)
 }
 
 func isUnsignedWebhookArgument(name string) bool {
