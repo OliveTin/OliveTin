@@ -1903,18 +1903,23 @@ func (api *oliveTinAPI) RestartAction(ctx ctx.Context, req *connect.Request[apiv
 		return nil, err
 	}
 
-	if err := validateRestartLogEntry(execReqLogEntry); err != nil {
+	binding, err := api.currentBindingForRestart(execReqLogEntry, req.Msg.ExecutionTrackingId)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := validateRestartLogEntry(binding, execReqLogEntry); err != nil {
 		return nil, err
 	}
 
 	authenticatedUser := auth.UserFromApiCall(ctx, req, api.cfg)
 	restartArgs := copyStringMap(execReqLogEntry.Arguments)
-	if err := api.errUnlessStartEntityAccessAllowed(authenticatedUser, execReqLogEntry.Binding, restartArgs); err != nil {
+	if err := api.errUnlessStartEntityAccessAllowed(authenticatedUser, binding, restartArgs); err != nil {
 		return nil, err
 	}
 
 	execReq := executor.ExecutionRequest{
-		Binding:           execReqLogEntry.Binding,
+		Binding:           binding,
 		Arguments:         restartArgs,
 		Justification:     execReqLogEntry.Justification,
 		AuthenticatedUser: authenticatedUser,
@@ -1943,6 +1948,19 @@ func (api *oliveTinAPI) restartActionLogEntry(executionTrackingId string) (*exec
 	}
 
 	return execReqLogEntry, nil
+}
+
+// A log entry keeps the binding it ran with, which can be out of date after the
+// config is reloaded. Restarts look the binding up again so that they run the
+// action as it is configured now, with its current ACLs, and so that actions
+// removed from the config cannot be restarted.
+func (api *oliveTinAPI) currentBindingForRestart(entry *executor.InternalLogEntry, executionTrackingId string) (*executor.ActionBinding, error) {
+	binding := api.executor.FindBindingByID(entry.Binding.ID)
+	if binding == nil || binding.Action == nil {
+		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("action for tracking ID %s is no longer in the configuration", executionTrackingId))
+	}
+
+	return binding, nil
 }
 
 var (

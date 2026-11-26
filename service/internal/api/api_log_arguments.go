@@ -46,12 +46,12 @@ func restartArgumentsIncompleteError() error {
 	return connect.NewError(connect.CodeInvalidArgument, fmt.Errorf("stored arguments are incomplete for restart; use StartAction with the required arguments instead"))
 }
 
-func validateRestartLogEntry(entry *executor.InternalLogEntry) error {
-	if entry.Binding.Action.RequiresJustification() && strings.TrimSpace(entry.Justification) == "" {
+func validateRestartLogEntry(binding *executor.ActionBinding, entry *executor.InternalLogEntry) error {
+	if binding.Action.RequiresJustification() && strings.TrimSpace(entry.Justification) == "" {
 		return restartRequiresJustificationError()
 	}
 
-	if executor.RestartArgumentsIncomplete(entry.Binding.Action, entry.Binding.Entity, entry.Arguments) {
+	if executor.RestartArgumentsIncomplete(binding.Action, binding.Entity, entry.Arguments) {
 		return restartArgumentsIncompleteError()
 	}
 
