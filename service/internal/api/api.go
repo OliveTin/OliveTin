@@ -1029,11 +1029,11 @@ func (api *oliveTinAPI) WhoAmI(ctx ctx.Context, req *connect.Request[apiv1.WhoAm
 	}
 
 	res := &apiv1.WhoAmIResponse{
-		AuthenticatedUser: user.Username,
-		Usergroup:         user.UsergroupLine,
-		Provider:          user.Provider,
-		Sid:               user.SID,
-		Acls:              user.Acls,
+		AuthenticatedUser:  user.Username,
+		Usergroup:          user.UsergroupLine,
+		Provider:           user.Provider,
+		Acls:               user.Acls,
+		SessionFingerprint: user.SessionFingerprint(),
 	}
 
 	return connect.NewResponse(res), nil

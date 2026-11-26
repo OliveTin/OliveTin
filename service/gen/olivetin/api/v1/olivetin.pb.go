@@ -2786,14 +2786,14 @@ func (*WhoAmIRequest) Descriptor() ([]byte, []int) {
 }
 
 type WhoAmIResponse struct {
-	state             protoimpl.MessageState `protogen:"open.v1"`
-	AuthenticatedUser string                 `protobuf:"bytes,1,opt,name=authenticated_user,json=authenticatedUser,proto3" json:"authenticated_user,omitempty"`
-	Usergroup         string                 `protobuf:"bytes,2,opt,name=usergroup,proto3" json:"usergroup,omitempty"`
-	Provider          string                 `protobuf:"bytes,3,opt,name=provider,proto3" json:"provider,omitempty"`
-	Acls              []string               `protobuf:"bytes,4,rep,name=acls,proto3" json:"acls,omitempty"`
-	Sid               string                 `protobuf:"bytes,5,opt,name=sid,proto3" json:"sid,omitempty"`
-	unknownFields     protoimpl.UnknownFields
-	sizeCache         protoimpl.SizeCache
+	state              protoimpl.MessageState `protogen:"open.v1"`
+	AuthenticatedUser  string                 `protobuf:"bytes,1,opt,name=authenticated_user,json=authenticatedUser,proto3" json:"authenticated_user,omitempty"`
+	Usergroup          string                 `protobuf:"bytes,2,opt,name=usergroup,proto3" json:"usergroup,omitempty"`
+	Provider           string                 `protobuf:"bytes,3,opt,name=provider,proto3" json:"provider,omitempty"`
+	Acls               []string               `protobuf:"bytes,4,rep,name=acls,proto3" json:"acls,omitempty"`
+	SessionFingerprint string                 `protobuf:"bytes,6,opt,name=session_fingerprint,json=sessionFingerprint,proto3" json:"session_fingerprint,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
 }
 
 func (x *WhoAmIResponse) Reset() {
@@ -2854,9 +2854,9 @@ func (x *WhoAmIResponse) GetAcls() []string {
 	return nil
 }
 
-func (x *WhoAmIResponse) GetSid() string {
+func (x *WhoAmIResponse) GetSessionFingerprint() string {
 	if x != nil {
-		return x.Sid
+		return x.SessionFingerprint
 	}
 	return ""
 }
@@ -5399,13 +5399,13 @@ const file_olivetin_api_v1_olivetin_proto_rawDesc = "" +
 	"\x17ExecutionStatusResponse\x126\n" +
 	"\tlog_entry\x18\x01 \x01(\v2\x19.olivetin.api.v1.LogEntryR\blogEntry\x12X\n" +
 	"\x12back_to_dashboards\x18\x02 \x03(\v2*.olivetin.api.v1.DashboardNavigationTargetR\x10backToDashboards\"\x0f\n" +
-	"\rWhoAmIRequest\"\x9f\x01\n" +
+	"\rWhoAmIRequest\"\xc9\x01\n" +
 	"\x0eWhoAmIResponse\x12-\n" +
 	"\x12authenticated_user\x18\x01 \x01(\tR\x11authenticatedUser\x12\x1c\n" +
 	"\tusergroup\x18\x02 \x01(\tR\tusergroup\x12\x1a\n" +
 	"\bprovider\x18\x03 \x01(\tR\bprovider\x12\x12\n" +
-	"\x04acls\x18\x04 \x03(\tR\x04acls\x12\x10\n" +
-	"\x03sid\x18\x05 \x01(\tR\x03sid\"\x1a\n" +
+	"\x04acls\x18\x04 \x03(\tR\x04acls\x12/\n" +
+	"\x13session_fingerprint\x18\x06 \x01(\tR\x12sessionFingerprintJ\x04\b\x05\x10\x06R\x03sid\"\x1a\n" +
 	"\x18ServerDiagnosticsRequest\"1\n" +
 	"\x19ServerDiagnosticsResponse\x12\x14\n" +
 	"\x05alert\x18\x01 \x01(\tR\x05alert\"\x11\n" +
