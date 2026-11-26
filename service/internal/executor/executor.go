@@ -933,9 +933,16 @@ func ensureArgumentMap(req *ExecutionRequest) {
 	}
 }
 
+// Arguments without a name, such as an unnamed confirmation or html block,
+// are only shown in the web UI and never have a value, so a submitted argument
+// with an empty name is always dropped.
 func filterToDefinedArgumentsOnly(req *ExecutionRequest) {
 	definedNames := make(map[string]struct{})
 	for _, arg := range req.Binding.Action.Arguments {
+		if arg.Name == "" {
+			continue
+		}
+
 		definedNames[arg.Name] = struct{}{}
 	}
 	filtered := make(map[string]string)
