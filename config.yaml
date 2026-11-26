@@ -27,7 +27,7 @@ actions:
   - title: Check disk space
     acls: [guest_actions]
     icon: disk
-    shell: df -h /
+    exec: ["df", "-h", "/"]
     onclick: execution-dialog
     # Second webhook example: POST /webhooks?demo=disk-space
     execOnWebhook:
