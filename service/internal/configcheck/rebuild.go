@@ -40,6 +40,7 @@ func Rebuild(cfg *config.Config, extra ...configissues.Issue) {
 	collected = append(collected, collectCronIssues(cfg)...)
 	collected = append(collected, collectWatcherPathIssues(cfg)...)
 	collected = append(collected, collectDashboardTypeIssues(cfg)...)
+	collected = append(collected, collectWebhookAuthIssues(cfg)...)
 	collected = append(collected, extra...)
 	configissues.Replace(collected)
 }
@@ -573,4 +574,36 @@ func missingWatchDirIssue(displayPath, dirToStat, configFile, actionID, actionTi
 		Source:      displayPath,
 		ConfigFile:  configFile,
 	}}
+}
+
+func collectWebhookAuthIssues(cfg *config.Config) []configissues.Issue {
+	out := make([]configissues.Issue, 0)
+
+	for _, action := range cfg.Actions {
+		if action == nil {
+			continue
+		}
+
+		out = append(out, webhookAuthIssuesForAction(action)...)
+	}
+
+	return out
+}
+
+// Webhook templates choose their own authType, so only webhooks without a
+// template need one in the config.
+func webhookAuthIssuesForAction(action *config.Action) []configissues.Issue {
+	out := make([]configissues.Issue, 0)
+
+	for index, webhook := range action.ExecOnWebhook {
+		if webhook.AuthType != "" || webhook.Template != "" {
+			continue
+		}
+
+		out = append(out, actionIssue(action, configissues.SeverityError, configissues.CodeWebhookAuthTypeUnset,
+			"Webhook has no authType, so its requests are rejected. Set an authType such as hmac-sha256 or bearer, or authType: none to allow unauthenticated requests",
+			fmt.Sprintf("execOnWebhook[%d]", index), ""))
+	}
+
+	return out
 }

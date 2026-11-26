@@ -92,9 +92,13 @@ type RateSpec struct {
 }
 
 // WebhookConfig defines configuration for generic webhook triggers.
+// WebhookAuthTypeNone must be set explicitly for a webhook that accepts
+// unauthenticated requests.
+const WebhookAuthTypeNone = "none"
+
 type WebhookConfig struct {
 	Secret        string            `koanf:"secret"`        // Optional: secret for signature verification
-	AuthType      string            `koanf:"authType"`      // Optional: "hmac-sha256", "hmac-sha1", "bearer", "basic", "none"
+	AuthType      string            `koanf:"authType"`      // Required unless set by a template: "hmac-sha256", "hmac-sha1", "bearer", "basic", "none"
 	AuthHeader    string            `koanf:"authHeader"`    // Optional: custom header name for auth (default: "X-Webhook-Signature")
 	MatchHeaders  map[string]string `koanf:"matchHeaders"`  // Match HTTP headers
 	MatchPath     string            `koanf:"matchPath"`     // JSONPath expression to match in request body (format: "jsonpath=value" or just "jsonpath")
