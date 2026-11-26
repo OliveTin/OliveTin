@@ -175,6 +175,23 @@ func TestWatchFileWriteWaitsForDanglingConfigMapLink(t *testing.T) {
 	recorder.expectOneCall(t)
 }
 
+func TestWatchFileWriteWaitsForDanglingReplacement(t *testing.T) {
+	skipWithoutSymlinks(t)
+
+	dir := t.TempDir()
+	path := filepath.Join(dir, "entities.yaml")
+	writeFile(t, path, "a: 1\n")
+	recorder := watchFileForTest(t, path)
+
+	temporary := filepath.Join(dir, "entities.yaml.tmp")
+	require.NoError(t, os.Symlink(filepath.Join(dir, "missing.yaml"), temporary))
+	require.NoError(t, os.Rename(temporary, path))
+	recorder.expectNone(t)
+
+	writeFile(t, filepath.Join(dir, "missing.yaml"), "a: 2\n")
+	recorder.expectOneCall(t)
+}
+
 func TestWatchFileWriteReloadsRenameSave(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "entities.yaml")
 	writeFile(t, path, "a: 1\n")
@@ -280,7 +297,6 @@ func TestWatchFileWriteStopsAfterStopFileWatch(t *testing.T) {
 	recorder := watchFileForTest(t, cm.path())
 
 	StopFileWatch(cm.path())
-	time.Sleep(50 * time.Millisecond)
 	cm.update(t, "a: 2\n")
 
 	recorder.expectNone(t)
@@ -296,12 +312,16 @@ func TestWatchDirectoryCreateStillFiresForNewFiles(t *testing.T) {
 	done := make(chan struct{})
 	t.Cleanup(func() { close(done) })
 
-	go watchPath(&watchContext{
+	// The watch is added before the event loop starts, so the file created
+	// below cannot be missed.
+	watcher, err := fsnotify.NewWatcher()
+	require.NoError(t, err)
+	require.NoError(t, watcher.Add(dir))
+	go runWatcher(&watchContext{
 		filedir:         dir,
 		callback:        func(filename string) { calls <- filename },
 		interestedEvent: fsnotify.Create,
-	}, done)
-	time.Sleep(50 * time.Millisecond)
+	}, watcher, done)
 
 	created := filepath.Join(dir, "new.txt")
 	writeFile(t, created, "x")

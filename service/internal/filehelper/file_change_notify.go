@@ -228,9 +228,20 @@ func waitForWatcherEventOrCancel(ctx *watchContext, watcher *fsnotify.Watcher, d
 	case <-done:
 		return false
 	case event, ok := <-watcher.Events:
-		return handleWatcherEvent(ctx, event, ok)
+		return !isStopped(done) && handleWatcherEvent(ctx, event, ok)
 	case err, ok := <-watcher.Errors:
 		return handleWatcherError(ctx, err, ok)
+	}
+}
+
+// isStopped stops a watch that has been asked to stop even when an event was
+// already waiting, because select picks between ready channels at random.
+func isStopped(done <-chan struct{}) bool {
+	select {
+	case <-done:
+		return true
+	default:
+		return false
 	}
 }
 
@@ -287,9 +298,7 @@ func consumeRelevantEvents(ctx *watchContext) {
 // target of its symlink changes.
 func consumeFileEvent(ctx *watchContext) {
 	if isWatchedFileChange(ctx) {
-		refreshResolvedPath(ctx)
-		log.Debugf("fsnotify event relevant: %v", ctx.event)
-		processDebounce(ctx)
+		consumeWatchedFileChange(ctx)
 		return
 	}
 
@@ -300,6 +309,20 @@ func consumeFileEvent(ctx *watchContext) {
 	}
 
 	log.Tracef("fsnotify event irrelevant: %v", ctx.event)
+}
+
+// consumeWatchedFileChange reloads after a write or create at the watched
+// path. A create can leave a dangling symlink, so it only reloads once the
+// file can be read. A write always reloads, as it always has.
+func consumeWatchedFileChange(ctx *watchContext) {
+	_, resolved := resolveWatchedPath(ctx)
+	if !resolved && !ctx.event.Has(fsnotify.Write) {
+		log.Debugf("fsnotify event waiting for %v to resolve: %v", ctx.watchedPath, ctx.event)
+		return
+	}
+
+	log.Debugf("fsnotify event relevant: %v", ctx.event)
+	processDebounce(ctx)
 }
 
 func isWatchedFileChange(ctx *watchContext) bool {
@@ -320,19 +343,27 @@ func isDirectoryChange(event *fsnotify.Event) bool {
 // for example part way through a replacement, the last target is kept and no
 // change is reported, so the file is not reloaded until it can be read.
 func refreshResolvedPath(ctx *watchContext) bool {
-	resolved, err := filepath.EvalSymlinks(ctx.watchedPath)
+	changed, _ := resolveWatchedPath(ctx)
+	return changed
+}
+
+// resolveWatchedPath updates where the watched file points. It reports
+// whether the target changed, and separately whether the file resolved at
+// all.
+func resolveWatchedPath(ctx *watchContext) (changed bool, resolved bool) {
+	target, err := filepath.EvalSymlinks(ctx.watchedPath)
 	if err != nil {
 		log.Debugf("fsnotify could not resolve %v: %v", ctx.watchedPath, err)
-		return false
+		return false, false
 	}
 
-	if resolved == ctx.resolvedPath {
-		return false
+	if target == ctx.resolvedPath {
+		return false, true
 	}
 
-	ctx.resolvedPath = resolved
-	watchResolvedDir(ctx, filepath.Dir(resolved))
-	return true
+	ctx.resolvedPath = target
+	watchResolvedDir(ctx, filepath.Dir(target))
+	return true, true
 }
 
 func watchResolvedDir(ctx *watchContext, dir string) {
