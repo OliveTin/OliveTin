@@ -2,6 +2,7 @@ package filehelper
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"sync"
 	"time"
@@ -42,11 +43,26 @@ type WatchMeta struct {
 }
 
 type watchContext struct {
-	callback        func(filename string)
-	event           *fsnotify.Event
-	meta            WatchMeta
-	filename        string
-	filedir         string
+	callback func(filename string)
+	event    *fsnotify.Event
+	watcher  *fsnotify.Watcher
+	meta     WatchMeta
+	filename string
+	filedir  string
+
+	// The fields below are only used by file watches, and only touched by the
+	// watcher's own goroutine once it has started.
+
+	// watchedPath is the file that was asked for, which may be a symlink.
+	watchedPath string
+	// resolvedPath is where watchedPath last pointed, or empty if it has not
+	// resolved yet.
+	resolvedPath string
+	// resolvedDir is the extra directory watched when resolvedPath is in a
+	// different directory to watchedPath, so in-place edits of a symlink's
+	// target are seen.
+	resolvedDir string
+
 	interestedEvent fsnotify.Op
 }
 
@@ -78,6 +94,7 @@ func WatchFileWrite(fullpath string, callback func(filename string), meta WatchM
 	ctx := &watchContext{
 		filedir:         filedir,
 		filename:        filename,
+		watchedPath:     watchKey,
 		callback:        callback,
 		interestedEvent: fsnotify.Write,
 		meta:            meta,
@@ -94,6 +111,9 @@ func WatchFileWrite(fullpath string, callback func(filename string), meta WatchM
 		closeWatcher(watcher)
 		return err
 	}
+
+	ctx.watcher = watcher
+	refreshResolvedPath(ctx)
 
 	done := registerFileWatch(watchKey)
 	go runWatcher(ctx, watcher, done)
@@ -236,6 +256,11 @@ func handleWatcherError(ctx *watchContext, err error, ok bool) bool {
 }
 
 func consumeEvent(ctx *watchContext) {
+	if ctx.watchedPath != "" {
+		consumeFileEvent(ctx)
+		return
+	}
+
 	if ctx.filename != "" && filepath.Base(ctx.event.Name) != ctx.filename {
 		log.Tracef("fsnotify irreleventa event different file %+v", ctx.event)
 		return
@@ -254,10 +279,130 @@ func consumeRelevantEvents(ctx *watchContext) {
 	}
 }
 
+// consumeFileEvent decides whether an event means the watched file's content
+// may have changed. Writing the file in place gives a Write event, but tools
+// that replace a file give other events: editors and mv rename a new file over
+// it (Create), and Kubernetes updates a mounted ConfigMap by swapping a
+// directory symlink, so the file itself gets no event at all and only the
+// target of its symlink changes.
+func consumeFileEvent(ctx *watchContext) {
+	if isWatchedFileChange(ctx) {
+		refreshResolvedPath(ctx)
+		log.Debugf("fsnotify event relevant: %v", ctx.event)
+		processDebounce(ctx)
+		return
+	}
+
+	if isDirectoryChange(ctx.event) && refreshResolvedPath(ctx) {
+		log.Debugf("fsnotify symlink target changed for %v: %v", ctx.watchedPath, ctx.event)
+		processDebounce(ctx)
+		return
+	}
+
+	log.Tracef("fsnotify event irrelevant: %v", ctx.event)
+}
+
+func isWatchedFileChange(ctx *watchContext) bool {
+	if !ctx.event.Has(fsnotify.Write) && !ctx.event.Has(fsnotify.Create) {
+		return false
+	}
+
+	name := filepath.Clean(ctx.event.Name)
+	return name == ctx.watchedPath || (ctx.resolvedPath != "" && name == ctx.resolvedPath)
+}
+
+func isDirectoryChange(event *fsnotify.Event) bool {
+	return event.Has(fsnotify.Create) || event.Has(fsnotify.Rename) || event.Has(fsnotify.Remove)
+}
+
+// refreshResolvedPath checks where the watched file points now, and reports
+// whether that changed. While the file is missing or a symlink is dangling,
+// for example part way through a replacement, the last target is kept and no
+// change is reported, so the file is not reloaded until it can be read.
+func refreshResolvedPath(ctx *watchContext) bool {
+	resolved, err := filepath.EvalSymlinks(ctx.watchedPath)
+	if err != nil {
+		log.Debugf("fsnotify could not resolve %v: %v", ctx.watchedPath, err)
+		return false
+	}
+
+	if resolved == ctx.resolvedPath {
+		return false
+	}
+
+	ctx.resolvedPath = resolved
+	watchResolvedDir(ctx, filepath.Dir(resolved))
+	return true
+}
+
+func watchResolvedDir(ctx *watchContext, dir string) {
+	if dir == ctx.resolvedDir {
+		return
+	}
+
+	unwatchResolvedDir(ctx)
+
+	// The directory may be the watched directory reached through a symlink.
+	// inotify gives both paths the same watch, so adding it again would rename
+	// that watch, and removing it later would stop the main watch.
+	if sameDirectory(dir, ctx.filedir) {
+		return
+	}
+
+	if err := ctx.watcher.Add(dir); err != nil {
+		log.WithFields(log.Fields{
+			"path": ctx.watchedPath,
+			"dir":  dir,
+		}).Warnf("Could not watch the directory a symlink points to, so edits there will not be seen: %v", err)
+		return
+	}
+
+	ctx.resolvedDir = dir
+}
+
+func unwatchResolvedDir(ctx *watchContext) {
+	if ctx.resolvedDir == "" {
+		return
+	}
+
+	// A ConfigMap's old directory has already been deleted by now, and the
+	// watch went with it, so an error here is expected.
+	if err := ctx.watcher.Remove(ctx.resolvedDir); err != nil {
+		log.Debugf("fsnotify could not stop watching %v: %v", ctx.resolvedDir, err)
+	}
+
+	ctx.resolvedDir = ""
+}
+
+func sameDirectory(left, right string) bool {
+	leftInfo, err := os.Stat(left)
+	if err != nil {
+		return false
+	}
+
+	rightInfo, err := os.Stat(right)
+	if err != nil {
+		return false
+	}
+
+	return os.SameFile(leftInfo, rightInfo)
+}
+
+// debounceKey keeps file watches apart by their whole path, so two files with
+// the same name in different directories do not suppress each other.
+// Directory watches keep their existing key.
+func debounceKey(ctx *watchContext) string {
+	if ctx.watchedPath != "" {
+		return ctx.watchedPath
+	}
+	return ctx.filename
+}
+
 func processDebounce(ctx *watchContext) {
 	debounceWriteLogMutex.Lock()
 
-	logEntry, found := debounceWriteLog[ctx.filename]
+	key := debounceKey(ctx)
+	logEntry, found := debounceWriteLog[key]
 
 	if !found {
 		logEntry = &FsNotifyLogEntry{
@@ -265,7 +410,7 @@ func processDebounce(ctx *watchContext) {
 			callbackWrapper:  nil,
 		}
 
-		debounceWriteLog[ctx.filename] = logEntry
+		debounceWriteLog[key] = logEntry
 	}
 
 	log.Debugf("fsnotify event %+v", logEntry)
