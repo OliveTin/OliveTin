@@ -1,2 +1,3 @@
 * xref:index.adoc[Index]
 * xref:signing.adoc[Signing]
+* xref:sbom.adoc[SBOMs]

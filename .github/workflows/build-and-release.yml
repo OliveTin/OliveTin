@@ -22,6 +22,7 @@ on:
       - 'var/entities/**'
       - 'var/helper-actions/**'
       - 'var/macos/**'
+      - 'var/sbom/**'
       - 'var/windows/**'
   workflow_dispatch:
   push:
@@ -50,6 +51,7 @@ on:
       - 'var/entities/**'
       - 'var/helper-actions/**'
       - 'var/macos/**'
+      - 'var/sbom/**'
       - 'var/windows/**'
 
 permissions:
@@ -158,6 +160,10 @@ jobs:
         uses: goreleaser/goreleaser-action@v7
         with:
           install-only: true
+
+      - name: Install syft (release SBOM, var/sbom/generate.sh)
+        if: env.WILL_PUBLISH == 'true'
+        uses: anchore/sbom-action/download-syft@v0
 
       - name: Set up Docker Buildx
         if: env.WILL_PUBLISH == 'true'
