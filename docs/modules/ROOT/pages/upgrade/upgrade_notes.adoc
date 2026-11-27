@@ -59,7 +59,7 @@ If you want a longer history in the web interface, raise `logHistoryLimit` in yo
 
 The deprecated `StartActionByGet` and `StartActionByGetAndWait` API methods used to run actions that require a justification without one. They now refuse them with "justification is required for this action", in the same way as `StartAction` and `StartActionAndWait`, unless the action's justification template fills one in. These methods cannot send a justification, so if a script calls them for such an action, change it to call `StartAction` or `StartActionAndWait` with a `justification`. See xref:api/method_StartActionByGetAndWait.adoc[StartActionByGetAndWait].
 
-Users logged in with trusted header authentication (`authHttpHeaderUsername`) now always have the provider `trusted-header`. OliveTin used to copy a `provider` request header into the user's provider, which let a client claim to be a `system` user and skip a required justification. This only affects you if something reads the provider from the `WhoAmI` or `Init` API for these users.
+Users logged in with trusted header authentication (`authHttpHeaderUsername`) now always have the provider `trusted-header`. OliveTin used to copy a `provider` request header into the user's provider, which let a client claim to be a `system` user and skip a required justification. This affects you if something reads the provider from the `WhoAmI` or `Init` API for these users. It also affects you if a client sends a `provider: system` header to start an action that requires a justification, without sending one. Those calls now fail with "justification is required for this action", unless the action's justification template fills one in. Send a `justification` with these calls.
 
 == 2024.08.14
 
