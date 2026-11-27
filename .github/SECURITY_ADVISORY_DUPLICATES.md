@@ -183,6 +183,23 @@ Previous decisions, for reference:
 
 ---
 
+## Required justification skipped
+
+**Canonical:** [GHSA-5jwv-37px-7hmc](https://github.com/OliveTin/OliveTin/security/advisories/GHSA-5jwv-37px-7hmc) — reporter **Khattak761** (2026-09-04)
+
+Ways to run an action that requires a justification without giving one. Not accepted as a vulnerability: the justification is a note in the logs, not an access control. The user already has `exec` on the action, and is still logged under their own username.
+
+| GHSA | Reporter | Status | Notes |
+|------|----------|--------|-------|
+| GHSA-5jwv-37px-7hmc | Khattak761 | closed (canonical) | `StartActionByGet` / `StartActionByGetAndWait` skip the check |
+| GHSA-cwqr-6xvr-ch27 | joostgrunwald | closed | Same endpoints, plus a client-supplied `provider: system` header with trusted-header auth |
+
+**Fix (public, as a bug):** the `StartActionByGet*` methods check the justification like `StartAction`, and trusted-header auth no longer reads a `provider` header.
+
+**Why not accepted:** no change to who can run what; ACLs still match the real username and usergroup. Close new reports here unless they show a justification bypass that also grants a permission the user did not have.
+
+---
+
 ## Easy to confuse (not duplicates)
 
 | Topic | Advisories | Distinction |
