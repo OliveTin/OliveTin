@@ -89,7 +89,7 @@ All configuration options are covered in the solution sections
 | `authJwtClaimUsername` | The claim to use for the username. | `sub` | Requires restart | xref:security/jwt_hmac.adoc[JWT with HMAC], xref:security/jwt_keys.adoc[JWT with Keys]
 | `authJwtClaimUserGroup` | The claim to use for the usergroup. | `sub` | Requires restart | xref:security/jwt_hmac.adoc[JWT with HMAC], xref:security/jwt_keys.adoc[JWT with Keys]
 | `authJwtHeader` | The HTTP header to use for JWT authentication. | `` | Requires restart | xref:security/jwt_keys.adoc[JWT with Keys]
-| `authJwtPubKeyPath` | The path to the public key to use for JWT authentication. | `` | Requires restart | xref:security/jwt_keys.adoc[JWT with Keys]
+| `authJwtPubKeyPath` | The path to the public key to use for JWT authentication. | `` | Live reloadable. The key file is read on every request, so replacing it takes effect without a restart. | xref:security/jwt_keys.adoc#rotating-public-keys-on-disk[JWT with Keys]
 | `authHttpHeaderUsername` | The HTTP header to use for the username. | `` | Requires restart | xref:security/trusted_header.adoc[Trusted Headers]
 | `authHttpHeaderUserGroup` | The HTTP header to use for the usergroup. | `` | Requires restart | xref:security/trusted_header.adoc[Trusted Headers]
 | `authLocalUsers` | The list of local users. | `[]` | Requires restart | xref:security/local.adoc[Local Users]

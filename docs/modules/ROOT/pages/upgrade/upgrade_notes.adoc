@@ -19,6 +19,13 @@ A webhook in `execOnWebhook` without an `authType` used to accept every request 
 
 If you have webhooks without an `authType`, add one. Use `authType: bearer`, `hmac-sha256`, `hmac-sha1` or `basic` with a `secret`, or set `authType: none` if the webhook should accept requests from anyone who can reach `/webhooks`. See xref:action_execution/onwebhook.adoc#every-webhook-needs-an-authtype[Webhook Authentication].
 
+[#jwt-local-key-reloaded]
+=== JWT public keys on disk are read on every request
+
+When `authJwtPubKeyPath` is set, OliveTin used to load the key file once and keep using that key until it restarted, even if the file was replaced, deleted or broken. It now reads the file on every request. Replacing the file takes effect straight away, so tokens signed by the old key stop working without a restart.
+
+If the key file is missing or cannot be parsed, every JWT is now rejected, instead of the previously loaded key staying in use. If you remove or move the key file while OliveTin is running, make sure the file at `authJwtPubKeyPath` is always present and valid. See xref:security/jwt_keys.adoc#rotating-public-keys-on-disk[Rotating public keys on disk].
+
 [#whoami-session-fingerprint]
 === `WhoAmI` no longer returns the session ID
 

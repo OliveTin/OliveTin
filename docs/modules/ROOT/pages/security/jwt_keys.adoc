@@ -46,6 +46,13 @@ authJwtClaimUsername: email
 authJwtCookieName: "CF_Authorization"
 ----
 
+[#rotating-public-keys-on-disk]
+=== Rotating public keys on disk
+
+OliveTin reads the key file on every request, so you can rotate the key by replacing the file at the same path, for example by updating a Kubernetes or Docker secret, without restarting OliveTin. As soon as the file changes, tokens signed by the old key are rejected and tokens signed by the new key are accepted.
+
+If the key file is missing or cannot be parsed, OliveTin rejects every JWT until the file is fixed. When you replace the file, write the new key to a temporary file and rename it over the old one, so that OliveTin never reads a half-written key.
+
 == See Also
 
 * xref:solutions/cloudflare_access_tunnel/index.adoc[Cloudflare Access & Tunnels Solution]
