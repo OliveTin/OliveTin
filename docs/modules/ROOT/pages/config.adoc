@@ -122,6 +122,7 @@ All configuration options are covered in the solution sections
 | Option | Description | Default | Live Reloadable | Documentation
 
 | `logLevel` | The log level to use. `INFO`, `DEBUG`, `WARN`, `TRACE` | `INFO` | Requires Restart | xref:advanced_configuration/logs.adoc[Logging]
+| `logHistoryLimit` | The maximum number of execution logs kept in memory. The oldest finished logs are removed first. Minimum `100`. | `2000` | Requires Restart | xref:logs/saving.adoc#log-history-limit[Saving logs]
 | `logDebugOptions` | Enable various debug logs. | `-` | Requires Restart | xref:troubleshooting/advanced.adoc[Advanced Troubleshooting]
 | `Insecure*` | Various options to disable security features. | `false` | Restart recommended | xref:troubleshooting/advanced.adoc[Advanced Troubleshooting]
 |===

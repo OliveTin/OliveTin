@@ -62,6 +62,7 @@ type Executor struct {
 	MapActionBindingsLock sync.RWMutex
 	listenersMu           sync.RWMutex
 	groupQueueMu          sync.Mutex
+	nextLogIndex          int64
 }
 
 // ExecutionRequest is a request to execute an action. It's passed to an
@@ -572,10 +573,11 @@ func (e *Executor) SetLog(trackingID string, entry *InternalLogEntry) string {
 		entry.ExecutionTrackingID = trackingID
 	}
 
-	entry.Index = int64(len(e.logsTrackingIdsByDate))
+	entry.Index = e.takeNextLogIndexLocked()
 
 	e.logs[trackingID] = entry
 	e.logsTrackingIdsByDate = append(e.logsTrackingIdsByDate, trackingID)
+	e.evictOldLogsLocked(time.Now())
 
 	return trackingID
 }
