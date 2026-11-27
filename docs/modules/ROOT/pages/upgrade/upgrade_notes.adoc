@@ -54,6 +54,13 @@ OliveTin now keeps up to 2000 execution logs in memory, and removes the oldest f
 
 If you want a longer history in the web interface, raise `logHistoryLimit` in your config. Logs saved to disk with `saveLogs` are not affected. See xref:logs/saving.adoc#log-history-limit[How many logs are kept in memory].
 
+[#start-action-by-get-justification]
+=== `StartActionByGet` and `StartActionByGetAndWait` now check required justifications
+
+The deprecated `StartActionByGet` and `StartActionByGetAndWait` API methods used to run actions that require a justification without one. They now refuse them with "justification is required for this action", in the same way as `StartAction` and `StartActionAndWait`, unless the action's justification template fills one in. These methods cannot send a justification, so if a script calls them for such an action, change it to call `StartAction` or `StartActionAndWait` with a `justification`. See xref:api/method_StartActionByGetAndWait.adoc[StartActionByGetAndWait].
+
+Users logged in with trusted header authentication (`authHttpHeaderUsername`) now always have the provider `trusted-header`. OliveTin used to copy a `provider` request header into the user's provider, which let a client claim to be a `system` user and skip a required justification. This only affects you if something reads the provider from the `WhoAmI` or `Init` API for these users.
+
 == 2024.08.14
 
 === Navigation change - Subpaths no longer supported
