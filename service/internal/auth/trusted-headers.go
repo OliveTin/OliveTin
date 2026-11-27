@@ -18,9 +18,8 @@ func checkUserFromHeaders(context *types.AuthCheckingContext) *types.Authenticat
 		u.UsergroupLine = getHeaderKeyOrEmpty(context.Request.Header, context.Config.AuthHttpHeaderUserGroup)
 	}
 
-	if prov := getHeaderKeyOrEmpty(context.Request.Header, "provider"); prov != "" {
-		u.Provider = prov
-	}
+	u.Provider = "trusted-header"
+
 	return u
 }
 

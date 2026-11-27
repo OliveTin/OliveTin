@@ -331,16 +331,17 @@ func (api *oliveTinAPI) StartActionByGet(ctx ctx.Context, req *connect.Request[a
 	}
 
 	user := auth.UserFromApiCall(ctx, req, api.cfg)
-	if err := api.errUnlessStartEntityAccessAllowed(user, binding, map[string]string{}); err != nil {
+	args := make(map[string]string)
+	justification, err := api.startByGetJustification(user, binding, args)
+	if err != nil {
 		return nil, err
 	}
-
-	args := make(map[string]string)
 
 	execReq := executor.ExecutionRequest{
 		Binding:           binding,
 		TrackingID:        uuid.NewString(),
 		Arguments:         args,
+		Justification:     justification,
 		AuthenticatedUser: user,
 		Cfg:               api.cfg,
 	}
@@ -352,27 +353,19 @@ func (api *oliveTinAPI) StartActionByGet(ctx ctx.Context, req *connect.Request[a
 	}), nil
 }
 
-func (api *oliveTinAPI) runBindingAndWait(binding *executor.ActionBinding, args map[string]string, user *authpublic.AuthenticatedUser) (*executor.InternalLogEntry, bool) {
-	execReq := executor.ExecutionRequest{
-		Binding:           binding,
-		TrackingID:        uuid.NewString(),
-		Arguments:         args,
-		AuthenticatedUser: user,
-		Cfg:               api.cfg,
+// The deprecated StartActionByGet methods take no arguments or justification, so they only
+// run an action that requires a justification when its justification template resolves to text.
+func (api *oliveTinAPI) startByGetJustification(user *authpublic.AuthenticatedUser, binding *executor.ActionBinding, args map[string]string) (string, error) {
+	if err := api.errUnlessStartEntityAccessAllowed(user, binding, args); err != nil {
+		return "", err
 	}
 
-	wg, _ := api.executor.ExecRequest(&execReq)
-	wg.Wait()
-
-	return api.executor.GetLog(execReq.TrackingID)
-}
-
-func (api *oliveTinAPI) startActionByGetAndWaitLogEntry(binding *executor.ActionBinding, user *authpublic.AuthenticatedUser) (*apiv1.LogEntry, error) {
-	internalLogEntry, ok := api.runBindingAndWait(binding, map[string]string{}, user)
-	if !ok {
-		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("execution not found"))
+	justification := resolveStartJustification(binding.Action, binding, "", args)
+	if err := validateJustificationRequired(binding.Action, justification, user); err != nil {
+		return "", connectInvalidJustification(err)
 	}
-	return api.logEntryForAllowedViewer(internalLogEntry, user)
+
+	return justification, nil
 }
 
 func (api *oliveTinAPI) StartActionByGetAndWait(ctx ctx.Context, req *connect.Request[apiv1.StartActionByGetAndWaitRequest]) (*connect.Response[apiv1.StartActionByGetAndWaitResponse], error) {
@@ -384,11 +377,13 @@ func (api *oliveTinAPI) StartActionByGetAndWait(ctx ctx.Context, req *connect.Re
 	}
 
 	user := auth.UserFromApiCall(ctx, req, api.cfg)
-	if err := api.errUnlessStartEntityAccessAllowed(user, binding, map[string]string{}); err != nil {
+	args := make(map[string]string)
+	justification, err := api.startByGetJustification(user, binding, args)
+	if err != nil {
 		return nil, err
 	}
 
-	logEntry, err := api.startActionByGetAndWaitLogEntry(binding, user)
+	logEntry, err := api.startActionAndWaitLogEntry(binding, args, justification, user)
 	if err != nil {
 		return nil, err
 	}

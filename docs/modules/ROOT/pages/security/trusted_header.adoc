@@ -24,6 +24,8 @@ The value of `X-Username` and `X-Usergroup` can be whatever you like, as long as
 
 NOTE: You *must* set `authHttpHeaderUsername` to some value, even if you only intend to use `authHttpHeaderUserGroup`, otherwise usergroups will be ignored.
 
+Users logged in this way always have the provider `trusted-header`. OliveTin does not read the provider from a request header. See xref:upgrade/upgrade_notes.adoc#trusted-header-provider[Upgrade Notes].
+
 == Multiple usergroups
 
 OliveTin will automatically detect multiple usergroups in the `authHttpHeaderUserGroup` header if they are separated by a space. You can also set a configuration option to use a different separator string with `authHttpHeaderUserGroupSep`. For example, if you set `authHttpHeaderUserGroupSep` to `,`, then the header `X-Usergroup: group1,group2` will be interpreted as two usergroups: `group1` and `group2`.

@@ -7,6 +7,8 @@
 Despite its name, this method no longer supports `GET` requests. The OliveTin 2k style of putting the action ID in the URL (eg: `GET /api/StartActionByGet/pingGithub`) returns `404` in OliveTin 3k, and is not coming back.
 ====
 
+This method cannot send a justification. If the action requires one, the call is refused with `invalid_argument`, unless the action's justification template fills it in. Use `StartAction` with a `justification` instead. See xref:upgrade/upgrade_notes.adoc#start-action-by-get-justification[Upgrade Notes].
+
 == Migrating to `StartAction`
 
 `StartActionByGet` takes only an `actionId`, and returns an Execution Tracking ID. `StartAction` does the same with `bindingId` - for a normal action, the binding ID is the same as the action `id` from your `config.yaml` (see xref:api/start_action.adoc#api-ids[Action IDs vs Binding IDs]).
