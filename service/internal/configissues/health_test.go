@@ -225,3 +225,34 @@ func TestIssueInTwoSourcesIsListedWithTheHighestSeverity(t *testing.T) {
 		assert.Equal(t, []Issue{failure}, List())
 	})
 }
+
+func TestDuplicateIssueIsLoggedOnceAsAnError(t *testing.T) {
+	resetIssues(t)
+	hook := captureLogs(t)
+
+	warning := testIssue(CodeConfigDecode, "bad value")
+	failure := warning
+	failure.Severity = SeverityError
+
+	Replace([]Issue{warning, failure})
+	Replace([]Issue{warning, failure})
+
+	entries := issueLogEntries(hook)
+	require.Len(t, entries, 1, "a duplicate issue must be logged once, and not again on an unchanged rebuild")
+	assert.Equal(t, log.ErrorLevel, entries[0].Level)
+}
+
+func TestIssueRaisedToAnErrorKeepsItsFirstPosition(t *testing.T) {
+	resetIssues(t)
+
+	warning := testIssue(CodeConfigDecode, "bad value")
+	failure := warning
+	failure.Severity = SeverityError
+
+	ReplaceLoadIssues([]Issue{warning})
+	ReportRuntime(testIssue(CodeDeprecatedAPICall, "runtime"))
+	Replace([]Issue{failure})
+
+	assert.Equal(t, []string{"bad value", "runtime"}, messages(List()))
+	assert.Equal(t, SeverityError, List()[0].Severity)
+}

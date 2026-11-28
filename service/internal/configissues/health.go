@@ -176,8 +176,10 @@ func uniqueIssueViews(stored []health.IssueView) []health.IssueView {
 			out = append(out, view)
 			continue
 		}
+		// Only the severity is raised, so the issue keeps the position of the
+		// first source it was found in.
 		if severityRank(view.Severity) > severityRank(out[position].Severity) {
-			out[position] = view
+			out[position].Severity = view.Severity
 		}
 	}
 	return out
