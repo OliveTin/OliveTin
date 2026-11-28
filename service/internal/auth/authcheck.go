@@ -24,11 +24,11 @@ func AddAuthChainFunction(check func(*types.AuthCheckingContext) *types.Authenti
 	authChain = append(authChain, check)
 }
 
-func runAuthChain[T any](req *connect.Request[T], cfg *config.Config) *types.AuthenticatedUser {
+func runAuthChain(header http.Header, cfg *config.Config) *types.AuthenticatedUser {
 	var user *types.AuthenticatedUser
 
 	authCtx := &types.AuthCheckingContext{
-		Request: &http.Request{Header: req.Header()},
+		Request: &http.Request{Header: header},
 		Config:  cfg,
 	}
 
@@ -44,9 +44,13 @@ func runAuthChain[T any](req *connect.Request[T], cfg *config.Config) *types.Aut
 }
 
 func UserFromApiCall[T any](ctx context.Context, req *connect.Request[T], cfg *config.Config) *types.AuthenticatedUser {
-	user := runAuthChain(req, cfg)
-
 	log.Tracef("UserFromApiCall Context: %+v", ctx)
+
+	return UserFromHeaders(req.Header(), req.Spec().Procedure, cfg)
+}
+
+func UserFromHeaders(header http.Header, procedure string, cfg *config.Config) *types.AuthenticatedUser {
+	user := runAuthChain(header, cfg)
 
 	if user == nil || user.Username == "" {
 		user = UserGuest(cfg)
@@ -54,17 +58,12 @@ func UserFromApiCall[T any](ctx context.Context, req *connect.Request[T], cfg *c
 		user.BuildUserAcls(cfg)
 	}
 
-	path := ""
-	if req != nil {
-		path = req.Spec().Procedure
-	}
-
 	log.WithFields(log.Fields{
 		"username":      user.Username,
 		"usergroupLine": user.UsergroupLine,
 		"provider":      user.Provider,
 		"acls":          user.Acls,
-		"path":          path,
+		"path":          procedure,
 	}).Debugf("Authenticated API request")
 
 	return user

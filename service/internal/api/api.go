@@ -237,22 +237,9 @@ func (api *oliveTinAPI) applyLocalLoginResult(req *apiv1.LocalUserLoginRequest, 
 	}
 }
 
-func (api *oliveTinAPI) localUserLoginEarlyReject(req *connect.Request[apiv1.LocalUserLoginRequest]) *connect.Response[apiv1.LocalUserLoginResponse] {
-	if !api.cfg.AuthLocalUsers.Enabled {
-		return connect.NewResponse(&apiv1.LocalUserLoginResponse{Success: false})
-	}
-
-	if isLocalInteractiveLoginDisabledForUser(api.cfg, req.Msg.Username) {
-		log.WithFields(log.Fields{"username": req.Msg.Username}).Debug("LocalUserLogin: interactive login disabled (no password configured)")
-		return connect.NewResponse(&apiv1.LocalUserLoginResponse{Success: false})
-	}
-
-	return nil
-}
-
 func (api *oliveTinAPI) LocalUserLogin(ctx ctx.Context, req *connect.Request[apiv1.LocalUserLoginRequest]) (*connect.Response[apiv1.LocalUserLoginResponse], error) {
-	if early := api.localUserLoginEarlyReject(req); early != nil {
-		return early, nil
+	if !api.cfg.AuthLocalUsers.Enabled {
+		return connect.NewResponse(&apiv1.LocalUserLoginResponse{Success: false}), nil
 	}
 
 	match, err := checkUserPassword(api.cfg, req.Msg.Username, req.Msg.Password)
@@ -278,7 +265,8 @@ func (api *oliveTinAPI) startActionAndWaitRun(binding *executor.ActionBinding, a
 	}
 	wg, _ := api.executor.ExecRequest(&execReq)
 	wg.Wait()
-	return api.executor.GetLog(execReq.TrackingID)
+	entry := execReq.LogEntry()
+	return entry, entry != nil
 }
 
 func (api *oliveTinAPI) findBindingOrNotFound(actionId string) (*executor.ActionBinding, error) {
@@ -344,16 +332,17 @@ func (api *oliveTinAPI) StartActionByGet(ctx ctx.Context, req *connect.Request[a
 	}
 
 	user := auth.UserFromApiCall(ctx, req, api.cfg)
-	if err := api.errUnlessStartEntityAccessAllowed(user, binding, map[string]string{}); err != nil {
+	args := make(map[string]string)
+	justification, err := api.startByGetJustification(user, binding, args)
+	if err != nil {
 		return nil, err
 	}
-
-	args := make(map[string]string)
 
 	execReq := executor.ExecutionRequest{
 		Binding:           binding,
 		TrackingID:        uuid.NewString(),
 		Arguments:         args,
+		Justification:     justification,
 		AuthenticatedUser: user,
 		Cfg:               api.cfg,
 	}
@@ -365,27 +354,19 @@ func (api *oliveTinAPI) StartActionByGet(ctx ctx.Context, req *connect.Request[a
 	}), nil
 }
 
-func (api *oliveTinAPI) runBindingAndWait(binding *executor.ActionBinding, args map[string]string, user *authpublic.AuthenticatedUser) (*executor.InternalLogEntry, bool) {
-	execReq := executor.ExecutionRequest{
-		Binding:           binding,
-		TrackingID:        uuid.NewString(),
-		Arguments:         args,
-		AuthenticatedUser: user,
-		Cfg:               api.cfg,
+// The deprecated StartActionByGet methods take no arguments or justification, so they only
+// run an action that requires a justification when its justification template resolves to text.
+func (api *oliveTinAPI) startByGetJustification(user *authpublic.AuthenticatedUser, binding *executor.ActionBinding, args map[string]string) (string, error) {
+	if err := api.errUnlessStartEntityAccessAllowed(user, binding, args); err != nil {
+		return "", err
 	}
 
-	wg, _ := api.executor.ExecRequest(&execReq)
-	wg.Wait()
-
-	return api.executor.GetLog(execReq.TrackingID)
-}
-
-func (api *oliveTinAPI) startActionByGetAndWaitLogEntry(binding *executor.ActionBinding, user *authpublic.AuthenticatedUser) (*apiv1.LogEntry, error) {
-	internalLogEntry, ok := api.runBindingAndWait(binding, map[string]string{}, user)
-	if !ok {
-		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("execution not found"))
+	justification := resolveStartJustification(binding.Action, binding, "", args)
+	if err := validateJustificationRequired(binding.Action, justification, user); err != nil {
+		return "", connectInvalidJustification(err)
 	}
-	return api.logEntryForAllowedViewer(internalLogEntry, user)
+
+	return justification, nil
 }
 
 func (api *oliveTinAPI) StartActionByGetAndWait(ctx ctx.Context, req *connect.Request[apiv1.StartActionByGetAndWaitRequest]) (*connect.Response[apiv1.StartActionByGetAndWaitResponse], error) {
@@ -397,11 +378,13 @@ func (api *oliveTinAPI) StartActionByGetAndWait(ctx ctx.Context, req *connect.Re
 	}
 
 	user := auth.UserFromApiCall(ctx, req, api.cfg)
-	if err := api.errUnlessStartEntityAccessAllowed(user, binding, map[string]string{}); err != nil {
+	args := make(map[string]string)
+	justification, err := api.startByGetJustification(user, binding, args)
+	if err != nil {
 		return nil, err
 	}
 
-	logEntry, err := api.startActionByGetAndWaitLogEntry(binding, user)
+	logEntry, err := api.startActionAndWaitLogEntry(binding, args, justification, user)
 	if err != nil {
 		return nil, err
 	}
@@ -535,9 +518,6 @@ func (api *oliveTinAPI) executionStatusBackToDashboards(ile *executor.InternalLo
 
 func (api *oliveTinAPI) ExecutionStatus(ctx ctx.Context, req *connect.Request[apiv1.ExecutionStatusRequest]) (*connect.Response[apiv1.ExecutionStatusResponse], error) {
 	user := auth.UserFromApiCall(ctx, req, api.cfg)
-	if err := api.checkDashboardAccess(user); err != nil {
-		return nil, err
-	}
 	ile, err := api.resolveExecutionStatusForView(req.Msg, user)
 	if err != nil {
 		return nil, err
@@ -603,10 +583,6 @@ func (api *oliveTinAPI) Logout(ctx ctx.Context, req *connect.Request[apiv1.Logou
 
 func (api *oliveTinAPI) GetActionBinding(ctx ctx.Context, req *connect.Request[apiv1.GetActionBindingRequest]) (*connect.Response[apiv1.GetActionBindingResponse], error) {
 	user := auth.UserFromApiCall(ctx, req, api.cfg)
-
-	if err := api.checkDashboardAccess(user); err != nil {
-		return nil, err
-	}
 
 	resp, err := api.getActionBindingResponse(user, req.Msg.BindingId)
 	if err != nil {
@@ -674,10 +650,6 @@ func (api *oliveTinAPI) errUnlessBindingEntityTypeAllowed(user *authpublic.Authe
 func (api *oliveTinAPI) GetDashboard(ctx ctx.Context, req *connect.Request[apiv1.GetDashboardRequest]) (*connect.Response[apiv1.GetDashboardResponse], error) {
 	user := auth.UserFromApiCall(ctx, req, api.cfg)
 
-	if err := api.checkDashboardAccess(user); err != nil {
-		return nil, err
-	}
-
 	entityType := ""
 	entityKey := ""
 	if req.Msg != nil {
@@ -691,13 +663,6 @@ func (api *oliveTinAPI) GetDashboard(ctx ctx.Context, req *connect.Request[apiv1
 	}
 
 	return api.buildCustomDashboardResponse(dashboardRenderRequest, req.Msg.Title)
-}
-
-func (api *oliveTinAPI) checkDashboardAccess(user *authpublic.AuthenticatedUser) error {
-	if user.IsGuest() && api.cfg.AuthRequireGuestsToLogin {
-		return connect.NewError(connect.CodePermissionDenied, fmt.Errorf("guests are not allowed to access the dashboard"))
-	}
-	return nil
 }
 
 func (api *oliveTinAPI) createDashboardRenderRequest(user *authpublic.AuthenticatedUser, entityType, entityKey string) *DashboardRenderRequest {
@@ -746,10 +711,6 @@ func resolveLogsPageSize(requestPageSize, defaultPageSize int64) int64 {
 
 func (api *oliveTinAPI) GetLogs(ctx ctx.Context, req *connect.Request[apiv1.GetLogsRequest]) (*connect.Response[apiv1.GetLogsResponse], error) {
 	user := auth.UserFromApiCall(ctx, req, api.cfg)
-
-	if err := api.checkDashboardAccess(user); err != nil {
-		return nil, err
-	}
 
 	pageSize := resolveLogsPageSize(req.Msg.GetPageSize(), api.cfg.LogHistoryPageSize)
 	logEntries, paging, err := api.executor.GetLogTrackingIdsACL(api.cfg, user, req.Msg.StartOffset, pageSize, req.Msg.DateFilter, req.Msg.GetFilter())
@@ -836,10 +797,6 @@ func (api *oliveTinAPI) buildActionLogsResponse(filtered []*executor.InternalLog
 func (api *oliveTinAPI) GetActionLogs(ctx ctx.Context, req *connect.Request[apiv1.GetActionLogsRequest]) (*connect.Response[apiv1.GetActionLogsResponse], error) {
 	user := auth.UserFromApiCall(ctx, req, api.cfg)
 
-	if err := api.checkDashboardAccess(user); err != nil {
-		return nil, err
-	}
-
 	filtered := api.filterLogsByACL(api.executor.GetLogsByBindingId(req.Msg.ActionId), user)
 	page := paginate(int64(len(filtered)), api.cfg.LogHistoryPageSize, req.Msg.StartOffset)
 	if page.empty {
@@ -925,9 +882,6 @@ func (api *oliveTinAPI) errUnlessUserMayValidateArgumentTypeForBinding(user *aut
 
 func (api *oliveTinAPI) ValidateArgumentType(ctx ctx.Context, req *connect.Request[apiv1.ValidateArgumentTypeRequest]) (*connect.Response[apiv1.ValidateArgumentTypeResponse], error) {
 	user := auth.UserFromApiCall(ctx, req, api.cfg)
-	if err := api.checkDashboardAccess(user); err != nil {
-		return nil, err
-	}
 
 	if err := api.validateArgumentTypeBindingAccess(user, req.Msg); err != nil {
 		return nil, err
@@ -977,7 +931,7 @@ func (api *oliveTinAPI) validateArgumentTypeConnectResponse(msg *apiv1.ValidateA
 
 func (api *oliveTinAPI) validateArgumentTypeInternal(msg *apiv1.ValidateArgumentTypeRequest) error {
 	if msg.BindingId == "" || msg.ArgumentName == "" {
-		return executor.TypeSafetyCheck("", msg.Value, msg.Type)
+		return validateUnboundArgumentType(msg)
 	}
 
 	arg, action := api.findArgumentForValidation(msg.BindingId, msg.ArgumentName)
@@ -990,6 +944,16 @@ func (api *oliveTinAPI) validateArgumentTypeInternal(msg *apiv1.ValidateArgument
 	}
 
 	return executor.ValidateArgument(arg, msg.Value, action)
+}
+
+// Custom regex types only exist on configured arguments, so validating one
+// without a binding would only evaluate a caller-supplied pattern.
+func validateUnboundArgumentType(msg *apiv1.ValidateArgumentTypeRequest) error {
+	if strings.HasPrefix(msg.Type, "regex:") {
+		return fmt.Errorf("custom regex types can only be validated for a configured action argument")
+	}
+
+	return executor.TypeSafetyCheck("", msg.Value, msg.Type)
 }
 
 func (api *oliveTinAPI) findArgumentForValidation(bindingId string, argumentName string) (*config.ActionArgument, *config.Action) {
@@ -1014,16 +978,12 @@ func (api *oliveTinAPI) findArgumentByName(action *config.Action, name string) *
 func (api *oliveTinAPI) WhoAmI(ctx ctx.Context, req *connect.Request[apiv1.WhoAmIRequest]) (*connect.Response[apiv1.WhoAmIResponse], error) {
 	user := auth.UserFromApiCall(ctx, req, api.cfg)
 
-	if err := api.checkDashboardAccess(user); err != nil {
-		return nil, err
-	}
-
 	res := &apiv1.WhoAmIResponse{
-		AuthenticatedUser: user.Username,
-		Usergroup:         user.UsergroupLine,
-		Provider:          user.Provider,
-		Sid:               user.SID,
-		Acls:              user.Acls,
+		AuthenticatedUser:  user.Username,
+		Usergroup:          user.UsergroupLine,
+		Provider:           user.Provider,
+		Acls:               user.Acls,
+		SessionFingerprint: user.SessionFingerprint(),
 	}
 
 	return connect.NewResponse(res), nil
@@ -1115,10 +1075,6 @@ func (api *oliveTinAPI) EventStream(ctx ctx.Context, req *connect.Request[apiv1.
 	srv.ResponseHeader().Set("X-Accel-Buffering", "no")
 
 	user := auth.UserFromApiCall(ctx, req, api.cfg)
-
-	if err := api.checkDashboardAccess(user); err != nil {
-		return err
-	}
 
 	client := &streamingClient{
 		channel:           make(chan *apiv1.EventStreamResponse, 10), // Buffered channel to hold Events
@@ -1343,9 +1299,6 @@ func (api *oliveTinAPI) maybeSendExecutionFinished(client *streamingClient, ile 
 
 func (api *oliveTinAPI) GetDiagnostics(ctx ctx.Context, req *connect.Request[apiv1.GetDiagnosticsRequest]) (*connect.Response[apiv1.GetDiagnosticsResponse], error) {
 	user := auth.UserFromApiCall(ctx, req, api.cfg)
-	if err := api.checkDashboardAccess(user); err != nil {
-		return nil, err
-	}
 	if !user.EffectivePolicy.ShowDiagnostics {
 		return nil, connect.NewError(connect.CodePermissionDenied, fmt.Errorf("diagnostics are not available for your account"))
 	}
@@ -1363,7 +1316,7 @@ func (api *oliveTinAPI) Init(ctx ctx.Context, req *connect.Request[apiv1.InitReq
 }
 
 func (api *oliveTinAPI) buildInitResponse(user *authpublic.AuthenticatedUser) *apiv1.InitResponse {
-	loginRequired := user.IsGuest() && api.cfg.AuthRequireGuestsToLogin
+	loginRequired := user.MustLogIn(api.cfg)
 	currentVersion, availableVersion, showNewVersions := initVersionFields(user, api.cfg)
 	showNavigation, rootDashboardEntries := api.initNavigationFields(user, loginRequired)
 
@@ -1602,10 +1555,6 @@ func (api *oliveTinAPI) maybeSendOutputChunk(client *streamingClient, entry *exe
 func (api *oliveTinAPI) GetEntities(ctx ctx.Context, req *connect.Request[apiv1.GetEntitiesRequest]) (*connect.Response[apiv1.GetEntitiesResponse], error) {
 	user := auth.UserFromApiCall(ctx, req, api.cfg)
 
-	if err := api.checkDashboardAccess(user); err != nil {
-		return nil, err
-	}
-
 	entityMap := entities.GetEntities()
 	entityDefinitions := api.buildEntityDefinitionsResponse(user, req.Msg, entityMap)
 
@@ -1717,10 +1666,6 @@ func searchSubcomponentsForDirectories(entityType string, contents []*config.Das
 
 func (api *oliveTinAPI) GetEntity(ctx ctx.Context, req *connect.Request[apiv1.GetEntityRequest]) (*connect.Response[apiv1.Entity], error) {
 	user := auth.UserFromApiCall(ctx, req, api.cfg)
-
-	if err := api.checkDashboardAccess(user); err != nil {
-		return nil, err
-	}
 
 	instances := entities.GetEntityInstances(req.Msg.Type)
 	if len(instances) == 0 {
@@ -1893,18 +1838,23 @@ func (api *oliveTinAPI) RestartAction(ctx ctx.Context, req *connect.Request[apiv
 		return nil, err
 	}
 
-	if err := validateRestartLogEntry(execReqLogEntry); err != nil {
+	binding, err := api.currentBindingForRestart(execReqLogEntry, req.Msg.ExecutionTrackingId)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := validateRestartLogEntry(binding, execReqLogEntry); err != nil {
 		return nil, err
 	}
 
 	authenticatedUser := auth.UserFromApiCall(ctx, req, api.cfg)
 	restartArgs := copyStringMap(execReqLogEntry.Arguments)
-	if err := api.errUnlessStartEntityAccessAllowed(authenticatedUser, execReqLogEntry.Binding, restartArgs); err != nil {
+	if err := api.errUnlessStartEntityAccessAllowed(authenticatedUser, binding, restartArgs); err != nil {
 		return nil, err
 	}
 
 	execReq := executor.ExecutionRequest{
-		Binding:           execReqLogEntry.Binding,
+		Binding:           binding,
 		Arguments:         restartArgs,
 		Justification:     execReqLogEntry.Justification,
 		AuthenticatedUser: authenticatedUser,
@@ -1933,6 +1883,19 @@ func (api *oliveTinAPI) restartActionLogEntry(executionTrackingId string) (*exec
 	}
 
 	return execReqLogEntry, nil
+}
+
+// A log entry keeps the binding it ran with, which can be out of date after the
+// config is reloaded. Restarts look the binding up again so that they run the
+// action as it is configured now, with its current ACLs, and so that actions
+// removed from the config cannot be restarted.
+func (api *oliveTinAPI) currentBindingForRestart(entry *executor.InternalLogEntry, executionTrackingId string) (*executor.ActionBinding, error) {
+	binding := api.executor.FindBindingByID(entry.Binding.ID)
+	if binding == nil || binding.Action == nil {
+		return nil, connect.NewError(connect.CodeNotFound, fmt.Errorf("action for tracking ID %s is no longer in the configuration", executionTrackingId))
+	}
+
+	return binding, nil
 }
 
 var (
@@ -1988,5 +1951,9 @@ func GetNewHandler(ex *executor.Executor) (string, http.Handler) {
 		},
 	)
 
-	return apiv1connect.NewOliveTinApiServiceHandler(server, jsonOpt)
+	return apiv1connect.NewOliveTinApiServiceHandler(
+		server,
+		jsonOpt,
+		connect.WithInterceptors(&loginRequiredInterceptor{api: server}),
+	)
 }

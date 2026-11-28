@@ -3,8 +3,9 @@ package webhooks
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
-	"github.com/PaesslerAG/jsonpath"
+	"github.com/theory/jsonpath"
 )
 
 type JSONMatcher struct {
@@ -20,7 +21,7 @@ func NewJSONMatcher(payload []byte) (*JSONMatcher, error) {
 }
 
 func (m *JSONMatcher) MatchPath(pathExpr string, expectedValue string) (bool, error) {
-	value, err := jsonpath.Get(pathExpr, m.payload)
+	value, err := m.selectValue(pathExpr)
 	if err != nil {
 		return false, err
 	}
@@ -41,7 +42,7 @@ func (m *JSONMatcher) MatchPath(pathExpr string, expectedValue string) (bool, er
 }
 
 func (m *JSONMatcher) ExtractValue(pathExpr string) (string, error) {
-	value, err := jsonpath.Get(pathExpr, m.payload)
+	value, err := m.selectValue(pathExpr)
 	if err != nil {
 		return "", err
 	}
@@ -58,6 +59,56 @@ func (m *JSONMatcher) ExtractValue(pathExpr string) (string, error) {
 	}
 
 	return string(jsonBytes), nil
+}
+
+// HasValue reports whether the path matches at least one value.
+func (m *JSONMatcher) HasValue(pathExpr string) (bool, error) {
+	_, nodes, err := m.selectNodes(pathExpr)
+	if err != nil {
+		return false, err
+	}
+	return len(nodes) > 0, nil
+}
+
+// selectValue returns the single value for a path that can only match one node,
+// and a list for a path that can match several (wildcards, descendants). A
+// singular path that matches nothing is an error, which callers use to tell
+// that it is absent. A path that can match several nodes returns a list even
+// when it is empty, so that "$.commits[*].id" on a push with no commits is "[]".
+func (m *JSONMatcher) selectValue(pathExpr string) (any, error) {
+	path, nodes, err := m.selectNodes(pathExpr)
+	if err != nil {
+		return nil, err
+	}
+
+	if path.Query().Singular() == nil {
+		return append([]any{}, nodes...), nil
+	}
+
+	if len(nodes) == 0 {
+		return nil, fmt.Errorf("no value found at JSONPath %q", pathExpr)
+	}
+
+	return nodes[0], nil
+}
+
+func (m *JSONMatcher) selectNodes(pathExpr string) (*jsonpath.Path, []any, error) {
+	path, err := jsonpath.Parse(withRootSelector(pathExpr))
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return path, path.Select(m.payload), nil
+}
+
+// Earlier versions of OliveTin accepted paths without the leading "$", such as
+// "repository.name", so keep accepting them.
+func withRootSelector(pathExpr string) string {
+	if strings.HasPrefix(pathExpr, "$") {
+		return pathExpr
+	}
+
+	return "$." + pathExpr
 }
 
 func (m *JSONMatcher) GetPayload() any {

@@ -58,6 +58,19 @@ checksum:
     - default
     - openrc
 
+# One SBOM per release covers every archive, package and MSI (same Go binary + webui).
+# See var/sbom/generate.sh. Container images get BuildKit SBOM attestations (dockers_v2 sbom: true).
+sboms:
+  # id must be in release.ids and checksum.ids, otherwise those filters drop the SBOM files.
+  - id: default
+    artifacts: any
+    cmd: ../var/sbom/generate.sh
+    args:
+      - "{{ .Version }}"
+    documents:
+      - "{{ .ProjectName }}-{{ .Version }}-sbom.cdx.json"
+      - "{{ .ProjectName }}-{{ .Version }}-sbom.spdx.json"
+
 snapshot:
   version_template: "{{ .Branch }}-{{ .ShortCommit }}"
 changelog:
@@ -83,6 +96,7 @@ changelog:
       - '^release:'
       - '^refactor:'
       - '^Merge branch'
+      - '^Merge commit from fork'
 
 archives:
   - id: default

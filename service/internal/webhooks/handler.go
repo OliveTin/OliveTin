@@ -7,8 +7,13 @@ import (
 	"github.com/OliveTin/OliveTin/internal/auth"
 	"github.com/OliveTin/OliveTin/internal/config"
 	"github.com/OliveTin/OliveTin/internal/executor"
+	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 )
+
+// CorrelationIDHeader is the response header carrying the ID that appears in
+// OliveTin's log lines for the same webhook request.
+const CorrelationIDHeader = "X-OliveTin-Log-Correlation-ID"
 
 type ActionWebhookConfig struct {
 	Action *config.Action
@@ -33,21 +38,25 @@ func (h *WebhookHandler) HandleWebhook(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	payload, err := h.readPayload(r)
+	correlationID := uuid.NewString()
+	w.Header().Set(CorrelationIDHeader, correlationID)
+	reqLog := log.WithFields(webhookRequestFields(r, correlationID))
+
+	payload, err := h.readPayload(r, reqLog)
 	if err != nil {
 		http.Error(w, "Failed to read payload", http.StatusBadRequest)
 		return
 	}
 
-	matchingActions := h.findMatchingActions(r, payload)
+	matchingActions := h.findMatchingActions(r, payload, reqLog)
 	if len(matchingActions) == 0 {
-		log.WithFields(webhookRequestFields(r)).Infof("Webhook: no matching actions")
+		reqLog.Infof("Webhook: no matching actions")
 		h.writeOKResponse(w, "no matching webhook actions")
 		return
 	}
 
-	processed := h.processMatchingActions(matchingActions, r, payload)
-	log.WithFields(webhookRequestFields(r)).WithFields(log.Fields{
+	processed := h.processMatchingActions(matchingActions, r, payload, reqLog)
+	reqLog.WithFields(log.Fields{
 		"matched":   len(matchingActions),
 		"processed": processed,
 	}).Infof("Webhook: matched")
@@ -55,19 +64,20 @@ func (h *WebhookHandler) HandleWebhook(w http.ResponseWriter, r *http.Request) {
 	h.writeOKResponse(w, "webhook actions")
 }
 
-func webhookRequestFields(r *http.Request) log.Fields {
+func webhookRequestFields(r *http.Request, correlationID string) log.Fields {
 	return log.Fields{
-		"method": r.Method,
-		"path":   r.URL.Path,
-		"query":  r.URL.RawQuery,
+		"correlationId": correlationID,
+		"method":        r.Method,
+		"path":          r.URL.Path,
+		"query":         r.URL.RawQuery,
 	}
 }
 
-func (h *WebhookHandler) readPayload(r *http.Request) ([]byte, error) {
+func (h *WebhookHandler) readPayload(r *http.Request, reqLog *log.Entry) ([]byte, error) {
 	maxSize := int64(1024 * 1024)
 	payload, err := io.ReadAll(io.LimitReader(r.Body, maxSize))
 	if err != nil {
-		log.WithFields(log.Fields{
+		reqLog.WithFields(log.Fields{
 			"error": err,
 		}).Warnf("Failed to read webhook payload")
 		return nil, err
@@ -83,27 +93,27 @@ func (h *WebhookHandler) writeOKResponse(w http.ResponseWriter, context string) 
 	}
 }
 
-func (h *WebhookHandler) processMatchingActions(matchingActions []ActionWebhookConfig, r *http.Request, payload []byte) int {
+func (h *WebhookHandler) processMatchingActions(matchingActions []ActionWebhookConfig, r *http.Request, payload []byte, reqLog *log.Entry) int {
 	processed := 0
 	for _, actionConfig := range matchingActions {
-		if h.processWebhook(actionConfig, r, payload) {
+		if h.processWebhook(actionConfig, r, payload, reqLog) {
 			processed++
 		}
 	}
 	return processed
 }
 
-func (h *WebhookHandler) findMatchingActions(r *http.Request, payload []byte) []ActionWebhookConfig {
+func (h *WebhookHandler) findMatchingActions(r *http.Request, payload []byte, reqLog *log.Entry) []ActionWebhookConfig {
 	var matches []ActionWebhookConfig
 
 	for _, action := range h.cfg.Actions {
-		matches = append(matches, h.findMatchingWebhooksForAction(action, r, payload)...)
+		matches = append(matches, h.findMatchingWebhooksForAction(action, r, payload, reqLog)...)
 	}
 
 	return matches
 }
 
-func (h *WebhookHandler) findMatchingWebhooksForAction(action *config.Action, r *http.Request, payload []byte) []ActionWebhookConfig {
+func (h *WebhookHandler) findMatchingWebhooksForAction(action *config.Action, r *http.Request, payload []byte, reqLog *log.Entry) []ActionWebhookConfig {
 	var matches []ActionWebhookConfig
 
 	for _, webhookConfig := range action.ExecOnWebhook {
@@ -113,7 +123,7 @@ func (h *WebhookHandler) findMatchingWebhooksForAction(action *config.Action, r 
 			ApplyGitHubTemplate(&webhookConfigCopy, webhookConfigCopy.Template)
 		}
 
-		matcher := NewWebhookMatcher(webhookConfigCopy, r, payload)
+		matcher := NewWebhookMatcher(webhookConfigCopy, r, payload).WithLogger(reqLog)
 		if matcher.Matches() {
 			matches = append(matches, ActionWebhookConfig{
 				Action: action,
@@ -125,21 +135,21 @@ func (h *WebhookHandler) findMatchingWebhooksForAction(action *config.Action, r 
 	return matches
 }
 
-func (h *WebhookHandler) processWebhook(actionConfig ActionWebhookConfig, r *http.Request, payload []byte) bool {
+func (h *WebhookHandler) processWebhook(actionConfig ActionWebhookConfig, r *http.Request, payload []byte, reqLog *log.Entry) bool {
 	verifier := NewAuthVerifier(actionConfig.Config)
 	if !verifier.Verify(r, payload) {
-		log.WithFields(log.Fields{
+		reqLog.WithFields(log.Fields{
 			"actionTitle": actionConfig.Action.Title,
 			"authType":    actionConfig.Config.AuthType,
 		}).Warnf("Webhook authentication failed")
 		return false
 	}
 
-	matcher := NewWebhookMatcher(actionConfig.Config, r, payload)
+	matcher := NewWebhookMatcher(actionConfig.Config, r, payload).WithLogger(reqLog)
 
 	args, err := matcher.ExtractArguments()
 	if err != nil {
-		log.WithFields(log.Fields{
+		reqLog.WithFields(log.Fields{
 			"actionTitle": actionConfig.Action.Title,
 			"error":       err,
 		}).Warnf("Failed to extract webhook arguments")
@@ -148,21 +158,21 @@ func (h *WebhookHandler) processWebhook(actionConfig ActionWebhookConfig, r *htt
 
 	justification, err := matcher.ExtractJustification()
 	if err != nil {
-		log.WithFields(log.Fields{
+		reqLog.WithFields(log.Fields{
 			"actionTitle": actionConfig.Action.Title,
 			"error":       err,
 		}).Warnf("Failed to extract webhook justification")
 		return false
 	}
 
-	h.executeAction(actionConfig.Action, args, justification)
+	h.executeAction(actionConfig.Action, args, justification, reqLog)
 	return true
 }
 
-func (h *WebhookHandler) executeAction(action *config.Action, args map[string]string, justification string) {
+func (h *WebhookHandler) executeAction(action *config.Action, args map[string]string, justification string, reqLog *log.Entry) {
 	binding := h.executor.FindBindingWithNoEntity(action)
 	if binding == nil {
-		log.WithFields(log.Fields{
+		reqLog.WithFields(log.Fields{
 			"actionTitle": action.Title,
 		}).Warnf("Action binding not found, skipping execution")
 		return

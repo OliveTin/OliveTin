@@ -3,6 +3,7 @@ package config
 import (
 	"testing"
 
+	"github.com/OliveTin/OliveTin/internal/configissues"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -292,4 +293,53 @@ func TestValidateChecklistChoiceValuesAllowsCommas(t *testing.T) {
 
 	err := c.validateChecklistChoiceValues()
 	require.NoError(t, err)
+}
+
+func stickyIssuesWithCode(code string) []configissues.Issue {
+	out := make([]configissues.Issue, 0)
+	for _, issue := range configissues.CopySticky() {
+		if issue.Code == code {
+			out = append(out, issue)
+		}
+	}
+	return out
+}
+
+func TestSanitizeReportsUnknownOnClick(t *testing.T) {
+	configissues.BeginConfigLoad()
+	c := DefaultConfig()
+	c.Actions = append(c.Actions, &Action{Title: "Ping", OnClick: "myexample"})
+	c.Sanitize()
+
+	issues := stickyIssuesWithCode(configissues.CodeOnClickUnknown)
+	require.Len(t, issues, 1)
+	assert.Equal(t, "Ping", issues[0].ActionTitle)
+	assert.Equal(t, "myexample", issues[0].Source)
+	assert.Equal(t, "nothing", c.findAction("Ping").OnClick, "Unknown onclick still falls back to the default")
+}
+
+func TestSanitizeAcceptsKnownOnClickValues(t *testing.T) {
+	configissues.BeginConfigLoad()
+	c := DefaultConfig()
+	for _, value := range []string{"", "default", "nothing", "execution-dialog", "execution-dialog-output-html", "execution-dialog-stdout-only", "execution-button", "history"} {
+		c.Actions = append(c.Actions, &Action{Title: "Action " + value, OnClick: value})
+	}
+	c.Sanitize()
+
+	assert.Empty(t, stickyIssuesWithCode(configissues.CodeOnClickUnknown))
+}
+
+func TestSanitizeReportsUnknownDefaultOnClickOnce(t *testing.T) {
+	configissues.BeginConfigLoad()
+	c := DefaultConfig()
+	c.DefaultOnClick = "myexample"
+	c.Actions = append(c.Actions, &Action{Title: "Ping"})
+	c.Sanitize()
+	c.Sanitize()
+
+	issues := stickyIssuesWithCode(configissues.CodeOnClickUnknown)
+	require.NotEmpty(t, issues)
+	for _, issue := range issues {
+		assert.Empty(t, issue.ActionTitle, "Only defaultOnClick is reported, not each action inheriting it")
+	}
 }

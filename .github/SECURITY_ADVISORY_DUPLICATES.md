@@ -12,6 +12,28 @@ This document lists known duplicate security advisory clusters for [OliveTin/Oli
 4. If unique: accept, patch on a private branch, reassess CVSS with OliveTin context (see SECURITY.md — OliveTin is intentional RCE by design).
 5. Merge fix to `next`, publish advisory, credit reporters in advisory body (not commit message).
 
+Keep each advisory's status tag up to date throughout (see below).
+
+---
+
+## Status tags
+
+Every advisory in triage or draft has one `[status:...]` tag at the end of its summary, so maintainers and reporters can see where it is. Set it with `scripts/ghsa_status.py <GHSA-ID> <status>`, and check all advisories with `scripts/ghsa_status.py --list` (it exits non-zero if any tag is missing, unknown, or left on a published or closed advisory).
+
+| Status | Advisory state | Set when |
+|--------|----------------|----------|
+| `pending-review` | triage | A new report arrives and has not been decided yet. |
+| `awaiting-reporter` | triage or draft | Questions have been asked and the reporter's reply is needed. |
+| `accepted` | draft | The report is accepted and a fix is not yet ready for review. |
+| `feedback-on-fix` | draft | The fix PR is open in the private advisory fork, waiting for review or merge. |
+| `pending-release` | draft | The fix is merged to `next` and is waiting for a release before publishing. |
+
+Remove the tag with `scripts/ghsa_status.py <GHSA-ID> clear`:
+
+- before publishing an advisory;
+- before closing an advisory;
+- before requesting a CVE, so the tag does not end up in the CVE record.
+
 ---
 
 ## shellAfterCompleted command injection
@@ -122,6 +144,59 @@ Unauthenticated `PasswordHash` performs Argon2id hashing. Fixed in CVE-2026-2834
 | GHSA-8656-625g-3h52 | muzi5622 | closed | Shared pool denies `LocalUserLogin` |
 
 **Why not accepted:** the endpoint is intentionally unauthenticated (documented hashing utility, needed before any user exists); worst case is bounded at ~640 MiB and 10 concurrent hashes; login refusal lasts only while the flood is sustained, with no bypass or C/I impact. Volumetric floods belong to reverse-proxy rate limiting.
+
+---
+
+## DoS triage
+
+Public criteria are in [SECURITY.md](../SECURITY.md) under "Denial of service (DoS) reports". In short: accept **crash or hang**, **amplification**, and **unbounded growth**; reject load that is proportional to traffic, bounded, fails gracefully and recovers by itself. Fix with bounds (semaphores, caps, TTL or eviction, limits on evaluation cost), not in-service rate limiting.
+
+Previous decisions, for reference:
+
+| GHSA | Outcome | Rule |
+|------|---------|------|
+| GHSA-45m3-398w-m2m9 | published | Crash: concurrent map writes in OAuth2 state handling |
+| GHSA-fwhj-785h-43hh | published | Crash: nil pointer from invalid bindings or log references |
+| GHSA-pc8g-78pf-4xrp | published | Amplification: about 64 MB of Argon2id memory per `PasswordHash` request; fixed with a 10-slot semaphore |
+| GHSA-xpxj-f2fm-rqch | published | Unbounded growth: OAuth2 state map; fixed with TTL and cap |
+| GHSA-j746-2pj2-p94h, GHSA-p7jx-32j2-jq49, GHSA-r2h8-8h64-fxx8, GHSA-8656-625g-3h52 | closed | Proportional and bounded: `PasswordHash` floods are capped by the semaphore and fail fast with `ResourceExhausted` |
+| GHSA-gc8x-fjw2-wghv | closed | Proportional and bounded: `ValidateArgumentType` regex uses Go's linear-time RE2 engine, so cost grows only with request size; hardened anyway |
+
+**CVSS note:** push back on `A:H` when an attack needs a very large number of requests before it has an effect; operators will notice network and CPU load first.
+
+---
+
+## RestartAction reuses stale bindings after a config reload
+
+**Canonical:** [GHSA-mgr4-8mh8-frw7](https://github.com/OliveTin/OliveTin/security/advisories/GHSA-mgr4-8mh8-frw7) — reporter **0xRrudy** (2026-10-29)
+
+`RestartAction` ran the binding saved in the old log entry, so after a hot reload it could restart a removed action, or run the old command and ACLs of an action whose ACLs were tightened.
+
+| GHSA | Reporter | Status | Notes |
+|------|----------|--------|-------|
+| GHSA-mgr4-8mh8-frw7 | 0xRrudy | canonical | Removed action and tightened ACL cases |
+| GHSA-w8ph-8qcm-h74w | ITALICOder | duplicate | Same issue, removed action case |
+
+**Fix:** look up the log entry's binding ID in the current action map, return NotFound if it is gone, and run the current binding.
+
+**Not a duplicate:** GHSA-p443-p7w5-2f7f (RestartAction lost the caller's identity), and reports about hot reload keeping auth state such as API keys.
+
+---
+
+## Required justification skipped
+
+**Canonical:** [GHSA-5jwv-37px-7hmc](https://github.com/OliveTin/OliveTin/security/advisories/GHSA-5jwv-37px-7hmc) — reporter **Khattak761** (2026-09-04)
+
+Ways to run an action that requires a justification without giving one. Not accepted as a vulnerability: the justification is a note in the logs, not an access control. The user already has `exec` on the action, and is still logged under their own username.
+
+| GHSA | Reporter | Status | Notes |
+|------|----------|--------|-------|
+| GHSA-5jwv-37px-7hmc | Khattak761 | closed (canonical) | `StartActionByGet` / `StartActionByGetAndWait` skip the check |
+| GHSA-cwqr-6xvr-ch27 | joostgrunwald | closed | Same endpoints, plus a client-supplied `provider: system` header with trusted-header auth |
+
+**Fix (public, as a bug):** the `StartActionByGet*` methods check the justification like `StartAction`, and trusted-header auth no longer reads a `provider` header.
+
+**Why not accepted:** no change to who can run what; ACLs still match the real username and usergroup. Close new reports here unless they show a justification bypass that also grants a permission the user did not have.
 
 ---
 

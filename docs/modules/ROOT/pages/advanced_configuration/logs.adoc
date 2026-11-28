@@ -33,6 +33,14 @@ The supported log levels are;
 * `WARN` - Very few messages, only warnings are shown.
 * `INFO` - The defualt log level.
 
+[#debug-logs-sensitive]
+[WARNING]
+====
+`DEBUG` and `TRACE` logs (including `-startuptrace` and xref:troubleshooting/log-debug-options.adoc[Debug Log Options]) are meant to show OliveTin's internal workings, so they **will contain sensitive information**: configuration values including secrets, API keys, password hashes, OAuth2 client secrets, webhook secrets, and request headers. This is expected, and is not considered a security vulnerability.
+
+Only use these log levels while troubleshooting, switch back to `INFO` afterwards, treat the logs as being as sensitive as your `config.yaml`, and remove secrets before sharing them with anyone.
+====
+
 You can change the `logLevel` while OliveTin is running, and it should update as soon as you save your config.yaml. You will always get a log message like this;
 
 [source,bash]

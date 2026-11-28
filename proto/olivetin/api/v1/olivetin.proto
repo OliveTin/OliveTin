@@ -303,7 +303,13 @@ message WhoAmIResponse {
 
     repeated string acls = 4;
 
-    string sid = 5;
+    // The session ID was returned here until it was replaced by
+    // session_fingerprint, because the session ID is the session's
+    // credential.
+    reserved 5;
+    reserved "sid";
+
+    string session_fingerprint = 6;
 }
 
 message ServerDiagnosticsRequest {}

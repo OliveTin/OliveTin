@@ -1,0 +1,74 @@
+[#single-button-toggle]
+= Single Button Toggle
+
+A single button toggle controls something that has two states, using just one action. Each press flips the state, and the button's icon changes to show the current state - a "closed" icon when the state is `closed`, and an "open" icon when the state is `open`.
+
+Unlike the xref:solutions/latching-toggle/index.adoc[Latching Toggle], which uses two interlocked actions, the button here is never disabled. It can always be pressed, and it always does the opposite of the current state.
+
+In OliveTin, the state is stored in an xref:entities/intro.adoc[entity file], which the action updates itself, and the icon is chosen with an xref:action_customization/icons.adoc[image icon] whose file name comes from the entity's state.
+
+The example on this page controls a garden water valve.
+
+[cols="1,1"]
+|===
+| Valve closed | Valve open
+
+a| image::solutions/single-button-toggle/dashboard-closed.png[]
+a| image::solutions/single-button-toggle/dashboard-open.png[]
+|===
+
+== How it works
+
+* The entity file `/etc/OliveTin/entities/water_valve.yaml` holds the state of the valve (`open` or `closed`). It is the single source of truth for the dashboard.
+* The **Toggle valve** action's icon is an `<img>` tag that uses `{{ .CurrentEntity.state }}` as the file name, so state `closed` shows `closed.png` and state `open` shows `open.png`.
+* The action has no `enabledExpression`, so it is never disabled.
+* When it runs, the action reads the current state from the entity file, works out the opposite state, and changes the `state:` line in the file. OliveTin watches entity files, so the dashboard and the icon update as soon as the file changes.
+* Each execution reads the state from the file, not from the dashboard, so a press that runs straight after another still flips the valve, even before OliveTin has reloaded the entity. The state may be written as `open` or `"open"`.
+* OliveTin runs one execution of an action at a time by default (`maxConcurrent: 1`). A press while the action is still running is blocked, not queued, so it does not flip the valve. Press again once the first execution has finished.
+
+== Icons
+
+Save the two icons into the `custom-webui/icons/` directory next to your `config.yaml`, so that OliveTin serves them at `/custom-webui/icons/closed.png` and `/custom-webui/icons/open.png`. See xref:action_customization/icons.adoc[Icons] for more about serving your own icons.
+
+[cols="1,1"]
+|===
+| `closed.png` | `open.png`
+
+a| image::solutions/single-button-toggle/icons/closed.png[closed.png,48]
+a| image::solutions/single-button-toggle/icons/open.png[open.png,48]
+|===
+
+You can use any images you like, as long as each one is named after the state it represents.
+
+== Entity file
+
+[source,yaml]
+.`/etc/OliveTin/entities/water_valve.yaml`
+----
+include::example$solutions/single-button-toggle/water_valve.yaml[]
+----
+
+== Configuration
+
+[source,yaml]
+.`config.yaml`
+----
+include::example$solutions/single-button-toggle/config.yaml[]
+----
+
+== Customising this pattern
+
+* The same pattern works for anything with two states, such as lights, relays, services, or a maintenance mode. Add more icons if your entity has more than two states, and change the action to cycle through them.
+* Replace the `echo` command with your real hardware control, for example a GPIO command, an MQTT publish, or a call to a smart plug API.
+* Only write the new state to the entity file once the hardware command has succeeded. If the command fails, the shell exits before the state changes and the dashboard keeps showing the real state.
+* If something else can change the device (a physical switch, a schedule), have a script update the entity file too. The icon will then follow it.
+* The icon path starts with `/`, so it works from any dashboard. If OliveTin is served under a sub-path behind a reverse proxy, include that sub-path in the icon's `src`.
+* This action changes every `state:` line in the entity file, so to control several valves, give each one its own entity file, or update the right entity with a YAML-aware tool such as `yq`.
+* Add ACLs if only certain users should be able to operate the valve.
+
+== See also
+
+* xref:entities/intro.adoc[Entities]
+* xref:action_customization/icons.adoc[Icons]
+* xref:solutions/latching-toggle/index.adoc[Latching Toggle]
+* xref:solutions/human-in-the-control-loop/index.adoc[Human in the Control Loop]

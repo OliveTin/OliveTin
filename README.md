@@ -12,7 +12,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/Olivetin/OliveTin)](https://goreportcard.com/report/github.com/OliveTin/OliveTin)
 [![AI Autonomy Level](https://img.shields.io/badge/AI%20Autonomy-Level%202%20of%205%20(pair--programmer)-blue)](https://blog.jread.com/posts/ai-levels-of-autonomy-in-software-engineering/)
 
-[OliveTin 2k to 3k upgrade guide](https://docs.olivetin.app/upgrade/2k3k.html)
+OliveTin 2k is end of life - see the [OliveTin 2k to 3k upgrade guide](https://docs.olivetin.app/upgrade/2k3k.html)
 </div>
 
 <img alt = "OliveTin action buttons" src = "var/marketing/screenshots/dashboard.png" />

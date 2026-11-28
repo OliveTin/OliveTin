@@ -42,9 +42,15 @@ func Compile(expression string) (*vm.Program, error) {
 }
 
 func compileNormalized(normalized string) (*vm.Program, error) {
+	if err := checkAllowedSyntax(normalized); err != nil {
+		return nil, err
+	}
+
 	return expr.Compile(normalized,
 		expr.Env(Record{}),
 		expr.AsBool(),
+		expr.DisableAllBuiltins(),
+		expr.MaxNodes(maxFilterNodes),
 		expr.Function("includes", includes),
 		expr.Function("hasTag", hasTag),
 	)

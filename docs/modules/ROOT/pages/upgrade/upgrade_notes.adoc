@@ -3,6 +3,87 @@
 
 OliveTin releases are published to GitHub, and the release notes are contained there. This page includes a summary of "Upgrade Notes" for breaking changes between releases.
 
+== Next release (unreleased)
+
+[#require-guests-to-login-all-api-calls]
+=== `authRequireGuestsToLogin` now applies to every API call and ACL
+
+When `authRequireGuestsToLogin` is `true`, guests (visitors who are not logged in) can now only call the API to log in, log out, check that OliveTin is ready, and generate a password hash. Previously some API calls, including the ones that start, restart and kill actions, did not check this option, so guests could still use them if an ACL gave them permission. ACLs also no longer apply to guests when this option is enabled, even an ACL that matches the `guest` username or usergroup.
+
+This affects you if `authRequireGuestsToLogin` is `true` and a script or integration calls the OliveTin API without logging in, for example with `curl` and no API key or session. Those calls now fail with "permission denied". Give the integration an API key or a user account, and an ACL that matches that user. ACLs for logged-in users, including OAuth2 users in the `guest` usergroup, are not affected. See xref:security/example_login_required.adoc[Login required].
+
+[#webhook-auth-type-required]
+=== Webhooks need an `authType`, and `authType: none` must be set for open webhooks
+
+A webhook in `execOnWebhook` without an `authType` used to accept every request that matched. It is now rejected, and the Diagnostics page shows an error for it (code `webhook_auth_type_unset`). Webhooks that use a GitHub `template` are not affected, because the template sets its own `authType`.
+
+If you have webhooks without an `authType`, add one. Use `authType: bearer`, `hmac-sha256`, `hmac-sha1` or `basic` with a `secret`, or set `authType: none` if the webhook should accept requests from anyone who can reach `/webhooks`. See xref:action_execution/onwebhook.adoc#every-webhook-needs-an-authtype[Webhook Authentication].
+
+[#jwt-local-key-reloaded]
+=== JWT public keys on disk are read on every request
+
+When `authJwtPubKeyPath` is set, OliveTin used to load the key file once and keep using that key until it restarted, even if the file was replaced, deleted or broken. It now reads the file on every request. Replacing the file takes effect straight away, so tokens signed by the old key stop working without a restart.
+
+If the key file is missing or cannot be parsed, every JWT is now rejected, instead of the previously loaded key staying in use. If you remove or move the key file while OliveTin is running, make sure the file at `authJwtPubKeyPath` is always present and valid. See xref:security/jwt_keys.adoc#rotating-public-keys-on-disk[Rotating public keys on disk].
+
+[#whoami-session-fingerprint]
+=== `WhoAmI` no longer returns the session ID
+
+The `WhoAmI` API used to return the caller's session ID in a `sid` field. That value is the credential held in the `HttpOnly` session cookie, so it should not be readable from a response. `sid` has been removed, and `WhoAmI` now returns `sessionFingerprint` instead: a short value derived from the session ID that tells sessions apart but cannot be used to log in.
+
+This only affects API clients or scripts that read `sid` from `WhoAmI`. If you used it to get the session cookie, take the cookie from the `Set-Cookie` header of the login response instead. If you used it to identify a session, use `sessionFingerprint`. See xref:api/login.adoc[Login].
+
+[#example-config-guest-actions]
+=== The example config only lets guests run harmless demo actions
+
+The example `config.yaml` shipped with OliveTin (including the container image and the macOS example) used to let guests run, see logs for, and kill every example action. It now sets `defaultPermissions` to only let guests view actions. A `guest_actions` ACL lets guests run the harmless demo actions, `admin_acl` gives users in the `admins` usergroup access to every action, and a `system_triggers` ACL lets startup, cron and webhook triggers keep working. The "Setup easy SSH" and "Ping host" actions no longer have webhook triggers. The webhook examples are now "Check disk space" and a new "Run script on webhook" action, which both use `exec:` and take no arguments.
+
+Upgrading does not change your existing `config.yaml`. If your config started from the example and still has its example actions, review which of them guests can run. This is particularly important for actions that change the system, run scripts, or take a URL or other input from the user, such as "Get OliveTin Theme", "Setup easy SSH", "Delete old backups" and "Restart Docker Container". Either remove the actions you do not use, or set up permissions like the new example config. See xref:security/example_some_admin_actions.adoc[Some actions require admin] and xref:security/acl.adoc#acls-for-triggers[ACLs for triggers].
+
+[#webhook-trigger-chains-exec-only]
+=== Actions triggered from webhooks can no longer use `shell:`
+
+Webhook-triggered actions were already required to use `exec:`. This rule now also applies to every action started through `triggers` from a webhook-triggered action, at any depth, including `shellAfterCompleted`. Previously these triggered actions could still run `shell:` commands.
+
+If a webhook action in your config triggers an action that uses `shell:` or `shellAfterCompleted`, that action will now fail with "webhooks cannot use Shell execution". Change it to use `exec:` instead. See xref:action_execution/shellvsexec.adoc[Shell vs Exec].
+
+[#log-history-limit]
+=== The number of execution logs kept in memory is now limited
+
+OliveTin now keeps up to 2000 execution logs in memory, and removes the oldest finished logs when there are more. Previously every execution since OliveTin started was kept in memory, so long-running instances showed their full history on the Logs pages.
+
+If you want a longer history in the web interface, raise `logHistoryLimit` in your config. Logs saved to disk with `saveLogs` are not affected. See xref:logs/saving.adoc#log-history-limit[How many logs are kept in memory].
+
+[#restart-action-current-config]
+=== `RestartAction` uses the action as it is configured now
+
+Restarting an execution, with the Restart button or the `RestartAction` API method, now runs the action as it is in the current config, with the arguments and justification stored with the original run. Previously it ran the action as it was configured when the original run started.
+
+After a config change, restarting an old execution can therefore run the changed command.
+
+If the action has been removed, the restart fails with "is no longer in the configuration", and `StartAction` cannot start it either. To run it again, add the action back to your config, or use the action that replaced it.
+
+If the action still exists but now requires an argument or a justification that the original run did not have, the restart fails and asks you to use `StartAction` instead. Start the action again with `StartAction`, or from the dashboard, with the inputs it now needs.
+
+[#web-ui-cache-control]
+=== Web UI files are no longer cached by browsers without checking
+
+OliveTin now sends `Cache-Control: no-cache` with web UI files, so browsers check for a newer version every time, and get the new web interface straight after an upgrade.
+
+Browsers that loaded the web interface from an earlier version may still have those files cached without this header. If the web interface looks out of date or broken after you upgrade, force a reload (Ctrl+Shift+R, or Cmd+Shift+R on macOS), or clear the browser cache for your OliveTin site. You only need to do this once.
+
+[#start-action-by-get-justification]
+=== `StartActionByGet` and `StartActionByGetAndWait` now check required justifications
+
+The deprecated `StartActionByGet` and `StartActionByGetAndWait` API methods used to run actions that require a justification without one. They now refuse them with "justification is required for this action", in the same way as `StartAction` and `StartActionAndWait`, unless the action's justification template fills one in. These methods cannot send a justification, so if a script calls them for such an action, change it to call `StartAction` or `StartActionAndWait` with a `justification`. See xref:api/method_StartActionByGetAndWait.adoc[StartActionByGetAndWait].
+
+[#trusted-header-provider]
+=== Trusted header users always have the provider `trusted-header`
+
+Users logged in with trusted header authentication (`authHttpHeaderUsername`) now always have the provider `trusted-header`. OliveTin used to copy a `provider` request header into the user's provider, which let a client claim to be a `system` user and skip a required justification.
+
+This affects you if something reads the provider from the `WhoAmI` or `Init` API for these users. Change it to expect `trusted-header`. It also affects you if a client sends a `provider: system` header to call `StartAction` or `StartActionAndWait` for an action that requires a justification, without sending one. Those calls now fail with "justification is required for this action", unless the action's justification template fills one in. Send a `justification` with these calls. `RestartAction` is not affected, because it always reuses the justification stored with the original run.
+
 == 2024.08.14
 
 === Navigation change - Subpaths no longer supported
@@ -25,7 +106,7 @@ This was a bit cumbersome, because OliveTin treats the content of the "webui" di
 
 Now themes are stored in the "configdir" (wherever OliveTin finds it's config file, eg `/config` in containers), under the subdirectory `custom-webui/themes`. OliveTin will try to create the `custom-webui` folder in your configdir if it doesn't find it.
 
-The advantage of this change is that themes are stored with your config, as part of your data. 
+The advantage of this change is that themes are stored with your config, as part of your data.
 
 To upgrade, simply move any themes you might have into your configdir, under `custom-webui/themes/`. eg:
 
@@ -64,4 +145,3 @@ The new behavior is that OliveTin will always try to load `http://yourServer:133
 Internally, OliveTin maps `http://yourServer:1337/theme.css` to the `theme.css` of whatever the theme is set to with `themeName`, for example, it could map to `themes/myTheme/theme.css`.
 
 As a theme developer, normally you would reference a background image, or similar using `./background.png`, but OliveTin is loading the theme.css as the directory root, and the themes' assets from the custom-webui theme directory. Therefore you need to update paths to be like; `background-image: "/custom-webui/themes/myTheme/background.png`.
-

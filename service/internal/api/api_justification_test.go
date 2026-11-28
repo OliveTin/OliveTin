@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	apiv1 "github.com/OliveTin/OliveTin/gen/olivetin/api/v1"
+	apiv1connect "github.com/OliveTin/OliveTin/gen/olivetin/api/v1/apiv1connect"
 	"github.com/OliveTin/OliveTin/internal/auth"
 	config "github.com/OliveTin/OliveTin/internal/config"
 	"github.com/OliveTin/OliveTin/internal/executor"
@@ -163,4 +164,80 @@ func TestValidateJustificationRequiredAllowsSystemUser(t *testing.T) {
 
 	err := validateJustificationRequired(action, "", auth.UserFromSystem(cfg, "cron"))
 	require.NoError(t, err)
+}
+
+func newJustificationRequiredTestServer(t *testing.T, cfg *config.Config) (apiv1connect.OliveTinApiServiceClient, func()) {
+	t.Helper()
+
+	cfg.Actions = append(cfg.Actions, &config.Action{
+		Title:         "Approve change",
+		ID:            "approve",
+		Justification: config.JustificationRequiredNoTemplate,
+		Shell:         "echo approved",
+	})
+
+	ex := executor.DefaultExecutor(cfg)
+	ex.RebuildActionMap()
+
+	ts, client := getNewTestServerAndClientWithExecutor(cfg, ex)
+	return client, ts.Close
+}
+
+func TestStartActionByGetRequiresJustification(t *testing.T) {
+	client, closeServer := newJustificationRequiredTestServer(t, config.DefaultConfig())
+	defer closeServer()
+
+	//nolint:staticcheck // Deliberately calling the deprecated RPC.
+	_, err := client.StartActionByGet(context.Background(), connect.NewRequest(&apiv1.StartActionByGetRequest{ActionId: "approve"}))
+	require.Error(t, err)
+	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
+}
+
+func TestStartActionByGetAndWaitRequiresJustification(t *testing.T) {
+	client, closeServer := newJustificationRequiredTestServer(t, config.DefaultConfig())
+	defer closeServer()
+
+	//nolint:staticcheck // Deliberately calling the deprecated RPC.
+	_, err := client.StartActionByGetAndWait(context.Background(), connect.NewRequest(&apiv1.StartActionByGetAndWaitRequest{ActionId: "approve"}))
+	require.Error(t, err)
+	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
+}
+
+func TestStartActionByGetUsesJustificationTemplate(t *testing.T) {
+	cfg := config.DefaultConfig()
+	cfg.Actions = append(cfg.Actions, &config.Action{
+		Title:         "Templated",
+		ID:            "templated",
+		Justification: "Scheduled maintenance",
+		Shell:         "echo hi",
+	})
+
+	ex := executor.DefaultExecutor(cfg)
+	ex.RebuildActionMap()
+	ts, client := getNewTestServerAndClientWithExecutor(cfg, ex)
+	defer ts.Close()
+
+	//nolint:staticcheck // Deliberately calling the deprecated RPC.
+	resp, err := client.StartActionByGet(context.Background(), connect.NewRequest(&apiv1.StartActionByGetRequest{ActionId: "templated"}))
+	require.NoError(t, err)
+
+	waitForLogJustification(t, ex, resp.Msg.ExecutionTrackingId, "Scheduled maintenance")
+}
+
+func TestTrustedHeaderProviderSystemDoesNotSkipJustification(t *testing.T) {
+	cfg := config.DefaultConfig()
+	cfg.AuthHttpHeaderUsername = "X-Username"
+	cfg.AuthHttpHeaderUserGroup = "X-Usergroup"
+
+	client, closeServer := newJustificationRequiredTestServer(t, cfg)
+	defer closeServer()
+
+	req := connect.NewRequest(&apiv1.StartActionAndWaitRequest{ActionId: "approve"})
+	req.Header().Set("X-Username", "alice")
+	req.Header().Set("X-Usergroup", "operators")
+	req.Header().Set("provider", "system")
+
+	_, err := client.StartActionAndWait(context.Background(), req)
+	require.Error(t, err)
+	assert.Equal(t, connect.CodeInvalidArgument, connect.CodeOf(err))
 }

@@ -62,6 +62,7 @@ type Executor struct {
 	MapActionBindingsLock sync.RWMutex
 	listenersMu           sync.RWMutex
 	groupQueueMu          sync.Mutex
+	nextLogIndex          int64
 }
 
 // ExecutionRequest is a request to execute an action. It's passed to an
@@ -93,6 +94,20 @@ func (req *ExecutionRequest) mutateLogEntry(mutator func(*InternalLogEntry)) {
 	defer req.executor.logmutex.Unlock()
 
 	mutator(req.logEntry)
+}
+
+// LogEntry returns a copy of this request's own log entry. Callers that wait
+// for a request use it instead of looking the entry up in the history, because
+// a later run can evict a finished entry from the history before it is read.
+func (req *ExecutionRequest) LogEntry() *InternalLogEntry {
+	if req.executor == nil {
+		return cloneInternalLogEntry(req.logEntry)
+	}
+
+	req.executor.logmutex.RLock()
+	defer req.executor.logmutex.RUnlock()
+
+	return cloneInternalLogEntry(req.logEntry)
 }
 
 // LogEntrySnapshot is a copy of selected log entry fields for race-safe reads.
@@ -572,10 +587,11 @@ func (e *Executor) SetLog(trackingID string, entry *InternalLogEntry) string {
 		entry.ExecutionTrackingID = trackingID
 	}
 
-	entry.Index = int64(len(e.logsTrackingIdsByDate))
+	entry.Index = e.takeNextLogIndexLocked()
 
 	e.logs[trackingID] = entry
 	e.logsTrackingIdsByDate = append(e.logsTrackingIdsByDate, trackingID)
+	e.evictOldLogsLocked(time.Now())
 
 	return trackingID
 }
@@ -933,9 +949,16 @@ func ensureArgumentMap(req *ExecutionRequest) {
 	}
 }
 
+// Arguments without a name, such as an unnamed confirmation or html block,
+// are only shown in the web UI and never have a value, so a submitted argument
+// with an empty name is always dropped.
 func filterToDefinedArgumentsOnly(req *ExecutionRequest) {
 	definedNames := make(map[string]struct{})
 	for _, arg := range req.Binding.Action.Arguments {
+		if arg.Name == "" {
+			continue
+		}
+
 		definedNames[arg.Name] = struct{}{}
 	}
 	filtered := make(map[string]string)
@@ -1017,11 +1040,27 @@ func stepRequestAction(req *ExecutionRequest) bool {
 	log.WithFields(log.Fields{
 		"actionTitle": req.logEntry.ActionTitle,
 		"tags":        req.Tags,
+		"username":    requestUsername(req),
+		"provider":    requestProvider(req),
 	}).Infof("Action requested")
 
 	notifyListenersStarted(req)
 
 	return true
+}
+
+func requestUsername(req *ExecutionRequest) string {
+	if req.AuthenticatedUser == nil {
+		return ""
+	}
+	return req.AuthenticatedUser.Username
+}
+
+func requestProvider(req *ExecutionRequest) string {
+	if req.AuthenticatedUser == nil {
+		return ""
+	}
+	return req.AuthenticatedUser.Provider
 }
 
 func stepRequestActionHasBinding(req *ExecutionRequest) bool {
@@ -1482,7 +1521,7 @@ func triggerLoop(req *ExecutionRequest) {
 		trigger := &ExecutionRequest{
 			Binding:           binding,
 			TrackingID:        uuid.NewString(),
-			Tags:              []string{"trigger"},
+			Tags:              triggeredRequestTags(req),
 			AuthenticatedUser: req.AuthenticatedUser,
 			Arguments:         req.Arguments,
 			Cfg:               req.Cfg,
@@ -1492,6 +1531,18 @@ func triggerLoop(req *ExecutionRequest) {
 
 		req.executor.ExecRequest(trigger)
 	}
+}
+
+// Triggered actions inherit the webhook tag so that the webhook shell
+// restrictions apply to the whole trigger chain, not just the first action.
+func triggeredRequestTags(req *ExecutionRequest) []string {
+	tags := []string{"trigger"}
+
+	if hasWebhookTag(req) {
+		tags = append(tags, "webhook")
+	}
+
+	return tags
 }
 
 func stepSaveLog(req *ExecutionRequest) bool {

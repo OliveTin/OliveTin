@@ -31,8 +31,15 @@ func (v *AuthVerifier) Verify(r *http.Request, payload []byte) bool {
 
 type authVerifierFunc func(*http.Request, []byte) bool
 
+// Webhooks match on headers, query parameters and the body, which are not
+// secrets, so a webhook with no authType is rejected. Operators who want an
+// open webhook must say so with authType: none.
 func (v *AuthVerifier) getVerifier() authVerifierFunc {
-	if v.config.AuthType == "" || v.config.AuthType == "none" {
+	if v.config.AuthType == "" {
+		return rejectMissingAuthType
+	}
+
+	if v.config.AuthType == config.WebhookAuthTypeNone {
 		return func(_ *http.Request, _ []byte) bool {
 			return true
 		}
@@ -56,6 +63,11 @@ func (v *AuthVerifier) buildVerifierMap() map[string]authVerifierFunc {
 			return v.verifyBasic(r)
 		},
 	}
+}
+
+func rejectMissingAuthType(_ *http.Request, _ []byte) bool {
+	log.Warnf("Webhook has no authType, rejecting. Set an authType, or authType: none to allow unauthenticated requests")
+	return false
 }
 
 func (v *AuthVerifier) handleUnknownAuthType() bool {

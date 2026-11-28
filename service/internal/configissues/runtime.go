@@ -1,10 +1,10 @@
 package configissues
 
-import "sync"
+import (
+	"context"
 
-var (
-	runtimeMu     sync.Mutex
-	runtimeIssues []Issue
+	health "github.com/jamesread/armature-health/v2"
+	log "github.com/sirupsen/logrus"
 )
 
 // ReportRuntime records an issue discovered while OliveTin is running, rather
@@ -12,36 +12,27 @@ var (
 // method). Unlike Report, runtime issues are kept when the issue list is
 // rebuilt on config reload or entity changes. They are cleared on restart.
 func ReportRuntime(issue Issue) {
-	addRuntime(issue)
-	Report(issue)
-}
-
-func addRuntime(issue Issue) {
-	runtimeMu.Lock()
-	defer runtimeMu.Unlock()
-
-	fingerprint := issueFingerprint(issue)
-	for _, existing := range runtimeIssues {
-		if issueFingerprint(existing) == fingerprint {
-			return
-		}
-	}
-
-	runtimeIssues = append(runtimeIssues, issue)
+	raise(sourceRuntime, issue)
 }
 
 // CopyRuntime returns a copy of the runtime issues.
 func CopyRuntime() []Issue {
-	runtimeMu.Lock()
-	defer runtimeMu.Unlock()
-	out := make([]Issue, len(runtimeIssues))
-	copy(out, runtimeIssues)
-	return out
+	stored, err := service.ListIssues(context.Background(), false, true)
+	if err != nil {
+		log.WithError(err).Error("Could not list runtime issues")
+		return []Issue{}
+	}
+
+	runtime := make([]health.IssueView, 0)
+	for _, view := range stored {
+		if view.CheckID == sourceRuntime {
+			runtime = append(runtime, view)
+		}
+	}
+	return orderedIssues(runtime)
 }
 
 // ClearRuntime removes all runtime issues. Intended for tests.
 func ClearRuntime() {
-	runtimeMu.Lock()
-	defer runtimeMu.Unlock()
-	runtimeIssues = nil
+	setSource(sourceRuntime, nil)
 }

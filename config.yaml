@@ -25,9 +25,15 @@ actions:
   # Lots of people also use OliveTin to monitor their servers, like checking
   # disk space, or checking logs. `onclick: execution-dialog` shows output.
   - title: Check disk space
+    acls: [guest_actions]
     icon: disk
-    shell: df -h /
+    exec: ["df", "-h", "/"]
     onclick: execution-dialog
+    # Second webhook example: POST /webhooks?demo=disk-space
+    execOnWebhook:
+      - authType: none
+        matchQuery:
+          demo: disk-space
 
   # This uses `onclick: execution-dialog` to show a dialog with more
   # information about the command that was run.
@@ -46,6 +52,7 @@ actions:
   # If you are running OliveTin in a container remember to pass through the
   # docker socket! https://docs.olivetin.app/solutions/container-control-panel/index.html
   - title: Ping the Internet
+    acls: [guest_actions]
     shell: ping -c 3 1.1.1.1
     icon: ping
     onclick: execution-dialog
@@ -54,6 +61,7 @@ actions:
 
   # You can also rate-limit actions too.
   - title: Sync Disks
+    acls: [guest_actions]
     shell: sync
     id: syncdisks
     icon: disk
@@ -77,6 +85,7 @@ actions:
     # execOnCalendarFile: examples/demo-olivetin-calendar.yaml
 
   - title: Verify backup archive
+    acls: [guest_actions]
     shell: sleep 3 && echo "Backup archive verified"
     groups: [ backup-jobs ]
     timeout: 30
@@ -88,16 +97,12 @@ actions:
   #
   # Docs: https://docs.olivetin.app/action_examples/ping.html
   - title: Ping host
+    acls: [guest_actions]
     id: ping_host
     shell: ping {{ host }} -c {{ count }}
     icon: ping
     timeout: 100
     onclick: history
-    # https://docs.olivetin.app/action_execution/onwebhook.html — POST to /webhooks
-    # with header X-OliveTin-Demo: ping-host (path and payload rules are documented).
-    execOnWebhook:
-      - matchHeaders:
-          X-OliveTin-Demo: ping-host
     arguments:
       - name: host
         title: Host
@@ -110,6 +115,27 @@ actions:
         type: int
         default: 3
         description: How many times to do you want to ping?
+
+  # Actions can be started by a webhook, as well as from the web UI. Webhook
+  # actions must use `exec:`, not `shell:`. This one takes no arguments, so a
+  # webhook request can only start it, not change what it runs. Replace the
+  # command with your own script.
+  #
+  # Every webhook needs an `authType`. These demo webhooks use `authType: none`,
+  # so anyone who can reach /webhooks can start them. For your own scripts, use
+  # `authType: bearer` (or hmac-sha256) with a `secret`.
+  #
+  # Docs: https://docs.olivetin.app/action_execution/onwebhook.html
+  # POST to /webhooks with the header X-OliveTin-Demo: run-script
+  - title: Run script on webhook
+    id: run_script_on_webhook
+    icon: '&#128279;'
+    exec: ["echo", "Webhook received. Replace this with your own script."]
+    onclick: execution-dialog
+    execOnWebhook:
+      - authType: none
+        matchHeaders:
+          X-OliveTin-Demo: run-script
 
   # OliveTin can control containers - docker is just a command line app.
   #
@@ -150,6 +176,7 @@ actions:
   #
   # Docs: https://docs.olivetin.app/args/input_checklist.html
   - title: Backup selected directories
+    acls: [guest_actions]
     icon: backup
     shell: 'echo "Backing up: {{ directories }}"'
     arguments:
@@ -198,10 +225,6 @@ actions:
     icon: ssh
     shell: olivetin-setup-easy-ssh
     onclick: execution-dialog
-    # Second webhook example: POST /webhooks?demo=setup-ssh
-    execOnWebhook:
-      - matchQuery:
-          demo: setup-ssh
 
   # Here's how to use SSH with the "easy" config, to restart a service on
   # another server.
@@ -233,32 +256,40 @@ actions:
   # you have these referenced in a dashboard, they will not show up in the
   # `actions` view.
   - title: Ping hypervisor1
+    acls: [guest_actions]
     shell: echo "hypervisor1 online"
 
   - title: Ping hypervisor2
+    acls: [guest_actions]
     shell: echo "hypervisor2 online"
 
   - title: Ping hypervisor3
+    acls: [guest_actions]
     shell: echo "hypervisor3 online"
 
   - title: Ping hypervisor4
+    acls: [guest_actions]
     shell: echo "hypervisor4 online"
 
   - title: "{{ server.name }} Wake on Lan"
+    acls: [guest_actions]
     shell: echo "Sending Wake on LAN to {{ server.hostname }}"
     icon: <iconify-icon icon="carbon:awake"></iconify-icon>
     entity: server
 
   - title: "{{ server.name }} Power Off"
+    acls: [guest_actions]
     shell: "echo 'Power Off Server: {{ server.hostname }}'"
     icon: <iconify-icon icon="carbon:flash-off"></iconify-icon>
     entity: server
 
   - title: "{{ server.name }} Print server name"
+    acls: [guest_actions]
     shell: 'echo "Server name: {{ server.name }}"'
     entity: server
 
   - title: Ping All Servers
+    acls: [guest_actions]
     shell: "echo 'Ping all servers'"
     icon: ping
     # https://docs.olivetin.app/action_execution/onfilecreated.html
@@ -279,6 +310,7 @@ actions:
     triggers: ["Update container entity file"]
 
   - title: Long running action
+    acls: [guest_actions]
     shell: sleep 300
     timeout: 300
     icon: logs
@@ -449,23 +481,51 @@ defaultPolicy:
   showLogList: true
 
 # Permissions affect actions (eg: ability to view a specific log).
+#
+# Guests can see every action, but can only run the harmless demo actions that
+# carry `acls: [guest_actions]`. Everything else needs a user in the "admins"
+# usergroup. Only give guests actions that you are happy for anyone who can
+# reach OliveTin to run.
 # Docs: https://docs.olivetin.app/security/acl.html
 defaultPermissions:
   view: true
-  exec: true
-  logs: true
+  exec: false
+  logs: false
+  kill: false
 
 # OliveTin uses access control lists to match up policy and permissions to users.
 # Docs: https://docs.olivetin.app/security/acl.html
 accessControlLists:
+  # Admins can do everything with every action.
   - name: admin_acl
     matchUsergroups: ["admins"]
+    addToEveryAction: true
     policy:
       showDiagnostics: true
     permissions:
       view: true
       exec: true
       logs: true
+      kill: true
+
+  # Guests can run the demo actions that list this ACL. Add your own
+  # usergroups here to let logged in users run them too.
+  - name: guest_actions
+    matchUsergroups: ["guest"]
+    permissions:
+      view: true
+      exec: true
+      logs: true
+      kill: true
+
+  # Actions started by execOnStartup, execOnCron, execOnWebhook and the other
+  # triggers run as the "system" usergroup. Triggers only start the actions
+  # you configured them on.
+  - name: system_triggers
+    matchUsergroups: ["system"]
+    addToEveryAction: true
+    permissions:
+      exec: true
 
 # OliveTin contains many more configuration options not in this default config.
 # Check out docs.olivetin.app for a setting if you feel like you're missing something.

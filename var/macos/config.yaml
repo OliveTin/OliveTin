@@ -32,6 +32,7 @@ actions:
   # The simplest possible action: run a command, flash the button for status.
   # `ping` works identically on macOS and Linux.
   - title: Ping the Internet
+    acls: [guest_actions]
     shell: ping -c 3 1.1.1.1
     icon: ping
     popupOnStart: execution-dialog-stdout-only
@@ -44,6 +45,7 @@ actions:
   # mount under /Volumes. `df -h /` shows the boot disk; drop the path to list
   # every mounted volume.
   - title: Check disk space
+    acls: [guest_actions]
     icon: disk
     shell: df -h /
     popupOnStart: execution-dialog-stdout-only
@@ -62,6 +64,7 @@ actions:
   # A mini button that links to the logs, with rate limiting and an hourly cron.
   # `date` is identical across platforms.
   - title: date
+    acls: [guest_actions]
     shell: date
     id: date
     timeout: 6
@@ -98,6 +101,7 @@ actions:
 
   # Battery / power summary using the built-in `pmset`.
   - title: Power & battery status
+    acls: [guest_actions]
     icon: '&#128267;'   # battery
     shell: pmset -g batt
     popupOnStart: execution-dialog-stdout-only
@@ -107,6 +111,7 @@ actions:
   # Prompt the user for input with `arguments`. `ping` again works as-is.
   # Docs: https://docs.olivetin.app/action_examples/ping.html
   - title: Ping host
+    acls: [guest_actions]
     id: ping_host
     shell: ping {{ host }} -c {{ count }}
     icon: ping
@@ -244,20 +249,50 @@ defaultPolicy:
   showLogList: true
 
 # Permissions affect individual actions.
+#
+# Guests can see every action, but can only run the harmless demo actions that
+# carry `acls: [guest_actions]`. Everything else needs a user in the "admins"
+# usergroup. Only give guests actions that you are happy for anyone who can
+# reach OliveTin to run.
+# Docs: https://docs.olivetin.app/security/acl.html
 defaultPermissions:
   view: true
-  exec: true
-  logs: true
+  exec: false
+  logs: false
+  kill: false
 
-# ACLs match policy/permissions to users.
+# OliveTin uses access control lists to match up policy and permissions to users.
+# Docs: https://docs.olivetin.app/security/acl.html
 accessControlLists:
+  # Admins can do everything with every action.
   - name: admin_acl
     matchUsergroups: ["admins"]
+    addToEveryAction: true
     policy:
       showDiagnostics: true
     permissions:
       view: true
       exec: true
       logs: true
+      kill: true
+
+  # Guests can run the demo actions that list this ACL. Add your own
+  # usergroups here to let logged in users run them too.
+  - name: guest_actions
+    matchUsergroups: ["guest"]
+    permissions:
+      view: true
+      exec: true
+      logs: true
+      kill: true
+
+  # Actions started by execOnStartup, execOnCron, execOnWebhook and the other
+  # triggers run as the "system" usergroup. Triggers only start the actions
+  # you configured them on.
+  - name: system_triggers
+    matchUsergroups: ["system"]
+    addToEveryAction: true
+    permissions:
+      exec: true
 
 # OliveTin has many more options not shown here. See docs.olivetin.app.

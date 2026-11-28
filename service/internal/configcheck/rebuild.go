@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/OliveTin/OliveTin/internal/config"
@@ -16,18 +17,19 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// Rebuild clears and rebuilds the issue list from the current config, entity
-// state, sticky load-time reports, runtime reports, and any extra issues provided by callers
-// (for example literal argument default validation from the executor).
+// Rebuild rebuilds the issue list from the current config, entity state, sticky
+// load-time reports, and any extra issues provided by callers (for example literal
+// argument default validation from the executor). Runtime reports are kept.
 func Rebuild(cfg *config.Config, extra ...configissues.Issue) {
 	if cfg == nil {
-		configissues.Replace(append(configissues.CopyRuntime(), extra...))
+		configissues.ReplaceLoadIssues(nil)
+		configissues.Replace(extra)
 		return
 	}
 
+	configissues.ReplaceLoadIssues(configissues.CopySticky())
+
 	collected := make([]configissues.Issue, 0)
-	collected = append(collected, configissues.CopySticky()...)
-	collected = append(collected, configissues.CopyRuntime()...)
 	collected = append(collected, collectActionGroupIssues(cfg)...)
 	collected = append(collected, collectAclReferenceIssues(cfg)...)
 	collected = append(collected, collectArgumentIssues(cfg)...)
@@ -38,6 +40,9 @@ func Rebuild(cfg *config.Config, extra ...configissues.Issue) {
 	collected = append(collected, collectEntityEmptyIssues(cfg)...)
 	collected = append(collected, collectCronIssues(cfg)...)
 	collected = append(collected, collectWatcherPathIssues(cfg)...)
+	collected = append(collected, collectDashboardTypeIssues(cfg)...)
+	collected = append(collected, collectWebhookAuthIssues(cfg)...)
+	collected = append(collected, collectWebhookUnsignedArgumentIssues(cfg)...)
 	collected = append(collected, extra...)
 	configissues.Replace(collected)
 }
@@ -571,4 +576,103 @@ func missingWatchDirIssue(displayPath, dirToStat, configFile, actionID, actionTi
 		Source:      displayPath,
 		ConfigFile:  configFile,
 	}}
+}
+
+func collectWebhookAuthIssues(cfg *config.Config) []configissues.Issue {
+	out := make([]configissues.Issue, 0)
+
+	for _, action := range cfg.Actions {
+		if action == nil {
+			continue
+		}
+
+		out = append(out, webhookAuthIssuesForAction(action)...)
+	}
+
+	return out
+}
+
+// Known webhook templates choose their own authType, so only webhooks without
+// one need an authType in the config. An unknown template name sets nothing,
+// so it is reported, and does not excuse a missing authType.
+func webhookAuthIssuesForAction(action *config.Action) []configissues.Issue {
+	out := make([]configissues.Issue, 0)
+
+	for index, webhook := range action.ExecOnWebhook {
+		source := fmt.Sprintf("execOnWebhook[%d]", index)
+		out = append(out, webhookTemplateIssues(action, webhook, source)...)
+		out = append(out, webhookAuthTypeIssues(action, webhook, source)...)
+	}
+
+	return out
+}
+
+func webhookTemplateIssues(action *config.Action, webhook config.WebhookConfig, source string) []configissues.Issue {
+	if webhook.Template == "" || config.IsKnownWebhookTemplate(webhook.Template) {
+		return nil
+	}
+
+	return []configissues.Issue{actionIssue(action, configissues.SeverityError, configissues.CodeWebhookTemplateUnknown,
+		fmt.Sprintf("Webhook template %q is not known, so it is ignored. Known templates are: %s", webhook.Template, strings.Join(config.WebhookTemplateNames, ", ")),
+		source, "")}
+}
+
+func webhookAuthTypeIssues(action *config.Action, webhook config.WebhookConfig, source string) []configissues.Issue {
+	if webhook.AuthType != "" || config.IsKnownWebhookTemplate(webhook.Template) {
+		return nil
+	}
+
+	return []configissues.Issue{actionIssue(action, configissues.SeverityError, configissues.CodeWebhookAuthTypeUnset,
+		"Webhook has no authType, so its requests are rejected. Set an authType such as hmac-sha256 or bearer, or authType: none to allow unauthenticated requests",
+		source, "")}
+}
+
+func collectWebhookUnsignedArgumentIssues(cfg *config.Config) []configissues.Issue {
+	out := make([]configissues.Issue, 0)
+
+	for _, action := range cfg.Actions {
+		if action == nil || !actionHasBodyOnlySignedWebhook(action) {
+			continue
+		}
+
+		out = append(out, unsignedWebhookArgumentIssues(action)...)
+	}
+
+	return out
+}
+
+// HMAC webhook signatures, including the GitHub templates, only cover the
+// request body. The path, query string and headers that OliveTin passes to
+// webhook_path, webhook_query and webhook_header_* arguments are not signed,
+// so anyone who has captured one signed request can change them.
+func actionHasBodyOnlySignedWebhook(action *config.Action) bool {
+	return slices.ContainsFunc(action.ExecOnWebhook, webhookSignsBodyOnly)
+}
+
+func webhookSignsBodyOnly(webhook config.WebhookConfig) bool {
+	if webhook.AuthType == "" {
+		return config.IsKnownWebhookTemplate(webhook.Template)
+	}
+
+	return config.IsHmacWebhookAuthType(webhook.AuthType)
+}
+
+func isUnsignedWebhookArgument(name string) bool {
+	return name == "webhook_path" || name == "webhook_query" || strings.HasPrefix(name, "webhook_header_")
+}
+
+func unsignedWebhookArgumentIssues(action *config.Action) []configissues.Issue {
+	out := make([]configissues.Issue, 0)
+
+	for _, arg := range action.Arguments {
+		if !isUnsignedWebhookArgument(arg.Name) {
+			continue
+		}
+
+		out = append(out, actionIssue(action, configissues.SeverityWarning, configissues.CodeWebhookUnsignedArg,
+			"Argument comes from the webhook request's path, query string or headers, which HMAC webhook signatures do not cover, so its value is not authenticated. Take values you need to trust from the request body with extract instead",
+			arg.Name, arg.Name))
+	}
+
+	return out
 }

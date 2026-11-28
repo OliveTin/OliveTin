@@ -1,6 +1,8 @@
 [#log-debug-options]
 = Debug Log Options
 
+WARNING: Debug log options log internal details, including request headers, and **will contain sensitive information**. This is expected. Only enable them while troubleshooting, and remove secrets before sharing the logs. See xref:advanced_configuration/logs.adoc#debug-logs-sensitive[DEBUG and TRACE logs contain sensitive information].
+
 [source,yaml]
 ----
 logDebugOptions:

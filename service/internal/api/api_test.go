@@ -1194,3 +1194,61 @@ func TestBuildChoicesExpandsChecklistEntityChoices(t *testing.T) {
 	assert.Equal(t, "basement", choices[1].Value)
 	assert.Equal(t, "basement", choices[1].Title)
 }
+
+func TestValidateArgumentTypeRejectsUnboundCustomRegex(t *testing.T) {
+	cfg := config.DefaultConfig()
+	ts, client := getNewTestServerAndClient(cfg)
+	defer ts.Close()
+
+	resp, err := client.ValidateArgumentType(context.Background(), connect.NewRequest(&apiv1.ValidateArgumentTypeRequest{
+		Value: "aaaa",
+		Type:  "regex:a+",
+	}))
+	require.NoError(t, err)
+	assert.False(t, resp.Msg.Valid, "a caller-supplied regex must not be evaluated without a binding")
+	assert.Contains(t, resp.Msg.Description, "custom regex types can only be validated for a configured action argument")
+}
+
+func TestValidateArgumentTypeUnboundBuiltinTypeStillValidates(t *testing.T) {
+	cfg := config.DefaultConfig()
+	ts, client := getNewTestServerAndClient(cfg)
+	defer ts.Close()
+
+	valid, err := client.ValidateArgumentType(context.Background(), connect.NewRequest(&apiv1.ValidateArgumentTypeRequest{
+		Value: "hello",
+		Type:  "ascii",
+	}))
+	require.NoError(t, err)
+	assert.True(t, valid.Msg.Valid)
+
+	invalid, err := client.ValidateArgumentType(context.Background(), connect.NewRequest(&apiv1.ValidateArgumentTypeRequest{
+		Value: "hello; rm -rf /",
+		Type:  "ascii_identifier",
+	}))
+	require.NoError(t, err)
+	assert.False(t, invalid.Msg.Valid)
+}
+
+func TestValidateArgumentTypeBoundCustomRegexStillValidates(t *testing.T) {
+	cfg := config.DefaultConfig()
+	cfg.Actions = append(cfg.Actions, &config.Action{
+		ID:    "regex_action",
+		Title: "Regex action",
+		Exec:  []string{"echo", "{{ code }}"},
+		Arguments: []config.ActionArgument{
+			{Name: "code", Type: "regex:[a-z]{3}"},
+		},
+	})
+	cfg.Sanitize()
+	ts, client := getNewTestServerAndClient(cfg)
+	defer ts.Close()
+
+	resp, err := client.ValidateArgumentType(context.Background(), connect.NewRequest(&apiv1.ValidateArgumentTypeRequest{
+		BindingId:    "regex_action",
+		ArgumentName: "code",
+		Value:        "abc",
+		Type:         "regex:[a-z]{3}",
+	}))
+	require.NoError(t, err)
+	assert.True(t, resp.Msg.Valid, "configured custom regex arguments must still validate")
+}

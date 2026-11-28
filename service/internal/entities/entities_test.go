@@ -3,7 +3,9 @@ package entities
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
+	"time"
 
 	config "github.com/OliveTin/OliveTin/internal/config"
 	"github.com/stretchr/testify/assert"
@@ -240,4 +242,44 @@ func TestLoadEntityFile_preservesEntitiesOnTransientFailure(t *testing.T) {
 	ordered := GetEntityInstancesOrdered(entityName)
 	require.Len(t, ordered, 1, "JSON parse failure should keep last good entities")
 	assert.Equal(t, "json-kept", ordered[0].Title)
+}
+
+// Kubernetes mounts each ConfigMap file as a symlink to ..data/<name>, and
+// updates it by pointing ..data at a new directory, so the file is never
+// written in place.
+func TestSyncEntityFileWatchers_reloadsConfigMapUpdate(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("symlinks need extra privileges on Windows")
+	}
+
+	ResetEntityWatchersForTests()
+	t.Cleanup(func() {
+		ResetEntityWatchersForTests()
+		ClearEntitiesOfType("vehicle")
+	})
+
+	dir := t.TempDir()
+	require.NoError(t, os.Mkdir(filepath.Join(dir, "..v1"), 0o755))
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "..v1", "vehicles.yaml"), []byte("- title: car1\n"), 0o600))
+	require.NoError(t, os.Symlink("..v1", filepath.Join(dir, "..data")))
+	require.NoError(t, os.Symlink(filepath.Join("..data", "vehicles.yaml"), filepath.Join(dir, "vehicles.yaml")))
+
+	cfg := config.DefaultConfig()
+	cfg.SetDir(dir)
+	cfg.Entities = []*config.EntityFile{
+		{Name: "vehicle", File: "vehicles.yaml"},
+	}
+
+	SyncEntityFileWatchers(cfg)
+	require.Len(t, GetEntityInstancesOrdered("vehicle"), 1)
+
+	require.NoError(t, os.Mkdir(filepath.Join(dir, "..v2"), 0o755))
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "..v2", "vehicles.yaml"), []byte("- title: car1\n- title: car2\n"), 0o600))
+	require.NoError(t, os.Symlink("..v2", filepath.Join(dir, "..data_tmp")))
+	require.NoError(t, os.Rename(filepath.Join(dir, "..data_tmp"), filepath.Join(dir, "..data")))
+	require.NoError(t, os.RemoveAll(filepath.Join(dir, "..v1")))
+
+	require.Eventually(t, func() bool {
+		return len(GetEntityInstancesOrdered("vehicle")) == 2
+	}, 3*time.Second, 50*time.Millisecond, "entities were not reloaded after a ConfigMap update")
 }

@@ -116,6 +116,25 @@ accessControlLists:
     addToEveryAction: true
 ```
 
+[#acls-for-triggers]
+=== ACLs for triggers (startup, cron, webhooks)
+
+Actions started by a trigger, such as `execOnStartup`, `execOnCron`, `execOnCalendarFile`, `execOnFileCreatedInDir` or `execOnWebhook`, run as a user in the `system` usergroup, and the same ACL checks apply. If you set `defaultPermissions.exec` to `false`, give the `system` usergroup `exec`, or your triggered actions will be blocked:
+
+[source,yaml]
+.`config.yaml`
+```yaml
+accessControlLists:
+  - name: system_triggers
+    matchUsergroups:
+      - system
+    permissions:
+      exec: true
+    addToEveryAction: true
+```
+
+Triggers only start the actions that you configured them on, so adding this ACL to every action does not let anyone else run those actions.
+
 == ACLs and Dashboards
 
 Root dashboards can also list `acls`. This controls whether the **whole dashboard page** is visible (including `display` widgets and entity fieldsets), not just action buttons.

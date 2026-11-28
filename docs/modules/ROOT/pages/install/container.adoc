@@ -13,7 +13,7 @@ The main OliveTin image is available at;
 
 == Tags
 
-* `latest-2k` - This tag will always point to the latest OliveTin 2k version (eg 2025.11.11)
+* `latest-2k` - This tag points to the final OliveTin 2k version. OliveTin 2k is end of life and no longer receives any updates - see xref:upgrade/2k3k.adoc#end-of-2k-support[End of support for OliveTin 2k].
 * `latest-3k` - This tag will always point to the latest OliveTin 3k version (eg 3000.2.0)
 * `latest` - This tag will always point to the latest OliveTin version (currently 3k)
 

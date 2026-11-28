@@ -1,0 +1,31 @@
+entities:
+  - file: /etc/OliveTin/entities/water_valve.yaml
+    name: water_valve
+
+actions:
+  - title: Toggle valve
+    icon: '<img src="/custom-webui/icons/{{ .CurrentEntity.state }}.png" width="48px" />'
+    entity: water_valve
+    shell: |
+      set -e
+      entity_file=/etc/OliveTin/entities/water_valve.yaml
+      if grep -Eq "^  state: +[\"']?open[\"']? *$" "$entity_file"; then
+        next_state=closed
+      else
+        next_state=open
+      fi
+      echo "Setting {{ .CurrentEntity.title }} to $next_state"
+      sed -i "s/^  state: .*/  state: $next_state/" "$entity_file"
+
+dashboards:
+  - title: Water Valve
+    contents:
+      - title: "{{ water_valve.title }}"
+        type: fieldset
+        entity: water_valve
+        contents:
+          - type: display
+            title: |
+              State: <strong>{{ water_valve.state }}</strong>
+
+          - title: Toggle valve

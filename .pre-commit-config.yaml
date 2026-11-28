@@ -29,7 +29,8 @@ repos:
     hooks:
       - id: conventional-pre-commit
         stages: [commit-msg]
-        args: [] # optional: list of Conventional Commits types to allow e.g. [feat, fix, ci, chore, test]
+        # The hook's default types, plus security for security advisory fixes (see SECURITY.md).
+        args: [build, chore, ci, docs, feat, fix, perf, refactor, revert, style, test, security]
 
   - repo: local
     hooks:

@@ -58,6 +58,8 @@ authOAuth2Providers:
 
 Then ensure an ACL matches that group, for example `matchUsergroups: ["guest"]`, so those users get the intended access.
 
+NOTE: Visitors who are not logged in are also called `guest`. If `authRequireGuestsToLogin` is `true`, an ACL that matches the `guest` usergroup applies only to logged-in users, never to visitors who are not logged in. If it is `false`, the ACL applies to both, so consider using a different group name, such as `oauth-users`.
+
 === All users from a provider in one group
 
 Give every user who logs in via GitHub the group `github` so you can target them in ACLs:

@@ -7,7 +7,7 @@ OliveTin provides a dedicated webhook endpoint at `/webhooks` that can receive w
 
 == Basic Configuration
 
-To configure an action to run on a webhook, add the `execOnWebhook` property to your action. Webhook-triggered actions **must** use `exec:` (not `shell:` or `shellAfterCompleted`).
+To configure an action to run on a webhook, add the `execOnWebhook` property to your action. Webhook-triggered actions **must** use `exec:` (not `shell:` or `shellAfterCompleted`). This also applies to any action started through `triggers` from a webhook-triggered action, at any depth of the trigger chain (see xref:upgrade/upgrade_notes.adoc#webhook-trigger-chains-exec-only[Upgrade Notes]).
 
 [source,yaml]
 .`config.yaml`
@@ -18,11 +18,13 @@ actions:
     exec:
       - /opt/scripts/deploy.sh
     execOnWebhook:
-      - matchHeaders:
+      - authType: bearer
+        secret: "${{ WEBHOOK_TOKEN }}"
+        matchHeaders:
           X-Event-Type: deploy
 ----
 
-This action will be triggered when a POST request is sent to `/webhooks` with the header `X-Event-Type: deploy`.
+This action will be triggered when a POST request is sent to `/webhooks` with the header `X-Event-Type: deploy` and the header `Authorization: Bearer <token>`, where the token is the value of the `WEBHOOK_TOKEN` environment variable. Every webhook needs an `authType`; see <<every-webhook-needs-an-authtype,Webhook Authentication>>.
 
 == Webhook Endpoint
 
@@ -56,7 +58,9 @@ actions:
       - echo
       - "Processing event"
     execOnWebhook:
-      - matchHeaders:
+      - authType: bearer
+        secret: "${{ WEBHOOK_TOKEN }}"
+        matchHeaders:
           X-Event-Type: my-event
           X-Source: my-service
 ----
@@ -78,7 +82,9 @@ actions:
       - name: service
         type: ascii
     execOnWebhook:
-      - matchQuery:
+      - authType: bearer
+        secret: "${{ WEBHOOK_TOKEN }}"
+        matchQuery:
           action: deploy
           env: production
         extract:
@@ -102,7 +108,9 @@ actions:
       - name: branch
         type: ascii
     execOnWebhook:
-      - matchPath: "$.event_type=push"
+      - authType: bearer
+        secret: "${{ WEBHOOK_TOKEN }}"
+        matchPath: "$.event_type=push"
         extract:
           branch: "$.branch"
 ----
@@ -112,7 +120,9 @@ The `matchPath` format is `jsonpath=value`. You can also just specify a JSONPath
 [source,yaml]
 ----
 execOnWebhook:
-  - matchPath: "$.repository.name"  # Matches if this path exists in the JSON
+  - authType: bearer
+    secret: "${{ WEBHOOK_TOKEN }}"
+    matchPath: "$.repository.name"  # Matches if this path exists in the JSON
 ----
 
 === Using Regex for Matching
@@ -127,7 +137,9 @@ actions:
       - echo
       - "Handling event"
     execOnWebhook:
-      - matchHeaders:
+      - authType: bearer
+        secret: "${{ WEBHOOK_TOKEN }}"
+        matchHeaders:
           X-Event-Type: "regex:^(push|pull_request|release)$"
 ----
 
@@ -143,7 +155,9 @@ actions:
       - /opt/scripts/deploy.sh
       - production
     execOnWebhook:
-      - matchHeaders:
+      - authType: bearer
+        secret: "${{ WEBHOOK_TOKEN }}"
+        matchHeaders:
           X-Event-Type: deploy
         matchQuery:
           environment: production
@@ -168,7 +182,9 @@ actions:
       - name: environment
         type: ascii
     execOnWebhook:
-      - matchHeaders:
+      - authType: bearer
+        secret: "${{ WEBHOOK_TOKEN }}"
+        matchHeaders:
           X-Event-Type: deploy
         extract:
           version: "$.release.tag_name"
@@ -199,19 +215,30 @@ actions:
       - name: webhook_header_x-request-id
         type: ascii
     execOnWebhook:
-      - matchHeaders:
+      - authType: bearer
+        secret: "${{ WEBHOOK_TOKEN }}"
+        matchHeaders:
           X-Event-Type: log
 ----
 
 Header names that contain hyphens become argument keys with the same hyphens (for example `webhook_header_x-request-id`). Use the `index` map-lookup form shown above, because Go templates treat hyphens in bare identifiers as subtraction.
 
+These metadata arguments come from the request's path, query string and headers, which HMAC signatures do not cover. Do not rely on them for values an action needs to trust; see <<what-hmac-signatures-cover,What HMAC signatures cover>>.
+
 == Webhook Authentication
 
 OliveTin supports several authentication methods to verify webhook requests:
 
+[#every-webhook-needs-an-authtype]
+=== Every webhook needs an `authType`
+
+Every webhook must set an `authType`. A webhook without one is rejected, and the xref:advanced_configuration/diagnostics.adoc[Diagnostics] page shows an error for it (code `webhook_auth_type_unset`). Webhooks that use one of the xref:action_execution/onwebhook_github.adoc[GitHub templates] choose their own `authType`. A `template` name that OliveTin does not know is ignored, and Diagnostics shows an error for it (code `webhook_template_unknown`). See xref:upgrade/upgrade_notes.adoc#webhook-auth-type-required[Upgrade Notes].
+
+`matchHeaders`, `matchQuery` and `matchPath` only decide which action a request is for. They are not secrets, so use one of the authentication methods below unless anyone who can reach `/webhooks` may run the action. Webhook-triggered actions run as the `system` usergroup, not as the caller (see xref:security/acl.adoc#acls-for-triggers[ACLs for triggers]).
+
 === No Authentication
 
-By default, webhooks have no authentication. Any request matching the criteria will trigger the action:
+To accept webhook requests without any authentication, set `authType: none` explicitly. Any request that matches will then trigger the action, so only do this for actions that are safe for anyone to run:
 
 [source,yaml]
 ----
@@ -250,6 +277,22 @@ execOnWebhook:
     matchHeaders:
       X-Event-Type: push
 ----
+
+[#what-hmac-signatures-cover]
+=== What HMAC signatures cover
+
+HMAC signatures, including the ones checked for the GitHub `template` webhooks, are worked out by the sender over the request body only. This is how GitHub, GitLab and similar services sign webhooks, so OliveTin cannot check anything more than the sender signed:
+
+* The request path, query string and headers are not signed. Anyone who has seen one signed request can send it again with a different path, query string or headers, and it will still pass the signature check.
+* There is no timestamp or nonce, so a signed request can be sent again, and it will run the action again.
+
+To keep webhooks safe:
+
+* Send webhooks to OliveTin over HTTPS, so that signed requests cannot be read or changed on the way.
+* Take any value that an action needs to trust from the request body, with `extract`. Do not use the `webhook_path`, `webhook_query` or `webhook_header_*` arguments for those values with HMAC webhooks. The xref:advanced_configuration/diagnostics.adoc[Diagnostics] page shows a warning (code `webhook_unsigned_argument`) for an action that does.
+* Make webhook-triggered actions safe to run more than once.
+
+`bearer` and `basic` authentication do not sign anything: they check that the request carries the secret. Anyone who has the secret can send any request.
 
 === Bearer Token
 
@@ -301,9 +344,13 @@ actions:
     exec:
       - /opt/scripts/deploy.sh
     execOnWebhook:
-      - matchHeaders:
+      - authType: bearer
+        secret: "${{ WEBHOOK_TOKEN }}"
+        matchHeaders:
           X-Event-Type: deploy-manual
-      - matchHeaders:
+      - authType: bearer
+        secret: "${{ WEBHOOK_TOKEN }}"
+        matchHeaders:
           X-Event-Type: deploy-auto
         matchPath: "$.status=success"
 ----
@@ -314,9 +361,10 @@ You can test your webhook configuration using `curl`:
 
 [source,bash]
 ----
-# Simple webhook with headers
+# Simple webhook with headers and a bearer token
 curl -X POST \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $WEBHOOK_TOKEN" \
   -H "X-Event-Type: deploy" \
   -d '{"version": "1.2.3"}' \
   http://localhost:1337/webhooks

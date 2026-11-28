@@ -8,6 +8,8 @@ OliveTin ACLs are *allow lists*, not deny lists. Each action starts with `defaul
 
 The default `defaultPermissions` allow guests to view and execute every action. To restrict some actions to logged-in admins while leaving others open to guests, set `defaultPermissions` to deny access by default, then use ACLs to explicitly grant access on each action.
 
+If any actions use triggers such as `execOnStartup`, `execOnCron` or `execOnWebhook`, also grant `exec` to the `system` usergroup. See xref:security/acl.adoc#acls-for-triggers[ACLs for triggers].
+
 See xref:security/acl.adoc[Access Control Lists] for the full ACL reference.
 
 == Full example configuration

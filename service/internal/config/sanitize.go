@@ -18,6 +18,7 @@ func (cfg *Config) Sanitize() {
 	cfg.sanitizeLogLevel()
 	cfg.sanitizeAuthRequireGuestsToLogin()
 	cfg.sanitizeLogHistoryPageSize()
+	cfg.sanitizeLogHistoryLimit()
 	cfg.sanitizeLocalUsers()
 	cfg.sanitizeSecurityHeaders()
 	cfg.sanitizeOnClickDefaults()
@@ -263,6 +264,7 @@ func (action *Action) sanitize(cfg *Config) {
 	action.Icon = lookupHTMLIcon(action.Icon, cfg.DefaultIconForActions)
 	migrateActionOnClick(action)
 	action.sanitizeJustification()
+	action.reportUnknownOnClick(cfg)
 	action.OnClick = sanitizeOnClick(action.OnClick, cfg)
 	action.PopupOnStart = action.OnClick
 
@@ -354,6 +356,13 @@ func (cfg *Config) sanitizeLogHistoryPageSize() {
 		cfg.LogHistoryPageSize = 10
 	} else if cfg.LogHistoryPageSize > 100 {
 		log.Warnf("LogsHistoryLimit is high, you can do this, but expect browser lag.")
+	}
+}
+
+func (cfg *Config) sanitizeLogHistoryLimit() {
+	if cfg.LogHistoryLimit < MinimumLogHistoryLimit {
+		log.Warnf("logHistoryLimit %d is too low, setting it to %d", cfg.LogHistoryLimit, MinimumLogHistoryLimit)
+		cfg.LogHistoryLimit = MinimumLogHistoryLimit
 	}
 }
 
@@ -454,22 +463,63 @@ func getActionID(action *Action) string {
 	return action.ID
 }
 
-//gocyclo:ignore
+// onClickModes are the onclick values that change how an action behaves.
+var onClickModes = []string{
+	"execution-dialog",
+	"execution-dialog-output-html",
+	"execution-dialog-stdout-only",
+	"execution-button",
+	"history",
+}
+
+// onClickDefaultAliases are accepted values that mean "use the default behaviour".
+var onClickDefaultAliases = []string{
+	"",
+	"default",
+	"nothing",
+}
+
+func isKnownOnClick(value string) bool {
+	return slices.Contains(onClickModes, value) || slices.Contains(onClickDefaultAliases, value)
+}
+
 func sanitizeOnClick(raw string, cfg *Config) string {
-	switch raw {
-	case "execution-dialog":
+	if slices.Contains(onClickModes, raw) {
 		return raw
-	case "execution-dialog-output-html":
-		return raw
-	case "execution-dialog-stdout-only":
-		return raw
-	case "execution-button":
-		return raw
-	case "history":
-		return raw
-	default:
-		return cfg.DefaultOnClick
 	}
+
+	return cfg.DefaultOnClick
+}
+
+func (action *Action) reportUnknownOnClick(cfg *Config) {
+	// On a second sanitize pass, an action's onclick may already hold the
+	// (separately reported) defaultOnClick value.
+	if isKnownOnClick(action.OnClick) || action.OnClick == cfg.DefaultOnClick {
+		return
+	}
+
+	configissues.ReportSticky(configissues.Issue{
+		Severity:    configissues.SeverityWarning,
+		Code:        configissues.CodeOnClickUnknown,
+		Message:     fmt.Sprintf("Unknown onclick value %q, using defaultOnClick (%q) instead", action.OnClick, cfg.DefaultOnClick),
+		ActionID:    action.ID,
+		ActionTitle: action.Title,
+		Source:      action.OnClick,
+		ConfigFile:  action.SourceFile,
+	})
+}
+
+func (cfg *Config) reportUnknownDefaultOnClick() {
+	if isKnownOnClick(cfg.DefaultOnClick) {
+		return
+	}
+
+	configissues.ReportSticky(configissues.Issue{
+		Severity: configissues.SeverityWarning,
+		Code:     configissues.CodeOnClickUnknown,
+		Message:  fmt.Sprintf("Unknown defaultOnClick value %q, actions will behave as if it were \"nothing\"", cfg.DefaultOnClick),
+		Source:   cfg.DefaultOnClick,
+	})
 }
 
 func migrateActionOnClick(action *Action) {
@@ -511,6 +561,7 @@ func (cfg *Config) sanitizeOnClickDefaults() {
 		cfg.DefaultOnClick = "nothing"
 	}
 
+	cfg.reportUnknownDefaultOnClick()
 	cfg.DefaultPopupOnStart = cfg.DefaultOnClick
 }
 

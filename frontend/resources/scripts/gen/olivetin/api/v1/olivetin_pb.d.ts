@@ -1297,9 +1297,9 @@ export declare type WhoAmIResponse = Message<"olivetin.api.v1.WhoAmIResponse"> &
   acls: string[];
 
   /**
-   * @generated from field: string sid = 5;
+   * @generated from field: string session_fingerprint = 6;
    */
-  sid: string;
+  sessionFingerprint: string;
 };
 
 /**

@@ -10,6 +10,10 @@ Operators should see configuration problems in Diagnostics instead of only in se
 
 The issue list is cleared and rebuilt when configuration is loaded or reloaded, and when entity data changes. Some findings that can only be detected while configuration is first being loaded (for example references to unset environment variables that are expanded away during that load, or included files that failed to parse) are kept across later rebuilds until the next configuration load begins.
 
+Issues found while OliveTin is running rather than from the configuration (for example calls to deprecated API methods) are kept across rebuilds until OliveTin restarts.
+
+Issues are kept in memory only. No database is needed, and the list starts empty on each start.
+
 ## What is collected
 
 Issues include:

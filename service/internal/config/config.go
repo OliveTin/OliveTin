@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"slices"
 )
 
 // ReservedArgumentNamePrefix is reserved for OliveTin-injected system arguments.
@@ -92,9 +93,38 @@ type RateSpec struct {
 }
 
 // WebhookConfig defines configuration for generic webhook triggers.
+// WebhookAuthTypeNone must be set explicitly for a webhook that accepts
+// unauthenticated requests.
+const WebhookAuthTypeNone = "none"
+
+// WebhookTemplateNames are the webhook templates OliveTin knows. Each one sets
+// its own authType, so a webhook that uses one does not need an authType in
+// the config.
+var WebhookTemplateNames = []string{
+	"github-push",
+	"github-pr",
+	"github-pull-request",
+	"github-release",
+	"github-workflow",
+}
+
+func IsKnownWebhookTemplate(name string) bool {
+	return slices.Contains(WebhookTemplateNames, name)
+}
+
+// HmacWebhookAuthTypes sign only the request body. The older of the two hash
+// functions is only accepted so that OliveTin can check signatures from
+// senders that still use it, such as older GitHub webhooks; OliveTin does not
+// use it for anything else.
+var HmacWebhookAuthTypes = []string{"hmac-sha256", "hmac-sha1"} // DevSkim: ignore DS126858
+
+func IsHmacWebhookAuthType(authType string) bool {
+	return slices.Contains(HmacWebhookAuthTypes, authType)
+}
+
 type WebhookConfig struct {
 	Secret        string            `koanf:"secret"`        // Optional: secret for signature verification
-	AuthType      string            `koanf:"authType"`      // Optional: "hmac-sha256", "hmac-sha1", "bearer", "basic", "none"
+	AuthType      string            `koanf:"authType"`      // Required unless set by a template: "hmac-sha256", "hmac-sha1", "bearer", "basic", "none"
 	AuthHeader    string            `koanf:"authHeader"`    // Optional: custom header name for auth (default: "X-Webhook-Signature")
 	MatchHeaders  map[string]string `koanf:"matchHeaders"`  // Match HTTP headers
 	MatchPath     string            `koanf:"matchPath"`     // JSONPath expression to match in request body (format: "jsonpath=value" or just "jsonpath")
@@ -215,6 +245,7 @@ type Config struct {
 	sourceFiles                        []string
 	AuthLocalUsers                     AuthLocalUsersConfig `koanf:"authLocalUsers"`
 	LogHistoryPageSize                 int64                `koanf:"logHistoryPageSize"`
+	LogHistoryLimit                    int                  `koanf:"logHistoryLimit"`
 	LogDebugOptions                    LogDebugOptions      `koanf:"logDebugOptions"`
 	DefaultPermissions                 PermissionsList      `koanf:"defaultPermissions"`
 	DefaultPolicy                      ConfigurationPolicy  `koanf:"defaultPolicy"`
@@ -303,6 +334,12 @@ type DashboardComponent struct {
 	Contents     []*DashboardComponent `koanf:"contents"`
 }
 
+// DefaultLogHistoryLimit is how many execution logs are kept in memory by default.
+const DefaultLogHistoryLimit = 2000
+
+// MinimumLogHistoryLimit stops the in-memory log history being configured too small to be useful.
+const MinimumLogHistoryLimit = 100
+
 func DefaultConfig() *Config {
 	return DefaultConfigWithBasePort(1337)
 }
@@ -320,6 +357,7 @@ func DefaultConfigWithBasePort(basePort int) *Config {
 	config.ExternalRestAddress = "."
 	config.LogLevel = "INFO"
 	config.LogHistoryPageSize = 10
+	config.LogHistoryLimit = DefaultLogHistoryLimit
 	config.CheckForUpdates = false
 	config.DefaultPermissions.Exec = true
 	config.DefaultPermissions.View = true
