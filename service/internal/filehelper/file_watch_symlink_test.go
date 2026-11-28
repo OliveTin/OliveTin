@@ -237,6 +237,34 @@ func TestWatchFileWriteKeepsWatchingTargetAfterDanglingLinkIsUndone(t *testing.T
 	recorder.expectOneCall(t)
 }
 
+// The link points away to a missing file, the old target is edited while the
+// link dangles, then the missing file appears as a link back to the old
+// target. The resolved path is the same as before, but the content changed.
+func TestWatchFileWriteReloadsWhenDanglingLinkResolvesToSameTarget(t *testing.T) {
+	skipWithoutSymlinks(t)
+
+	linkDir, firstDir, secondDir := t.TempDir(), t.TempDir(), t.TempDir()
+	first := filepath.Join(firstDir, "entities.yaml")
+	writeFile(t, first, "a: 1\n")
+
+	path := filepath.Join(linkDir, "entities.yaml")
+	require.NoError(t, os.Symlink(first, path))
+	recorder := watchFileForTest(t, path)
+
+	second := filepath.Join(secondDir, "entities.yaml")
+	temporary := filepath.Join(linkDir, "entities.yaml.tmp")
+	require.NoError(t, os.Symlink(second, temporary))
+	require.NoError(t, os.Rename(temporary, path))
+	recorder.expectNone(t)
+
+	writeFile(t, first, "a: 2\n")
+	recorder.expectNone(t)
+
+	require.NoError(t, os.Symlink(first, second))
+	recorder.expectOneCall(t)
+	assert.Equal(t, "a: 2\n", readFile(t, path))
+}
+
 func TestWatchFileWriteReloadsRenameSave(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "entities.yaml")
 	writeFile(t, path, "a: 1\n")

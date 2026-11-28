@@ -41,14 +41,28 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.CONTAINER_TOKEN }}
 
+      # Runs are queued in the order they start waiting, not in tag order, so
+      # this run may start before the run for an earlier release. Every
+      # release up to this one is processed oldest first, so a note always
+      # moves under the first release that shipped it. Releases that already
+      # have a section are skipped by the script.
       - name: Move released upgrade notes
         run: |
           released_notes="${RUNNER_TEMP}/upgrade_notes_released.adoc"
-          if ! git show "refs/tags/${RELEASE_TAG}:${NOTES_PATH}" > "${released_notes}"; then
-            echo "Tag ${RELEASE_TAG} has no ${NOTES_PATH}; nothing to do."
-            exit 0
+          if ! git rev-parse -q --verify "refs/tags/${RELEASE_TAG}" > /dev/null; then
+            echo "Tag ${RELEASE_TAG} does not exist."
+            exit 1
           fi
-          python3 -I scripts/release_upgrade_notes.py "${RELEASE_TAG}" "${released_notes}" "${NOTES_PATH}"
+          git tag -l '3*.*.*' | grep -v -e '-' | sort -V | while read -r tag; do
+            if ! git show "refs/tags/${tag}:${NOTES_PATH}" > "${released_notes}" 2>/dev/null; then
+              echo "Tag ${tag} has no ${NOTES_PATH}; skipping."
+            else
+              python3 -I scripts/release_upgrade_notes.py "${tag}" "${released_notes}" "${NOTES_PATH}"
+            fi
+            if [ "${tag}" = "${RELEASE_TAG}" ]; then
+              break
+            fi
+          done
 
       - name: Commit and push
         run: |
@@ -59,5 +73,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add "${NOTES_PATH}"
-          git commit -m "docs: label upgrade notes released in ${RELEASE_TAG}"
+          git commit -m "docs: label upgrade notes released up to ${RELEASE_TAG}"
           git push origin HEAD:next

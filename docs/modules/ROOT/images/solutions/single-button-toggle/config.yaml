@@ -16,7 +16,7 @@ actions:
     shell: |
       set -e
       entity_file="${{ WATER_VALVE_ENTITY_FILE }}"
-      if grep -Eq "^  state: +[\"']?open[\"']? *$" "$entity_file"; then
+      if grep -Eq "^  state: +[\"']?open[\"']?( +#.*)? *$" "$entity_file"; then
         next_state=closed
       else
         next_state=open

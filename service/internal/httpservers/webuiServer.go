@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
 
@@ -38,22 +39,26 @@ func NewWebUIServer(cfg *config.Config) *webUIServer {
 // (webUIDir) do not hash their asset names at all. Without Cache-Control,
 // browsers cache responses that only carry Last-Modified heuristically, and
 // can keep an old UI after an upgrade. no-cache makes them revalidate every
-// time; unchanged files still come back as a cheap 304.
+// time; unchanged files still come back as a cheap 304 (see webui_etag.go).
 const webuiCacheControl = "no-cache"
 
 func (s *webUIServer) handleWebui(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Cache-Control", webuiCacheControl)
 
-	// Mangle requests for any path like /logs or /config to load the webui index.html
-	if path.Ext(r.URL.Path) == "" && r.URL.Path != "/" {
-		log.Debugf("Mangling request for %s to /index.html", r.URL.Path)
-		http.ServeFile(w, r, path.Join(s.webuiDir, "index.html"))
-		return
-	}
+	// http.Dir rejects path traversal; do not Join raw URL paths into ServeFile.
+	root := http.Dir(s.webuiDir)
 
 	log.Tracef("Serving webui from %s for %s", s.webuiDir, r.URL.Path)
-	// http.Dir rejects path traversal; do not Join raw URL paths into ServeFile.
-	http.FileServer(http.Dir(s.webuiDir)).ServeHTTP(w, r)
+	serveFileWithContentETag(w, r, root, webuiFileName(r.URL.Path), http.FileServer(root))
+}
+
+// Mangle requests for any path like /logs or /config to load the webui index.html
+func webuiFileName(urlPath string) string {
+	if path.Ext(urlPath) == "" {
+		return "/index.html"
+	}
+
+	return urlPath
 }
 
 func (s *webUIServer) findWebuiDir() string {
@@ -138,10 +143,12 @@ func (s *webUIServer) generateThemeCss(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *webUIServer) handleCustomWebui() http.Handler {
-	fs := http.StripPrefix("/custom-webui/", http.FileServer(http.Dir(s.findCustomWebuiDir())))
+	root := http.Dir(s.findCustomWebuiDir())
+	fileServer := http.StripPrefix("/custom-webui/", http.FileServer(root))
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Cache-Control", webuiCacheControl)
-		fs.ServeHTTP(w, r)
+		name := "/" + strings.TrimPrefix(r.URL.Path, "/custom-webui/")
+		serveFileWithContentETag(w, r, root, name, fileServer)
 	})
 }

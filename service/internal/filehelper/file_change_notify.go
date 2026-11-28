@@ -62,6 +62,10 @@ type watchContext struct {
 	// different directory to watchedPath, so in-place edits of a symlink's
 	// target are seen.
 	resolvedDir string
+	// dangling is set while watchedPath cannot be resolved. Edits made in the
+	// meantime may not have been seen, so the file is reloaded once it
+	// resolves again, even if it points to the same target as before.
+	dangling bool
 
 	interestedEvent fsnotify.Op
 }
@@ -348,22 +352,26 @@ func refreshResolvedPath(ctx *watchContext) bool {
 }
 
 // resolveWatchedPath updates where the watched file points. It reports
-// whether the target changed, and separately whether the file resolved at
-// all.
+// whether the target changed, or resolved again after dangling, and
+// separately whether the file resolved at all.
 func resolveWatchedPath(ctx *watchContext) (changed bool, resolved bool) {
 	target, err := filepath.EvalSymlinks(ctx.watchedPath)
 	if err != nil {
 		log.Debugf("fsnotify could not resolve %v: %v", ctx.watchedPath, err)
 		watchDanglingTargetDir(ctx)
+		ctx.dangling = true
 		return false, false
 	}
+
+	recovered := ctx.dangling
+	ctx.dangling = false
 
 	// The target's directory is watched again even when the target has not
 	// changed, because a dangling symlink in between may have moved the extra
 	// watch to the directory it pointed into.
 	watchResolvedDir(ctx, filepath.Dir(target))
 
-	if target == ctx.resolvedPath {
+	if target == ctx.resolvedPath && !recovered {
 		return false, true
 	}
 
