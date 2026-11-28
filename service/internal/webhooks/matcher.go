@@ -56,10 +56,10 @@ func (m *WebhookMatcher) matchHeaders() bool {
 	for key, expectedValue := range m.config.MatchHeaders {
 		actualValue := m.req.Header.Get(key)
 		if !m.compareValues(actualValue, expectedValue) {
+			// Header values can be credentials, such as a token or signature, so
+			// only the header name is logged.
 			m.log.WithFields(log.Fields{
-				"header":   key,
-				"expected": expectedValue,
-				"actual":   actualValue,
+				"header": key,
 			}).Debugf("Header mismatch")
 			return false
 		}
