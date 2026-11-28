@@ -20,9 +20,12 @@ on:
 permissions:
   contents: read
 
+# A run that is waiting must not be replaced by a later one, or the notes for
+# the earlier tag would be moved under the later version instead.
 concurrency:
   group: release-upgrade-notes
   cancel-in-progress: false
+  queue: max
 
 jobs:
   label-upgrade-notes:
