@@ -265,7 +265,8 @@ func (api *oliveTinAPI) startActionAndWaitRun(binding *executor.ActionBinding, a
 	}
 	wg, _ := api.executor.ExecRequest(&execReq)
 	wg.Wait()
-	return api.executor.GetLog(execReq.TrackingID)
+	entry := execReq.LogEntry()
+	return entry, entry != nil
 }
 
 func (api *oliveTinAPI) findBindingOrNotFound(actionId string) (*executor.ActionBinding, error) {
