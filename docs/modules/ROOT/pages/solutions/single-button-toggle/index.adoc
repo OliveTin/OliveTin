@@ -22,7 +22,8 @@ a| image::solutions/single-button-toggle/dashboard-open.png[]
 * The entity file `/etc/OliveTin/entities/water_valve.yaml` holds the state of the valve (`open` or `closed`). It is the single source of truth for the dashboard.
 * The **Toggle valve** action's icon is an `<img>` tag that uses `{{ .CurrentEntity.state }}` as the file name, so state `closed` shows `closed.png` and state `open` shows `open.png`.
 * The action has no `enabledExpression`, so it is never disabled.
-* When it runs, the action reads the current state, works out the opposite state, and writes that back to the entity file. OliveTin watches entity files, so the dashboard and the icon update as soon as the file changes.
+* When it runs, the action reads the current state from the entity file, works out the opposite state, and changes the `state:` line in the file. OliveTin watches entity files, so the dashboard and the icon update as soon as the file changes.
+* The state is read from the file, not from the dashboard, so two presses in quick succession each flip the valve, even if the second press comes before OliveTin has reloaded the entity. OliveTin runs one execution of an action at a time by default (`maxConcurrent: 1`), so the presses do not overlap.
 
 == Icons
 
@@ -61,7 +62,7 @@ include::example$solutions/single-button-toggle/config.yaml[]
 * Only write the new state to the entity file once the hardware command has succeeded. If the command fails, the shell exits before the state changes and the dashboard keeps showing the real state.
 * If something else can change the device (a physical switch, a schedule), have a script update the entity file too. The icon will then follow it.
 * The icon path starts with `/`, so it works from any dashboard. If OliveTin is served under a sub-path behind a reverse proxy, include that sub-path in the icon's `src`.
-* This action rewrites the whole entity file, so to control several valves, give each one its own entity file (or update the file in place with a tool such as `yq`).
+* This action changes every `state:` line in the entity file, so to control several valves, give each one its own entity file, or update the right entity with a YAML-aware tool such as `yq`.
 * Add ACLs if only certain users should be able to operate the valve.
 
 == See also

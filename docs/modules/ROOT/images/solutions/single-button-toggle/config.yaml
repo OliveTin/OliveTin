@@ -15,13 +15,14 @@ actions:
     entity: water_valve
     shell: |
       set -e
-      if [ "{{ .CurrentEntity.state }}" = "open" ]; then
+      entity_file="${{ WATER_VALVE_ENTITY_FILE }}"
+      if grep -q '^  state: open$' "$entity_file"; then
         next_state=closed
       else
         next_state=open
       fi
       echo "Setting {{ .CurrentEntity.title }} to $next_state"
-      printf -- '- title: %s\n  state: %s\n' "{{ .CurrentEntity.title }}" "$next_state" > "${{ WATER_VALVE_ENTITY_FILE }}"
+      sed -i "s/^  state: .*/  state: $next_state/" "$entity_file"
 
 dashboards:
   - title: Water Valve
