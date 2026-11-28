@@ -2,6 +2,7 @@ package logfilter
 
 import (
 	"testing"
+	"time"
 
 	"github.com/expr-lang/expr/vm"
 	"github.com/stretchr/testify/assert"
@@ -151,5 +152,28 @@ func TestCompileAllowsSupportedExpressions(t *testing.T) {
 		matched, err := Matches(program, record)
 		require.NoError(t, err, expression)
 		assert.Equal(t, expected, matched, expression)
+	}
+}
+
+func nestedChainedComparison(depth int) string {
+	term := "0"
+	for range depth {
+		term = "0<(" + term + ")<0"
+	}
+	return term
+}
+
+func TestCompileRejectsNestedChainedComparisonsQuickly(t *testing.T) {
+	expressions := []string{
+		"unknown(" + nestedChainedComparison(40) + ")",
+		nestedChainedComparison(40),
+	}
+
+	for _, expression := range expressions {
+		start := time.Now()
+		program, err := Compile(expression)
+		require.Error(t, err)
+		assert.Nil(t, program)
+		assert.Less(t, time.Since(start), time.Second)
 	}
 }

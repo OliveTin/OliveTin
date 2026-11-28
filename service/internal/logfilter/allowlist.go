@@ -44,15 +44,14 @@ var allowedFunctions = map[string]bool{
 
 var errUnsupportedSyntax = fmt.Errorf("unsupported filter expression; use field comparisons, and/or/not, contains, includes() and hasTag()")
 
-type allowlistVisitor struct {
-	err error
-}
+var errFilterTooComplex = fmt.Errorf("filter expression is too complex")
 
-func (v *allowlistVisitor) Visit(node *ast.Node) {
-	if v.err != nil {
-		return
-	}
-	v.err = checkNode(*node)
+// The parser shares the middle operand of a chained comparison between two
+// branches, so nesting them makes the tree grow exponentially while the text
+// stays short. Each node is checked before its children, and the walk stops
+// after maxFilterNodes visits, so the check itself stays cheap.
+type allowlistWalker struct {
+	visited int
 }
 
 func checkAllowedSyntax(expression string) error {
@@ -61,9 +60,44 @@ func checkAllowedSyntax(expression string) error {
 		return err
 	}
 
-	visitor := &allowlistVisitor{}
-	ast.Walk(&tree.Node, visitor)
-	return visitor.err
+	walker := &allowlistWalker{}
+	return walker.check(tree.Node)
+}
+
+func (walker *allowlistWalker) check(node ast.Node) error {
+	walker.visited++
+	if walker.visited > maxFilterNodes {
+		return errFilterTooComplex
+	}
+
+	if err := checkNode(node); err != nil {
+		return err
+	}
+
+	return walker.checkAll(childNodes(node))
+}
+
+func (walker *allowlistWalker) checkAll(nodes []ast.Node) error {
+	for _, child := range nodes {
+		if err := walker.check(child); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func childNodes(node ast.Node) []ast.Node {
+	switch typed := node.(type) {
+	case *ast.UnaryNode:
+		return []ast.Node{typed.Node}
+	case *ast.BinaryNode:
+		return []ast.Node{typed.Left, typed.Right}
+	case *ast.CallNode:
+		return typed.Arguments
+	case *ast.ArrayNode:
+		return typed.Nodes
+	}
+	return nil
 }
 
 func checkNode(node ast.Node) error {
