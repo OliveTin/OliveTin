@@ -78,3 +78,39 @@ func TestMatchPath(t *testing.T) {
 	_, err = matcher.MatchPath("$.missing", "x")
 	assert.Error(t, err)
 }
+
+func TestEmptyCollectionIsExtractedAndMatchedAsAnEmptyList(t *testing.T) {
+	matcher, err := NewJSONMatcher([]byte(`{"commits": []}`))
+	require.NoError(t, err)
+
+	value, err := matcher.ExtractValue("$.commits[*].id")
+	require.NoError(t, err)
+	assert.Equal(t, "[]", value)
+
+	matched, err := matcher.MatchPath("$.commits[*].id", "[]")
+	require.NoError(t, err)
+	assert.True(t, matched)
+
+	found, err := matcher.HasValue("$.commits[*].id")
+	require.NoError(t, err)
+	assert.False(t, found, "an empty collection has no value for an existence check")
+}
+
+func TestHasValue(t *testing.T) {
+	matcher := newTestJSONMatcher(t)
+
+	cases := map[string]bool{
+		"$.repository.name":   true,
+		"$.repository.topics": true,
+		"$.commits[*].id":     true,
+		"$.missing":           false,
+		"$.commits[5]":        false,
+	}
+	for path, expected := range cases {
+		t.Run(path, func(t *testing.T) {
+			found, err := matcher.HasValue(path)
+			require.NoError(t, err)
+			assert.Equal(t, expected, found)
+		})
+	}
+}
