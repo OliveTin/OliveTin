@@ -358,12 +358,16 @@ func resolveWatchedPath(ctx *watchContext) (changed bool, resolved bool) {
 		return false, false
 	}
 
+	// The target's directory is watched again even when the target has not
+	// changed, because a dangling symlink in between may have moved the extra
+	// watch to the directory it pointed into.
+	watchResolvedDir(ctx, filepath.Dir(target))
+
 	if target == ctx.resolvedPath {
 		return false, true
 	}
 
 	ctx.resolvedPath = target
-	watchResolvedDir(ctx, filepath.Dir(target))
 	return true, true
 }
 

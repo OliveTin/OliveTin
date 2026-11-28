@@ -210,6 +210,33 @@ func TestWatchFileWriteWaitsForDanglingTargetInAnotherDirectory(t *testing.T) {
 	recorder.expectOneCall(t)
 }
 
+func TestWatchFileWriteKeepsWatchingTargetAfterDanglingLinkIsUndone(t *testing.T) {
+	skipWithoutSymlinks(t)
+
+	linkDir, targetDir, otherDir := t.TempDir(), t.TempDir(), t.TempDir()
+	target := filepath.Join(targetDir, "real.yaml")
+	writeFile(t, target, "a: 1\n")
+
+	path := filepath.Join(linkDir, "entities.yaml")
+	require.NoError(t, os.Symlink(target, path))
+	recorder := watchFileForTest(t, path)
+
+	replaceLink := func(destination string) {
+		temporary := filepath.Join(linkDir, "entities.yaml.tmp")
+		require.NoError(t, os.Symlink(destination, temporary))
+		require.NoError(t, os.Rename(temporary, path))
+	}
+
+	replaceLink(filepath.Join(otherDir, "missing.yaml"))
+	recorder.expectNone(t)
+
+	replaceLink(target)
+	recorder.expectOneCall(t)
+
+	writeFile(t, target, "a: 2\n")
+	recorder.expectOneCall(t)
+}
+
 func TestWatchFileWriteReloadsRenameSave(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "entities.yaml")
 	writeFile(t, path, "a: 1\n")
