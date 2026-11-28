@@ -96,6 +96,20 @@ func (req *ExecutionRequest) mutateLogEntry(mutator func(*InternalLogEntry)) {
 	mutator(req.logEntry)
 }
 
+// LogEntry returns a copy of this request's own log entry. Callers that wait
+// for a request use it instead of looking the entry up in the history, because
+// a later run can evict a finished entry from the history before it is read.
+func (req *ExecutionRequest) LogEntry() *InternalLogEntry {
+	if req.executor == nil {
+		return cloneInternalLogEntry(req.logEntry)
+	}
+
+	req.executor.logmutex.RLock()
+	defer req.executor.logmutex.RUnlock()
+
+	return cloneInternalLogEntry(req.logEntry)
+}
+
 // LogEntrySnapshot is a copy of selected log entry fields for race-safe reads.
 type LogEntrySnapshot struct {
 	Output            string

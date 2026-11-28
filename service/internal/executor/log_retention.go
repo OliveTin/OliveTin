@@ -1,7 +1,6 @@
 package executor
 
 import (
-	"slices"
 	"time"
 
 	config "github.com/OliveTin/OliveTin/internal/config"
@@ -36,10 +35,11 @@ func (e *Executor) evictOldLogsLocked(now time.Time) {
 	}
 
 	kept := make([]string, 0, len(e.logsTrackingIdsByDate)-excess)
+	evicted := make(map[*InternalLogEntry]bool, excess)
 
 	for _, trackingID := range e.logsTrackingIdsByDate {
 		if excess > 0 && canEvictLogEntry(e.logs[trackingID], now) {
-			e.removeLogLocked(trackingID)
+			e.removeLogLocked(trackingID, evicted)
 			excess--
 			continue
 		}
@@ -48,6 +48,7 @@ func (e *Executor) evictOldLogsLocked(now time.Time) {
 	}
 
 	e.logsTrackingIdsByDate = kept
+	e.removeEvictedFromBindingsLocked(evicted)
 }
 
 func canEvictLogEntry(entry *InternalLogEntry, now time.Time) bool {
@@ -85,7 +86,7 @@ func longestRateWindow(rates []config.RateSpec) time.Duration {
 	return longest
 }
 
-func (e *Executor) removeLogLocked(trackingID string) {
+func (e *Executor) removeLogLocked(trackingID string, evicted map[*InternalLogEntry]bool) {
 	entry := e.logs[trackingID]
 	delete(e.logs, trackingID)
 
@@ -93,24 +94,36 @@ func (e *Executor) removeLogLocked(trackingID string) {
 		return
 	}
 
-	e.removeLogFromBindingLocked(entry)
+	evicted[entry] = true
 }
 
-func (e *Executor) removeLogFromBindingLocked(entry *InternalLogEntry) {
-	bindingID := entry.Binding.ID
-	bindingLogs := e.LogsByBindingId[bindingID]
-
-	index := slices.Index(bindingLogs, entry)
-	if index < 0 {
-		return
+// Each affected binding's list is rebuilt once per eviction, not once per
+// evicted entry, so evicting many entries of one binding stays linear.
+func (e *Executor) removeEvictedFromBindingsLocked(evicted map[*InternalLogEntry]bool) {
+	bindingIDs := make(map[string]bool)
+	for entry := range evicted {
+		bindingIDs[entry.Binding.ID] = true
 	}
 
-	if len(bindingLogs) == 1 {
+	for bindingID := range bindingIDs {
+		e.removeEvictedFromBindingLocked(bindingID, evicted)
+	}
+}
+
+func (e *Executor) removeEvictedFromBindingLocked(bindingID string, evicted map[*InternalLogEntry]bool) {
+	// Build a new slice rather than deleting in place, because callers may still
+	// be reading the previous slice after releasing the lock.
+	remaining := make([]*InternalLogEntry, 0, len(e.LogsByBindingId[bindingID]))
+	for _, entry := range e.LogsByBindingId[bindingID] {
+		if !evicted[entry] {
+			remaining = append(remaining, entry)
+		}
+	}
+
+	if len(remaining) == 0 {
 		delete(e.LogsByBindingId, bindingID)
 		return
 	}
 
-	// Build a new slice rather than deleting in place, because callers may still
-	// be reading the previous slice after releasing the lock.
-	e.LogsByBindingId[bindingID] = slices.Concat(bindingLogs[:index], bindingLogs[index+1:])
+	e.LogsByBindingId[bindingID] = remaining
 }

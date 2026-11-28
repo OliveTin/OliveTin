@@ -8,13 +8,14 @@ actions:
     entity: water_valve
     shell: |
       set -e
-      if [ "{{ .CurrentEntity.state }}" = "open" ]; then
+      entity_file=/etc/OliveTin/entities/water_valve.yaml
+      if grep -Eq "^  state: +[\"']?open[\"']? *$" "$entity_file"; then
         next_state=closed
       else
         next_state=open
       fi
       echo "Setting {{ .CurrentEntity.title }} to $next_state"
-      printf -- '- title: %s\n  state: %s\n' "{{ .CurrentEntity.title }}" "$next_state" > /etc/OliveTin/entities/water_valve.yaml
+      sed -i "s/^  state: .*/  state: $next_state/" "$entity_file"
 
 dashboards:
   - title: Water Valve

@@ -178,3 +178,28 @@ func TestLogHistoryLoadedFromDiskIsBounded(t *testing.T) {
 	e.logmutex.RUnlock()
 	assertLogStoresConsistent(t, e, binding.ID)
 }
+
+func TestRequestLogEntrySurvivesHistoryEviction(t *testing.T) {
+	e, cfg, binding := newRetentionTestExecutor(t, &config.Action{Title: "retention", Shell: "true"})
+
+	req := &ExecutionRequest{
+		Binding:           binding,
+		Cfg:               cfg,
+		AuthenticatedUser: auth.UserFromSystem(cfg, "test"),
+	}
+	wg, trackingID := e.ExecRequest(req)
+	wg.Wait()
+
+	for range cfg.LogHistoryLimit + 1 {
+		addRetentionTestLog(e, newQueueTestLogEntry(binding, true))
+	}
+
+	_, found := e.GetLog(trackingID)
+	require.False(t, found, "the request's entry is evicted from the history")
+
+	entry := req.LogEntry()
+	require.NotNil(t, entry)
+	assert.Equal(t, trackingID, entry.ExecutionTrackingID)
+	assert.True(t, entry.ExecutionFinished)
+	assert.Equal(t, int32(0), entry.ExitCode)
+}

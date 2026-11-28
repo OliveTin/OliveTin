@@ -171,7 +171,17 @@ function handleMonthChange (month, year) {
   router.replace({ query: { ...route.query, month: formatCalendarMonthQuery(month, year) } })
 }
 
+// A missing or invalid month is written into the URL, so that bookmarking the
+// page keeps the month it showed.
+function writeDisplayedMonthToAddress () {
+  const month = formatCalendarMonthQuery(currentMonthIndex.value, currentYear.value)
+  if (route.query.month !== month) {
+    router.replace({ query: { ...route.query, month } })
+  }
+}
+
 onMounted(() => {
+  writeDisplayedMonthToAddress()
   fetchLogs()
 })
 </script>

@@ -121,7 +121,7 @@ func setSource(sourceID string, next []Issue) {
 	}
 
 	refreshSnapshot()
-	logNewIssues(before, next)
+	logNewIssues(before, copyCurrentSeverities(), next)
 }
 
 func raise(sourceID string, issue Issue) {
@@ -143,7 +143,7 @@ func raise(sourceID string, issue Issue) {
 	}
 
 	refreshSnapshot()
-	logNewIssues(before, []Issue{issue})
+	logNewIssues(before, copyCurrentSeverities(), []Issue{issue})
 }
 
 // refreshSnapshot rebuilds the list returned by List after a change, so that
@@ -182,14 +182,18 @@ func copyCurrentSeverities() map[string]string {
 // logNewIssues logs issues that were not open before, or whose severity changed,
 // in the order they were collected, so startup and reloads do not repeat the
 // same warnings.
-func logNewIssues(before map[string]string, issues []Issue) {
+// An issue is logged when the severity it is now listed with is new, and that
+// severity is the one it was reported with. The same problem reported as both a
+// warning and an error is listed once as an error, so only the error is logged,
+// and an unchanged rebuild logs nothing.
+func logNewIssues(before map[string]string, after map[string]string, issues []Issue) {
 	for _, issue := range issues {
 		key := issueKey(issue)
-		severity := string(healthSeverity(issue.Severity))
-		if before[key] == severity {
+		listed := after[key]
+		if listed == before[key] || listed != string(healthSeverity(issue.Severity)) {
 			continue
 		}
-		before[key] = severity
+		before[key] = listed
 		logNewIssue(issue)
 	}
 }

@@ -48,7 +48,7 @@ func (h *WebhookHandler) HandleWebhook(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	matchingActions := h.findMatchingActions(r, payload)
+	matchingActions := h.findMatchingActions(r, payload, reqLog)
 	if len(matchingActions) == 0 {
 		reqLog.Infof("Webhook: no matching actions")
 		h.writeOKResponse(w, "no matching webhook actions")
@@ -103,17 +103,17 @@ func (h *WebhookHandler) processMatchingActions(matchingActions []ActionWebhookC
 	return processed
 }
 
-func (h *WebhookHandler) findMatchingActions(r *http.Request, payload []byte) []ActionWebhookConfig {
+func (h *WebhookHandler) findMatchingActions(r *http.Request, payload []byte, reqLog *log.Entry) []ActionWebhookConfig {
 	var matches []ActionWebhookConfig
 
 	for _, action := range h.cfg.Actions {
-		matches = append(matches, h.findMatchingWebhooksForAction(action, r, payload)...)
+		matches = append(matches, h.findMatchingWebhooksForAction(action, r, payload, reqLog)...)
 	}
 
 	return matches
 }
 
-func (h *WebhookHandler) findMatchingWebhooksForAction(action *config.Action, r *http.Request, payload []byte) []ActionWebhookConfig {
+func (h *WebhookHandler) findMatchingWebhooksForAction(action *config.Action, r *http.Request, payload []byte, reqLog *log.Entry) []ActionWebhookConfig {
 	var matches []ActionWebhookConfig
 
 	for _, webhookConfig := range action.ExecOnWebhook {
@@ -123,7 +123,7 @@ func (h *WebhookHandler) findMatchingWebhooksForAction(action *config.Action, r 
 			ApplyGitHubTemplate(&webhookConfigCopy, webhookConfigCopy.Template)
 		}
 
-		matcher := NewWebhookMatcher(webhookConfigCopy, r, payload)
+		matcher := NewWebhookMatcher(webhookConfigCopy, r, payload).WithLogger(reqLog)
 		if matcher.Matches() {
 			matches = append(matches, ActionWebhookConfig{
 				Action: action,
@@ -145,7 +145,7 @@ func (h *WebhookHandler) processWebhook(actionConfig ActionWebhookConfig, r *htt
 		return false
 	}
 
-	matcher := NewWebhookMatcher(actionConfig.Config, r, payload)
+	matcher := NewWebhookMatcher(actionConfig.Config, r, payload).WithLogger(reqLog)
 
 	args, err := matcher.ExtractArguments()
 	if err != nil {

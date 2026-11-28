@@ -54,6 +54,24 @@ OliveTin now keeps up to 2000 execution logs in memory, and removes the oldest f
 
 If you want a longer history in the web interface, raise `logHistoryLimit` in your config. Logs saved to disk with `saveLogs` are not affected. See xref:logs/saving.adoc#log-history-limit[How many logs are kept in memory].
 
+[#restart-action-current-config]
+=== `RestartAction` uses the action as it is configured now
+
+Restarting an execution, with the Restart button or the `RestartAction` API method, now runs the action as it is in the current config, with the arguments and justification stored with the original run. Previously it ran the action as it was configured when the original run started.
+
+After a config change, restarting an old execution can therefore run the changed command.
+
+If the action has been removed, the restart fails with "is no longer in the configuration", and `StartAction` cannot start it either. To run it again, add the action back to your config, or use the action that replaced it.
+
+If the action still exists but now requires an argument or a justification that the original run did not have, the restart fails and asks you to use `StartAction` instead. Start the action again with `StartAction`, or from the dashboard, with the inputs it now needs.
+
+[#web-ui-cache-control]
+=== Web UI files are no longer cached by browsers without checking
+
+OliveTin now sends `Cache-Control: no-cache` with web UI files, so browsers check for a newer version every time, and get the new web interface straight after an upgrade.
+
+Browsers that loaded the web interface from an earlier version may still have those files cached without this header. If the web interface looks out of date or broken after you upgrade, force a reload (Ctrl+Shift+R, or Cmd+Shift+R on macOS), or clear the browser cache for your OliveTin site. You only need to do this once.
+
 [#start-action-by-get-justification]
 === `StartActionByGet` and `StartActionByGetAndWait` now check required justifications
 

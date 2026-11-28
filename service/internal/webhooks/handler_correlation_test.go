@@ -83,3 +83,22 @@ func TestWebhookCorrelationIDIsUniquePerRequest(t *testing.T) {
 
 	assert.NotEqual(t, requireCorrelationID(t, first), requireCorrelationID(t, second))
 }
+
+func TestWebhookMatcherDiagnosticsUseTheCorrelationID(t *testing.T) {
+	cfg := config.DefaultConfig()
+	cfg.Actions = []*config.Action{{
+		Title: "Deploy",
+		ExecOnWebhook: []config.WebhookConfig{{
+			AuthType:     "bearer",
+			Secret:       "not-sent-by-this-request",
+			MatchHeaders: map[string]string{"X-Event": "regex:("},
+		}},
+	}}
+
+	rec, hook := postWebhook(t, cfg)
+
+	id := requireCorrelationID(t, rec)
+	entry := findLogEntry(hook, "Invalid regex pattern")
+	require.NotNil(t, entry)
+	assert.Equal(t, id, entry.Data["correlationId"])
+}

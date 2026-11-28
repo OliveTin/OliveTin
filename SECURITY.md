@@ -99,7 +99,7 @@ A DoS report **is** considered a vulnerability when at least one of these is tru
 * **Amplification**: a small or cheap request makes OliveTin do disproportionately large work. For example a single request that allocates a large amount of memory, or a short input that causes a large amount of CPU work.
 * **Unbounded growth**: requests cause memory or other state to grow without limit, and it is not reclaimed after the requests stop. For example a map, slice or cache that has no cap, expiry or eviction.
 
-A DoS report is **not** considered a vulnerability when:
+A DoS report is **not** considered a vulnerability when none of the above is true, and:
 
 * the load is proportional to the number and size of requests sent, and the work done for each request is bounded;
 * OliveTin fails gracefully while busy, for example by returning HTTP 429 or `ResourceExhausted`, rather than crashing;

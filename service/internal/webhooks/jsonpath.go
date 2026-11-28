@@ -61,25 +61,44 @@ func (m *JSONMatcher) ExtractValue(pathExpr string) (string, error) {
 	return string(jsonBytes), nil
 }
 
+// HasValue reports whether the path matches at least one value.
+func (m *JSONMatcher) HasValue(pathExpr string) (bool, error) {
+	_, nodes, err := m.selectNodes(pathExpr)
+	if err != nil {
+		return false, err
+	}
+	return len(nodes) > 0, nil
+}
+
 // selectValue returns the single value for a path that can only match one node,
-// and a list for a path that can match several (wildcards, descendants). A path
-// that matches nothing is an error, which callers use to tell that it is absent.
+// and a list for a path that can match several (wildcards, descendants). A
+// singular path that matches nothing is an error, which callers use to tell
+// that it is absent. A path that can match several nodes returns a list even
+// when it is empty, so that "$.commits[*].id" on a push with no commits is "[]".
 func (m *JSONMatcher) selectValue(pathExpr string) (any, error) {
-	path, err := jsonpath.Parse(withRootSelector(pathExpr))
+	path, nodes, err := m.selectNodes(pathExpr)
 	if err != nil {
 		return nil, err
 	}
 
-	nodes := path.Select(m.payload)
+	if path.Query().Singular() == nil {
+		return append([]any{}, nodes...), nil
+	}
+
 	if len(nodes) == 0 {
 		return nil, fmt.Errorf("no value found at JSONPath %q", pathExpr)
 	}
 
-	if path.Query().Singular() != nil {
-		return nodes[0], nil
+	return nodes[0], nil
+}
+
+func (m *JSONMatcher) selectNodes(pathExpr string) (*jsonpath.Path, []any, error) {
+	path, err := jsonpath.Parse(withRootSelector(pathExpr))
+	if err != nil {
+		return nil, nil, err
 	}
 
-	return []any(nodes), nil
+	return path, path.Select(m.payload), nil
 }
 
 // Earlier versions of OliveTin accepted paths without the leading "$", such as

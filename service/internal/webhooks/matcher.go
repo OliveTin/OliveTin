@@ -12,6 +12,7 @@ import (
 type WebhookMatcher struct {
 	config    config.WebhookConfig
 	req       *http.Request
+	log       *log.Entry
 	bodyBytes []byte
 }
 
@@ -20,7 +21,15 @@ func NewWebhookMatcher(cfg config.WebhookConfig, r *http.Request, bodyBytes []by
 		config:    cfg,
 		req:       r,
 		bodyBytes: bodyBytes,
+		log:       log.NewEntry(log.StandardLogger()),
 	}
+}
+
+// WithLogger makes the matcher log through the request's logger, so that its
+// diagnostics carry the request's correlation ID.
+func (m *WebhookMatcher) WithLogger(entry *log.Entry) *WebhookMatcher {
+	m.log = entry
+	return m
 }
 
 func (m *WebhookMatcher) Matches() bool {
@@ -47,10 +56,10 @@ func (m *WebhookMatcher) matchHeaders() bool {
 	for key, expectedValue := range m.config.MatchHeaders {
 		actualValue := m.req.Header.Get(key)
 		if !m.compareValues(actualValue, expectedValue) {
-			log.WithFields(log.Fields{
-				"header":   key,
-				"expected": expectedValue,
-				"actual":   actualValue,
+			// Header values can be credentials, such as a token or signature, so
+			// only the header name is logged.
+			m.log.WithFields(log.Fields{
+				"header": key,
 			}).Debugf("Header mismatch")
 			return false
 		}
@@ -67,7 +76,7 @@ func (m *WebhookMatcher) matchQuery() bool {
 	for key, expectedValue := range m.config.MatchQuery {
 		actualValue := query.Get(key)
 		if !m.compareValues(actualValue, expectedValue) {
-			log.WithFields(log.Fields{
+			m.log.WithFields(log.Fields{
 				"query":    key,
 				"expected": expectedValue,
 				"actual":   actualValue,
@@ -86,7 +95,7 @@ func (m *WebhookMatcher) matchPath() bool {
 	jsonPath, expectedValue := m.parseMatchPath()
 	matcher, err := NewJSONMatcher(m.bodyBytes)
 	if err != nil {
-		log.WithFields(log.Fields{
+		m.log.WithFields(log.Fields{
 			"error": err,
 		}).Debugf("Failed to create JSON matcher")
 		return false
@@ -107,13 +116,13 @@ func (m *WebhookMatcher) parseMatchPath() (string, string) {
 
 func (m *WebhookMatcher) matchPathValue(matcher *JSONMatcher, jsonPath, expectedValue string) bool {
 	if expectedValue == "" {
-		_, err := matcher.ExtractValue(jsonPath)
-		return err == nil
+		found, err := matcher.HasValue(jsonPath)
+		return err == nil && found
 	}
 
 	matches, err := matcher.MatchPath(jsonPath, expectedValue)
 	if err != nil {
-		log.WithFields(log.Fields{
+		m.log.WithFields(log.Fields{
 			"jsonPath": jsonPath,
 			"error":    err,
 		}).Debugf("Failed to match JSONPath")
@@ -126,7 +135,7 @@ func (m *WebhookMatcher) compareValues(actual, expected string) bool {
 	if pattern, hasRegex := strings.CutPrefix(expected, "regex:"); hasRegex {
 		matched, err := regexp.MatchString(pattern, actual)
 		if err != nil {
-			log.WithFields(log.Fields{
+			m.log.WithFields(log.Fields{
 				"pattern": pattern,
 				"error":   err,
 			}).Warnf("Invalid regex pattern")
@@ -169,7 +178,7 @@ func (m *WebhookMatcher) extractJSONPathValues(matcher *JSONMatcher) map[string]
 	for argName, jsonPath := range m.config.Extract {
 		value, err := matcher.ExtractValue(jsonPath)
 		if err != nil {
-			log.WithFields(log.Fields{
+			m.log.WithFields(log.Fields{
 				"argName":  argName,
 				"jsonPath": jsonPath,
 				"error":    err,
