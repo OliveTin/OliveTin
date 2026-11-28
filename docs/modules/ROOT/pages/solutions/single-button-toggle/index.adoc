@@ -23,7 +23,8 @@ a| image::solutions/single-button-toggle/dashboard-open.png[]
 * The **Toggle valve** action's icon is an `<img>` tag that uses `{{ .CurrentEntity.state }}` as the file name, so state `closed` shows `closed.png` and state `open` shows `open.png`.
 * The action has no `enabledExpression`, so it is never disabled.
 * When it runs, the action reads the current state from the entity file, works out the opposite state, and changes the `state:` line in the file. OliveTin watches entity files, so the dashboard and the icon update as soon as the file changes.
-* The state is read from the file, not from the dashboard, so two presses in quick succession each flip the valve, even if the second press comes before OliveTin has reloaded the entity. OliveTin runs one execution of an action at a time by default (`maxConcurrent: 1`), so the presses do not overlap.
+* Each execution reads the state from the file, not from the dashboard, so a press that runs straight after another still flips the valve, even before OliveTin has reloaded the entity. The state may be written as `open` or `"open"`.
+* OliveTin runs one execution of an action at a time by default (`maxConcurrent: 1`). A press while the action is still running is blocked, not queued, so it does not flip the valve. Press again once the first execution has finished.
 
 == Icons
 

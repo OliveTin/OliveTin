@@ -9,7 +9,7 @@ actions:
     shell: |
       set -e
       entity_file=/etc/OliveTin/entities/water_valve.yaml
-      if grep -q '^  state: open$' "$entity_file"; then
+      if grep -Eq "^  state: +[\"']?open[\"']? *$" "$entity_file"; then
         next_state=closed
       else
         next_state=open
