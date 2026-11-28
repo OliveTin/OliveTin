@@ -354,6 +354,7 @@ func resolveWatchedPath(ctx *watchContext) (changed bool, resolved bool) {
 	target, err := filepath.EvalSymlinks(ctx.watchedPath)
 	if err != nil {
 		log.Debugf("fsnotify could not resolve %v: %v", ctx.watchedPath, err)
+		watchDanglingTargetDir(ctx)
 		return false, false
 	}
 
@@ -364,6 +365,28 @@ func resolveWatchedPath(ctx *watchContext) (changed bool, resolved bool) {
 	ctx.resolvedPath = target
 	watchResolvedDir(ctx, filepath.Dir(target))
 	return true, true
+}
+
+// watchDanglingTargetDir watches the directory a dangling symlink points into.
+// Directory watches are not recursive, so when that directory is not already
+// watched, creating the missing target there would give no event, and the file
+// would not be reloaded once it can be read.
+func watchDanglingTargetDir(ctx *watchContext) {
+	target, err := os.Readlink(ctx.watchedPath)
+	if err != nil {
+		return
+	}
+
+	if !filepath.IsAbs(target) {
+		target = filepath.Join(filepath.Dir(ctx.watchedPath), target)
+	}
+
+	dir := filepath.Dir(target)
+	if _, err := os.Stat(dir); err != nil {
+		return
+	}
+
+	watchResolvedDir(ctx, dir)
 }
 
 func watchResolvedDir(ctx *watchContext, dir string) {
